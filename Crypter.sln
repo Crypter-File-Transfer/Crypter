@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypter", "Crypter.csproj", "{3FC34E6A-F5B5-430A-ADD4-059643564A12}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Web", "Crypter.Web\Crypter.Web.csproj", "{3FC34E6A-F5B5-430A-ADD4-059643564A12}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypter.API", "Crypter.API\Crypter.API.csproj", "{F9208A53-1847-4B7E-A867-C5D17F52410C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{3FC34E6A-F5B5-430A-ADD4-059643564A12}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3FC34E6A-F5B5-430A-ADD4-059643564A12}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3FC34E6A-F5B5-430A-ADD4-059643564A12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9208A53-1847-4B7E-A867-C5D17F52410C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9208A53-1847-4B7E-A867-C5D17F52410C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9208A53-1847-4B7E-A867-C5D17F52410C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9208A53-1847-4B7E-A867-C5D17F52410C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
