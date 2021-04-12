@@ -94,12 +94,6 @@ namespace CrypterAPI.Models
             DbType = DbType.String,
             Value = ExpirationDate,
          });
-         //cmd.Parameters.Add(new MySqlParameter
-         //{
-         //   ParameterName = "@charcount",
-         //   DbType = DbType.Int16,
-         //   Value = CharCount,
-         //});
          cmd.Parameters.Add(new MySqlParameter
          {
             ParameterName = "@encryptedmessagepath",
