@@ -56,12 +56,12 @@ namespace CrypterAPI.Controllers
             {
                var item = new FileUploadItem(Db)
                {
-                  Id = reader.GetInt32(0),
+                  Id = reader.GetString(0),
                   UntrustedName = reader.GetString(1),
                   UserID = reader.GetString(2),
-                  Size = reader.GetFloat(3),
-                  TimeStamp = reader.GetDateTime(4),
-                  FileContent = reader.GetString(5)
+                  Size = reader.GetInt16(3),
+                  Created = reader.GetDateTime(4),
+                  EncryptedFileContentPath = reader.GetString(5)
                };
                items.Add(item);
             }
