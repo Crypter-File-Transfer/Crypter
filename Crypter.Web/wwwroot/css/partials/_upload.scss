@@ -1,0 +1,24 @@
+﻿.box {
+    background-color: lightgray;
+    padding: 100px 20px;
+}
+
+.box__dragndrop,
+.box__uploading,
+.box__success,
+.box__error {
+    display: none;
+}
+
+.box.has-advanced-upload {
+    outline: 2px dashed black;
+    outline-offset: -10px;
+}
+
+.box.has-advanced-upload .box__dragndrop {
+    display: inline;
+}
+
+.box.is-dragover {
+    background-color: grey;
+}

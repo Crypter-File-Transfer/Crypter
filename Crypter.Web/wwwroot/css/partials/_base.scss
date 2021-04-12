@@ -1,0 +1,107 @@
+﻿.grt {
+    font-family: "Recursive", sans-serif;
+    font-size: 16px;
+    line-height: 27px;
+    padding: 17px;
+
+    h1 {
+        font-size: 33px;
+        line-height: 52px;
+        margin-bottom: 27px;
+    }
+
+    .title {
+        font-size: 42px;
+        line-height: 65px;
+        margin-bottom: 27px;
+    }
+
+    h2 {
+        font-size: 26px;
+        line-height: 42px;
+        margin-top: 44px;
+        margin-bottom: 17px;
+    }
+
+    h3 {
+        font-size: 20px;
+        line-height: 33px;
+        margin-top: 27px;
+        margin-bottom: 11px;
+    }
+
+    h4 {
+        font-size: 16px;
+        line-height: 27px;
+        font-weight: bold;
+        margin-bottom: 7px;
+    }
+
+    p, ul, ol, blockquote, pre, .alert, .note, .box, .footnotes {
+        margin-bottom: 27px;
+    }
+
+    ul, ol {
+        margin-left: 27px;
+    }
+
+    blockquote {
+        padding-left: 17px;
+        border-style: solid;
+        border-color: rgba(0,0,0,0.15);
+        border-width: 0 0 0 7px;
+    }
+
+    sub, sup {
+        padding: 0 1px;
+    }
+
+    code, pre, kbd {
+        font-size: 15px;
+    }
+
+    code {
+        background-color: rgba(0,0,0,0.08);
+        padding: 3px 4px;
+        border-radius: 7px;
+        margin: 0 1px;
+    }
+
+    pre {
+        padding: 11px;
+        border-style: solid;
+        border-color: rgba(0,0,0,0.15);
+        border-width: 0 0 0 7px;
+    }
+
+    kbd {
+        background-color: #fff;
+        padding: 3px 4px;
+        border-radius: 4px;
+        box-shadow: 0 0 4px 0 rgba(0,0,0,0.45);
+        margin: 0 1px;
+    }
+
+    .alert, .note, .box {
+        padding: 17px;
+    }
+
+    .footnotes {
+        font-size: 13px;
+        line-height: 23px;
+        padding-top: 17px;
+        border-top: 1px dotted rgba(0,0,0,0.15);
+    }
+
+    .footnotes p {
+        margin-bottom: 17px;
+    }
+
+    ul ul, ul ol, ol ul, ol ol, blockquote.right p, blockquote.left p, .alert :last-child, .note :last-child, .box :last-child, .footnotes :last-child {
+        margin-bottom: 0;
+    }
+
+    @media all and (min-width: 598px) {
+            padding: 27px;
+    }
+}

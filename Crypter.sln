@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Web", "Crypter.Web\Crypter.Web.csproj", "{3FC34E6A-F5B5-430A-ADD4-059643564A12}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypter.API", "Crypter.API\Crypter.API.csproj", "{F9208A53-1847-4B7E-A867-C5D17F52410C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.API", "Crypter.API\Crypter.API.csproj", "{F9208A53-1847-4B7E-A867-C5D17F52410C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
