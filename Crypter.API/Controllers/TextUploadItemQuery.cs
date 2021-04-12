@@ -17,14 +17,14 @@ namespace CrypterAPI.Controllers
          Db = db;
       }
 
-      public async Task<TextUploadItem> FindOneAsync(int id)
+      public async Task<TextUploadItem> FindOneAsync(string id)
       {
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"SELECT `Id`, `UntrustedName`, `UserID`, `Size`, `TimeStamp`, `CharCount`, `Message` FROM `TextUploadItems` WHERE `Id` = @id";
+         cmd.CommandText = @"SELECT `Id`,`UserID`,`UntrustedName`, `Size`, `Signature`, `Created`, `ExpirationDate`, `EncryptedMessagePath` FROM `MessageUploads` WHERE `Id` = @id";
          cmd.Parameters.Add(new MySqlParameter
          {
             ParameterName = "@id",
-            DbType = DbType.Int32,
+            DbType = DbType.String,
             Value = id,
          });
          var result = await ReadAllAsync(await cmd.ExecuteReaderAsync());
@@ -34,7 +34,7 @@ namespace CrypterAPI.Controllers
       public async Task<List<TextUploadItem>> LatestItemsAsync()
       {
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"SELECT `Id`, `UntrustedName`, `UserID`, `Size`, `TimeStamp`, `CharCount`, `Message` FROM `TextUploadItems` ORDER BY `Id` DESC LIMIT 10;";
+         cmd.CommandText = @"SELECT `Id`, `UserID`, `UntrustedName`, `Size`,`Signature`,`Created`, `ExpirationDate`, `EncryptedMessagePath` FROM `MessageUploads` ORDER BY `Id` DESC LIMIT 10;";
          return await ReadAllAsync(await cmd.ExecuteReaderAsync());
       }
 
@@ -42,7 +42,7 @@ namespace CrypterAPI.Controllers
       {
          using var txn = await Db.Connection.BeginTransactionAsync();
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"DELETE FROM `TextUploadItems`";
+         cmd.CommandText = @"DELETE FROM `MessageUplaods`";
          //added per https://fl.vu/mysql-trans
          cmd.Transaction = txn;
          await cmd.ExecuteNonQueryAsync();
@@ -58,13 +58,14 @@ namespace CrypterAPI.Controllers
             {
                var item = new TextUploadItem(Db)
                {
-                  Id = reader.GetInt32(0),
-                  UntrustedName = reader.GetString(1),
-                  UserID = reader.GetString(2),
-                  Size = reader.GetFloat(3),
-                  TimeStamp = reader.GetDateTime(4),
-                  CharCount = reader.GetString(5),
-                  Message = reader.GetString(6)
+                  Id = reader.GetString(0),
+                  UserID = reader.GetString(1),
+                  UntrustedName = reader.GetString(2),
+                  Size = reader.GetInt16(3),
+                  Signature = reader.GetString(4),
+                  Created = reader.GetDateTime(5),
+                  ExpirationDate = reader.GetDateTime(6),
+                  EncryptedMessagePath = reader.GetString(7)
                };
                items.Add(item);
             }

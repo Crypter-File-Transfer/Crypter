@@ -73,7 +73,7 @@ namespace CrypterAPI.Models
          cmd.Parameters.Add(new MySqlParameter
          {
             ParameterName = "@size",
-            DbType = DbType.String,
+            DbType = DbType.Int16,
             Value = Size,
          });
          cmd.Parameters.Add(new MySqlParameter

@@ -38,7 +38,7 @@ namespace CrypterAPI.Controllers
 
       // GET: api/TextUploadItems/5
       [HttpGet("{id}")]
-      public async Task<IActionResult> GetTextUploadItem(int id)
+      public async Task<IActionResult> GetTextUploadItem(string id)
       {
          await Db.Connection.OpenAsync();
          var query = new TextUploadItemQuery(Db);
@@ -51,7 +51,7 @@ namespace CrypterAPI.Controllers
       // PUT: api/TextUploadItems/5
       // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
       [HttpPut("{id}")]
-      public async Task<IActionResult> PutTextUploadItem(int id, [FromBody] TextUploadItem body)
+      public async Task<IActionResult> PutTextUploadItem(string id, [FromBody] TextUploadItem body)
       {
          await Db.Connection.OpenAsync();
          var query = new TextUploadItemQuery(Db);
@@ -59,21 +59,21 @@ namespace CrypterAPI.Controllers
          if (result is null)
             return new NotFoundResult();
          //update fields
-         result.UntrustedName = body.UntrustedName;
          result.UserID = body.UserID;
+         result.UntrustedName = body.UntrustedName;
          result.Size = body.Size;
-         result.CharCount = body.CharCount;
-         result.Message = body.Message;
+         result.Signature = body.Signature;
+         result.Created = body.Created;
+         result.ExpirationDate = body.ExpirationDate; 
+         result.EncryptedMessagePath = body.EncryptedMessagePath;
          await result.UpdateAsync();
          return new OkObjectResult(result);
 
       }
 
-
-
       // DELETE: api/TextUploadItems/5
       [HttpDelete("{id}")]
-      public async Task<IActionResult> DeleteTextUploadItem(int id)
+      public async Task<IActionResult> DeleteTextUploadItem(string id)
       {
          await Db.Connection.OpenAsync();
          var query = new TextUploadItemQuery(Db);
@@ -94,7 +94,5 @@ namespace CrypterAPI.Controllers
          await query.DeleteAllAsync();
          return new OkResult();
       }
-
-
    }
 }

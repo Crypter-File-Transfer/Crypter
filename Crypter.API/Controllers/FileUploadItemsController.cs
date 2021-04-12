@@ -38,7 +38,7 @@ namespace CrypterAPI.Controllers
 
       // GET: api/FileUploadItems/5
       [HttpGet("{id}")]
-      public async Task<IActionResult> GetFileUploadItem(int id)
+      public async Task<IActionResult> GetFileUploadItem(string id)
       {
          await Db.Connection.OpenAsync();
          var query = new FileUploadItemQuery(Db);
@@ -51,7 +51,7 @@ namespace CrypterAPI.Controllers
       // PUT: api/FileUploadItems/5
       // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
       [HttpPut("{id}")]
-      public async Task<IActionResult> PutFileUploadItem(int id, [FromBody] FileUploadItem body)
+      public async Task<IActionResult> PutFileUploadItem(string id, [FromBody] FileUploadItem body)
       {
          await Db.Connection.OpenAsync();
          var query = new FileUploadItemQuery(Db);
@@ -59,10 +59,13 @@ namespace CrypterAPI.Controllers
          if (result is null)
             return new NotFoundResult();
          //update fields
-         result.UntrustedName = body.UntrustedName;
          result.UserID = body.UserID;
+         result.UntrustedName = body.UntrustedName;
          result.Size = body.Size;
-         result.FileContent = body.FileContent;
+         result.Signature = body.Signature;
+         result.Created = body.Created;
+         result.ExpirationDate = body.ExpirationDate;
+         result.EncryptedFileContentPath = body.EncryptedFileContentPath;
          await result.UpdateAsync();
          return new OkObjectResult(result);
 
@@ -70,7 +73,7 @@ namespace CrypterAPI.Controllers
 
       // DELETE: api/FileUploadItems/5
       [HttpDelete("{id}")]
-      public async Task<IActionResult> DeleteFileUploadItem(int id)
+      public async Task<IActionResult> DeleteFileUploadItem(string id)
       {
          await Db.Connection.OpenAsync();
          var query = new FileUploadItemQuery(Db);
