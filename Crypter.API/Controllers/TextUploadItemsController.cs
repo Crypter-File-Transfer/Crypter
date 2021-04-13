@@ -58,7 +58,8 @@ namespace CrypterAPI.Controllers
          var result = await query.FindOneAsync(id);
          if (result is null)
             return new NotFoundResult();
-         //update fields
+          //update fields
+         //result.ID = body.ID;
          result.UserID = body.UserID;
          result.UntrustedName = body.UntrustedName;
          result.Size = body.Size;

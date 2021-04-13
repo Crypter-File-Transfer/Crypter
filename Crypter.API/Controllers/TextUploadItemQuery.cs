@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
 using MySqlConnector;
+using System;
 using CrypterAPI.Models;
 
 
@@ -20,13 +21,14 @@ namespace CrypterAPI.Controllers
       public async Task<TextUploadItem> FindOneAsync(string id)
       {
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"SELECT `Id`,`UserID`,`UntrustedName`, `Size`, `Signature`, `Created`, `ExpirationDate`, `EncryptedMessagePath` FROM `MessageUploads` WHERE `Id` = @id";
+         cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`Signature`,`Created`, `ExpirationDate` FROM `MessageUploads` WHERE `ID` = @id";
          cmd.Parameters.Add(new MySqlParameter
          {
             ParameterName = "@id",
             DbType = DbType.String,
             Value = id,
          });
+         Console.WriteLine(id); 
          var result = await ReadAllAsync(await cmd.ExecuteReaderAsync());
          return result.Count > 0 ? result[0] : null;
       }
@@ -34,7 +36,7 @@ namespace CrypterAPI.Controllers
       public async Task<List<TextUploadItem>> LatestItemsAsync()
       {
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"SELECT `Id`, `UserID`, `UntrustedName`, `Size`,`Signature`,`Created`, `ExpirationDate`, `EncryptedMessagePath` FROM `MessageUploads` ORDER BY `Id` DESC LIMIT 10;";
+         cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`Signature`,`Created`, `ExpirationDate` FROM `MessageUploads`";
          return await ReadAllAsync(await cmd.ExecuteReaderAsync());
       }
 
@@ -42,7 +44,7 @@ namespace CrypterAPI.Controllers
       {
          using var txn = await Db.Connection.BeginTransactionAsync();
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"DELETE FROM `MessageUplaods`";
+         cmd.CommandText = @"DELETE FROM `MessageUploads`";
          //added per https://fl.vu/mysql-trans
          cmd.Transaction = txn;
          await cmd.ExecuteNonQueryAsync();
@@ -58,14 +60,15 @@ namespace CrypterAPI.Controllers
             {
                var item = new TextUploadItem(Db)
                {
-                  Id = reader.GetString(0),
+                  //ID = reader.GetGuid(0).ToString("d"),
+                  ID = reader.GetString(0),
                   UserID = reader.GetString(1),
                   UntrustedName = reader.GetString(2),
-                  Size = reader.GetInt16(3),
-                  Signature = reader.GetString(4),
-                  Created = reader.GetDateTime(5),
-                  ExpirationDate = reader.GetDateTime(6),
-                  EncryptedMessagePath = reader.GetString(7)
+                  Size = reader.GetInt32(3),
+                  EncryptedMessagePath = reader.GetString(4),
+                  Signature = reader.GetString(5),
+                  Created = reader.GetDateTime(6),
+                  ExpirationDate = reader.GetDateTime(7)
                };
                items.Add(item);
             }

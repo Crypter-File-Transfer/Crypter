@@ -22,26 +22,26 @@ namespace CrypterAPI.Models
       public async Task InsertAsync()
       {
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"INSERT INTO `MessageUploads` (`UserID`,`UntrustedName`,`Size`, `Signature`, `Created`, `ExpirationDate`, `EncryptedMessagePath`) VALUES (@userid, @untrustedname, @size, @signature, @created, @expirationdate, @encryptedmessagepath);";
+         //guid as unique identifier
+         ID = Guid.NewGuid().ToString();
+         cmd.CommandText = @"INSERT INTO `MessageUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `Signature`, `Created`, `ExpirationDate`, `EncryptedMessagePath`) VALUES (@id, @userid, @untrustedname, @size, @signature, @created, @expirationdate, @encryptedmessagepath);";
          BindParams(cmd);
          await cmd.ExecuteNonQueryAsync();
-         //guid as unique identifier
-         Id = Guid.NewGuid().ToString(); 
       }
 
       public async Task UpdateAsync()
       {
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"UPDATE `MessageUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `Signature` = @signature, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedMessagePath`= @encryptedmessagepath WHERE `Id` = @id;";
+         cmd.CommandText = @"UPDATE `MessageUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `Signature` = @signature, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedMessagePath`= @encryptedmessagepath WHERE `ID` = @id;";
          BindParams(cmd);
-         BindId(cmd);
+         //BindId(cmd);
          await cmd.ExecuteNonQueryAsync();
       }
 
       public async Task DeleteAsync()
       {
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"DELETE FROM `MessageUploads` WHERE `Id` = @id;";
+         cmd.CommandText = @"DELETE FROM `MessageUploads` WHERE `ID` = @id;";
          BindId(cmd);
          await cmd.ExecuteNonQueryAsync();
       }
@@ -52,12 +52,19 @@ namespace CrypterAPI.Models
          {
             ParameterName = "@id",
             DbType = DbType.String,
-            Value = Id,
+            Value = ID,
          });
       }
 
       private void BindParams(MySqlCommand cmd)
-      {
+      { 
+         cmd.Parameters.Add(new MySqlParameter
+         {
+            ParameterName = "@id",
+            DbType = DbType.String,
+            Value = ID
+         });
+         Console.WriteLine(ID);
          cmd.Parameters.Add(new MySqlParameter
          {
             ParameterName = "@userid",
@@ -73,7 +80,7 @@ namespace CrypterAPI.Models
          cmd.Parameters.Add(new MySqlParameter
          {
             ParameterName = "@size",
-            DbType = DbType.Int16,
+            DbType = DbType.Int32,
             Value = Size,
          });
          cmd.Parameters.Add(new MySqlParameter
@@ -85,13 +92,13 @@ namespace CrypterAPI.Models
          cmd.Parameters.Add(new MySqlParameter
          {
             ParameterName = "@created",
-            DbType = DbType.String,
+            DbType = DbType.DateTime,
             Value = Created,
          });
          cmd.Parameters.Add(new MySqlParameter
          {
             ParameterName = "@expirationdate",
-            DbType = DbType.String,
+            DbType = DbType.DateTime,
             Value = ExpirationDate,
          });
          cmd.Parameters.Add(new MySqlParameter
@@ -101,6 +108,7 @@ namespace CrypterAPI.Models
             Value = EncryptedMessagePath,
          });
       }
-   }
+
+    }
 
 }

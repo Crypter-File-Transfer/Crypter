@@ -9,63 +9,70 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 
 CREATE TABLE `Users` (
-  `UserId` CHAR(36) NOT NULL UNIQUE,
+  `UserID` VARCHAR(36) NOT NULL,
   `UserName` VARCHAR(32) UNIQUE, 
   `Password` VARCHAR(64),
   `Email` VARCHAR(50), 
   `Authenticated` TINYINT(1),
   `UserCreated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
-  PRIMARY KEY (UserId)
+  PRIMARY KEY (UserID)
  ) ENGINE=InnoDB;
 
 CREATE TABLE `MessageUploads` (
-  `Id` CHAR(36) NOT NULL UNIQUE,
-  `UserID` CHAR(36) NOT NULL,
+  `ID` VARCHAR(36) NOT NULL,
+  `UserID` VARCHAR(36) NOT NULL,
   `UntrustedName` VARCHAR(100),
   `Size` INT DEFAULT NULL,
   `EncryptedMessagePath` VARCHAR(256),
   `Signature` TEXT,
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   `ExpirationDate` TIMESTAMP NOT NULL,
-  PRIMARY KEY (Id), 
-  FOREIGN KEY (UserId) REFERENCES Users(UserId)
+  PRIMARY KEY (ID),
+  /*Commented out for testing
+  FOREIGN KEY (UserID) REFERENCES Users(UserID)*/
 ) ENGINE=InnoDB; 
 
 CREATE TABLE `FileUploads` (
-  `Id` CHAR(36) NOT NULL UNIQUE,
-  `UserID` CHAR(36) NOT NULL,
+  `ID` VARCHAR(36) NOT NULL,
+  `UserID` VARCHAR(36) NOT NULL,
   `UntrustedName` VARCHAR(100),
   `EncryptedFileContentPath` VARCHAR(256), 
   `Signature` TEXT,
   `Size` INT DEFAULT NULL,
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   `ExpirationDate` TIMESTAMP NOT NULL,
-  PRIMARY KEY (Id), 
-  FOREIGN KEY (UserId) REFERENCES Users(UserId)
+  PRIMARY KEY (ID),
+ /*Commented out for testing
+  FOREIGN KEY (UserID) REFERENCES Users(UserID)
+ */
 ) ENGINE=InnoDB;
 
 
 CREATE TABLE `Keys` (
-  `KeyId` CHAR(36) NOT NULL UNIQUE,
-  `UserId` CHAR(36), 
+  `KeyID` VARCHAR(36) NOT NULL,
+  `UserID` VARCHAR(36), 
   `PrivateKey` TEXT, 
   `PublicKey` TEXT, 
   `KeyType` VARCHAR(25),
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
-  PRIMARY KEY(KeyId), 
-  FOREIGN KEY(UserId) REFERENCES Users(UserId)
+  PRIMARY KEY(KeyID), 
+  /*Commented out for testing FOREIGN KEY(UserID) REFERENCES Users(UserID)*/
 ) ENGINE=InnoDB;
 
 CREATE TABLE `ExchangedKeys` (
-  `UserId` char(36) NOT NULL,
+  `UserID` VARCHAR(36) NOT NULL,
   `ExchangedKey` TEXT, 
-  `OtherUserId` char(36) NOT NULL, 
+  `OtherUserID` VARCHAR(36) NOT NULL, 
   `OtherUserExchangedKey` TEXT,
   `ExchangeCreated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
-   PRIMARY KEY(UserId, OtherUserId), 
-   CONSTRAINT KeyExchange UNIQUE (UserId, OtherUserId), 
-   CONSTRAINT ExchangeToUser1_FK FOREIGN KEY (UserId) REFERENCES Users(UserId), 
-   CONSTRAINT ExchangeToUser2_FK FOREIGN KEY (OtherUserId) REFERENCES Users(UserId)
+   PRIMARY KEY(UserID, OtherUserID), 
+   CONSTRAINT KeyExchange UNIQUE (UserID, OtherUserID),
+   /*Commented out for testing
+   CONSTRAINT ExchangeToUser1_FK FOREIGN KEY (UserID) REFERENCES Users(UserID), 
+   CONSTRAINT ExchangeToUser2_FK FOREIGN KEY (OtherUserID) REFERENCES Users(UserID)
+   */
 ) ENGINE=InnoDB;
 
+--disble strict mode to allow ID non auto-increment
+SET GLOBAL sql_mode = ''; 
 

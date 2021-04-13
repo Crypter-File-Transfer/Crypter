@@ -5,7 +5,7 @@ namespace CrypterAPI.Models
    public class UploadItem
    {
       //unique key in database, will use GUID 
-      public string Id { get; set; }
+      public string ID { get; set; }
       // user id/ tag, null if anonymous
       public string UserID { get; set; }
       // item name/ title
