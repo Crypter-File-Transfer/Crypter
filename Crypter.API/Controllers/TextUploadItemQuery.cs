@@ -28,7 +28,7 @@ namespace CrypterAPI.Controllers
             DbType = DbType.String,
             Value = id,
          });
-         Console.WriteLine(id); 
+         //Console.WriteLine(id); 
          var result = await ReadAllAsync(await cmd.ExecuteReaderAsync());
          return result.Count > 0 ? result[0] : null;
       }
