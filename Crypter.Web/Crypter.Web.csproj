@@ -13,9 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.5.180" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="16.9.0" />
     <PackageReference Include="BlazorInputFile" Version="0.2.0" />
-    <PackageReference Include="BuildWebCompiler" Version="1.12.405" />
   </ItemGroup>
 
 </Project>
