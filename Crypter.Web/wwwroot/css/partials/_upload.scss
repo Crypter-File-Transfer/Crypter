@@ -1,24 +1,38 @@
-﻿.box {
-    background-color: lightgray;
-    padding: 100px 20px;
-}
+﻿.file-upload, .message-upload {
+    max-width: 600px;
+    margin: auto;
+    text-align: left;
 
-.box__dragndrop,
-.box__uploading,
-.box__success,
-.box__error {
-    display: none;
-}
+    .dropzone {
+        border: 5px dashed #000000;
+        margin: auto auto 24px auto;
+        text-align: center;
+        position: relative;
+    }
 
-.box.has-advanced-upload {
-    outline: 2px dashed black;
-    outline-offset: -10px;
-}
+    .dz-text {
+        position: absolute;
+        padding: 20px;
+        left: 0;
+        right: 0;
+        z-index: -1;
+    }
 
-.box.has-advanced-upload .box__dragndrop {
-    display: inline;
-}
+    .passphrase {
+        margin-bottom: 24px;
+    }
 
-.box.is-dragover {
-    background-color: grey;
+    label {
+        display: block;
+    }
+
+    input[type="text"] {
+        margin-right: 10px;
+        width: 500px;
+    }
+
+    #fileInput {
+        padding: 5rem 9rem 2rem;
+        z-index: 10;
+    }
 }

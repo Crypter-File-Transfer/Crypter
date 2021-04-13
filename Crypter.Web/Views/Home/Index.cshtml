@@ -16,20 +16,12 @@
         </ul>
         <div class="tab-content" id="myTabContent">
             <div class="tab-pane fade show active" id="file" role="tabpanel" aria-labelledby="file-tab">
-                <h2>Encrypt a file</h2>
-                <form class="box" method="post" action="" enctype="multipart/form-data">
-                    <div class="box__input">
-                        <input class="box__file" type="file" name="files[]" id="file" data-multiple-caption="{count} files selected" multiple />
-                        <label for="file"><strong>Choose a file</strong><span class="box__dragndrop"> or drag it here</span>.</label>
-                        <button class="box__button" type="submit">Upload</button>
-                    </div>
-                    <div class="box__uploading">Uploading…</div>
-                    <div class="box__success">Done!</div>
-                    <div class="box__error">Error! <span></span>.</div>
-                </form>
+                <h2>Upload a file</h2>
+                <component type="typeof(FileUpload)" render-mode="ServerPrerendered" />
             </div>
             <div class="tab-pane fade" id="message" role="tabpanel" aria-labelledby="message-tab">
-                <h2>Encrypt a message</h2>
+                <h2>Type a message</h2>
+                <component type="typeof(MessageUpload)" render-mode="ServerPrerendered" />
             </div>
         </div>
     </div>
