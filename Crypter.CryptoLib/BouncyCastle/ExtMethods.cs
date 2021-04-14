@@ -7,15 +7,6 @@ namespace Crypter.CryptoLib.BouncyCastle
 {
    public static class ExtMethods
    {
-      public static string ConvertToPEM(this RsaKeyParameters keyParams)
-      {
-         var stringWriter = new StringWriter();
-         var pemWriter = new PemWriter(stringWriter);
-         pemWriter.WriteObject(keyParams);
-         pemWriter.Writer.Flush();
-         return stringWriter.ToString();
-      }
-
       public static string ConvertToPEM(this AsymmetricKeyParameter keyParams)
       {
          var stringWriter = new StringWriter();
@@ -25,6 +16,8 @@ namespace Crypter.CryptoLib.BouncyCastle
          return stringWriter.ToString();
       }
 
+      // Dead code that I don't want to delete yet - Jack
+      /*
       public static string ConvertToPKCS8(this RsaKeyParameters privateKeyParams)
       {
          var pkcs8 = new Pkcs8Generator(privateKeyParams);
@@ -36,6 +29,7 @@ namespace Crypter.CryptoLib.BouncyCastle
          pemWriter.Writer.Flush();
          return stringWriter.ToString();
       }
+      */
 
       public static byte[] ConvertToBytes(this KeyParameter symmetricKey)
       {
