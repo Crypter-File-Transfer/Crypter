@@ -1,0 +1,33 @@
+﻿@inject IJSRuntime jsRuntime
+
+<div class="message-upload">
+    <div class="row">
+        <div class="col-12 p-0">
+            <textarea @bind="MessageText" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
+            <label><small class="align-text-bottom">@(MaxMessageLength - MessageText.Count()) remaining</small></label>
+        </div>
+    </div>
+    <div class="row passphrase">
+        <div class="col-12 p-0">
+            <label for="EncryptionPhrase">
+                Encryption Passphrase
+            </label>
+            <input type="text" name="EncryptionPhrase" id="encryptionPassphrase" /><input type="button" value="Random" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 p-0">
+            <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText))">Encrypt</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    const int MaxMessageLength = 1024;
+    string MessageText = "";
+
+    private void EncryptMessage(string text)
+    {
+        // Encryption code goes here
+    }
+}

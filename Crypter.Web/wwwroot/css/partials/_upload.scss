@@ -1,0 +1,38 @@
+﻿.file-upload, .message-upload {
+    max-width: 600px;
+    margin: auto;
+    text-align: left;
+
+    .dropzone {
+        border: 5px dashed #000000;
+        margin: auto auto 24px auto;
+        text-align: center;
+        position: relative;
+    }
+
+    .dz-text {
+        position: absolute;
+        padding: 20px;
+        left: 0;
+        right: 0;
+        z-index: -1;
+    }
+
+    .passphrase {
+        margin-bottom: 24px;
+    }
+
+    label {
+        display: block;
+    }
+
+    input[type="text"] {
+        margin-right: 10px;
+        width: 500px;
+    }
+
+    #fileInput {
+        padding: 5rem 9rem 2rem;
+        z-index: 10;
+    }
+}
