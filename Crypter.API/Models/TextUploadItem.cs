@@ -6,15 +6,15 @@ namespace CrypterAPI.Models
 {
    //TextUpload inherits from UploadItem
    public class TextUploadItem : UploadItem
-   {
-      //add additional members/ methods unique to text uploads
-      public string CharCount { get; set; }
-      public string Message { get; set; }
+    { 
+      //public string CharCount { get; set; }
+      public string EncryptedMessagePath { get; set; }
       //constructor sets TimeStamp upon instantiation
       public TextUploadItem()
       {
-         this.TimeStamp = DateTime.UtcNow;
-      }
+        this.Created = DateTime.UtcNow;
+        this.ExpirationDate = DateTime.UtcNow.AddHours(24);
+       }
       internal TextUploadItem(CrypterDB db)
       {
          Db = db;
@@ -22,25 +22,26 @@ namespace CrypterAPI.Models
       public async Task InsertAsync()
       {
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"INSERT INTO `TextUploadItems` (`UntrustedName`, `UserID`, `Size`, `TimeStamp`, `CharCount`, `Message`) VALUES (@untrustedname, @userid, @size, @timestamp, @charcount, @message);";
+         //guid as unique identifier
+         ID = Guid.NewGuid().ToString();
+         cmd.CommandText = @"INSERT INTO `MessageUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `Signature`, `Created`, `ExpirationDate`, `EncryptedMessagePath`) VALUES (@id, @userid, @untrustedname, @size, @signature, @created, @expirationdate, @encryptedmessagepath);";
          BindParams(cmd);
          await cmd.ExecuteNonQueryAsync();
-         Id = (int)cmd.LastInsertedId;
       }
 
       public async Task UpdateAsync()
       {
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"UPDATE `TextUploadItems` SET `UntrustedName` = @untrustedname, `UserID` = @userid, `Size` = @size, `TimeStamp` = @timestamp, `CharCount` = @charcount, `Message`=@message WHERE `Id` = @id;";
+         cmd.CommandText = @"UPDATE `MessageUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `Signature` = @signature, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedMessagePath`= @encryptedmessagepath WHERE `ID` = @id;";
          BindParams(cmd);
-         BindId(cmd);
+         //BindId(cmd);
          await cmd.ExecuteNonQueryAsync();
       }
 
       public async Task DeleteAsync()
       {
          using var cmd = Db.Connection.CreateCommand();
-         cmd.CommandText = @"DELETE FROM `TextUploadItems` WHERE `Id` = @id;";
+         cmd.CommandText = @"DELETE FROM `MessageUploads` WHERE `ID` = @id;";
          BindId(cmd);
          await cmd.ExecuteNonQueryAsync();
       }
@@ -50,19 +51,20 @@ namespace CrypterAPI.Models
          cmd.Parameters.Add(new MySqlParameter
          {
             ParameterName = "@id",
-            DbType = DbType.Int32,
-            Value = Id,
+            DbType = DbType.String,
+            Value = ID,
          });
       }
 
       private void BindParams(MySqlCommand cmd)
-      {
+      { 
          cmd.Parameters.Add(new MySqlParameter
          {
-            ParameterName = "@untrustedname",
+            ParameterName = "@id",
             DbType = DbType.String,
-            Value = UntrustedName,
+            Value = ID
          });
+         Console.WriteLine(ID);
          cmd.Parameters.Add(new MySqlParameter
          {
             ParameterName = "@userid",
@@ -71,29 +73,42 @@ namespace CrypterAPI.Models
          });
          cmd.Parameters.Add(new MySqlParameter
          {
-            ParameterName = "@size",
+            ParameterName = "@untrustedname",
             DbType = DbType.String,
+            Value = UntrustedName,
+         });
+         cmd.Parameters.Add(new MySqlParameter
+         {
+            ParameterName = "@size",
+            DbType = DbType.Int32,
             Value = Size,
          });
          cmd.Parameters.Add(new MySqlParameter
          {
-            ParameterName = "@timestamp",
+            ParameterName = "@signature",
             DbType = DbType.String,
-            Value = TimeStamp,
+            Value = Signature,
          });
          cmd.Parameters.Add(new MySqlParameter
          {
-            ParameterName = "@charcount",
-            DbType = DbType.Int16,
-            Value = CharCount,
+            ParameterName = "@created",
+            DbType = DbType.DateTime,
+            Value = Created,
          });
          cmd.Parameters.Add(new MySqlParameter
          {
-            ParameterName = "@message",
+            ParameterName = "@expirationdate",
+            DbType = DbType.DateTime,
+            Value = ExpirationDate,
+         });
+         cmd.Parameters.Add(new MySqlParameter
+         {
+            ParameterName = "@encryptedmessagepath",
             DbType = DbType.String,
-            Value = Message,
+            Value = EncryptedMessagePath,
          });
       }
-   }
+
+    }
 
 }
