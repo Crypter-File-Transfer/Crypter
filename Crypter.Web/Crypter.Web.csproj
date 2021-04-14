@@ -16,4 +16,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.5" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
+  </ItemGroup>
+
 </Project>
