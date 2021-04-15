@@ -2,13 +2,13 @@
 {
    public struct AnonymousSignature
    {
-      public readonly string SignedDigest { get; }
-      public readonly string SymmetricKey { get; }
+      public readonly string Hash { get; }
+      public readonly string Key { get; }
 
       public AnonymousSignature(string signedDigestEncodedBase64, string symmetricKeyEncodedBase64)
       {
-         SignedDigest = signedDigestEncodedBase64;
-         SymmetricKey = symmetricKeyEncodedBase64;
+         Hash = signedDigestEncodedBase64;
+         Key = symmetricKeyEncodedBase64;
       }
    }
 }
