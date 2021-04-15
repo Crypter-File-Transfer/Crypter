@@ -1,0 +1,72 @@
+﻿@inject IJSRuntime jsRuntime
+
+<div class="message-upload">
+   <div class="row">
+      <div class="col-12 p-0">
+         <textarea @bind="MessageText" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
+         <label><small class="align-text-bottom">@(MaxMessageLength - MessageText.Count()) remaining</small></label>
+      </div>
+   </div>
+   <div class="row passphrase">
+      <div class="col-12 p-0">
+         <label for="EncryptionPhrase">
+            Encryption Passphrase
+         </label>
+         <input type="text" name="EncryptionPhrase" id="encryptionPassphrase" /><input type="button" value="Random" />
+      </div>
+   </div>
+   <div class="row">
+      <div class="col-12 p-0">
+         <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText, rsaKeySize))">Encrypt</button>
+      </div>
+   </div>
+   <div class="row">
+      <p><b>CipherText: </b>@outCipherText</p>
+      <p><b>SignatureJSON: </b>@outSignature</p>
+      <p><b>Private Key: </b>@outPrivateKey</p>
+      <p><b>Public Key: </b>@outPublicKey</p>
+   </div>
+</div>
+
+@code {
+   const int MaxMessageLength = 1024;
+   string MessageText = "";
+   RsaKeySize rsaKeySize = RsaKeySize._1024;
+
+   string outCipherText = "";
+   string outSignature = "";
+   string outPrivateKey = "";
+   string outPublicKey = "";
+
+   private void EncryptMessage(string message, RsaKeySize rsaKeySize)
+   {
+      // Refer to https://stackoverflow.com/a/11701301 for procedure
+
+      byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+
+      // Sign the plaintext
+      var asymmetricWrapper = new CryptoLib.BouncyCastle.AsymmetricWrapper();
+      var asymmetricKeyPair = asymmetricWrapper.GenerateAsymmetricKeyPair(rsaKeySize);
+      var signedMessageBytes = asymmetricWrapper.DigestAndSign(messageBytes, asymmetricKeyPair.Private);
+
+      // Encipher the plaintext
+      var symmetricWrapper = new CryptoLib.BouncyCastle.SymmetricWrapper();
+      var symmetricKey = symmetricWrapper.GenerateSymmetricKey();
+      var iv = symmetricWrapper.GenerateIV();
+      var cipherText = symmetricWrapper.EncryptBytes(messageBytes, symmetricKey, iv);
+
+      // Base64 encode everything that needs to be transmitted or displayed
+      var encodedCipherText = Convert.ToBase64String(cipherText);
+      var encodedSignature = Convert.ToBase64String(signedMessageBytes);
+      var encodedSymmetricKey = Convert.ToBase64String(symmetricKey.ConvertToBytes());
+
+      // Create the signature file
+      var anonSignature = new AnonymousSignature(encodedSignature, encodedSymmetricKey);
+
+      // Show the ciphertext and signature file for dev purposes
+      outCipherText = encodedCipherText;
+      outSignature = JsonSerializer.Serialize(anonSignature);
+      outPrivateKey = asymmetricKeyPair.Private.ConvertToPEM();
+      outPublicKey = asymmetricKeyPair.Public.ConvertToPEM();
+   }
+}

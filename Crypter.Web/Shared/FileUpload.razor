@@ -1,0 +1,125 @@
+﻿@using BlazorInputFile
+@inject IJSRuntime jsRuntime
+
+<div class="file-upload">
+   <div class="row">
+      <div class="col-12 p-0">
+         <div class="dropzone @dropClass rounded">
+            <div class="dz-text">
+               <p>Drop file here</p>
+               <p>or</p>
+            </div>
+            <BlazorInputFile.InputFile id="fileInput" multiple title=""
+                                       OnChange="HandleFileInputChange"
+                                       @ondragenter="HandleDragEnter"
+                                       @ondragleave="HandleDragLeave" />
+         </div>
+         @if ((fileSizeError || fileCountError))
+         {
+            <ul class="validation-errors mb-0">
+               @if (fileSizeError)
+               {
+                  <li class="validation-message">The max file size is @MaxFileSizeMB MB.</li>
+               }
+
+               @if (fileCountError)
+               {
+                  <li class="validation-message">You can only upload @MaxFileCount file(s).</li>
+               }
+            </ul>
+         }
+         @if (selectedFiles != null && selectedFiles.Count > 0)
+         {
+            <div class="col-12">
+               <ul>
+                  @foreach (var file in selectedFiles)
+                  {
+                     <li>
+                        @file.Name
+                        <button class="btn btn-link text-danger p-0 pl-1" type="button"
+                                @onclick="@(e => RemoveFile(file))">
+                           <small class="align-text-bottom">Remove</small>
+                        </button>
+                     </li>
+                  }
+               </ul>
+            </div>
+         }
+      </div>
+   </div>
+   <div class="row passphrase">
+      <div class="col-12 p-0">
+         <label for="EncryptionPhrase">Encryption Passphrase</label>
+         <input type="text" name="EncryptionPhrase" id="encryptionPassphrase" />
+         <input type="button" value="Random" />
+      </div>
+   </div>
+   <div class="row">
+      <div class="col-12 p-0">
+         <button type="button" class="btn btn-primary" @onclick="@(e => EncryptFile(selectedFiles[0]))">Encrypt</button>
+      </div>
+   </div>
+</div>
+
+@code {
+   const int MaxFileSizeMB = 10;
+   const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
+   const int MaxFileCount = 1;
+   private string dropClass = "";
+   private bool fileSizeError = false;
+   private bool fileCountError = false;
+   private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
+
+   private void HandleDragEnter()
+   {
+      dropClass = "dropzone-drag";
+   }
+
+   private void HandleDragLeave()
+   {
+      dropClass = "";
+   }
+
+   private void HandleFileInputChange(IFileListEntry[] files)
+   {
+      dropClass = "";
+      fileSizeError = false;
+      fileCountError = false;
+
+      if (files != null)
+      {
+         foreach (var file in files)
+         {
+            bool error = false;
+            if (file.Size > MaxFileSize)
+            {
+               error = true;
+               fileSizeError = true;
+            }
+
+            if (selectedFiles.Count == MaxFileCount)
+            {
+
+               error = true;
+               fileCountError = true;
+            }
+
+            if (!error)
+            {
+               selectedFiles.Add(file);
+            }
+         }
+      }
+   }
+
+   private void RemoveFile(IFileListEntry file)
+   {
+      selectedFiles.Remove(file);
+      fileCountError = false;
+   }
+
+   private void EncryptFile(IFileListEntry file)
+   {
+      // Encryption Code Goes here
+   }
+}

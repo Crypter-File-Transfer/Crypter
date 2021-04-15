@@ -1,9 +1,6 @@
 ﻿[
   {
     "outputFile": "wwwroot/css/main.css",
-    "inputFile": "wwwroot/css/main.scss",
-    "options": {
-      "outputStyle": "compressed"
-    }
+    "inputFile": "wwwroot/css/main.scss"
   }
 ]
