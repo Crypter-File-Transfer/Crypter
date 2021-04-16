@@ -2,164 +2,174 @@
 @inject IJSRuntime jsRuntime
 
 <div class="file-upload">
-   <div class="row">
-      <div class="col-12 p-0">
-         <div class="dropzone @dropClass rounded">
-            <div class="dz-text">
-               <p>Drop file here</p>
-               <p>or</p>
+    <div class="row">
+        <div class="col-12 p-0">
+            <div class="dropzone @dropClass rounded">
+                <div class="dz-text">
+                    <p>Drop file here</p>
+                    <p>or</p>
+                </div>
+                <BlazorInputFile.InputFile id="fileInput" multiple title=""
+                                           OnChange="HandleFileInputChange"
+                                           @ondragenter="HandleDragEnter"
+                                           @ondragleave="HandleDragLeave" />
             </div>
-            <BlazorInputFile.InputFile id="fileInput" multiple title=""
-                                       OnChange="HandleFileInputChange"
-                                       @ondragenter="HandleDragEnter"
-                                       @ondragleave="HandleDragLeave" />
-         </div>
-         @if ((fileSizeError || fileCountError))
-         {
-            <ul class="validation-errors mb-0">
-               @if (fileSizeError)
-               {
-                  <li class="validation-message">The max file size is @MaxFileSizeMB MB.</li>
-               }
+            @if ((fileSizeError || fileCountError))
+            {
+                <ul class="validation-errors mb-0">
+                    @if (fileSizeError)
+                    {
+                        <li class="validation-message">The max file size is @MaxFileSizeMB MB.</li>
+                    }
 
-               @if (fileCountError)
-               {
-                  <li class="validation-message">You can only upload @MaxFileCount file(s).</li>
-               }
-            </ul>
-         }
-         @if (selectedFiles != null && selectedFiles.Count > 0)
-         {
-            <div class="col-12">
-               <ul>
-                  @foreach (var file in selectedFiles)
-                  {
-                     <li>
-                        @file.Name
-                        <button class="btn btn-link text-danger p-0 pl-1" type="button"
-                                @onclick="@(e => RemoveFile(file))">
-                           <small class="align-text-bottom">Remove</small>
-                        </button>
-                     </li>
-                  }
-               </ul>
-            </div>
-         }
-      </div>
-   </div>
-   <div class="row passphrase">
-      <div class="col-12 p-0">
-         <label for="EncryptionPhrase">Encryption Passphrase</label>
-         <input type="text" name="EncryptionPhrase" id="encryptionPassphrase" />
-         <input type="button" value="Random" />
-      </div>
-   </div>
-   <div class="row">
-      <div class="col-12 p-0">
-         <button type="button" class="btn btn-primary" @onclick="@(e => EncryptFile(selectedFiles[0], rsaKeySize))">Encrypt</button>
-      </div>
-   </div>
+                    @if (fileCountError)
+                    {
+                        <li class="validation-message">You can only upload @MaxFileCount file(s).</li>
+                    }
+                </ul>
+            }
+            @if (selectedFiles != null && selectedFiles.Count > 0)
+            {
+                <div class="col-12">
+                    <ul>
+                        @foreach (var file in selectedFiles)
+                        {
+                            <li>
+                                @file.Name
+                                <button class="btn btn-link text-danger p-0 pl-1" type="button"
+                                        @onclick="@(e => RemoveFile(file))">
+                                    <small class="align-text-bottom">Remove</small>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 p-0">
+            <button type="button" class="btn btn-primary" @onclick="@(e => EncryptFile(selectedFiles[0], rsaKeySize))">Encrypt</button>
+        </div>
+    </div>
+    <UploadSuccessModal @ref="Modal" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
 </div>
 
 @code {
-   const int MaxFileSizeMB = 10;
-   const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
-   const int MaxFileCount = 1;
-   private string dropClass = "";
-   private bool fileSizeError = false;
-   private bool fileCountError = false;
-   private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
-   RsaKeySize rsaKeySize = RsaKeySize._1024;
+    const int MaxFileSizeMB = 10;
+    const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
+    const int MaxFileCount = 1;
+    private string dropClass = "";
+    private bool fileSizeError = false;
+    private bool fileCountError = false;
+    private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
+    RsaKeySize rsaKeySize = RsaKeySize._1024;
+    string publicKey;
+    string privateKey;
 
-   private void HandleDragEnter()
-   {
-      dropClass = "dropzone-drag";
-   }
+    private void HandleDragEnter()
+    {
+        dropClass = "dropzone-drag";
+    }
 
-   private void HandleDragLeave()
-   {
-      dropClass = "";
-   }
+    private void HandleDragLeave()
+    {
+        dropClass = "";
+    }
 
-   private void HandleFileInputChange(IFileListEntry[] files)
-   {
-      dropClass = "";
-      fileSizeError = false;
-      fileCountError = false;
+    private void HandleFileInputChange(IFileListEntry[] files)
+    {
+        dropClass = "";
+        fileSizeError = false;
+        fileCountError = false;
 
-      if (files != null)
-      {
-         foreach (var file in files)
-         {
-            bool error = false;
-            if (file.Size > MaxFileSize)
+        if (files != null)
+        {
+            foreach (var file in files)
             {
-               error = true;
-               fileSizeError = true;
+                bool error = false;
+                if (file.Size > MaxFileSize)
+                {
+                    error = true;
+                    fileSizeError = true;
+                }
+
+                if (selectedFiles.Count == MaxFileCount)
+                {
+
+                    error = true;
+                    fileCountError = true;
+                }
+
+                if (!error)
+                {
+                    selectedFiles.Add(file);
+                }
             }
+        }
+    }
 
-            if (selectedFiles.Count == MaxFileCount)
-            {
+    private void RemoveFile(IFileListEntry file)
+    {
+        selectedFiles.Remove(file);
+        fileCountError = false;
+    }
 
-               error = true;
-               fileCountError = true;
-            }
+    private async Task EncryptFile(IFileListEntry file, RsaKeySize rsaKeySize)
+    {
+        // Refer to https://stackoverflow.com/a/11701301 for procedure
 
-            if (!error)
-            {
-               selectedFiles.Add(file);
-            }
-         }
-      }
-   }
+        byte[] fileBytes = new byte[file.Data.Length];
+        await file.Data.ReadAsync(fileBytes, 0, (int)file.Data.Length);
 
-   private void RemoveFile(IFileListEntry file)
-   {
-      selectedFiles.Remove(file);
-      fileCountError = false;
-   }
+        // Encipher the plaintext
+        var symmetricWrapper = new CryptoLib.BouncyCastle.SymmetricWrapper();
+        var symmetricKey = symmetricWrapper.GenerateSymmetricKey();
+        var iv = symmetricWrapper.GenerateIV();
+        var cipherText = symmetricWrapper.EncryptBytes(fileBytes, symmetricKey, iv);
 
-   private async Task EncryptFile(IFileListEntry file, RsaKeySize rsaKeySize)
-   {
-      // Refer to https://stackoverflow.com/a/11701301 for procedure
+        // Create a signature, which contains a hash of the plaintext and the plaintext public key
+        byte[] messageHash = HashWrapper.GetSha256Digest(fileBytes);
+        var encodedHash = Convert.ToBase64String(messageHash);
+        var encodedSymmetricKey = Convert.ToBase64String(symmetricKey.ConvertToBytes());
+        var signature = new AnonymousSignature(encodedHash, encodedSymmetricKey);
+        var signatureJson = JsonSerializer.Serialize(signature);
+        var signatureJsonBytes = Encoding.UTF8.GetBytes(signatureJson);
 
-      byte[] fileBytes = new byte[file.Data.Length];
-      await file.Data.ReadAsync(fileBytes, 0, (int)file.Data.Length);
+        // Encipher the signature using an RSA public key
+        var asymmetricWrapper = new CryptoLib.BouncyCastle.AsymmetricWrapper();
+        var asymmetricKeyPair = asymmetricWrapper.GenerateAsymmetricKeyPair(rsaKeySize);
+        var encryptedSignature = asymmetricWrapper.Encrypt(signatureJsonBytes, asymmetricKeyPair.Public);
 
-      // Encipher the plaintext
-      var symmetricWrapper = new CryptoLib.BouncyCastle.SymmetricWrapper();
-      var symmetricKey = symmetricWrapper.GenerateSymmetricKey();
-      var iv = symmetricWrapper.GenerateIV();
-      var cipherText = symmetricWrapper.EncryptBytes(fileBytes, symmetricKey, iv);
+        // Hash the symmetric key to create a server-side encryption key
+        var hashedSymmetricKey = HashWrapper.GetSha256Digest(symmetricKey.ConvertToBytes());
 
-      // Create a signature, which contains a hash of the plaintext and the plaintext public key
-      byte[] messageHash = HashWrapper.GetSha256Digest(fileBytes);
-      var encodedHash = Convert.ToBase64String(messageHash);
-      var encodedSymmetricKey = Convert.ToBase64String(symmetricKey.ConvertToBytes());
-      var signature = new AnonymousSignature(encodedHash, encodedSymmetricKey);
-      var signatureJson = JsonSerializer.Serialize(signature);
-      var signatureJsonBytes = Encoding.UTF8.GetBytes(signatureJson);
+        // Base64 encode everything that needs to be transmitted or displayed
+        var encodedCipherText = Convert.ToBase64String(cipherText);
+        var encodedSignature = Convert.ToBase64String(encryptedSignature);
+        var encodedServerEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
 
-      // Encipher the signature using an RSA public key
-      var asymmetricWrapper = new CryptoLib.BouncyCastle.AsymmetricWrapper();
-      var asymmetricKeyPair = asymmetricWrapper.GenerateAsymmetricKeyPair(rsaKeySize);
-      var encryptedSignature = asymmetricWrapper.Encrypt(signatureJsonBytes, asymmetricKeyPair.Public);
+        // Send this to the API
+        Console.WriteLine(encodedCipherText);
+        Console.WriteLine(encodedSignature);
+        Console.WriteLine(encodedServerEncryptionKey);
 
-      // Hash the symmetric key to create a server-side encryption key
-      var hashedSymmetricKey = HashWrapper.GetSha256Digest(symmetricKey.ConvertToBytes());
+        // Display this to the user after the upload is complete
+        Console.WriteLine(asymmetricKeyPair.Private.ConvertToPEM());   // Instruct Alice to share this key with Bob.  This is effectively Bob's private key he will use to decrypt
+        Console.WriteLine(asymmetricKeyPair.Public.ConvertToPEM());    // Instruct Alice to keep this key secret.  We've bastardized asymmetric encryption so that Alice's private key is also Bob's public key
 
-      // Base64 encode everything that needs to be transmitted or displayed
-      var encodedCipherText = Convert.ToBase64String(cipherText);
-      var encodedSignature = Convert.ToBase64String(encryptedSignature);
-      var encodedServerEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
+        // Send data to success modal component
+        KeyGenerated(asymmetricKeyPair.Public.ConvertToPEM(), asymmetricKeyPair.Private.ConvertToPEM());
 
-      // Send this to the API
-      Console.WriteLine(encodedCipherText);
-      Console.WriteLine(encodedSignature);
-      Console.WriteLine(encodedServerEncryptionKey);
+        // Open modal on key generation
+        Modal.Open();
+    }
 
-      // Display this to the user after the upload is complete
-      Console.WriteLine(asymmetricKeyPair.Private.ConvertToPEM());   // Instruct Alice to share this key with Bob.  This is effectively Bob's private key he will use to decrypt
-      Console.WriteLine(asymmetricKeyPair.Public.ConvertToPEM());    // Instruct Alice to keep this key secret.  We've bastardized asymmetric encryption so that Alice's private key is also Bob's public key
-   }
+    public void KeyGenerated(string pubKey, string privKey)
+    {
+        publicKey = pubKey;
+        privateKey = privKey;
+    }
+
+    private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
 }
