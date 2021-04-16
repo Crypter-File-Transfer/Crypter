@@ -1,72 +1,82 @@
 ﻿@inject IJSRuntime jsRuntime
 
 <div class="message-upload">
-   <div class="row">
-      <div class="col-12 p-0">
-         <textarea @bind="MessageText" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
-         <label><small class="align-text-bottom">@(MaxMessageLength - MessageText.Count()) remaining</small></label>
-      </div>
-   </div>
-   <div class="row passphrase">
-      <div class="col-12 p-0">
-         <label for="EncryptionPhrase">
-            Encryption Passphrase
-         </label>
-         <input type="text" name="EncryptionPhrase" id="encryptionPassphrase" /><input type="button" value="Random" />
-      </div>
-   </div>
-   <div class="row">
-      <div class="col-12 p-0">
-         <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText, rsaKeySize))">Encrypt</button>
-      </div>
-   </div>
+    <div class="row">
+        <div class="col-12 p-0">
+            <textarea @bind="MessageText" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
+            <label><small class="align-text-bottom">@(MaxMessageLength - MessageText.Count()) remaining</small></label>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 p-0">
+            <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText, rsaKeySize))">Encrypt</button>
+        </div>
+    </div>
+    <UploadSuccessModal @ref="Modal" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
 </div>
 
 @code {
-   const int MaxMessageLength = 1024;
-   string MessageText = "";
-   RsaKeySize rsaKeySize = RsaKeySize._1024;
+    const int MaxMessageLength = 1024;
+    string MessageText = "";
+    string publicKey;
+    string privateKey;
 
-   private void EncryptMessage(string message, RsaKeySize rsaKeySize)
-   {
-      // Refer to https://stackoverflow.com/a/11701301 for procedure
+    RsaKeySize rsaKeySize = RsaKeySize._1024;
 
-      byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+    private void EncryptMessage(string message, RsaKeySize rsaKeySize)
+    {
+        // Refer to https://stackoverflow.com/a/11701301 for procedure
 
-      // Encipher the plaintext
-      var symmetricWrapper = new CryptoLib.BouncyCastle.SymmetricWrapper();
-      var symmetricKey = symmetricWrapper.GenerateSymmetricKey();
-      var iv = symmetricWrapper.GenerateIV();
-      var cipherText = symmetricWrapper.EncryptBytes(messageBytes, symmetricKey, iv);
+        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
 
-      // Create a signature, which contains a hash of the plaintext and the plaintext public key
-      byte[] messageHash = HashWrapper.GetSha256Digest(messageBytes);
-      var encodedHash = Convert.ToBase64String(messageHash);
-      var encodedSymmetricKey = Convert.ToBase64String(symmetricKey.ConvertToBytes());
-      var signature = new AnonymousSignature(encodedHash, encodedSymmetricKey);
-      var signatureJson = JsonSerializer.Serialize(signature);
-      var signatureJsonBytes = Encoding.UTF8.GetBytes(signatureJson);
+        // Encipher the plaintext
+        var symmetricWrapper = new CryptoLib.BouncyCastle.SymmetricWrapper();
+        var symmetricKey = symmetricWrapper.GenerateSymmetricKey();
+        var iv = symmetricWrapper.GenerateIV();
+        var cipherText = symmetricWrapper.EncryptBytes(messageBytes, symmetricKey, iv);
 
-      // Encipher the signature using an RSA public key
-      var asymmetricWrapper = new CryptoLib.BouncyCastle.AsymmetricWrapper();
-      var asymmetricKeyPair = asymmetricWrapper.GenerateAsymmetricKeyPair(rsaKeySize);
-      var encryptedSignature = asymmetricWrapper.Encrypt(signatureJsonBytes, asymmetricKeyPair.Public);
+        // Create a signature, which contains a hash of the plaintext and the plaintext public key
+        byte[] messageHash = HashWrapper.GetSha256Digest(messageBytes);
+        var encodedHash = Convert.ToBase64String(messageHash);
+        var encodedSymmetricKey = Convert.ToBase64String(symmetricKey.ConvertToBytes());
+        var signature = new AnonymousSignature(encodedHash, encodedSymmetricKey);
+        var signatureJson = JsonSerializer.Serialize(signature);
+        var signatureJsonBytes = Encoding.UTF8.GetBytes(signatureJson);
 
-      // Hash the symmetric key to create a server-side encryption key
-      var hashedSymmetricKey = HashWrapper.GetSha256Digest(symmetricKey.ConvertToBytes());
+        // Encipher the signature using an RSA public key
+        var asymmetricWrapper = new CryptoLib.BouncyCastle.AsymmetricWrapper();
+        var asymmetricKeyPair = asymmetricWrapper.GenerateAsymmetricKeyPair(rsaKeySize);
+        var encryptedSignature = asymmetricWrapper.Encrypt(signatureJsonBytes, asymmetricKeyPair.Public);
 
-      // Base64 encode everything that needs to be transmitted or displayed
-      var encodedCipherText = Convert.ToBase64String(cipherText);
-      var encodedSignature = Convert.ToBase64String(encryptedSignature);
-      var encodedServerEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
+        // Hash the symmetric key to create a server-side encryption key
+        var hashedSymmetricKey = HashWrapper.GetSha256Digest(symmetricKey.ConvertToBytes());
 
-      // Send this to the API
-      Console.WriteLine(encodedCipherText);
-      Console.WriteLine(encodedSignature);
-      Console.WriteLine(encodedServerEncryptionKey);
+        // Base64 encode everything that needs to be transmitted or displayed
+        var encodedCipherText = Convert.ToBase64String(cipherText);
+        var encodedSignature = Convert.ToBase64String(encryptedSignature);
+        var encodedServerEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
 
-      // Display this to the user after the upload is complete
-      Console.WriteLine(asymmetricKeyPair.Private.ConvertToPEM());   // Instruct Alice to share this key with Bob.  This is effectively Bob's private key he will use to decrypt
-      Console.WriteLine(asymmetricKeyPair.Public.ConvertToPEM());    // Instruct Alice to keep this key secret.  We've bastardized asymmetric encryption so that Alice's private key is also Bob's public key
-   }
+        // Send this to the API
+        Console.WriteLine(encodedCipherText);
+        Console.WriteLine(encodedSignature);
+        Console.WriteLine(encodedServerEncryptionKey);
+
+        // Display this to the user after the upload is complete
+        Console.WriteLine(asymmetricKeyPair.Private.ConvertToPEM());   // Instruct Alice to share this key with Bob.  This is effectively Bob's private key he will use to decrypt
+        Console.WriteLine(asymmetricKeyPair.Public.ConvertToPEM());    // Instruct Alice to keep this key secret.  We've bastardized asymmetric encryption so that Alice's private key is also Bob's public key
+
+        // Send data to success modal component
+        KeyGenerated(asymmetricKeyPair.Public.ConvertToPEM(), asymmetricKeyPair.Private.ConvertToPEM());
+
+        // Open modal on key generation
+        Modal.Open();
+    }
+
+    public void KeyGenerated(string pubKey, string privKey)
+    {
+        publicKey = pubKey;
+        privateKey = privKey;
+    }
+
+    private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
 }
