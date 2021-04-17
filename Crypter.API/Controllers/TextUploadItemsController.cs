@@ -24,6 +24,18 @@ namespace CrypterAPI.Controllers
          await Db.Connection.OpenAsync();
          body.Db = Db;
          await body.InsertAsync();
+         //Create folder for uploaded message
+         string folderName = @"../../../CrypterFiles";
+         string pathString = System.IO.Path.Combine(folderName, $"{body.ID}");
+         System.IO.Directory.CreateDirectory(pathString);
+         string fileName = $"{body.UntrustedName}";
+         string signatureName = $"{body.Signature}";
+         string actualPathString = System.IO.Path.Combine(pathString, fileName);
+         string sigPathString = System.IO.Path.Combine(pathString, signatureName);
+         //Confirm paths 
+         Console.WriteLine("Newly created file path: {0}", actualPathString);
+         Console.WriteLine("New created signature path: {0}", sigPathString);
+         //return GUID
          Console.Write($"{body.ID}\n");
          return new OkObjectResult(body.ID);
         }
