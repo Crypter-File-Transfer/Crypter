@@ -1,4 +1,4 @@
-﻿@using BlazorInputFile
+@using BlazorInputFile
 @inject IJSRuntime jsRuntime
 
 <div class="file-upload" hidden="@IsEncrypting">
@@ -120,7 +120,6 @@
 
     private async Task EncryptFile(IFileListEntry file, RsaKeySize rsaKeySize)
     {
-
         // Hide file upload on encryption
         IsEncrypting = true;
 
@@ -128,45 +127,15 @@
 
         byte[] fileBytes = new byte[file.Data.Length];
         await file.Data.ReadAsync(fileBytes, 0, (int)file.Data.Length);
-
-        // Encipher the plaintext
-        var symmetricWrapper = new CryptoLib.BouncyCastle.SymmetricWrapper();
-        var symmetricKey = symmetricWrapper.GenerateSymmetricKey();
-        var iv = symmetricWrapper.GenerateIV();
-        var cipherText = symmetricWrapper.EncryptBytes(fileBytes, symmetricKey, iv);
-
-        // Create a signature, which contains a hash of the plaintext and the plaintext public key
-        byte[] messageHash = HashWrapper.GetSha256Digest(fileBytes);
-        var encodedHash = Convert.ToBase64String(messageHash);
-        var encodedSymmetricKey = Convert.ToBase64String(symmetricKey.ConvertToBytes());
-        var signature = new AnonymousSignature(encodedHash, encodedSymmetricKey);
-        var signatureJson = JsonSerializer.Serialize(signature);
-        var signatureJsonBytes = Encoding.UTF8.GetBytes(signatureJson);
-
-        // Encipher the signature using an RSA public key
-        var asymmetricWrapper = new CryptoLib.BouncyCastle.AsymmetricWrapper();
-        var asymmetricKeyPair = asymmetricWrapper.GenerateAsymmetricKeyPair(rsaKeySize);
-        var encryptedSignature = asymmetricWrapper.Encrypt(signatureJsonBytes, asymmetricKeyPair.Public);
-
-        // Hash the symmetric key to create a server-side encryption key
-        var hashedSymmetricKey = HashWrapper.GetSha256Digest(symmetricKey.ConvertToBytes());
-
-        // Base64 encode everything that needs to be transmitted or displayed
-        var encodedCipherText = Convert.ToBase64String(cipherText);
-        var encodedSignature = Convert.ToBase64String(encryptedSignature);
-        var encodedServerEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
+        var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(fileBytes, rsaKeySize);
 
         // Send this to the API
-        Console.WriteLine(encodedCipherText);
-        Console.WriteLine(encodedSignature);
-        Console.WriteLine(encodedServerEncryptionKey);
-
-        // Display this to the user after the upload is complete
-        Console.WriteLine(asymmetricKeyPair.Private.ConvertToPEM());   // Instruct Alice to share this key with Bob.  This is effectively Bob's private key he will use to decrypt
-        Console.WriteLine(asymmetricKeyPair.Public.ConvertToPEM());    // Instruct Alice to keep this key secret.  We've bastardized asymmetric encryption so that Alice's private key is also Bob's public key
+        Console.WriteLine(clientEncryptResult.CipherText);
+        Console.WriteLine(clientEncryptResult.Signature);
+        Console.WriteLine(clientEncryptResult.ServerEncryptionKey);
 
         // Send data to success modal component
-        KeyGenerated(asymmetricKeyPair.Public.ConvertToPEM(), asymmetricKeyPair.Private.ConvertToPEM());
+        KeyGenerated(clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
 
         // Open modal on key generation
         Modal.Open();
