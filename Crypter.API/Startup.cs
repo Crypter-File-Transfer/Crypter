@@ -21,16 +21,6 @@ namespace CrypterAPI
       public void ConfigureServices(IServiceCollection services)
       {
          services.AddTransient<CrypterDB>(_ => new CrypterDB(Configuration["ConnectionStrings:DefaultConnection"]));
-
-         //// Adds db context to DI container and specifies context uses in-memory database
-         //services.AddDbContext<UploadItemContext>(opt => opt.UseInMemoryDatabase("CrypterDB"));
-         //services.AddControllers();
-         ////text upload db context
-         //services.AddDbContext<TextUploadItemContext>(opt => opt.UseInMemoryDatabase("CrypterMessagesDB"));
-         //services.AddControllers();
-         //// file upload db context
-         //services.AddDbContext<FileUploadItemContext>(opt => opt.UseInMemoryDatabase("CrypterFileDB"));
-
          services.AddControllers();
       }
 
