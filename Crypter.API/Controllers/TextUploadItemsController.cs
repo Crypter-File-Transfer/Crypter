@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using CrypterAPI.Models;
+using System; 
 
 namespace CrypterAPI.Controllers
 {
@@ -23,8 +24,9 @@ namespace CrypterAPI.Controllers
          await Db.Connection.OpenAsync();
          body.Db = Db;
          await body.InsertAsync();
-         return new OkObjectResult(body);
-      }
+         Console.Write($"{body.ID}\n");
+         return new OkObjectResult(body.ID);
+        }
 
       // GET: api/TextUploadItems
       [HttpGet]
