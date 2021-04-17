@@ -43,8 +43,7 @@ table {
 .grt {
   font-family: "Recursive", sans-serif;
   font-size: 16px;
-  line-height: 27px;
-  padding: 17px; }
+  line-height: 27px; }
   .grt h1 {
     font-size: 33px;
     line-height: 52px;
@@ -104,9 +103,6 @@ table {
     margin-bottom: 17px; }
   .grt ul ul, .grt ul ol, .grt ol ul, .grt ol ol, .grt blockquote.right p, .grt blockquote.left p, .grt .alert :last-child, .grt .note :last-child, .grt .box :last-child, .grt .footnotes :last-child {
     margin-bottom: 0; }
-  @media all and (min-width: 598px) {
-    .grt {
-      padding: 27px; } }
 
 #encrypt {
   margin: 40px auto; }

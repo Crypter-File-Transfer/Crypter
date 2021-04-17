@@ -1,7 +1,7 @@
 ﻿@using BlazorInputFile
 @inject IJSRuntime jsRuntime
 
-<div class="file-upload">
+<div class="file-upload" hidden="@IsEncrypting">
     <div class="row">
         <div class="col-12 p-0">
             <div class="dropzone @dropClass rounded">
@@ -9,10 +9,10 @@
                     <p>Drop file here</p>
                     <p>or</p>
                 </div>
-                <BlazorInputFile.InputFile id="fileInput" multiple title=""
-                                           OnChange="HandleFileInputChange"
-                                           @ondragenter="HandleDragEnter"
-                                           @ondragleave="HandleDragLeave" />
+                <BlazorInputFile.InputFile id="fileInput"
+                                    OnChange="HandleFileInputChange"
+                                    @ondragenter="HandleDragEnter"
+                                    @ondragleave="HandleDragLeave" />
             </div>
             @if ((fileSizeError || fileCountError))
             {
@@ -55,6 +55,8 @@
     <UploadSuccessModal @ref="Modal" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
 </div>
 
+<h3 hidden="@(!IsEncrypting)">Encryption Processing</h3>
+
 @code {
     const int MaxFileSizeMB = 10;
     const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
@@ -62,6 +64,7 @@
     private string dropClass = "";
     private bool fileSizeError = false;
     private bool fileCountError = false;
+    private bool IsEncrypting = false;
     private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
     RsaKeySize rsaKeySize = RsaKeySize._1024;
     string publicKey;
@@ -117,6 +120,10 @@
 
     private async Task EncryptFile(IFileListEntry file, RsaKeySize rsaKeySize)
     {
+
+        // Hide file upload on encryption
+        IsEncrypting = true;
+
         // Refer to https://stackoverflow.com/a/11701301 for procedure
 
         byte[] fileBytes = new byte[file.Data.Length];
@@ -163,6 +170,12 @@
 
         // Open modal on key generation
         Modal.Open();
+
+        // Reset File Uploads
+        RemoveFile(selectedFiles[0]);
+
+        // Show file upload after encryption
+        IsEncrypting = false;
     }
 
     public void KeyGenerated(string pubKey, string privKey)
