@@ -2,7 +2,6 @@
     font-family: "Recursive", sans-serif;
     font-size: 16px;
     line-height: 27px;
-    padding: 17px;
 
     h1 {
         font-size: 33px;
@@ -91,9 +90,5 @@
 
     ul ul, ul ol, ol ul, ol ol, blockquote.right p, blockquote.left p, .alert :last-child, .note :last-child, .box :last-child, .footnotes :last-child {
         margin-bottom: 0;
-    }
-
-    @media all and (min-width: 598px) {
-            padding: 27px;
     }
 }
