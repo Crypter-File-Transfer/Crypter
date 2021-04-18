@@ -1,11 +1,12 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using CrypterAPI.Models;
-using System; 
+using System;
+using Crypter.API.Controllers;
 
 namespace CrypterAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("file")]
     //[ApiController]
     public class FileUploadItemsController : ControllerBase
     {
@@ -16,7 +17,7 @@ namespace CrypterAPI.Controllers
             Db = db;
         }
 
-        // POST: api/FileUploadItems
+        // POST: crypter.dev/file
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<IActionResult> PostFileUploadItem([FromBody] FileUploadItem body)
@@ -24,23 +25,10 @@ namespace CrypterAPI.Controllers
             await Db.Connection.OpenAsync();
             body.Db = Db;
             await body.InsertAsync();
-            //Create folder for uploaded file
-            string folderName = @"../../../CrypterFiles";
-            string pathString = System.IO.Path.Combine(folderName, $"{body.ID}");
-            System.IO.Directory.CreateDirectory(pathString);
-            string fileName = $"{body.UntrustedName}";
-            string signatureName = $"{body.Signature}";
-            string actualPathString = System.IO.Path.Combine(pathString, fileName);
-            string sigPathString = System.IO.Path.Combine(pathString, signatureName);
-            //Confirm paths 
-            Console.WriteLine("Newly created file path: {0}", actualPathString);
-            Console.WriteLine("New created signature path: {0}", sigPathString);
-            //return GUID
-            Console.Write($"{body.ID}\n"); 
             return new OkObjectResult(body.ID);
         }
 
-        // GET: api/FileUploadItems
+        // GET: crypter.dev/file
         [HttpGet]
         public async Task<IActionResult> GetFileUploadItems()
         {
@@ -50,7 +38,7 @@ namespace CrypterAPI.Controllers
             return new OkObjectResult(result);
         }
 
-        // GET: api/FileUploadItems/5
+        // GET: crypter.dev/file/{guid}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetFileUploadItem(string id)
         {
@@ -59,10 +47,11 @@ namespace CrypterAPI.Controllers
             var result = await query.FindOneAsync(id);
             if (result is null)
                 return new NotFoundResult();
-            return new OkObjectResult(result);
+            Console.WriteLine(result.EncryptedFileContentPath); 
+            return new OkObjectResult(result.EncryptedFileContentPath);
         }
 
-        // PUT: api/FileUploadItems/5
+        // PUT: crypter.dev/file/{guid}
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutFileUploadItem(string id, [FromBody] FileUploadItem body)
@@ -85,7 +74,7 @@ namespace CrypterAPI.Controllers
 
         }
 
-        // DELETE: api/FileUploadItems/5
+        // DELETE: crypter.dev/file/{guid}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFileUploadItem(string id)
         {
@@ -99,7 +88,7 @@ namespace CrypterAPI.Controllers
         }
 
         // Requires safe updates to be disabled within MySQl editor preferences
-        // DELETE api/FileUploadItems
+        // DELETE: crypter.dev/file/
         [HttpDelete]
         public async Task<IActionResult> DeleteAll()
         {

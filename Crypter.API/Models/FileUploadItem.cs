@@ -2,6 +2,7 @@
 using System.Data;
 using System.Threading.Tasks;
 using MySqlConnector;
+using Crypter.API.Controllers;
 
 namespace CrypterAPI.Models
 {
@@ -25,6 +26,10 @@ namespace CrypterAPI.Models
             using var cmd = Db.Connection.CreateCommand();
             //guid as unique identifier
             ID = Guid.NewGuid().ToString();
+            // Create file paths and insert these paths
+            FilePaths filePaths = new FilePaths(UntrustedName, ID, true);
+            EncryptedFileContentPath = filePaths.ActualPathString;
+            Signature = filePaths.SigPathString;
             cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `Signature`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`) VALUES (@id, @userid, @untrustedname, @size, @signature, @created, @expirationdate, @encryptedfilecontentpath);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
