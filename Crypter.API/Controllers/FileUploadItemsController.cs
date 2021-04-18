@@ -1,32 +1,35 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using CrypterAPI.Models;
+using System;
+using Microsoft.Extensions.Configuration;
 
 namespace CrypterAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("file")]
     //[ApiController]
     public class FileUploadItemsController : ControllerBase
     {
-        public CrypterDB Db { get; }
+        private readonly CrypterDB Db;
+        private readonly string BaseSaveDirectory;
 
-        public FileUploadItemsController(CrypterDB db)
+        public FileUploadItemsController(CrypterDB db, IConfiguration configuration)
         {
             Db = db;
+            BaseSaveDirectory = configuration["EncryptedFileStore"];
         }
 
-        // POST: api/FileUploadItems
+        // POST: crypter.dev/file
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<IActionResult> PostFileUploadItem([FromBody] FileUploadItem body)
         {
             await Db.Connection.OpenAsync();
-            body.Db = Db;
-            await body.InsertAsync();
-            return new OkObjectResult(body);
+            await body.InsertAsync(Db, BaseSaveDirectory);
+            return new OkObjectResult(body.ID);
         }
 
-        // GET: api/FileUploadItems
+        // GET: crypter.dev/file
         [HttpGet]
         public async Task<IActionResult> GetFileUploadItems()
         {
@@ -36,19 +39,38 @@ namespace CrypterAPI.Controllers
             return new OkObjectResult(result);
         }
 
-        // GET: api/FileUploadItems/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetFileUploadItem(string id)
+        // GET: crypter.dev/file/actual/{guid}
+        [HttpGet("actual/{id}")]
+        public async Task<IActionResult> GetFileUploadActual(string id)
         {
             await Db.Connection.OpenAsync();
             var query = new FileUploadItemQuery(Db);
             var result = await query.FindOneAsync(id);
             if (result is null)
                 return new NotFoundResult();
-            return new OkObjectResult(result);
+            //obtain file path for actual encrypted file
+            Console.WriteLine(result.EncryptedFileContentPath);
+            //return the encrypted file 
+            return new OkObjectResult(result.EncryptedFileContentPath);
         }
 
-        // PUT: api/FileUploadItems/5
+        // GET: crypter.dev/file/signature/{guid}
+        [HttpGet("signature/{id}")]
+        public async Task<IActionResult> GetFileUploadSig(string id)
+        {
+            await Db.Connection.OpenAsync();
+            var query = new FileUploadItemQuery(Db);
+            var result = await query.FindOneAsync(id);
+            if (result is null)
+                return new NotFoundResult();
+            //obtain file path for the signature of the encrypted file
+            Console.WriteLine(result.Signature);
+            //TODO: read and return signature
+            //return the sig
+            return new OkObjectResult(result.Signature);
+        }
+
+        // PUT: crypter.dev/file/{guid}
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutFileUploadItem(string id, [FromBody] FileUploadItem body)
@@ -66,12 +88,12 @@ namespace CrypterAPI.Controllers
             result.Created = body.Created;
             result.ExpirationDate = body.ExpirationDate;
             result.EncryptedFileContentPath = body.EncryptedFileContentPath;
-            await result.UpdateAsync();
+            await result.UpdateAsync(Db);
             return new OkObjectResult(result);
 
         }
 
-        // DELETE: api/FileUploadItems/5
+        // DELETE: crypter.dev/file/{guid}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFileUploadItem(string id)
         {
@@ -80,12 +102,12 @@ namespace CrypterAPI.Controllers
             var result = await query.FindOneAsync(id);
             if (result is null)
                 return new NotFoundResult();
-            await result.DeleteAsync();
+            await result.DeleteAsync(Db);
             return new OkResult();
         }
 
         // Requires safe updates to be disabled within MySQl editor preferences
-        // DELETE api/FileUploadItems
+        // DELETE: crypter.dev/file/
         [HttpDelete]
         public async Task<IActionResult> DeleteAll()
         {
