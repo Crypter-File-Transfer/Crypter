@@ -14,19 +14,18 @@ namespace CrypterAPI.Models
         //constructor sets TimeStamp upon instantiation
         public TextUploadItem()
         {
-            this.Created = DateTime.UtcNow;
-            this.ExpirationDate = DateTime.UtcNow.AddHours(24);
+            Created = DateTime.UtcNow;
+            ExpirationDate = DateTime.UtcNow.AddHours(24);
         }
-        internal TextUploadItem(CrypterDB db)
+
+        public async Task InsertAsync(CrypterDB db, string baseSaveDirectory)
         {
-            Db = db;
-        }
-        public async Task InsertAsync()
-        {
-            using var cmd = Db.Connection.CreateCommand();
+            using var cmd = db.Connection.CreateCommand();
             //guid as unique identifier
             ID = Guid.NewGuid().ToString();
-            FilePaths filePaths = new FilePaths(UntrustedName, ID, false);
+            // Create file paths and insert these paths
+            FilePaths filePaths = new FilePaths(baseSaveDirectory);
+            var success = filePaths.SaveFile(UntrustedName, ID, false);
             EncryptedMessagePath = filePaths.ActualPathString;
             Signature = filePaths.SigPathString;
             cmd.CommandText = @"INSERT INTO `MessageUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `Signature`, `Created`, `ExpirationDate`, `EncryptedMessagePath`) VALUES (@id, @userid, @untrustedname, @size, @signature, @created, @expirationdate, @encryptedmessagepath);";
@@ -34,18 +33,18 @@ namespace CrypterAPI.Models
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task UpdateAsync()
+        public async Task UpdateAsync(CrypterDB db)
         {
-            using var cmd = Db.Connection.CreateCommand();
+            using var cmd = db.Connection.CreateCommand();
             cmd.CommandText = @"UPDATE `MessageUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `Signature` = @signature, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedMessagePath`= @encryptedmessagepath WHERE `ID` = @id;";
             BindParams(cmd);
             //BindId(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task DeleteAsync()
+        public async Task DeleteAsync(CrypterDB db)
         {
-            using var cmd = Db.Connection.CreateCommand();
+            using var cmd = db.Connection.CreateCommand();
             cmd.CommandText = @"DELETE FROM `MessageUploads` WHERE `ID` = @id;";
             BindId(cmd);
             await cmd.ExecuteNonQueryAsync();

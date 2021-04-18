@@ -57,7 +57,7 @@ namespace CrypterAPI.Controllers
             {
                 while (await reader.ReadAsync())
                 {
-                    var item = new TextUploadItem(Db)
+                    var item = new TextUploadItem()
                     {
                         //ID = reader.GetGuid(0).ToString("d"),
                         ID = reader.GetString(0),

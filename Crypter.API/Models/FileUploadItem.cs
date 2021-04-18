@@ -14,39 +14,37 @@ namespace CrypterAPI.Models
         //constructor sets TimeStamp upon instantiation
         public FileUploadItem()
         {
-            this.Created = DateTime.UtcNow;
-            this.ExpirationDate = DateTime.UtcNow.AddHours(24);
+            Created = DateTime.UtcNow;
+            ExpirationDate = DateTime.UtcNow.AddHours(24);
         }
-        internal FileUploadItem(CrypterDB db)
+ 
+        public async Task InsertAsync(CrypterDB db, string baseSaveDirectory)
         {
-            Db = db;
-        }
-        public async Task InsertAsync()
-        {
-            using var cmd = Db.Connection.CreateCommand();
+            using var cmd = db.Connection.CreateCommand();
             //guid as unique identifier
             ID = Guid.NewGuid().ToString();
             // Create file paths and insert these paths
-            FilePaths filePaths = new FilePaths(UntrustedName, ID, true);
-            EncryptedFileContentPath = filePaths.ActualPathString;
-            Signature = filePaths.SigPathString;
+            FilePaths filePath = new FilePaths(baseSaveDirectory);
+            var success = filePath.SaveFile(UntrustedName, ID, true);
+            EncryptedFileContentPath = filePath.ActualPathString;
+            Signature = filePath.SigPathString;
             cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `Signature`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`) VALUES (@id, @userid, @untrustedname, @size, @signature, @created, @expirationdate, @encryptedfilecontentpath);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task UpdateAsync()
+        public async Task UpdateAsync(CrypterDB db)
         {
-            using var cmd = Db.Connection.CreateCommand();
+            using var cmd = db.Connection.CreateCommand();
             cmd.CommandText = @"UPDATE `FileUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `Signature` = @signature, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedFileContentPath`= @encryptedfilecontentpath WHERE `ID` = @id;";
             BindParams(cmd);
             //BindId(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
 
-        public async Task DeleteAsync()
+        public async Task DeleteAsync(CrypterDB db)
         {
-            using var cmd = Db.Connection.CreateCommand();
+            using var cmd = db.Connection.CreateCommand();
             cmd.CommandText = @"DELETE FROM `FileUploads` WHERE `ID` = @id;";
             BindId(cmd);
             await cmd.ExecuteNonQueryAsync();

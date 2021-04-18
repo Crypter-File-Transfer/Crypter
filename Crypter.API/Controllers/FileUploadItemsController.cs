@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using CrypterAPI.Models;
 using System;
-using Crypter.API.Controllers;
+using Microsoft.Extensions.Configuration;
 
 namespace CrypterAPI.Controllers
 {
@@ -10,11 +10,13 @@ namespace CrypterAPI.Controllers
     //[ApiController]
     public class FileUploadItemsController : ControllerBase
     {
-        public CrypterDB Db { get; }
+        private readonly CrypterDB Db;
+        private readonly string BaseSaveDirectory;
 
-        public FileUploadItemsController(CrypterDB db)
+        public FileUploadItemsController(CrypterDB db, IConfiguration configuration)
         {
             Db = db;
+            BaseSaveDirectory = configuration["EncryptedFileStore"];
         }
 
         // POST: crypter.dev/file
@@ -23,8 +25,7 @@ namespace CrypterAPI.Controllers
         public async Task<IActionResult> PostFileUploadItem([FromBody] FileUploadItem body)
         {
             await Db.Connection.OpenAsync();
-            body.Db = Db;
-            await body.InsertAsync();
+            await body.InsertAsync(Db, BaseSaveDirectory);
             return new OkObjectResult(body.ID);
         }
 
@@ -38,17 +39,35 @@ namespace CrypterAPI.Controllers
             return new OkObjectResult(result);
         }
 
-        // GET: crypter.dev/file/{guid}
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetFileUploadItem(string id)
+        // GET: crypter.dev/file/actual/{guid}
+        [HttpGet("actual/{id}")]
+        public async Task<IActionResult> GetFileUploadActual(string id)
         {
             await Db.Connection.OpenAsync();
             var query = new FileUploadItemQuery(Db);
             var result = await query.FindOneAsync(id);
             if (result is null)
                 return new NotFoundResult();
-            Console.WriteLine(result.EncryptedFileContentPath); 
+            //obtain file path for actual encrypted file
+            Console.WriteLine(result.EncryptedFileContentPath);
+            //return the encrypted file 
             return new OkObjectResult(result.EncryptedFileContentPath);
+        }
+
+        // GET: crypter.dev/file/signature/{guid}
+        [HttpGet("signature/{id}")]
+        public async Task<IActionResult> GetFileUploadSig(string id)
+        {
+            await Db.Connection.OpenAsync();
+            var query = new FileUploadItemQuery(Db);
+            var result = await query.FindOneAsync(id);
+            if (result is null)
+                return new NotFoundResult();
+            //obtain file path for the signature of the encrypted file
+            Console.WriteLine(result.Signature);
+            //TODO: read and return signature
+            //return the sig
+            return new OkObjectResult(result.Signature);
         }
 
         // PUT: crypter.dev/file/{guid}
@@ -69,7 +88,7 @@ namespace CrypterAPI.Controllers
             result.Created = body.Created;
             result.ExpirationDate = body.ExpirationDate;
             result.EncryptedFileContentPath = body.EncryptedFileContentPath;
-            await result.UpdateAsync();
+            await result.UpdateAsync(Db);
             return new OkObjectResult(result);
 
         }
@@ -83,7 +102,7 @@ namespace CrypterAPI.Controllers
             var result = await query.FindOneAsync(id);
             if (result is null)
                 return new NotFoundResult();
-            await result.DeleteAsync();
+            await result.DeleteAsync(Db);
             return new OkResult();
         }
 

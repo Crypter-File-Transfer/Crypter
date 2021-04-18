@@ -18,17 +18,12 @@ namespace CrypterAPI.Models
       public DateTime Created { get; set; }
       // expiration date
       public DateTime ExpirationDate { get; set;}
-      internal CrypterDB Db { get; set; }
 
       //constructor sets TimeStamp upon instantiation
       public UploadItem()
       {
         this.Created = DateTime.UtcNow;
         this.ExpirationDate = DateTime.UtcNow.AddHours(24); 
-      }
-      internal UploadItem(CrypterDB db)
-      {
-         Db = db;
       }
    }
 }
