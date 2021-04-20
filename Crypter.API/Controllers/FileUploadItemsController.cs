@@ -8,7 +8,7 @@ using System.IO;
 
 namespace CrypterAPI.Controllers
 {
-    [Route("file")]
+    [Route("api/file")]
     [Produces("application/json")]
     //[ApiController]
     public class FileUploadItemsController : ControllerBase
@@ -22,7 +22,7 @@ namespace CrypterAPI.Controllers
             BaseSaveDirectory = configuration["EncryptedFileStore"];
         }
 
-        // POST: crypter.dev/file
+        // POST: crypter.dev/api/file
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<IActionResult> PostFileUploadItem([FromBody] FileUploadItem body)
@@ -36,7 +36,7 @@ namespace CrypterAPI.Controllers
 
         }
         // Probably not a use case for this GET
-        // GET: crypter.dev/file
+        // GET: crypter.dev/api/file
         [HttpGet]
         public async Task<IActionResult> GetFileUploadItems()
         {
@@ -46,7 +46,7 @@ namespace CrypterAPI.Controllers
             return new OkObjectResult(result);
         }
 
-        // GET: crypter.dev/file/actual/{guid}
+        // GET: crypter.dev/api/file/actual/{guid}
         [HttpGet("actual/{id}")]
         public async Task<IActionResult> GetFileUploadActual(string id)
         {
@@ -61,7 +61,7 @@ namespace CrypterAPI.Controllers
             return new JsonResult(result.CipherTextPath);
         }
 
-        // GET: crypter.dev/file/signature/{guid}
+        // GET: crypter.dev/api/file/signature/{guid}
         [HttpGet("signature/{id}")]
         public async Task<IActionResult> GetFileUploadSig(string id)
         {
@@ -82,7 +82,7 @@ namespace CrypterAPI.Controllers
             return new JsonResult(SigDict);
         }
 
-        // PUT: crypter.dev/file/{guid}
+        // PUT: crypter.dev/api/file/{guid}
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutFileUploadItem(string id, [FromBody] FileUploadItem body)
@@ -105,7 +105,7 @@ namespace CrypterAPI.Controllers
 
         }
 
-        // DELETE: crypter.dev/file/{guid}
+        // DELETE: crypter.dev/api/file/{guid}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteFileUploadItem(string id)
         {
@@ -119,7 +119,7 @@ namespace CrypterAPI.Controllers
         }
 
         // Requires safe updates to be disabled within MySQl editor preferences
-        // DELETE: crypter.dev/file/
+        // DELETE: crypter.dev/api/file/
         [HttpDelete]
         public async Task<IActionResult> DeleteAll()
         {

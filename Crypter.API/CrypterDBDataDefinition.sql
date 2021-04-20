@@ -73,6 +73,4 @@ CREATE TABLE `ExchangedKeys` (
    */
 ) ENGINE=InnoDB;
 
---disble strict mode to allow ID non auto-increment
-SET GLOBAL sql_mode = ''; 
 
