@@ -21,18 +21,21 @@ namespace CrypterAPI.Models
             using var cmd = db.Connection.CreateCommand();
             //guid as unique identifier
             ID = Guid.NewGuid().ToString();
+            //temporary assignment to UserID
             UserID = ID;
             //untrustedName is GUID
             FileName = ID;
             // Create file paths and insert these paths
-            FilePaths filePaths = new FilePaths(baseSaveDirectory);
-            var success = filePaths.SaveFile(FileName, ID, false);
+            FilePaths filePath = new FilePaths(baseSaveDirectory);
+            var success = filePath.SaveFile(FileName, ID, false);
             //add paths to TextUploadItem object
-            CipherTextPath = filePaths.ActualPathString;
-            SignaturePath = filePaths.SigPathString;
+            CipherTextPath = filePath.ActualPathString;
+            SignaturePath = filePath.SigPathString;
             //write CipherText and Signature to file system at defined paths
-            filePaths.WriteBinaryToFile(CipherTextPath, CipherText);
-            filePaths.WriteTextToFile(SignaturePath, Signature);
+            filePath.WriteBinaryToFile(CipherTextPath, CipherText);
+            filePath.WriteTextToFile(SignaturePath, Signature);
+            // Calc size of cipher text file
+            Size = filePath.FileSizeBytes(CipherTextPath);
             cmd.CommandText = @"INSERT INTO `MessageUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedMessagePath`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @encryptedmessagepath);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();

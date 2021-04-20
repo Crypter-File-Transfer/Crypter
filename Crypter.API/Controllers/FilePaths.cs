@@ -76,7 +76,7 @@ namespace Crypter.API.Controllers
         /// </summary>
         /// <param name="destPath"></param>
         /// <param name="cipherText"></param>
-        /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=net-5.0
+        /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writeallbytes?view=net-5.0
         public bool WriteBinaryToFile(string destPath, string cipherText)
         {
             //decode base64 to bytes and save as binary
@@ -91,5 +91,29 @@ namespace Crypter.API.Controllers
             }
             return true;
         }
+
+        /// <summary>
+        /// Accepts a file path and returns the size 
+        /// </summary>
+        /// <param name="destPath"></param>
+        /// <param name="cipherText"></param>
+        public int FileSizeBytes(string targetPath)
+        {
+            int size = 0; 
+            //decode base64 to bytes and save as binary
+            try
+            {
+                FileInfo file = new FileInfo(targetPath);
+                size = (int)file.Length;
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Exception caught!: {exception}");
+            }
+            return size;
+
+        }
+
+
     }
 }

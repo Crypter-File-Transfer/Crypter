@@ -3,6 +3,7 @@ using System.Data;
 using System.Threading.Tasks;
 using MySqlConnector;
 using Crypter.API.Controllers;
+using System.IO; 
 
 namespace CrypterAPI.Models
 {
@@ -21,9 +22,8 @@ namespace CrypterAPI.Models
             using var cmd = db.Connection.CreateCommand();
             //guid as unique identifier
             ID = Guid.NewGuid().ToString();
-            //temporary assignments to UserID and Size
+            //temporary assignments to UserID 
             UserID = ID;
-            Size = 100;
             // Create file paths and insert these paths
             FilePaths filePath = new FilePaths(baseSaveDirectory);
             var success = filePath.SaveFile(FileName, ID, true);
@@ -33,6 +33,9 @@ namespace CrypterAPI.Models
             //write cipherText and Signature to file system at defined paths
             filePath.WriteBinaryToFile(CipherTextPath, CipherText);
             filePath.WriteTextToFile(SignaturePath, Signature);
+            // Calc size of cipher text file
+            Size = filePath.FileSizeBytes(CipherTextPath); 
+            Console.Write(Size); 
             cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @encryptedfilecontentpath);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
