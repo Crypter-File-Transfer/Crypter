@@ -49,9 +49,9 @@ namespace CrypterAPI.Controllers
             if (result is null)
                 return new NotFoundResult();
             //obtain file path for actual encrypted file
-            Console.WriteLine(result.EncryptedFileContentPath);
+            Console.WriteLine(result.CipherTextPath);
             //return the encrypted file 
-            return new OkObjectResult(result.EncryptedFileContentPath);
+            return new OkObjectResult(result.CipherTextPath);
         }
 
         // GET: crypter.dev/file/signature/{guid}
@@ -64,10 +64,10 @@ namespace CrypterAPI.Controllers
             if (result is null)
                 return new NotFoundResult();
             //obtain file path for the signature of the encrypted file
-            Console.WriteLine(result.Signature);
+            Console.WriteLine(result.SignaturePath);
             //TODO: read and return signature
             //return the sig
-            return new OkObjectResult(result.Signature);
+            return new OkObjectResult(result.SignaturePath);
         }
 
         // PUT: crypter.dev/file/{guid}
@@ -84,10 +84,10 @@ namespace CrypterAPI.Controllers
             result.UserID = body.UserID;
             result.UntrustedName = body.UntrustedName;
             result.Size = body.Size;
-            result.Signature = body.Signature;
+            result.SignaturePath = body.SignaturePath;
             result.Created = body.Created;
             result.ExpirationDate = body.ExpirationDate;
-            result.EncryptedFileContentPath = body.EncryptedFileContentPath;
+            result.CipherTextPath = body.CipherTextPath;
             await result.UpdateAsync(Db);
             return new OkObjectResult(result);
 

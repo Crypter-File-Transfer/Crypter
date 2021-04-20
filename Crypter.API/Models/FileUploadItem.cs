@@ -9,8 +9,6 @@ namespace CrypterAPI.Models
     // FileUpload inherits from UploadItem
     public class FileUploadItem : UploadItem
     {
-        public string EncryptedFileContentPath { get; set; }
-
         //constructor sets TimeStamp upon instantiation
         public FileUploadItem()
         {
@@ -23,12 +21,19 @@ namespace CrypterAPI.Models
             using var cmd = db.Connection.CreateCommand();
             //guid as unique identifier
             ID = Guid.NewGuid().ToString();
+            //temporary assignments to UserID and Size
+            UserID = ID;
+            Size = 100;
             // Create file paths and insert these paths
             FilePaths filePath = new FilePaths(baseSaveDirectory);
             var success = filePath.SaveFile(UntrustedName, ID, true);
-            EncryptedFileContentPath = filePath.ActualPathString;
-            Signature = filePath.SigPathString;
-            cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `Signature`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`) VALUES (@id, @userid, @untrustedname, @size, @signature, @created, @expirationdate, @encryptedfilecontentpath);";
+            //add paths to FileUploadItem object
+            CipherTextPath = filePath.ActualPathString;
+            SignaturePath = filePath.SigPathString;
+            //write cipherText and Signature to file system at defined paths
+            filePath.WriteToFile(CipherTextPath, CipherText);
+            filePath.WriteToFile(SignaturePath, Signature);
+            cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @encryptedfilecontentpath);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -36,7 +41,7 @@ namespace CrypterAPI.Models
         public async Task UpdateAsync(CrypterDB db)
         {
             using var cmd = db.Connection.CreateCommand();
-            cmd.CommandText = @"UPDATE `FileUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `Signature` = @signature, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedFileContentPath`= @encryptedfilecontentpath WHERE `ID` = @id;";
+            cmd.CommandText = @"UPDATE `FileUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedFileContentPath`= @encryptedfilecontentpath WHERE `ID` = @id;";
             BindParams(cmd);
             //BindId(cmd);
             await cmd.ExecuteNonQueryAsync();
@@ -88,9 +93,9 @@ namespace CrypterAPI.Models
             });
             cmd.Parameters.Add(new MySqlParameter
             {
-                ParameterName = "@signature",
+                ParameterName = "@signaturepath",
                 DbType = DbType.String,
-                Value = Signature,
+                Value = SignaturePath,
             });
             cmd.Parameters.Add(new MySqlParameter
             {
@@ -108,7 +113,7 @@ namespace CrypterAPI.Models
             {
                 ParameterName = "@encryptedfilecontentpath",
                 DbType = DbType.String,
-                Value = EncryptedFileContentPath,
+                Value = CipherTextPath,
             });
         }
     }

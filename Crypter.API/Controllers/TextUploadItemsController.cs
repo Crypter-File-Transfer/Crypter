@@ -49,9 +49,9 @@ namespace CrypterAPI.Controllers
             if (result is null)
                 return new NotFoundResult();
             //obtain file path for actual encrypted message
-            Console.WriteLine(result.EncryptedMessagePath);
+            Console.WriteLine(result.CipherTextPath);
             //return the encrypted message 
-            return new OkObjectResult(result.EncryptedMessagePath);
+            return new OkObjectResult(result.CipherTextPath);
         }
 
         // GET: crypter.dev/message/signature/{guid}
@@ -88,7 +88,7 @@ namespace CrypterAPI.Controllers
             result.Signature = body.Signature;
             result.Created = body.Created;
             result.ExpirationDate = body.ExpirationDate;
-            result.EncryptedMessagePath = body.EncryptedMessagePath;
+            result.CipherTextPath = body.CipherTextPath;
             await result.UpdateAsync(Db);
             return new OkObjectResult(result);
 

@@ -12,13 +12,20 @@ namespace CrypterAPI.Models
       public string UntrustedName { get; set; }
       // file size in bytes
       public int Size { get; set; }
-      // signature
-      public string Signature { get; set; }
+      // encrypted message or file
+      public string CipherText { get; set; }
+      // encrypted message or file path 
+      public string CipherTextPath { get; set; }
+      //actual signature
+      public string Signature{get; set;}
+      // signature path
+      public string SignaturePath { get; set; }
       // file time stamp
       public DateTime Created { get; set; }
       // expiration date
       public DateTime ExpirationDate { get; set;}
-
+      //server key, unsure of the type
+      public string ServerEncryptionKey { get; set; }
       //constructor sets TimeStamp upon instantiation
       public UploadItem()
       {
