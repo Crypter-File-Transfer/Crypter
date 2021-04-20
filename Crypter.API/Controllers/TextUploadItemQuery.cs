@@ -61,7 +61,7 @@ namespace CrypterAPI.Controllers
                     {
                         ID = reader.GetString(0),
                         UserID = reader.GetString(1),
-                        UntrustedName = reader.GetString(2),
+                        FileName = reader.GetString(2),
                         Size = reader.GetInt32(3),
                         CipherTextPath = reader.GetString(4),
                         SignaturePath = reader.GetString(5),

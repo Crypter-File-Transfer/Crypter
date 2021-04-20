@@ -3,10 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using CrypterAPI.Models;
 using System;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json;
+using System.Collections.Generic;
 
 namespace CrypterAPI.Controllers
 {
     [Route("file")]
+    [Produces("application/json")]
     //[ApiController]
     public class FileUploadItemsController : ControllerBase
     {
@@ -26,7 +29,11 @@ namespace CrypterAPI.Controllers
         {
             await Db.Connection.OpenAsync();
             await body.InsertAsync(Db, BaseSaveDirectory);
-            return new OkObjectResult(body.ID);
+            //Send GUID in response-
+            Dictionary<string, string> ResponseDict = new Dictionary<string, string>();
+            ResponseDict.Add("ID", body.ID);
+            return new JsonResult(ResponseDict);
+
         }
 
         // GET: crypter.dev/file
@@ -51,7 +58,7 @@ namespace CrypterAPI.Controllers
             //obtain file path for actual encrypted file
             Console.WriteLine(result.CipherTextPath);
             //return the encrypted file 
-            return new OkObjectResult(result.CipherTextPath);
+            return new JsonResult(result.CipherTextPath);
         }
 
         // GET: crypter.dev/file/signature/{guid}
@@ -82,7 +89,7 @@ namespace CrypterAPI.Controllers
                 return new NotFoundResult();
             //update fields
             result.UserID = body.UserID;
-            result.UntrustedName = body.UntrustedName;
+            result.FileName = body.FileName;
             result.Size = body.Size;
             result.SignaturePath = body.SignaturePath;
             result.Created = body.Created;

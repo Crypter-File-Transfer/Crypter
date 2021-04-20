@@ -51,17 +51,39 @@ namespace Crypter.API.Controllers
         }
 
         /// <summary>
-        /// Accepts a file path and string to write the string to the provided file
+        /// Accepts a file path and string to write the string to the provided file as text
         /// </summary>
         /// <param name="destPath"></param>
         /// <param name="cipherText"></param>
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=net-5.0
-        public bool WriteToFile(string destPath, string cipherText)
+        public bool WriteTextToFile(string destPath, string cipherText)
         {
             try
             {
                 // create file and write all text to file, then close file
                 File.WriteAllText(destPath, cipherText);
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Exception!: {exception}");
+            }
+            return true;
+        }
+
+
+        /// <summary>
+        /// Accepts a file path and base64 encoded string. Decodes string to bytes and writes to destPath as binary
+        /// </summary>
+        /// <param name="destPath"></param>
+        /// <param name="cipherText"></param>
+        /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=net-5.0
+        public bool WriteBinaryToFile(string destPath, string cipherText)
+        {
+            //decode base64 to bytes and save as binary
+            try
+            {
+                // create file and write all text to file, then close file
+                File.WriteAllBytes(destPath, Convert.FromBase64String(cipherText));
             }
             catch (Exception exception)
             {

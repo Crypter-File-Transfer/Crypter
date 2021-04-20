@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using CrypterAPI.Models;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
 
 namespace CrypterAPI.Controllers
 {
@@ -26,7 +27,10 @@ namespace CrypterAPI.Controllers
         {
             await Db.Connection.OpenAsync();
             await body.InsertAsync(Db, BaseSaveDirectory);
-            return new OkObjectResult(body.ID);
+            //Send GUID in response-
+            Dictionary<string, string> ResponseDict = new Dictionary<string, string>();
+            ResponseDict.Add("ID", body.ID);
+            return new JsonResult(ResponseDict);
         }
 
         // GET: crypter.dev/message
@@ -83,7 +87,7 @@ namespace CrypterAPI.Controllers
             //update fields
             //result.ID = body.ID;
             result.UserID = body.UserID;
-            result.UntrustedName = body.UntrustedName;
+            result.FileName = body.FileName;
             result.Size = body.Size;
             result.Signature = body.Signature;
             result.Created = body.Created;

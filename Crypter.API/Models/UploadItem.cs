@@ -9,7 +9,7 @@ namespace CrypterAPI.Models
       // user id/ tag, null if anonymous
       public string UserID { get; set; }
       // item name/ title
-      public string UntrustedName { get; set; }
+      public string FileName { get; set; }
       // file size in bytes
       public int Size { get; set; }
       // encrypted message or file
