@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using CrypterAPI.Models;
 using System;
 using Microsoft.Extensions.Configuration;
-using System.Text.Json;
 using System.Collections.Generic;
+using System.IO; 
 
 namespace CrypterAPI.Controllers
 {
@@ -35,7 +35,7 @@ namespace CrypterAPI.Controllers
             return new JsonResult(ResponseDict);
 
         }
-
+        // Probably not a use case for this GET
         // GET: crypter.dev/file
         [HttpGet]
         public async Task<IActionResult> GetFileUploadItems()
@@ -73,8 +73,13 @@ namespace CrypterAPI.Controllers
             //obtain file path for the signature of the encrypted file
             Console.WriteLine(result.SignaturePath);
             //TODO: read and return signature
-            //return the sig
-            return new OkObjectResult(result.SignaturePath);
+            string signature = System.IO.File.ReadAllText(result.SignaturePath);
+            Console.WriteLine(signature);
+            //Send signature in response-
+            Dictionary<string, string> SigDict = new Dictionary<string, string>();
+            SigDict.Add("Signature", signature);
+            //return the encrypted file 
+            return new JsonResult(SigDict);
         }
 
         // PUT: crypter.dev/file/{guid}

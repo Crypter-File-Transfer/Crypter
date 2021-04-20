@@ -36,6 +36,7 @@ namespace CrypterAPI.Models
             filePath.WriteTextToFile(SignaturePath, Signature);
             // Calc size of cipher text file
             Size = filePath.FileSizeBytes(CipherTextPath);
+            Console.WriteLine(Size); 
             cmd.CommandText = @"INSERT INTO `MessageUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedMessagePath`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @encryptedmessagepath);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();

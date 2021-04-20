@@ -4,6 +4,8 @@ using CrypterAPI.Models;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace CrypterAPI.Controllers
 {
@@ -32,7 +34,7 @@ namespace CrypterAPI.Controllers
             ResponseDict.Add("ID", body.ID);
             return new JsonResult(ResponseDict);
         }
-
+        // Probably not a use case for this GET
         // GET: crypter.dev/message
         [HttpGet]
         public async Task<IActionResult> GetTextUploadItems()
@@ -68,10 +70,15 @@ namespace CrypterAPI.Controllers
             if (result is null)
                 return new NotFoundResult();
             //obtain file path for signature of encrypted message
-            Console.WriteLine(result.Signature);
+            Console.WriteLine(result.SignaturePath);
             //TODO: read and return signature
+            string signature = System.IO.File.ReadAllText(result.SignaturePath);
+            Console.WriteLine(signature);
+            //Send signature in response-
+            Dictionary<string, string> SigDict = new Dictionary<string, string>();
+            SigDict.Add("Signature", signature);
             //return the encrypted file 
-            return new OkObjectResult(result.Signature);
+            return new JsonResult(SigDict); 
         }
 
         // PUT: crypter.dev/message/signature/{guid}
@@ -89,7 +96,7 @@ namespace CrypterAPI.Controllers
             result.UserID = body.UserID;
             result.FileName = body.FileName;
             result.Size = body.Size;
-            result.Signature = body.Signature;
+            result.SignaturePath = body.SignaturePath;
             result.Created = body.Created;
             result.ExpirationDate = body.ExpirationDate;
             result.CipherTextPath = body.CipherTextPath;
