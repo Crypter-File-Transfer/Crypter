@@ -9,8 +9,6 @@ namespace CrypterAPI.Models
     //TextUpload inherits from UploadItem
     public class TextUploadItem : UploadItem
     {
-        //public string CharCount { get; set; }
-        public string EncryptedMessagePath { get; set; }
         //constructor sets TimeStamp upon instantiation
         public TextUploadItem()
         {
@@ -23,12 +21,22 @@ namespace CrypterAPI.Models
             using var cmd = db.Connection.CreateCommand();
             //guid as unique identifier
             ID = Guid.NewGuid().ToString();
+            //temporary assignment to UserID
+            UserID = ID;
+            //untrustedName is GUID
+            FileName = ID;
             // Create file paths and insert these paths
-            FilePaths filePaths = new FilePaths(baseSaveDirectory);
-            var success = filePaths.SaveFile(UntrustedName, ID, false);
-            EncryptedMessagePath = filePaths.ActualPathString;
-            Signature = filePaths.SigPathString;
-            cmd.CommandText = @"INSERT INTO `MessageUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `Signature`, `Created`, `ExpirationDate`, `EncryptedMessagePath`) VALUES (@id, @userid, @untrustedname, @size, @signature, @created, @expirationdate, @encryptedmessagepath);";
+            FilePaths filePath = new FilePaths(baseSaveDirectory);
+            var success = filePath.SaveFile(FileName, ID, false);
+            //add paths to TextUploadItem object
+            CipherTextPath = filePath.ActualPathString;
+            SignaturePath = filePath.SigPathString;
+            //write CipherText and Signature to file system at defined paths
+            filePath.WriteBinaryToFile(CipherTextPath, CipherText);
+            filePath.WriteTextToFile(SignaturePath, Signature);
+            // Calc size of cipher text file
+            Size = filePath.FileSizeBytes(CipherTextPath);
+            cmd.CommandText = @"INSERT INTO `MessageUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedMessagePath`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @encryptedmessagepath);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -36,7 +44,7 @@ namespace CrypterAPI.Models
         public async Task UpdateAsync(CrypterDB db)
         {
             using var cmd = db.Connection.CreateCommand();
-            cmd.CommandText = @"UPDATE `MessageUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `Signature` = @signature, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedMessagePath`= @encryptedmessagepath WHERE `ID` = @id;";
+            cmd.CommandText = @"UPDATE `MessageUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedMessagePath`= @encryptedmessagepath WHERE `ID` = @id;";
             BindParams(cmd);
             //BindId(cmd);
             await cmd.ExecuteNonQueryAsync();
@@ -78,7 +86,7 @@ namespace CrypterAPI.Models
             {
                 ParameterName = "@untrustedname",
                 DbType = DbType.String,
-                Value = UntrustedName,
+                Value = FileName,
             });
             cmd.Parameters.Add(new MySqlParameter
             {
@@ -88,9 +96,9 @@ namespace CrypterAPI.Models
             });
             cmd.Parameters.Add(new MySqlParameter
             {
-                ParameterName = "@signature",
+                ParameterName = "@signaturepath",
                 DbType = DbType.String,
-                Value = Signature,
+                Value = SignaturePath,
             });
             cmd.Parameters.Add(new MySqlParameter
             {
@@ -108,7 +116,7 @@ namespace CrypterAPI.Models
             {
                 ParameterName = "@encryptedmessagepath",
                 DbType = DbType.String,
-                Value = EncryptedMessagePath,
+                Value = CipherTextPath,
             });
         }
 

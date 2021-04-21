@@ -3,10 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using CrypterAPI.Models;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace CrypterAPI.Controllers
 {
-    [Route("message")]
+    [Route("api/message")]
     //[ApiController]
     public class TextUploadItemsController : ControllerBase
     {
@@ -19,17 +22,20 @@ namespace CrypterAPI.Controllers
             BaseSaveDirectory = configuration["EncryptedFileStore"];
         }
 
-        // POST: crypter.dev/message
+        // POST: crypter.dev/api/message
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<IActionResult> PostTextUploadItem([FromBody] TextUploadItem body)
         {
             await Db.Connection.OpenAsync();
             await body.InsertAsync(Db, BaseSaveDirectory);
-            return new OkObjectResult(body.ID);
+            //Send GUID in response-
+            Dictionary<string, string> ResponseDict = new Dictionary<string, string>();
+            ResponseDict.Add("ID", body.ID);
+            return new JsonResult(ResponseDict);
         }
-
-        // GET: crypter.dev/message
+        // Probably not a use case for this GET
+        // GET: crypter.dev/api/message
         [HttpGet]
         public async Task<IActionResult> GetTextUploadItems()
         {
@@ -39,7 +45,7 @@ namespace CrypterAPI.Controllers
             return new OkObjectResult(result);
         }
 
-        // GET: crypter.dev/message/actual/{guid}
+        // GET: crypter.dev/api/message/actual/{guid}
         [HttpGet("actual/{id}")]
         public async Task<IActionResult> GetTextUploadActual(string id)
         {
@@ -49,12 +55,12 @@ namespace CrypterAPI.Controllers
             if (result is null)
                 return new NotFoundResult();
             //obtain file path for actual encrypted message
-            Console.WriteLine(result.EncryptedMessagePath);
+            Console.WriteLine(result.CipherTextPath);
             //return the encrypted message 
-            return new OkObjectResult(result.EncryptedMessagePath);
+            return new OkObjectResult(result.CipherTextPath);
         }
 
-        // GET: crypter.dev/message/signature/{guid}
+        // GET: crypter.dev/api/message/signature/{guid}
         [HttpGet("signature/{id}")]
         public async Task<IActionResult> GetTextUploadSig(string id)
         {
@@ -64,13 +70,18 @@ namespace CrypterAPI.Controllers
             if (result is null)
                 return new NotFoundResult();
             //obtain file path for signature of encrypted message
-            Console.WriteLine(result.Signature);
-            //TODO: read and return signature
+            Console.WriteLine(result.SignaturePath);
+            //read and return signature
+            string signature = System.IO.File.ReadAllText(result.SignaturePath);
+            Console.WriteLine(signature);
+            //Send signature in response-
+            Dictionary<string, string> SigDict = new Dictionary<string, string>();
+            SigDict.Add("Signature", signature);
             //return the encrypted file 
-            return new OkObjectResult(result.Signature);
+            return new JsonResult(SigDict); 
         }
 
-        // PUT: crypter.dev/message/signature/{guid}
+        // PUT: crypter.dev/api/message/signature/{guid}
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("signature/{id}")]
         public async Task<IActionResult> PutTextUploadItem(string id, [FromBody] TextUploadItem body)
@@ -83,18 +94,18 @@ namespace CrypterAPI.Controllers
             //update fields
             //result.ID = body.ID;
             result.UserID = body.UserID;
-            result.UntrustedName = body.UntrustedName;
+            result.FileName = body.FileName;
             result.Size = body.Size;
-            result.Signature = body.Signature;
+            result.SignaturePath = body.SignaturePath;
             result.Created = body.Created;
             result.ExpirationDate = body.ExpirationDate;
-            result.EncryptedMessagePath = body.EncryptedMessagePath;
+            result.CipherTextPath = body.CipherTextPath;
             await result.UpdateAsync(Db);
             return new OkObjectResult(result);
 
         }
 
-        // DELETE: crypter.dev/message/{guid}
+        // DELETE: crypter.dev/api/message/{guid}
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTextUploadItem(string id)
         {
@@ -108,7 +119,7 @@ namespace CrypterAPI.Controllers
         }
 
         // Requires safe updates to be disabled within MySQl editor preferences
-        // DELETE: crypter.dev/message/
+        // DELETE: crypter.dev/api/message/
         [HttpDelete]
         public async Task<IActionResult> DeleteAll()
         {

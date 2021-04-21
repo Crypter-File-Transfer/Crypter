@@ -21,7 +21,7 @@ namespace CrypterAPI.Controllers
         public async Task<TextUploadItem> FindOneAsync(string id)
         {
             using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`Signature`,`Created`, `ExpirationDate` FROM `MessageUploads` WHERE `ID` = @id";
+            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate` FROM `MessageUploads` WHERE `ID` = @id";
             cmd.Parameters.Add(new MySqlParameter
             {
                 ParameterName = "@id",
@@ -35,7 +35,7 @@ namespace CrypterAPI.Controllers
         public async Task<List<TextUploadItem>> LatestItemsAsync()
         {
             using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`Signature`,`Created`, `ExpirationDate` FROM `MessageUploads`";
+            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate` FROM `MessageUploads`";
             return await ReadAllAsync(await cmd.ExecuteReaderAsync());
         }
 
@@ -59,13 +59,12 @@ namespace CrypterAPI.Controllers
                 {
                     var item = new TextUploadItem()
                     {
-                        //ID = reader.GetGuid(0).ToString("d"),
                         ID = reader.GetString(0),
                         UserID = reader.GetString(1),
-                        UntrustedName = reader.GetString(2),
+                        FileName = reader.GetString(2),
                         Size = reader.GetInt32(3),
-                        EncryptedMessagePath = reader.GetString(4),
-                        Signature = reader.GetString(5),
+                        CipherTextPath = reader.GetString(4),
+                        SignaturePath = reader.GetString(5),
                         Created = reader.GetDateTime(6),
                         ExpirationDate = reader.GetDateTime(7)
                     };

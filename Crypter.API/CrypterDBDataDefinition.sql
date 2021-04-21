@@ -24,10 +24,10 @@ CREATE TABLE `MessageUploads` (
   `UntrustedName` VARCHAR(100),
   `Size` INT DEFAULT NULL,
   `EncryptedMessagePath` VARCHAR(256),
-  `Signature` TEXT,
+  `SignaturePath` VARCHAR(256),
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   `ExpirationDate` TIMESTAMP NOT NULL,
-  PRIMARY KEY (ID),
+  PRIMARY KEY (ID)
   /*Commented out for testing
   FOREIGN KEY (UserID) REFERENCES Users(UserID)*/
 ) ENGINE=InnoDB; 
@@ -38,10 +38,10 @@ CREATE TABLE `FileUploads` (
   `UntrustedName` VARCHAR(100),
   `Size` INT DEFAULT NULL,
   `EncryptedFileContentPath` VARCHAR(256), 
-  `Signature` TEXT,
+  `SignaturePath` VARCHAR(256),
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   `ExpirationDate` TIMESTAMP NOT NULL,
-  PRIMARY KEY (ID),
+  PRIMARY KEY (ID)
  /*Commented out for testing
   FOREIGN KEY (UserID) REFERENCES Users(UserID)
  */
@@ -55,7 +55,7 @@ CREATE TABLE `Keys` (
   `PublicKey` TEXT, 
   `KeyType` VARCHAR(25),
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
-  PRIMARY KEY(KeyID), 
+  PRIMARY KEY(KeyID)
   /*Commented out for testing FOREIGN KEY(UserID) REFERENCES Users(UserID)*/
 ) ENGINE=InnoDB;
 
@@ -66,13 +66,11 @@ CREATE TABLE `ExchangedKeys` (
   `OtherUserExchangedKey` TEXT,
   `ExchangeCreated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
    PRIMARY KEY(UserID, OtherUserID), 
-   CONSTRAINT KeyExchange UNIQUE (UserID, OtherUserID),
+   CONSTRAINT KeyExchange UNIQUE (UserID, OtherUserID)
    /*Commented out for testing
    CONSTRAINT ExchangeToUser1_FK FOREIGN KEY (UserID) REFERENCES Users(UserID), 
    CONSTRAINT ExchangeToUser2_FK FOREIGN KEY (OtherUserID) REFERENCES Users(UserID)
    */
 ) ENGINE=InnoDB;
 
---disble strict mode to allow ID non auto-increment
-SET GLOBAL sql_mode = ''; 
 
