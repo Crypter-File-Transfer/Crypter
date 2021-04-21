@@ -4,7 +4,8 @@ using CrypterAPI.Models;
 using System;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
-using System.IO; 
+using Crypter.Contracts.Requests.Anonymous;
+using Crypter.Contracts.Responses.Anonymous;
 
 namespace CrypterAPI.Controllers
 {
@@ -25,14 +26,19 @@ namespace CrypterAPI.Controllers
         // POST: crypter.dev/api/file
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<IActionResult> PostFileUploadItem([FromBody] FileUploadItem body)
+        public async Task<IActionResult> PostFileUploadItem([FromBody] AnonymousFileUploadRequest body)
         {
             await Db.Connection.OpenAsync();
-            await body.InsertAsync(Db, BaseSaveDirectory);
-            //Send GUID in response-
-            Dictionary<string, string> ResponseDict = new Dictionary<string, string>();
-            ResponseDict.Add("ID", body.ID);
-            return new JsonResult(ResponseDict);
+
+            var newFile = new FileUploadItem();
+            newFile.FileName = body.Name;
+            newFile.CipherText = body.CipherText;
+            newFile.Signature = body.Signature;
+
+            await newFile.InsertAsync(Db, BaseSaveDirectory);
+
+            var responseBody = new AnonymousUploadResponse(Guid.Parse(newFile.ID), newFile.ExpirationDate);
+            return new JsonResult(responseBody);
 
         }
         // Probably not a use case for this GET
