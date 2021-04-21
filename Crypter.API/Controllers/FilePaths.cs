@@ -62,12 +62,13 @@ namespace Crypter.API.Controllers
             {
                 // create file and write all text to file, then close file
                 File.WriteAllText(destPath, cipherText);
+                return true;
             }
             catch (Exception exception)
             {
                 Console.WriteLine($"Exception!: {exception}");
+                return false;
             }
-            return true;
         }
 
 
@@ -84,12 +85,13 @@ namespace Crypter.API.Controllers
             {
                 // create file and write all text to file, then close file
                 File.WriteAllBytes(destPath, Convert.FromBase64String(cipherText));
+                return true;
             }
             catch (Exception exception)
             {
                 Console.WriteLine($"Exception!: {exception}");
+                return false;
             }
-            return true;
         }
 
         /// <summary>
@@ -99,19 +101,18 @@ namespace Crypter.API.Controllers
         /// <param name="cipherText"></param>
         public int FileSizeBytes(string targetPath)
         {
-            int size = 0; 
             //decode base64 to bytes and save as binary
             try
             {
                 FileInfo file = new FileInfo(targetPath);
-                size = (int)file.Length;
+                int size = (int)file.Length;
+                return size; 
             }
             catch (Exception exception)
             {
                 Console.WriteLine($"Exception caught!: {exception}");
+                return -1; 
             }
-            return size;
-
         }
 
 
