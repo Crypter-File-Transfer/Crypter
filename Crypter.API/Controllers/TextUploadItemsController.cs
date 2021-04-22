@@ -4,12 +4,13 @@ using CrypterAPI.Models;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
+using Crypter.Contracts.Requests.Anonymous;
+using Crypter.Contracts.Responses.Anonymous;
 
 namespace CrypterAPI.Controllers
 {
     [Route("api/message")]
+    [Produces("application/json")]
     //[ApiController]
     public class TextUploadItemsController : ControllerBase
     {
@@ -25,15 +26,20 @@ namespace CrypterAPI.Controllers
         // POST: crypter.dev/api/message
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<IActionResult> PostTextUploadItem([FromBody] TextUploadItem body)
+        public async Task<IActionResult> PostTextUploadItem([FromBody] AnonymousMessageUploadRequest body)
         {
             await Db.Connection.OpenAsync();
-            await body.InsertAsync(Db, BaseSaveDirectory);
-            //Send GUID in response-
-            Dictionary<string, string> ResponseDict = new Dictionary<string, string>();
-            ResponseDict.Add("ID", body.ID);
-            return new JsonResult(ResponseDict);
+
+            var newText = new TextUploadItem();
+            newText.CipherText = body.CipherText;
+            newText.Signature = body.Signature;
+
+            await newText.InsertAsync(Db, BaseSaveDirectory);
+
+            var responseBody = new AnonymousUploadResponse(Guid.Parse(newText.ID), newText.ExpirationDate);
+            return new JsonResult(responseBody);
         }
+
         // Probably not a use case for this GET
         // GET: crypter.dev/api/message
         [HttpGet]

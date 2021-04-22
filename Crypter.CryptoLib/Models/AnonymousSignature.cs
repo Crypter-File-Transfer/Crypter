@@ -1,9 +1,9 @@
 ﻿namespace Crypter.CryptoLib
 {
-   public struct AnonymousSignature
+   public class AnonymousSignature
    {
-      public readonly string Hash { get; }
-      public readonly string Key { get; }
+      public string Hash { get; }
+      public string Key { get; }
 
       public AnonymousSignature(string signedDigestEncodedBase64, string symmetricKeyEncodedBase64)
       {
