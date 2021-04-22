@@ -132,3 +132,25 @@ table {
   .file-upload #fileInput, .message-upload #fileInput {
     padding: 5rem 9rem 2rem;
     z-index: 10; }
+
+.decryption-details {
+  border: 1px solid black;
+  border-radius: 10px; }
+  .decryption-details::after {
+    content: '';
+    display: table;
+    clear: both; }
+  .decryption-details .details, .decryption-details .decryption-key {
+    padding: 16px;
+    float: left; }
+  .decryption-details .details h3 {
+    text-transform: capitalize;
+    margin-top: 0; }
+  .decryption-details .decryption-key {
+    border-left: 1px solid black;
+    text-align: center; }
+    .decryption-details .decryption-key input, .decryption-details .decryption-key button {
+      display: block;
+      margin: 12px auto; }
+    .decryption-details .decryption-key input {
+      width: 75%; }

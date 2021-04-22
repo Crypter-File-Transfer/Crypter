@@ -1,0 +1,48 @@
+﻿<div class="decryption-details">
+    <div class="details col-md-3">
+        <h3>@Format details</h3>
+        <table class="data-details">
+            <tr>
+                <td><strong>Created: </strong></td>
+                <td>@Created</td>
+            </tr>
+            <tr>
+                <td><strong>Size: </strong></td>
+                <td>@Size</td>
+            </tr>
+            <tr>
+                <td><strong>Expires in: </strong></td>
+                <td>@Expiration</td>
+            </tr>
+        </table>
+    </div>
+    <div class="decryption-key col-md-9">
+        <h4>Decryption Key</h4>
+        <p><em>This should have been provided by the sender</em></p>
+        <input @bind="decryptionKey" type="text" />
+        <button type="button" class="btn btn-primary">Decrypt</button>
+    </div>
+</div>
+
+@code {
+
+    private string decryptionKey = "";
+
+    // Stores the Format received by parent component
+    [Parameter] public string Format { get; set; }
+
+    // Stores the Creation Date received by parent component
+    [Parameter] public string Created { get; set; }
+
+    // Stores the Size received by parent component
+    [Parameter] public int Size { get; set; }
+
+    // Stores the Expiration Date received by parent component
+    [Parameter] public string Expiration { get; set; }
+
+    // Watch for changes in variable values in parent component to update here
+    [Parameter] public EventCallback<string> FormatChanged { get; set; }
+    [Parameter] public EventCallback<string> CreatedChanged { get; set; }
+    [Parameter] public EventCallback<int> SizeChanged { get; set; }
+    [Parameter] public EventCallback<string> ExpirationChanged { get; set; }
+}

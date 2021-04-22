@@ -1,9 +1,18 @@
-﻿@page "/decrypt/{guid}"
+﻿@page "/decrypt/{format}/{guid}"
 
-<h2>Decrypt</h2>
-<p>We need to work on the integration of the API to get messages by guid.</p>
+<NavMenu />
+<h2>Decrypt your @format</h2>
+<DecryptDetails @bind-Format="format" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
 
 @code {
+
+    string creationDate = DateTime.Now.ToString("MM/dd/yyyy");
+    string expirationDate = "Never";
+    int fileSize = 0;
+
+    [Parameter]
+    public string format { get; set; }
+
     [Parameter]
     public string guid { get; set; }
 }

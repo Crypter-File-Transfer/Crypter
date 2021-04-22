@@ -1,0 +1,37 @@
+﻿.decryption-details {
+    border: 1px solid black;
+    border-radius: 10px;
+
+    &::after {
+        content: '';
+        display: table;
+        clear: both;
+    }
+
+    .details, .decryption-key {
+        padding: 16px;
+        float: left;
+    }
+
+    .details {
+
+        h3 {
+            text-transform: capitalize;
+            margin-top: 0;
+        }
+    }
+
+    .decryption-key {
+        border-left: 1px solid black;
+        text-align: center;
+
+        input, button {
+            display: block;
+            margin: 12px auto;
+        }
+
+        input {
+            width: 75%;
+        }
+    }
+}
