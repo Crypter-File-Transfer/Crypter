@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.CryptoLib", "Crypte
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Web", "Crypter.Web\Crypter.Web.csproj", "{4CF78490-FDFA-47EE-A1BE-7AE5534ECFAF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypter.Test", "Crypter.Test\Crypter.Test.csproj", "{6AF35926-1548-4782-9E9E-F08E2EA16214}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Test", "Crypter.Test\Crypter.Test.csproj", "{6AF35926-1548-4782-9E9E-F08E2EA16214}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypter.Contracts", "Crypter.Contracts\Crypter.Contracts.csproj", "{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{6AF35926-1548-4782-9E9E-F08E2EA16214}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6AF35926-1548-4782-9E9E-F08E2EA16214}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6AF35926-1548-4782-9E9E-F08E2EA16214}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
