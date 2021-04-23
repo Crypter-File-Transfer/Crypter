@@ -47,7 +47,7 @@
       var response = await UploadMessageToAPI(clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);
 
       // Send data to success modal component
-      CompletedUpload(response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
+      CompletedUpload("message", response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
 
       // Open modal
       Modal.Open();
@@ -59,7 +59,7 @@
       IsEncrypting = false;
    }
 
-   public void CompletedUpload(Guid id, string pubKey, string privKey)
+   public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
    {
       dataFormat = format;
       returnedId = id;
