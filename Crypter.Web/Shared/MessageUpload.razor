@@ -16,18 +16,21 @@
     <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
 </div>
 
-<h3 hidden="@(!IsEncrypting)">Encryption Processing</h3>
+<h3 hidden="@(!IsEncrypting)">@EncryptionStatusMessage</h3>
 
 @code {
    // Constants
    private const int MaxMessageLength = 1024;
 
+   // State
+   private bool IsEncrypting = false;
+   private string EncryptionStatusMessage = "";
+
    // User input
    private string MessageText = "";
-   CryptoStrength encryptionStrength = CryptoStrength.Minimum; //TODO Allow the user to set this in the UI
+   CryptoStrength encryptionStrength = CryptoStrength.Minimum;
 
    // Variables we control
-   private bool IsEncrypting = false;
    private Guid returnedId;
    private string publicKey;
    private string privateKey;
@@ -35,19 +38,36 @@
 
    private async Task EncryptMessage(string message, CryptoStrength strength)
    {
-      // Set is encrypting to true
+      // Hide file upload on encryption
       IsEncrypting = true;
+      await SetNewEncryptionStatus("Creating symmetric key");
+      var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoInfo(strength);
+      var hashedSymmetricKey = DigestWrapper.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
-      // Refer to https://stackoverflow.com/a/11701301 for procedure
-
+      await SetNewEncryptionStatus("Encrypting your message");
       byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-      var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(messageBytes, strength);
+      var cipherText = CryptoLib.Common.DoSymmetricEncryption(messageBytes, symmetricCryptoParams);
 
-      // Send POST request to API with upload details
-      var response = await UploadMessageToAPI(clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);
+      await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
+      var asymmetricKeys = CryptoLib.Common.GenerateAsymmetricKeys(strength);
+
+      await SetNewEncryptionStatus("Creating a signature");
+      var signature = CryptoLib.Common.CreateSignature(messageBytes, symmetricCryptoParams, asymmetricKeys.Public, strength);
+      var signatureString = signature.ToString();
+      var signatureBytes = Encoding.UTF8.GetBytes(signatureString);
+
+      await SetNewEncryptionStatus("Preparing to upload");
+      var encodedCipherText = Convert.ToBase64String(cipherText);
+      var encodedSignature = Convert.ToBase64String(signatureBytes);
+      var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
+
+      await SetNewEncryptionStatus("Uploading");
+      var response = await UploadMessageToAPI(encodedCipherText, encodedSignature, serverEncryptionKey);
 
       // Send data to success modal component
-      CompletedUpload("message", response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
+      CompletedUpload("message", response.Id,
+         Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
+         Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
 
       // Open modal
       Modal.Open();
@@ -57,6 +77,13 @@
 
       // No longer encrypting
       IsEncrypting = false;
+   }
+
+   public async Task SetNewEncryptionStatus(string status)
+   {
+      EncryptionStatusMessage = status;
+      StateHasChanged();
+      await Task.Delay(500);
    }
 
    public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
