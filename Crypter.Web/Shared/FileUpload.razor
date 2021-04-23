@@ -51,7 +51,7 @@
    </div>
    <div class="row">
       <div class="col-12 p-0">
-         <button type="button" class="btn btn-primary" @onclick="@(e => EncryptFile(selectedFiles[0], rsaKeySize))">Encrypt</button>
+         <button type="button" class="btn btn-primary" @onclick="@(e => EncryptFile(selectedFiles[0], encryptionStrength))">Encrypt</button>
       </div>
    </div>
    <UploadSuccessModal @ref="Modal" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
@@ -60,19 +60,23 @@
 <h3 hidden="@(!IsEncrypting)">Encryption Processing</h3>
 
 @code {
-   const int MaxFileSizeMB = 10;
-   const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
-   const int MaxFileCount = 1;
+   // Constants
+   private const int MaxFileSizeMB = 10;
+   private const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
+   private const int MaxFileCount = 1;
+
+   // User input
+   private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
+   private CryptoStrength encryptionStrength = CryptoStrength.Minimum; //TODO Allow the user to set this in the UI
+
+   // Variables we control
    private string dropClass = "";
    private bool fileSizeError = false;
    private bool fileCountError = false;
    private bool IsEncrypting = false;
-   private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
-   Guid returnedId;
-   string publicKey;
-   string privateKey;
-
-   RsaKeySize rsaKeySize = RsaKeySize._1024;
+   private Guid returnedId;
+   private string publicKey;
+   private string privateKey;
 
    private void HandleDragEnter()
    {
@@ -122,7 +126,7 @@
       fileCountError = false;
    }
 
-   private async Task EncryptFile(IFileListEntry file, RsaKeySize rsaKeySize)
+   private async Task EncryptFile(IFileListEntry file, CryptoStrength strength)
    {
       // Hide file upload on encryption
       IsEncrypting = true;
@@ -131,7 +135,7 @@
 
       byte[] fileBytes = new byte[file.Data.Length];
       await file.Data.ReadAsync(fileBytes, 0, (int)file.Data.Length);
-      var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(fileBytes, rsaKeySize);
+      var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(fileBytes, strength);
 
       // Send POST request to API with upload details
       var response = await UploadFileToAPI(file.Name, clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);

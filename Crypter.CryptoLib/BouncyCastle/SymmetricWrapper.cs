@@ -1,20 +1,20 @@
-﻿using Org.BouncyCastle.Crypto;
+﻿using Crypter.CryptoLib.Enums;
+using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
-using System.Text;
 
 namespace Crypter.CryptoLib.BouncyCastle
 {
    public class SymmetricWrapper
    {
       /// <summary>
-      /// Generate a new AES256 key
+      /// Generate a new AES key of the given size
       /// </summary>
-      /// <remarks>Currently only supports the AES256 algorithm</remarks>
       /// <returns></returns>
-      public KeyParameter GenerateSymmetricKey()
+      public KeyParameter GenerateSymmetricKey(AesKeySize keySize)
       {
-         var generator = GeneratorUtilities.GetKeyGenerator("AES256");
+         var algorithm = $"AES{(int)keySize}";
+         var generator = GeneratorUtilities.GetKeyGenerator(algorithm);
          byte[] symmetricKey = generator.GenerateKey();
          return new KeyParameter(symmetricKey);
       }
@@ -22,7 +22,14 @@ namespace Crypter.CryptoLib.BouncyCastle
       /// <summary>
       /// Generate a 128-bit IV
       /// </summary>
-      /// <returns></returns>
+      /// <remarks>
+      /// Be aware that AES uses 128-bit block sizes.
+      /// This is true for both AES128 and AES256.
+      /// The size of the IV should be equal to the block size.
+      /// </remarks>
+      /// <returns>
+      /// An array of 16 random bytes
+      /// </returns>
       public byte[] GenerateIV()
       {
          SecureRandom random = new SecureRandom();
