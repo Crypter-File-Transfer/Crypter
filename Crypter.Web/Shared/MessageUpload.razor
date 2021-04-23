@@ -12,7 +12,7 @@
             <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText, rsaKeySize))">Encrypt</button>
         </div>
     </div>
-    <UploadSuccessModal @ref="Modal" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
+    <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
 </div>
 
 <h3 hidden="@(!IsEncrypting)">Encryption Processing</h3>
@@ -22,6 +22,7 @@
     string MessageText = "";
     string publicKey;
     string privateKey;
+    string dataFormat;
     private bool IsEncrypting = false;
 
 
@@ -44,6 +45,9 @@
 
         // Send data to success modal component
         KeyGenerated(clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
+
+        // Set Data Format
+        dataFormat = "message";
 
         // Open modal on key generation
         Modal.Open();
