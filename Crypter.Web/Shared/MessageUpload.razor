@@ -13,7 +13,7 @@
             <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText, encryptionStrength))">Encrypt</button>
         </div>
     </div>
-    <UploadSuccessModal @ref="Modal" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
+    <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
 </div>
 
 <h3 hidden="@(!IsEncrypting)">Encryption Processing</h3>
@@ -31,6 +31,7 @@
    private Guid returnedId;
    private string publicKey;
    private string privateKey;
+   private string dataFormat;
 
    private async Task EncryptMessage(string message, CryptoStrength strength)
    {
@@ -46,7 +47,7 @@
       var response = await UploadMessageToAPI(clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);
 
       // Send data to success modal component
-      CompletedUpload(response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
+      CompletedUpload("message", response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
 
       // Open modal
       Modal.Open();
@@ -58,8 +59,9 @@
       IsEncrypting = false;
    }
 
-   public void CompletedUpload(Guid id, string pubKey, string privKey)
+   public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
    {
+      dataFormat = format;
       returnedId = id;
       publicKey = pubKey;
       privateKey = privKey;

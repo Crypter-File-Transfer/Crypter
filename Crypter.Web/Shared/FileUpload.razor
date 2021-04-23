@@ -54,7 +54,7 @@
          <button type="button" class="btn btn-primary" @onclick="@(e => EncryptFile(selectedFiles[0], encryptionStrength))">Encrypt</button>
       </div>
    </div>
-   <UploadSuccessModal @ref="Modal" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
+   <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
 </div>
 
 <h3 hidden="@(!IsEncrypting)">Encryption Processing</h3>
@@ -77,6 +77,7 @@
    private Guid returnedId;
    private string publicKey;
    private string privateKey;
+   private string dataFormat;
 
    private void HandleDragEnter()
    {
@@ -101,15 +102,15 @@
             bool error = false;
             if (file.Size > MaxFileSize)
             {
-               error = true;
-               fileSizeError = true;
+                error = true;
+                fileSizeError = true;
             }
 
             if (selectedFiles.Count == MaxFileCount)
             {
 
-               error = true;
-               fileCountError = true;
+                error = true;
+                fileCountError = true;
             }
 
             if (!error)
@@ -141,7 +142,7 @@
       var response = await UploadFileToAPI(file.Name, clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);
 
       // Send data to success modal component
-      CompletedUpload(response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
+      CompletedUpload("file", response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
 
       // Open modal
       Modal.Open();
@@ -153,8 +154,9 @@
       IsEncrypting = false;
    }
 
-   public void CompletedUpload(Guid id, string pubKey, string privKey)
+   public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
    {
+      dataFormat = format;
       returnedId = id;
       publicKey = pubKey;
       privateKey = privKey;

@@ -1,6 +1,6 @@
 ﻿<div class="decryption-details">
     <div class="details col-md-3">
-        <h3>@Format details</h3>
+        <h3>@DataFormat details</h3>
         <table class="data-details">
             <tr>
                 <td><strong>Created: </strong></td>
@@ -29,7 +29,7 @@
     private string decryptionKey = "";
 
     // Stores the Format received by parent component
-    [Parameter] public string Format { get; set; }
+    [Parameter] public string DataFormat { get; set; }
 
     // Stores the Creation Date received by parent component
     [Parameter] public string Created { get; set; }
@@ -41,7 +41,7 @@
     [Parameter] public string Expiration { get; set; }
 
     // Watch for changes in variable values in parent component to update here
-    [Parameter] public EventCallback<string> FormatChanged { get; set; }
+    [Parameter] public EventCallback<string> DataFormatChanged { get; set; }
     [Parameter] public EventCallback<string> CreatedChanged { get; set; }
     [Parameter] public EventCallback<int> SizeChanged { get; set; }
     [Parameter] public EventCallback<string> ExpirationChanged { get; set; }
