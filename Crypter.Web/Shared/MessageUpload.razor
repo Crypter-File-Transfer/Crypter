@@ -10,7 +10,7 @@
     </div>
     <div class="row">
         <div class="col-12 p-0">
-            <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText, rsaKeySize))">Encrypt</button>
+            <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText, encryptionStrength))">Encrypt</button>
         </div>
     </div>
     <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
@@ -19,68 +19,72 @@
 <h3 hidden="@(!IsEncrypting)">Encryption Processing</h3>
 
 @code {
-    const int MaxMessageLength = 1024;
-    string MessageText = "";
-    private bool IsEncrypting = false;
-    Guid returnedId;
-    string publicKey;
-    string privateKey;
-    string dataFormat;
+   // Constants
+   private const int MaxMessageLength = 1024;
 
-    RsaKeySize rsaKeySize = RsaKeySize._1024;
+   // User input
+   private string MessageText = "";
+   CryptoStrength encryptionStrength = CryptoStrength.Minimum; //TODO Allow the user to set this in the UI
 
-    private async Task EncryptMessage(string message, RsaKeySize rsaKeySize)
-    {
-        // Set is encrypting to true
-        IsEncrypting = true;
+   // Variables we control
+   private bool IsEncrypting = false;
+   private Guid returnedId;
+   private string publicKey;
+   private string privateKey;
+   private string dataFormat;
 
-        // Refer to https://stackoverflow.com/a/11701301 for procedure
+   private async Task EncryptMessage(string message, CryptoStrength strength)
+   {
+      // Set is encrypting to true
+      IsEncrypting = true;
 
-        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-        var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(messageBytes, rsaKeySize);
+      // Refer to https://stackoverflow.com/a/11701301 for procedure
 
-        // Send POST request to API with upload details
-        var response = await UploadMessageToAPI(clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);
+      byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+      var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(messageBytes, strength);
 
-        // Send data to success modal component
-        CompletedUpload("message", response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
+      // Send POST request to API with upload details
+      var response = await UploadMessageToAPI(clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);
 
-        // Open modal
-        Modal.Open();
+      // Send data to success modal component
+      CompletedUpload(response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
 
-        // Reset message text
-        MessageText = "";
+      // Open modal
+      Modal.Open();
 
-        // No longer encrypting
-        IsEncrypting = false;
-    }
+      // Reset message text
+      MessageText = "";
 
-    public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
-    {
-        dataFormat = format;
-        returnedId = id;
-        publicKey = pubKey;
-        privateKey = privKey;
-    }
+      // No longer encrypting
+      IsEncrypting = false;
+   }
 
-    private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string signature, string serverEncryptionKey)
-    {
-        var postBody = new AnonymousMessageUploadRequest
-        {
-            CipherText = cipherText,
-            Signature = signature,
-            ServerEncryptionKey = serverEncryptionKey
-        };
-        using var response = await HttpClient.PostAsJsonAsync("https://localhost:5001/api/message", postBody);
+   public void CompletedUpload(Guid id, string pubKey, string privKey)
+   {
+      dataFormat = format;
+      returnedId = id;
+      publicKey = pubKey;
+      privateKey = privKey;
+   }
 
-        if (!response.IsSuccessStatusCode)
-        {
-            // insert error handling
-        }
+   private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string signature, string serverEncryptionKey)
+   {
+      var postBody = new AnonymousMessageUploadRequest
+      {
+         CipherText = cipherText,
+         Signature = signature,
+         ServerEncryptionKey = serverEncryptionKey
+      };
+      using var response = await HttpClient.PostAsJsonAsync("https://localhost:5001/api/message", postBody);
 
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
-    }
+      if (!response.IsSuccessStatusCode)
+      {
+         // insert error handling
+      }
 
-    private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
+      var content = await response.Content.ReadAsStringAsync();
+      return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
+   }
+
+   private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
 }
