@@ -30,40 +30,42 @@
 
 @code {
 
-   private string DownloadLink = "https://www.crypter.dev/decrypt";
-   public string ModalDisplay = "none;";
-   public string ModalClass = "";
-   public bool ShowBackdrop = false;
+    private string DownloadLink = "https://www.crypter.dev/decrypt";
+    public string ModalDisplay = "none;";
+    public string ModalClass = "";
+    public bool ShowBackdrop = false;
 
-   // Resource for modal functionality in Blazor: https://bit.ly/3mSI22z
-   // Open the success modal
-   public void Open()
-   {
-      ModalDisplay = "block;";
-      ModalClass = "Show";
-      ShowBackdrop = true;
-      StateHasChanged();
-   }
+    // Resource for modal functionality in Blazor: https://bit.ly/3mSI22z
+    // Open the success modal
+    public void Open()
+    {
+        ModalDisplay = "block;";
+        ModalClass = "Show";
+        ShowBackdrop = true;
+        StateHasChanged();
+    }
 
-   // Close the success modal
-   public void Close()
-   {
-      ModalDisplay = "none";
-      ModalClass = "";
-      ShowBackdrop = false;
-      StateHasChanged();
-   }
+    // Close the success modal
+    public void Close()
+    {
+        ModalDisplay = "none";
+        ModalClass = "";
+        ShowBackdrop = false;
+        StateHasChanged();
+    }
 
-   // Parameters for component reference
-   // Resource: https://bit.ly/3wYHWuT
+    // Parameters for component reference
+    // Resource: https://bit.ly/3wYHWuT
 
-   // Parameters from parent component
-   [Parameter] public Guid ReturnedId { get; set; }
-   [Parameter] public string PublicKey { get; set; }
-   [Parameter] public string PrivateKey { get; set; }
+    // Parameters from parent component
+    [Parameter] public string DataFormat { get; set; }
+    [Parameter] public Guid ReturnedId { get; set; }
+    [Parameter] public string PublicKey { get; set; }
+    [Parameter] public string PrivateKey { get; set; }
 
-   // Watch for changes in variable values in parent component to update here
-   [Parameter] public EventCallback<Guid> ReturnedIdChanged { get; set; }
-   [Parameter] public EventCallback<string> PublicKeyChanged { get; set; }
-   [Parameter] public EventCallback<string> PrivateKeyChanged { get; set; }
+    // Watch for changes in variable values in parent component to update here
+    [Parameter] public EventCallback<string> DataFormatChanged { get; set; }
+    [Parameter] public EventCallback<Guid> ReturnedIdChanged { get; set; }
+    [Parameter] public EventCallback<string> PublicKeyChanged { get; set; }
+    [Parameter] public EventCallback<string> PrivateKeyChanged { get; set; }
 }

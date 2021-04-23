@@ -60,122 +60,124 @@
 <h3 hidden="@(!IsEncrypting)">Encryption Processing</h3>
 
 @code {
-   const int MaxFileSizeMB = 10;
-   const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
-   const int MaxFileCount = 1;
-   private string dropClass = "";
-   private bool fileSizeError = false;
-   private bool fileCountError = false;
-   private bool IsEncrypting = false;
-   private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
-   Guid returnedId;
-   string publicKey;
-   string privateKey;
+    const int MaxFileSizeMB = 10;
+    const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
+    const int MaxFileCount = 1;
+    private string dropClass = "";
+    private bool fileSizeError = false;
+    private bool fileCountError = false;
+    private bool IsEncrypting = false;
+    private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
+    Guid returnedId;
+    string publicKey;
+    string privateKey;
+    string dataFormat;
 
-   RsaKeySize rsaKeySize = RsaKeySize._1024;
+    RsaKeySize rsaKeySize = RsaKeySize._1024;
 
-   private void HandleDragEnter()
-   {
-      dropClass = "dropzone-drag";
-   }
+    private void HandleDragEnter()
+    {
+        dropClass = "dropzone-drag";
+    }
 
-   private void HandleDragLeave()
-   {
-      dropClass = "";
-   }
+    private void HandleDragLeave()
+    {
+        dropClass = "";
+    }
 
-   private void HandleFileInputChange(IFileListEntry[] files)
-   {
-      dropClass = "";
-      fileSizeError = false;
-      fileCountError = false;
+    private void HandleFileInputChange(IFileListEntry[] files)
+    {
+        dropClass = "";
+        fileSizeError = false;
+        fileCountError = false;
 
-      if (files != null)
-      {
-         foreach (var file in files)
-         {
-            bool error = false;
-            if (file.Size > MaxFileSize)
+        if (files != null)
+        {
+            foreach (var file in files)
             {
-               error = true;
-               fileSizeError = true;
+                bool error = false;
+                if (file.Size > MaxFileSize)
+                {
+                    error = true;
+                    fileSizeError = true;
+                }
+
+                if (selectedFiles.Count == MaxFileCount)
+                {
+
+                    error = true;
+                    fileCountError = true;
+                }
+
+                if (!error)
+                {
+                    selectedFiles.Add(file);
+                }
             }
+        }
+    }
 
-            if (selectedFiles.Count == MaxFileCount)
-            {
+    private void RemoveFile(IFileListEntry file)
+    {
+        selectedFiles.Remove(file);
+        fileCountError = false;
+    }
 
-               error = true;
-               fileCountError = true;
-            }
+    private async Task EncryptFile(IFileListEntry file, RsaKeySize rsaKeySize)
+    {
+        // Hide file upload on encryption
+        IsEncrypting = true;
 
-            if (!error)
-            {
-               selectedFiles.Add(file);
-            }
-         }
-      }
-   }
+        // Refer to https://stackoverflow.com/a/11701301 for procedure
 
-   private void RemoveFile(IFileListEntry file)
-   {
-      selectedFiles.Remove(file);
-      fileCountError = false;
-   }
+        byte[] fileBytes = new byte[file.Data.Length];
+        await file.Data.ReadAsync(fileBytes, 0, (int)file.Data.Length);
+        var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(fileBytes, rsaKeySize);
 
-   private async Task EncryptFile(IFileListEntry file, RsaKeySize rsaKeySize)
-   {
-      // Hide file upload on encryption
-      IsEncrypting = true;
+        // Send POST request to API with upload details
+        var response = await UploadFileToAPI(file.Name, clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);
 
-      // Refer to https://stackoverflow.com/a/11701301 for procedure
+        // Send data to success modal component
+        CompletedUpload("file", response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
 
-      byte[] fileBytes = new byte[file.Data.Length];
-      await file.Data.ReadAsync(fileBytes, 0, (int)file.Data.Length);
-      var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(fileBytes, rsaKeySize);
+        // Open modal
+        Modal.Open();
 
-      // Send POST request to API with upload details
-      var response = await UploadFileToAPI(file.Name, clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);
+        // Reset File Uploads
+        RemoveFile(selectedFiles[0]);
 
-      // Send data to success modal component
-      CompletedUpload(response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
+        // Show file upload after encryption
+        IsEncrypting = false;
+    }
 
-      // Open modal
-      Modal.Open();
+    public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
+    {
+        dataFormat = format;
+        returnedId = id;
+        publicKey = pubKey;
+        privateKey = privKey;
+    }
 
-      // Reset File Uploads
-      RemoveFile(selectedFiles[0]);
+    private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string cipherText, string signature, string serverEncryptionKey)
+    {
+        var requestBody = new AnonymousFileUploadRequest
+        {
+            Name = filename,
+            CipherText = cipherText,
+            Signature = signature,
+            ServerEncryptionKey = serverEncryptionKey
+        };
 
-      // Show file upload after encryption
-      IsEncrypting = false;
-   }
+        using var response = await HttpClient.PostAsJsonAsync("https://localhost:5001/api/file", requestBody);
 
-   public void CompletedUpload(Guid id, string pubKey, string privKey)
-   {
-      returnedId = id;
-      publicKey = pubKey;
-      privateKey = privKey;
-   }
+        if (!response.IsSuccessStatusCode)
+        {
+            // insert error handling
+        }
 
-   private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string cipherText, string signature, string serverEncryptionKey)
-   {
-      var requestBody = new AnonymousFileUploadRequest
-      {
-         Name = filename,
-         CipherText = cipherText,
-         Signature = signature,
-         ServerEncryptionKey = serverEncryptionKey
-      };
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
+    }
 
-      using var response = await HttpClient.PostAsJsonAsync("https://localhost:5001/api/file", requestBody);
-
-      if (!response.IsSuccessStatusCode)
-      {
-         // insert error handling
-      }
-
-      var content = await response.Content.ReadAsStringAsync();
-      return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
-   }
-
-   private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
+    private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
 }
