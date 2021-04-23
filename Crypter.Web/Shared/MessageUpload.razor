@@ -10,7 +10,7 @@
     </div>
     <div class="row">
         <div class="col-12 p-0">
-            <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText, rsaKeySize))">Encrypt</button>
+            <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText, encryptionStrength))">Encrypt</button>
         </div>
     </div>
     <UploadSuccessModal @ref="Modal" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
@@ -19,16 +19,20 @@
 <h3 hidden="@(!IsEncrypting)">Encryption Processing</h3>
 
 @code {
-   const int MaxMessageLength = 1024;
-   string MessageText = "";
+   // Constants
+   private const int MaxMessageLength = 1024;
+
+   // User input
+   private string MessageText = "";
+   CryptoStrength encryptionStrength = CryptoStrength.Minimum; //TODO Allow the user to set this in the UI
+
+   // Variables we control
    private bool IsEncrypting = false;
-   Guid returnedId;
-   string publicKey;
-   string privateKey;
+   private Guid returnedId;
+   private string publicKey;
+   private string privateKey;
 
-   RsaKeySize rsaKeySize = RsaKeySize._1024;
-
-   private async Task EncryptMessage(string message, RsaKeySize rsaKeySize)
+   private async Task EncryptMessage(string message, CryptoStrength strength)
    {
       // Set is encrypting to true
       IsEncrypting = true;
@@ -36,7 +40,7 @@
       // Refer to https://stackoverflow.com/a/11701301 for procedure
 
       byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-      var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(messageBytes, rsaKeySize);
+      var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(messageBytes, strength);
 
       // Send POST request to API with upload details
       var response = await UploadMessageToAPI(clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);
