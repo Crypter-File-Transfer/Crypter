@@ -1,8 +1,8 @@
-﻿@page "/decrypt/{format}/{guid}"
+﻿@page "/decrypt/{DataFormat}/{guid}"
 
 <NavMenu />
-<h2>Decrypt your @format</h2>
-<DecryptDetails @bind-Format="format" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
+<h2>Decrypt your @DataFormat</h2>
+<DecryptDetails @bind-DataFormat="DataFormat" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
 
 @code {
 
@@ -11,7 +11,7 @@
     int fileSize = 0;
 
     [Parameter]
-    public string format { get; set; }
+    public string DataFormat { get; set; }
 
     [Parameter]
     public string guid { get; set; }
