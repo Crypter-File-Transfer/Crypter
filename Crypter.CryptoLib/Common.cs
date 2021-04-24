@@ -32,14 +32,19 @@ namespace Crypter.CryptoLib
          return asymmetricWrapper.GenerateAsymmetricKeyPair(rsaKeySize);
       }
 
-      public static AnonymousSignature CreateSignature(byte[] plaintext, SymmetricCryptoParams symmetricParams, AsymmetricKeyParameter publicKey, CryptoStrength strength)
+      public static byte[] CreateEncryptedSignature(byte[] plaintext, SymmetricCryptoParams symmetricParams, AsymmetricKeyParameter publicKey, CryptoStrength strength)
       {
          var digestAlgorithm = MapStrengthToDigestAlgorithm(strength);
          byte[] messageHash = DigestWrapper.GetDigest(plaintext, digestAlgorithm);
          var encodedHash = Convert.ToBase64String(messageHash);
          var encodedSymmetricKey = Convert.ToBase64String(symmetricParams.Key.ConvertToBytes());
          var encodedIV = Convert.ToBase64String(symmetricParams.IV);
-         return new AnonymousSignature(digestAlgorithm, encodedHash, encodedSymmetricKey, encodedIV);
+         var signature = new AnonymousSignature(digestAlgorithm, encodedHash, encodedSymmetricKey, encodedIV);
+         var signatureString = signature.ToString();
+         var signatureBytes = Encoding.UTF8.GetBytes(signatureString);
+
+         var asymmetricWrapper = new AsymmetricWrapper();
+         return asymmetricWrapper.Encrypt(signatureBytes, publicKey);
       }
 
       public static DigestAlgorithm MapStrengthToDigestAlgorithm(CryptoStrength strength)
