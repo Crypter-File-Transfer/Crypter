@@ -1,9 +1,10 @@
 ﻿namespace Crypter.Contracts.Enum
 {
-    public enum StatusCode
+    public enum ResponseCode
     {
         Unknown = -1,
         Success,
-        InvalidRequest
+        InvalidRequest,
+        NotFound
     }
 }

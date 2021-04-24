@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using Crypter.Contracts.Requests.Anonymous;
 using Crypter.Contracts.Responses.Anonymous;
+using Crypter.Contracts.Enum;
 
 namespace CrypterAPI.Controllers
 {
@@ -50,6 +51,29 @@ namespace CrypterAPI.Controllers
             var query = new FileUploadItemQuery(Db);
             var result = await query.LatestItemsAsync();
             return new OkObjectResult(result);
+        }
+
+        [HttpGet("preview/{id}")]
+        public async Task<IActionResult> GetFilePreview(string id)
+        {
+            Guid guid = Guid.Empty;
+            if (!Guid.TryParse(id, out guid))
+            {
+               var invalidResponseBody = new AnonymousFilePreviewResponse(ResponseCode.InvalidRequest);
+               return new BadRequestObjectResult(invalidResponseBody);
+            }
+
+            await Db.Connection.OpenAsync();
+            var query = new FileUploadItemQuery(Db);
+            var result = await query.FindOneAsync(guid.ToString());
+            if (result is null)
+            {
+               var notFoundResponseBody = new AnonymousFilePreviewResponse(ResponseCode.NotFound);
+               return new NotFoundObjectResult(notFoundResponseBody);
+            }
+
+            var responseBody = new AnonymousFilePreviewResponse(result.FileName, result.Size, result.Created, result.ExpirationDate);
+            return new OkObjectResult(responseBody);
         }
 
         // GET: crypter.dev/api/file/actual/{guid}
