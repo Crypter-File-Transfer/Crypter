@@ -39,17 +39,6 @@ namespace CrypterAPI.Controllers
             return await ReadAllAsync(await cmd.ExecuteReaderAsync());
         }
 
-        public async Task DeleteAllAsync()
-        {
-            using var txn = await Db.Connection.BeginTransactionAsync();
-            using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = @"DELETE FROM `MessageUploads`";
-            //added per https://fl.vu/mysql-trans
-            cmd.Transaction = txn;
-            await cmd.ExecuteNonQueryAsync();
-            await txn.CommitAsync();
-        }
-
         private async Task<List<TextUploadItem>> ReadAllAsync(DbDataReader reader)
         {
             var items = new List<TextUploadItem>();

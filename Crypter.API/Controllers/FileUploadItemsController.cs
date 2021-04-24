@@ -42,16 +42,6 @@ namespace CrypterAPI.Controllers
             return new JsonResult(responseBody);
 
         }
-        // Probably not a use case for this GET
-        // GET: crypter.dev/api/file
-        [HttpGet]
-        public async Task<IActionResult> GetFileUploadItems()
-        {
-            await Db.Connection.OpenAsync();
-            var query = new FileUploadItemQuery(Db);
-            var result = await query.LatestItemsAsync();
-            return new OkObjectResult(result);
-        }
 
         [HttpGet("preview/{id}")]
         public async Task<IActionResult> GetFilePreview(string id)
@@ -148,15 +138,5 @@ namespace CrypterAPI.Controllers
             return new OkResult();
         }
 
-        // Requires safe updates to be disabled within MySQl editor preferences
-        // DELETE: crypter.dev/api/file/
-        [HttpDelete]
-        public async Task<IActionResult> DeleteAll()
-        {
-            await Db.Connection.OpenAsync();
-            var query = new FileUploadItemQuery(Db);
-            await query.DeleteAllAsync();
-            return new OkResult();
-        }
     }
 }

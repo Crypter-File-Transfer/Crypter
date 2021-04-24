@@ -41,17 +41,7 @@ namespace CrypterAPI.Controllers
             return new JsonResult(responseBody);
         }
 
-        // Probably not a use case for this GET
-        // GET: crypter.dev/api/message
-        [HttpGet]
-        public async Task<IActionResult> GetTextUploadItems()
-        {
-            await Db.Connection.OpenAsync();
-            var query = new TextUploadItemQuery(Db);
-            var result = await query.LatestItemsAsync();
-            return new OkObjectResult(result);
-        }
-
+        // GET: crypter.dev/api/message/preview/{id}
         [HttpGet("preview/{id}")]
         public async Task<IActionResult> GetTextPreview(string id)
         {
@@ -145,17 +135,6 @@ namespace CrypterAPI.Controllers
             if (result is null)
                 return new NotFoundResult();
             await result.DeleteAsync(Db);
-            return new OkResult();
-        }
-
-        // Requires safe updates to be disabled within MySQl editor preferences
-        // DELETE: crypter.dev/api/message/
-        [HttpDelete]
-        public async Task<IActionResult> DeleteAll()
-        {
-            await Db.Connection.OpenAsync();
-            var query = new TextUploadItemQuery(Db);
-            await query.DeleteAllAsync();
             return new OkResult();
         }
     }
