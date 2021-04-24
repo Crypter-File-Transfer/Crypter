@@ -41,17 +41,7 @@ namespace CrypterAPI.Controllers
             return new JsonResult(responseBody);
         }
 
-        // Probably not a use case for this GET
-        // GET: crypter.dev/api/message
-        [HttpGet]
-        public async Task<IActionResult> GetTextUploadItems()
-        {
-            await Db.Connection.OpenAsync();
-            var query = new TextUploadItemQuery(Db);
-            var result = await query.LatestItemsAsync();
-            return new OkObjectResult(result);
-        }
-
+        // GET: crypter.dev/api/message/preview/{id}
         [HttpGet("preview/{id}")]
         public async Task<IActionResult> GetTextPreview(string id)
         {
@@ -79,36 +69,46 @@ namespace CrypterAPI.Controllers
         [HttpGet("actual/{id}")]
         public async Task<IActionResult> GetTextUploadActual(string id)
         {
+            Guid guid = Guid.Empty;
+            if (!Guid.TryParse(id, out guid))
+            {
+                var invalidResponseBody = new AnonymousDownloadResponse(ResponseCode.InvalidRequest);
+                return new BadRequestObjectResult(invalidResponseBody);
+            }
             await Db.Connection.OpenAsync();
             var query = new TextUploadItemQuery(Db);
             var result = await query.FindOneAsync(id);
             if (result is null)
                 return new NotFoundResult();
-            //obtain file path for actual encrypted message
-            Console.WriteLine(result.CipherTextPath);
-            //return the encrypted message 
-            return new OkObjectResult(result.CipherTextPath);
+            //read file bytes and convert to base64 string
+            string cipherText = Convert.ToBase64String(System.IO.File.ReadAllBytes(result.CipherTextPath));
+            var responseBody = new AnonymousDownloadResponse(cipherText);
+            //TODO: Apply decryption key to remove server-side encryption
+
+            //return the encrypted message bytes
+            return new OkObjectResult(responseBody);
         }
 
         // GET: crypter.dev/api/message/signature/{guid}
         [HttpGet("signature/{id}")]
         public async Task<IActionResult> GetTextUploadSig(string id)
         {
+            Guid guid = Guid.Empty;
+            if (!Guid.TryParse(id, out guid))
+            {
+                var invalidResponseBody = new AnonymousDownloadResponse(ResponseCode.InvalidRequest);
+                return new BadRequestObjectResult(invalidResponseBody);
+            }
             await Db.Connection.OpenAsync();
             var query = new TextUploadItemQuery(Db);
             var result = await query.FindOneAsync(id);
             if (result is null)
                 return new NotFoundResult();
-            //obtain file path for signature of encrypted message
-            Console.WriteLine(result.SignaturePath);
-            //read and return signature
+            //read and return signature using SignaturePath
             string signature = System.IO.File.ReadAllText(result.SignaturePath);
-            Console.WriteLine(signature);
-            //Send signature in response-
-            Dictionary<string, string> SigDict = new Dictionary<string, string>();
-            SigDict.Add("Signature", signature);
-            //return the encrypted file 
-            return new JsonResult(SigDict); 
+            var responseBody = new AnonymousSignatureResponse(signature);
+            //return the signature
+            return new OkObjectResult(responseBody); 
         }
 
         // PUT: crypter.dev/api/message/signature/{guid}
@@ -122,7 +122,6 @@ namespace CrypterAPI.Controllers
             if (result is null)
                 return new NotFoundResult();
             //update fields
-            //result.ID = body.ID;
             result.UserID = body.UserID;
             result.FileName = body.FileName;
             result.Size = body.Size;
@@ -145,17 +144,6 @@ namespace CrypterAPI.Controllers
             if (result is null)
                 return new NotFoundResult();
             await result.DeleteAsync(Db);
-            return new OkResult();
-        }
-
-        // Requires safe updates to be disabled within MySQl editor preferences
-        // DELETE: crypter.dev/api/message/
-        [HttpDelete]
-        public async Task<IActionResult> DeleteAll()
-        {
-            await Db.Connection.OpenAsync();
-            var query = new TextUploadItemQuery(Db);
-            await query.DeleteAllAsync();
             return new OkResult();
         }
     }
