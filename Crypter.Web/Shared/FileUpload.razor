@@ -57,7 +57,7 @@
    <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
 </div>
 
-<h3 hidden="@(!IsEncrypting)">Encryption Processing</h3>
+<h3 hidden="@(!IsEncrypting)">@EncryptionStatusMessage</h3>
 
 @code {
    // Constants
@@ -65,15 +65,18 @@
    private const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
    private const int MaxFileCount = 1;
 
+   // State
+   private bool IsEncrypting = false;
+   private string EncryptionStatusMessage = "";
+
    // User input
    private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
-   private CryptoStrength encryptionStrength = CryptoStrength.Minimum; //TODO Allow the user to set this in the UI
+   private CryptoStrength encryptionStrength = CryptoStrength.Minimum;
 
    // Variables we control
    private string dropClass = "";
    private bool fileSizeError = false;
    private bool fileCountError = false;
-   private bool IsEncrypting = false;
    private Guid returnedId;
    private string publicKey;
    private string privateKey;
@@ -102,15 +105,15 @@
             bool error = false;
             if (file.Size > MaxFileSize)
             {
-                error = true;
-                fileSizeError = true;
+               error = true;
+               fileSizeError = true;
             }
 
             if (selectedFiles.Count == MaxFileCount)
             {
 
-                error = true;
-                fileCountError = true;
+               error = true;
+               fileCountError = true;
             }
 
             if (!error)
@@ -131,18 +134,35 @@
    {
       // Hide file upload on encryption
       IsEncrypting = true;
+      await SetNewEncryptionStatus("Creating symmetric key");
+      var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoInfo(strength);
+      var hashedSymmetricKey = DigestWrapper.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
-      // Refer to https://stackoverflow.com/a/11701301 for procedure
-
+      await SetNewEncryptionStatus("Encrypting your file");
       byte[] fileBytes = new byte[file.Data.Length];
       await file.Data.ReadAsync(fileBytes, 0, (int)file.Data.Length);
-      var clientEncryptResult = CryptoLib.Common.DoAnonymousClientEncryption(fileBytes, strength);
+      var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricCryptoParams);
 
-      // Send POST request to API with upload details
-      var response = await UploadFileToAPI(file.Name, clientEncryptResult.CipherText, clientEncryptResult.Signature, clientEncryptResult.ServerEncryptionKey);
+      await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
+      var asymmetricKeys = CryptoLib.Common.GenerateAsymmetricKeys(strength);
+
+      await SetNewEncryptionStatus("Creating a signature");
+      var signature = CryptoLib.Common.CreateSignature(fileBytes, symmetricCryptoParams, asymmetricKeys.Public, strength);
+      var signatureString = signature.ToString();
+      var signatureBytes = Encoding.UTF8.GetBytes(signatureString);
+
+      await SetNewEncryptionStatus("Preparing to upload");
+      var encodedCipherText = Convert.ToBase64String(cipherText);
+      var encodedSignature = Convert.ToBase64String(signatureBytes);
+      var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
+
+      await SetNewEncryptionStatus("Uploading");
+      var response = await UploadFileToAPI(file.Name, encodedCipherText, encodedSignature, serverEncryptionKey);
 
       // Send data to success modal component
-      CompletedUpload("file", response.Id, clientEncryptResult.KeyPair.Public.ConvertToPEM(), clientEncryptResult.KeyPair.Private.ConvertToPEM());
+      CompletedUpload("file", response.Id,
+         Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
+         Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
 
       // Open modal
       Modal.Open();
@@ -152,6 +172,13 @@
 
       // Show file upload after encryption
       IsEncrypting = false;
+   }
+
+   public async Task SetNewEncryptionStatus(string status)
+   {
+      EncryptionStatusMessage = status;
+      StateHasChanged();
+      await Task.Delay(500);
    }
 
    public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
