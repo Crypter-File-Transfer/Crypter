@@ -41,8 +41,9 @@ namespace Crypter.API.Controllers
             //create paths for encrypted content and signature
             ActualFileName = $"{untrustedName}";
             SignatureName = $"{untrustedName}.sig";
-            ActualPathString = Path.Combine(pathString, ActualFileName);
-            SigPathString = Path.Combine(pathString, SignatureName);
+            // Combine paths and use standard directory separator
+            ActualPathString = Path.GetFullPath(Path.Combine(pathString, ActualFileName));
+            SigPathString = Path.GetFullPath(Path.Combine(pathString, SignatureName));
             ////Confirm paths, write to console
             Console.WriteLine("Newly created file path: {0}", ActualPathString);
             Console.WriteLine("New created signature path: {0}", SigPathString);
