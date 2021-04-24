@@ -26,13 +26,10 @@ namespace CrypterAPI.Models
             UserID = ID;
             // Create file paths and insert these paths
             FilePaths filePath = new FilePaths(baseSaveDirectory);
-            var success = filePath.SaveFile(FileName, ID, true);
+            var success = filePath.SaveFile(FileName, ID, CipherText, Signature, true);
             //add paths to FileUploadItem object
             CipherTextPath = filePath.ActualPathString;
             SignaturePath = filePath.SigPathString;
-            //write cipherText and Signature to file system at defined paths
-            filePath.WriteBinaryToFile(CipherTextPath, CipherText);
-            filePath.WriteTextToFile(SignaturePath, Signature);
             // Calc size of cipher text file
             Size = filePath.FileSizeBytes(CipherTextPath); 
             cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @encryptedfilecontentpath);";

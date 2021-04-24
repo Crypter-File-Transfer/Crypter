@@ -17,13 +17,17 @@ namespace Crypter.API.Controllers
         }
 
         /// <summary>
-        /// Accepts a file name "untrusted name" and guid to generate file paths
+        /// Accepts a file name "untrusted name" and guid to generate file paths and write signature and cipherText to file system 
         /// </summary>
         /// <param name="untrustedName"></param>
         /// <param name="guid"></param>
         /// <param name="isFile"></param>
+        /// <param name="cipherText"></param>
+        /// <param name="signature"></param>
         /// <returns>true or false to indicate whether the operation was successful</returns>
-        public bool SaveFile(string untrustedName, string guid, bool isFile)
+        /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=net-5.0
+        /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writeallbytes?view=net-5.0
+        public bool SaveFile(string untrustedName, string guid, string cipherText, string signature, bool isFile)
         {
             string pathString;
             //create folder path for file upload
@@ -47,52 +51,20 @@ namespace Crypter.API.Controllers
             ////Confirm paths, write to console
             Console.WriteLine("Newly created file path: {0}", ActualPathString);
             Console.WriteLine("New created signature path: {0}", SigPathString);
-
+            //write signature to path
+            try
+            {
+                // create file and write all text to file, then close file
+                File.WriteAllText(SigPathString, signature);
+                //decode base64 to bytes and save as binary
+                File.WriteAllBytes(ActualPathString, Convert.FromBase64String(cipherText));
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Exception!: {exception}");
+                return false;
+            }
             return true;
-        }
-
-        /// <summary>
-        /// Accepts a file path and string to write the string to the provided file as text
-        /// </summary>
-        /// <param name="destPath"></param>
-        /// <param name="cipherText"></param>
-        /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=net-5.0
-        public bool WriteTextToFile(string destPath, string cipherText)
-        {
-            try
-            {
-                // create file and write all text to file, then close file
-                File.WriteAllText(destPath, cipherText);
-                return true;
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine($"Exception!: {exception}");
-                return false;
-            }
-        }
-
-
-        /// <summary>
-        /// Accepts a file path and base64 encoded string. Decodes string to bytes and writes to destPath as binary
-        /// </summary>
-        /// <param name="destPath"></param>
-        /// <param name="cipherText"></param>
-        /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writeallbytes?view=net-5.0
-        public bool WriteBinaryToFile(string destPath, string cipherText)
-        {
-            //decode base64 to bytes and save as binary
-            try
-            {
-                // create file and write all text to file, then close file
-                File.WriteAllBytes(destPath, Convert.FromBase64String(cipherText));
-                return true;
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine($"Exception!: {exception}");
-                return false;
-            }
         }
 
         /// <summary>

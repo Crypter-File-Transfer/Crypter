@@ -85,7 +85,7 @@ namespace CrypterAPI.Controllers
             var responseBody = new AnonymousDownloadResponse(cipherText);
             //TODO: Apply decryption key to remove server-side encryption
 
-            //return the encrypted file bytes
+            //return the encrypted message bytes
             return new OkObjectResult(responseBody);
         }
 
