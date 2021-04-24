@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using Crypter.Contracts.Requests.Anonymous;
 using Crypter.Contracts.Responses.Anonymous;
 using Crypter.Contracts.Enum;
-
+using System.IO; 
 namespace CrypterAPI.Controllers
 {
     [Route("api/file")]
@@ -43,6 +43,7 @@ namespace CrypterAPI.Controllers
 
         }
 
+        // GET: crypter.dev/api/file/preview/{guid}
         [HttpGet("preview/{id}")]
         public async Task<IActionResult> GetFilePreview(string id)
         {
@@ -70,36 +71,46 @@ namespace CrypterAPI.Controllers
         [HttpGet("actual/{id}")]
         public async Task<IActionResult> GetFileUploadActual(string id)
         {
+            Guid guid = Guid.Empty;
+            if (!Guid.TryParse(id, out guid))
+            {
+                var invalidResponseBody = new AnonymousDownloadResponse(ResponseCode.InvalidRequest);
+                return new BadRequestObjectResult(invalidResponseBody);
+            }
             await Db.Connection.OpenAsync();
             var query = new FileUploadItemQuery(Db);
-            var result = await query.FindOneAsync(id);
+            var result = await query.FindOneAsync(guid.ToString());
             if (result is null)
                 return new NotFoundResult();
-            //obtain file path for actual encrypted file
-            Console.WriteLine(result.CipherTextPath);
-            //return the encrypted file 
-            return new JsonResult(result.CipherTextPath);
+            //read file bytes and convert to base64 string
+            string cipherText = Convert.ToBase64String(System.IO.File.ReadAllBytes(result.CipherTextPath));
+            var responseBody = new AnonymousDownloadResponse(cipherText);
+            //TODO: Apply decryption key to remove server-side encryption
+
+            //return the encrypted file bytes
+            return new OkObjectResult(responseBody); 
         }
 
         // GET: crypter.dev/api/file/signature/{guid}
         [HttpGet("signature/{id}")]
         public async Task<IActionResult> GetFileUploadSig(string id)
         {
+            Guid guid = Guid.Empty;
+            if (!Guid.TryParse(id, out guid))
+            {
+                var invalidResponseBody = new AnonymousDownloadResponse(ResponseCode.InvalidRequest);
+                return new BadRequestObjectResult(invalidResponseBody);
+            }
             await Db.Connection.OpenAsync();
             var query = new FileUploadItemQuery(Db);
             var result = await query.FindOneAsync(id);
             if (result is null)
                 return new NotFoundResult();
-            //obtain file path for the signature of the encrypted file
-            Console.WriteLine(result.SignaturePath);
-            //TODO: read and return signature
+            //read and return signature using Signature Path
             string signature = System.IO.File.ReadAllText(result.SignaturePath);
-            Console.WriteLine(signature);
-            //Send signature in response-
-            Dictionary<string, string> SigDict = new Dictionary<string, string>();
-            SigDict.Add("Signature", signature);
-            //return the encrypted file 
-            return new JsonResult(SigDict);
+            var responseBody = new AnonymousSignatureResponse(signature);
+            //return the signature
+            return new OkObjectResult(responseBody); 
         }
 
         // PUT: crypter.dev/api/file/{guid}

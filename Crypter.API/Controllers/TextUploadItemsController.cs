@@ -69,36 +69,46 @@ namespace CrypterAPI.Controllers
         [HttpGet("actual/{id}")]
         public async Task<IActionResult> GetTextUploadActual(string id)
         {
+            Guid guid = Guid.Empty;
+            if (!Guid.TryParse(id, out guid))
+            {
+                var invalidResponseBody = new AnonymousDownloadResponse(ResponseCode.InvalidRequest);
+                return new BadRequestObjectResult(invalidResponseBody);
+            }
             await Db.Connection.OpenAsync();
             var query = new TextUploadItemQuery(Db);
             var result = await query.FindOneAsync(id);
             if (result is null)
                 return new NotFoundResult();
-            //obtain file path for actual encrypted message
-            Console.WriteLine(result.CipherTextPath);
-            //return the encrypted message 
-            return new OkObjectResult(result.CipherTextPath);
+            //read file bytes and convert to base64 string
+            string cipherText = Convert.ToBase64String(System.IO.File.ReadAllBytes(result.CipherTextPath));
+            var responseBody = new AnonymousDownloadResponse(cipherText);
+            //TODO: Apply decryption key to remove server-side encryption
+
+            //return the encrypted file bytes
+            return new OkObjectResult(responseBody);
         }
 
         // GET: crypter.dev/api/message/signature/{guid}
         [HttpGet("signature/{id}")]
         public async Task<IActionResult> GetTextUploadSig(string id)
         {
+            Guid guid = Guid.Empty;
+            if (!Guid.TryParse(id, out guid))
+            {
+                var invalidResponseBody = new AnonymousDownloadResponse(ResponseCode.InvalidRequest);
+                return new BadRequestObjectResult(invalidResponseBody);
+            }
             await Db.Connection.OpenAsync();
             var query = new TextUploadItemQuery(Db);
             var result = await query.FindOneAsync(id);
             if (result is null)
                 return new NotFoundResult();
-            //obtain file path for signature of encrypted message
-            Console.WriteLine(result.SignaturePath);
-            //read and return signature
+            //read and return signature using SignaturePath
             string signature = System.IO.File.ReadAllText(result.SignaturePath);
-            Console.WriteLine(signature);
-            //Send signature in response-
-            Dictionary<string, string> SigDict = new Dictionary<string, string>();
-            SigDict.Add("Signature", signature);
-            //return the encrypted file 
-            return new JsonResult(SigDict); 
+            var responseBody = new AnonymousSignatureResponse(signature);
+            //return the signature
+            return new OkObjectResult(responseBody); 
         }
 
         // PUT: crypter.dev/api/message/signature/{guid}
@@ -112,7 +122,6 @@ namespace CrypterAPI.Controllers
             if (result is null)
                 return new NotFoundResult();
             //update fields
-            //result.ID = body.ID;
             result.UserID = body.UserID;
             result.FileName = body.FileName;
             result.Size = body.Size;
