@@ -1,18 +1,123 @@
-﻿@page "/decrypt/{DataFormat}/{guid}"
+﻿@page "/decrypt/{DataFormat}/{id}"
+
+@inject HttpClient HttpClient
+@inject NavigationManager NavManager
 
 <NavMenu />
 <h2>Decrypt your @DataFormat</h2>
-<DecryptDetails @bind-DataFormat="DataFormat" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
+<DecryptDetails @bind-DataFormat="DataFormat" @bind-Name="name" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
 
 @code {
+   string name = "";
+   string creationDate = DateTime.Now.ToString("MM/dd/yyyy");
+   string expirationDate = "Never";
+   int fileSize = 0;
 
-    string creationDate = DateTime.Now.ToString("MM/dd/yyyy");
-    string expirationDate = "Never";
-    int fileSize = 0;
+   [Parameter]
+   public string DataFormat { get; set; }
 
-    [Parameter]
-    public string DataFormat { get; set; }
+   [Parameter]
+   public string Id { get; set; }
 
-    [Parameter]
-    public string guid { get; set; }
+   protected override async Task OnInitializedAsync()
+   {
+      AssertValidDataFormat();
+
+      Guid guid = Guid.Empty;
+      if (Guid.TryParse(Id, out guid))
+      {
+         var lowerFormat = DataFormat.ToLower();
+         if (lowerFormat == "message")
+         {
+            var messageResponse = await DownloadMessagePreviewFromApi(guid);
+            switch (messageResponse.Status)
+            {
+               case Contracts.Enum.ResponseCode.Success:
+                  PopulateMessagePreview(messageResponse.Size, messageResponse.CreationUTC, messageResponse.ExpirationUTC);
+                  break;
+               default:
+                  //TODO - nothing was found; tell the user
+                  break;
+            }
+         }
+         else
+         {
+            var fileResponse = await DownloadFilePreviewFromApi(guid);
+            switch (fileResponse.Status)
+            {
+               case Contracts.Enum.ResponseCode.Success:
+                  PopulateFilePreview(fileResponse.Name, fileResponse.Size, fileResponse.CreationUTC, fileResponse.ExpirationUTC);
+                  break;
+               default:
+                  //TODO - nothing was found; tell the user
+                  break;
+            }
+         }
+      }
+   }
+
+   private void AssertValidDataFormat()
+   {
+      var lowerFormat = DataFormat.ToLower();
+      var validFormats = new List<string> { "file", "message" };
+      if (!validFormats.Contains(lowerFormat))
+      {
+         //TODO Can we show the "nothing at this page" location instead?
+         NavManager.NavigateTo("/");
+      }
+   }
+
+   private async Task<AnonymousFilePreviewResponse> DownloadFilePreviewFromApi(Guid id)
+   {
+      var requestBody = new AnonymousFilePreviewRequest
+      {
+         Id = id
+      };
+
+      var url = $"https://localhost:5001/api/file/preview/{id}";
+      using var response = await HttpClient.GetAsync(url);
+
+      if (!response.IsSuccessStatusCode)
+      {
+         // insert error handling
+      }
+
+      var content = await response.Content.ReadAsStringAsync();
+      return JsonConvert.DeserializeObject<AnonymousFilePreviewResponse>(content);
+   }
+
+   private async Task<AnonymousMessagePreviewResponse> DownloadMessagePreviewFromApi(Guid id)
+   {
+      var requestBody = new AnonymousMessagePreviewRequest
+      {
+         Id = id
+      };
+
+      var url = $"https://localhost:5001/api/message/preview/{id}";
+      using var response = await HttpClient.GetAsync(url);
+
+      if (!response.IsSuccessStatusCode)
+      {
+         // insert error handling
+      }
+
+      var content = await response.Content.ReadAsStringAsync();
+      return JsonConvert.DeserializeObject<AnonymousMessagePreviewResponse>(content);
+   }
+
+   private void PopulateFilePreview(string filename, int size, DateTime creation, DateTime expiration)
+   {
+      name = filename;
+      creationDate = creation.ToLocalTime().ToString();
+      expirationDate = expiration.ToLocalTime().ToString();
+      fileSize = size;
+   }
+
+   private void PopulateMessagePreview(int size, DateTime creation, DateTime expiration)
+   {
+      Console.WriteLine(creation);
+      creationDate = creation.ToLocalTime().ToString();
+      expirationDate = expiration.ToLocalTime().ToString();
+      fileSize = size;
+   }
 }
