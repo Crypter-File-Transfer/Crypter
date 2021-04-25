@@ -103,7 +103,7 @@ namespace CrypterAPI.Controllers
             }
             await Db.Connection.OpenAsync();
             var query = new FileUploadItemQuery(Db);
-            var result = await query.FindOneAsync(id);
+            var result = await query.FindOneAsync(guid.ToString());
             if (result is null)
                 return new NotFoundResult();
             //read and return signature using Signature Path

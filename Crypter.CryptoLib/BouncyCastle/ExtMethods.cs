@@ -16,20 +16,12 @@ namespace Crypter.CryptoLib.BouncyCastle
          return stringWriter.ToString();
       }
 
-      // Dead code that I don't want to delete yet - Jack
-      /*
-      public static string ConvertToPKCS8(this RsaKeyParameters privateKeyParams)
+      public static AsymmetricCipherKeyPair ConvertFromPEM(string pemKey)
       {
-         var pkcs8 = new Pkcs8Generator(privateKeyParams);
-         var pem = pkcs8.Generate();
-
-         var stringWriter = new StringWriter();
-         var pemWriter = new PemWriter(stringWriter);
-         pemWriter.WriteObject(pem);
-         pemWriter.Writer.Flush();
-         return stringWriter.ToString();
+         var stringReader = new StringReader(pemKey);
+         var pemReader = new PemReader(stringReader);
+         return (AsymmetricCipherKeyPair)pemReader.ReadObject();
       }
-      */
 
       public static byte[] ConvertToBytes(this KeyParameter symmetricKey)
       {
