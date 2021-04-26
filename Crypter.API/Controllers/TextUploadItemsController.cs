@@ -36,11 +36,24 @@ namespace CrypterAPI.Controllers
             var newText = new TextUploadItem();
             newText.CipherText = body.CipherText;
             newText.Signature = body.Signature;
-            newText.ServerEncryptionKey = body.ServerEncryptionKey; 
-            await newText.InsertAsync(Db, BaseSaveDirectory);
-
-            var responseBody = new AnonymousUploadResponse(Guid.Parse(newText.ID), newText.ExpirationDate);
-            return new JsonResult(responseBody);
+            // if server encryption key is empty and is not 256 bits(32bytes) reject the post
+            if(!string.IsNullOrEmpty(body.ServerEncryptionKey))
+            {
+                byte[] keyString = Convert.FromBase64String(body.ServerEncryptionKey);
+                int keySize = Buffer.ByteLength(keyString);
+                //check size
+                if (keySize == 32)
+                {
+                    //add server encryption key to the upload item 
+                    newText.ServerEncryptionKey = body.ServerEncryptionKey;
+                    await newText.InsertAsync(Db, BaseSaveDirectory);
+                    var responseBody = new AnonymousUploadResponse(Guid.Parse(newText.ID), newText.ExpirationDate);
+                    return new JsonResult(responseBody);
+                }
+            }
+            //reject posts with no encryption key/ invalid length
+            var invalidResponseBody = new AnonymousUploadResponse(ResponseCode.InvalidRequest);
+            return new BadRequestObjectResult(invalidResponseBody);
         }
 
         // GET: crypter.dev/api/message/preview/{id}
