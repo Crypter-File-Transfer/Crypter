@@ -1,69 +1,58 @@
-﻿@page "/decrypt/{DataFormat}/{id}"
+﻿@page "/decrypt/message/{id:guid}"
+@page "/decrypt/file/{id:guid}"
 
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
 
 <NavMenu />
-<h2>Decrypt your @DataFormat</h2>
-<DecryptDetails @bind-DataFormat="DataFormat" @bind-Name="name" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
+<h2>Decrypt your @dataFormat</h2>
+<DecryptDetails @bind-DataFormat="dataFormat" @bind-Id="Id" @bind-Name="name" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
 
 @code {
+   string dataFormat = "";
    string name = "";
    string creationDate = DateTime.Now.ToString("MM/dd/yyyy");
    string expirationDate = "Never";
    int fileSize = 0;
 
    [Parameter]
-   public string DataFormat { get; set; }
-
-   [Parameter]
-   public string Id { get; set; }
+   public Guid Id { get; set; }
 
    protected override async Task OnInitializedAsync()
    {
-      AssertValidDataFormat();
+      var relativeURL = NavManager.ToBaseRelativePath(NavManager.Uri);
+      var urlPieces = relativeURL.Split("/");
+      dataFormat = urlPieces[1].ToLower();
 
-      Guid guid = Guid.Empty;
-      if (Guid.TryParse(Id, out guid))
+      if (dataFormat == "message")
       {
-         var lowerFormat = DataFormat.ToLower();
-         if (lowerFormat == "message")
+         var messageResponse = await DownloadMessagePreviewFromApi(Id);
+         switch (messageResponse.Status)
          {
-            var messageResponse = await DownloadMessagePreviewFromApi(guid);
-            switch (messageResponse.Status)
-            {
-               case Contracts.Enum.ResponseCode.Success:
-                  PopulateMessagePreview(messageResponse.Size, messageResponse.CreationUTC, messageResponse.ExpirationUTC);
-                  break;
-               default:
-                  //TODO - nothing was found; tell the user
-                  break;
-            }
-         }
-         else
-         {
-            var fileResponse = await DownloadFilePreviewFromApi(guid);
-            switch (fileResponse.Status)
-            {
-               case Contracts.Enum.ResponseCode.Success:
-                  PopulateFilePreview(fileResponse.Name, fileResponse.Size, fileResponse.CreationUTC, fileResponse.ExpirationUTC);
-                  break;
-               default:
-                  //TODO - nothing was found; tell the user
-                  break;
-            }
+            case Contracts.Enum.ResponseCode.Success:
+               PopulateMessagePreview(messageResponse.Size, messageResponse.CreationUTC, messageResponse.ExpirationUTC);
+               break;
+            default:
+               //TODO - nothing was found; tell the user
+               break;
          }
       }
-   }
-
-   private void AssertValidDataFormat()
-   {
-      var lowerFormat = DataFormat.ToLower();
-      var validFormats = new List<string> { "file", "message" };
-      if (!validFormats.Contains(lowerFormat))
+      else if (dataFormat == "file")
       {
-         //TODO Can we show the "nothing at this page" location instead?
-         NavManager.NavigateTo("/");
+         var fileResponse = await DownloadFilePreviewFromApi(Id);
+         switch (fileResponse.Status)
+         {
+            case Contracts.Enum.ResponseCode.Success:
+               PopulateFilePreview(fileResponse.Name, fileResponse.Size, fileResponse.CreationUTC, fileResponse.ExpirationUTC);
+               break;
+            default:
+               //TODO - nothing was found; tell the user
+               break;
+         }
+      }
+      else
+      {
+         Console.WriteLine("This shouldn't happen");
       }
    }
 

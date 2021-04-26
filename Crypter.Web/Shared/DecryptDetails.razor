@@ -1,42 +1,46 @@
-﻿<div class="decryption-details">
+﻿@inject HttpClient HttpClient
+
+<div class="decryption-details">
     <div class="details col-md-3">
         <h3>@DataFormat details</h3>
         <table class="data-details">
-           @if (DataFormat.ToLower() == "file")
-           {
-              <tr>
-                 <td><strong>File name: </strong></td>
-                 <td>@Name</td>
-              </tr>
-           }
-           <tr>
-              <td><strong>Created: </strong></td>
-              <td>@Created</td>
-           </tr>
-           <tr>
-              <td><strong>Size: </strong></td>
-              <td>@Size bytes</td>
-           </tr>
-           <tr>
-              <td><strong>Expires at: </strong></td>
-              <td>@Expiration</td>
-           </tr>
+            @if (DataFormat.ToLower() == "file")
+            {
+                <tr>
+                    <td><strong>File name: </strong></td>
+                    <td>@Name</td>
+                </tr>
+            }
+            <tr>
+                <td><strong>Created: </strong></td>
+                <td>@Created</td>
+            </tr>
+            <tr>
+                <td><strong>Size: </strong></td>
+                <td>@Size bytes</td>
+            </tr>
+            <tr>
+                <td><strong>Expires at: </strong></td>
+                <td>@Expiration</td>
+            </tr>
         </table>
     </div>
     <div class="decryption-key col-md-9">
         <h4>Decryption Key</h4>
         <p><em>This should have been provided by the sender</em></p>
         <input @bind="decryptionKey" type="text" />
-        <button type="button" class="btn btn-primary">Decrypt</button>
+        <button type="button" class="btn btn-primary" @onclick="@(e => OnDecryptClicked(DataFormat, Id, decryptionKey))">Decrypt</button>
     </div>
 </div>
 
 @code {
-
     private string decryptionKey = "";
 
     // Stores the Format received by parent component
     [Parameter] public string DataFormat { get; set; }
+
+    // Stores the ID received by parent component
+    [Parameter] public Guid Id { get; set; }
 
     // Stores the File name received by parent component
     [Parameter] public string Name { get; set; }
@@ -51,9 +55,49 @@
     [Parameter] public string Expiration { get; set; }
 
     // Watch for changes in variable values in parent component to update here
-    [Parameter] public EventCallback<string> NameChanged { get; set; }
     [Parameter] public EventCallback<string> DataFormatChanged { get; set; }
+    [Parameter] public EventCallback<Guid> IdChanged { get; set; }
+    [Parameter] public EventCallback<string> NameChanged { get; set; }
     [Parameter] public EventCallback<string> CreatedChanged { get; set; }
     [Parameter] public EventCallback<int> SizeChanged { get; set; }
     [Parameter] public EventCallback<string> ExpirationChanged { get; set; }
+
+    private async Task OnDecryptClicked(string dataFormat, Guid id, string privateDecryptionKey)
+    {
+        // Convert the decryption key from Base64 => PEM formatted string => AsymmetricKeyParameter
+        byte[] privateKeyPemBytes = Convert.FromBase64String(privateDecryptionKey);
+        string privateKeyPemString = Encoding.UTF8.GetString(privateKeyPemBytes);
+        var privateKeyBouncyCastle = ExtMethods.ConvertFromPEM(privateKeyPemString).Private;
+
+        // Request the signature from the API
+        var signatureResponse = await DownloadSignature(dataFormat, id);
+        var signatureBytes = Convert.FromBase64String(signatureResponse.Signature);
+
+        // Attempt to decrypt the signature
+        var asymmetricWrapper = new AsymmetricWrapper();
+        byte[] decryptedSignatureBytes = asymmetricWrapper.Decrypt(signatureBytes, privateKeyBouncyCastle);
+        string decryptedSignatureString = Encoding.UTF8.GetString(decryptedSignatureBytes);
+
+        // Attempt to deserialize the plaintext signature
+        var signature = new AnonymousSignature(decryptedSignatureString);
+    }
+
+    private async Task<AnonymousSignatureResponse> DownloadSignature(string dataFormat, Guid id)
+    {
+        var requestBody = new AnonymousSignatureRequest
+        {
+            Id = id
+        };
+
+        var url = $"https://localhost:5001/api/{dataFormat}/signature/{id}";
+        using var response = await HttpClient.GetAsync(url);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // insert error handling
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<AnonymousSignatureResponse>(content);
+    }
 }
