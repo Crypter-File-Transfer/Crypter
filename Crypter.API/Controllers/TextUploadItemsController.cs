@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using Crypter.Contracts.Requests.Anonymous;
 using Crypter.Contracts.Responses.Anonymous;
 using Crypter.Contracts.Enum;
+using Crypter.CryptoLib;
+using Crypter.CryptoLib.BouncyCastle;
 
 namespace CrypterAPI.Controllers
 {
@@ -65,7 +67,7 @@ namespace CrypterAPI.Controllers
             return new OkObjectResult(responseBody);
         }
 
-        // POST: crypter.dev/api/message/actual/{guid}
+        // POST: crypter.dev/api/message/actual
         [HttpPost("actual")]
         public async Task<IActionResult> GetTextUploadActual([FromBody] AnonymousMessageDownloadRequest body)
         {
@@ -74,12 +76,16 @@ namespace CrypterAPI.Controllers
             var result = await query.FindOneAsync(body.Id.ToString());
             if (result is null)
                 return new NotFoundResult();
-            //read file bytes and convert to base64 string
-            string cipherText = Convert.ToBase64String(System.IO.File.ReadAllBytes(result.CipherTextPath));
-            var responseBody = new AnonymousDownloadResponse(cipherText);
-            //TODO: Apply decryption key to remove server-side encryption
-
-            //return the encrypted message bytes
+            //Get decryption key from clint
+            byte[] ServerDecryptionKey = Convert.FromBase64String(body.ServerDecryptionKey);
+            //read bytes from path
+            byte[] cipherTextAES = System.IO.File.ReadAllBytes(result.CipherTextPath);
+            byte[] initializationVector = Convert.FromBase64String(result.InitializationVector);
+            // make symmetric params and remove server-side AES encryption
+            var symParams = Common.MakeSymmetricCryptoParams(ServerDecryptionKey, initializationVector);
+            byte[] cipherText = Common.UndoSymmetricEncryption(cipherTextAES, symParams); 
+            //init response body and return cipherText to client
+            var responseBody = new AnonymousDownloadResponse(Convert.ToBase64String(cipherText));
             return new OkObjectResult(responseBody);
         }
 
