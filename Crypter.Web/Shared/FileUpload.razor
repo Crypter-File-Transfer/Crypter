@@ -57,7 +57,12 @@
    <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
 </div>
 
-<h3 hidden="@(!IsEncrypting)">@EncryptionStatusMessage</h3>
+<div class="encrypt-status" hidden="@(!IsEncrypting)">
+    <h3>@EncryptionStatusMessage</h3>
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
 
 @code {
    // Constants
