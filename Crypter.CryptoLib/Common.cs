@@ -4,6 +4,7 @@ using Crypter.CryptoLib.BouncyCastle;
 using Crypter.CryptoLib.Enums;
 using Crypter.CryptoLib.Models;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Crypter.CryptoLib
 {
@@ -19,10 +20,22 @@ namespace Crypter.CryptoLib
          return new SymmetricCryptoParams(symmetricKey, iv);
       }
 
+      public static SymmetricCryptoParams MakeSymmetricCryptoParams(byte[] key, byte[] iv)
+      {
+         var keyParam = new KeyParameter(key);
+         return new SymmetricCryptoParams(keyParam, iv);
+      }
+
       public static byte[] DoSymmetricEncryption(byte[] plaintext, SymmetricCryptoParams symmetricParams)
       {
          var symmetricWrapper = new SymmetricWrapper();
          return symmetricWrapper.EncryptBytes(plaintext, symmetricParams.Key, symmetricParams.IV);
+      }
+
+      public static byte[] UndoSymmetricEncryption(byte[] ciphertext, SymmetricCryptoParams symmetricParams)
+      {
+         var symmetricWrapper = new SymmetricWrapper();
+         return symmetricWrapper.DecryptBytes(ciphertext, symmetricParams.Key, symmetricParams.IV);
       }
 
       public static AsymmetricCipherKeyPair GenerateAsymmetricKeys(CryptoStrength strength)

@@ -67,19 +67,13 @@ namespace CrypterAPI.Controllers
             return new OkObjectResult(responseBody);
         }
 
-        // GET: crypter.dev/api/file/actual/{guid}
-        [HttpGet("actual/{id}")]
-        public async Task<IActionResult> GetFileUploadActual(string id)
+        // POST: crypter.dev/api/file/actual
+        [HttpPost("actual")]
+        public async Task<IActionResult> GetFileUploadActual([FromBody] AnonymousFileDownloadRequest body)
         {
-            Guid guid = Guid.Empty;
-            if (!Guid.TryParse(id, out guid))
-            {
-                var invalidResponseBody = new AnonymousDownloadResponse(ResponseCode.InvalidRequest);
-                return new BadRequestObjectResult(invalidResponseBody);
-            }
             await Db.Connection.OpenAsync();
             var query = new FileUploadItemQuery(Db);
-            var result = await query.FindOneAsync(guid.ToString());
+            var result = await query.FindOneAsync(body.Id.ToString());
             if (result is null)
                 return new NotFoundResult();
             //read file bytes and convert to base64 string
@@ -88,7 +82,7 @@ namespace CrypterAPI.Controllers
             //TODO: Apply decryption key to remove server-side encryption
 
             //return the encrypted file bytes
-            return new OkObjectResult(responseBody); 
+            return new OkObjectResult(responseBody);
         }
 
         // GET: crypter.dev/api/file/signature/{guid}
