@@ -9,10 +9,10 @@
                 <p>Download Link: <a href="@DownloadLink/@DataFormat/@ReturnedId" target="_blank">@DownloadLink/@DataFormat/@ReturnedId</a></p>
                 <h4>Decryption Key</h4>
                 <p><em>Share this key with the receiving party</em></p>
-                <input @bind="PrivateKey" type="text" name="privateKey" id="privateKey" readonly />
+                <input class="form-control"  @bind="PrivateKey" type="text" name="privateKey" id="privateKey" readonly />
                 <h4>Generated Encryption Key</h4>
                 <p><em>Do not share this key</em></p>
-                <input @bind="PublicKey" type="text" name="publicKey" id="publicKey" readonly />
+                <input class="form-control"  @bind="PublicKey" type="text" name="publicKey" id="publicKey" readonly />
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close()">Okay</button>

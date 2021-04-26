@@ -104,6 +104,9 @@ table {
   .grt ul ul, .grt ul ol, .grt ol ul, .grt ol ol, .grt blockquote.right p, .grt blockquote.left p, .grt .alert :last-child, .grt .note :last-child, .grt .box :last-child, .grt .footnotes :last-child {
     margin-bottom: 0; }
 
+.nav.head .nav-item button, .nav.head .nav-item a {
+  margin: 8px; }
+
 #encrypt {
   margin: 40px auto; }
 
@@ -127,8 +130,7 @@ table {
   .file-upload label, .message-upload label {
     display: block; }
   .file-upload input[type="text"], .message-upload input[type="text"] {
-    margin-right: 10px;
-    width: 500px; }
+    margin-right: 10px; }
   .file-upload #fileInput, .message-upload #fileInput {
     padding: 5rem 9rem 2rem;
     z-index: 10; }
