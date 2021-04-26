@@ -65,19 +65,13 @@ namespace CrypterAPI.Controllers
             return new OkObjectResult(responseBody);
         }
 
-        // GET: crypter.dev/api/message/actual/{guid}
-        [HttpGet("actual/{id}")]
-        public async Task<IActionResult> GetTextUploadActual(string id)
+        // POST: crypter.dev/api/message/actual/{guid}
+        [HttpPost("actual")]
+        public async Task<IActionResult> GetTextUploadActual([FromBody] AnonymousMessageDownloadRequest body)
         {
-            Guid guid = Guid.Empty;
-            if (!Guid.TryParse(id, out guid))
-            {
-                var invalidResponseBody = new AnonymousDownloadResponse(ResponseCode.InvalidRequest);
-                return new BadRequestObjectResult(invalidResponseBody);
-            }
             await Db.Connection.OpenAsync();
             var query = new TextUploadItemQuery(Db);
-            var result = await query.FindOneAsync(id);
+            var result = await query.FindOneAsync(body.Id.ToString());
             if (result is null)
                 return new NotFoundResult();
             //read file bytes and convert to base64 string
