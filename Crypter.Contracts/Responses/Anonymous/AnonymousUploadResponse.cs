@@ -12,14 +12,14 @@ namespace Crypter.Contracts.Responses.Anonymous
       /// Do not use!
       /// For deserialization purposes only.
       /// </summary>
-      private AnonymousUploadResponse() : base(StatusCode.Unknown)
+      private AnonymousUploadResponse() : base(ResponseCode.Unknown)
       { }
 
       /// <summary>
       /// Error response
       /// </summary>
       /// <param name="status"></param>
-      public AnonymousUploadResponse(StatusCode status) : base(status)
+      public AnonymousUploadResponse(ResponseCode status) : base(status)
       { }
 
       /// <summary>
@@ -28,7 +28,7 @@ namespace Crypter.Contracts.Responses.Anonymous
       /// <param name="status"></param>
       /// <param name="id"></param>
       /// <param name="expirationUTC"></param>
-      public AnonymousUploadResponse(Guid id, DateTime expirationUTC) : base(StatusCode.Success)
+      public AnonymousUploadResponse(Guid id, DateTime expirationUTC) : base(ResponseCode.Success)
       {
          Id = id;
          ExpirationUTC = expirationUTC;

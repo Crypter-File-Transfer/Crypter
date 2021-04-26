@@ -4,6 +4,7 @@ using Crypter.CryptoLib.BouncyCastle;
 using Crypter.CryptoLib.Enums;
 using Crypter.CryptoLib.Models;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Crypter.CryptoLib
 {
@@ -19,10 +20,22 @@ namespace Crypter.CryptoLib
          return new SymmetricCryptoParams(symmetricKey, iv);
       }
 
+      public static SymmetricCryptoParams MakeSymmetricCryptoParams(byte[] key, byte[] iv)
+      {
+         var keyParam = new KeyParameter(key);
+         return new SymmetricCryptoParams(keyParam, iv);
+      }
+
       public static byte[] DoSymmetricEncryption(byte[] plaintext, SymmetricCryptoParams symmetricParams)
       {
          var symmetricWrapper = new SymmetricWrapper();
          return symmetricWrapper.EncryptBytes(plaintext, symmetricParams.Key, symmetricParams.IV);
+      }
+
+      public static byte[] UndoSymmetricEncryption(byte[] ciphertext, SymmetricCryptoParams symmetricParams)
+      {
+         var symmetricWrapper = new SymmetricWrapper();
+         return symmetricWrapper.DecryptBytes(ciphertext, symmetricParams.Key, symmetricParams.IV);
       }
 
       public static AsymmetricCipherKeyPair GenerateAsymmetricKeys(CryptoStrength strength)
@@ -32,14 +45,19 @@ namespace Crypter.CryptoLib
          return asymmetricWrapper.GenerateAsymmetricKeyPair(rsaKeySize);
       }
 
-      public static AnonymousSignature CreateSignature(byte[] plaintext, SymmetricCryptoParams symmetricParams, AsymmetricKeyParameter publicKey, CryptoStrength strength)
+      public static byte[] CreateEncryptedSignature(byte[] plaintext, SymmetricCryptoParams symmetricParams, AsymmetricKeyParameter publicKey, CryptoStrength strength)
       {
          var digestAlgorithm = MapStrengthToDigestAlgorithm(strength);
          byte[] messageHash = DigestWrapper.GetDigest(plaintext, digestAlgorithm);
          var encodedHash = Convert.ToBase64String(messageHash);
          var encodedSymmetricKey = Convert.ToBase64String(symmetricParams.Key.ConvertToBytes());
          var encodedIV = Convert.ToBase64String(symmetricParams.IV);
-         return new AnonymousSignature(digestAlgorithm, encodedHash, encodedSymmetricKey, encodedIV);
+         var signature = new AnonymousSignature(digestAlgorithm, encodedHash, encodedSymmetricKey, encodedIV);
+         var signatureString = signature.ToString();
+         var signatureBytes = Encoding.UTF8.GetBytes(signatureString);
+
+         var asymmetricWrapper = new AsymmetricWrapper();
+         return asymmetricWrapper.Encrypt(signatureBytes, publicKey);
       }
 
       public static DigestAlgorithm MapStrengthToDigestAlgorithm(CryptoStrength strength)

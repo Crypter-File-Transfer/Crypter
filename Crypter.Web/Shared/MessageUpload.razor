@@ -57,13 +57,11 @@
       var asymmetricKeys = CryptoLib.Common.GenerateAsymmetricKeys(strength);
 
       await SetNewEncryptionStatus("Creating a signature");
-      var signature = CryptoLib.Common.CreateSignature(messageBytes, symmetricCryptoParams, asymmetricKeys.Public, strength);
-      var signatureString = signature.ToString();
-      var signatureBytes = Encoding.UTF8.GetBytes(signatureString);
+      var signature = CryptoLib.Common.CreateEncryptedSignature(messageBytes, symmetricCryptoParams, asymmetricKeys.Public, strength);
 
       await SetNewEncryptionStatus("Preparing to upload");
       var encodedCipherText = Convert.ToBase64String(cipherText);
-      var encodedSignature = Convert.ToBase64String(signatureBytes);
+      var encodedSignature = Convert.ToBase64String(signature);
       var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
 
       await SetNewEncryptionStatus("Uploading");

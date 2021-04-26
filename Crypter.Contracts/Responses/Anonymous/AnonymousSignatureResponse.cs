@@ -10,14 +10,14 @@ namespace Crypter.Contracts.Responses.Anonymous
       /// Do not use!
       /// For deserialization purposes only.
       /// </summary>
-      private AnonymousSignatureResponse() : base(StatusCode.Unknown)
+      private AnonymousSignatureResponse()
       { }
 
       /// <summary>
       /// Error response
       /// </summary>
       /// <param name="status"></param>
-      public AnonymousSignatureResponse(StatusCode status) : base(status)
+      public AnonymousSignatureResponse(ResponseCode status) : base(status)
       { }
 
       /// <summary>
@@ -25,7 +25,7 @@ namespace Crypter.Contracts.Responses.Anonymous
       /// </summary>
       /// <param name="status"></param>
       /// <param name="signatureBase64"></param>
-      public AnonymousSignatureResponse(string signatureBase64) : base(StatusCode.Success)
+      public AnonymousSignatureResponse(string signatureBase64) : base(ResponseCode.Success)
       {
          Signature = signatureBase64;
       }

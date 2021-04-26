@@ -37,7 +37,7 @@ namespace Crypter.CryptoLib.BouncyCastle
       }
 
       /// <summary>
-      /// Encrypt a sequence of bytes using AES/CTR/NoPadding
+      /// Encrypt some bytes using AES/CTR/NoPadding
       /// </summary>
       /// <param name="inBytes"></param>
       /// <param name="key"></param>
@@ -47,6 +47,20 @@ namespace Crypter.CryptoLib.BouncyCastle
       {
          IBufferedCipher cipher = CipherUtilities.GetCipher("AES/CTR/NoPadding");
          cipher.Init(true, new ParametersWithIV(key, iv));
+         return cipher.DoFinal(inBytes);
+      }
+
+      /// <summary>
+      /// Decrypt some bytes using AES/CTR/NoPadding
+      /// </summary>
+      /// <param name="inBytes"></param>
+      /// <param name="key"></param>
+      /// <param name="iv"></param>
+      /// <returns></returns>
+      public byte[] DecryptBytes(byte[] inBytes, KeyParameter key, byte[] iv)
+      {
+         IBufferedCipher cipher = CipherUtilities.GetCipher("AES/CTR/NoPadding");
+         cipher.Init(false, new ParametersWithIV(key, iv));
          return cipher.DoFinal(inBytes);
       }
    }

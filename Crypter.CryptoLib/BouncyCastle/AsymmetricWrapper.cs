@@ -37,6 +37,21 @@ namespace Crypter.CryptoLib.BouncyCastle
       }
 
       /// <summary>
+      /// Decrypt some ciphertext
+      /// </summary>
+      /// <param name="privateKey"></param>
+      /// <returns></returns>
+      /// <remarks>
+      /// https://stackoverflow.com/questions/10783081/c-sharp-bouncycastle-rsa-encryption-and-decryption
+      /// </remarks>
+      public byte[] Decrypt(byte[] ciphertext, AsymmetricKeyParameter privateKey)
+      {
+         var engine = new RsaEngine();
+         engine.Init(false, privateKey);
+         return engine.ProcessBlock(ciphertext, 0, ciphertext.Length);
+      }
+
+      /// <summary>
       /// Generate a signature
       /// </summary>
       /// <param name="plaintext"></param>

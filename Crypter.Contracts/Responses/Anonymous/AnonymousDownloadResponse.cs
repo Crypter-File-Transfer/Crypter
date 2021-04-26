@@ -10,21 +10,21 @@ namespace Crypter.Contracts.Responses.Anonymous
       /// Do not use!
       /// For deserialization purposes only.
       /// </summary>
-      private AnonymousDownloadResponse() : base(StatusCode.Unknown)
+      private AnonymousDownloadResponse()
       { }
 
       /// <summary>
       /// Error response
       /// </summary>
       /// <param name="status"></param>
-      public AnonymousDownloadResponse(StatusCode status) : base(status)
+      public AnonymousDownloadResponse(ResponseCode status) : base(status)
       { }
 
       /// <summary>
       /// Success response
       /// </summary>
       /// <param name="cipherText"></param>
-      public AnonymousDownloadResponse(string cipherText) : base(StatusCode.Success)
+      public AnonymousDownloadResponse(string cipherText) : base(ResponseCode.Success)
       {
          CipherText = cipherText;
       }
