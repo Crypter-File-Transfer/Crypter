@@ -35,7 +35,8 @@ namespace CrypterAPI.Controllers
             newFile.FileName = body.Name;
             newFile.CipherText = body.CipherText;
             newFile.Signature = body.Signature;
-
+            //add server encryption key to the upload item 
+            newFile.ServerEncryptionKey = body.ServerEncryptionKey;
             await newFile.InsertAsync(Db, BaseSaveDirectory);
 
             var responseBody = new AnonymousUploadResponse(Guid.Parse(newFile.ID), newFile.ExpirationDate);

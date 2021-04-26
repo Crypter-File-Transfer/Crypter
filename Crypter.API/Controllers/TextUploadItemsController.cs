@@ -34,7 +34,7 @@ namespace CrypterAPI.Controllers
             var newText = new TextUploadItem();
             newText.CipherText = body.CipherText;
             newText.Signature = body.Signature;
-
+            newText.ServerEncryptionKey = body.ServerEncryptionKey; 
             await newText.InsertAsync(Db, BaseSaveDirectory);
 
             var responseBody = new AnonymousUploadResponse(Guid.Parse(newText.ID), newText.ExpirationDate);

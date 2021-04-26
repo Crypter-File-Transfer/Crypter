@@ -3,7 +3,11 @@ using System.Data;
 using System.Threading.Tasks;
 using MySqlConnector;
 using Crypter.API.Controllers;
-using System.IO; 
+using Crypter.CryptoLib; 
+using System.IO;
+using Org.BouncyCastle.Crypto.Parameters;
+using Crypter.CryptoLib.BouncyCastle;
+using System.Text;
 
 namespace CrypterAPI.Models
 {
@@ -24,15 +28,25 @@ namespace CrypterAPI.Models
             ID = Guid.NewGuid().ToString();
             //temporary assignments to UserID 
             UserID = ID;
+            //convert serverEncryption key from string to bytes and apply encryption to cipherText
+            // decode encryption key from base64 to bytes
+            byte[] HashedSymmetricEncryptionKey = Convert.FromBase64String(ServerEncryptionKey);
+            //generate an iv and save to UploadItem
+            SymmetricWrapper wrapper = new SymmetricWrapper();
+            byte[] iv = wrapper.GenerateIV();
+            InitializationVector = Convert.ToBase64String(iv); 
+            //make symmetric crypto parameters and apply AES encryption
+            var symParams = Common.MakeSymmetricCryptoParams(HashedSymmetricEncryptionKey, iv);
+            byte[] cipherTextAES = Common.DoSymmetricEncryption(Encoding.UTF8.GetBytes(CipherText), symParams);
             // Create file paths and insert these paths
             FilePaths filePath = new FilePaths(baseSaveDirectory);
-            var success = filePath.SaveFile(FileName, ID, CipherText, Signature, true);
+            var success = filePath.SaveFile(FileName, ID, cipherTextAES, Signature, true);
             //add paths to FileUploadItem object
             CipherTextPath = filePath.ActualPathString;
             SignaturePath = filePath.SigPathString;
             // Calc size of cipher text file
             Size = filePath.FileSizeBytes(CipherTextPath); 
-            cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @encryptedfilecontentpath);";
+            cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`, `Iv`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @encryptedfilecontentpath, @initializationvector);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -40,9 +54,8 @@ namespace CrypterAPI.Models
         public async Task UpdateAsync(CrypterDB db)
         {
             using var cmd = db.Connection.CreateCommand();
-            cmd.CommandText = @"UPDATE `FileUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedFileContentPath`= @encryptedfilecontentpath WHERE `ID` = @id;";
+            cmd.CommandText = @"UPDATE `FileUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedFileContentPath`= @encryptedfilecontentpath, `Iv` = @initializationvector WHERE `ID` = @id;";
             BindParams(cmd);
-            //BindId(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -113,6 +126,12 @@ namespace CrypterAPI.Models
                 ParameterName = "@encryptedfilecontentpath",
                 DbType = DbType.String,
                 Value = CipherTextPath,
+            });
+            cmd.Parameters.Add(new MySqlParameter
+            {
+                ParameterName = "@initializationvector",
+                DbType = DbType.String,
+                Value = InitializationVector,
             });
         }
     }
