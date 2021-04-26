@@ -1,26 +1,31 @@
 ﻿@page "/"
 
-<Navigation />
-<div class="text-center">
-    <h1 class="title">Crypter.dev</h1>
-    <h2>Private, encrypted file transfer and messaging</h2>
-    <div class="container" id="encrypt">
-        <ul class="nav nav-tabs" id="myTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file" type="button" role="tab" aria-controls="file" aria-selected="true">Encrypt a file</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="message-tab" data-bs-toggle="tab" data-bs-target="#message" type="button" role="tab" aria-controls="message" aria-selected="false">Encrypt a message</button>
-            </li>
-        </ul>
-        <div class="tab-content" id="myTabContent">
-            <div class="tab-pane fade show active" id="file" role="tabpanel" aria-labelledby="file-tab">
-                <h2>Upload a file</h2>
-                <FileUpload />
-            </div>
-            <div class="tab-pane fade" id="message" role="tabpanel" aria-labelledby="message-tab">
-                <h2>Type a message</h2>
-                <MessageUpload />
+<nav class="navbar navbar-dark bg-dark navbar-expand-lg justify-content-end">
+    <a class="navbar-brand" href="#"></a>
+    <Navigation />
+</nav>
+<div class="container">
+    <div class="text-center">
+        <h1 class="title">Crypter.dev</h1>
+        <h2>Private, encrypted file transfer and messaging</h2>
+        <div class="container" id="encrypt">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file" type="button" role="tab" aria-controls="file" aria-selected="true">Encrypt a file</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="message-tab" data-bs-toggle="tab" data-bs-target="#message" type="button" role="tab" aria-controls="message" aria-selected="false">Encrypt a message</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="file" role="tabpanel" aria-labelledby="file-tab">
+                    <h2 class="mt-0">Upload a file</h2>
+                    <FileUpload />
+                </div>
+                <div class="tab-pane fade" id="message" role="tabpanel" aria-labelledby="message-tab">
+                    <h2 class="mt-0">Type a message</h2>
+                    <MessageUpload />
+                </div>
             </div>
         </div>
     </div>

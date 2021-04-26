@@ -1,18 +1,20 @@
 ﻿@page "/decrypt/{DataFormat}/{guid}"
 
 <NavMenu />
-<h2>Decrypt your @DataFormat</h2>
-<DecryptDetails @bind-DataFormat="DataFormat" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
+<div class="container">
+    <h2>Decrypt your @DataFormat</h2>
+    <Crypter.Web.Shared.DecryptDetails @bind-DataFormat="DataFormat" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></Crypter.Web.Shared.DecryptDetails>
 
-@code {
+    @code {
 
-    string creationDate = DateTime.Now.ToString("MM/dd/yyyy");
-    string expirationDate = "Never";
-    int fileSize = 0;
+        string creationDate = DateTime.Now.ToString("MM/dd/yyyy");
+        string expirationDate = "Never";
+        int fileSize = 0;
 
-    [Parameter]
-    public string DataFormat { get; set; }
+        [Parameter]
+        public string DataFormat { get; set; }
 
-    [Parameter]
-    public string guid { get; set; }
-}
+        [Parameter]
+        public string guid { get; set; }
+    }
+</div>

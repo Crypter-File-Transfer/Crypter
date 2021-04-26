@@ -14,12 +14,6 @@ a, .btn-link {
     border-color: #1861ac;
 }
 
-app {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-}
-
 .top-row {
     height: 3.5rem;
     display: flex;
