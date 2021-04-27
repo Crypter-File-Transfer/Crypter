@@ -5,8 +5,10 @@
 @inject NavigationManager NavManager
 
 <NavMenu />
-<h2>Decrypt your @dataFormat</h2>
-<DecryptDetails @bind-DataFormat="dataFormat" @bind-Id="Id" @bind-Name="name" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
+<div class="container">
+  <h2>Decrypt your @dataFormat</h2>
+  <DecryptDetails @bind-DataFormat="dataFormat" @bind-Id="Id" @bind-Name="name" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
+</div>
 
 @code {
    string dataFormat = "";

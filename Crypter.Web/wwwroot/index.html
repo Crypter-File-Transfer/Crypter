@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="h-100">
 
 <head>
     <meta charset="utf-8" />
@@ -14,14 +14,8 @@
     <link rel="stylesheet" href="css/main.css" />
 </head>
 
-<body class="grt">
+<body class="grt d-flex flex-column h-100">
     <app>Loading...</app>
-
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
     <footer class="footer mt-auto py-3 bg-light">
         <div class="container">
             <div class="col-md-6">
@@ -30,10 +24,10 @@
                         <h5>Crypter.dev</h5>
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link" href="#">Home</a>
+                                <a class="nav-link p-0 lh-lg" href="#">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#">About</a>
+                                <a class="nav-link p-0 lh-lg" href="#">About</a>
                             </li>
                         </ul>
                     </div>
@@ -41,10 +35,10 @@
                         <h5>Legal</h5>
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link" href="#">Privacy Policy</a>
+                                <a class="nav-link p-0 lh-lg" href="#">Privacy Policy</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#">Terms of Service</a>
+                                <a class="nav-link p-0 lh-lg" href="./acceptable-use-policy">Acceptable Use Policy</a>
                             </li>
                         </ul>
                     </div>
@@ -52,13 +46,13 @@
                         <h5>Support</h5>
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link" href="#">Help</a>
+                                <a class="nav-link p-0 lh-lg" href="#">Help</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#">Feedback</a>
+                                <a class="nav-link p-0 lh-lg" href="#">Feedback</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#">Donate</a>
+                                <a class="nav-link p-0 lh-lg" href="#">Donate</a>
                             </li>
                         </ul>
                     </div>
@@ -69,6 +63,11 @@
             &copy; 2021 Crypter Dev Team
         </div>
     </footer>
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
     <script src="lib/jquery/dist/jquery.min.js"></script>
     <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="_content/BlazorInputFile/inputfile.js"></script>
