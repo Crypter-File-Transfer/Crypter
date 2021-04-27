@@ -7,7 +7,9 @@ using System.Collections.Generic;
 using Crypter.Contracts.Requests.Anonymous;
 using Crypter.Contracts.Responses.Anonymous;
 using Crypter.Contracts.Enum;
-using System.IO; 
+using System.IO;
+using Crypter.CryptoLib;
+
 namespace CrypterAPI.Controllers
 {
     [Route("api/file")]
@@ -35,12 +37,24 @@ namespace CrypterAPI.Controllers
             newFile.FileName = body.Name;
             newFile.CipherText = body.CipherText;
             newFile.Signature = body.Signature;
-
-            await newFile.InsertAsync(Db, BaseSaveDirectory);
-
-            var responseBody = new AnonymousUploadResponse(Guid.Parse(newFile.ID), newFile.ExpirationDate);
-            return new JsonResult(responseBody);
-
+            // if server encryption key is empty and is not 256 bits(32bytes), reject the post
+            if (!string.IsNullOrEmpty(body.ServerEncryptionKey))
+            {
+                byte[] keyString = Convert.FromBase64String(body.ServerEncryptionKey);
+                int keySize = Buffer.ByteLength(keyString);
+                //check size
+                if (keySize == 32)
+                {
+                    //add server encryption key to the upload item 
+                    newFile.ServerEncryptionKey = body.ServerEncryptionKey;
+                    await newFile.InsertAsync(Db, BaseSaveDirectory);
+                    var responseBody = new AnonymousUploadResponse(Guid.Parse(newFile.ID), newFile.ExpirationDate);
+                    return new JsonResult(responseBody);
+                }
+            }
+            //reject posts with no encryption key/ invalid length
+            var invalidResponseBody = new AnonymousUploadResponse(ResponseCode.InvalidRequest);
+            return new BadRequestObjectResult(invalidResponseBody);
         }
 
         // GET: crypter.dev/api/file/preview/{guid}
@@ -76,11 +90,16 @@ namespace CrypterAPI.Controllers
             var result = await query.FindOneAsync(body.Id.ToString());
             if (result is null)
                 return new NotFoundResult();
-            //read file bytes and convert to base64 string
-            string cipherText = Convert.ToBase64String(System.IO.File.ReadAllBytes(result.CipherTextPath));
-            var responseBody = new AnonymousDownloadResponse(cipherText);
-            //TODO: Apply decryption key to remove server-side encryption
-
+            //Get decryption key from client
+            byte[] ServerDecryptionKey = Convert.FromBase64String(body.ServerDecryptionKey);
+            //read bytes from path
+            byte[] cipherTextAES = System.IO.File.ReadAllBytes(result.CipherTextPath);
+            byte[] initializationVector = Convert.FromBase64String(result.InitializationVector);
+            // make symmetric params and remove server-side AES encryption
+            var symParams = Common.MakeSymmetricCryptoParams(ServerDecryptionKey, initializationVector);
+            byte[] cipherText = Common.UndoSymmetricEncryption(cipherTextAES, symParams);
+            //init response body and return cipherText to client
+            var responseBody = new AnonymousDownloadResponse(Convert.ToBase64String(cipherText));
             //return the encrypted file bytes
             return new OkObjectResult(responseBody);
         }

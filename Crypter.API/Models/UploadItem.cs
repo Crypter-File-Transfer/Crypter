@@ -24,8 +24,10 @@ namespace CrypterAPI.Models
       public DateTime Created { get; set; }
       // expiration date
       public DateTime ExpirationDate { get; set;}
-      //server key, unsure of the type
+      //server key
       public string ServerEncryptionKey { get; set; }
+      //initialization vector for server encryption/decryption
+      public string InitializationVector { get; set; }
       //constructor sets TimeStamp upon instantiation
       public UploadItem()
       {

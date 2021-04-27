@@ -27,6 +27,7 @@ CREATE TABLE `MessageUploads` (
   `SignaturePath` VARCHAR(256),
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   `ExpirationDate` TIMESTAMP NOT NULL,
+  `Iv` VARCHAR(256),
   PRIMARY KEY (ID)
   /*Commented out for testing
   FOREIGN KEY (UserID) REFERENCES Users(UserID)*/
@@ -41,6 +42,7 @@ CREATE TABLE `FileUploads` (
   `SignaturePath` VARCHAR(256),
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   `ExpirationDate` TIMESTAMP NOT NULL,
+  `Iv` VARCHAR(256),
   PRIMARY KEY (ID)
  /*Commented out for testing
   FOREIGN KEY (UserID) REFERENCES Users(UserID)

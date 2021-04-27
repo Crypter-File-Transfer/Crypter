@@ -27,7 +27,7 @@ namespace Crypter.API.Controllers
         /// <returns>true or false to indicate whether the operation was successful</returns>
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=net-5.0
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writeallbytes?view=net-5.0
-        public bool SaveFile(string untrustedName, string guid, string cipherText, string signature, bool isFile)
+        public bool SaveFile(string untrustedName, string guid, byte[] cipherText, string signature, bool isFile)
         {
             string pathString;
             //create folder path for file upload
@@ -57,7 +57,7 @@ namespace Crypter.API.Controllers
                 // create file and write all text to file, then close file
                 File.WriteAllText(SigPathString, signature);
                 //decode base64 to bytes and save as binary
-                File.WriteAllBytes(ActualPathString, Convert.FromBase64String(cipherText));
+                File.WriteAllBytes(ActualPathString, cipherText);
             }
             catch (Exception exception)
             {
@@ -74,7 +74,7 @@ namespace Crypter.API.Controllers
         /// <param name="cipherText"></param>
         public int FileSizeBytes(string targetPath)
         {
-            //decode base64 to bytes and save as binary
+            //get size of file
             try
             {
                 FileInfo file = new FileInfo(targetPath);

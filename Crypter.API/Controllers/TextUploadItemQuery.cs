@@ -21,7 +21,7 @@ namespace CrypterAPI.Controllers
         public async Task<TextUploadItem> FindOneAsync(string id)
         {
             using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate` FROM `MessageUploads` WHERE `ID` = @id";
+            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `MessageUploads` WHERE `ID` = @id";
             cmd.Parameters.Add(new MySqlParameter
             {
                 ParameterName = "@id",
@@ -35,7 +35,7 @@ namespace CrypterAPI.Controllers
         public async Task<List<TextUploadItem>> LatestItemsAsync()
         {
             using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate` FROM `MessageUploads`";
+            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `MessageUploads`";
             return await ReadAllAsync(await cmd.ExecuteReaderAsync());
         }
 
@@ -55,7 +55,8 @@ namespace CrypterAPI.Controllers
                         CipherTextPath = reader.GetString(4),
                         SignaturePath = reader.GetString(5),
                         Created = reader.GetDateTime(6),
-                        ExpirationDate = reader.GetDateTime(7)
+                        ExpirationDate = reader.GetDateTime(7),
+                        InitializationVector = reader.GetString(8)
                     };
                     items.Add(item);
                 }
