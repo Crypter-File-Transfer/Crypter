@@ -84,7 +84,7 @@
         var signature = new AnonymousSignature(decryptedSignatureString);
 
         // Request the ciphertext from the server
-        var serverDecryptionKey = DigestWrapper.GetDigest(Encoding.UTF8.GetBytes(signature.Key), DigestAlgorithm.SHA256);
+        var serverDecryptionKey = DigestWrapper.GetDigest(Convert.FromBase64String(signature.Key), DigestAlgorithm.SHA256);
         var encodedServerDecryptionKey = Convert.ToBase64String(serverDecryptionKey);
         var ciphertextResponse = await DownloadCiphertext(DataFormat, id, encodedServerDecryptionKey);
 
