@@ -37,7 +37,7 @@ namespace CrypterAPI.Models
             InitializationVector = Convert.ToBase64String(iv); 
             //make symmetric crypto parameters and apply AES encryption
             var symParams = Common.MakeSymmetricCryptoParams(HashedSymmetricEncryptionKey, iv);
-            byte[] cipherTextAES = Common.DoSymmetricEncryption(Encoding.UTF8.GetBytes(CipherText), symParams);
+            byte[] cipherTextAES = Common.DoSymmetricEncryption(Convert.FromBase64String(CipherText), symParams);
             // Create file paths and insert these paths
             FilePaths filePath = new FilePaths(baseSaveDirectory);
             var success = filePath.SaveFile(FileName, ID, cipherTextAES, Signature, true);
