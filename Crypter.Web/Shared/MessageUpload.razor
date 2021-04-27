@@ -1,5 +1,6 @@
 @inject IJSRuntime jsRuntime
 @inject HttpClient HttpClient
+@inject AppSettings AppSettings
 
 <div class="message-upload" hidden="@IsEncrypting">
     <div class="row">
@@ -24,97 +25,97 @@
 </div>
 
 @code {
-   // Constants
-   private const int MaxMessageLength = 1024;
+    // Constants
+    private const int MaxMessageLength = 1024;
 
-   // State
-   private bool IsEncrypting = false;
-   private string EncryptionStatusMessage = "";
+    // State
+    private bool IsEncrypting = false;
+    private string EncryptionStatusMessage = "";
 
-   // User input
-   private string MessageText = "";
-   CryptoStrength encryptionStrength = CryptoStrength.Minimum;
+    // User input
+    private string MessageText = "";
+    CryptoStrength encryptionStrength = CryptoStrength.Minimum;
 
-   // Variables we control
-   private Guid returnedId;
-   private string publicKey;
-   private string privateKey;
-   private string dataFormat;
+    // Variables we control
+    private Guid returnedId;
+    private string publicKey;
+    private string privateKey;
+    private string dataFormat;
 
-   private async Task EncryptMessage(string message, CryptoStrength strength)
-   {
-      // Hide file upload on encryption
-      IsEncrypting = true;
-      await SetNewEncryptionStatus("Creating symmetric key");
-      var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoInfo(strength);
-      var hashedSymmetricKey = DigestWrapper.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
+    private async Task EncryptMessage(string message, CryptoStrength strength)
+    {
+        // Hide file upload on encryption
+        IsEncrypting = true;
+        await SetNewEncryptionStatus("Creating symmetric key");
+        var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoInfo(strength);
+        var hashedSymmetricKey = DigestWrapper.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
-      await SetNewEncryptionStatus("Encrypting your message");
-      byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-      var cipherText = CryptoLib.Common.DoSymmetricEncryption(messageBytes, symmetricCryptoParams);
+        await SetNewEncryptionStatus("Encrypting your message");
+        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+        var cipherText = CryptoLib.Common.DoSymmetricEncryption(messageBytes, symmetricCryptoParams);
 
-      await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
-      var asymmetricKeys = CryptoLib.Common.GenerateAsymmetricKeys(strength);
+        await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
+        var asymmetricKeys = CryptoLib.Common.GenerateAsymmetricKeys(strength);
 
-      await SetNewEncryptionStatus("Creating a signature");
-      var signature = CryptoLib.Common.CreateEncryptedSignature(messageBytes, symmetricCryptoParams, asymmetricKeys.Public, strength);
+        await SetNewEncryptionStatus("Creating a signature");
+        var signature = CryptoLib.Common.CreateEncryptedSignature(messageBytes, symmetricCryptoParams, asymmetricKeys.Public, strength);
 
-      await SetNewEncryptionStatus("Preparing to upload");
-      var encodedCipherText = Convert.ToBase64String(cipherText);
-      var encodedSignature = Convert.ToBase64String(signature);
-      var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
+        await SetNewEncryptionStatus("Preparing to upload");
+        var encodedCipherText = Convert.ToBase64String(cipherText);
+        var encodedSignature = Convert.ToBase64String(signature);
+        var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
 
-      await SetNewEncryptionStatus("Uploading");
-      var response = await UploadMessageToAPI(encodedCipherText, encodedSignature, serverEncryptionKey);
+        await SetNewEncryptionStatus("Uploading");
+        var response = await UploadMessageToAPI(encodedCipherText, encodedSignature, serverEncryptionKey);
 
-      // Send data to success modal component
-      CompletedUpload("message", response.Id,
-         Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
-         Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+        // Send data to success modal component
+        CompletedUpload("message", response.Id,
+           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
+           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
 
-      // Open modal
-      Modal.Open();
+        // Open modal
+        Modal.Open();
 
-      // Reset message text
-      MessageText = "";
+        // Reset message text
+        MessageText = "";
 
-      // No longer encrypting
-      IsEncrypting = false;
-   }
+        // No longer encrypting
+        IsEncrypting = false;
+    }
 
-   public async Task SetNewEncryptionStatus(string status)
-   {
-      EncryptionStatusMessage = status;
-      StateHasChanged();
-      await Task.Delay(500);
-   }
+    public async Task SetNewEncryptionStatus(string status)
+    {
+        EncryptionStatusMessage = status;
+        StateHasChanged();
+        await Task.Delay(500);
+    }
 
-   public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
-   {
-      dataFormat = format;
-      returnedId = id;
-      publicKey = pubKey;
-      privateKey = privKey;
-   }
+    public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
+    {
+        dataFormat = format;
+        returnedId = id;
+        publicKey = pubKey;
+        privateKey = privKey;
+    }
 
-   private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string signature, string serverEncryptionKey)
-   {
-      var postBody = new AnonymousMessageUploadRequest
-      {
-         CipherText = cipherText,
-         Signature = signature,
-         ServerEncryptionKey = serverEncryptionKey
-      };
-      using var response = await HttpClient.PostAsJsonAsync("https://localhost:5001/api/message", postBody);
+    private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string signature, string serverEncryptionKey)
+    {
+        var postBody = new AnonymousMessageUploadRequest
+        {
+            CipherText = cipherText,
+            Signature = signature,
+            ServerEncryptionKey = serverEncryptionKey
+        };
+        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/message", postBody);
 
-      if (!response.IsSuccessStatusCode)
-      {
-         // insert error handling
-      }
+        if (!response.IsSuccessStatusCode)
+        {
+            // insert error handling
+        }
 
-      var content = await response.Content.ReadAsStringAsync();
-      return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
-   }
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
+    }
 
-   private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
+    private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
 }

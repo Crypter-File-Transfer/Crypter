@@ -2,59 +2,60 @@
 
 @inject IJSRuntime jsRuntime
 @inject HttpClient HttpClient
+@inject AppSettings AppSettings
 
 <div class="file-upload" hidden="@IsEncrypting">
-   <div class="row">
-      <div class="col-12 p-0">
-         <div class="dropzone @dropClass rounded">
-            <div class="dz-text">
-               <p>Drop file here</p>
-               <p>or</p>
+    <div class="row">
+        <div class="col-12 p-0">
+            <div class="dropzone @dropClass rounded">
+                <div class="dz-text">
+                    <p>Drop file here</p>
+                    <p>or</p>
+                </div>
+                <BlazorInputFile.InputFile id="fileInput"
+                                           OnChange="HandleFileInputChange"
+                                           @ondragenter="HandleDragEnter"
+                                           @ondragleave="HandleDragLeave" />
             </div>
-            <BlazorInputFile.InputFile id="fileInput"
-                                       OnChange="HandleFileInputChange"
-                                       @ondragenter="HandleDragEnter"
-                                       @ondragleave="HandleDragLeave" />
-         </div>
-         @if ((fileSizeError || fileCountError))
-         {
-            <ul class="validation-errors mb-0">
-               @if (fileSizeError)
-               {
-                  <li class="validation-message">The max file size is @MaxFileSizeMB MB.</li>
-               }
+            @if ((fileSizeError || fileCountError))
+            {
+                <ul class="validation-errors mb-0">
+                    @if (fileSizeError)
+                    {
+                        <li class="validation-message">The max file size is @MaxFileSizeMB MB.</li>
+                    }
 
-               @if (fileCountError)
-               {
-                  <li class="validation-message">You can only upload @MaxFileCount file(s).</li>
-               }
-            </ul>
-         }
-         @if (selectedFiles != null && selectedFiles.Count > 0)
-         {
-            <div class="col-12">
-               <ul>
-                  @foreach (var file in selectedFiles)
-                  {
-                     <li>
-                        @file.Name
-                        <button class="btn btn-link text-danger p-0 pl-1" type="button"
-                                @onclick="@(e => RemoveFile(file))">
-                           <small class="align-text-bottom">Remove</small>
-                        </button>
-                     </li>
-                  }
-               </ul>
-            </div>
-         }
-      </div>
-   </div>
-   <div class="row">
-      <div class="col-12 p-0">
-         <button type="button" class="btn btn-primary" @onclick="@(e => EncryptFile(selectedFiles[0], encryptionStrength))">Encrypt</button>
-      </div>
-   </div>
-   <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
+                    @if (fileCountError)
+                    {
+                        <li class="validation-message">You can only upload @MaxFileCount file(s).</li>
+                    }
+                </ul>
+            }
+            @if (selectedFiles != null && selectedFiles.Count > 0)
+            {
+                <div class="col-12">
+                    <ul>
+                        @foreach (var file in selectedFiles)
+                        {
+                            <li>
+                                @file.Name
+                                <button class="btn btn-link text-danger p-0 pl-1" type="button"
+                                        @onclick="@(e => RemoveFile(file))">
+                                    <small class="align-text-bottom">Remove</small>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 p-0">
+            <button type="button" class="btn btn-primary" @onclick="@(e => EncryptFile(selectedFiles[0], encryptionStrength))">Encrypt</button>
+        </div>
+    </div>
+    <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
 </div>
 
 <div class="encrypt-status" hidden="@(!IsEncrypting)">
@@ -65,153 +66,153 @@
 </div>
 
 @code {
-   // Constants
-   private const int MaxFileSizeMB = 10;
-   private const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
-   private const int MaxFileCount = 1;
+    // Constants
+    private const int MaxFileSizeMB = 10;
+    private const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
+    private const int MaxFileCount = 1;
 
-   // State
-   private bool IsEncrypting = false;
-   private string EncryptionStatusMessage = "";
+    // State
+    private bool IsEncrypting = false;
+    private string EncryptionStatusMessage = "";
 
-   // User input
-   private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
-   private CryptoStrength encryptionStrength = CryptoStrength.Minimum;
+    // User input
+    private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
+    private CryptoStrength encryptionStrength = CryptoStrength.Minimum;
 
-   // Variables we control
-   private string dropClass = "";
-   private bool fileSizeError = false;
-   private bool fileCountError = false;
-   private Guid returnedId;
-   private string publicKey;
-   private string privateKey;
-   private string dataFormat;
+    // Variables we control
+    private string dropClass = "";
+    private bool fileSizeError = false;
+    private bool fileCountError = false;
+    private Guid returnedId;
+    private string publicKey;
+    private string privateKey;
+    private string dataFormat;
 
-   private void HandleDragEnter()
-   {
-      dropClass = "dropzone-drag";
-   }
+    private void HandleDragEnter()
+    {
+        dropClass = "dropzone-drag";
+    }
 
-   private void HandleDragLeave()
-   {
-      dropClass = "";
-   }
+    private void HandleDragLeave()
+    {
+        dropClass = "";
+    }
 
-   private void HandleFileInputChange(IFileListEntry[] files)
-   {
-      dropClass = "";
-      fileSizeError = false;
-      fileCountError = false;
+    private void HandleFileInputChange(IFileListEntry[] files)
+    {
+        dropClass = "";
+        fileSizeError = false;
+        fileCountError = false;
 
-      if (files != null)
-      {
-         foreach (var file in files)
-         {
-            bool error = false;
-            if (file.Size > MaxFileSize)
+        if (files != null)
+        {
+            foreach (var file in files)
             {
-               error = true;
-               fileSizeError = true;
+                bool error = false;
+                if (file.Size > MaxFileSize)
+                {
+                    error = true;
+                    fileSizeError = true;
+                }
+
+                if (selectedFiles.Count == MaxFileCount)
+                {
+
+                    error = true;
+                    fileCountError = true;
+                }
+
+                if (!error)
+                {
+                    selectedFiles.Add(file);
+                }
             }
+        }
+    }
 
-            if (selectedFiles.Count == MaxFileCount)
-            {
+    private void RemoveFile(IFileListEntry file)
+    {
+        selectedFiles.Remove(file);
+        fileCountError = false;
+    }
 
-               error = true;
-               fileCountError = true;
-            }
+    private async Task EncryptFile(IFileListEntry file, CryptoStrength strength)
+    {
+        // Hide file upload on encryption
+        IsEncrypting = true;
+        await SetNewEncryptionStatus("Creating symmetric key");
+        var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoInfo(strength);
+        var hashedSymmetricKey = DigestWrapper.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
-            if (!error)
-            {
-               selectedFiles.Add(file);
-            }
-         }
-      }
-   }
+        await SetNewEncryptionStatus("Encrypting your file");
+        byte[] fileBytes = new byte[file.Data.Length];
+        await file.Data.ReadAsync(fileBytes, 0, (int)file.Data.Length);
+        var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricCryptoParams);
 
-   private void RemoveFile(IFileListEntry file)
-   {
-      selectedFiles.Remove(file);
-      fileCountError = false;
-   }
+        await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
+        var asymmetricKeys = CryptoLib.Common.GenerateAsymmetricKeys(strength);
 
-   private async Task EncryptFile(IFileListEntry file, CryptoStrength strength)
-   {
-      // Hide file upload on encryption
-      IsEncrypting = true;
-      await SetNewEncryptionStatus("Creating symmetric key");
-      var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoInfo(strength);
-      var hashedSymmetricKey = DigestWrapper.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
+        await SetNewEncryptionStatus("Creating a signature");
+        var signature = CryptoLib.Common.CreateEncryptedSignature(fileBytes, symmetricCryptoParams, asymmetricKeys.Public, strength);
 
-      await SetNewEncryptionStatus("Encrypting your file");
-      byte[] fileBytes = new byte[file.Data.Length];
-      await file.Data.ReadAsync(fileBytes, 0, (int)file.Data.Length);
-      var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricCryptoParams);
+        await SetNewEncryptionStatus("Preparing to upload");
+        var encodedCipherText = Convert.ToBase64String(cipherText);
+        var encodedSignature = Convert.ToBase64String(signature);
+        var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
 
-      await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
-      var asymmetricKeys = CryptoLib.Common.GenerateAsymmetricKeys(strength);
+        await SetNewEncryptionStatus("Uploading");
+        var response = await UploadFileToAPI(file.Name, encodedCipherText, encodedSignature, serverEncryptionKey);
 
-      await SetNewEncryptionStatus("Creating a signature");
-      var signature = CryptoLib.Common.CreateEncryptedSignature(fileBytes, symmetricCryptoParams, asymmetricKeys.Public, strength);
+        // Send data to success modal component
+        CompletedUpload("file", response.Id,
+           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
+           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
 
-      await SetNewEncryptionStatus("Preparing to upload");
-      var encodedCipherText = Convert.ToBase64String(cipherText);
-      var encodedSignature = Convert.ToBase64String(signature);
-      var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
+        // Open modal
+        Modal.Open();
 
-      await SetNewEncryptionStatus("Uploading");
-      var response = await UploadFileToAPI(file.Name, encodedCipherText, encodedSignature, serverEncryptionKey);
+        // Reset File Uploads
+        RemoveFile(selectedFiles[0]);
 
-      // Send data to success modal component
-      CompletedUpload("file", response.Id,
-         Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
-         Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+        // Show file upload after encryption
+        IsEncrypting = false;
+    }
 
-      // Open modal
-      Modal.Open();
+    public async Task SetNewEncryptionStatus(string status)
+    {
+        EncryptionStatusMessage = status;
+        StateHasChanged();
+        await Task.Delay(500);
+    }
 
-      // Reset File Uploads
-      RemoveFile(selectedFiles[0]);
+    public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
+    {
+        dataFormat = format;
+        returnedId = id;
+        publicKey = pubKey;
+        privateKey = privKey;
+    }
 
-      // Show file upload after encryption
-      IsEncrypting = false;
-   }
+    private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string cipherText, string signature, string serverEncryptionKey)
+    {
+        var requestBody = new AnonymousFileUploadRequest
+        {
+            Name = filename,
+            CipherText = cipherText,
+            Signature = signature,
+            ServerEncryptionKey = serverEncryptionKey
+        };
 
-   public async Task SetNewEncryptionStatus(string status)
-   {
-      EncryptionStatusMessage = status;
-      StateHasChanged();
-      await Task.Delay(500);
-   }
+        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/api/file", requestBody);
 
-   public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
-   {
-      dataFormat = format;
-      returnedId = id;
-      publicKey = pubKey;
-      privateKey = privKey;
-   }
+        if (!response.IsSuccessStatusCode)
+        {
+            // insert error handling
+        }
 
-   private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string cipherText, string signature, string serverEncryptionKey)
-   {
-      var requestBody = new AnonymousFileUploadRequest
-      {
-         Name = filename,
-         CipherText = cipherText,
-         Signature = signature,
-         ServerEncryptionKey = serverEncryptionKey
-      };
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
+    }
 
-      using var response = await HttpClient.PostAsJsonAsync("https://localhost:5001/api/file", requestBody);
-
-      if (!response.IsSuccessStatusCode)
-      {
-         // insert error handling
-      }
-
-      var content = await response.Content.ReadAsStringAsync();
-      return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
-   }
-
-   private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
+    private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
 }

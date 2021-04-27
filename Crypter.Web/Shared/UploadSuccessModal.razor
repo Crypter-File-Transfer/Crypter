@@ -1,4 +1,6 @@
-﻿<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+﻿@inject NavigationManager Navigator
+
+<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -6,13 +8,13 @@
             </div>
             <div class="modal-body">
                 <p>Your encrypted message will expire in 24 hours and will automatically be deleted once downloaded or expired.</p>
-                <p>Download Link: <a href="@DownloadLink/@DataFormat/@ReturnedId" target="_blank">@DownloadLink/@DataFormat/@ReturnedId</a></p>
+                <p>Download Link: <a href=@($"{Navigator.BaseUri}decrypt/{DataFormat}/{ReturnedId}") target="_blank">@($"{Navigator.BaseUri}decrypt/{DataFormat}/{ReturnedId}")</a></p>
                 <h4>Decryption Key</h4>
                 <p><em>Share this key with the receiving party</em></p>
-                <input class="form-control"  @bind="PrivateKey" type="text" name="privateKey" id="privateKey" readonly />
+                <input class="form-control" @bind="PrivateKey" type="text" name="privateKey" id="privateKey" readonly />
                 <h4>Generated Encryption Key</h4>
                 <p><em>Do not share this key</em></p>
-                <input class="form-control"  @bind="PublicKey" type="text" name="publicKey" id="publicKey" readonly />
+                <input class="form-control" @bind="PublicKey" type="text" name="publicKey" id="publicKey" readonly />
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close()">Okay</button>
@@ -29,8 +31,6 @@
 
 
 @code {
-
-    private string DownloadLink = "https://www.crypter.dev/decrypt";
     public string ModalDisplay = "none;";
     public string ModalClass = "";
     public bool ShowBackdrop = false;

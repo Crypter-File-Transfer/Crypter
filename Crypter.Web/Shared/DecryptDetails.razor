@@ -1,6 +1,5 @@
 ﻿@inject HttpClient HttpClient
-
-@using CryptoLib.Models
+@inject AppSettings AppSettings
 
 <div class="decryption-details">
     <div class="details col-md-3">
@@ -120,7 +119,7 @@
     /// <returns></returns>
     private async Task<AnonymousSignatureResponse> DownloadSignature(string dataFormat, Guid id)
     {
-        var url = $"https://localhost:5001/api/{dataFormat}/signature/{id}";
+        var url = $"{AppSettings.ApiBaseUrl}/{dataFormat}/signature/{id}";
         using var response = await HttpClient.GetAsync(url);
 
         if (!response.IsSuccessStatusCode)
@@ -153,7 +152,7 @@
             ServerDecryptionKey = serverDecryptionKey
         };
 
-        var url = $"https://localhost:5001/api/{dataFormat}/actual";
+        var url = $"{AppSettings.ApiBaseUrl}/{dataFormat}/actual";
 
         using var response = dataFormat == "file"
             ? await HttpClient.PostAsJsonAsync(url, fileRequestBody)
