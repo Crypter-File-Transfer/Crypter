@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Crypter.Web</title>
+    <title>Crypter</title>
     <base href="/" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="preconnect" href="https://fonts.gstatic.com">
@@ -24,10 +24,10 @@
                         <h5>Crypter.dev</h5>
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link p-0 lh-lg" href="#">Home</a>
+                                <a class="nav-link p-0 lh-lg" href="/">Home</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link p-0 lh-lg" href="#">About</a>
+                                <a class="nav-link p-0 lh-lg" href="./about">About</a>
                             </li>
                         </ul>
                     </div>
@@ -35,7 +35,7 @@
                         <h5>Legal</h5>
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link p-0 lh-lg" href="#">Privacy Policy</a>
+                                <a class="nav-link p-0 lh-lg" href="./privacy-policy">Privacy Policy</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link p-0 lh-lg" href="./acceptable-use-policy">Acceptable Use Policy</a>
@@ -46,13 +46,13 @@
                         <h5>Support</h5>
                         <ul class="nav flex-column">
                             <li class="nav-item">
-                                <a class="nav-link p-0 lh-lg" href="#">Help</a>
+                                <a class="nav-link p-0 lh-lg" href="./help">Help</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link p-0 lh-lg" href="#">Feedback</a>
+                                <a class="nav-link p-0 lh-lg" href="./feedback">Feedback</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link p-0 lh-lg" href="#">Donate</a>
+                                <a class="nav-link p-0 lh-lg" href="./donate">Donate</a>
                             </li>
                         </ul>
                     </div>
@@ -72,6 +72,12 @@
     <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="_content/BlazorInputFile/inputfile.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
+
+    <script>
+        window.setTitle = (title) => {
+            document.title = title;
+        }
+    </script>
 </body>
 
 </html>

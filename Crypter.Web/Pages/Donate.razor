@@ -1,0 +1,16 @@
+﻿@page "/donate"
+
+@inject IJSRuntime JsRuntime;
+
+<NavMenu />
+<div class="container">
+    <h2>Donate</h2>
+    <p>The Crypter team is not accepting gifts or donations at this time.</p>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Donate");
+    }
+}
