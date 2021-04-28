@@ -1,8 +1,10 @@
 ﻿@page "/acceptable-use-policy"
 
+@inject IJSRuntime JsRuntime;
+
 <NavMenu />
 <div class="container">
-    <h2>Crypter - Acceptable Use Policy</h2>
+    <h2>Acceptable Use Policy</h2>
     <h3>Effective date</h3>
     <p>April 26, 2021</p>
     <h3>Purpose</h3>
@@ -25,3 +27,10 @@
     <h3>Disclaimer</h3>
     <p>The Crypter team will make reasonable efforts to keep the Crypter service running.  However, end-users must accept that the Crypter service may experience outages and failures from time to time.  End-users waive all rights to seek damages from the Crypter team or any of its providers in the event the Crypter service experiences an outage or failure.</p>
 </div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Acceptable Use Policy");
+    }
+}

@@ -13,8 +13,8 @@ namespace Crypter.CryptoLib
       public static SymmetricCryptoParams GenerateSymmetricCryptoInfo(CryptoStrength strength)
       {
          var symmetricWrapper = new SymmetricWrapper();
-         var aesBlockSize = MapStrengthToAesBlockSize(strength);
-         var symmetricKey = symmetricWrapper.GenerateSymmetricKey(aesBlockSize);
+         var aesKeySize = MapStrengthToAesKeySize(strength);
+         var symmetricKey = symmetricWrapper.GenerateSymmetricKey(aesKeySize);
          var iv = symmetricWrapper.GenerateIV();
 
          return new SymmetricCryptoParams(symmetricKey, iv);
@@ -72,7 +72,7 @@ namespace Crypter.CryptoLib
          };
       }
 
-      public static AesKeySize MapStrengthToAesBlockSize(CryptoStrength strength)
+      public static AesKeySize MapStrengthToAesKeySize(CryptoStrength strength)
       {
          return strength switch
          {

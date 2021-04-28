@@ -1,0 +1,18 @@
+﻿@page "/feedback"
+
+@inject IJSRuntime JsRuntime;
+
+<NavMenu />
+<div class="container">
+    <h2>Feedback</h2>
+    <p>The team would love to hear your feedback!  Send Jack an email or message him on Twitter.</p>
+    <p>Email: jackedwards@protonmail.com</p>
+    <p>Twitter: <a class="p-0 lh-lg" href="https://twitter.com/Jack_E_Edwards">Jack's Twitter profile</a></p>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Feedback");
+    }
+}
