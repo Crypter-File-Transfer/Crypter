@@ -1,4 +1,4 @@
-﻿namespace Crypter.CryptoLib
+﻿namespace Crypter.CryptoLib.Enums
 {
    public enum RsaKeySize
    {

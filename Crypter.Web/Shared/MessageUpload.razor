@@ -47,8 +47,8 @@
         // Hide file upload on encryption
         IsEncrypting = true;
         await SetNewEncryptionStatus("Creating symmetric key");
-        var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoInfo(strength);
-        var hashedSymmetricKey = DigestWrapper.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
+        var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
+        var hashedSymmetricKey = DigestMethods.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
         await SetNewEncryptionStatus("Encrypting your message");
         byte[] messageBytes = Encoding.UTF8.GetBytes(message);

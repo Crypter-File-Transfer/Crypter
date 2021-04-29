@@ -16,13 +16,6 @@ namespace Crypter.CryptoLib.BouncyCastle
          return stringWriter.ToString();
       }
 
-      public static AsymmetricCipherKeyPair ConvertFromPEM(string pemKey)
-      {
-         var stringReader = new StringReader(pemKey);
-         var pemReader = new PemReader(stringReader);
-         return (AsymmetricCipherKeyPair)pemReader.ReadObject();
-      }
-
       public static byte[] ConvertToBytes(this KeyParameter symmetricKey)
       {
          return symmetricKey.GetKey();

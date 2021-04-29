@@ -5,13 +5,13 @@ using Org.BouncyCastle.Security;
 
 namespace Crypter.CryptoLib.BouncyCastle
 {
-   public class SymmetricWrapper
+   public static class SymmetricMethods
    {
       /// <summary>
       /// Generate a new AES key of the given size
       /// </summary>
       /// <returns></returns>
-      public KeyParameter GenerateSymmetricKey(AesKeySize keySize)
+      public static KeyParameter GenerateKey(AesKeySize keySize)
       {
          var algorithm = $"AES{(int)keySize}";
          var generator = GeneratorUtilities.GetKeyGenerator(algorithm);
@@ -30,7 +30,7 @@ namespace Crypter.CryptoLib.BouncyCastle
       /// <returns>
       /// An array of 16 random bytes
       /// </returns>
-      public byte[] GenerateIV()
+      public static byte[] GenerateIV()
       {
          SecureRandom random = new SecureRandom();
          return random.GenerateSeed(16);
@@ -43,7 +43,7 @@ namespace Crypter.CryptoLib.BouncyCastle
       /// <param name="key"></param>
       /// <param name="iv"></param>
       /// <returns></returns>
-      public byte[] EncryptBytes(byte[] inBytes, KeyParameter key, byte[] iv)
+      public static byte[] Encrypt(byte[] inBytes, KeyParameter key, byte[] iv)
       {
          IBufferedCipher cipher = CipherUtilities.GetCipher("AES/CTR/NoPadding");
          cipher.Init(true, new ParametersWithIV(key, iv));
@@ -57,7 +57,7 @@ namespace Crypter.CryptoLib.BouncyCastle
       /// <param name="key"></param>
       /// <param name="iv"></param>
       /// <returns></returns>
-      public byte[] DecryptBytes(byte[] inBytes, KeyParameter key, byte[] iv)
+      public static byte[] Decrypt(byte[] inBytes, KeyParameter key, byte[] iv)
       {
          IBufferedCipher cipher = CipherUtilities.GetCipher("AES/CTR/NoPadding");
          cipher.Init(false, new ParametersWithIV(key, iv));

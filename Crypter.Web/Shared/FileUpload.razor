@@ -141,8 +141,8 @@
         // Hide file upload on encryption
         IsEncrypting = true;
         await SetNewEncryptionStatus("Creating symmetric key");
-        var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoInfo(strength);
-        var hashedSymmetricKey = DigestWrapper.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
+        var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
+        var hashedSymmetricKey = DigestMethods.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
         await SetNewEncryptionStatus("Encrypting your file");
         byte[] fileBytes = new byte[file.Data.Length];
@@ -203,7 +203,7 @@
             ServerEncryptionKey = serverEncryptionKey
         };
 
-        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/api/file", requestBody);
+        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/file", requestBody);
 
         if (!response.IsSuccessStatusCode)
         {
