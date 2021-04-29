@@ -2,6 +2,7 @@ using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
 using System;
 using System.Net.Http;
 using System.Reflection;
@@ -35,6 +36,18 @@ namespace Crypter.Web
             return new ConfigurationBuilder()
                     .AddJsonStream(stream)
                     .Build();
+        }
+    }
+
+    // TODO: This is the conversion from byte array to file, but it has an issue with images either here or in the DecryptDetails.js
+    public class FileUtil
+    {
+        public async static Task SaveAs(IJSRuntime js, string filename, byte[] data)
+        {
+            await js.InvokeAsync<object>(
+                "saveAsFile",
+                filename,
+                Convert.ToBase64String(data));
         }
     }
 }

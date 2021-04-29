@@ -1,5 +1,6 @@
 ﻿@inject HttpClient HttpClient
 @inject AppSettings AppSettings
+@inject IJSRuntime js
 
 <div class="row">
     <div class="col-md-4">
@@ -35,9 +36,17 @@
                     <div class="alert alert-success text-center" role="alert">
                         Decryption successful!
                     </div>
-                    <div class="mb-3">
-                        <textarea @bind="decryptedMessage" class="form-control" rows="5"></textarea>
-                    </div>
+                    @if (DataFormat == "message")
+                    {
+                        <div class="mb-3">
+                            <textarea @bind="decryptedMessage" class="form-control" rows="5"></textarea>
+                        </div>
+                    } else
+                    {
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-primary" @onclick="@(e => DownloadFile(Name, decryptedFile))">Download your file</button>
+                        </div>
+                    }
                 }
             </div>
         </div>
@@ -48,6 +57,7 @@
     private string decryptionKey = "";
     private bool decryptionSuccess = false;
     private string decryptedMessage = "";
+    private byte[] decryptedFile;
 
     // Stores the Format received by parent component
     [Parameter] public string DataFormat { get; set; }
@@ -121,10 +131,10 @@
         if (dataFormat == "message")
         {
             decryptedMessage = Encoding.UTF8.GetString(plaintextBytes);
-            Console.WriteLine(Encoding.UTF8.GetString(plaintextBytes));
         }
         else
         {
+            decryptedFile = plaintextBytes;
             // Probably this: https://stackoverflow.com/a/53822526
         }
     }
@@ -183,5 +193,10 @@
 
         var content = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<AnonymousDownloadResponse>(content);
+    }
+
+    private void DownloadFile(string fileName, byte[] fileContent)
+    {
+        FileUtil.SaveAs(js, fileName, fileContent);
     }
 }
