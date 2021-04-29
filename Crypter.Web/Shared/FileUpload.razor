@@ -203,7 +203,7 @@
             ServerEncryptionKey = serverEncryptionKey
         };
 
-        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/api/file", requestBody);
+        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/file", requestBody);
 
         if (!response.IsSuccessStatusCode)
         {

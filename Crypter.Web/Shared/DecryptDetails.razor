@@ -1,41 +1,53 @@
 ﻿@inject HttpClient HttpClient
 @inject AppSettings AppSettings
 
-<div class="decryption-details">
-    <div class="details col-md-3">
-        <h3>@DataFormat details</h3>
-        <table class="data-details">
-            @if (DataFormat.ToLower() == "file")
-            {
-                <tr>
-                    <td><strong>File name: </strong></td>
-                    <td>@Name</td>
-                </tr>
-            }
-            <tr>
-                <td><strong>Created: </strong></td>
-                <td>@Created</td>
-            </tr>
-            <tr>
-                <td><strong>Size: </strong></td>
-                <td>@Size bytes</td>
-            </tr>
-            <tr>
-                <td><strong>Expires at: </strong></td>
-                <td>@Expiration</td>
-            </tr>
-        </table>
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <h5 class="card-header">@DataFormat Details</h5>
+            <ul class="list-group list-group-flush">
+                @if (DataFormat.ToLower() == "file")
+                {
+                    <li class="list-group-item"><span class="fw-bold">File name: </span>@Name</li>
+                }
+                <li class="list-group-item"><span class="fw-bold">Created: </span>@Created</li>
+                <li class="list-group-item"><span class="fw-bold">Expires: </span>@Expiration</li>
+                <li class="list-group-item"><span class="fw-bold">Size: </span>@Size bytes</li>
+            </ul>
+        </div>
     </div>
-    <div class="decryption-key col-md-9">
-        <h4>Decryption Key</h4>
-        <p><em>This should have been provided by the sender</em></p>
-        <input @bind="decryptionKey" type="text" />
-        <button type="button" class="btn btn-primary" @onclick="@(e => OnDecryptClicked(DataFormat, Id, decryptionKey))">Decrypt</button>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body text-center">
+                @if (decryptionSuccess == false)
+                {
+                    <h5 class="card-title">Decryption Key</h5>
+                    <p class="card-text fst-italic">This should have been provided by the sender</p>
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="decryptionKey" @bind="decryptionKey">
+                    </div>
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-primary" @onclick="@(e => OnDecryptClicked(DataFormat, Id, decryptionKey))">Decrypt your @DataFormat</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-success text-center" role="alert">
+                        Decryption successful!
+                    </div>
+                    <div class="mb-3">
+                        <textarea @bind="decryptedMessage" class="form-control" rows="5"></textarea>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
 </div>
 
 @code {
     private string decryptionKey = "";
+    private bool decryptionSuccess = false;
+    private string decryptedMessage = "";
 
     // Stores the Format received by parent component
     [Parameter] public string DataFormat { get; set; }
@@ -94,6 +106,7 @@
         if (verifyResult)
         {
             Console.WriteLine("Plaintext looks good!");
+            decryptionSuccess = true;
         }
         else
         {
@@ -102,6 +115,7 @@
 
         if (dataFormat == "message")
         {
+            decryptedMessage = Encoding.UTF8.GetString(plaintextBytes);
             Console.WriteLine(Encoding.UTF8.GetString(plaintextBytes));
         }
         else
