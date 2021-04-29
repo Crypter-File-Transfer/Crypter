@@ -1,6 +1,7 @@
 ﻿@page "/decrypt/message/{id:guid}"
 @page "/decrypt/file/{id:guid}"
 
+@inject IJSRuntime JsRuntime;
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
 @inject AppSettings AppSettings
@@ -23,6 +24,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Decrypt");
+
         var relativeURL = NavManager.ToBaseRelativePath(NavManager.Uri);
         var urlPieces = relativeURL.Split("/");
         dataFormat = urlPieces[1].ToLower();
@@ -107,7 +110,6 @@
 
     private void PopulateMessagePreview(int size, DateTime creation, DateTime expiration)
     {
-        Console.WriteLine(creation);
         creationDate = creation.ToLocalTime().ToString();
         expirationDate = expiration.ToLocalTime().ToString();
         fileSize = size;

@@ -4,10 +4,7 @@ using System.Threading.Tasks;
 using MySqlConnector;
 using Crypter.API.Controllers;
 using Crypter.CryptoLib; 
-using System.IO;
-using Org.BouncyCastle.Crypto.Parameters;
 using Crypter.CryptoLib.BouncyCastle;
-using System.Text;
 
 namespace CrypterAPI.Models
 {
@@ -32,8 +29,7 @@ namespace CrypterAPI.Models
             // decode encryption key from base64 to bytes
             byte[] HashedSymmetricEncryptionKey = Convert.FromBase64String(ServerEncryptionKey);
             //generate an iv and save to UploadItem
-            SymmetricWrapper wrapper = new SymmetricWrapper();
-            byte[] iv = wrapper.GenerateIV();
+            byte[] iv = SymmetricMethods.GenerateIV();
             InitializationVector = Convert.ToBase64String(iv); 
             //make symmetric crypto parameters and apply AES encryption
             var symParams = Common.MakeSymmetricCryptoParams(HashedSymmetricEncryptionKey, iv);

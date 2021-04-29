@@ -65,32 +65,37 @@
 
     private async Task OnDecryptClicked(string dataFormat, Guid id, string privateDecryptionKey)
     {
-        // Convert the decryption key from Base64 => PEM formatted string => AsymmetricKeyParameter
-        byte[] privateKeyPemBytes = Convert.FromBase64String(privateDecryptionKey);
-        string privateKeyPemString = Encoding.UTF8.GetString(privateKeyPemBytes);
-        var privateKeyBouncyCastle = ExtMethods.ConvertFromPEM(privateKeyPemString).Private;
+        // Attempt to convert the decryption key from Base64
+        string pemKey;
+        try
+        {
+            byte[] pemKeyAsBytes = Convert.FromBase64String(privateDecryptionKey);
+            pemKey = Encoding.UTF8.GetString(pemKeyAsBytes);
+        }
+        catch (FormatException)
+        {
+            Console.WriteLine("Invalid key format");  // Todo
+            return;
+        }
 
         // Request the signature from the API
         var signatureResponse = await DownloadSignature(dataFormat, id);
-        var signatureBytes = Convert.FromBase64String(signatureResponse.Signature);
+        byte[] encryptedSignature = Convert.FromBase64String(signatureResponse.Signature);
 
-        // Attempt to decrypt the signature
-        var asymmetricWrapper = new AsymmetricWrapper();
-        byte[] decryptedSignatureBytes = asymmetricWrapper.Decrypt(signatureBytes, privateKeyBouncyCastle);
-        string decryptedSignatureString = Encoding.UTF8.GetString(decryptedSignatureBytes);
-
-        // Attempt to deserialize the plaintext signature
-        var signature = new AnonymousSignature(decryptedSignatureString);
+        // Attempt to decrypt the signature using the provided key
+        AnonymousSignature signature = CryptoLib.Common.DecryptAndDeserializeSignature(encryptedSignature, pemKey);
 
         // Request the ciphertext from the server
-        var serverDecryptionKey = DigestWrapper.GetDigest(Convert.FromBase64String(signature.Key), DigestAlgorithm.SHA256);
+        var serverDecryptionKey = DigestMethods.GetDigest(signature.Key, DigestAlgorithm.SHA256);
         var encodedServerDecryptionKey = Convert.ToBase64String(serverDecryptionKey);
         var ciphertextResponse = await DownloadCiphertext(DataFormat, id, encodedServerDecryptionKey);
 
         // Decrypt the ciphertext using the symmetric key from the signature
-        byte[] plaintextBytes = DecryptCiphertext(ciphertextResponse.CipherText, signature.Key, signature.IV);
+        byte[] ciphertextBytes = Convert.FromBase64String(ciphertextResponse.CipherText);
+        var symmetricParams = CryptoLib.Common.MakeSymmetricCryptoParams(signature.Key, signature.IV);
+        byte[] plaintextBytes = CryptoLib.Common.UndoSymmetricEncryption(ciphertextBytes, symmetricParams);
 
-        var verifyResult = VerifyPlaintextAgainstKnownDigest(plaintextBytes, signature.Digest);
+        var verifyResult = CryptoLib.Common.VerifyPlaintextAgainstKnownDigest(plaintextBytes, signature.Digest);
         if (verifyResult)
         {
             Console.WriteLine("Plaintext looks good!");
@@ -108,7 +113,6 @@
         {
             // Probably this: https://stackoverflow.com/a/53822526
         }
-
     }
 
     /// <summary>
@@ -165,48 +169,5 @@
 
         var content = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<AnonymousDownloadResponse>(content);
-    }
-
-    /// <summary>
-    /// Decrypt the ciphertext received from the API using the provided key
-    /// </summary>
-    /// <param name="ciphertext">Base64 encoded ciphertext; raw from the API response</param>
-    /// <param name="symmetricKey">Base64 encoded symmetric key; raw from the signature</param>
-    /// <param name="iv">Base64 encoded IV; raw from the signature</param>
-    /// <returns>Plaintext as bytes</returns>
-    private byte[] DecryptCiphertext(string ciphertext, string symmetricKey, string iv)
-    {
-        var decodedCiphertext = Convert.FromBase64String(ciphertext);
-        var decodedKey = Convert.FromBase64String(symmetricKey);
-        var decodedIV = Convert.FromBase64String(iv);
-
-        var symmetricParams = Common.MakeSymmetricCryptoParams(decodedKey, decodedIV);
-        return Common.UndoSymmetricEncryption(decodedCiphertext, symmetricParams);
-    }
-
-    /// <summary>
-    /// Digest the plaintext bytes and compare to the digest from the signature
-    /// </summary>
-    /// <param name="plaintext"></param>
-    /// <param name="knownDigest">Base64 encoded digest; raw from the signature</param>
-    /// <returns></returns>
-    private bool VerifyPlaintextAgainstKnownDigest(byte[] plaintext, string knownDigest)
-    {
-        var decodedDigest = Convert.FromBase64String(knownDigest);
-        var newDigest = DigestWrapper.GetDigest(plaintext, DigestAlgorithm.SHA256);
-
-        if (decodedDigest.Length < (256 / 8))
-        {
-            return false;
-        }
-
-        for (int i = 0; i < (256 / 8); i++)
-        {
-            if (!decodedDigest[i].Equals(newDigest[i]))
-            {
-                return false;
-            }
-        }
-        return true;
     }
 }

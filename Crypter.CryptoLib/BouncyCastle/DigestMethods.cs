@@ -4,7 +4,7 @@ using System;
 
 namespace Crypter.CryptoLib.BouncyCastle
 {
-   public static class DigestWrapper
+   public static class DigestMethods
    {
       public static byte[] GetDigest(byte[] data, DigestAlgorithm algorithm)
       {
