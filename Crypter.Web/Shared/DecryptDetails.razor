@@ -10,6 +10,7 @@
                 @if (DataFormat.ToLower() == "file")
                 {
                     <li class="list-group-item"><span class="fw-bold">File name: </span>@Name</li>
+                    <li class="list-group-item"><span class="fw-bold">Type: </span>@ContentType</li>
                 }
                 <li class="list-group-item"><span class="fw-bold">Created: </span>@Created</li>
                 <li class="list-group-item"><span class="fw-bold">Expires: </span>@Expiration</li>
@@ -41,10 +42,11 @@
                         <div class="mb-3">
                             <textarea @bind="decryptedMessage" class="form-control" rows="5"></textarea>
                         </div>
-                    } else
+                    }
+                    else
                     {
                         <div class="mb-3">
-                            <button type="button" class="btn btn-primary" @onclick="@(e => DownloadFile(Name, decryptedFile))">Download your file</button>
+                            <button type="button" class="btn btn-primary" @onclick="@(e => DownloadFile(Name, decryptedFile, ContentType))">Download your file</button>
                         </div>
                     }
                 }
@@ -58,6 +60,8 @@
     private bool decryptionSuccess = false;
     private string decryptedMessage = "";
     private byte[] decryptedFile;
+
+    [Inject] public IBlazorDownloadFileService BlazorDownloadFileService { get; set; }
 
     // Stores the Format received by parent component
     [Parameter] public string DataFormat { get; set; }
@@ -77,6 +81,9 @@
     // Stores the Expiration Date received by parent component
     [Parameter] public string Expiration { get; set; }
 
+    // Store the Content Type received by parent component
+    [Parameter] public string ContentType { get; set; }
+
     // Watch for changes in variable values in parent component to update here
     [Parameter] public EventCallback<string> DataFormatChanged { get; set; }
     [Parameter] public EventCallback<Guid> IdChanged { get; set; }
@@ -84,6 +91,7 @@
     [Parameter] public EventCallback<string> CreatedChanged { get; set; }
     [Parameter] public EventCallback<int> SizeChanged { get; set; }
     [Parameter] public EventCallback<string> ExpirationChanged { get; set; }
+    [Parameter] public EventCallback<string> ContentTypeChanged { get; set; }
 
     private async Task OnDecryptClicked(string dataFormat, Guid id, string privateDecryptionKey)
     {
@@ -117,25 +125,19 @@
         var symmetricParams = CryptoLib.Common.MakeSymmetricCryptoParams(signature.Key, signature.IV);
         byte[] plaintextBytes = CryptoLib.Common.UndoSymmetricEncryption(ciphertextBytes, symmetricParams);
 
-        var verifyResult = CryptoLib.Common.VerifyPlaintextAgainstKnownDigest(plaintextBytes, signature.Digest);
-        if (verifyResult)
-        {
-            Console.WriteLine("Plaintext looks good!");
-            decryptionSuccess = true;
-        }
-        else
-        {
-            Console.WriteLine("Plaintext is bad :(");
-        }
+        decryptionSuccess = CryptoLib.Common.VerifyPlaintextAgainstKnownDigest(plaintextBytes, signature.Digest);
 
-        if (dataFormat == "message")
+        if (decryptionSuccess)
         {
-            decryptedMessage = Encoding.UTF8.GetString(plaintextBytes);
-        }
-        else
-        {
-            decryptedFile = plaintextBytes;
-            // Probably this: https://stackoverflow.com/a/53822526
+            if (dataFormat == "message")
+            {
+                decryptedMessage = Encoding.UTF8.GetString(plaintextBytes);
+            }
+            else
+            {
+                decryptedFile = plaintextBytes;
+                // Probably this: https://stackoverflow.com/a/53822526
+            }
         }
     }
 
@@ -160,7 +162,7 @@
     }
 
     /// <summary>
-    /// Request the ciphertext from 
+    /// Request the ciphertext from
     /// </summary>
     /// <param name="dataFormat">"file" or "message"</param>
     /// <param name="id">The guid corresponding to the resource</param>
@@ -195,9 +197,8 @@
         return JsonConvert.DeserializeObject<AnonymousDownloadResponse>(content);
     }
 
-    private void DownloadFile(string fileName, byte[] fileContent)
+    private async Task DownloadFile(string fileName, byte[] fileContent, string contentType)
     {
-        FileUtil.SaveAs(js, fileName, fileContent);
+        await BlazorDownloadFileService.DownloadFileAsync(fileName, fileContent, contentType);
     }
-
 }

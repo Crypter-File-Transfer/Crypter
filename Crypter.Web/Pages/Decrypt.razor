@@ -9,7 +9,7 @@
 <NavMenu />
 <div class="container">
     <h2>Decrypt your @dataFormat</h2>
-    <DecryptDetails @bind-DataFormat="dataFormat" @bind-Id="Id" @bind-Name="name" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
+    <DecryptDetails @bind-DataFormat="dataFormat" @bind-Id="Id" @bind-Name="name" @bind-ContentType="contentType" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
 </div>
 
 @code {
@@ -18,6 +18,7 @@
     string creationDate = DateTime.Now.ToString("MM/dd/yyyy");
     string expirationDate = "Never";
     int fileSize = 0;
+    string contentType = "";
 
     [Parameter]
     public Guid Id { get; set; }
@@ -49,7 +50,7 @@
             switch (fileResponse.Status)
             {
                 case Contracts.Enum.ResponseCode.Success:
-                    PopulateFilePreview(fileResponse.Name, fileResponse.Size, fileResponse.CreationUTC, fileResponse.ExpirationUTC);
+                    PopulateFilePreview(fileResponse.Name, fileResponse.Size, fileResponse.CreationUTC, fileResponse.ExpirationUTC, fileResponse.ContentType);
                     break;
                 default:
                     //TODO - nothing was found; tell the user
@@ -100,12 +101,13 @@
         return JsonConvert.DeserializeObject<AnonymousMessagePreviewResponse>(content);
     }
 
-    private void PopulateFilePreview(string filename, int size, DateTime creation, DateTime expiration)
+    private void PopulateFilePreview(string filename, int size, DateTime creation, DateTime expiration, string type)
     {
         name = filename;
         creationDate = creation.ToLocalTime().ToString();
         expirationDate = expiration.ToLocalTime().ToString();
         fileSize = size;
+        contentType = type;
     }
 
     private void PopulateMessagePreview(int size, DateTime creation, DateTime expiration)
