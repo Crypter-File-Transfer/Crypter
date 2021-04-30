@@ -16,4 +16,10 @@
     <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="CryptoTests\Assets\clarity_by_sigi_sagi.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
