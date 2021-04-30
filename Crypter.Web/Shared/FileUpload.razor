@@ -17,7 +17,7 @@
                         @ondragenter="HandleDragEnter"
                         @ondragleave="HandleDragLeave" />
             </div>
-            @if ((fileSizeError || fileCountError))
+            @if ((fileSizeError || fileCountError || noFileSelected))
             {
                 <div class="validation-errors my-3">
                     @if (fileSizeError)
@@ -31,6 +31,13 @@
                     {
                         <div class="alert alert-danger" role="alert">
                             You can only upload @MaxFileCount file(s).
+                        </div>
+                    }
+
+                    @if (noFileSelected)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            No file selected.
                         </div>
                     }
                 </div>
@@ -48,7 +55,7 @@
     </div>
     <div class="row">
         <div class="col-12 p-0">
-            <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => EncryptFile(selectedFiles[0], encryptionStrength))">Encrypt</button>
+            <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptFileClicked(selectedFiles, encryptionStrength))">Encrypt</button>
         </div>
     </div>
     <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
@@ -79,6 +86,7 @@
     private string dropClass = "";
     private bool fileSizeError = false;
     private bool fileCountError = false;
+    private bool noFileSelected = false;
     private Guid returnedId;
     private string publicKey;
     private string privateKey;
@@ -120,6 +128,7 @@
 
                 if (!error)
                 {
+                    noFileSelected = false;
                     selectedFiles.Add(file);
                 }
             }
@@ -132,6 +141,15 @@
         fileCountError = false;
     }
 
+    private async Task OnEncryptFileClicked(List<IFileListEntry> files, CryptoStrength strength)
+    {
+        noFileSelected = files.Count == 0;
+        if (!noFileSelected)
+        {
+            await EncryptFile(files[0], strength);
+        }
+    }
+
     private async Task EncryptFile(IFileListEntry file, CryptoStrength strength)
     {
         // Hide file upload on encryption
@@ -141,9 +159,9 @@
         var hashedSymmetricKey = DigestMethods.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
         await SetNewEncryptionStatus("Encrypting your file");
-        var stream = new MemoryStream();        // Todo, can this be cleaned up?
-        await file.Data.CopyToAsync(stream);    // Reference: https://github.com/SteveSandersonMS/BlazorInputFile/blob/master/samples/Sample.Core/Pages/SingleFile.razor
-        var fileBytes = stream.ToArray();       // WARNING: The "MaxMessageSize" for the InputFile is 20 * 1024. I think this is why copying to stream then to byte[] is required for larger files
+        using var stream = new MemoryStream();
+        await file.Data.CopyToAsync(stream);
+        var fileBytes = stream.ToArray();
         var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricCryptoParams);
 
         await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
