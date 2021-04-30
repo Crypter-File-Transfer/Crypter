@@ -1,7 +1,9 @@
 ﻿.grt {
-  font-family: "Recursive", sans-serif;
+  font-family: "Rubik", sans-serif;
   font-size: 16px;
   line-height: 27px; }
+  .grt main {
+    margin-top: 100px; }
   .grt h1 {
     font-size: 33px;
     line-height: 52px;
@@ -66,27 +68,33 @@
 #encrypt {
   margin: 40px auto;
   max-width: 700px; }
-  #encrypt .tab-content {
-    border: 1px solid #dee2e6;
-    border-top: none;
-    border-radius: 0 0 10px 10px;
-    padding: 32px; }
 
 .file-upload, .message-upload {
   max-width: 600px;
   margin: auto;
   text-align: left; }
   .file-upload .dropzone, .message-upload .dropzone {
-    border: 5px dashed #dee2e6;
+    border-width: 4px;
+    border-style: dotted;
     margin: auto auto 24px auto;
     text-align: center;
-    position: relative; }
+    position: relative;
+    transition: all 200ms ease; }
+    .file-upload .dropzone.dropzone-drag, .message-upload .dropzone.dropzone-drag {
+      background-color: rgba(27, 110, 194, 0.15);
+      border-color: #1b6ec2;
+      transition: all 200ms ease; }
+      .file-upload .dropzone.dropzone-drag .dz-text, .message-upload .dropzone.dropzone-drag .dz-text {
+        color: #1b6ec2; }
+    .file-upload .dropzone:hover .dz-text, .message-upload .dropzone:hover .dz-text {
+      color: #1b6ec2;
+      transition: color 200ms ease; }
   .file-upload .dz-text, .message-upload .dz-text {
     position: absolute;
     padding: 20px;
     left: 0;
     right: 0;
-    z-index: -1; }
+    transition: color 200ms ease; }
   .file-upload .passphrase, .message-upload .passphrase {
     margin-bottom: 24px; }
   .file-upload label, .message-upload label {
@@ -95,7 +103,10 @@
     margin-right: 10px; }
   .file-upload #fileInput, .message-upload #fileInput {
     padding: 5rem 9rem 2rem;
+    opacity: 0;
     z-index: 10; }
+    .file-upload #fileInput:hover, .message-upload #fileInput:hover {
+      cursor: pointer; }
 
 .decryption-details {
   border: 1px solid black;

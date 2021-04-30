@@ -4,10 +4,29 @@
     text-align: left;
 
     .dropzone {
-        border: 5px dashed #dee2e6;
+        border-width: 4px;
+        border-style: dotted;
         margin: auto auto 24px auto;
         text-align: center;
         position: relative;
+        transition: all 200ms ease;
+
+        &.dropzone-drag {
+            background-color: rgba(27,110,194, 0.15);
+            border-color: #1b6ec2;
+            transition: all 200ms ease;
+
+            .dz-text {
+                color: #1b6ec2;
+            }
+        }
+
+        &:hover {
+            .dz-text {
+                color: #1b6ec2;
+                transition: color 200ms ease;
+            }
+        }
     }
 
     .dz-text {
@@ -15,7 +34,7 @@
         padding: 20px;
         left: 0;
         right: 0;
-        z-index: -1;
+        transition: color 200ms ease;
     }
 
     .passphrase {
@@ -32,6 +51,11 @@
 
     #fileInput {
         padding: 5rem 9rem 2rem;
+        opacity: 0;
         z-index: 10;
+
+        &:hover {
+            cursor: pointer;
+        }
     }
 }

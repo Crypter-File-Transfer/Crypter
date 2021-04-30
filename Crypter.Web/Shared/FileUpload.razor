@@ -7,52 +7,45 @@
 <div class="file-upload" hidden="@IsEncrypting">
     <div class="row">
         <div class="col-12 p-0">
-            <div class="dropzone @dropClass rounded">
-                <div class="dz-text">
-                    <p>Drop file here</p>
-                    <p>or</p>
-                </div>
-                <BlazorInputFile.InputFile id="fileInput"
-                                           OnChange="HandleFileInputChange"
-                                           @ondragenter="HandleDragEnter"
-                                           @ondragleave="HandleDragLeave" />
+            <div class="card dropzone @dropClass rounded mb-3">
+                <p class="card-text dz-text">
+                    <i class="bi bi-file-arrow-up d-block fs-1 my-3"></i>
+                    <span class="fw-bold">Choose a file</span> or drag it here to upload
+                </p>
+                <BlazorInputFile.InputFile id="fileInput" OnChange="HandleFileInputChange" @ondragenter="HandleDragEnter" @ondragleave="HandleDragLeave" />
             </div>
             @if ((fileSizeError || fileCountError))
             {
-                <ul class="validation-errors mb-0">
+                <div class="validation-errors my-3">
                     @if (fileSizeError)
                     {
-                        <li class="validation-message">The max file size is @MaxFileSizeMB MB.</li>
+                        <div class="alert alert-danger" role="alert">
+                            The max file size is @MaxFileSizeMB MB.
+                        </div>
                     }
 
                     @if (fileCountError)
                     {
-                        <li class="validation-message">You can only upload @MaxFileCount file(s).</li>
+                        <div class="alert alert-danger" role="alert">
+                            You can only upload @MaxFileCount file(s).
+                        </div>
                     }
-                </ul>
+                </div>
             }
             @if (selectedFiles != null && selectedFiles.Count > 0)
             {
-                <div class="col-12">
-                    <ul>
-                        @foreach (var file in selectedFiles)
-                        {
-                            <li>
-                                @file.Name
-                                <button class="btn btn-link text-danger p-0 pl-1" type="button"
-                                        @onclick="@(e => RemoveFile(file))">
-                                    <small class="align-text-bottom">Remove</small>
-                                </button>
-                            </li>
-                        }
-                    </ul>
+                <div class="card my-3">
+                    <div class="card-body">
+                        @selectedFiles[0].Name
+                        <button type="button" class="btn-close float-end" aria-label="Remove file" @onclick="@(e => RemoveFile(selectedFiles[0]))"></button>
+                    </div>
                 </div>
             }
         </div>
     </div>
     <div class="row">
         <div class="col-12 p-0">
-            <button type="button" class="btn btn-primary" @onclick="@(e => EncryptFile(selectedFiles[0], encryptionStrength))">Encrypt</button>
+            <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => EncryptFile(selectedFiles[0], encryptionStrength))">Encrypt</button>
         </div>
     </div>
     <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
