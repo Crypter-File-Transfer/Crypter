@@ -38,6 +38,7 @@ CREATE TABLE `FileUploads` (
   `UserID` VARCHAR(36) NOT NULL,
   `UntrustedName` VARCHAR(100),
   `Size` INT DEFAULT NULL,
+  `ContentType` VARCHAR(256),
   `EncryptedFileContentPath` VARCHAR(256), 
   `SignaturePath` VARCHAR(256),
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 

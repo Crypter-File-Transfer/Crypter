@@ -11,6 +11,8 @@ namespace CrypterAPI.Models
     // FileUpload inherits from UploadItem
     public class FileUploadItem : UploadItem
     {
+        public string ContentType { get; set; }
+
         //constructor sets TimeStamp upon instantiation
         public FileUploadItem()
         {
@@ -42,7 +44,7 @@ namespace CrypterAPI.Models
             SignaturePath = filePath.SigPathString;
             // Calc size of cipher text file
             Size = filePath.FileSizeBytes(CipherTextPath); 
-            cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`, `Iv`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @encryptedfilecontentpath, @initializationvector);";
+            cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `ContentType`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`, `Iv`) VALUES (@id, @userid, @untrustedname, @size, @contentType, @signaturepath, @created, @expirationdate, @encryptedfilecontentpath, @initializationvector);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -50,7 +52,7 @@ namespace CrypterAPI.Models
         public async Task UpdateAsync(CrypterDB db)
         {
             using var cmd = db.Connection.CreateCommand();
-            cmd.CommandText = @"UPDATE `FileUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedFileContentPath`= @encryptedfilecontentpath, `Iv` = @initializationvector WHERE `ID` = @id;";
+            cmd.CommandText = @"UPDATE `FileUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `ContentType` = @contentType, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedFileContentPath`= @encryptedfilecontentpath, `Iv` = @initializationvector WHERE `ID` = @id;";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -98,6 +100,12 @@ namespace CrypterAPI.Models
                 ParameterName = "@size",
                 DbType = DbType.Int16,
                 Value = Size,
+            });
+            cmd.Parameters.Add(new MySqlParameter
+            {
+                ParameterName = "@contentType",
+                DbType = DbType.String,
+                Value = ContentType
             });
             cmd.Parameters.Add(new MySqlParameter
             {

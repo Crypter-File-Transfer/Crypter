@@ -35,6 +35,7 @@ namespace CrypterAPI.Controllers
 
             var newFile = new FileUploadItem();
             newFile.FileName = body.Name;
+            newFile.ContentType = body.ContentType;
             newFile.CipherText = body.CipherText;
             newFile.Signature = body.Signature;
             // if server encryption key is empty and is not 256 bits(32bytes), reject the post
@@ -77,7 +78,7 @@ namespace CrypterAPI.Controllers
                return new NotFoundObjectResult(notFoundResponseBody);
             }
 
-            var responseBody = new AnonymousFilePreviewResponse(result.FileName, result.Size, result.Created, result.ExpirationDate);
+            var responseBody = new AnonymousFilePreviewResponse(result.FileName, result.ContentType, result.Size, result.Created, result.ExpirationDate);
             return new OkObjectResult(responseBody);
         }
 
