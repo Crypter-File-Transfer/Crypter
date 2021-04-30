@@ -5,13 +5,13 @@
 <div class="message-upload" hidden="@IsEncrypting">
     <div class="row">
         <div class="col-12 p-0">
-            <textarea @bind="MessageText" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
+            <textarea class="form-control" @bind="MessageText" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
             <label><small class="align-text-bottom">@(MaxMessageLength - MessageText.Count()) remaining</small></label>
         </div>
     </div>
     <div class="row">
         <div class="col-12 p-0">
-            <button type="button" class="btn btn-primary" @onclick="@(e => EncryptMessage(MessageText, encryptionStrength))">Encrypt</button>
+            <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => EncryptMessage(MessageText, encryptionStrength))">Encrypt</button>
         </div>
     </div>
     <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
