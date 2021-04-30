@@ -12,10 +12,10 @@
                     <p>Drop file here</p>
                     <p>or</p>
                 </div>
-                <BlazorInputFile.InputFile id="fileInput"
-                                           OnChange="HandleFileInputChange"
-                                           @ondragenter="HandleDragEnter"
-                                           @ondragleave="HandleDragLeave" />
+                <InputFile id="fileInput"
+                        OnChange="HandleFileInputChange"
+                        @ondragenter="HandleDragEnter"
+                        @ondragleave="HandleDragLeave" />
             </div>
             @if ((fileSizeError || fileCountError))
             {
@@ -145,8 +145,9 @@
         var hashedSymmetricKey = DigestMethods.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
         await SetNewEncryptionStatus("Encrypting your file");
-        byte[] fileBytes = new byte[file.Data.Length];
-        await file.Data.ReadAsync(fileBytes, 0, (int)file.Data.Length);
+        var stream = new MemoryStream();        // Todo, can this be cleaned up?
+        await file.Data.CopyToAsync(stream);    // Reference: https://github.com/SteveSandersonMS/BlazorInputFile/blob/master/samples/Sample.Core/Pages/SingleFile.razor
+        var fileBytes = stream.ToArray();       // WARNING: The "MaxMessageSize" for the InputFile is 20 * 1024. I think this is why copying to stream then to byte[] is required for larger files
         var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricCryptoParams);
 
         await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
@@ -161,7 +162,7 @@
         var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
 
         await SetNewEncryptionStatus("Uploading");
-        var response = await UploadFileToAPI(file.Name, encodedCipherText, encodedSignature, serverEncryptionKey);
+        var response = await UploadFileToAPI(file.Name, file.Type, encodedCipherText, encodedSignature, serverEncryptionKey);
 
         // Send data to success modal component
         CompletedUpload("file", response.Id,
@@ -193,11 +194,12 @@
         privateKey = privKey;
     }
 
-    private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string cipherText, string signature, string serverEncryptionKey)
+    private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string contentType, string cipherText, string signature, string serverEncryptionKey)
     {
         var requestBody = new AnonymousFileUploadRequest
         {
             Name = filename,
+            ContentType = contentType,
             CipherText = cipherText,
             Signature = signature,
             ServerEncryptionKey = serverEncryptionKey

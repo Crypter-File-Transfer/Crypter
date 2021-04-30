@@ -6,6 +6,7 @@ namespace Crypter.Contracts.Responses.Anonymous
    public class AnonymousFilePreviewResponse : BaseResponse
    {
       public string Name { get; set; }
+      public string ContentType { get; set; }
       public int Size { get; set; }
       public DateTime CreationUTC { get; set; }
       public DateTime ExpirationUTC { get; set; }
@@ -30,9 +31,10 @@ namespace Crypter.Contracts.Responses.Anonymous
       /// <param name="name"></param>
       /// <param name="size"></param>
       /// <param name="expirationUTC"></param>
-      public AnonymousFilePreviewResponse(string name, int size, DateTime creationUTC, DateTime expirationUTC) : base(ResponseCode.Success)
+      public AnonymousFilePreviewResponse(string name, string contentType, int size, DateTime creationUTC, DateTime expirationUTC) : base(ResponseCode.Success)
       {
          Name = name;
+         ContentType = contentType;
          Size = size;
          CreationUTC = creationUTC;
          ExpirationUTC = expirationUTC;
