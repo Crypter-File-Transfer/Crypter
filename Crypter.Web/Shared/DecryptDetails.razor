@@ -25,12 +25,28 @@
                 {
                     <h5 class="card-title">Decryption Key</h5>
                     <p class="card-text fst-italic">This should have been provided by the sender</p>
-                    <div class="mb-3">
-                        <input type="text" class="form-control" id="decryptionKey" @bind="decryptionKey">
-                    </div>
-                    <div class="mb-3">
-                        <button type="button" class="btn btn-primary" @onclick="@(e => OnDecryptClicked(DataFormat, Id, decryptionKey))">Decrypt your @DataFormat</button>
-                    </div>
+                    @if (decryptionError == true)
+                    {
+                        <div class="alert alert-danger text-center" role="alert">
+                            @decryptionErrorText
+                        </div>
+                    }
+                    @if (!IsDecrypting) {
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="decryptionKey" @bind="decryptionKey">
+                        </div>
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-primary" @onclick="@(e => OnDecryptClicked(DataFormat, Id, decryptionKey))">Decrypt your @DataFormat</button>
+                        </div>
+                    } else 
+                    { 
+                        <div class="mb-3">
+                            <h3>@DecryptionStatusMessage</h3>
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    }
                 }
                 else
                 {
@@ -56,8 +72,15 @@
 </div>
 
 @code {
+
+    // State
+    private bool IsDecrypting = false;
+    private string DecryptionStatusMessage = "";
+
     private string decryptionKey = "";
     private bool decryptionSuccess = false;
+    private bool decryptionError = false;
+    private string decryptionErrorText = "";
     private string decryptedMessage = "";
     private byte[] decryptedFile;
 
@@ -95,6 +118,8 @@
 
     private async Task OnDecryptClicked(string dataFormat, Guid id, string privateDecryptionKey)
     {
+        decryptionError = false;
+
         // Attempt to convert the decryption key from Base64
         string pemKey;
         try
@@ -104,7 +129,8 @@
         }
         catch (FormatException)
         {
-            Console.WriteLine("Invalid key format");  // Todo
+            decryptionError = true;
+            decryptionErrorText = "Invalid key format";
             return;
         }
 
@@ -136,7 +162,6 @@
             else
             {
                 decryptedFile = plaintextBytes;
-                // Probably this: https://stackoverflow.com/a/53822526
             }
         }
     }
@@ -154,7 +179,8 @@
 
         if (!response.IsSuccessStatusCode)
         {
-            // insert error handling
+            decryptionError = true;
+            decryptionErrorText = "Error: Failed to decrypt signature";
         }
 
         var content = await response.Content.ReadAsStringAsync();
@@ -190,7 +216,8 @@
 
         if (!response.IsSuccessStatusCode)
         {
-            // insert error handling
+            decryptionError = true;
+            decryptionErrorText = "Error: Unable to decrypt " + dataFormat;
         }
 
         var content = await response.Content.ReadAsStringAsync();
