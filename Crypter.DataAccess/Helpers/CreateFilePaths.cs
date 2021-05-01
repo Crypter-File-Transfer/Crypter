@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
 
-namespace Crypter.DataAccess
+namespace Crypter.DataAccess.Helpers
 {
-    public class FilePaths
+    public class CreateFilePaths
     {
         private readonly string folderName;
         public string ActualFileName { get; set; }
@@ -11,7 +11,7 @@ namespace Crypter.DataAccess
         public string ActualPathString { get; set; }
         public string SigPathString { get; set; }
 
-        public FilePaths(string baseFilePath)
+        public CreateFilePaths(string baseFilePath)
         {
             folderName = baseFilePath;
         }
@@ -27,7 +27,7 @@ namespace Crypter.DataAccess
         /// <returns>true or false to indicate whether the operation was successful</returns>
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=net-5.0
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writeallbytes?view=net-5.0
-        public bool SaveFile(string untrustedName, string guid, byte[] cipherText, string signature, bool isFile)
+        public bool SaveToFileSystem(string untrustedName, string guid, byte[] cipherText, string signature, bool isFile)
         {
             string pathString;
             //create folder path for file upload
@@ -87,5 +87,7 @@ namespace Crypter.DataAccess
                 return -1;
             }
         }
+
+
     }
 }

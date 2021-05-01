@@ -37,6 +37,15 @@ namespace Crypter.DataAccess.Queries
             return await ReadAllAsync(await cmd.ExecuteReaderAsync());
         }
 
+        public async Task<List<TextUploadItem>> FindExpiredItemsAsync()
+        {
+            using var cmd = Db.Connection.CreateCommand();
+            //Used for testing, selects all messages rather than just expired ones, would rather not delete yet
+            //cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`, `EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `MessageUploads`";
+            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`, `EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `MessageUploads` WHERE utc_timestamp() > `ExpirationDate`";
+            return await ReadAllAsync(await cmd.ExecuteReaderAsync());
+        }
+
         private async Task<List<TextUploadItem>> ReadAllAsync(DbDataReader reader)
         {
             var items = new List<TextUploadItem>();

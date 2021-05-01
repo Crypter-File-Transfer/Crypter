@@ -2,6 +2,7 @@
 using System.Data;
 using System.Threading.Tasks;
 using MySqlConnector;
+using Crypter.DataAccess.Helpers; 
 
 namespace Crypter.DataAccess.Models
 {
@@ -34,8 +35,8 @@ namespace Crypter.DataAccess.Models
             var symParams = CryptoLib.Common.MakeSymmetricCryptoParams(HashedSymmetricEncryptionKey, iv);
             byte[] cipherTextAES = CryptoLib.Common.DoSymmetricEncryption(Convert.FromBase64String(CipherText), symParams);
             // Create file paths and insert these paths
-            FilePaths filePath = new FilePaths(baseSaveDirectory);
-            var success = filePath.SaveFile(FileName, ID, cipherTextAES, Signature, false);
+            CreateFilePaths filePath = new CreateFilePaths(baseSaveDirectory);
+            var success = filePath.SaveToFileSystem(FileName, ID, cipherTextAES, Signature, false);
             //add paths to TextUploadItem object
             CipherTextPath = filePath.ActualPathString;
             SignaturePath = filePath.SigPathString;
