@@ -74,7 +74,7 @@ namespace Crypter.DataAccess.Queries
         public long GetSumOfSize()
         {
             using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = "SELECT SUM(Size) FROM MessageUploads;";
+            cmd.CommandText = "SELECT COALESCE(SUM(Size), 0) FROM MessageUploads;";
             using var reader = cmd.ExecuteReader();
             reader.Read();
             var result = reader.GetInt64(0);
