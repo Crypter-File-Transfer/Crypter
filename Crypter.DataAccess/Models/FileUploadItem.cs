@@ -1,50 +1,48 @@
 ﻿using System;
 using System.Data;
 using System.Threading.Tasks;
+using Crypter.DataAccess.Helpers;
 using MySqlConnector;
-using Crypter.API.Controllers;
-using Crypter.CryptoLib.BouncyCastle;
-using Crypter.CryptoLib;
 
-namespace CrypterAPI.Models
+namespace Crypter.DataAccess.Models
 {
-    //TextUpload inherits from UploadItem
-    public class TextUploadItem : UploadItem
+    // FileUpload inherits from UploadItem
+    public class FileUploadItem : UploadItem
     {
+        public string ContentType { get; set; }
+
         //constructor sets TimeStamp upon instantiation
-        public TextUploadItem()
+        public FileUploadItem()
         {
             Created = DateTime.UtcNow;
             ExpirationDate = DateTime.UtcNow.AddHours(24);
         }
-
+ 
         public async Task InsertAsync(CrypterDB db, string baseSaveDirectory)
         {
             using var cmd = db.Connection.CreateCommand();
             //guid as unique identifier
             ID = Guid.NewGuid().ToString();
-            //temporary assignment to UserID
+            //temporary assignments to UserID 
             UserID = ID;
-            //untrustedName is GUID for now, placeholder for "subject"
-            FileName = ID;
             //convert serverEncryption key from string to bytes and apply encryption to cipherText
             // decode encryption key from base64 to bytes
             byte[] HashedSymmetricEncryptionKey = Convert.FromBase64String(ServerEncryptionKey);
             //generate an iv and save to UploadItem
-            byte[] iv = SymmetricMethods.GenerateIV();
-            InitializationVector = Convert.ToBase64String(iv);
+            byte[] iv = CryptoLib.BouncyCastle.SymmetricMethods.GenerateIV();
+            InitializationVector = Convert.ToBase64String(iv); 
             //make symmetric crypto parameters and apply AES encryption
-            var symParams = Common.MakeSymmetricCryptoParams(HashedSymmetricEncryptionKey, iv);
-            byte[] cipherTextAES = Common.DoSymmetricEncryption(Convert.FromBase64String(CipherText), symParams);
+            var symParams = CryptoLib.Common.MakeSymmetricCryptoParams(HashedSymmetricEncryptionKey, iv);
+            byte[] cipherTextAES = CryptoLib.Common.DoSymmetricEncryption(Convert.FromBase64String(CipherText), symParams);
             // Create file paths and insert these paths
-            FilePaths filePath = new FilePaths(baseSaveDirectory);
-            var success = filePath.SaveFile(FileName, ID, cipherTextAES, Signature, false);
-            //add paths to TextUploadItem object
+            CreateFilePaths filePath = new CreateFilePaths(baseSaveDirectory);
+            var success = filePath.SaveToFileSystem(FileName, ID, cipherTextAES, Signature, true);
+            //add paths to FileUploadItem object
             CipherTextPath = filePath.ActualPathString;
             SignaturePath = filePath.SigPathString;
             // Calc size of cipher text file
-            Size = filePath.FileSizeBytes(CipherTextPath);
-            cmd.CommandText = @"INSERT INTO `MessageUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `Iv`, `EncryptedMessagePath`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @initializationvector, @encryptedmessagepath);";
+            Size = filePath.FileSizeBytes(CipherTextPath); 
+            cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `ContentType`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`, `Iv`) VALUES (@id, @userid, @untrustedname, @size, @contentType, @signaturepath, @created, @expirationdate, @encryptedfilecontentpath, @initializationvector);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -52,16 +50,15 @@ namespace CrypterAPI.Models
         public async Task UpdateAsync(CrypterDB db)
         {
             using var cmd = db.Connection.CreateCommand();
-            cmd.CommandText = @"UPDATE `MessageUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `Iv` = @initializationvector, `EncryptedMessagePath`= @encryptedmessagepath WHERE `ID` = @id;";
+            cmd.CommandText = @"UPDATE `FileUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `ContentType` = @contentType, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedFileContentPath`= @encryptedfilecontentpath, `Iv` = @initializationvector WHERE `ID` = @id;";
             BindParams(cmd);
-            //BindId(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
 
         public async Task DeleteAsync(CrypterDB db)
         {
             using var cmd = db.Connection.CreateCommand();
-            cmd.CommandText = @"DELETE FROM `MessageUploads` WHERE `ID` = @id;";
+            cmd.CommandText = @"DELETE FROM `FileUploads` WHERE `ID` = @id;";
             BindId(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -99,8 +96,14 @@ namespace CrypterAPI.Models
             cmd.Parameters.Add(new MySqlParameter
             {
                 ParameterName = "@size",
-                DbType = DbType.Int32,
+                DbType = DbType.Int16,
                 Value = Size,
+            });
+            cmd.Parameters.Add(new MySqlParameter
+            {
+                ParameterName = "@contentType",
+                DbType = DbType.String,
+                Value = ContentType
             });
             cmd.Parameters.Add(new MySqlParameter
             {
@@ -111,18 +114,18 @@ namespace CrypterAPI.Models
             cmd.Parameters.Add(new MySqlParameter
             {
                 ParameterName = "@created",
-                DbType = DbType.DateTime,
+                DbType = DbType.String,
                 Value = Created,
             });
             cmd.Parameters.Add(new MySqlParameter
             {
                 ParameterName = "@expirationdate",
-                DbType = DbType.DateTime,
+                DbType = DbType.String,
                 Value = ExpirationDate,
             });
             cmd.Parameters.Add(new MySqlParameter
             {
-                ParameterName = "@encryptedmessagepath",
+                ParameterName = "@encryptedfilecontentpath",
                 DbType = DbType.String,
                 Value = CipherTextPath,
             });
@@ -133,7 +136,5 @@ namespace CrypterAPI.Models
                 Value = InitializationVector,
             });
         }
-
     }
-
 }

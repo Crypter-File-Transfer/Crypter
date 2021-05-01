@@ -1,14 +1,14 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using CrypterAPI.Models;
 using Microsoft.Extensions.Configuration;
 using System;
-using System.Collections.Generic;
 using Crypter.Contracts.Requests.Anonymous;
 using Crypter.Contracts.Responses.Anonymous;
 using Crypter.Contracts.Enum;
 using Crypter.CryptoLib;
-using Crypter.CryptoLib.BouncyCastle;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Models;
+using Crypter.DataAccess.Queries;
 
 namespace CrypterAPI.Controllers
 {

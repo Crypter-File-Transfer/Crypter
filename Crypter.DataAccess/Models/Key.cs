@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CrypterAPI.Models
+namespace Crypter.DataAccess.Models
 {
     public class Key
     {
@@ -21,7 +21,7 @@ namespace CrypterAPI.Models
         //constructor sets TimeStamp upon instantiation
         public Key()
         {
-            this.Created = DateTime.UtcNow;
+            Created = DateTime.UtcNow;
         }
         internal Key(CrypterDB db)
         {

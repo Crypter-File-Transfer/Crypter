@@ -1,3 +1,4 @@
+using Crypter.DataAccess;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +21,7 @@ namespace CrypterAPI
       {
          services.AddCors();
 
-         services.AddTransient<CrypterDB>(_ => new CrypterDB(Configuration["ConnectionStrings:DefaultConnection"]));
+         services.AddTransient(_ => new CrypterDB(Configuration["ConnectionStrings:DefaultConnection"]));
          services.AddControllers();
       }
 

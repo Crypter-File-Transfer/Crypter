@@ -2,10 +2,10 @@
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
+using Crypter.DataAccess.Models;
 using MySqlConnector;
-using CrypterAPI.Models;
 
-namespace CrypterAPI.Controllers
+namespace Crypter.DataAccess.Queries
 {
     public class FileUploadItemQuery
     {
@@ -33,6 +33,15 @@ namespace CrypterAPI.Controllers
         {
             using var cmd = Db.Connection.CreateCommand();
             cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`, `ContentType`, `EncryptedFileContentPath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `FileUploads`";
+            return await ReadAllAsync(await cmd.ExecuteReaderAsync());
+        }
+
+        public async Task<List<FileUploadItem>> FindExpiredItemsAsync()
+        {
+            using var cmd = Db.Connection.CreateCommand();
+            //Used for testing, selects all messages rather than just expired ones, would rather not delete just yet
+            //cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`, `ContentType`, `EncryptedFileContentPath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `FileUploads`";
+            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`, `ContentType`, `EncryptedFileContentPath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `FileUploads` WHERE utc_timestamp() > `ExpirationDate`";
             return await ReadAllAsync(await cmd.ExecuteReaderAsync());
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
-namespace Crypter.API.Models
+
+namespace Crypter.DataAccess.Models
 {
     public class User
     {
@@ -12,7 +13,7 @@ namespace Crypter.API.Models
         public DateTime UserCreated { get; set; }
         public User()
         {
-            this.UserCreated = DateTime.UtcNow; 
+            UserCreated = DateTime.UtcNow;
         }
     }
 }
