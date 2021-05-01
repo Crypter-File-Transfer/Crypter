@@ -2,10 +2,10 @@
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
+using Crypter.DataAccess.Models;
 using MySqlConnector;
-using CrypterAPI.Models;
 
-namespace CrypterAPI.Controllers
+namespace Crypter.DataAccess.Queries
 {
     public class FileUploadItemQuery
     {

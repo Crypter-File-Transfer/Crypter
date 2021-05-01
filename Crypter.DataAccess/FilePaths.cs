@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
-namespace Crypter.API.Controllers
 
+namespace Crypter.DataAccess
 {
     public class FilePaths
     {
@@ -79,15 +79,13 @@ namespace Crypter.API.Controllers
             {
                 FileInfo file = new FileInfo(targetPath);
                 int size = (int)file.Length;
-                return size; 
+                return size;
             }
             catch (Exception exception)
             {
                 Console.WriteLine($"Exception caught!: {exception}");
-                return -1; 
+                return -1;
             }
         }
-
-
     }
 }
