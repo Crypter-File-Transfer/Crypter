@@ -10,6 +10,16 @@
         </div>
     </div>
     <div class="row">
+        @if (Error)
+        {
+            <div class="validation-errors my-3">
+                <div class="alert alert-danger" role="alert">
+                    @ErrorMessage
+                </div>
+            </div>
+        }
+    </div>
+    <div class="row">
         <div class="col-12 p-0">
             <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => EncryptMessage(MessageText, encryptionStrength))">Encrypt</button>
         </div>
@@ -31,6 +41,8 @@
     // State
     private bool IsEncrypting = false;
     private string EncryptionStatusMessage = "";
+    private bool Error = false;
+    private string ErrorMessage = "";
 
     // User input
     private string MessageText = "";
@@ -70,7 +82,8 @@
 
         if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
         {
-            Console.WriteLine("Server is full");
+            Error = true;
+            ErrorMessage = "The server is full.  Try again later.";
             IsEncrypting = false;
             return;
         }
