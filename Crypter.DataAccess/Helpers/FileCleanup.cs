@@ -43,7 +43,7 @@ namespace Crypter.DataAccess.Helpers
                 Console.WriteLine($"Exception!: {exception}");
                 return false;
             }
-            return false;
+            return true;
         }
     }
 
