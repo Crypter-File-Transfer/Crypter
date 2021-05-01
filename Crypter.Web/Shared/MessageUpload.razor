@@ -68,6 +68,15 @@
         await SetNewEncryptionStatus("Uploading");
         var response = await UploadMessageToAPI(encodedCipherText, encodedSignature, serverEncryptionKey);
 
+        Console.WriteLine(response.Status);
+        Console.WriteLine(response.StatusMessage);
+        if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+        {
+            Console.WriteLine("Server is full");
+            IsEncrypting = false;
+            return;
+        }
+
         // Send data to success modal component
         CompletedUpload("message", response.Id,
            Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),

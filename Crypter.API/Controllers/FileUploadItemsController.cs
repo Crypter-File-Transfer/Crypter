@@ -19,11 +19,13 @@ namespace CrypterAPI.Controllers
     {
         private readonly CrypterDB Db;
         private readonly string BaseSaveDirectory;
+        private readonly long AllocatedDiskSpace;
 
         public FileUploadItemsController(CrypterDB db, IConfiguration configuration)
         {
             Db = db;
-            BaseSaveDirectory = configuration["EncryptedFileStore"];
+            BaseSaveDirectory = configuration["EncryptedFileStore:Location"];
+            AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * 1024 * 1024 * 1024;
         }
 
         // POST: crypter.dev/api/file
@@ -32,6 +34,17 @@ namespace CrypterAPI.Controllers
         public async Task<IActionResult> PostFileUploadItem([FromBody] AnonymousFileUploadRequest body)
         {
             await Db.Connection.OpenAsync();
+
+            // Check if the disk is full before saving the upload
+            var sizeOfFileUploads = new FileUploadItemQuery(Db).GetSumOfSize();
+            var sizeOfMessageUploads = new TextUploadItemQuery(Db).GetSumOfSize();
+            var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
+            int maxUploadSize = 10 * 1024 * 1024;
+            if ((totalSizeOfUploads + maxUploadSize) > AllocatedDiskSpace)
+            {
+                var outOfSpaceResponseBody = new AnonymousUploadResponse(ResponseCode.DiskFull);
+                return new OkObjectResult(outOfSpaceResponseBody);
+            }
 
             var newFile = new FileUploadItem();
             newFile.FileName = body.Name;

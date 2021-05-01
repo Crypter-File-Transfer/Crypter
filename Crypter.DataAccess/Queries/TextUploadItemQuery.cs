@@ -70,5 +70,15 @@ namespace Crypter.DataAccess.Queries
             }
             return items;
         }
+
+        public long GetSumOfSize()
+        {
+            using var cmd = Db.Connection.CreateCommand();
+            cmd.CommandText = "SELECT SUM(Size) FROM MessageUploads;";
+            using var reader = cmd.ExecuteReader();
+            reader.Read();
+            var result = reader.GetInt64(0);
+            return result;
+        }
     }
 }
