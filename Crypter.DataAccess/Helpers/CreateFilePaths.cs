@@ -48,9 +48,6 @@ namespace Crypter.DataAccess.Helpers
             // Combine paths and use standard directory separator
             ActualPathString = Path.GetFullPath(Path.Combine(pathString, ActualFileName));
             SigPathString = Path.GetFullPath(Path.Combine(pathString, SignatureName));
-            ////Confirm paths, write to console
-            Console.WriteLine("Newly created file path: {0}", ActualPathString);
-            Console.WriteLine("New created signature path: {0}", SigPathString);
             //write signature to path
             try
             {
