@@ -4,8 +4,8 @@ namespace Crypter.Contracts.Responses
 {
    public class BaseResponse
    {
-      public ResponseCode Status { get; }
-      public string StatusMessage { get; }
+      public ResponseCode Status { get; set; }
+      public string StatusMessage { get; set; }
 
       /// <summary>
       /// Do not use!
