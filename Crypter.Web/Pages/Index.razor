@@ -1,5 +1,8 @@
 ﻿@page "/"
 
+@inject HttpClient HttpClient
+@inject AppSettings AppSettings
+
 <div class="container text-center">
     <h1 class="title">Crypter.dev</h1>
     <h2>Private, encrypted file transfer and messaging</h2>
@@ -30,3 +33,32 @@
         </div>
     </div>
 </div>
+
+@code
+{
+    public bool ServerHasDiskSpace = false;
+    public long AllocatedServerSpace = 0;
+    public long AvailableServerSpace = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var diskMetricsResponse = await DownloadDiskMetrics();
+        ServerHasDiskSpace = !diskMetricsResponse.Full;
+        AllocatedServerSpace = long.Parse(diskMetricsResponse.Allocated);
+        AvailableServerSpace = long.Parse(diskMetricsResponse.Available);
+    }
+
+    public async Task<DiskMetricsResponse> DownloadDiskMetrics()
+    {
+        var url = $"{AppSettings.ApiBaseUrl}/metrics/disk";
+        using var response = await HttpClient.GetAsync(url);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // insert error handling
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<DiskMetricsResponse>(content);
+    }
+}

@@ -12,7 +12,7 @@ namespace Crypter.Contracts.Responses.Anonymous
       /// Do not use!
       /// For deserialization purposes only.
       /// </summary>
-      private AnonymousUploadResponse() : base(ResponseCode.Unknown)
+      private AnonymousUploadResponse()
       { }
 
       /// <summary>

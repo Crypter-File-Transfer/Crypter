@@ -5,6 +5,7 @@
         Unknown = -1,
         Success,
         InvalidRequest,
-        NotFound
+        NotFound,
+        DiskFull
     }
 }

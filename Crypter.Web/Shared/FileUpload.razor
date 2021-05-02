@@ -13,11 +13,11 @@
                     <span class="fw-bold">Choose a file</span> or drag it here to upload
                 </p>
                 <InputFile id="fileInput"
-                        OnChange="HandleFileInputChange"
-                        @ondragenter="HandleDragEnter"
-                        @ondragleave="HandleDragLeave" />
+                           OnChange="HandleFileInputChange"
+                           @ondragenter="HandleDragEnter"
+                           @ondragleave="HandleDragLeave" />
             </div>
-            @if ((fileSizeError || fileCountError || noFileSelected))
+            @if ((fileSizeError || fileCountError || noFileSelected || serverIsFull))
             {
                 <div class="validation-errors my-3">
                     @if (fileSizeError)
@@ -38,6 +38,13 @@
                     {
                         <div class="alert alert-danger" role="alert">
                             No file selected.
+                        </div>
+                    }
+
+                    @if (serverIsFull)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            The server is full. Try again later.
                         </div>
                     }
                 </div>
@@ -87,6 +94,7 @@
     private bool fileSizeError = false;
     private bool fileCountError = false;
     private bool noFileSelected = false;
+    private bool serverIsFull = false;
     private Guid returnedId;
     private string publicKey;
     private string privateKey;
@@ -177,6 +185,13 @@
 
         await SetNewEncryptionStatus("Uploading");
         var response = await UploadFileToAPI(file.Name, file.Type, encodedCipherText, encodedSignature, serverEncryptionKey);
+
+        if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+        {
+            serverIsFull = true;
+            IsEncrypting = false;
+            return;
+        }
 
         // Send data to success modal component
         CompletedUpload("file", response.Id,
