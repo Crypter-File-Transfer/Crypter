@@ -5,7 +5,7 @@
 <div class="row">
     <div class="col-md-4">
         <div class="card">
-            <h5 class="card-header">@DataFormat Details</h5>
+            <h5 class="card-header">Details</h5>
             <ul class="list-group list-group-flush">
                 @if (DataFormat.ToLower() == "file")
                 {
@@ -118,9 +118,11 @@
 
     private async Task OnDecryptClicked(string dataFormat, Guid id, string privateDecryptionKey)
     {
+        IsDecrypting = true;
         decryptionError = false;
 
         // Attempt to convert the decryption key from Base64
+        await SetNewDecryptionStatus("Decoding key");
         string pemKey;
         try
         {
@@ -130,27 +132,52 @@
         catch (FormatException)
         {
             decryptionError = true;
+            IsDecrypting = false;
             decryptionErrorText = "Invalid key format";
             return;
         }
 
         // Request the signature from the API
+        await SetNewDecryptionStatus("Downloading signature");
         var signatureResponse = await DownloadSignature(dataFormat, id);
         byte[] encryptedSignature = Convert.FromBase64String(signatureResponse.Signature);
 
         // Attempt to decrypt the signature using the provided key
-        AnonymousSignature signature = CryptoLib.Common.DecryptAndDeserializeSignature(encryptedSignature, pemKey);
+        await SetNewDecryptionStatus("Decrypting signature");
+        AnonymousSignature signature;
+        try
+        {
+            signature = CryptoLib.Common.DecryptAndDeserializeSignature(encryptedSignature, pemKey);
+        }
+        catch (FormatException)
+        {
+            decryptionError = true;
+            IsDecrypting = false;
+            decryptionErrorText = "Failed to decrypt signature";
+            return;
+        }
 
         // Request the ciphertext from the server
+        await SetNewDecryptionStatus($"Downloading {dataFormat}");
         var serverDecryptionKey = DigestMethods.GetDigest(signature.Key, DigestAlgorithm.SHA256);
         var encodedServerDecryptionKey = Convert.ToBase64String(serverDecryptionKey);
         var ciphertextResponse = await DownloadCiphertext(DataFormat, id, encodedServerDecryptionKey);
 
+        if (ciphertextResponse.Status.Equals(Contracts.Enum.ResponseCode.DecryptFailure))
+        {
+            decryptionError = true;
+            IsDecrypting = false;
+            decryptionErrorText = "Failed to remove server-side encryption";
+            return;
+        }
+
         // Decrypt the ciphertext using the symmetric key from the signature
+        await SetNewDecryptionStatus($"Decrypting {dataFormat}");
         byte[] ciphertextBytes = Convert.FromBase64String(ciphertextResponse.CipherText);
         var symmetricParams = CryptoLib.Common.MakeSymmetricCryptoParams(signature.Key, signature.IV);
         byte[] plaintextBytes = CryptoLib.Common.UndoSymmetricEncryption(ciphertextBytes, symmetricParams);
 
+        await SetNewDecryptionStatus($"Verifying decrypted {dataFormat}");
         decryptionSuccess = CryptoLib.Common.VerifyPlaintextAgainstKnownDigest(plaintextBytes, signature.Digest);
 
         if (decryptionSuccess)
@@ -163,6 +190,13 @@
             {
                 decryptedFile = plaintextBytes;
             }
+        }
+        else
+        {
+            decryptionError = true;
+            IsDecrypting = false;
+            decryptionErrorText = $"Failed to verify decrypted {dataFormat}";
+            return;
         }
     }
 
@@ -227,5 +261,12 @@
     private async Task DownloadFile(string fileName, byte[] fileContent, string contentType)
     {
         await BlazorDownloadFileService.DownloadFileAsync(fileName, fileContent, contentType);
+    }
+
+    public async Task SetNewDecryptionStatus(string status)
+    {
+        DecryptionStatusMessage = status;
+        StateHasChanged();
+        await Task.Delay(500);
     }
 }
