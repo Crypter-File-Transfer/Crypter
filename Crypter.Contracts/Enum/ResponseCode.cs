@@ -6,6 +6,7 @@
         Success,
         InvalidRequest,
         NotFound,
-        DiskFull
+        DiskFull,
+        DecryptFailure
     }
 }
