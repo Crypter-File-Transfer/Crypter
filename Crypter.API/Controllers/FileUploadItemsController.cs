@@ -146,42 +146,5 @@ namespace CrypterAPI.Controllers
             //return the signature
             return new OkObjectResult(responseBody); 
         }
-
-        // PUT: crypter.dev/api/file/{guid}
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutFileUploadItem(string id, [FromBody] FileUploadItem body)
-        {
-            await Db.Connection.OpenAsync();
-            var query = new FileUploadItemQuery(Db);
-            var result = await query.FindOneAsync(id);
-            if (result is null)
-                return new NotFoundResult();
-            //update fields
-            result.UserID = body.UserID;
-            result.FileName = body.FileName;
-            result.Size = body.Size;
-            result.SignaturePath = body.SignaturePath;
-            result.Created = body.Created;
-            result.ExpirationDate = body.ExpirationDate;
-            result.CipherTextPath = body.CipherTextPath;
-            await result.UpdateAsync(Db);
-            return new OkObjectResult(result);
-
-        }
-
-        // DELETE: crypter.dev/api/file/{guid}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteFileUploadItem(string id)
-        {
-            await Db.Connection.OpenAsync();
-            var query = new FileUploadItemQuery(Db);
-            var result = await query.FindOneAsync(id);
-            if (result is null)
-                return new NotFoundResult();
-            await result.DeleteAsync(Db);
-            return new OkResult();
-        }
-
     }
 }
