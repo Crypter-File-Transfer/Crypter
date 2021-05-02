@@ -47,9 +47,12 @@ namespace Crypter.CryptoLib.BouncyCastle
       {
          IBufferedCipher cipher = CipherUtilities.GetCipher("AES/CTR/NoPadding");
          cipher.Init(true, new ParametersWithIV(key, iv));
-         var result = cipher.DoFinal(inBytes);
+
+         byte[] ciphertext = new byte[cipher.GetOutputSize(inBytes.Length)];
+         var length = cipher.ProcessBytes(inBytes, 0, inBytes.Length, ciphertext, 0);
+         cipher.DoFinal(ciphertext, length);
          cipher.Reset();
-         return result;
+         return ciphertext;
       }
 
       /// <summary>
@@ -63,9 +66,12 @@ namespace Crypter.CryptoLib.BouncyCastle
       {
          IBufferedCipher cipher = CipherUtilities.GetCipher("AES/CTR/NoPadding");
          cipher.Init(false, new ParametersWithIV(key, iv));
-         var result = cipher.DoFinal(inBytes);
+
+         byte[] plaintext = new byte[cipher.GetOutputSize(inBytes.Length)];
+         var length = cipher.ProcessBytes(inBytes, 0, inBytes.Length, plaintext, 0);
+         cipher.DoFinal(plaintext, length);
          cipher.Reset();
-         return result;
+         return plaintext;
       }
    }
 }
