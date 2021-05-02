@@ -9,6 +9,7 @@ using Crypter.CryptoLib;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Models;
 using Crypter.DataAccess.Queries;
+using Crypter.DataAccess.Helpers;
 
 namespace CrypterAPI.Controllers
 {
@@ -101,7 +102,8 @@ namespace CrypterAPI.Controllers
         {
             await Db.Connection.OpenAsync();
             var query = new FileUploadItemQuery(Db);
-            var result = await query.FindOneAsync(body.Id.ToString());
+            string downloadId = body.Id.ToString();
+            FileUploadItem result = await query.FindOneAsync(downloadId);
             if (result is null)
                 return new NotFoundResult();
             //Get decryption key from client
@@ -114,6 +116,11 @@ namespace CrypterAPI.Controllers
             byte[] cipherText = Common.UndoSymmetricEncryption(cipherTextAES, symParams);
             //init response body and return cipherText to client
             var responseBody = new AnonymousDownloadResponse(Convert.ToBase64String(cipherText));
+            //delete item from db
+            await result.DeleteAsync(Db);
+            //delete directory content for downloaded Id
+            FileCleanup DownloadDir = new FileCleanup(downloadId, BaseSaveDirectory);
+            DownloadDir.CleanDirectory(true); 
             //return the encrypted file bytes
             return new OkObjectResult(responseBody);
         }

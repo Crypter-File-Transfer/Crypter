@@ -20,7 +20,7 @@ namespace Crypter.DataAccess.Helpers
         /// <param name="isFile"></param>
         /// <returns>true or false to indicate whether the operation was successful</returns>
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.directory.delete?view=net-5.0
-        public bool CleanExpiredDirectory(bool isFile)
+        public bool CleanDirectory(bool isFile)
         {
             string pathString;
             //create path files

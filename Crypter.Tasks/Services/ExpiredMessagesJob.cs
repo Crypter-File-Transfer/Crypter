@@ -48,7 +48,7 @@ namespace Crypter.Tasks.Services
                 //delete each file from the file system given Id
                 FileCleanup DeleteItem = new FileCleanup(expiredID, BaseSaveDirectory);
                 //boolean argument indicates the item is not a file
-                DeleteItem.CleanExpiredDirectory(false);
+                DeleteItem.CleanDirectory(false);
             }
             await Task.CompletedTask;
         }
