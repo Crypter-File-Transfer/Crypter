@@ -118,7 +118,7 @@ namespace CrypterAPI.Controllers
             await result.DeleteAsync(Db);
             //delete directory content for downloaded message Id
             FileCleanup DownloadDir = new FileCleanup(downloadId, BaseSaveDirectory);
-            DownloadDir.CleanExpiredDirectory(false);
+            DownloadDir.CleanDirectory(false);
             return new OkObjectResult(responseBody);
         }
 
