@@ -155,6 +155,7 @@
         if (!noFileSelected)
         {
             await EncryptFile(files[0], strength);
+            GC.Collect();
         }
     }
 
@@ -169,7 +170,7 @@
         await SetNewEncryptionStatus("Encrypting your file");
         using var stream = new MemoryStream();
         await file.Data.CopyToAsync(stream);
-        var fileBytes = stream.ToArray();
+        byte[] fileBytes = stream.ToArray();
         var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricCryptoParams);
 
         await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
