@@ -10,6 +10,10 @@ namespace Crypter.DataAccess.Models
         public string UserName { get; set; }
         // hash of user password
         private string Password { get; set; }
+        public bool IsPublic { get; set; }
+        public string PublicAlias { get; set; }
+        public bool AllowAnonFiles { get; set; }
+        public bool AllowAnonMessages { get; set; }
         public DateTime UserCreated { get; set; }
         public User()
         {
