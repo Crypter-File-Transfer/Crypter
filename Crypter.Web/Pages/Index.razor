@@ -2,6 +2,7 @@
 
 @inject HttpClient HttpClient
 @inject AppSettings AppSettings
+@inject IJSRuntime JsRuntime;
 
 <div class="container text-center">
     <h1 class="title">Crypter.dev</h1>
@@ -42,6 +43,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter");
         var diskMetricsResponse = await DownloadDiskMetrics();
         ServerHasDiskSpace = !diskMetricsResponse.Full;
         AllocatedServerSpace = long.Parse(diskMetricsResponse.Allocated);
