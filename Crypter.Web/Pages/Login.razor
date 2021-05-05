@@ -1,0 +1,30 @@
+﻿@page "/login"
+
+@inject IJSRuntime JsRuntime;
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <h1>Login to get more benefits from Crypter.dev</h1>
+            <ul>
+                <li>Connect with other users for easy file and message transfer</li>
+                <li>Have more control over how long your content is available</li>
+                <li>And much more...</li>
+            </ul>
+            <p>
+                Don't have an account?
+                <a href="/register">Register here!</a>
+            </p>
+        </div>
+        <div class="col-md-4">
+            <LoginComponent />
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Login");
+    }
+}

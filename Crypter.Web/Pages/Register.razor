@@ -1,0 +1,31 @@
+﻿@page "/register"
+
+@inject IJSRuntime JsRuntime;
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <h1>Let's get started...</h1>
+            <p>
+                Already have an account?
+                <a href="/login">Log in</a>
+            </p>
+            <p>Signing up for Crypter.dev gives you many more benefits than our anonymous functionality!</p>
+            <ul>
+                <li>Connect with other users for easy file and message transfer</li>
+                <li>Have more control over how long your content is available</li>
+                <li>And much more...</li>
+            </ul>
+        </div>
+        <div class="col-md-4">
+            <RegisterComponent />
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Register");
+    }
+}

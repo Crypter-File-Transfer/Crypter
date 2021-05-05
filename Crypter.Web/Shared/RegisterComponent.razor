@@ -1,0 +1,27 @@
+﻿<div class="mb-3">
+    <label for="exampleFormControlInput1" class="form-label">Username</label>
+    <input @bind="Username" type="text" class="form-control" id="usernameFormControl">
+</div>
+<div class="mb-3">
+    <label for="exampleFormControlInput1" class="form-label">Email <span class="text-black-50">(optional)</span></label>
+    <input @bind="Email" type="email" class="form-control" id="emailFormControl">
+</div>
+<div class="mb-3">
+    <label for="exampleFormControlTextarea1" class="form-label">Password</label>
+    <input @bind="Password" type="password" class="form-control" id="passwordFormControl">
+    <a href="/password-reset">Forgot password?</a>
+</div>
+<div class="mb-3">
+    <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnRegisterClicked(Username, Email, Password))">Register</button>
+</div>
+
+@code {
+    private string Username;
+    private string Email;
+    private string Password;
+
+    private void OnRegisterClicked(string username, string email, string password)
+    {
+        Console.WriteLine("Logging in...");
+    }
+}
