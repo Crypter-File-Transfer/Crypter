@@ -226,16 +226,9 @@
 
     private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string contentType, string cipherText, string signature, string serverEncryptionKey)
     {
-        var requestBody = new AnonymousFileUploadRequest
-        {
-            Name = filename,
-            ContentType = contentType,
-            CipherText = cipherText,
-            Signature = signature,
-            ServerEncryptionKey = serverEncryptionKey
-        };
+        var requestBody = new AnonymousUploadRequest(filename, ResourceType.File, contentType, cipherText, signature, serverEncryptionKey);
 
-        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/file", requestBody);
+        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/anonymous/upload", requestBody);
 
         if (!response.IsSuccessStatusCode)
         {

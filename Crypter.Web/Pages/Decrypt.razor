@@ -39,91 +39,45 @@
         var urlPieces = relativeURL.Split("/");
         dataFormat = urlPieces[1].ToLower();
 
-        if (dataFormat == "message")
+        ResourceType type = dataFormat == "message"
+            ? ResourceType.Message
+            : ResourceType.File;
+
+        var previewResponse = await DownloadPreviewFromApi(Id, type);
+        switch (previewResponse.Status)
         {
-            var messageResponse = await DownloadMessagePreviewFromApi(Id);
-            switch (messageResponse.Status)
-            {
-                case Contracts.Enum.ResponseCode.Success:
-                    PopulateMessagePreview(messageResponse.Size, messageResponse.CreationUTC, messageResponse.ExpirationUTC);
-                    break;
-                default:
-                    // Failed response must be handled in DownloadMessagePreview
-                    break;
-            }
-        }
-        else if (dataFormat == "file")
-        {
-            var fileResponse = await DownloadFilePreviewFromApi(Id);
-            switch (fileResponse.Status)
-            {
-                case Contracts.Enum.ResponseCode.Success:
-                    PopulateFilePreview(fileResponse.Name, fileResponse.Size, fileResponse.CreationUTC, fileResponse.ExpirationUTC, fileResponse.ContentType);
-                    break;
-                default:
-                    // Failed response must be handled in DownloadFilePreview
-                    break;
-            }
-        }
-        else
-        {
-            // This is unnecessary. Unsupported dataFormats automatically send to the 404.
+            case Contracts.Enum.ResponseCode.Success:
+                PopulatePreview(previewResponse.Name, previewResponse.Size, previewResponse.CreationUTC, previewResponse.ExpirationUTC, previewResponse.ContentType);
+                break;
+            default:
+                // Failed response must be handled in DownloadMessagePreview
+                break;
         }
     }
 
-    private async Task<AnonymousFilePreviewResponse> DownloadFilePreviewFromApi(Guid id)
+    private async Task<AnonymousPreviewResponse> DownloadPreviewFromApi(Guid id, ResourceType type)
     {
-        var requestBody = new AnonymousFilePreviewRequest
-        {
-            Id = id
-        };
+        var requestBody = new AnonymousPreviewRequest(id, type);
 
-        var url = $"{AppSettings.ApiBaseUrl}/file/preview/{id}";
-        using var response = await HttpClient.GetAsync(url);
+        var url = $"{AppSettings.ApiBaseUrl}/anonymous/get-preview";
+        using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
         if (!response.IsSuccessStatusCode)
         {
             error = true;
-            errorText = dataFormat + " not found";
+            errorText = $"{type.ToString()} not found";
         }
 
         var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AnonymousFilePreviewResponse>(content);
+        return JsonConvert.DeserializeObject<AnonymousPreviewResponse>(content);
     }
 
-    private async Task<AnonymousMessagePreviewResponse> DownloadMessagePreviewFromApi(Guid id)
+    private void PopulatePreview(string aName, int size, DateTime creation, DateTime expiration, string aContentType)
     {
-        var requestBody = new AnonymousMessagePreviewRequest
-        {
-            Id = id
-        };
-
-        var url = $"{AppSettings.ApiBaseUrl}/message/preview/{id}";
-        using var response = await HttpClient.GetAsync(url);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            error = true;
-            errorText = dataFormat + " not found";
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AnonymousMessagePreviewResponse>(content);
-    }
-
-    private void PopulateFilePreview(string filename, int size, DateTime creation, DateTime expiration, string type)
-    {
-        name = filename;
+        name = aName;
         creationDate = creation.ToLocalTime().ToString();
         expirationDate = expiration.ToLocalTime().ToString();
         fileSize = size;
-        contentType = type;
-    }
-
-    private void PopulateMessagePreview(int size, DateTime creation, DateTime expiration)
-    {
-        creationDate = creation.ToLocalTime().ToString();
-        expirationDate = expiration.ToLocalTime().ToString();
-        fileSize = size;
+        contentType = aContentType;
     }
 }

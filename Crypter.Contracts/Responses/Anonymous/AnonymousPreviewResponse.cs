@@ -3,7 +3,7 @@ using Crypter.Contracts.Enum;
 
 namespace Crypter.Contracts.Responses.Anonymous
 {
-   public class AnonymousFilePreviewResponse : BaseResponse
+   public class AnonymousPreviewResponse : BaseResponse
    {
       public string Name { get; set; }
       public string ContentType { get; set; }
@@ -15,14 +15,14 @@ namespace Crypter.Contracts.Responses.Anonymous
       /// Do not use!
       /// For deserialization purposes only.
       /// </summary>
-      private AnonymousFilePreviewResponse()
+      private AnonymousPreviewResponse()
       { }
 
       /// <summary>
       /// Error response
       /// </summary>
       /// <param name="status"></param>
-      public AnonymousFilePreviewResponse(ResponseCode status) : base(status)
+      public AnonymousPreviewResponse(ResponseCode status) : base(status)
       { }
 
       /// <summary>
@@ -31,7 +31,7 @@ namespace Crypter.Contracts.Responses.Anonymous
       /// <param name="name"></param>
       /// <param name="size"></param>
       /// <param name="expirationUTC"></param>
-      public AnonymousFilePreviewResponse(string name, string contentType, int size, DateTime creationUTC, DateTime expirationUTC) : base(ResponseCode.Success)
+      public AnonymousPreviewResponse(string name, string contentType, int size, DateTime creationUTC, DateTime expirationUTC) : base(ResponseCode.Success)
       {
          Name = name;
          ContentType = contentType;

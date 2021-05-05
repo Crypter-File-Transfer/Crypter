@@ -137,9 +137,13 @@
             return;
         }
 
+        ResourceType resourceType = DataFormat.ToLower() == "message"
+            ? ResourceType.Message
+            : ResourceType.File;
+
         // Request the signature from the API
         await SetNewDecryptionStatus("Downloading signature");
-        var signatureResponse = await DownloadSignature(dataFormat, id);
+        var signatureResponse = await DownloadSignature(resourceType, id);
         byte[] encryptedSignature = Convert.FromBase64String(signatureResponse.Signature);
 
         // Attempt to decrypt the signature using the provided key
@@ -161,7 +165,7 @@
         await SetNewDecryptionStatus($"Downloading {dataFormat}");
         var serverDecryptionKey = DigestMethods.GetDigest(signature.Key, DigestAlgorithm.SHA256);
         var encodedServerDecryptionKey = Convert.ToBase64String(serverDecryptionKey);
-        var ciphertextResponse = await DownloadCiphertext(DataFormat, id, encodedServerDecryptionKey);
+        var ciphertextResponse = await DownloadCiphertext(resourceType, id, encodedServerDecryptionKey);
 
         if (ciphertextResponse.Status.Equals(Contracts.Enum.ResponseCode.DecryptFailure))
         {
@@ -195,7 +199,7 @@
         {
             decryptionError = true;
             IsDecrypting = false;
-            decryptionErrorText = $"Failed to verify decrypted {dataFormat}";
+            decryptionErrorText = $"Failed to verify decrypted {dataFormat.ToLower()}";
             return;
         }
     }
@@ -206,10 +210,11 @@
     /// <param name="dataFormat">"file" or "message"</param>
     /// <param name="id">The guid corresponding to the resource</param>
     /// <returns></returns>
-    private async Task<AnonymousSignatureResponse> DownloadSignature(string dataFormat, Guid id)
+    private async Task<AnonymousSignatureResponse> DownloadSignature(ResourceType type, Guid id)
     {
-        var url = $"{AppSettings.ApiBaseUrl}/{dataFormat}/signature/{id}";
-        using var response = await HttpClient.GetAsync(url);
+        var url = $"{AppSettings.ApiBaseUrl}/anonymous/get-signature";
+        var requestBody = new AnonymousSignatureRequest(id, type);
+        using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -228,30 +233,18 @@
     /// <param name="id">The guid corresponding to the resource</param>
     /// <param name="serverDecryptionKey">Base64(Sha256(GetBytes(symmetricKey)))</param>
     /// <returns></returns>
-    private async Task<AnonymousDownloadResponse> DownloadCiphertext(string dataFormat, Guid id, string serverDecryptionKey)
+    private async Task<AnonymousDownloadResponse> DownloadCiphertext(ResourceType type, Guid id, string serverDecryptionKey)
     {
-        var fileRequestBody = new AnonymousFileDownloadRequest
-        {
-            Id = id,
-            ServerDecryptionKey = serverDecryptionKey
-        };
+        var requestBody = new AnonymousDownloadRequest(id, type, serverDecryptionKey);
 
-        var messageRequestBody = new AnonymousMessageDownloadRequest
-        {
-            Id = id,
-            ServerDecryptionKey = serverDecryptionKey
-        };
+        var url = $"{AppSettings.ApiBaseUrl}/anonymous/get-item";
 
-        var url = $"{AppSettings.ApiBaseUrl}/{dataFormat}/actual";
-
-        using var response = dataFormat == "file"
-            ? await HttpClient.PostAsJsonAsync(url, fileRequestBody)
-            : await HttpClient.PostAsJsonAsync(url, messageRequestBody);
+        var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
         if (!response.IsSuccessStatusCode)
         {
             decryptionError = true;
-            decryptionErrorText = "Error: Unable to decrypt " + dataFormat;
+            decryptionErrorText = $"Error: Unable to decrypt {type.ToString().ToLower()}";
         }
 
         var content = await response.Content.ReadAsStringAsync();

@@ -3,7 +3,7 @@ using System;
 
 namespace Crypter.Contracts.Requests.Anonymous
 {
-    public class AnonymousSignatureRequest
+    public class AnonymousPreviewRequest
     {
         public Guid Id { get; set; }
         public ResourceType Type { get; set; }
@@ -12,10 +12,10 @@ namespace Crypter.Contracts.Requests.Anonymous
         /// Do not use!
         /// For deserialization purposes only.
         /// </summary>
-        public AnonymousSignatureRequest()
+        public AnonymousPreviewRequest()
         { }
 
-        public AnonymousSignatureRequest(Guid id, ResourceType type)
+        public AnonymousPreviewRequest(Guid id, ResourceType type)
         {
             Id = id;
             Type = type;

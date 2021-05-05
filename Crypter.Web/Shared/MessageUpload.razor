@@ -120,13 +120,8 @@
 
     private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string signature, string serverEncryptionKey)
     {
-        var postBody = new AnonymousMessageUploadRequest
-        {
-            CipherText = cipherText,
-            Signature = signature,
-            ServerEncryptionKey = serverEncryptionKey
-        };
-        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/message", postBody);
+        var postBody = new AnonymousUploadRequest("{no subject}", ResourceType.Message, "text", cipherText, signature, serverEncryptionKey);
+        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/anonymous/upload", postBody);
 
         if (!response.IsSuccessStatusCode)
         {
