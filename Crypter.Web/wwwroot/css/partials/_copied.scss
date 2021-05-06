@@ -1,0 +1,21 @@
+﻿.copiedTooltip {
+    position: relative;
+
+    .toolTipText {
+        background-color: gray;
+        color: #ffffff;
+        border-radius: 5px;
+        text-align: center;
+        line-height: 32px;
+        display: none;
+        position: absolute;
+        width: 100px;
+        height: 32px;
+        margin: auto;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        opacity: 0;
+    }
+}

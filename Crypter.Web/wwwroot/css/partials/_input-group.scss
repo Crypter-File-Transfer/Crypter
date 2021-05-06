@@ -1,0 +1,17 @@
+﻿.input-group-append {
+    margin-left: -1px;
+}
+
+.input-group-append {
+    display: flex;
+}
+
+.input-group > .input-group-append > .btn, .input-group > .input-group-append > .input-group-text {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group-append .btn {
+    position: relative;
+    z-index: 2;
+}

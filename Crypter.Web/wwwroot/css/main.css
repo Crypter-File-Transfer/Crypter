@@ -95,12 +95,6 @@
     left: 0;
     right: 0;
     transition: color 200ms ease; }
-  .file-upload .passphrase, .message-upload .passphrase {
-    margin-bottom: 24px; }
-  .file-upload label, .message-upload label {
-    display: block; }
-  .file-upload input[type="text"], .message-upload input[type="text"] {
-    margin-right: 10px; }
   .file-upload #fileInput, .message-upload #fileInput {
     padding: 5rem 9rem 2rem;
     opacity: 0;
@@ -129,3 +123,36 @@
       margin: 12px auto; }
     .decryption-details .decryption-key input {
       width: 75%; }
+
+.copiedTooltip {
+  position: relative; }
+  .copiedTooltip .toolTipText {
+    background-color: gray;
+    color: #ffffff;
+    border-radius: 5px;
+    text-align: center;
+    line-height: 32px;
+    display: none;
+    position: absolute;
+    width: 100px;
+    height: 32px;
+    margin: auto;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0; }
+
+.input-group-append {
+  margin-left: -1px; }
+
+.input-group-append {
+  display: flex; }
+
+.input-group > .input-group-append > .btn, .input-group > .input-group-append > .input-group-text {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0; }
+
+.input-group-append .btn {
+  position: relative;
+  z-index: 2; }

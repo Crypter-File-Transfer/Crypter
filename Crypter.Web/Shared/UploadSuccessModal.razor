@@ -1,4 +1,5 @@
 ﻿@inject NavigationManager Navigator
+@inject IJSRuntime js
 
 <div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
     <div class="modal-dialog" role="document">
@@ -11,7 +12,16 @@
                 <p>Download Link: <a href=@($"{Navigator.BaseUri}decrypt/{DataFormat}/{ReturnedId}") target="_blank">@($"{Navigator.BaseUri}decrypt/{DataFormat}/{ReturnedId}")</a></p>
                 <h4>Decryption Key</h4>
                 <p><em>Share this key with the receiving party</em></p>
-                <input class="form-control" @bind="PrivateKey" type="text" name="privateKey" id="privateKey" readonly />
+                <div class="copiedTooltip">
+                    <div class="input-group mb-3">
+                        <input class="form-control" @bind="PrivateKey" type="text" name="privateKey" id="privateKey" readonly @onclick="CopyToClipboard" />
+                        <div class="input-group-append">
+                            <button class="btn btn-secondary" type="button" @onclick="CopyToClipboard">Copy</button>
+                        </div>
+                    </div>
+                    
+                    <span id="copiedToolTip" class="toolTipText">Copied</span>
+                </div>
                 <!--
                 <h4>Generated Encryption Key</h4>
                 <p><em>Do not share this key</em></p>
@@ -70,4 +80,9 @@
     [Parameter] public EventCallback<Guid> ReturnedIdChanged { get; set; }
     [Parameter] public EventCallback<string> PublicKeyChanged { get; set; }
     [Parameter] public EventCallback<string> PrivateKeyChanged { get; set; }
+
+    private async Task CopyToClipboard()
+    {
+        await js.InvokeVoidAsync("copyToClipboard", PrivateKey);
+    }
 }
