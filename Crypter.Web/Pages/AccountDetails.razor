@@ -1,0 +1,79 @@
+﻿@page "/account-details"
+
+@inject IJSRuntime JsRuntime;
+
+<div class="container">
+    <button type="button" class="btn btn-secondary float-end" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
+    <h1>Account Details</h1>
+    <h2>User Details</h2>
+    <form id="DetailsForm">
+        <div class="mb-3">
+            <label for="emailFormControl" class="form-label">Email</label>
+            <input @bind="Email" type="email" class="form-control" id="emailFormControl" placeholder="jsmith@email.com" readonly>
+        </div>
+        <div class="mb-3">
+            <label for="exampleFormControlInput1" class="form-label">Password</label>
+            <input @bind="Password" type="password" class="form-control" id="exampleFormControlInput1" placeholder="password" readonly>
+        </div>
+        <h2>Public Details</h2>
+        <div class="mb-3">
+            <label for="aliasFormControl" class="form-label">Public Alias</label>
+            <input @bind="PublicAlias" type="text" class="form-control" id="aliasFormControl" placeholder="Jan Smith" readonly>
+        </div>
+        <div class="mb-3">
+            <div class="form-check form-switch">
+                <label class="form-check-label" for="appearPublicly">Appear publicly</label>
+                <input @bind="AppearPublicly" class="form-check-input" type="checkbox" id="appearPublicly" disabled>
+            </div>
+        </div>
+        <div class="mb-3">
+            <div class="form-check form-switch">
+                <label class="form-check-label" for="acceptAnonymousMessages">Accept messages from anonymous users</label>
+                <input @bind="AcceptAnonymousMessages" class="form-check-input" type="checkbox" id="acceptAnonymousMessages" disabled>
+            </div>
+        </div>
+        <div class="mb-3">
+            <div class="form-check form-switch">
+                <label class="form-check-label" for="acceptAnonymousFiles">Accept files from anonymous users</label>
+                <input @bind="AcceptAnonymousFiles" class="form-check-input" type="checkbox" id="acceptAnonymousFiles" disabled>
+            </div>
+        </div>
+        @if (IsEditing)
+        {
+            <button type="button" class="btn btn-primary mx-auto" @onclick="OnSaveClicked">Save</button>
+        }
+    </form>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Account Details");
+    }
+
+    private bool IsEditing = false;
+    private string Username;
+    private string Email;
+    private string Password;
+    private string PublicAlias;
+    private bool AppearPublicly;
+    private bool AcceptAnonymousMessages;
+    private bool AcceptAnonymousFiles;
+
+    // TODO: Place code for getting data from the API
+
+    public async Task OnEditClicked()
+    {
+        await JsRuntime.InvokeVoidAsync("EditAccountDetails");
+        IsEditing = true;
+    }
+
+    public async Task OnSaveClicked()
+    {
+        await JsRuntime.InvokeVoidAsync("SaveAccountDetails");
+
+        // Insert PATCH calls to API
+
+        IsEditing = false;
+    }
+}

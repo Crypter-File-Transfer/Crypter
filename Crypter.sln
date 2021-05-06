@@ -10,11 +10,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Web", "Crypter.Web\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Contracts", "Crypter.Contracts\Crypter.Contracts.csproj", "{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypter.DataAccess", "Crypter.DataAccess\Crypter.DataAccess.csproj", "{AB46BF28-CCD0-4D85-9769-405A9FD87C3E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.DataAccess", "Crypter.DataAccess\Crypter.DataAccess.csproj", "{AB46BF28-CCD0-4D85-9769-405A9FD87C3E}"
 EndProject
-Project("{9344BDBB-3E7F-41FC-A0DD-8665D75EE146}") = "Crypter.Test", "Crypter.Test\Crypter.Test.csproj", "{29F529FE-52A2-43C8-BC5D-A0F7DD3CC99A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Test", "Crypter.Test\Crypter.Test.csproj", "{29F529FE-52A2-43C8-BC5D-A0F7DD3CC99A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypter.Tasks", "Crypter.Tasks\Crypter.Tasks.csproj", "{6B6F7A26-DFB2-470F-8D0F-35CF63268F8D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Tasks", "Crypter.Tasks\Crypter.Tasks.csproj", "{6B6F7A26-DFB2-470F-8D0F-35CF63268F8D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
