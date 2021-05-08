@@ -16,7 +16,7 @@ namespace Crypter.API.Helpers
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             // connect to sql server database
-            options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+            options.UseMySQL(Configuration.GetConnectionString("DefaultConnection"));
         }
 
         public DbSet<User> Users { get; set; }

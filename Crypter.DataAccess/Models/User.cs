@@ -10,8 +10,8 @@ namespace Crypter.DataAccess.Models
         public string UserName { get; set; }
         //// hash of user password
         //private string Password { get; set; }
-        public byte[] PasswordHash { get; set; }
-        public byte[] PasswordSalt { get; set; }
+        public string PasswordHash { get; set; }
+        public string PasswordSalt { get; set; }
         public bool IsPublic { get; set; }
         public string PublicAlias { get; set; }
         public bool AllowAnonFiles { get; set; }

@@ -87,28 +87,5 @@ namespace Crypter.API.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-
-        //[HttpGet]
-        //public IActionResult GetAll()
-        //{
-        //    var users = _userService.GetAll();
-        //    var model = _mapper.Map<IList<UserModel>>(users);
-        //    return Ok(model);
-        //}
-
-        //[HttpGet("{id}")]
-        //public IActionResult GetById(int id)
-        //{
-        //    var user = _userService.GetById(id);
-        //    var model = _mapper.Map<UserModel>(user);
-        //    return Ok(model);
-        //}
-
-        //[HttpDelete("{id}")]
-        //public IActionResult Delete(int id)
-        //{
-        //    _userService.Delete(id);
-        //    return Ok();
-        //}
     }
 }

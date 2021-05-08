@@ -11,7 +11,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 CREATE TABLE `Users` (
   `UserID` VARCHAR(36) NOT NULL,
   `UserName` VARCHAR(32) UNIQUE, 
-  `Password` VARCHAR(64),
+  `PasswordHash` VARCHAR(256),
+  `PasswordSalt` VARCHAR(256), 
   `PublicAlias` VARCHAR(32) UNIQUE,
   `IsPublic` TINYINT(1),
   `AllowAnonMessages` TINYINT(1),

@@ -37,7 +37,7 @@ namespace Crypter.API.Services
                 return null;
 
             // check if password is correct
-            if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+            if (!VerifyPasswordHash(password, Convert.FromBase64String(user.PasswordHash), Convert.FromBase64String(user.PasswordSalt)))
                 return null;
 
             // authentication successful
@@ -61,8 +61,9 @@ namespace Crypter.API.Services
             byte[] passwordHash, passwordSalt;
             CreatePasswordHash(password, out passwordHash, out passwordSalt);
 
-            user.PasswordHash = passwordHash;
-            user.PasswordSalt = passwordSalt;
+            user.PasswordHash = Convert.ToBase64String(passwordHash);
+            user.PasswordSalt = Convert.ToBase64String(passwordSalt); 
+            user.UserID = Guid.NewGuid().ToString(); 
 
             _context.Users.Add(user);
             _context.SaveChanges();
