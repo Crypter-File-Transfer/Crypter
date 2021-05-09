@@ -32,6 +32,14 @@
                 </div>
             </div>
         </div>
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: @(ServerSpacePercentage + '%')" aria-valuenow="@ServerSpacePercentage" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <h6 class="card-subtitle mt-2 text-muted">@AvailableServerSpace bytes remaining</h6>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -40,6 +48,7 @@
     public bool ServerHasDiskSpace = false;
     public long AllocatedServerSpace = 0;
     public long AvailableServerSpace = 0;
+    public string ServerSpacePercentage = "0";
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,6 +57,8 @@
         ServerHasDiskSpace = !diskMetricsResponse.Full;
         AllocatedServerSpace = long.Parse(diskMetricsResponse.Allocated);
         AvailableServerSpace = long.Parse(diskMetricsResponse.Available);
+
+        ServerSpacePercentage = ((1 - (AvailableServerSpace / AllocatedServerSpace)) * 100).ToString();
     }
 
     public async Task<DiskMetricsResponse> DownloadDiskMetrics()
