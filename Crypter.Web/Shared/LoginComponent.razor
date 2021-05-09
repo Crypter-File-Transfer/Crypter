@@ -1,23 +1,61 @@
-﻿<div class="mb-3">
-    <label for="exampleFormControlInput1" class="form-label">Username</label>
-    <input @bind="Username" type="text" class="form-control" id="usernameFormControl">
-    <a href="/request-username">Forgot username?</a>
-</div>
-<div class="mb-3">
-    <label for="exampleFormControlTextarea1" class="form-label">Password</label>
-    <input @bind="Password" type="password" class="form-control" id="passwordFormControl">
-    <a href="/password-reset">Forgot password?</a>
-</div>
-<div class="mb-3">
-    <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnLoginClicked(Username, Password))">Login</button>
-</div>
+﻿@inject AppSettings AppSettings
+@inject HttpClient HttpClient
+@inject NavigationManager NavManager
+
+@if (!LoginSuccess)
+{
+    if (LoginError)
+    {
+        <div class="alert alert-danger" role="alert">
+            @LoginErrorText
+        </div>
+    }
+    <div class="mb-3">
+        <label for="exampleFormControlInput1" class="form-label">Username</label>
+        <input @bind="Username" type="text" class="form-control" id="usernameFormControl">
+        <a href="/request-username">Forgot username?</a>
+    </div>
+    <div class="mb-3">
+        <label for="exampleFormControlTextarea1" class="form-label">Password</label>
+        <input @bind="Password" type="password" class="form-control" id="passwordFormControl">
+        <a href="/password-reset">Forgot password?</a>
+    </div>
+    <div class="mb-3">
+        <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnLoginClicked(Username, Password))">Login</button>
+    </div>
+}
+else
+{
+    <div class="alert alert-success" role="alert">
+        Login successful!
+    </div>
+}
 
 @code {
     private string Username;
     private string Password;
+    private bool LoginError = false;
+    private string LoginErrorText = "";
+    private bool LoginSuccess = false;
 
-    private void OnLoginClicked(string username, string password)
+    private async Task OnLoginClicked(string username, string password)
     {
-        Console.WriteLine("Logging in...");
+        var url = $"{AppSettings.ApiBaseUrl}/user/authenticate";
+        // TODO: Add variables to request body when proper structure exists
+        // Currently returns a 400 error. May be on my end.
+        var requestBody = new AuthenticateUserRequest();
+        using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            LoginError = true;
+            LoginErrorText = response.ReasonPhrase;
+        }
+        else
+        {
+            LoginSuccess = true;
+            await Task.Delay(500);
+            NavManager.NavigateTo("/account-details");
+        }
     }
 }
