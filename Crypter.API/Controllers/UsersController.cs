@@ -45,7 +45,7 @@ namespace Crypter.API.Controllers
             if (user == null)
                 return new OkObjectResult(new AuthenticateUserResponse(ResponseCode.InvalidCredentials));
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+            var key = Encoding.ASCII.GetBytes(_appSettings.TokenSecretKey);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
