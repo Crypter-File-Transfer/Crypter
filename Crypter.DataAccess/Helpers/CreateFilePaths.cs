@@ -27,24 +27,25 @@ namespace Crypter.DataAccess.Helpers
         /// <returns>true or false to indicate whether the operation was successful</returns>
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=net-5.0
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writeallbytes?view=net-5.0
-        public bool SaveToFileSystem(string untrustedName, string guid, byte[] cipherText, string signature, bool isFile)
+        public bool SaveToFileSystem(string guid, byte[] cipherText, string signature, bool isFile)
         {
             string pathString;
             //create folder path for file upload
             if (isFile)
             {
                 pathString = Path.Combine(folderName, $"files/{guid}");
+                ActualFileName = "file";
             }
             //create folder path for message upload
             else
             {
                 pathString = Path.Combine(folderName, $"messages/{guid}");
+                ActualFileName = "message";
             }
             //Create folder for uploaded file 
             System.IO.Directory.CreateDirectory(pathString);
-            //create paths for encrypted content and signature
-            ActualFileName = $"{untrustedName}";
-            SignatureName = $"{untrustedName}.sig";
+            ////create paths for encrypted content and signature
+            SignatureName = "signature";
             // Combine paths and use standard directory separator
             ActualPathString = Path.GetFullPath(Path.Combine(pathString, ActualFileName));
             SigPathString = Path.GetFullPath(Path.Combine(pathString, SignatureName));

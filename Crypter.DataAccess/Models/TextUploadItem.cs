@@ -36,7 +36,7 @@ namespace Crypter.DataAccess.Models
             byte[] cipherTextAES = CryptoLib.Common.DoSymmetricEncryption(Convert.FromBase64String(CipherText), symParams);
             // Create file paths and insert these paths
             CreateFilePaths filePath = new CreateFilePaths(baseSaveDirectory);
-            var success = filePath.SaveToFileSystem(FileName, ID, cipherTextAES, Signature, false);
+            var success = filePath.SaveToFileSystem(ID, cipherTextAES, Signature, false);
             //add paths to TextUploadItem object
             CipherTextPath = filePath.ActualPathString;
             SignaturePath = filePath.SigPathString;
