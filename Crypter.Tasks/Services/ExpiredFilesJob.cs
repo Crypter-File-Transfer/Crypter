@@ -35,24 +35,35 @@ namespace Crypter.Tasks.Services
         public override async Task DoWork(CancellationToken cancellationToken)
         {
             _logger.LogInformation($"{DateTime.Now:hh:mm:ss} ExpiredFilesJob is working.");
-            await Db.Connection.OpenAsync();
-            var query = new FileUploadItemQuery(Db);
-            //get list of expired uploads
-            List<FileUploadItem> expiredListResult = await query.FindExpiredItemsAsync();
-            //process each expired
-            foreach (FileUploadItem expiredItem in expiredListResult)
+            try
             {
-                string expiredID = expiredItem.ID;
-                //delete each row from database
-                await expiredItem.DeleteAsync(Db);
-                _logger.LogInformation($"Deleted {expiredItem.ID}");
-                //delete each file from the file system given Id
-                FileCleanup DeleteItem = new FileCleanup(expiredID, BaseSaveDirectory);
-                //boolean argument indicates the item is a file
-                DeleteItem.CleanDirectory(true);
+                await Db.Connection.OpenAsync();
+                var query = new FileUploadItemQuery(Db);
+                //get list of expired uploads
+                List<FileUploadItem> expiredListResult = await query.FindExpiredItemsAsync();
+                //process each expired
+                foreach (FileUploadItem expiredItem in expiredListResult)
+                {
+                    string expiredID = expiredItem.ID;
+                    //delete each row from database
+                    await expiredItem.DeleteAsync(Db);
+                    _logger.LogInformation($"Deleted {expiredItem.ID}");
+                    //delete each file from the file system given Id
+                    FileCleanup DeleteItem = new FileCleanup(expiredID, BaseSaveDirectory);
+                    //boolean argument indicates the item is a file
+                    DeleteItem.CleanDirectory(true);
+                }
+                await Task.CompletedTask;
             }
-
-            await Task.CompletedTask;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error:");
+                throw; 
+            }
+            finally
+            {
+                Db.Connection.Close();
+            }
         }
 
         public override Task StopAsync(CancellationToken cancellationToken)
