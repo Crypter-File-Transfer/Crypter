@@ -183,8 +183,12 @@ namespace Crypter.API.Controllers
             // Delete the item from the server
             await deleteRecord(Database);
             FileCleanup DownloadDir = new FileCleanup(body.Id.ToString(), BaseSaveDirectory);
-            DownloadDir.CleanDirectory(false);
-
+            if (body.Type == ResourceType.File)
+                DownloadDir.CleanDirectory(true);
+            else
+            {
+                DownloadDir.CleanDirectory(false);
+            }
             return new OkObjectResult(
                 new AnonymousDownloadResponse(Convert.ToBase64String(cipherTextClient)));
         }
