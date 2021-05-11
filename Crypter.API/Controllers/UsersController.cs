@@ -10,8 +10,10 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Crypter.DataAccess.Models;
 using Crypter.Contracts.Requests.Registered;
+using Crypter.Contracts.Responses.Registered; 
 using Crypter.API.Services;
-using Crypter.API.Helpers; 
+using Crypter.API.Helpers;
+using Crypter.Contracts.Enum; 
 
 namespace Crypter.API.Controllers
 {
@@ -41,8 +43,7 @@ namespace Crypter.API.Controllers
             var user = _userService.Authenticate(body.Username, body.Password);
 
             if (user == null)
-                return BadRequest(new { message = "Username or password is incorrect" });
-
+                return new OkObjectResult(new AuthenticateUserResponse(ResponseCode.InvalidCredentials));
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -58,12 +59,9 @@ namespace Crypter.API.Controllers
             var tokenString = tokenHandler.WriteToken(token);
 
             // return basic user info and authentication token
-            return Ok(new
-            {
-                Id = user.UserID,
-                Username = user.UserName,
-                Token = tokenString
-            });
+            return new OkObjectResult(
+                new AuthenticateUserResponse(user.UserID, user.UserName, tokenString)
+            );  
         }
 
 
@@ -72,19 +70,29 @@ namespace Crypter.API.Controllers
         [HttpPost("register")]
         public IActionResult Register([FromBody] RegisterUserRequest body)
         {
+         
+            //validate password
+            if (!UploadRules.IsValidPassword(body.Password))
+            {
+                return new OkObjectResult(
+                    new RegisterUserResponse(ResponseCode.PasswordRequirementsNotMet));
+            }
             // map model to entity
             var user = _mapper.Map<User>(body);
-
             try
             {
                 // create user
-                _userService.Create(user, body.Password);
-                return Ok();
+                User newUser = _userService.Create(user, body.Password);
+                return new OkObjectResult(
+                new RegisterUserResponse(newUser.UserName, newUser.UserCreated)
+                );
             }
-            catch (AppException ex)
+            catch (AppException)
             {
                 // return error message if there was an exception
-                return BadRequest(new { message = ex.Message });
+                return new OkObjectResult(
+                    new RegisterUserResponse(ResponseCode.InvalidRequest)
+                ); 
             }
         }
     }

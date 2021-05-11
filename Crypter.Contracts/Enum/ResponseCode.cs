@@ -7,6 +7,8 @@
         InvalidRequest,
         NotFound,
         DiskFull,
-        DecryptFailure
+        DecryptFailure,
+        InvalidCredentials,
+        PasswordRequirementsNotMet
     }
 }

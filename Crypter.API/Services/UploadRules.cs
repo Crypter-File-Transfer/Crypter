@@ -43,5 +43,20 @@ namespace Crypter.API.Services
 
             return true;
         }
+
+        public static bool IsValidPassword(string userInput)
+        {
+            if(string.IsNullOrWhiteSpace(userInput))
+            {
+                return false;
+            }
+            //validate password requirements
+            //meets min chars
+            //meets special char
+            //meets upper/lower reqs
+            // does not contain email, publicalias, username
+
+            return true; 
+        }
     }
 }

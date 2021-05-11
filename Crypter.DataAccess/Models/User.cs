@@ -8,8 +8,8 @@ namespace Crypter.DataAccess.Models
         public string UserID { get; set; }
         // user chosen user name
         public string UserName { get; set; }
+        public string Email { get; set; }
         //// hash of user password
-        //private string Password { get; set; }
         public string PasswordHash { get; set; }
         public string PasswordSalt { get; set; }
         public bool IsPublic { get; set; }

@@ -51,10 +51,6 @@ namespace Crypter.API.Services
 
         public User Create(User user, string password)
         {
-            // validation
-            if (string.IsNullOrWhiteSpace(password))
-                throw new AppException("Password is required");
-
             if (_context.Users.Any(x => x.UserName == user.UserName))
                 throw new AppException("Username \"" + user.UserName + "\" is already taken");
 
