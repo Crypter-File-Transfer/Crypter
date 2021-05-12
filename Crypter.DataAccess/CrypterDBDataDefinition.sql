@@ -14,11 +14,11 @@ CREATE TABLE `Users` (
   `PasswordHash` VARCHAR(256),
   `PasswordSalt` VARCHAR(256), 
   `PublicAlias` VARCHAR(32) UNIQUE,
-  `IsPublic` TINYINT(1),
-  `AllowAnonMessages` TINYINT(1),
-  `AllowAnonFiles` TINYINT(1), 
+  `IsPublic` TINYINT,
+  `AllowAnonMessages` TINYINT,
+  `AllowAnonFiles` TINYINT, 
   `Email` VARCHAR(50), 
-  `Authenticated` TINYINT(1),
+  `Authenticated` TINYINT,
   `UserCreated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   PRIMARY KEY (UserID)
  ) ENGINE=InnoDB;
