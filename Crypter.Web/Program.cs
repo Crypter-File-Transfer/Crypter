@@ -1,3 +1,4 @@
+using Blazored.SessionStorage;
 using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -24,6 +25,7 @@ namespace Crypter.Web
 
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             builder.Services.AddBlazorDownloadFile();
+            builder.Services.AddBlazoredSessionStorage();
 
             await builder.Build().RunAsync();
         }

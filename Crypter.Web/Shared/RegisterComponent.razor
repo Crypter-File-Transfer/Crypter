@@ -48,9 +48,8 @@ else
     private async Task OnRegisterClicked(string username, string email, string password)
     {
         var url = $"{AppSettings.ApiBaseUrl}/user/register";
-        // TODO: Add variables to request body when proper structure exists
-        // Currently returns a 400 error. May be on my end.
-        var requestBody = new RegisterUserRequest();
+        // TODO: Perform password hashing before creating request body
+        var requestBody = new RegisterUserRequest(Username, Password, Email);
         using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
         if (!response.IsSuccessStatusCode)

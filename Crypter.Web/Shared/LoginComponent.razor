@@ -1,6 +1,8 @@
 ﻿@inject AppSettings AppSettings
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
+@inject IJSRuntime JsRuntime
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 
 @if (!LoginSuccess)
 {
@@ -40,10 +42,10 @@ else
 
     private async Task OnLoginClicked(string username, string password)
     {
+        Console.WriteLine(Username, Password);
         var url = $"{AppSettings.ApiBaseUrl}/user/authenticate";
-        // TODO: Add variables to request body when proper structure exists
-        // Currently returns a 400 error. May be on my end.
-        var requestBody = new AuthenticateUserRequest();
+        // TODO: Perform password hashing before making requestBody
+        var requestBody = new AuthenticateUserRequest(Username, Password);
         using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
         if (!response.IsSuccessStatusCode)
@@ -53,6 +55,9 @@ else
         }
         else
         {
+            var content = await response.Content.ReadAsStringAsync();
+            var jsonResponse = JsonConvert.DeserializeObject<AuthenticateUserResponse>(content);
+            await sessionStorage.SetItemAsync("AuthToken", jsonResponse.Token);
             LoginSuccess = true;
             await Task.Delay(500);
             NavManager.NavigateTo("/account-details");

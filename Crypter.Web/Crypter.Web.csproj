@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <PackageReference Include="BlazorDownloadFileFast" Version="0.0.4" />
+    <PackageReference Include="Blazored.SessionStorage" Version="2.0.0" />
     <PackageReference Include="BlazorInputFile" Version="0.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="3.2.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Build" Version="3.2.1" PrivateAssets="all" />
