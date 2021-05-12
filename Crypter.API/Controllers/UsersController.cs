@@ -36,32 +36,6 @@ namespace Crypter.API.Controllers
             _appSettings = appSettings.Value;
         }
 
-        [HttpPost("getuser")]
-        public IActionResult GetById([FromBody] RegisteredUserInfoRequest body)
-        {
-            Console.WriteLine(body.Id);
-            try
-            {
-                var user = _userService.GetById(body.Id);
-                return new OkObjectResult(
-                    new RegisteredUserInfoResponse(
-                        user.UserName,
-                        user.Email,
-                        user.IsPublic,
-                        user.PublicAlias,
-                        user.AllowAnonFiles,
-                        user.AllowAnonMessages,
-                        user.UserCreated
-                    )
-                );
-            } catch (Exception ex) {
-                Console.WriteLine(ex.Message);
-                return new OkObjectResult(
-                    new RegisteredUserInfoResponse(ResponseCode.NotFound));
-            } 
-
-        }
-
         [AllowAnonymous]
         [HttpPost("authenticate")]
         public IActionResult Authenticate([FromBody] AuthenticateUserRequest body)

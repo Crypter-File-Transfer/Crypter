@@ -1,12 +1,13 @@
-﻿
+﻿using System.ComponentModel.DataAnnotations;
+
 namespace Crypter.Contracts.Requests.Registered
 {
     public class AuthenticateUserRequest
     {
-        //[Required]
+        [Required]
         public string Username { get; set; }
 
-        //[Required]
+        [Required]
         public string Password { get; set; }
 
         /// <summary>
