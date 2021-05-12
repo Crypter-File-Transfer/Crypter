@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
+﻿
 namespace Crypter.Contracts.Requests.Registered
 {
     public class RegisterUserRequest
