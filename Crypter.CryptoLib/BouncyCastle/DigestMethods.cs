@@ -7,7 +7,7 @@ namespace Crypter.CryptoLib.BouncyCastle
 {
     public static class DigestMethods
     {
-        public static byte[] GetDigest(byte[] data, DigestAlgorithm algorithm)
+        internal static byte[] GetDigest(byte[] data, DigestAlgorithm algorithm)
         {
             return algorithm switch
             {
@@ -24,6 +24,7 @@ namespace Crypter.CryptoLib.BouncyCastle
             digestor.BlockUpdate(data, 0, data.Length);
             byte[] hash = new byte[digestor.GetDigestSize()];
             digestor.DoFinal(hash, 0);
+            digestor.Reset();
             return hash;
         }
     }

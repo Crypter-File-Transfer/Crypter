@@ -48,8 +48,11 @@ else
     private async Task OnRegisterClicked(string username, string email, string password)
     {
         var url = $"{AppSettings.ApiBaseUrl}/user/register";
-        // TODO: Perform password hashing before creating request body
-        var requestBody = new RegisterUserRequest(Username, Password, Email);
+
+        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(username, password);
+        string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
+
+        var requestBody = new RegisterUserRequest(Username, digestedPasswordBase64, Email);
         using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
         if (!response.IsSuccessStatusCode)
@@ -62,6 +65,5 @@ else
             await Task.Delay(500);
             NavManager.NavigateTo("/login");
         }
-
     }
 }

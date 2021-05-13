@@ -165,7 +165,7 @@
         IsEncrypting = true;
         await SetNewEncryptionStatus("Creating symmetric key");
         var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
-        var hashedSymmetricKey = DigestMethods.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
+        var hashedSymmetricKey = CryptoLib.Common.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
         await SetNewEncryptionStatus("Encrypting your file");
         using var stream = new MemoryStream();

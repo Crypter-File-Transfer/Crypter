@@ -14,7 +14,7 @@ namespace Crypter.Test.CryptoTests
         public void Sha256_Digest_Works()
         {
             byte[] foo = new byte[] { 0x00 };
-            Assert.DoesNotThrow(() => CryptoLib.BouncyCastle.DigestMethods.GetDigest(foo, DigestAlgorithm.SHA256));
+            Assert.DoesNotThrow(() => CryptoLib.Common.GetDigest(foo, DigestAlgorithm.SHA256));
         }
 
         [Test]
@@ -27,7 +27,7 @@ namespace Crypter.Test.CryptoTests
                 0xd9, 0xbc, 0x5f, 0x8b, 0x92, 0xac, 0x4d, 0x96,
                 0x2c, 0x42, 0xdc, 0xc1, 0x01, 0x0f, 0x9d, 0xdb
             };
-            var hashResult = CryptoLib.BouncyCastle.DigestMethods.GetDigest(knownInput, DigestAlgorithm.SHA256);
+            var hashResult = CryptoLib.Common.GetDigest(knownInput, DigestAlgorithm.SHA256);
             Assert.AreEqual(knownHash, hashResult);
         }
 
@@ -45,7 +45,7 @@ namespace Crypter.Test.CryptoTests
                 0x9f, 0x45, 0x51, 0xc3, 0xba, 0xf1, 0x9e, 0x93,
                 0xfb, 0xfc, 0xc8, 0xbc, 0x78, 0xd8, 0x0a, 0xa7
             };
-            var hashResult = CryptoLib.BouncyCastle.DigestMethods.GetDigest(knownInput, DigestAlgorithm.SHA512);
+            var hashResult = CryptoLib.Common.GetDigest(knownInput, DigestAlgorithm.SHA512);
             Assert.AreEqual(knownHash, hashResult);
         }
     }

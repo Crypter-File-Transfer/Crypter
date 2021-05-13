@@ -163,7 +163,7 @@
 
         // Request the ciphertext from the server
         await SetNewDecryptionStatus($"Downloading {dataFormat}");
-        var serverDecryptionKey = DigestMethods.GetDigest(signature.Key, DigestAlgorithm.SHA256);
+        var serverDecryptionKey = CryptoLib.Common.GetDigest(signature.Key, DigestAlgorithm.SHA256);
         var encodedServerDecryptionKey = Convert.ToBase64String(serverDecryptionKey);
         var ciphertextResponse = await DownloadCiphertext(resourceType, id, encodedServerDecryptionKey);
 

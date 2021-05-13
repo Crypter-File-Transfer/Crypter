@@ -42,10 +42,12 @@ else
 
     private async Task OnLoginClicked(string username, string password)
     {
-        Console.WriteLine(Username, Password);
         var url = $"{AppSettings.ApiBaseUrl}/user/authenticate";
-        // TODO: Perform password hashing before making requestBody
-        var requestBody = new AuthenticateUserRequest(Username, Password);
+
+        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(username, password);
+        string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
+
+        var requestBody = new AuthenticateUserRequest(Username, digestedPasswordBase64);
         using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
         var content = await response.Content.ReadAsStringAsync();
         var jsonResponse = JsonConvert.DeserializeObject<AuthenticateUserResponse>(content);
