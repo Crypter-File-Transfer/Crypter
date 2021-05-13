@@ -13,7 +13,7 @@ namespace Crypter.API.Services
         User Authenticate(string username, string password);
         User GetById(string id);
         User Create(User user, string password);
-
+        void Update(User user, string password = null);
     }
 
     public class UserService : IUserService
@@ -65,6 +65,41 @@ namespace Crypter.API.Services
             _context.SaveChanges();
 
             return user;
+        }
+
+        public void Update(User userParam, string password = null)
+        {
+            var user = _context.Users.Find(userParam.UserID);
+
+            if (user == null)
+                throw new AppException("User not found");
+
+            // update UserName if it has changed
+            if (!string.IsNullOrWhiteSpace(userParam.UserName) && userParam.UserName != user.UserName)
+            {
+                // throw error if the new username is already taken
+                if (_context.Users.Any(x => x.UserName == userParam.UserName))
+                    throw new AppException("Username " + userParam.UserName + " is already taken");
+
+                user.UserName = userParam.UserName;
+            }
+
+            // update user properties if provided
+            if (!string.IsNullOrWhiteSpace(userParam.Email))
+                user.Email = userParam.Email;
+
+            // update password if provided
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                byte[] passwordHash, passwordSalt;
+                CreatePasswordHash(password, out passwordHash, out passwordSalt);
+
+                user.PasswordHash = Convert.ToBase64String(passwordHash);
+                user.PasswordSalt = Convert.ToBase64String(passwordSalt); 
+            }
+
+            _context.Users.Update(user);
+            _context.SaveChanges();
         }
 
         // private helper methods

@@ -1,11 +1,22 @@
 ﻿using System;
 namespace Crypter.Contracts.Requests.Registered
 {
-    public class UpdateUserRequest
+    public class UpdateUserEmailRequest
     {
-        public string Username { get; set; }
-        public string Password { get; set; }
+        public string Id { get; set; }
         public string Email { get; set; }
-        public string PublicAlias { get; set; }
+
+        /// <summary>
+        /// Do not use!
+        /// For deserialization purposes only.
+        /// </summary>
+        public UpdateUserEmailRequest()
+        { }
+
+        public UpdateUserEmailRequest(string id, string email)
+        {
+            Id = id; 
+            Email = email;
+        }
     }
 }

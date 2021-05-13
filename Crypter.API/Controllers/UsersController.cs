@@ -123,5 +123,27 @@ namespace Crypter.API.Controllers
                 ); 
             }
         }
+
+        [AllowAnonymous]
+        [HttpPut("update")]
+        public IActionResult UpdateUser([FromBody] UpdateUserRequest body)
+        {
+            // map model to entity and set id
+            var user = _mapper.Map<User>(body);
+
+            try
+            {
+                // update user 
+                _userService.Update(user, body.Password);
+                return new OkObjectResult(
+                new UpdateUserResponse(user.Email)); 
+            }
+            catch (AppException)
+            {
+                return new BadRequestObjectResult(
+                              new UpdateUserResponse(ResponseCode.InvalidRequest)
+                );
+            }
+        }
     }
 }
