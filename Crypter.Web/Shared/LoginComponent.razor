@@ -47,17 +47,28 @@ else
         // TODO: Perform password hashing before making requestBody
         var requestBody = new AuthenticateUserRequest(Username, Password);
         using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
-
+        var content = await response.Content.ReadAsStringAsync();
+        var jsonResponse = JsonConvert.DeserializeObject<AuthenticateUserResponse>(content);
         if (!response.IsSuccessStatusCode)
         {
             LoginError = true;
-            LoginErrorText = response.ReasonPhrase;
+            switch ((int)jsonResponse.Status)
+            {
+                case 1:
+                    LoginErrorText = "Invalid Request";
+                    break;
+                case 5:
+                    LoginErrorText = "Usename and/or password is incorrect";
+                    break;
+                default:
+                    LoginErrorText = "Unknown error";
+                    break;
+            }
         }
         else
         {
-            var content = await response.Content.ReadAsStringAsync();
-            var jsonResponse = JsonConvert.DeserializeObject<AuthenticateUserResponse>(content);
             await sessionStorage.SetItemAsync("AuthToken", jsonResponse.Token);
+            await sessionStorage.SetItemAsync("Id", jsonResponse.Id);
             LoginSuccess = true;
             await Task.Delay(500);
             NavManager.NavigateTo("/account-details");

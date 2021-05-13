@@ -36,6 +36,7 @@ namespace Crypter.API.Controllers
             _appSettings = appSettings.Value;
         }
 
+        [AllowAnonymous]
         [HttpPost("getuser")]
         public IActionResult GetById([FromBody] RegisteredUserInfoRequest body)
         {
@@ -56,7 +57,7 @@ namespace Crypter.API.Controllers
                 );
             } catch (Exception ex) {
                 Console.WriteLine(ex.Message);
-                return new OkObjectResult(
+                return new BadRequestObjectResult(
                     new RegisteredUserInfoResponse(ResponseCode.NotFound));
             } 
 
@@ -69,7 +70,9 @@ namespace Crypter.API.Controllers
             var user = _userService.Authenticate(body.Username, body.Password);
 
             if (user == null)
-                return new OkObjectResult(new AuthenticateUserResponse(ResponseCode.InvalidCredentials));
+            {
+                return new BadRequestObjectResult(new AuthenticateUserResponse(ResponseCode.InvalidCredentials));
+            }
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_appSettings.TokenSecretKey);
             var tokenDescriptor = new SecurityTokenDescriptor
@@ -116,7 +119,7 @@ namespace Crypter.API.Controllers
             catch (AppException)
             {
                 // return error message if there was an exception
-                return new OkObjectResult(
+                return new BadRequestObjectResult(
                     new RegisterUserResponse(ResponseCode.InvalidRequest)
                 ); 
             }

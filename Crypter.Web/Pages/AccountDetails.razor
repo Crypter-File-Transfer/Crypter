@@ -1,24 +1,24 @@
 ﻿@page "/account-details"
 
-@inject IJSRuntime JsRuntime;
+@inject HttpClient HttpClient
+@inject AppSettings AppSettings
+@inject NavigationManager NavManager
+@inject IJSRuntime JsRuntime
+@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
 
 <div class="container">
     <button type="button" class="btn btn-secondary float-end" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
     <h1>Account Details</h1>
-    <h2>User Details</h2>
+    <h2>User Details for @Username</h2>
     <form id="DetailsForm">
         <div class="mb-3">
             <label for="emailFormControl" class="form-label">Email</label>
             <input @bind="Email" type="email" class="form-control" id="emailFormControl" placeholder="jsmith@email.com" readonly>
         </div>
-        <div class="mb-3">
-            <label for="exampleFormControlInput1" class="form-label">Password</label>
-            <input @bind="Password" type="password" class="form-control" id="exampleFormControlInput1" placeholder="password" readonly>
-        </div>
         <h2>Public Details</h2>
         <div class="mb-3">
             <label for="aliasFormControl" class="form-label">Public Alias</label>
-            <input @bind="PublicAlias" type="text" class="form-control" id="aliasFormControl" placeholder="Jan Smith" readonly>
+            <input @bind="PublicAlias" type="text" class="form-control" id="aliasFormControl" placeholder="Set Public Alias" readonly>
         </div>
         <div class="mb-3">
             <div class="form-check form-switch">
@@ -46,11 +46,6 @@
 </div>
 
 @code {
-    protected override async Task OnInitializedAsync()
-    {
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Account Details");
-    }
-
     private bool IsEditing = false;
     private string Username;
     private string Email;
@@ -59,8 +54,12 @@
     private bool AppearPublicly;
     private bool AcceptAnonymousMessages;
     private bool AcceptAnonymousFiles;
+    private bool IsAuthenticated = false;
 
-    // TODO: Place code for getting data from the API
+    protected override async Task OnInitializedAsync()
+    {
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Account Details");
+    }
 
     public async Task OnEditClicked()
     {
@@ -75,5 +74,32 @@
         // Insert PATCH calls to API
 
         IsEditing = false;
+    }
+
+    private async Task GetUserInfo()
+    {
+        var userAccountInfo = await DownloadUserInfo();
+        Username = userAccountInfo.UserName;
+        Email = userAccountInfo.Email;
+        PublicAlias = userAccountInfo.PublicAlias;
+        AppearPublicly = userAccountInfo.IsPublic;
+        AcceptAnonymousFiles = userAccountInfo.AllowAnonFiles;
+        AcceptAnonymousMessages = userAccountInfo.AllowAnonMessages;
+    }
+
+    public async Task<RegisteredUserInfoResponse> DownloadUserInfo()
+    {
+        var url = $"{AppSettings.ApiBaseUrl}/user/getuser";
+        var id = await sessionStorage.GetItemAsync<string>("Id");
+        var requestBody = new RegisteredUserInfoRequest(id);
+        using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // Error handling
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<RegisteredUserInfoResponse>(content);
     }
 }
