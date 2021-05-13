@@ -71,12 +71,12 @@ namespace Crypter.DataAccess.Queries
             return items;
         }
 
-        public long GetSumOfSize()
+        public async Task<long> GetSumOfSizeAsync()
         {
             using var cmd = Db.Connection.CreateCommand();
             cmd.CommandText = "SELECT COALESCE(SUM(Size), 0) FROM FileUploads;";
             using var reader = cmd.ExecuteReader();
-            reader.Read();
+            await reader.ReadAsync();
             var result = reader.GetInt64(0);
             return result;
         }

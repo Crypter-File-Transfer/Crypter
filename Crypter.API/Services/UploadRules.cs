@@ -2,15 +2,16 @@
 using Crypter.DataAccess;
 using Crypter.DataAccess.Queries;
 using System;
+using System.Threading.Tasks;
 
 namespace Crypter.API.Services
 {
     public static class UploadRules
     {
-        public static bool AllocatedSpaceRemaining(CrypterDB database, long allocatedDiskSpace, int maxUploadSize)
+        public static async Task<bool> AllocatedSpaceRemaining(CrypterDB database, long allocatedDiskSpace, int maxUploadSize)
         {
-            var sizeOfFileUploads = new FileUploadItemQuery(database).GetSumOfSize();
-            var sizeOfMessageUploads = new TextUploadItemQuery(database).GetSumOfSize();
+            var sizeOfFileUploads = await new FileUploadItemQuery(database).GetSumOfSizeAsync();
+            var sizeOfMessageUploads = await new TextUploadItemQuery(database).GetSumOfSizeAsync();
             var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
             return (totalSizeOfUploads + maxUploadSize) <= allocatedDiskSpace;
         }

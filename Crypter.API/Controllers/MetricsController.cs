@@ -3,6 +3,7 @@ using Crypter.DataAccess;
 using Crypter.DataAccess.Queries;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
 {
@@ -22,11 +23,11 @@ namespace Crypter.API.Controllers
 
         // GET: crypter.dev/api/metrics/disk
         [HttpGet("disk")]
-        public IActionResult GetDiskMetrics()
+        public async Task<IActionResult> GetDiskMetrics()
         {
             Db.Connection.Open();
-            var sizeOfFileUploads = new FileUploadItemQuery(Db).GetSumOfSize();
-            var sizeOfMessageUploads = new TextUploadItemQuery(Db).GetSumOfSize();
+            var sizeOfFileUploads = await new FileUploadItemQuery(Db).GetSumOfSizeAsync();
+            var sizeOfMessageUploads = await new TextUploadItemQuery(Db).GetSumOfSizeAsync();
             var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
             var isFull = totalSizeOfUploads + (10 * 1024 * 1024) >= AllocatedDiskSpace;
 

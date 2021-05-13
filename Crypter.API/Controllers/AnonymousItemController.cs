@@ -43,7 +43,7 @@ namespace Crypter.API.Controllers
 
             Database.Connection.Open();
 
-            if (!UploadRules.AllocatedSpaceRemaining(Database, AllocatedDiskSpace, MaxUploadSize))
+            if (!await UploadRules.AllocatedSpaceRemaining(Database, AllocatedDiskSpace, MaxUploadSize))
             {
                 return new OkObjectResult(
                     new AnonymousUploadResponse(ResponseCode.DiskFull));
