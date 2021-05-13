@@ -59,6 +59,7 @@
     protected override async Task OnInitializedAsync()
     {
         await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Account Details");
+        await GetUserInfo();
     }
 
     public async Task OnEditClicked()
