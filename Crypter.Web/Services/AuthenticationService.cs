@@ -10,7 +10,7 @@ namespace Crypter.Web.Services
     {
         User User { get; }
         Task Initialize();
-        Task Login(string username, string password);
+        Task Login(string username, string password, string authenticationUrl);
         Task Logout();
     }
     public class AuthenticationService : IAuthenticationService
@@ -18,7 +18,6 @@ namespace Crypter.Web.Services
         private IHttpService _httpService;
         private NavigationManager _navigationManager;
         private ISessionStorageService _sessionStorageService;
-
 
         public User User { get; private set; }
 
@@ -37,9 +36,9 @@ namespace Crypter.Web.Services
             User = await _sessionStorageService.GetItem<User>("user");
         }
 
-        public async Task Login(string username, string password)
+        public async Task Login(string username, string password, string authenticationUrl)
         {
-            User = await _httpService.Post<User>("https://localhost:5001/api/user/authenticate", new AuthenticateUserRequest(username, password));
+            User = await _httpService.Post<User>(authenticationUrl, new AuthenticateUserRequest(username, password));
             await _sessionStorageService.SetItem("user", User);
         }
 

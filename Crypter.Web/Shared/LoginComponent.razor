@@ -1,6 +1,7 @@
 ﻿@inject AppSettings AppSettings
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
+@inject AppSettings AppSettings
 @inject IJSRuntime JsRuntime
 @inject IAuthenticationService AuthenticationService
 
@@ -54,11 +55,12 @@
     {
         try
         {
-            await AuthenticationService.Login(Username, Password);
+            await AuthenticationService.Login(Username, Password, $"{AppSettings.ApiBaseUrl}/user/authenticate");
             // TODO: Revide to Auth homepage when complete
             var returnUrl = NavManager.QueryString("returnUrl") ?? "account-details";
             NavManager.NavigateTo(returnUrl);
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             LoginError = true;
             LoginErrorText = ex.Message;
