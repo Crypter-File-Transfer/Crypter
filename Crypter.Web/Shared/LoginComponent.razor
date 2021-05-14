@@ -50,13 +50,12 @@
             await AuthenticationService.Login(Username, digestedPasswordBase64, $"{AppSettings.ApiBaseUrl}/user/authenticate");
             // TODO: Revide to Auth homepage when complete
             var returnUrl = NavManager.QueryString("returnUrl") ?? "account-details";
-            NavManager.NavigateTo(returnUrl);
+            NavManager.NavigateTo(returnUrl, true);
         }
         catch (Exception ex)
         {
             LoginError = true;
             LoginErrorText = ex.Message;
-            StateHasChanged();
         }
     }
 }

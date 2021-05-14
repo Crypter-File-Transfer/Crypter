@@ -36,7 +36,7 @@ namespace Crypter.Web
             var authenticationService = host.Services.GetRequiredService<IAuthenticationService>();
             await authenticationService.Initialize();
 
-            await builder.Build().RunAsync();
+            await host.RunAsync();
         }
 
         public static IConfigurationRoot LoadAppSettings(string filename)
