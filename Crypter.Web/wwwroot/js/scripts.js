@@ -1,5 +1,11 @@
 ﻿function EditAccountDetails() {
-    var fields = document.getElementById("DetailsForm").elements;
+   var fields = [
+      document.getElementById("emailFormControl"),
+      document.getElementById("aliasFormControl"),
+      document.getElementById("appearPublicly"),
+      document.getElementById("acceptAnonymousMessages"),
+      document.getElementById("acceptAnonymousFiles")
+   ];
 
     for (var i in fields) {
         fields[i].readOnly = false;
