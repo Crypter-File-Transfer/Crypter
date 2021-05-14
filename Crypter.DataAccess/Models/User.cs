@@ -21,5 +21,13 @@ namespace Crypter.DataAccess.Models
         {
             UserCreated = DateTime.UtcNow;
         }
+        public User(string userid, string publicAlias, bool ispublic, bool allowMessages, bool allowFiles)
+        {
+            UserID = userid;
+            PublicAlias = publicAlias; 
+            IsPublic = ispublic;
+            AllowAnonMessages = allowMessages;
+            AllowAnonFiles = allowFiles; 
+        }
     }
 }

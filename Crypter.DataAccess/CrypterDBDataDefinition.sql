@@ -18,7 +18,6 @@ CREATE TABLE `Users` (
   `AllowAnonMessages` TINYINT,
   `AllowAnonFiles` TINYINT, 
   `Email` VARCHAR(50), 
-  `Authenticated` TINYINT,
   `UserCreated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   PRIMARY KEY (UserID)
  ) ENGINE=InnoDB;

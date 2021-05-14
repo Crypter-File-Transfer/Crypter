@@ -36,10 +36,10 @@ namespace Crypter.API.Controllers
             _appSettings = appSettings.Value;
         }
 
+        // POST: crypter.dev/api/user/getuser
         [HttpPost("getuser")]
         public IActionResult GetById([FromBody] RegisteredUserInfoRequest body)
         {
-            Console.WriteLine(body.Id);
             try
             {
                 var user = _userService.GetById(body.Id);
@@ -51,7 +51,8 @@ namespace Crypter.API.Controllers
                         user.PublicAlias,
                         user.AllowAnonFiles,
                         user.AllowAnonMessages,
-                        user.UserCreated
+                        user.UserCreated,
+                        body.Token
                     )
                 );
             } catch (Exception ex) {
@@ -62,6 +63,7 @@ namespace Crypter.API.Controllers
 
         }
 
+        // POST: crypter.dev/api/user/authenticate
         [AllowAnonymous]
         [HttpPost("authenticate")]
         public IActionResult Authenticate([FromBody] AuthenticateUserRequest body)
@@ -93,7 +95,7 @@ namespace Crypter.API.Controllers
         }
 
 
-
+        // POST: crypter.dev/api/user/register
         [AllowAnonymous]
         [HttpPost("register")]
         public IActionResult Register([FromBody] RegisterUserRequest body)
@@ -124,22 +126,49 @@ namespace Crypter.API.Controllers
             }
         }
 
+        // PUT: crypter.dev/api/user/public
+        [AllowAnonymous]
+        [HttpPut("public")]
+        public IActionResult UpdateUserPublic([FromBody] RegisteredUserPublicSettingsRequest body)
+        {
+            if (body.SetIsPublic == "0")
+            {
+                body.AllowAnonFiles = "0";
+                body.AllowAnonMessages = "0"; 
+            }
+            var user = new User(body.UserID, body.PublicAlias, body.SetIsPublic == "1", body.AllowAnonMessages == "1", body.AllowAnonFiles == "1");
+            try
+            {
+                // update user 
+                _userService.UpdatePublic(user);
+                return new OkObjectResult(
+                new RegisteredUserPublicSettingsResponse(user.PublicAlias, user.IsPublic.ToString(), user.AllowAnonMessages.ToString(), user.AllowAnonFiles.ToString(), body.Token));
+            }
+            catch (AppException)
+            {
+                return new BadRequestObjectResult(
+                              new RegisteredUserPublicSettingsResponse(ResponseCode.InvalidRequest)
+                );
+            }
+        }
+
+        // PUT: crypter.dev/api/user/update
         [AllowAnonymous]
         [HttpPut("update")]
         public IActionResult UpdateUser([FromBody] UpdateUserRequest body)
         {
             // map model to entity and set id
             var user = _mapper.Map<User>(body);
-
             try
             {
                 // update user 
                 _userService.Update(user, body.Password);
                 return new OkObjectResult(
-                new UpdateUserResponse(user.Email)); 
+                new UpdateUserResponse(user.Email, body.Token)); 
             }
-            catch (AppException)
+            catch (AppException ex)
             {
+                Console.WriteLine(ex.Message); 
                 return new BadRequestObjectResult(
                               new UpdateUserResponse(ResponseCode.InvalidRequest)
                 );

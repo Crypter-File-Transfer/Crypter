@@ -6,6 +6,7 @@ namespace Crypter.Contracts.Responses.Registered
     public class UpdateUserResponse : BaseResponse
     {
         public string Email { get; set; }
+        public string Token { get; set; }
 
         /// <summary>
         /// Do not use!
@@ -27,9 +28,10 @@ namespace Crypter.Contracts.Responses.Registered
         /// <param name="status"></param>
         /// <param name="userName"></param>
         /// <param name="userCreationUTC"></param>
-        public UpdateUserResponse(string email) : base(ResponseCode.Success)
+        public UpdateUserResponse(string email, string token) : base(ResponseCode.Success)
         {
-            Email = email; 
+            Email = email;
+            Token = token; 
         }
     }
 }

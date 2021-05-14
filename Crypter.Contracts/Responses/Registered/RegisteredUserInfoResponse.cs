@@ -14,6 +14,7 @@ namespace Crypter.Contracts.Responses.Registered
         public bool AllowAnonFiles { get; set; }
         public bool AllowAnonMessages { get; set; }
         public DateTime UserCreated { get; set; }
+        public string Token { get; set; }
 
 
         /// <summary>
@@ -40,7 +41,8 @@ namespace Crypter.Contracts.Responses.Registered
         /// <param name="allowAnonFiles"></param>
         /// <param name="allowAnonMessages"></param>
         /// <param name="userCreated"></param>
-        public RegisteredUserInfoResponse(string username, string email, bool isPublic, string alias, bool allowAnonFiles, bool allowAnonMessages, DateTime userCreated) : base(ResponseCode.Success)
+        /// <param name="token"></param>
+        public RegisteredUserInfoResponse(string username, string email, bool isPublic, string alias, bool allowAnonFiles, bool allowAnonMessages, DateTime userCreated, string token) : base(ResponseCode.Success)
         { 
             UserName = username;
             Email = email;
@@ -50,6 +52,7 @@ namespace Crypter.Contracts.Responses.Registered
             AllowAnonFiles = allowAnonFiles;
             AllowAnonMessages = allowAnonMessages;
             UserCreated = userCreated;
+            Token = token; 
         }
     }
 }

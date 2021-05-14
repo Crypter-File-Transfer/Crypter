@@ -14,6 +14,7 @@ namespace Crypter.API.Services
         User GetById(string id);
         User Create(User user, string password);
         void Update(User user, string password = null);
+        void UpdatePublic(User user); 
     }
 
     public class UserService : IUserService
@@ -65,6 +66,27 @@ namespace Crypter.API.Services
             _context.SaveChanges();
 
             return user;
+        }
+
+        public void UpdatePublic(User userParam)
+        {
+            var user = _context.Users.Find(userParam.UserID);
+
+            if (user == null)
+                throw new AppException("User not found");
+            //update public alias
+            if (!string.IsNullOrWhiteSpace(userParam.PublicAlias) && userParam.PublicAlias != user.PublicAlias)
+            {
+                user.PublicAlias = userParam.PublicAlias;
+            }
+            //update public boolean values
+            user.IsPublic = userParam.IsPublic;
+            user.AllowAnonMessages = userParam.AllowAnonMessages;
+            user.AllowAnonFiles = userParam.AllowAnonFiles;
+          
+            _context.Users.Update(user);
+            _context.SaveChanges();
+
         }
 
         public void Update(User userParam, string password = null)

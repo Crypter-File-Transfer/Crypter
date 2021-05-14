@@ -2,25 +2,26 @@
 
 namespace Crypter.Contracts.Responses.Registered
 {
-    public class RegisteredTogglePublicUserResponse : BaseResponse
+    public class RegisteredUserPublicSettingsResponse : BaseResponse
     {
         public string PublicAlias { get; set; }
-        public bool IsPublic { get; set; }
-        public bool AllowAnonMessages { get; set; }
-        public bool AllowAnonFiles { get; set; }
+        public string IsPublic { get; set; }
+        public string AllowAnonMessages { get; set; }
+        public string AllowAnonFiles { get; set; }
+        public string Token { get; set; }
 
         /// <summary>
         /// Do not use!
         /// For deserialization purposes only.
         /// </summary>
-        private RegisteredTogglePublicUserResponse()
+        private RegisteredUserPublicSettingsResponse()
         { }
 
         /// <summary>
         /// Error response
         /// </summary>
         /// <param name="status"></param>
-        public RegisteredTogglePublicUserResponse(ResponseCode status) : base(status)
+        public RegisteredUserPublicSettingsResponse(ResponseCode status) : base(status)
         { }
 
         /// <summary>
@@ -31,12 +32,14 @@ namespace Crypter.Contracts.Responses.Registered
         /// <param name="isPublic"></param>
         /// <param name="allowMessages"></param>
         /// <param name="allowFiles"></param>
-        public RegisteredTogglePublicUserResponse(string publicAlias, bool isPublic, bool allowMessages, bool allowFiles) : base(ResponseCode.Success)
+        /// <param name="token"></param>
+        public RegisteredUserPublicSettingsResponse(string publicAlias, string isPublic, string allowMessages, string allowFiles, string token) : base(ResponseCode.Success)
         {
             PublicAlias = publicAlias;
             IsPublic = isPublic;
             AllowAnonMessages = allowMessages;
-            AllowAnonFiles = allowFiles; 
+            AllowAnonFiles = allowFiles;
+            Token = token; 
         }
     }
 }
