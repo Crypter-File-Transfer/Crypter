@@ -1,7 +1,6 @@
 ﻿@inject AppSettings AppSettings
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
-@inject AppSettings AppSettings
 @inject IJSRuntime JsRuntime
 @inject IAuthenticationService AuthenticationService
 
@@ -34,16 +33,6 @@
 
     protected override void OnInitialized()
     {
-        var url = $"{AppSettings.ApiBaseUrl}/user/authenticate";
-
-        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(username, password);
-        string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
-
-        var requestBody = new AuthenticateUserRequest(Username, digestedPasswordBase64);
-        using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
-        var content = await response.Content.ReadAsStringAsync();
-        var jsonResponse = JsonConvert.DeserializeObject<AuthenticateUserResponse>(content);
-        if (!response.IsSuccessStatusCode)
         if (AuthenticationService.User != null)
         {
             // TODO: Revise to Auth homepage when complete
