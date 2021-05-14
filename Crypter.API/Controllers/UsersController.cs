@@ -52,7 +52,8 @@ namespace Crypter.API.Controllers
                         user.AllowAnonFiles,
                         user.AllowAnonMessages,
                         user.UserCreated,
-                        body.Token
+                        //added to resolve error
+                        "body.Token"
                     )
                 );
             } catch (Exception ex) {
