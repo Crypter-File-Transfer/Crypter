@@ -53,9 +53,12 @@
 
     private async void OnLoginClicked(string username, string password)
     {
+        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(username, password);
+        string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
+
         try
         {
-            await AuthenticationService.Login(Username, Password, $"{AppSettings.ApiBaseUrl}/user/authenticate");
+            await AuthenticationService.Login(Username, digestedPasswordBase64, $"{AppSettings.ApiBaseUrl}/user/authenticate");
             // TODO: Revide to Auth homepage when complete
             var returnUrl = NavManager.QueryString("returnUrl") ?? "account-details";
             NavManager.NavigateTo(returnUrl);
