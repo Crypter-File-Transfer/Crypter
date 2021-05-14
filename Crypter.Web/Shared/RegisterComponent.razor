@@ -1,6 +1,7 @@
 ﻿@inject AppSettings AppSettings
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
+@inject IAuthenticationService AuthenticationService
 
 @if (!RegistrationSuccess)
 {
@@ -44,6 +45,15 @@ else
     private bool RegistrationError = false;
     private string RegistrationErrorText = "";
     private bool RegistrationSuccess = false;
+
+    protected override void OnInitialized()
+    {
+        if (AuthenticationService.User != null)
+        {
+            //TODO: Revise to Auth homepage when complete
+            NavManager.NavigateTo("account-details");
+        }
+    }
 
     private async Task OnRegisterClicked(string username, string email, string password)
     {

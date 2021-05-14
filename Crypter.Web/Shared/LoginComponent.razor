@@ -2,36 +2,27 @@
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject IAuthenticationService AuthenticationService
 
-@if (!LoginSuccess)
+@if (LoginError)
 {
-    if (LoginError)
-    {
-        <div class="alert alert-danger" role="alert">
-            @LoginErrorText
-        </div>
-    }
-    <div class="mb-3">
-        <label for="exampleFormControlInput1" class="form-label">Username</label>
-        <input @bind="Username" type="text" class="form-control" id="usernameFormControl">
-        <a href="/request-username">Forgot username?</a>
-    </div>
-    <div class="mb-3">
-        <label for="exampleFormControlTextarea1" class="form-label">Password</label>
-        <input @bind="Password" type="password" class="form-control" id="passwordFormControl">
-        <a href="/password-reset">Forgot password?</a>
-    </div>
-    <div class="mb-3">
-        <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnLoginClicked(Username, Password))">Login</button>
+    <div class="alert alert-danger" role="alert">
+        @LoginErrorText
     </div>
 }
-else
-{
-    <div class="alert alert-success" role="alert">
-        Login successful!
-    </div>
-}
+<div class="mb-3">
+    <label for="exampleFormControlInput1" class="form-label">Username</label>
+    <input @bind="Username" type="text" class="form-control" id="usernameFormControl">
+    <a href="/request-username">Forgot username?</a>
+</div>
+<div class="mb-3">
+    <label for="exampleFormControlTextarea1" class="form-label">Password</label>
+    <input @bind="Password" type="password" class="form-control" id="passwordFormControl">
+    <a href="/password-reset">Forgot password?</a>
+</div>
+<div class="mb-3">
+    <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnLoginClicked(Username, Password))">Login</button>
+</div>
 
 @code {
     private string Username;
@@ -40,7 +31,7 @@ else
     private string LoginErrorText = "";
     private bool LoginSuccess = false;
 
-    private async Task OnLoginClicked(string username, string password)
+    protected override void OnInitialized()
     {
         var url = $"{AppSettings.ApiBaseUrl}/user/authenticate";
 
@@ -52,28 +43,26 @@ else
         var content = await response.Content.ReadAsStringAsync();
         var jsonResponse = JsonConvert.DeserializeObject<AuthenticateUserResponse>(content);
         if (!response.IsSuccessStatusCode)
+        if (AuthenticationService.User != null)
+        {
+            // TODO: Revise to Auth homepage when complete
+            NavManager.NavigateTo("account-details");
+        }
+    }
+
+    private async void OnLoginClicked(string username, string password)
+    {
+        try
+        {
+            await AuthenticationService.Login(Username, Password);
+            // TODO: Revide to Auth homepage when complete
+            var returnUrl = NavManager.QueryString("returnUrl") ?? "account-details";
+            NavManager.NavigateTo(returnUrl);
+        } catch (Exception ex)
         {
             LoginError = true;
-            switch ((int)jsonResponse.Status)
-            {
-                case 1:
-                    LoginErrorText = "Invalid Request";
-                    break;
-                case 5:
-                    LoginErrorText = "Usename and/or password is incorrect";
-                    break;
-                default:
-                    LoginErrorText = "Unknown error";
-                    break;
-            }
-        }
-        else
-        {
-            await sessionStorage.SetItemAsync("AuthToken", jsonResponse.Token);
-            await sessionStorage.SetItemAsync("Id", jsonResponse.Id);
-            LoginSuccess = true;
-            await Task.Delay(500);
-            NavManager.NavigateTo("/account-details");
+            LoginErrorText = ex.Message;
+            StateHasChanged();
         }
     }
 }

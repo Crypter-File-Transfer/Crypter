@@ -4,7 +4,7 @@
 @inject AppSettings AppSettings
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
-@inject Blazored.SessionStorage.ISessionStorageService sessionStorage
+@inject IAuthenticationService AuthenticationService
 
 <div class="container">
     <button type="button" class="btn btn-secondary float-end" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
@@ -58,6 +58,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (AuthenticationService.User == null)
+        {
+            NavManager.NavigateTo("login");
+        }
+
         await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Account Details");
         await GetUserInfo();
     }
@@ -91,7 +96,9 @@
     public async Task<RegisteredUserInfoResponse> DownloadUserInfo()
     {
         var url = $"{AppSettings.ApiBaseUrl}/user/getuser";
-        var id = await sessionStorage.GetItemAsync<string>("Id");
+        var id = AuthenticationService.User.Id;
+        var token = AuthenticationService.User.Token;
+
         var requestBody = new RegisteredUserInfoRequest(id);
         using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
