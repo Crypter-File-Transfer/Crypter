@@ -127,9 +127,15 @@
         var url = $"{AppSettings.ApiBaseUrl}/user/getuser";
         var id = AuthenticationService.User.Id;
         var token = AuthenticationService.User.Token;
-
         var requestBody = new RegisteredUserInfoRequest(id);
-        using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
+
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        request.Content = new StringContent(JsonConvert.SerializeObject(requestBody), Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var response = await HttpClient.SendAsync(request);
+
+        //using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
         if (!response.IsSuccessStatusCode)
         {

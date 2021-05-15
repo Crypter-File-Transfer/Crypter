@@ -36,7 +36,6 @@ namespace Crypter.API.Controllers
             _appSettings = appSettings.Value;
         }
 
-        [AllowAnonymous]
         [HttpPost("getuser")]
         public IActionResult GetById([FromBody] RegisteredUserInfoRequest body)
         {
