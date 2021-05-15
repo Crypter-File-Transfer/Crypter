@@ -59,12 +59,10 @@
     private bool IsEditing = false;
     private string Username;
     private string Email;
-    private string Password;
     private string PublicAlias;
     private bool AppearPublicly;
     private bool AcceptAnonymousMessages;
     private bool AcceptAnonymousFiles;
-    private bool IsAuthenticated = false;
     private string PrivateKey;
     private string PublicKey;
 
@@ -118,24 +116,20 @@
         Email = userAccountInfo.Email;
         PublicAlias = userAccountInfo.PublicAlias;
         AppearPublicly = userAccountInfo.IsPublic;
-        AcceptAnonymousFiles = userAccountInfo.AllowAnonFiles;
-        AcceptAnonymousMessages = userAccountInfo.AllowAnonMessages;
+        AcceptAnonymousFiles = userAccountInfo.AllowAnonymousFiles;
+        AcceptAnonymousMessages = userAccountInfo.AllowAnonymousMessages;
     }
 
-    public async Task<RegisteredUserInfoResponse> DownloadUserInfo()
+    public async Task<AccountDetailsResponse> DownloadUserInfo()
     {
-        var url = $"{AppSettings.ApiBaseUrl}/user/getuser";
+        var url = $"{AppSettings.ApiBaseUrl}/user/account-details";
         var id = AuthenticationService.User.Id;
         var token = AuthenticationService.User.Token;
-        var requestBody = new RegisteredUserInfoRequest(id);
 
-        var request = new HttpRequestMessage(HttpMethod.Post, url);
-        request.Content = JsonContent.Create(requestBody);
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         using var response = await HttpClient.SendAsync(request);
-
-        //using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -143,7 +137,7 @@
         }
 
         var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<RegisteredUserInfoResponse>(content);
+        return JsonConvert.DeserializeObject<AccountDetailsResponse>(content);
     }
 
     private void PromptUserToCreateKeyPair()

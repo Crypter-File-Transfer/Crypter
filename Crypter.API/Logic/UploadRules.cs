@@ -4,7 +4,7 @@ using Crypter.DataAccess.Queries;
 using System;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Services
+namespace Crypter.API.Logic
 {
     public static class UploadRules
     {
@@ -43,16 +43,6 @@ namespace Crypter.API.Services
             }
 
             return true;
-        }
-
-        public static bool IsValidPassword(string userInput)
-        {
-            if(string.IsNullOrWhiteSpace(userInput))
-            {
-                return false;
-            }
-
-            return true; 
         }
     }
 }

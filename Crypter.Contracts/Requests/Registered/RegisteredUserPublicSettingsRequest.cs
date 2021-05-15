@@ -1,14 +1,11 @@
-﻿using System;
-namespace Crypter.Contracts.Requests.Registered
+﻿namespace Crypter.Contracts.Requests.Registered
 {
-    public class RegisteredUserPublicSettingsRequest 
+    public class RegisteredUserPublicSettingsRequest
     {
-        public string UserID { get; set; }
         public string PublicAlias { get; set; }
-        public bool SetIsPublic { get; set; }
-        public bool AllowAnonMessages { get; set;  }
-        public bool AllowAnonFiles { get; set; }
-        public string Token { get; set; }
+        public bool IsPublic { get; set; }
+        public bool AllowAnonymousMessages { get; set; }
+        public bool AllowAnonymousFiles { get; set; }
 
         /// <summary>
         /// Do not use!
@@ -17,14 +14,12 @@ namespace Crypter.Contracts.Requests.Registered
         public RegisteredUserPublicSettingsRequest()
         { }
 
-        public RegisteredUserPublicSettingsRequest(string userid, string publicalias, bool setispublic, bool allowanonmessages, bool allowanonfiles, string token)
+        public RegisteredUserPublicSettingsRequest(string publicAlias, bool isPublic, bool allowAnonymousMessages, bool allowAnonymousFiles)
         {
-            UserID = userid; 
-            PublicAlias = publicalias;
-            SetIsPublic = setispublic;
-            AllowAnonMessages = allowanonmessages;
-            AllowAnonFiles = allowanonfiles;
-            Token = token; 
+            PublicAlias = publicAlias;
+            IsPublic = isPublic;
+            AllowAnonymousMessages = allowAnonymousMessages;
+            AllowAnonymousFiles = allowAnonymousFiles;
         }
     }
 }

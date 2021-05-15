@@ -10,7 +10,7 @@ namespace Crypter.API.Helpers
         {
             CreateMap<User, AuthenticateUserRequest>();
             CreateMap<RegisterUserRequest, User>();
-            CreateMap<UpdateUserRequest, User>();
+            CreateMap<UpdateUserCredentialsRequest, User>();
         }
     }
 }

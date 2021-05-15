@@ -1,6 +1,5 @@
 ﻿
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Crypter.DataAccess.Models;
 using Crypter.API.Helpers; 
@@ -20,7 +19,7 @@ namespace Crypter.API.Services
 
     public class UserService : IUserService
     {
-        private DataContext _context;
+        private readonly DataContext _context;
 
         public UserService(DataContext context)
         {

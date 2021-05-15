@@ -1,4 +1,4 @@
-﻿using Crypter.API.Services;
+﻿using Crypter.API.Logic;
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests.Anonymous;
 using Crypter.Contracts.Responses.Anonymous;

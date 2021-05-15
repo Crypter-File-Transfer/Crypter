@@ -6,9 +6,8 @@ namespace Crypter.Contracts.Responses.Registered
     {
         public string PublicAlias { get; set; }
         public bool IsPublic { get; set; }
-        public bool AllowAnonMessages { get; set; }
-        public bool AllowAnonFiles { get; set; }
-        public string Token { get; set; }
+        public bool AllowAnonymousMessages { get; set; }
+        public bool AllowAnonymousFiles { get; set; }
 
         /// <summary>
         /// Do not use!
@@ -30,16 +29,14 @@ namespace Crypter.Contracts.Responses.Registered
         /// <param name="status"></param>
         /// <param name="publicAlias"></param>
         /// <param name="isPublic"></param>
-        /// <param name="allowMessages"></param>
-        /// <param name="allowFiles"></param>
-        /// <param name="token"></param>
-        public RegisteredUserPublicSettingsResponse(string publicAlias, bool isPublic, bool allowMessages, bool allowFiles, string token) : base(ResponseCode.Success)
+        /// <param name="allowAnonymousMessages"></param>
+        /// <param name="allowAnonymousFiles"></param>
+        public RegisteredUserPublicSettingsResponse(string publicAlias, bool isPublic, bool allowAnonymousMessages, bool allowAnonymousFiles) : base(ResponseCode.Success)
         {
             PublicAlias = publicAlias;
             IsPublic = isPublic;
-            AllowAnonMessages = allowMessages;
-            AllowAnonFiles = allowFiles;
-            Token = token; 
+            AllowAnonymousMessages = allowAnonymousMessages;
+            AllowAnonymousFiles = allowAnonymousFiles;
         }
     }
 }

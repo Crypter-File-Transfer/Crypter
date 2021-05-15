@@ -14,18 +14,18 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace CrypterAPI
 {
-   public class Startup
-   {
-      public Startup(IConfiguration configuration)
-      {
-         Configuration = configuration;
-      }
+    public class Startup
+    {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
 
-      public IConfiguration Configuration { get; }
+        public IConfiguration Configuration { get; }
 
-      // This method gets called by the runtime. Use this method to add services to the container.
-      public void ConfigureServices(IServiceCollection services)
-      {
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
+        {
             //added for users
             services.AddDbContext<DataContext>();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -50,8 +50,8 @@ namespace CrypterAPI
                         var user = userService.GetById(userId);
                         if (user == null)
                         {
-                        // return unauthorized if user no longer exists
-                        context.Fail("Unauthorized");
+                            // return unauthorized if user no longer exists
+                            context.Fail("Unauthorized");
                         }
                         return Task.CompletedTask;
                     }
@@ -75,28 +75,27 @@ namespace CrypterAPI
             services.AddControllers();
         }
 
-      // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-      public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-      {
-         if (env.IsDevelopment())
-         {
-            app.UseDeveloperExceptionPage();
-            app.UseCors(x => x
-                .AllowAnyMethod()
-                .AllowAnyHeader()
-                .SetIsOriginAllowed(origin => true) // allow any origin
-                .AllowCredentials()); // allow credentials
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+                app.UseCors(x => x
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .SetIsOriginAllowed(origin => true)); // allow any origin
          }
 
-         app.UseHttpsRedirection();
-         app.UseRouting();
-         app.UseAuthentication(); 
-         app.UseAuthorization();
+            app.UseHttpsRedirection();
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
-         app.UseEndpoints(endpoints =>
-         {
-            endpoints.MapControllers();
-         });
-      }
-   }
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
+        }
+    }
 }

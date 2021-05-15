@@ -2,34 +2,32 @@
 
 namespace Crypter.Contracts.Responses.Registered
 {
-    public class DeleteUserResponse : BaseResponse
+    public class UserAuthenticateResponse : BaseResponse
     {
-        public string UserID;
-        public string Token;
+        public string Token { get; set; }
 
         /// <summary>
         /// Do not use!
         /// For deserialization purposes only.
         /// </summary>
-        private DeleteUserResponse()
+        private UserAuthenticateResponse()
         { }
 
         /// <summary>
         /// Error response
         /// </summary>
         /// <param name="status"></param>
-        public DeleteUserResponse(ResponseCode status) : base(status)
+        public UserAuthenticateResponse(ResponseCode status) : base(status)
         { }
 
         /// <summary>
         /// Success response
         /// </summary>
-        /// <param name="userid"></param>
         /// <param name="token"></param>
-        public DeleteUserResponse(string userid, string token) : base(ResponseCode.Success)
+        public UserAuthenticateResponse(string token) : base(ResponseCode.Success)
         {
-            UserID = userid;
             Token = token;
         }
     }
 }
+
