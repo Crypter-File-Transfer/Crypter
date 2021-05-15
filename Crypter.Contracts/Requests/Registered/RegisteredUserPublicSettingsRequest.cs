@@ -5,9 +5,9 @@ namespace Crypter.Contracts.Requests.Registered
     {
         public string UserID { get; set; }
         public string PublicAlias { get; set; }
-        public string SetIsPublic { get; set; }
-        public string AllowAnonMessages { get; set;  }
-        public string AllowAnonFiles { get; set; }
+        public bool SetIsPublic { get; set; }
+        public bool AllowAnonMessages { get; set;  }
+        public bool AllowAnonFiles { get; set; }
         public string Token { get; set; }
 
         /// <summary>
@@ -17,7 +17,7 @@ namespace Crypter.Contracts.Requests.Registered
         public RegisteredUserPublicSettingsRequest()
         { }
 
-        public RegisteredUserPublicSettingsRequest(string userid, string publicalias, string setispublic, string allowanonmessages, string allowanonfiles, string token)
+        public RegisteredUserPublicSettingsRequest(string userid, string publicalias, bool setispublic, bool allowanonmessages, bool allowanonfiles, string token)
         {
             UserID = userid; 
             PublicAlias = publicalias;
