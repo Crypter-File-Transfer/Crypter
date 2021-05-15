@@ -81,9 +81,18 @@ namespace Crypter.API.Services
                 user.PublicAlias = userParam.PublicAlias;
             }
             //update public boolean values
-            user.IsPublic = userParam.IsPublic;
-            user.AllowAnonMessages = userParam.AllowAnonMessages;
-            user.AllowAnonFiles = userParam.AllowAnonFiles;
+            if (!userParam.IsPublic)
+            {
+                user.IsPublic = false;
+                user.AllowAnonFiles = false;
+                user.AllowAnonMessages = false;
+            }
+            else
+            {
+                user.IsPublic = userParam.IsPublic;
+                user.AllowAnonMessages = userParam.AllowAnonMessages;
+                user.AllowAnonFiles = userParam.AllowAnonFiles;
+            }
           
             _context.Users.Update(user);
             _context.SaveChanges();

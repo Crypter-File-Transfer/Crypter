@@ -132,12 +132,7 @@ namespace Crypter.API.Controllers
         [HttpPut("public")]
         public IActionResult UpdateUserPublic([FromBody] RegisteredUserPublicSettingsRequest body)
         {
-            if (body.SetIsPublic == false)
-            {
-                body.AllowAnonFiles = false;
-                body.AllowAnonMessages = false; 
-            }
-            var user = new User(body.UserID, body.PublicAlias, body.SetIsPublic == true, body.AllowAnonMessages == true, body.AllowAnonFiles == true);
+            var user = new User(body.UserID, body.PublicAlias, body.SetIsPublic, body.AllowAnonMessages, body.AllowAnonFiles);
             try
             {
                 // update user 
