@@ -175,5 +175,26 @@ namespace Crypter.API.Controllers
                 );
             }
         }
+
+
+        // DELETE: crypter.dev/api/user/delete
+        [HttpDelete("delete")]
+        public IActionResult Delete([FromBody] DeleteUserRequest body)
+        {
+            try
+            {
+                _userService.Delete(body.UserID);
+                return new OkObjectResult(
+                    new DeleteUserResponse(body.UserID, body.Token)); 
+
+            }
+            catch (AppException ex)
+            {
+                Console.WriteLine(ex.Message);
+                return new BadRequestObjectResult(
+                    new DeleteUserResponse(ResponseCode.InvalidRequest)); 
+            }
+            
+        }
     }
 }

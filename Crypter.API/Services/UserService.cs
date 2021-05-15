@@ -14,7 +14,8 @@ namespace Crypter.API.Services
         User GetById(string id);
         User Create(User user, string password);
         void Update(User user, string password = null);
-        void UpdatePublic(User user); 
+        void UpdatePublic(User user);
+        void Delete(string UserID); 
     }
 
     public class UserService : IUserService
@@ -122,6 +123,17 @@ namespace Crypter.API.Services
 
             _context.Users.Update(user);
             _context.SaveChanges();
+        }
+
+        //delete user
+        public void Delete(string UserID)
+        {
+            var user = _context.Users.Find(UserID); 
+            if (user != null)
+            {
+                _context.Users.Remove(user);
+                _context.SaveChanges(); 
+            }
         }
 
         // private helper methods
