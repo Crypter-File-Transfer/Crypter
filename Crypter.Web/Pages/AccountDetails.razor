@@ -130,7 +130,7 @@
         var requestBody = new RegisteredUserInfoRequest(id);
 
         var request = new HttpRequestMessage(HttpMethod.Post, url);
-        request.Content = new StringContent(JsonConvert.SerializeObject(requestBody), Encoding.UTF8, "application/json");
+        request.Content = JsonContent.Create(requestBody);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         using var response = await HttpClient.SendAsync(request);
