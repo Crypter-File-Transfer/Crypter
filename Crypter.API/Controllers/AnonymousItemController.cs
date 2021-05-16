@@ -56,6 +56,7 @@ namespace Crypter.API.Controllers
                 case ResourceType.Message:
                     var newText = new TextUploadItem
                     {
+                        FileName = body.Name,
                         CipherText = body.CipherText,
                         Signature = body.Signature,
                         ServerEncryptionKey = body.ServerEncryptionKey

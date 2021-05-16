@@ -23,8 +23,6 @@ namespace Crypter.DataAccess.Models
             ID = Guid.NewGuid().ToString();
             //temporary assignment to UserID
             UserID = ID;
-            //untrustedName is GUID for now, placeholder for "subject"
-            FileName = ID;
             //convert serverEncryption key from string to bytes and apply encryption to cipherText
             // decode encryption key from base64 to bytes
             byte[] HashedSymmetricEncryptionKey = Convert.FromBase64String(ServerEncryptionKey);
