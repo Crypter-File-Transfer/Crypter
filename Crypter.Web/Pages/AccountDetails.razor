@@ -8,7 +8,6 @@
 
 <NavigationUser />
 <div class="container">
-    <button type="button" class="btn btn-secondary float-end" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
     <h1>Account Details</h1>
     <form id="DetailsForm">
         <h2>User Details for @Username</h2>
@@ -16,6 +15,7 @@
             <label for="emailFormControl" class="form-label">Email</label>
             <input @bind="Email" type="email" class="form-control" id="emailFormControl" placeholder="jsmith@email.com" readonly>
         </div>
+        <button type="button" class="btn btn-secondary float-end mt-4" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
         <h2>Public Details</h2>
         <div class="mb-3">
             <label for="aliasFormControl" class="form-label">Public Alias</label>
@@ -98,7 +98,21 @@
     {
         await JsRuntime.InvokeVoidAsync("SaveAccountDetails");
 
-        // Insert PATCH calls to API
+        var url = $"{AppSettings.ApiBaseUrl}/user/update-preferences";
+        var token = AuthenticationService.User.Token;
+
+        var request = new HttpRequestMessage(HttpMethod.Put, url);
+        var requestBody = new RegisteredUserPublicSettingsRequest(PublicAlias, AppearPublicly, AcceptAnonymousMessages, AcceptAnonymousFiles);
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Content = JsonContent.Create(requestBody);
+
+        using var response = await HttpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // Error handling
+        }
 
         IsEditing = false;
     }

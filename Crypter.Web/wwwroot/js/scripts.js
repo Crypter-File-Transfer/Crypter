@@ -1,6 +1,5 @@
 ﻿function EditAccountDetails() {
    var fields = [
-      document.getElementById("emailFormControl"),
       document.getElementById("aliasFormControl"),
       document.getElementById("appearPublicly"),
       document.getElementById("acceptAnonymousMessages"),
