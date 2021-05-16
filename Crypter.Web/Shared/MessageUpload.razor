@@ -4,6 +4,9 @@
 
 <div class="message-upload" hidden="@IsEncrypting">
     <div class="row">
+        <div class="col-12 p-0 my-3">
+            <input type="text" class="form-control" @bind="MessageSubject" @bind:event="oninput" id="messageSubject" name="messageSubject" placeholder="Subject">
+        </div>
         <div class="col-12 p-0">
             <textarea class="form-control" @bind="MessageText" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
             <label><small class="align-text-bottom">@(MaxMessageLength - MessageText.Count()) remaining</small></label>
@@ -46,6 +49,7 @@
 
     // User input
     private string MessageText = "";
+    private string MessageSubject = "";
     CryptoStrength encryptionStrength = CryptoStrength.Minimum;
 
     // Variables we control
@@ -96,7 +100,8 @@
         // Open modal
         Modal.Open();
 
-        // Reset message text
+        // Reset message subject and text
+        MessageSubject = "";
         MessageText = "";
 
         // No longer encrypting
@@ -120,7 +125,11 @@
 
     private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string signature, string serverEncryptionKey)
     {
-        var postBody = new AnonymousUploadRequest("{no subject}", ResourceType.Message, "text", cipherText, signature, serverEncryptionKey);
+        if (MessageSubject == "")
+        {
+            MessageSubject = "(no subject)";
+        }
+        var postBody = new AnonymousUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, signature, serverEncryptionKey);
         using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/anonymous/upload", postBody);
 
         if (!response.IsSuccessStatusCode)

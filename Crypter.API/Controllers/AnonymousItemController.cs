@@ -104,7 +104,7 @@ namespace Crypter.API.Controllers
                         return new NotFoundObjectResult(
                             new AnonymousPreviewResponse(ResponseCode.NotFound));
                     }
-                    response = new AnonymousPreviewResponse("{no subject}", "text", textResult.Size, textResult.Created, textResult.ExpirationDate);
+                    response = new AnonymousPreviewResponse(textResult.FileName, "text", textResult.Size, textResult.Created, textResult.ExpirationDate);
 
                     break;
                 case ResourceType.File:
