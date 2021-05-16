@@ -23,14 +23,14 @@ function SaveAccountDetails() {
 
 function copyToClipboard (text) {
     navigator.clipboard.writeText(text).then(() => {
-        $('#copiedToolTip').css('display', 'block');
-        $('#copiedToolTip').animate({
+        $('.copiedToolTip').css('display', 'block');
+        $('.copiedToolTip').animate({
             opacity: 1
         }, 500, function () {
-            $('#copiedToolTip').delay(500).animate({
+            $('.copiedToolTip').delay(500).animate({
                 opacity: 0
             }, 500, function () {
-                $('#copiedToolTip').css('display', 'none');
+                $('.copiedToolTip').css('display', 'none');
             });
         });
     }).catch((error) => {
