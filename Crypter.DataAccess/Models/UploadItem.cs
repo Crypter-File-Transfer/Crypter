@@ -34,5 +34,11 @@ namespace Crypter.DataAccess.Models
             Created = DateTime.UtcNow;
             ExpirationDate = DateTime.UtcNow.AddHours(24);
         }
+        public UploadItem(string filename, int size, DateTime expirationDate)
+        {
+            FileName = filename;
+            Size = size;
+            ExpirationDate = expirationDate; 
+        }
     }
 }

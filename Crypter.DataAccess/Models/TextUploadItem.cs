@@ -21,8 +21,6 @@ namespace Crypter.DataAccess.Models
             using var cmd = db.Connection.CreateCommand();
             //guid as unique identifier
             ID = Guid.NewGuid().ToString();
-            //temporary assignment to UserID
-            UserID = ID;
             //convert serverEncryption key from string to bytes and apply encryption to cipherText
             // decode encryption key from base64 to bytes
             byte[] HashedSymmetricEncryptionKey = Convert.FromBase64String(ServerEncryptionKey);

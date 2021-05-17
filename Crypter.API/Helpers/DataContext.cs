@@ -20,5 +20,7 @@ namespace Crypter.API.Helpers
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<UploadItem> FileUploads { get; set; }
+        public DbSet<UploadItem> MessageUploads { get; set; }
     }
 }

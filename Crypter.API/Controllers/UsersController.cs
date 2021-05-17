@@ -15,6 +15,7 @@ using Crypter.API.Helpers;
 using Crypter.Contracts.Enum;
 using System.Linq;
 using Crypter.API.Logic;
+using Newtonsoft.Json;
 
 namespace Crypter.API.Controllers
 {
@@ -118,6 +119,30 @@ namespace Crypter.API.Controllers
                     new AccountDetailsResponse(ResponseCode.NotFound));
             }
 
+        }
+
+        // GET: crypter.dev/api/user/user-uploads
+        [HttpGet("user-uploads")]
+        public IActionResult GetUserUploads()
+        {
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            try
+            {
+                var uploadsList = _userService.GetUploadsById(userId);
+                if (uploadsList == null)
+                {
+                    return new NotFoundObjectResult(ResponseCode.NotFound);
+                }
+                var response = JsonConvert.SerializeObject(uploadsList); 
+
+                return new OkObjectResult(new UserUploadsResponse(response));
+               
+            }
+            catch (Exception)
+            {
+                return new NotFoundObjectResult(
+                    new UserUploadsResponse(ResponseCode.InvalidRequest));
+            }
         }
 
         // PUT: crypter.dev/api/user/update-credentials

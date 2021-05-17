@@ -2,8 +2,8 @@
 using System;
 using System.Linq;
 using Crypter.DataAccess.Models;
-using Crypter.API.Helpers; 
-
+using Crypter.API.Helpers;
+using System.Collections.Generic;
 
 namespace Crypter.API.Services
 {
@@ -11,6 +11,7 @@ namespace Crypter.API.Services
     {
         User Authenticate(string username, string password);
         User GetById(string id);
+        public List<UploadItem> GetUploadsById(string id);
         User Create(User user, string password);
         void Update(User user, string password = null);
         void UpdatePublic(User user);
@@ -48,6 +49,20 @@ namespace Crypter.API.Services
         public User GetById(string id)
         {
             return _context.Users.Find(id);
+        }
+
+        public List<UploadItem> GetUploadsById(string id)
+        {
+            var uploads = (from upload in _context.MessageUploads where upload.UserID == id select upload)
+                .Concat(from upload in _context.FileUploads where upload.UserID == id select upload).OrderBy(upload => upload.ExpirationDate);
+
+            foreach (UploadItem item in uploads)
+            {
+                Console.WriteLine(item.ID); 
+            }
+
+            //return list of all uploads
+            return (List<UploadItem>)uploads; 
         }
 
         public User Create(User user, string password)
