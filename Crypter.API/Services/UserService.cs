@@ -51,18 +51,26 @@ namespace Crypter.API.Services
             return _context.Users.Find(id);
         }
 
-        public List<UploadItem> GetUploadsById(string id)
+        public List<UploadItem> GetUploadsById(string userid)
         {
-            var uploads = (from upload in _context.MessageUploads where upload.UserID == id select upload)
-                .Concat(from upload in _context.FileUploads where upload.UserID == id select upload).OrderBy(upload => upload.ExpirationDate);
-
-            foreach (UploadItem item in uploads)
+            var uploadsQuery = (from upload in _context.MessageUploads where upload.UserID == userid select upload)
+                .Concat(from upload in _context.FileUploads where upload.UserID == userid select upload).OrderBy(upload => upload.ExpirationDate);
+            if (uploadsQuery == null)
             {
-                Console.WriteLine(item.ID); 
+                return null; 
             }
-
+            List<UploadItem> uploads = new();
+            foreach  (UploadItem item in uploadsQuery)
+            {
+                var uploaditem = new UploadItem(
+                        item.FileName,
+                        item.Size,
+                        item.ExpirationDate
+                    );
+                uploads.Append(uploaditem); 
+            }
             //return list of all uploads
-            return (List<UploadItem>)uploads; 
+            return uploads; 
         }
 
         public User Create(User user, string password)
