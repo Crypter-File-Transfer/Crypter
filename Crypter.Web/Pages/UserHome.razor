@@ -1,0 +1,118 @@
+﻿@page "/user"
+
+@inject HttpClient HttpClient
+@inject AppSettings AppSettings
+@inject NavigationManager NavManager
+@inject IJSRuntime JsRuntime
+@inject IAuthenticationService AuthenticationService
+
+<NavigationUser />
+<div class="container my-4">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Received files and messages</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <a href=""><h6 class="card-subtitle my-2">This is a sample subject</h6></a>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                From: Sample User
+                            </div>
+                            <div class="col-lg-6">
+                                Expires in: 6 hours
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Sent files and messages</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <a href=""><h6 class="card-subtitle my-2">This is a sample subject</h6></a>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                To: Sample User
+                            </div>
+                            <div class="col-lg-6">
+                                Expires in: 16 hours
+                            </div>
+                        </div>
+                    </li>
+                    @if (SentUploadsStatus == "NotFound")
+                    {
+                        <li class="list-group-item">
+                            No files or messages found
+                        </li>
+                    } else { 
+                        for (int i = 0; i < SentUploadsLength; i++) { 
+                            <li class="list-group-item">
+                                <a href=""><h6 class="card-subtitle my-2">This is a sample subject</h6></a>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        To: Sample User
+                                    </div>
+                                    <div class="col-lg-6">
+                                        Expires in: 16 hours
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private string SentUploadsStatus = "";
+    private int SentUploadsLength = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationService.User == null)
+        {
+            NavManager.NavigateTo("login");
+        }
+
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Home");
+        //await GetUserUploads();
+    }
+
+    /*private async Task GetUserUploads()
+    {
+        var userUploads = await DownloadUserUploads();
+        SentUploadsStatus = userUploads.Status.ToString();
+        SentUploadsLength = userUploads.UserUploadsList.Length;
+    }
+
+    private async Task<UserUploadsResponse> DownloadUserUploads()
+    {
+        var url = $"{AppSettings.ApiBaseUrl}/user/user-uploads";
+        var token = AuthenticationService.User.Token;
+
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var response = await HttpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // Error handling
+            SentUploadsStatus = response.StatusCode.ToString();
+            Console.WriteLine(SentUploadsStatus);
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<UserUploadsResponse>(content);
+    }*/
+}

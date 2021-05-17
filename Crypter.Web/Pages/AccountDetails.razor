@@ -1,4 +1,4 @@
-﻿@page "/account-details"
+﻿@page "/user/account-details"
 
 @inject HttpClient HttpClient
 @inject AppSettings AppSettings
@@ -7,7 +7,7 @@
 @inject IAuthenticationService AuthenticationService
 
 <NavigationUser />
-<div class="container">
+<div class="container my-4">
     <h1>Account Details</h1>
     <form id="DetailsForm">
         <h2>User Details for @Username</h2>
@@ -121,7 +121,6 @@
     public async Task<AccountDetailsResponse> DownloadUserInfo()
     {
         var url = $"{AppSettings.ApiBaseUrl}/user/account-details";
-        var id = AuthenticationService.User.Id;
         var token = AuthenticationService.User.Token;
 
         var request = new HttpRequestMessage(HttpMethod.Get, url);
