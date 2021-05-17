@@ -16,6 +16,7 @@ using Crypter.Contracts.Enum;
 using System.Linq;
 using Crypter.API.Logic;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
 {
@@ -24,16 +25,19 @@ namespace Crypter.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IKeyService _keyService;
         private readonly IMapper _mapper;
         private readonly AppSettings _appSettings;
 
         public UsersController(
             IUserService userService,
+            IKeyService keyService,
             IMapper mapper,
             IOptions<AppSettings> appSettings
             )
         {
             _userService = userService;
+            _keyService = keyService;
             _mapper = mapper;
             _appSettings = appSettings.Value;
         }
@@ -65,7 +69,7 @@ namespace Crypter.API.Controllers
 
         // POST: crypter.dev/api/user/authenticate
         [HttpPost("authenticate")]
-        public IActionResult Authenticate([FromBody] AuthenticateUserRequest body)
+        public async Task<IActionResult> AuthenticateAsync([FromBody] AuthenticateUserRequest body)
         {
             var user = _userService.Authenticate(body.Username, body.Password);
 
@@ -87,8 +91,10 @@ namespace Crypter.API.Controllers
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
+            var userPersonalKey = await _keyService.GetUserPersonalKeyAsync(user.UserID);
+
             return new OkObjectResult(
-                new UserAuthenticateResponse(tokenString)
+                new UserAuthenticateResponse(user.UserID, tokenString, userPersonalKey?.PrivateKey)
             );
         }
 
@@ -118,7 +124,6 @@ namespace Crypter.API.Controllers
                 return new NotFoundObjectResult(
                     new AccountDetailsResponse(ResponseCode.NotFound));
             }
-
         }
 
         // GET: crypter.dev/api/user/user-uploads
@@ -175,14 +180,34 @@ namespace Crypter.API.Controllers
             {
                 _userService.UpdatePublic(user);
                 return new OkObjectResult(
-                    new RegisteredUserPublicSettingsResponse(user.PublicAlias, user.IsPublic, user.AllowAnonMessages, user.AllowAnonFiles)
-                );
+                    new RegisteredUserPublicSettingsResponse(user.PublicAlias, user.IsPublic, user.AllowAnonMessages, user.AllowAnonFiles));
             }
-            catch (AppException)
+            catch (AppException ex)
             {
+                Console.WriteLine(ex.Message);
                 return new BadRequestObjectResult(
-                    new RegisteredUserPublicSettingsResponse(ResponseCode.InvalidRequest)
-                );
+                    new RegisteredUserPublicSettingsResponse(ResponseCode.InvalidRequest));
+            }
+        }
+
+        // POST: crypter.dev/api/user/update-personal-keys
+        [Authorize]
+        [HttpPost("update-personal-keys")]
+        public async Task<IActionResult> UpdatePersonalKeys([FromBody] UpdateUserKeysRequest body)
+        {
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+
+            try
+            {
+                await _keyService.InsertUserPersonalKeyAsync(userId, body.EncryptedPrivateKey, body.PublicKey);
+                return new OkObjectResult(
+                    new UpdateUserKeysResponse(ResponseCode.Success));
+            }
+            catch (AppException ex)
+            {
+                Console.WriteLine(ex.Message);
+                return new BadRequestObjectResult(
+                    new UpdateUserKeysResponse(ResponseCode.InvalidRequest));
             }
         }
     }

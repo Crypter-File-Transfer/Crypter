@@ -8,7 +8,7 @@ namespace Crypter.Contracts.Responses.Registered
         /// Do not use!
         /// For deserialization purposes only.
         /// </summary>
-        private UserRegisterResponse()
+        public UserRegisterResponse()
         { }
 
         /// <summary>

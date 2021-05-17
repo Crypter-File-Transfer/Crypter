@@ -53,7 +53,6 @@
             <button type="button" class="btn btn-primary mx-auto" @onclick="OnSaveClicked">Save</button>
         }
     </form>
-    <BasicModal @ref="Modal" @bind-Subject="ModalSubject" @bind-Message="ModalMessage" @bind-PrimaryButtonText="ModalPrimaryButtonText" @bind-SecondaryButtonText="ModalSecondaryButtonText" ModalClosed="@ModalClosedHandler"/>
 </div>
 
 @code {
@@ -67,11 +66,6 @@
     private string PrivateKey;
     private string PublicKey;
 
-    private string ModalSubject;
-    private string ModalMessage;
-    private string ModalPrimaryButtonText;
-    private string ModalSecondaryButtonText;
-
     protected override async Task OnInitializedAsync()
     {
         if (AuthenticationService.User == null)
@@ -81,11 +75,6 @@
 
         await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Account Details");
         await GetUserInfo();
-
-        if (PrivateKey == null)
-        {
-            PromptUserToCreateKeyPair();
-        }
     }
 
     public async Task OnEditClicked()
@@ -117,13 +106,6 @@
         IsEditing = false;
     }
 
-    public async Task CreateUserKeyPair()
-    {
-        var keyPair = await Task.Run(() => CryptoLib.Common.GenerateAsymmetricKeys(CryptoStrength.Standard));
-        PrivateKey = keyPair.Private.ConvertToPEM();
-        PublicKey = keyPair.Public.ConvertToPEM();
-    }
-
     private async Task GetUserInfo()
     {
         var userAccountInfo = await DownloadUserInfo();
@@ -133,6 +115,7 @@
         AppearPublicly = userAccountInfo.IsPublic;
         AcceptAnonymousFiles = userAccountInfo.AllowAnonymousFiles;
         AcceptAnonymousMessages = userAccountInfo.AllowAnonymousMessages;
+        PrivateKey = AuthenticationService.User.PrivateKey;
     }
 
     public async Task<AccountDetailsResponse> DownloadUserInfo()
@@ -154,24 +137,4 @@
         var content = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<AccountDetailsResponse>(content);
     }
-
-    private void PromptUserToCreateKeyPair()
-    {
-        ModalSubject = "Generate your keys";
-        ModalMessage = "To finish creating your Crypter account, you need to generate a private/public key-pair." +
-                "\nThis usually takes a while and your browser may stop responding, so please be patient.";
-        ModalPrimaryButtonText = "Generate key-pair";
-        ModalSecondaryButtonText = "Not now";
-        Modal.Open();
-    }
-
-    private async Task ModalClosedHandler(bool affirmativeExit)
-    {
-        if (affirmativeExit)
-        {
-            await CreateUserKeyPair();
-        }
-    }
-
-    private Crypter.Web.Shared.BasicModal Modal { get; set; }
 }

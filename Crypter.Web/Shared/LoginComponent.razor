@@ -3,6 +3,7 @@
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
 @inject IAuthenticationService AuthenticationService
+@inject IHttpService HttpService
 
 @if (LoginError)
 {
@@ -23,12 +24,19 @@
 <div class="mb-3">
     <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnLoginClicked(Username, Password))">Login</button>
 </div>
+<BasicModal @ref="Modal" @bind-Subject="ModalSubject" @bind-Message="ModalMessage" @bind-PrimaryButtonText="ModalPrimaryButtonText" @bind-SecondaryButtonText="ModalSecondaryButtonText" @bind-ShowSecondaryButton="ModalShowSecondaryButton" ModalClosed="@ModalClosedHandler" />
 
 @code {
     private string Username;
     private string Password;
     private bool LoginError = false;
     private string LoginErrorText = "";
+
+    private string ModalSubject;
+    private string ModalMessage;
+    private string ModalPrimaryButtonText;
+    private string ModalSecondaryButtonText;
+    private bool ModalShowSecondaryButton;
 
     protected override void OnInitialized()
     {
@@ -39,17 +47,23 @@
         }
     }
 
-    private async void OnLoginClicked(string username, string password)
+    private async Task OnLoginClicked(string username, string password)
     {
         byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(username, password);
         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
         try
         {
-            await AuthenticationService.Login(Username, digestedPasswordBase64, $"{AppSettings.ApiBaseUrl}/user/authenticate");
-            // TODO: Revide to Auth homepage when complete
-            var returnUrl = NavManager.QueryString("returnUrl") ?? "account-details";
-            NavManager.NavigateTo(returnUrl, true);
+            await AuthenticationService.Login(username, password, digestedPasswordBase64, $"{AppSettings.ApiBaseUrl}/user/authenticate");
+            if (string.IsNullOrEmpty(AuthenticationService.User.PrivateKey))
+            {
+                PromptUserToCreateKeyPair();
+                await OnLoginClicked(username, password);  // A subsequent authentication will contain the encrypted private key in the response
+            }
+            else
+            {
+                OnLoginCompleted();
+            }
         }
         catch (Exception ex)
         {
@@ -57,4 +71,60 @@
             LoginErrorText = ex.Message;
         }
     }
+
+    private void OnLoginCompleted()
+    {
+        // TODO: Revide to Auth homepage when complete
+        var returnUrl = NavManager.QueryString("returnUrl") ?? "account-details";
+        NavManager.NavigateTo(returnUrl, true);
+    }
+
+    private async Task GenerateAndUploadKeys()
+    {
+        var keyPair = await GenerateUserKeyPair();
+        var encodedPublicKey = Convert.ToBase64String(
+            Encoding.UTF8.GetBytes(keyPair.publicKey));
+
+        var encodedEncryptedPrivateKey = Convert.ToBase64String(
+            EncryptPrivateKey(keyPair.privateKey));
+
+        var updateKeysUrl = $"{AppSettings.ApiBaseUrl}/user/update-personal-keys";
+        var updateKeysRequestBody = new UpdateUserKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
+        await HttpService.Post<UpdateUserKeysResponse>(updateKeysUrl, updateKeysRequestBody, true);
+        OnLoginCompleted();
+    }
+
+    private async Task<(string privateKey, string publicKey)> GenerateUserKeyPair()
+    {
+        var keyPair = await Task.Run(() => CryptoLib.Common.GenerateAsymmetricKeys(CryptoStrength.Standard));
+        var privateKey = keyPair.Private.ConvertToPEM();
+        var publicKey = keyPair.Public.ConvertToPEM();
+        return (privateKey, publicKey);
+    }
+
+    private byte[] EncryptPrivateKey(string privatePemKey)
+    {
+        var privateKeyBytes = Encoding.UTF8.GetBytes(privatePemKey);
+        var symmetricEncryptionKey = CryptoLib.Common.CreateSymmetricKeyFromUserDetails(Username, Password, AuthenticationService.User.Id);
+        return CryptoLib.Common.DoSymmetricEncryption(privateKeyBytes, symmetricEncryptionKey);
+    }
+
+    private void PromptUserToCreateKeyPair()
+    {
+        ModalSubject = "Generate your keys";
+        ModalMessage = "We need to generate a private/public key-pair to finish setting up your Crypter account." +
+                " This usually takes a while and your browser may stop responding." +
+                "\nPlease be patient.";
+        ModalPrimaryButtonText = "OK";
+        ModalSecondaryButtonText = "";
+        ModalShowSecondaryButton = false;
+        Modal.Open();
+    }
+
+    private async Task ModalClosedHandler(bool affirmative)
+    {
+        await GenerateAndUploadKeys();
+    }
+
+    private Crypter.Web.Shared.BasicModal Modal { get; set; }
 }

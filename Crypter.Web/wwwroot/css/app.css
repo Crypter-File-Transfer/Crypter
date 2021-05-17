@@ -109,6 +109,10 @@ a, .btn-link {
     color: red;
 }
 
+.word-wrap {
+    white-space: pre-line;
+}
+
 #blazor-error-ui {
     background: lightyellow;
     bottom: 0;

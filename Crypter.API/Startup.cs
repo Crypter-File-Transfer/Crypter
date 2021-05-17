@@ -69,6 +69,7 @@ namespace CrypterAPI
 
             // configure DI for application services
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IKeyService, KeyService>();
 
             services.AddCors();
             services.AddTransient(_ => new CrypterDB(Configuration["ConnectionStrings:DefaultConnection"]));

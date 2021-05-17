@@ -62,7 +62,7 @@ else
         byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(username, password);
         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
-        var requestBody = new RegisterUserRequest(Username, digestedPasswordBase64, Email);
+        var requestBody = new RegisterUserRequest(username, digestedPasswordBase64, email);
         using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
         if (!response.IsSuccessStatusCode)
@@ -72,6 +72,7 @@ else
         } else
         {
             RegistrationSuccess = true;
+            StateHasChanged();
             await Task.Delay(500);
             NavManager.NavigateTo("/login");
         }

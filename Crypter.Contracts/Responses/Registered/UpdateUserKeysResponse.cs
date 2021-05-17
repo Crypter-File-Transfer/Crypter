@@ -2,20 +2,20 @@
 
 namespace Crypter.Contracts.Responses.Registered
 {
-    public class UpdateUserCredentialsResponse : BaseResponse
+    public class UpdateUserKeysResponse : BaseResponse
     {
         /// <summary>
         /// Do not use!
         /// For deserialization purposes only.
         /// </summary>
-        public UpdateUserCredentialsResponse()
+        public UpdateUserKeysResponse()
         { }
 
         /// <summary>
         /// Error response
         /// </summary>
         /// <param name="status"></param>
-        public UpdateUserCredentialsResponse(ResponseCode status) : base(status)
+        public UpdateUserKeysResponse(ResponseCode status) : base(status)
         { }
     }
 }

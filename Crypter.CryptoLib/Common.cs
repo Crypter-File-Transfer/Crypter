@@ -174,9 +174,26 @@ namespace Crypter.CryptoLib
         /// <returns>SHA512(password:username)</returns>
         public static byte[] DigestUsernameAndPasswordForAuthentication(string username, string password)
         {
-            var saltedPassword = $"{password}:{username}";
+            var saltedPassword = $"{password}:{username.ToLower()}";
             var saltedPasswordBytes = Encoding.UTF8.GetBytes(saltedPassword);
             return GetDigest(saltedPasswordBytes, DigestAlgorithm.SHA512);
+        }
+
+        /// <summary>
+        /// Create a symmetric key to encrypt/decrypt a user's private key
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="password"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public static SymmetricCryptoParams CreateSymmetricKeyFromUserDetails(string username, string password, string userId)
+        {
+            var keySeed = $"{username.ToLower()}:{password}";
+            var seedBytes = Encoding.UTF8.GetBytes(keySeed);
+
+            var key = GetDigest(seedBytes, DigestAlgorithm.SHA256);
+            var iv = GetDigest(Encoding.UTF8.GetBytes(userId.ToLower()), DigestAlgorithm.SHA256)[0..15];
+            return MakeSymmetricCryptoParams(key, iv);
         }
 
         private static DigestAlgorithm MapStrengthToDigestAlgorithm(CryptoStrength strength)

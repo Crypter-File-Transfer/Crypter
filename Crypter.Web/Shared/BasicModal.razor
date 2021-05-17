@@ -5,12 +5,15 @@
                 <h3>@Subject</h3>
             </div>
             <div class="modal-body">
-                <p>@Message</p>
+                <p class="word-wrap">@Message</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close(true)">@PrimaryButtonText</button>
+            @if (ShowSecondaryButton)
+            {
                 <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="() => Close(false)">@SecondaryButtonText</button>
-            </div>
+            }
+                <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close(true)">@PrimaryButtonText</button>
+                </div>
         </div>
     </div>
 </div>
@@ -27,11 +30,13 @@
     [Parameter] public string Message { get; set; }
     [Parameter] public string PrimaryButtonText { get; set; }
     [Parameter] public string SecondaryButtonText { get; set; }
+    [Parameter] public bool ShowSecondaryButton { get; set; }
 
     [Parameter] public EventCallback<string> SubjectChanged { get; set; }
     [Parameter] public EventCallback<string> MessageChanged { get; set; }
     [Parameter] public EventCallback<string> PrimaryButtonTextChanged { get; set; }
     [Parameter] public EventCallback<string> SecondaryButtonTextChanged { get; set; }
+    [Parameter] public EventCallback<bool> ShowSecondaryButtonChanged { get; set; }
 
     [Parameter] public EventCallback<bool> ModalClosed { get; set; }
 

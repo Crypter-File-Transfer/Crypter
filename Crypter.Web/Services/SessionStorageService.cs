@@ -13,7 +13,7 @@ namespace Crypter.Web.Services
 
     public class SessionStorageService : ISessionStorageService
     {
-        private IJSRuntime _jSRuntime;
+        private readonly IJSRuntime _jSRuntime;
 
         public SessionStorageService(IJSRuntime jSRuntime)
         {

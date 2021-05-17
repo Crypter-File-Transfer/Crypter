@@ -4,13 +4,15 @@ namespace Crypter.Contracts.Responses.Registered
 {
     public class UserAuthenticateResponse : BaseResponse
     {
+        public string Id { get; set; }
         public string Token { get; set; }
+        public string EncryptedPrivateKey { get; set; }
 
         /// <summary>
         /// Do not use!
         /// For deserialization purposes only.
         /// </summary>
-        private UserAuthenticateResponse()
+        public UserAuthenticateResponse()
         { }
 
         /// <summary>
@@ -23,10 +25,14 @@ namespace Crypter.Contracts.Responses.Registered
         /// <summary>
         /// Success response
         /// </summary>
+        /// <param name="id"></param>
         /// <param name="token"></param>
-        public UserAuthenticateResponse(string token) : base(ResponseCode.Success)
+        /// <param name="encryptedPrivateKey></param>
+        public UserAuthenticateResponse(string id, string token, string encryptedPrivateKey = null) : base(ResponseCode.Success)
         {
+            Id = id;
             Token = token;
+            EncryptedPrivateKey = encryptedPrivateKey;
         }
     }
 }

@@ -1,67 +1,66 @@
 ﻿using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Services
 {
     public interface IHttpService
     {
-        Task<T> Get<T>(string uri);
-        Task<T> Post<T>(string uri, object value);
+        Task<T> Get<T>(string uri, bool withAuthorization = false);
+        Task<T> Post<T>(string uri, object value, bool withAuthorization = false);
     }
 
     public class HttpService : IHttpService
     {
-        private HttpClient _httpClient;
-        private NavigationManager _navigationManager;
-        private ISessionStorageService _sessionStorageService;
-        private IConfiguration _configuration;
+        private readonly HttpClient _httpClient;
+        private readonly NavigationManager _navigationManager;
+        private readonly ISessionStorageService _sessionStorageService;
 
         public HttpService(
             HttpClient httpClient,
             NavigationManager navigationManager,
-            ISessionStorageService sessionStorageService,
-            IConfiguration configuration
+            ISessionStorageService sessionStorageService
         ) {
             _httpClient = httpClient;
             _navigationManager = navigationManager;
             _sessionStorageService = sessionStorageService;
-            _configuration = configuration;
         }
 
-        public async Task<T> Get<T>(string uri)
+        public async Task<T> Get<T>(string uri, bool withAuthorization)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            return await sendRequest<T>(request);
+            return await SendRequest<T>(request, withAuthorization);
         }
 
-        public async Task<T> Post<T>(string uri, object value)
+        public async Task<T> Post<T>(string uri, object value, bool withAuthorization)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, uri);
-            request.Content = new StringContent(JsonSerializer.Serialize(value), Encoding.UTF8, "application/json");
-            return await sendRequest<T>(request);
+            var request = new HttpRequestMessage(HttpMethod.Post, uri)
+            {
+                Content = JsonContent.Create(value)
+            };
+            return await SendRequest<T>(request, withAuthorization);
         }
 
-        private async Task<T> sendRequest<T>(HttpRequestMessage request)
+        private async Task<T> SendRequest<T>(HttpRequestMessage request, bool withAuthorization)
         {
             var user = await _sessionStorageService.GetItem<User>("user");
-            var isApiUrl = !request.RequestUri.IsAbsoluteUri;
-            if (user != null && isApiUrl)
+            if (user != null && withAuthorization)
             {
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
             }
 
             using var response = await _httpClient.SendAsync(request);
 
+            // Todo
+            // We shouldn't log the user out just because they received an unauthorized response.
+            // The user could be legitimately logged in and just tried going to a stale URL.
+            // Send the user to an "unauthorized" page instead.
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 _navigationManager.NavigateTo("logout");

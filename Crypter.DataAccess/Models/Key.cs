@@ -2,30 +2,29 @@
 
 namespace Crypter.DataAccess.Models
 {
+    public enum KeyType
+    {
+        Personal,
+        Exchanged
+    }
+
     public class Key
     {
-        //unique key in database, will use GUID 
         public string KeyId { get; set; }
-        //reference to Users Model
         public string UserId { get; set; }
         public string PrivateKey { get; set; }
         public string PublicKey { get; set; }
-        enum KeyType
-        {
-            Global,
-            Exchanged
-        }
-        // file time stamp
+        public KeyType KeyType { get; set; }
         public DateTime Created { get; set; }
-        internal CrypterDB Db { get; set; }
-        //constructor sets TimeStamp upon instantiation
-        public Key()
+
+        public Key(string keyId, string userId, string privateKey, string publicKey, KeyType keyType, DateTime created)
         {
-            Created = DateTime.UtcNow;
-        }
-        internal Key(CrypterDB db)
-        {
-            Db = db;
+            KeyId = keyId;
+            UserId = userId;
+            PrivateKey = privateKey;
+            PublicKey = publicKey;
+            KeyType = keyType;
+            Created = created;
         }
     }
 }
