@@ -129,12 +129,7 @@ namespace Crypter.API.Controllers
             try
             {
                 var uploadsList = _userService.GetUploadsById(userId);
-                if (uploadsList == null)
-                {
-                    return new NotFoundObjectResult(ResponseCode.NotFound);
-                }
                 var response = JsonConvert.SerializeObject(uploadsList); 
-
                 return new OkObjectResult(new UserUploadsResponse(response));
                
             }
