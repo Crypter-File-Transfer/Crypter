@@ -58,7 +58,6 @@
             if (string.IsNullOrEmpty(AuthenticationService.User.PrivateKey))
             {
                 PromptUserToCreateKeyPair();
-                await OnLoginClicked(username, password);  // A subsequent authentication will contain the encrypted private key in the response
             }
             else
             {
@@ -91,7 +90,7 @@
         var updateKeysUrl = $"{AppSettings.ApiBaseUrl}/user/update-personal-keys";
         var updateKeysRequestBody = new UpdateUserKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
         await HttpService.Post<UpdateUserKeysResponse>(updateKeysUrl, updateKeysRequestBody, true);
-        OnLoginCompleted();
+        await OnLoginClicked(Username, Password);  // Login again now that keys have been uploaded and will be returned on login
     }
 
     private async Task<(string privateKey, string publicKey)> GenerateUserKeyPair()
