@@ -59,7 +59,7 @@ namespace Crypter.API.Services
             {
                 return null; 
             }
-            List<UploadItem> uploads = new();
+            List<UploadItem> uploads = new List<UploadItem>();
             foreach  (UploadItem item in uploadsQuery)
             {
                 var uploaditem = new UploadItem(
