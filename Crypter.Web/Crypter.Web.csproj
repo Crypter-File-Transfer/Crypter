@@ -8,7 +8,6 @@
   <ItemGroup>
     <Content Remove="appsettings.json" />
     <Content Remove="compilerconfig.json" />
-    <Content Remove="Shared\NavigationUser.razor" />
   </ItemGroup>
 
   <ItemGroup>
