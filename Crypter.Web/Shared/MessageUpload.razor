@@ -84,7 +84,7 @@
 
         await SetNewEncryptionStatus("Uploading");
 
-        if (AuthenticationService.User != null)
+        if (AuthenticationService.User == null)
         {
             var response = await UploadMessageToAPI(encodedCipherText, encodedSignature, serverEncryptionKey);
             if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
