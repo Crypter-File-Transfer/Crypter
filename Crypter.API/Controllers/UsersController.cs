@@ -3,11 +3,15 @@ using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration; 
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Crypter.DataAccess; 
 using Crypter.DataAccess.Models;
+using Crypter.DataAccess.Helpers;
+using Crypter.DataAccess.Queries;
 using Crypter.Contracts.Requests.Registered;
 using Crypter.Contracts.Responses.Registered;
 using Crypter.API.Services;
@@ -17,6 +21,7 @@ using System.Linq;
 using Crypter.API.Logic;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+
 
 namespace Crypter.API.Controllers
 {
@@ -28,18 +33,28 @@ namespace Crypter.API.Controllers
         private readonly IKeyService _keyService;
         private readonly IMapper _mapper;
         private readonly AppSettings _appSettings;
+        private readonly CrypterDB Database;
+        private readonly string BaseSaveDirectory;
+        private readonly long AllocatedDiskSpace;
+        private readonly int MaxUploadSize;
 
         public UsersController(
             IUserService userService,
             IKeyService keyService,
             IMapper mapper,
-            IOptions<AppSettings> appSettings
+            IOptions<AppSettings> appSettings,
+            CrypterDB db,
+            IConfiguration configuration
             )
         {
             _userService = userService;
             _keyService = keyService;
             _mapper = mapper;
             _appSettings = appSettings.Value;
+            Database = db;
+            BaseSaveDirectory = configuration["EncryptedFileStore:Location"];
+            AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(1024, 3);
+            MaxUploadSize = int.Parse(configuration["MaxUploadSizeMB"]) * (int)Math.Pow(1024, 2);
         }
 
         // POST: crypter.dev/api/user/register
@@ -188,6 +203,65 @@ namespace Crypter.API.Controllers
                 return new BadRequestObjectResult(
                     new RegisteredUserPublicSettingsResponse(ResponseCode.InvalidRequest));
             }
+        }
+
+        //POST: crypter.dev/api/user/upload
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadNewItem([FromBody] RegisteredUserUploadRequest body)
+        {
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            if (!UploadRules.IsValidRegisteredUserUploadRequest(body))
+            {
+                return new OkObjectResult(
+                    new RegisteredUserUploadResponse(ResponseCode.InvalidRequest));
+            }
+
+            Database.Connection.Open();
+
+            if (!await UploadRules.AllocatedSpaceRemaining(Database, AllocatedDiskSpace, MaxUploadSize))
+            {
+                return new OkObjectResult(
+                    new RegisteredUserUploadResponse(ResponseCode.DiskFull));
+            }
+
+            Guid newGuid;
+            DateTime expiration;
+            switch (body.Type)
+            {
+                case ResourceType.Message:
+                    var newText = new TextUploadItem
+                    {
+                        UserID = userId, 
+                        FileName = body.Name,
+                        CipherText = body.CipherText,
+                        Signature = body.Signature,
+                        ServerEncryptionKey = body.ServerEncryptionKey
+                    };
+                    await newText.InsertAsync(Database, BaseSaveDirectory);
+                    newGuid = Guid.Parse(newText.ID);
+                    expiration = newText.ExpirationDate;
+                    break;
+                case ResourceType.File:
+                    var newFile = new FileUploadItem
+                    {
+                        UserID = userId,
+                        FileName = body.Name,
+                        ContentType = body.ContentType,
+                        CipherText = body.CipherText,
+                        Signature = body.Signature,
+                        ServerEncryptionKey = body.ServerEncryptionKey
+                    };
+                    await newFile.InsertAsync(Database, BaseSaveDirectory);
+                    newGuid = Guid.Parse(newFile.ID);
+                    expiration = newFile.ExpirationDate;
+                    break;
+                default:
+                    return new OkObjectResult(
+                        new RegisteredUserUploadResponse(ResponseCode.InvalidRequest));
+            }
+
+            var responseBody = new RegisteredUserUploadResponse(newGuid, expiration);
+            return new JsonResult(responseBody);
         }
 
         // POST: crypter.dev/api/user/update-personal-keys
