@@ -57,20 +57,20 @@ namespace Crypter.API.Services
                 .Concat(from upload in _context.FileUploads where upload.UserID == userid select upload).OrderBy(upload => upload.ExpirationDate);
             if (uploadsQuery == null)
             {
-                return null; 
+                return null;
             }
             List<UploadItem> uploads = new List<UploadItem>();
-            foreach  (UploadItem item in uploadsQuery)
+            foreach (UploadItem item in uploadsQuery)
             {
                 var uploaditem = new UploadItem(
                         item.FileName,
                         item.Size,
                         item.ExpirationDate
                     );
-                uploads.Append(uploaditem); 
+                uploads.Append(uploaditem);
             }
             //return list of all uploads
-            return uploads; 
+            return uploads;
         }
 
         public User Create(User user, string password)

@@ -12,6 +12,7 @@ using Crypter.DataAccess;
 using Crypter.DataAccess.Models;
 using Crypter.DataAccess.Helpers;
 using Crypter.DataAccess.Queries;
+using Crypter.Contracts; 
 using Crypter.Contracts.Requests.Registered;
 using Crypter.Contracts.Responses.Registered;
 using Crypter.API.Services;
@@ -153,8 +154,9 @@ namespace Crypter.API.Controllers
                 return new OkObjectResult(new UserUploadsResponse(response));
                
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.Message); 
                 return new NotFoundObjectResult(
                     new UserUploadsResponse(ResponseCode.InvalidRequest));
             }
@@ -206,10 +208,12 @@ namespace Crypter.API.Controllers
         }
 
         //POST: crypter.dev/api/user/upload
+        [Authorize]
         [HttpPost("upload")]
         public async Task<IActionResult> UploadNewItem([FromBody] RegisteredUserUploadRequest body)
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            Console.WriteLine(userId); 
             if (!UploadRules.IsValidRegisteredUserUploadRequest(body))
             {
                 return new OkObjectResult(

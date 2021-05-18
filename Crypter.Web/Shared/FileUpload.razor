@@ -3,6 +3,7 @@
 @inject IJSRuntime jsRuntime
 @inject HttpClient HttpClient
 @inject AppSettings AppSettings
+@inject IAuthenticationService AuthenticationService
 
 <div class="file-upload" hidden="@IsEncrypting">
     <div class="row">
@@ -185,19 +186,38 @@
         var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
 
         await SetNewEncryptionStatus("Uploading");
-        var response = await UploadFileToAPI(file.Name, file.Type, encodedCipherText, encodedSignature, serverEncryptionKey);
-
-        if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+        if (AuthenticationService.User == null)
         {
-            serverIsFull = true;
-            IsEncrypting = false;
-            return;
-        }
+            var response = await UploadFileToAPI(file.Name, file.Type, encodedCipherText, encodedSignature, serverEncryptionKey);
 
-        // Send data to success modal component
-        CompletedUpload("file", response.Id,
-           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
-           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+            if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+            {
+                serverIsFull = true;
+                IsEncrypting = false;
+                return;
+            }
+
+            // Send data to success modal component
+            CompletedUpload("file", response.Id,
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+        }
+        else
+        {
+            var response = await UploadUserFileToAPI(file.Name, file.Type, encodedCipherText, encodedSignature, serverEncryptionKey);
+
+            if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+            {
+                serverIsFull = true;
+                IsEncrypting = false;
+                return;
+            }
+
+            // Send data to success modal component
+            CompletedUpload("file", response.Id,
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+        }
 
         // Open modal
         Modal.Open();
@@ -237,6 +257,28 @@
 
         var content = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
+    }
+
+    private async Task<RegisteredUserUploadResponse> UploadUserFileToAPI(string filename, string contentType, string cipherText, string signature, string serverEncryptionKey)
+    {
+        var url = $"{AppSettings.ApiBaseUrl}/user/upload";
+        var token = AuthenticationService.User.Token;
+
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        var postBody = new RegisteredUserUploadRequest(filename, ResourceType.File, contentType, cipherText, signature, serverEncryptionKey);
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Content = JsonContent.Create(postBody);
+
+        using var response = await HttpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // insert error handling
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<RegisteredUserUploadResponse>(content);
     }
 
     private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }

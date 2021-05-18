@@ -1,6 +1,7 @@
 @inject IJSRuntime jsRuntime
 @inject HttpClient HttpClient
 @inject AppSettings AppSettings
+@inject IAuthenticationService AuthenticationService
 
 <div class="message-upload" hidden="@IsEncrypting">
     <div class="row">
@@ -82,20 +83,39 @@
         var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
 
         await SetNewEncryptionStatus("Uploading");
-        var response = await UploadMessageToAPI(encodedCipherText, encodedSignature, serverEncryptionKey);
 
-        if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+        if (AuthenticationService.User != null)
         {
-            Error = true;
-            ErrorMessage = "The server is full.  Try again later.";
-            IsEncrypting = false;
-            return;
-        }
+            var response = await UploadMessageToAPI(encodedCipherText, encodedSignature, serverEncryptionKey);
+            if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+            {
+                Error = true;
+                ErrorMessage = "The server is full.  Try again later.";
+                IsEncrypting = false;
+                return;
+            }
 
-        // Send data to success modal component
-        CompletedUpload("message", response.Id,
-           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
-           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+            // Send data to success modal component
+            CompletedUpload("message", response.Id,
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+        }
+        else
+        {
+            var response = await UploadUserMessageToAPI(encodedCipherText, encodedSignature, serverEncryptionKey);
+            if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+            {
+                Error = true;
+                ErrorMessage = "The server is full.  Try again later.";
+                IsEncrypting = false;
+                return;
+            }
+
+            // Send data to success modal component
+            CompletedUpload("message", response.Id,
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+        }
 
         // Open modal
         Modal.Open();
@@ -139,6 +159,32 @@
 
         var content = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
+    }
+
+    private async Task<RegisteredUserUploadResponse> UploadUserMessageToAPI(string cipherText, string signature, string serverEncryptionKey)
+    {
+        if (MessageSubject == "")
+        {
+            MessageSubject = "(no subject)";
+        }
+        var url = $"{AppSettings.ApiBaseUrl}/user/upload";
+        var token = AuthenticationService.User.Token;
+
+        var request = new HttpRequestMessage(HttpMethod.Post, url);
+        var postBody = new RegisteredUserUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, signature, serverEncryptionKey);
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        request.Content = JsonContent.Create(postBody);
+
+        using var response = await HttpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // insert error handling
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<RegisteredUserUploadResponse>(content);
     }
 
     private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
