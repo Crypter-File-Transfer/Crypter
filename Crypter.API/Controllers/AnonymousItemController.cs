@@ -56,7 +56,7 @@ namespace Crypter.API.Controllers
                 case ResourceType.Message:
                     var newText = new TextUploadItem
                     {
-                        UserID = "anonymous", 
+                        UserID = Guid.Empty.ToString(), 
                         FileName = body.Name,
                         CipherText = body.CipherText,
                         Signature = body.Signature,
@@ -69,7 +69,7 @@ namespace Crypter.API.Controllers
                 case ResourceType.File:
                     var newFile = new FileUploadItem
                     {
-                        UserID = "anonymous",
+                        UserID = Guid.Empty.ToString(),
                         FileName = body.Name,
                         ContentType = body.ContentType,
                         CipherText = body.CipherText,
