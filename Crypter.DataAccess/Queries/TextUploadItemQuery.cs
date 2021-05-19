@@ -19,7 +19,7 @@ namespace Crypter.DataAccess.Queries
         public async Task<TextUploadItem> FindOneAsync(string id)
         {
             using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `MessageUploads` WHERE `ID` = @id";
+            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv`, `ServerDigest` FROM `MessageUploads` WHERE `ID` = @id";
             cmd.Parameters.Add(new MySqlParameter
             {
                 ParameterName = "@id",
@@ -33,7 +33,7 @@ namespace Crypter.DataAccess.Queries
         public async Task<List<TextUploadItem>> LatestItemsAsync()
         {
             using var cmd = Db.Connection.CreateCommand();
-            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `MessageUploads`";
+            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`,`EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv`, `ServerDigest` FROM `MessageUploads`";
             return await ReadAllAsync(await cmd.ExecuteReaderAsync());
         }
 
@@ -42,7 +42,7 @@ namespace Crypter.DataAccess.Queries
             using var cmd = Db.Connection.CreateCommand();
             //Used for testing, selects all messages rather than just expired ones, would rather not delete yet
             //cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`, `EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `MessageUploads`";
-            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`, `EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv` FROM `MessageUploads` WHERE utc_timestamp() > `ExpirationDate`";
+            cmd.CommandText = @"SELECT `ID`, `UserID`, `UntrustedName`, `Size`, `EncryptedMessagePath`,`SignaturePath`,`Created`, `ExpirationDate`, `Iv`, `ServerDigest` FROM `MessageUploads` WHERE utc_timestamp() > `ExpirationDate`";
             return await ReadAllAsync(await cmd.ExecuteReaderAsync());
         }
 
@@ -63,7 +63,8 @@ namespace Crypter.DataAccess.Queries
                         SignaturePath = reader.GetString(5),
                         Created = reader.GetDateTime(6),
                         ExpirationDate = reader.GetDateTime(7),
-                        InitializationVector = reader.GetString(8)
+                        InitializationVector = reader.GetString(8),
+                        ServerDigest = reader.GetString(9)
                     };
                     items.Add(item);
                 }

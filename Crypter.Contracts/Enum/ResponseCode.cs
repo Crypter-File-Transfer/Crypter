@@ -9,6 +9,7 @@
         DiskFull,
         DecryptFailure,
         InvalidCredentials,
-        PasswordRequirementsNotMet
+        PasswordRequirementsNotMet,
+        DigestsDoNotMatch
     }
 }

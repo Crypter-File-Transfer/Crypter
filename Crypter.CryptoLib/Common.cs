@@ -141,16 +141,16 @@ namespace Crypter.CryptoLib
             return (RsaKeyParameters)pemReader.ReadObject();
         }
 
-        public static bool VerifyPlaintextAgainstKnownDigest(byte[] plaintext, byte[] knownDigest)
+        public static bool VerifyPlaintextAgainstKnownDigest(byte[] plaintext, byte[] knownDigest, DigestAlgorithm algorithm)
         {
-            var newDigest = GetDigest(plaintext, DigestAlgorithm.SHA256);
+            var newDigest = GetDigest(plaintext, algorithm);
 
-            if (knownDigest.Length < (256 / 8))
+            if (newDigest.Length != knownDigest.Length)
             {
                 return false;
             }
 
-            for (int i = 0; i < (256 / 8); i++)
+            for (int i = 0; i < knownDigest.Length; i++)
             {
                 if (!knownDigest[i].Equals(newDigest[i]))
                 {

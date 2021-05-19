@@ -38,7 +38,7 @@ namespace Crypter.DataAccess.Models
             SignaturePath = filePath.SigPathString;
             // Calc size of cipher text file
             Size = filePath.FileSizeBytes(CipherTextPath);
-            cmd.CommandText = @"INSERT INTO `MessageUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `Iv`, `EncryptedMessagePath`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @initializationvector, @encryptedmessagepath);";
+            cmd.CommandText = @"INSERT INTO `MessageUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `SignaturePath`, `Created`, `ExpirationDate`, `Iv`, `EncryptedMessagePath`, `ServerDigest`) VALUES (@id, @userid, @untrustedname, @size, @signaturepath, @created, @expirationdate, @initializationvector, @encryptedmessagepath, @serverdigest);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -46,7 +46,7 @@ namespace Crypter.DataAccess.Models
         public async Task UpdateAsync(CrypterDB db)
         {
             using var cmd = db.Connection.CreateCommand();
-            cmd.CommandText = @"UPDATE `MessageUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `Iv` = @initializationvector, `EncryptedMessagePath`= @encryptedmessagepath WHERE `ID` = @id;";
+            cmd.CommandText = @"UPDATE `MessageUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `Iv` = @initializationvector, `EncryptedMessagePath`= @encryptedmessagepath, `ServerDigest` = @serverdigest WHERE `ID` = @id;";
             BindParams(cmd);
             //BindId(cmd);
             await cmd.ExecuteNonQueryAsync();
@@ -125,6 +125,12 @@ namespace Crypter.DataAccess.Models
                 ParameterName = "@initializationvector",
                 DbType = DbType.String,
                 Value = InitializationVector,
+            });
+            cmd.Parameters.Add(new MySqlParameter
+            {
+                ParameterName = "@serverdigest",
+                DbType = DbType.String,
+                Value = ServerDigest
             });
         }
     }

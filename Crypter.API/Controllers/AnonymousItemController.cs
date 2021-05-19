@@ -2,6 +2,7 @@
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests.Anonymous;
 using Crypter.Contracts.Responses.Anonymous;
+using Crypter.CryptoLib.Enums;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Helpers;
 using Crypter.DataAccess.Models;
@@ -22,6 +23,7 @@ namespace Crypter.API.Controllers
         private readonly string BaseSaveDirectory;
         private readonly long AllocatedDiskSpace;
         private readonly int MaxUploadSize;
+        private const DigestAlgorithm ItemDigestAlgorithm = DigestAlgorithm.SHA256;
 
         public AnonymousItemController(CrypterDB db, IConfiguration configuration)
         {
@@ -49,6 +51,11 @@ namespace Crypter.API.Controllers
                     new AnonymousUploadResponse(ResponseCode.DiskFull));
             }
 
+            // Digest the ciphertext BEFORE applying server-side encryption
+            var ciphertextBytes = Convert.FromBase64String(body.CipherText);
+            var serverDigest = CryptoLib.Common.GetDigest(ciphertextBytes, ItemDigestAlgorithm);
+            var encodedServerDigest = Convert.ToBase64String(serverDigest);
+
             Guid newGuid;
             DateTime expiration;
             switch (body.Type)
@@ -60,7 +67,8 @@ namespace Crypter.API.Controllers
                         FileName = body.Name,
                         CipherText = body.CipherText,
                         Signature = body.Signature,
-                        ServerEncryptionKey = body.ServerEncryptionKey
+                        ServerEncryptionKey = body.ServerEncryptionKey,
+                        ServerDigest = encodedServerDigest
                     };
                     await newText.InsertAsync(Database, BaseSaveDirectory);
                     newGuid = Guid.Parse(newText.ID);
@@ -74,7 +82,8 @@ namespace Crypter.API.Controllers
                         ContentType = body.ContentType,
                         CipherText = body.CipherText,
                         Signature = body.Signature,
-                        ServerEncryptionKey = body.ServerEncryptionKey
+                        ServerEncryptionKey = body.ServerEncryptionKey,
+                        ServerDigest = encodedServerDigest
                     };
                     await newFile.InsertAsync(Database, BaseSaveDirectory);
                     newGuid = Guid.Parse(newFile.ID);
@@ -140,6 +149,7 @@ namespace Crypter.API.Controllers
             byte[] serverDecryptionKey = Convert.FromBase64String(body.ServerDecryptionKey);
             string cipherTextPath;
             byte[] iv;
+            byte[] storedServerDigest;
             Func<CrypterDB, Task> deleteRecord;
             switch (body.Type)
             {
@@ -155,6 +165,7 @@ namespace Crypter.API.Controllers
 
                     cipherTextPath = textResult.CipherTextPath;
                     iv = Convert.FromBase64String(textResult.InitializationVector);
+                    storedServerDigest = Convert.FromBase64String(textResult.ServerDigest);
                     deleteRecord = textResult.DeleteAsync;
 
                     break;
@@ -170,6 +181,7 @@ namespace Crypter.API.Controllers
 
                     cipherTextPath = fileResult.CipherTextPath;
                     iv = Convert.FromBase64String(fileResult.InitializationVector);
+                    storedServerDigest = Convert.FromBase64String(fileResult.ServerDigest);
                     deleteRecord = fileResult.DeleteAsync;
 
                     break;
@@ -182,6 +194,14 @@ namespace Crypter.API.Controllers
             byte[] cipherTextServer = System.IO.File.ReadAllBytes(cipherTextPath);
             var symParams = CryptoLib.Common.MakeSymmetricCryptoParams(serverDecryptionKey, iv);
             byte[] cipherTextClient = CryptoLib.Common.UndoSymmetricEncryption(cipherTextServer, symParams);
+
+            // Compare digests AFTER removing server-side encryption
+            var digestsMatch = CryptoLib.Common.VerifyPlaintextAgainstKnownDigest(cipherTextClient, storedServerDigest, ItemDigestAlgorithm);
+            if (!digestsMatch)
+            {
+                return new BadRequestObjectResult(
+                    new AnonymousDownloadResponse(ResponseCode.DigestsDoNotMatch));
+            }
 
             // Delete the item from the server
             await deleteRecord(Database);

@@ -171,12 +171,21 @@
         var encodedServerDecryptionKey = Convert.ToBase64String(serverDecryptionKey);
         var ciphertextResponse = await DownloadCiphertext(resourceType, id, encodedServerDecryptionKey);
 
-        if (ciphertextResponse.Status.Equals(Contracts.Enum.ResponseCode.DecryptFailure))
+        // Error handler
+        switch (ciphertextResponse.Status)
         {
-            decryptionError = true;
-            IsDecrypting = false;
-            decryptionErrorText = "Failed to remove server-side encryption";
-            return;
+            case ResponseCode.Success:
+                break;
+            case ResponseCode.DecryptFailure:
+                decryptionErrorText = "Failed to remove server-side encryption";
+                break;
+            case ResponseCode.DigestsDoNotMatch:
+                decryptionErrorText = "Wrong symmetric key provided to API";
+                break;
+            default:
+                decryptionError = true;
+                IsDecrypting = false;
+                return;
         }
 
         // Decrypt the ciphertext using the symmetric key from the signature
@@ -186,7 +195,7 @@
         byte[] plaintextBytes = CryptoLib.Common.UndoSymmetricEncryption(ciphertextBytes, symmetricParams);
 
         await SetNewDecryptionStatus($"Verifying decrypted {dataFormat}");
-        decryptionSuccess = CryptoLib.Common.VerifyPlaintextAgainstKnownDigest(plaintextBytes, signature.Digest);
+        decryptionSuccess = CryptoLib.Common.VerifyPlaintextAgainstKnownDigest(plaintextBytes, signature.Digest, signature.Algorithm);
 
         if (decryptionSuccess)
         {

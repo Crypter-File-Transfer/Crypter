@@ -21,7 +21,6 @@ namespace Crypter.DataAccess.Models
         public async Task InsertAsync(CrypterDB db, string baseSaveDirectory)
         {
             using var cmd = db.Connection.CreateCommand();
-            //guid as unique identifier
             ID = Guid.NewGuid().ToString();
             //convert serverEncryption key from string to bytes and apply encryption to cipherText
             // decode encryption key from base64 to bytes
@@ -40,7 +39,7 @@ namespace Crypter.DataAccess.Models
             SignaturePath = filePath.SigPathString;
             // Calc size of cipher text file
             Size = filePath.FileSizeBytes(CipherTextPath); 
-            cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `ContentType`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`, `Iv`) VALUES (@id, @userid, @untrustedname, @size, @contentType, @signaturepath, @created, @expirationdate, @encryptedfilecontentpath, @initializationvector);";
+            cmd.CommandText = @"INSERT INTO `FileUploads` (`ID`,`UserID`,`UntrustedName`,`Size`, `ContentType`, `SignaturePath`, `Created`, `ExpirationDate`, `EncryptedFileContentPath`, `Iv`, `ServerDigest`) VALUES (@id, @userid, @untrustedname, @size, @contentType, @signaturepath, @created, @expirationdate, @encryptedfilecontentpath, @initializationvector, @serverdigest);";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -48,7 +47,7 @@ namespace Crypter.DataAccess.Models
         public async Task UpdateAsync(CrypterDB db)
         {
             using var cmd = db.Connection.CreateCommand();
-            cmd.CommandText = @"UPDATE `FileUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `ContentType` = @contentType, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedFileContentPath`= @encryptedfilecontentpath, `Iv` = @initializationvector WHERE `ID` = @id;";
+            cmd.CommandText = @"UPDATE `FileUploads` SET `UserID` = @userid, `UntrustedName` = @untrustedname, `Size` = @size, `ContentType` = @contentType, `SignaturePath` = @signaturepath, `Created` = @created, `ExpirationDate` = @expirationdate, `EncryptedFileContentPath`= @encryptedfilecontentpath, `Iv` = @initializationvector `ServerDigest` = @serverdigest WHERE `ID` = @id;";
             BindParams(cmd);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -132,6 +131,12 @@ namespace Crypter.DataAccess.Models
                 ParameterName = "@initializationvector",
                 DbType = DbType.String,
                 Value = InitializationVector,
+            });
+            cmd.Parameters.Add(new MySqlParameter
+            {
+                ParameterName = @"serverdigest",
+                DbType = DbType.String,
+                Value = ServerDigest
             });
         }
     }

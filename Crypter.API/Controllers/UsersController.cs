@@ -10,9 +10,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Crypter.DataAccess; 
 using Crypter.DataAccess.Models;
-using Crypter.DataAccess.Helpers;
-using Crypter.DataAccess.Queries;
-using Crypter.Contracts; 
 using Crypter.Contracts.Requests.Registered;
 using Crypter.Contracts.Responses.Registered;
 using Crypter.API.Services;
@@ -22,7 +19,7 @@ using System.Linq;
 using Crypter.API.Logic;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
-
+using Crypter.CryptoLib.Enums;
 
 namespace Crypter.API.Controllers
 {
@@ -38,6 +35,7 @@ namespace Crypter.API.Controllers
         private readonly string BaseSaveDirectory;
         private readonly long AllocatedDiskSpace;
         private readonly int MaxUploadSize;
+        private const DigestAlgorithm ItemDigestAlgorithm = DigestAlgorithm.SHA256;
 
         public UsersController(
             IUserService userService,
@@ -227,6 +225,11 @@ namespace Crypter.API.Controllers
                 return new OkObjectResult(
                     new RegisteredUserUploadResponse(ResponseCode.DiskFull));
             }
+
+            // Digest the ciphertext BEFORE applying server-side encryption
+            var ciphertextBytes = Convert.FromBase64String(body.CipherText);
+            var serverDigest = CryptoLib.Common.GetDigest(ciphertextBytes, ItemDigestAlgorithm);
+            var encodedServerDigest = Convert.ToBase64String(serverDigest);
 
             Guid newGuid;
             DateTime expiration;

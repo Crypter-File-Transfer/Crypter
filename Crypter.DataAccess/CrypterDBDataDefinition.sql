@@ -1,12 +1,10 @@
-﻿
-SET FOREIGN_KEY_CHECKS = 0;
+﻿SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `MessageUploads`; 
 DROP TABLE IF EXISTS `FileUploads`; 
 DROP TABLE IF EXISTS `ExchangedKeys`; 
 DROP TABLE IF EXISTS `Keys`; 
 DROP TABLE IF EXISTS `Users`; 
 SET FOREIGN_KEY_CHECKS = 1;
-
 
 CREATE TABLE `Users` (
   `UserID` VARCHAR(36) NOT NULL,
@@ -32,6 +30,7 @@ CREATE TABLE `MessageUploads` (
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   `ExpirationDate` TIMESTAMP NOT NULL,
   `Iv` VARCHAR(256),
+  `ServerDigest` VARCHAR(256),
   PRIMARY KEY (ID)
   /*Commented out for testing
   FOREIGN KEY (UserID) REFERENCES Users(UserID)*/
@@ -48,6 +47,7 @@ CREATE TABLE `FileUploads` (
   `Created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
   `ExpirationDate` TIMESTAMP NOT NULL,
   `Iv` VARCHAR(256),
+  `ServerDigest` VARCHAR(256),
   PRIMARY KEY (ID)
  /*Commented out for testing
   FOREIGN KEY (UserID) REFERENCES Users(UserID)
@@ -65,19 +65,3 @@ CREATE TABLE `Keys` (
   PRIMARY KEY(KeyID)
   /*Commented out for testing FOREIGN KEY(UserID) REFERENCES Users(UserID)*/
 ) ENGINE=InnoDB;
-
-CREATE TABLE `ExchangedKeys` (
-  `UserID` VARCHAR(36) NOT NULL,
-  `ExchangedKey` TEXT, 
-  `OtherUserID` VARCHAR(36) NOT NULL, 
-  `OtherUserExchangedKey` TEXT,
-  `ExchangeCreated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, 
-   PRIMARY KEY(UserID, OtherUserID), 
-   CONSTRAINT KeyExchange UNIQUE (UserID, OtherUserID)
-   /*Commented out for testing
-   CONSTRAINT ExchangeToUser1_FK FOREIGN KEY (UserID) REFERENCES Users(UserID), 
-   CONSTRAINT ExchangeToUser2_FK FOREIGN KEY (OtherUserID) REFERENCES Users(UserID)
-   */
-) ENGINE=InnoDB;
-
-
