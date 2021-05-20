@@ -64,7 +64,7 @@ namespace Crypter.DataAccess.Queries
                         Created = reader.GetDateTime(7),
                         ExpirationDate = reader.GetDateTime(8),
                         InitializationVector = reader.GetString(9),
-                        ServerDigest = reader.GetString(9)
+                        ServerDigest = reader.GetString(10)
                     };
                     items.Add(item);
                 }
