@@ -64,7 +64,7 @@ namespace Crypter.Web.Services
         {
             User = null;
             await _sessionStorageService.RemoveItem("user");
-            _navigationManager.NavigateTo("/");
+            _navigationManager.NavigateTo("/", true);
         }
     }
 }
