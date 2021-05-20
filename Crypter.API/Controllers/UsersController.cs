@@ -238,11 +238,12 @@ namespace Crypter.API.Controllers
                 case ResourceType.Message:
                     var newText = new TextUploadItem
                     {
-                        UserID = userId, 
+                        UserID = userId,
                         FileName = body.Name,
                         CipherText = body.CipherText,
                         Signature = body.Signature,
-                        ServerEncryptionKey = body.ServerEncryptionKey
+                        ServerEncryptionKey = body.ServerEncryptionKey,
+                        ServerDigest = encodedServerDigest
                     };
                     await newText.InsertAsync(Database, BaseSaveDirectory);
                     newGuid = Guid.Parse(newText.ID);
@@ -256,7 +257,8 @@ namespace Crypter.API.Controllers
                         ContentType = body.ContentType,
                         CipherText = body.CipherText,
                         Signature = body.Signature,
-                        ServerEncryptionKey = body.ServerEncryptionKey
+                        ServerEncryptionKey = body.ServerEncryptionKey,
+                        ServerDigest = encodedServerDigest
                     };
                     await newFile.InsertAsync(Database, BaseSaveDirectory);
                     newGuid = Guid.Parse(newFile.ID);
