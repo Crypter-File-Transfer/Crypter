@@ -1,10 +1,10 @@
-﻿
-using System;
+﻿using System;
 using System.Linq;
 using Crypter.DataAccess.Models;
-using Crypter.DataAccess.DTO; 
 using Crypter.API.Helpers;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace Crypter.API.Services
 {
@@ -12,6 +12,8 @@ namespace Crypter.API.Services
     {
         User Authenticate(string username, string password);
         User GetById(string id);
+        Task<IEnumerable<User>> SearchByUsername(string username);
+        Task<IEnumerable<User>> SearchByPublicAlias(string publicAlias);
         public List<UploadItem> GetUploadsById(string id);
         User Create(User user, string password);
         void Update(User user, string password = null);
@@ -50,6 +52,22 @@ namespace Crypter.API.Services
         public User GetById(string id)
         {
             return _context.Users.Find(id);
+        }
+
+        public async Task<IEnumerable<User>> SearchByUsername(string username)
+        {
+            var lowerUsername = username.ToLower();
+            return await _context.Users
+                .Where(x => x.UserName.ToLower().StartsWith(lowerUsername))
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<User>> SearchByPublicAlias(string publicAlias)
+        {
+            var lowerPublicAlias = publicAlias.ToLower();
+            return await _context.Users
+                .Where(x => x.PublicAlias.ToLower().StartsWith(lowerPublicAlias))
+                .ToListAsync();
         }
 
         public List<UploadItem> GetUploadsById(string userid)

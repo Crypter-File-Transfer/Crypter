@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Configuration; 
+using Microsoft.Extensions.Configuration;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Crypter.DataAccess; 
+using Crypter.DataAccess;
 using Crypter.DataAccess.Models;
 using Crypter.Contracts.Requests.Registered;
 using Crypter.Contracts.Responses.Registered;
@@ -20,6 +20,8 @@ using Crypter.API.Logic;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
 using Crypter.CryptoLib.Enums;
+using Crypter.Contracts.Responses.Search;
+using Crypter.Contracts.DTO;
 
 namespace Crypter.API.Controllers
 {
@@ -214,7 +216,6 @@ namespace Crypter.API.Controllers
         public async Task<IActionResult> UploadNewItem([FromBody] RegisteredUserUploadRequest body)
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
-            Console.WriteLine(userId); 
             if (!UploadRules.IsValidRegisteredUserUploadRequest(body))
             {
                 return new OkObjectResult(
@@ -295,6 +296,38 @@ namespace Crypter.API.Controllers
                 return new BadRequestObjectResult(
                     new UpdateUserKeysResponse(ResponseCode.InvalidRequest));
             }
+        }
+
+        [Authorize]
+        [HttpGet("search/username")]
+        public async Task<IActionResult> SearchByUsername([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
+        {
+            var allMatchingUsers = await _userService.SearchByUsername(value);
+            var filteredMatches = allMatchingUsers
+                .OrderBy(x => x.UserName)
+                .Skip(index)
+                .Take(count)
+                .Select(x => new UserSearchResult(x.UserID, x.UserName, x.PublicAlias))
+                .ToList();
+
+            return new OkObjectResult(
+                new UserSearchResponse(filteredMatches));
+        }
+
+        [Authorize]
+        [HttpGet("search/public-alias")]
+        public async Task<IActionResult> SearchByPublicAlias([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
+        {
+            var allMatchingUsers = await _userService.SearchByPublicAlias(value);
+            var filteredMatches = allMatchingUsers
+                .OrderBy(x => x.PublicAlias)
+                .Skip(index)
+                .Take(count)
+                .Select(x => new UserSearchResult(x.UserID, x.UserName, x.PublicAlias))
+                .ToList();
+
+            return new OkObjectResult(
+                new UserSearchResponse(filteredMatches));
         }
     }
 }
