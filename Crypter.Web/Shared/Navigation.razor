@@ -29,10 +29,13 @@
                     Encrypt
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#">Encrypt a file</a></li>
-                    <li><a class="dropdown-item" href="#">Encrypt a message</a></li>
+                    <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptAFileClicked">Encrypt a file</a></li>
+                    <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptAMessageClicked">Encrypt a message</a></li>
                 </ul>
             </div>
+
+            <UserFileUploadModal @ref="FileModal" />
+            <UserMessageUploadModal @ref="MessageModal" />
         }
     </ul>
 </div>
@@ -58,4 +61,17 @@
         }
         return Task.CompletedTask;
     }
+
+    private void OnEncryptAFileClicked()
+    {
+        FileModal.Open();
+    }
+
+    private void OnEncryptAMessageClicked()
+    {
+        MessageModal.Open();
+    }
+
+    private Crypter.Web.Shared.UserFileUploadModal FileModal { get; set; }
+    private Crypter.Web.Shared.UserMessageUploadModal MessageModal { get; set; }
 }
