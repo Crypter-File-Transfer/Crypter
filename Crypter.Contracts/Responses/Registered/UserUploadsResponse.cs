@@ -1,4 +1,5 @@
-﻿using Crypter.Contracts.Enum;
+﻿using System.Collections.Generic;
+using Crypter.Contracts.Enum;
 
 namespace Crypter.Contracts.Responses.Registered
 {
@@ -22,7 +23,7 @@ namespace Crypter.Contracts.Responses.Registered
         /// <summary>
         /// Success response
         /// </summary>
-        /// <param name="username"></param>
+        /// <param name="userUploadsList"></param>
         public UserUploadsResponse(string userUploadsList) : base(ResponseCode.Success)
         {
             UserUploadsList = userUploadsList; 

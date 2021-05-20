@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using Crypter.DataAccess.Models;
+using Crypter.DataAccess.DTO; 
 using Crypter.API.Helpers;
 using System.Collections.Generic;
 
@@ -53,21 +54,26 @@ namespace Crypter.API.Services
 
         public List<UploadItem> GetUploadsById(string userid)
         {
-            var uploadsQuery = (from upload in _context.MessageUploads where upload.UserID == userid select upload)
-                .Concat(from upload in _context.FileUploads where upload.UserID == userid select upload).OrderBy(upload => upload.ExpirationDate);
-            if (uploadsQuery == null)
+            var userMessageUploads = (from upload in _context.MessageUploads where upload.UserID == userid select new { upload.UntrustedName, upload.Size, upload.ExpirationDate});
+            var userFileUploads = (from upload in _context.FileUploads where upload.UserID == userid select new { upload.UntrustedName, upload.Size, upload.ExpirationDate });
+
+            var userUploads = (from upload in userMessageUploads.Concat(userFileUploads) orderby upload.ExpirationDate select upload);
+
+            if (userUploads == null)
             {
                 return null;
             }
+
             List<UploadItem> uploads = new List<UploadItem>();
-            foreach (UploadItem item in uploadsQuery)
+            foreach (var item in userUploads)
             {
                 var uploaditem = new UploadItem(
-                        item.FileName,
+                        item.UntrustedName,
                         item.Size,
                         item.ExpirationDate
                     );
-                uploads.Append(uploaditem);
+                Console.WriteLine($"Filename: {item.UntrustedName}\nSize: {item.Size}\nExpiration: {item.ExpirationDate} ");
+                uploads.Add(uploaditem);
             }
             //return list of all uploads
             return uploads;

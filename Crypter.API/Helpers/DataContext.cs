@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Crypter.DataAccess.Models; 
+using Crypter.DataAccess.Models;
+using Crypter.DataAccess.DTO; 
 
 namespace Crypter.API.Helpers
 {
@@ -20,8 +21,8 @@ namespace Crypter.API.Helpers
         }
 
         public DbSet<User> Users { get; set; }
-        public DbSet<UploadItem> FileUploads { get; set; }
-        public DbSet<UploadItem> MessageUploads { get; set; }
+        public DbSet<UserFileUploadDTO> FileUploads { get; set; }
+        public DbSet<UserMessageUploadDTO> MessageUploads { get; set; }
         public DbSet<Key> Keys { get; set; }
     }
 }

@@ -106,6 +106,7 @@ namespace Crypter.API.Controllers
             var tokenString = tokenHandler.WriteToken(token);
 
             var userPersonalKey = await _keyService.GetUserPersonalKeyAsync(user.UserID);
+            Console.WriteLine(tokenString); 
 
             return new OkObjectResult(
                 new UserAuthenticateResponse(user.UserID, tokenString, userPersonalKey?.PrivateKey)
@@ -141,6 +142,7 @@ namespace Crypter.API.Controllers
         }
 
         // GET: crypter.dev/api/user/user-uploads
+        [Authorize]
         [HttpGet("user-uploads")]
         public IActionResult GetUserUploads()
         {
@@ -148,8 +150,9 @@ namespace Crypter.API.Controllers
             try
             {
                 var uploadsList = _userService.GetUploadsById(userId);
-                var response = JsonConvert.SerializeObject(uploadsList); 
-                return new OkObjectResult(new UserUploadsResponse(response));
+                Console.WriteLine(JsonConvert.SerializeObject(uploadsList));
+                var response = new UserUploadsResponse(JsonConvert.SerializeObject(uploadsList));
+                return new OkObjectResult(response);
                
             }
             catch (Exception ex)
