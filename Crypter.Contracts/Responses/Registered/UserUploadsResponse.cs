@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using Crypter.Contracts.Enum;
 
 namespace Crypter.Contracts.Responses.Registered
 {
     public class UserUploadsResponse : BaseResponse
     {
-        public string UserUploadsList; 
+        public string UserUploadsList { get; set; }
         /// <summary>
         /// Do not use!
         /// For deserialization purposes only.
@@ -26,7 +26,7 @@ namespace Crypter.Contracts.Responses.Registered
         /// <param name="userUploadsList"></param>
         public UserUploadsResponse(string userUploadsList) : base(ResponseCode.Success)
         {
-            UserUploadsList = userUploadsList; 
+            UserUploadsList = userUploadsList;
         }
     }
 }
