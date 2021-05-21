@@ -72,8 +72,8 @@ namespace Crypter.API.Services
 
         public List<UploadItem> GetUploadsById(string userid)
         {
-            var userMessageUploads = (from upload in _context.MessageUploads where upload.UserID == userid select new { upload.UntrustedName, upload.Size, upload.ExpirationDate});
-            var userFileUploads = (from upload in _context.FileUploads where upload.UserID == userid select new { upload.UntrustedName, upload.Size, upload.ExpirationDate });
+            var userMessageUploads = (from upload in _context.MessageUploads where upload.UserID == userid select new { upload.ID, upload.UntrustedName, upload.Size, upload.ExpirationDate});
+            var userFileUploads = (from upload in _context.FileUploads where upload.UserID == userid select new { upload.ID, upload.UntrustedName, upload.Size, upload.ExpirationDate });
 
             var userUploads = (from upload in userMessageUploads.Concat(userFileUploads) orderby upload.ExpirationDate select upload);
 
@@ -86,8 +86,8 @@ namespace Crypter.API.Services
             foreach (var item in userUploads)
             {
                 var uploaditem = new UploadItem(
+                        item.ID,
                         item.UntrustedName,
-                        item.Size,
                         item.ExpirationDate
                     );
                 Console.WriteLine($"Filename: {item.UntrustedName}\nSize: {item.Size}\nExpiration: {item.ExpirationDate} ");

@@ -24,10 +24,10 @@ namespace Crypter.DataAccess.Models
             ExpirationDate = DateTime.UtcNow.AddHours(24);
         }
 
-        public UploadItem(string filename, int size, DateTime expirationDate)
+        public UploadItem(string Id, string filename, DateTime expirationDate)
         {
+            ID = Id;
             FileName = filename;
-            Size = size;
             ExpirationDate = expirationDate;
         }
     }

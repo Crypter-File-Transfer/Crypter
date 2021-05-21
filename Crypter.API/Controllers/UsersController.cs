@@ -151,10 +151,12 @@ namespace Crypter.API.Controllers
             var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
             try
             {
-                var uploadsList = _userService.GetUploadsById(userId);
+                var uploadList = _userService.GetUploadsById(userId).Select(X => new UserUploadItem(X.ID, X.FileName, X.ExpirationDate));
+                return new OkObjectResult(new UserUploadsResponse(uploadList));
+                /*var uploadsList = _userService.GetUploadsById(userId);
                 Console.WriteLine(JsonConvert.SerializeObject(uploadsList));
                 var response = new UserUploadsResponse(JsonConvert.SerializeObject(uploadsList));
-                return new OkObjectResult(response);
+                return new OkObjectResult(response);*/
                
             }
             catch (Exception ex)

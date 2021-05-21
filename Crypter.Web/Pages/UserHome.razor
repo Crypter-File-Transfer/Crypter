@@ -35,22 +35,28 @@
                     <h5 class="card-title">Sent files and messages</h5>
                 </div>
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <a href=""><h6 class="card-subtitle my-2">This is a sample subject</h6></a>
-                        <div class="row">
-                            <div class="col-lg-6">
-                                To: Sample User
-                            </div>
-                            <div class="col-lg-6">
-                                Expires in: 16 hours
-                            </div>
-                        </div>
-                    </li>
                     @if (SentUploadsStatus == "NotFound")
                     {
                         <li class="list-group-item">
                             No files or messages found
                         </li>
+                    } else { 
+                        if (Uploads == null) { 
+                        <li class="list-group-item">
+                            Loading files...
+                        </li>
+                        } else { 
+                            foreach (UserUploadItem item in Uploads) { 
+                                <li class="list-group-item">
+                                    <a href=""><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            Expires on: @item.ExpirationDate
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                        }
                     }
                 </ul>
             </div>
@@ -62,7 +68,7 @@
 
     private string SentUploadsStatus = "";
     private int SentUploadsLength = 0;
-    private object Uploads;
+    private IEnumerable<UserUploadItem> Uploads;
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,18 +78,15 @@
         }
 
         await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Home");
-        await GetUserUploads();
+        Uploads = await GetUserUploads();
     }
 
-    private async Task GetUserUploads()
+    private async Task<IEnumerable<UserUploadItem>> GetUserUploads()
     {
         var userUploads = await DownloadUserUploads();
 
-        // SOURCE USED
-        // https://stackoverflow.com/questions/40826918/how-to-map-json-to-an-object-with-a-different-structure
-        Root Uploads = JsonConvert.DeserializeObject<Root>(userUploads.UserUploadsList);
-        Console.WriteLine(userUploads.UserUploadsList);
         SentUploadsStatus = userUploads.Status.ToString();
+        return userUploads.UserUploadsList;
 
     }
 
