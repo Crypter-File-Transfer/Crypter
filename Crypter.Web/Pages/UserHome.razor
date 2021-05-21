@@ -79,6 +79,8 @@
     {
         var userUploads = await DownloadUserUploads();
 
+        // SOURCE USED
+        // https://stackoverflow.com/questions/40826918/how-to-map-json-to-an-object-with-a-different-structure
         Root Uploads = JsonConvert.DeserializeObject<Root>(userUploads.UserUploadsList);
         Console.WriteLine(userUploads.UserUploadsList);
         SentUploadsStatus = userUploads.Status.ToString();
