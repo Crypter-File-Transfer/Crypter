@@ -110,15 +110,4 @@
         var content = await response.Content.ReadAsStringAsync();
         return JsonConvert.DeserializeObject<UserUploadsResponse>(content);
     }
-
-    public class Root
-    {
-        public UploadData[] UploadData;
-    }
-
-    public class UploadData
-    {
-        public string FileName { get; set; }
-        public string ExpirationDate { get; set; }
-    }
 }
