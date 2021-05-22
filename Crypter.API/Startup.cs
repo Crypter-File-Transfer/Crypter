@@ -1,16 +1,18 @@
+using Crypter.API.Models;
 using Crypter.DataAccess;
+using Crypter.DataAccess.EntityFramework;
+using Crypter.DataAccess.Interfaces;
+using Crypter.DataAccess.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Crypter.API.Services;
-using Crypter.API.Helpers;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.IdentityModel.Tokens;
 
 namespace CrypterAPI
 {
@@ -23,17 +25,13 @@ namespace CrypterAPI
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //added for users
             services.AddDbContext<DataContext>();
-            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsSection);
-            // configure jwt authentication
             var appSettings = appSettingsSection.Get<AppSettings>();
-            var key = Encoding.ASCII.GetBytes(appSettings.TokenSecretKey);
+            var key = Encoding.UTF8.GetBytes(appSettings.TokenSecretKey);
             services.AddAuthentication(x =>
             {
                 x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -46,11 +44,11 @@ namespace CrypterAPI
                     OnTokenValidated = context =>
                     {
                         var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
-                        var userId = context.Principal.Identity.Name;
-                        var user = userService.GetById(userId);
+                        Guid userIdFromToken = Guid.Parse(context.Principal.Identity.Name);
+
+                        var user = userService.ReadAsync(userIdFromToken);
                         if (user == null)
                         {
-                            // return unauthorized if user no longer exists
                             context.Fail("Unauthorized");
                         }
                         return Task.CompletedTask;
@@ -70,9 +68,10 @@ namespace CrypterAPI
             // configure DI for application services
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IKeyService, KeyService>();
+            services.AddScoped<IBaseItemService<MessageItem>, MessageItemService>();
+            services.AddScoped<IBaseItemService<FileItem>, FileItemService>();
 
             services.AddCors();
-            services.AddTransient(_ => new CrypterDB(Configuration["ConnectionStrings:DefaultConnection"]));
             services.AddControllers();
         }
 

@@ -6,7 +6,7 @@ namespace Crypter.Contracts.Responses.Registered
 {
     public class UserUploadsResponse : BaseResponse
     {
-        public IEnumerable<UserUploadItem> UserUploadsList { get; set; }
+        public IEnumerable<UserUploadItemDTO> UserUploadsList { get; set; }
         /// <summary>
         /// Do not use!
         /// For deserialization purposes only.
@@ -25,7 +25,7 @@ namespace Crypter.Contracts.Responses.Registered
         /// Success response
         /// </summary>
         /// <param name="userUploadsList"></param>
-        public UserUploadsResponse(IEnumerable<UserUploadItem> userUploads) : base(ResponseCode.Success)
+        public UserUploadsResponse(IEnumerable<UserUploadItemDTO> userUploads) : base(ResponseCode.Success)
         {
             UserUploadsList = userUploads;
         }

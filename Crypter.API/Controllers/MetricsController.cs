@@ -1,6 +1,6 @@
 ﻿using Crypter.Contracts.Responses.Metrics;
-using Crypter.DataAccess;
-using Crypter.DataAccess.Queries;
+using Crypter.DataAccess.Interfaces;
+using Crypter.DataAccess.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
@@ -8,31 +8,33 @@ using System.Threading.Tasks;
 namespace Crypter.API.Controllers
 {
     [Route("api/metrics")]
-    [Produces("application/json")]
-    //[ApiController]
     public class MetricsController : ControllerBase
     {
-        private readonly CrypterDB Db;
         private readonly long AllocatedDiskSpace;
+        private readonly IBaseItemService<MessageItem> _messageService;
+        private readonly IBaseItemService<FileItem> _fileService;
 
-        public MetricsController(CrypterDB db, IConfiguration configuration)
+        public MetricsController(IConfiguration configuration,
+            IBaseItemService<MessageItem> messageService,
+            IBaseItemService<FileItem> fileService
+            )
         {
-            Db = db;
             AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * 1024 * 1024 * 1024;
+            _messageService = messageService;
+            _fileService = fileService;
         }
 
         // GET: crypter.dev/api/metrics/disk
         [HttpGet("disk")]
         public async Task<IActionResult> GetDiskMetrics()
         {
-            Db.Connection.Open();
-            var sizeOfFileUploads = await new FileUploadItemQuery(Db).GetSumOfSizeAsync();
-            var sizeOfMessageUploads = await new TextUploadItemQuery(Db).GetSumOfSizeAsync();
+            var sizeOfFileUploads = await _fileService.GetAggregateSizeAsync();
+            var sizeOfMessageUploads = await _messageService.GetAggregateSizeAsync();
             var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
             var isFull = totalSizeOfUploads + (10 * 1024 * 1024) >= AllocatedDiskSpace;
 
             var responseBody = new DiskMetricsResponse(isFull, AllocatedDiskSpace.ToString(), (AllocatedDiskSpace - totalSizeOfUploads).ToString());
-            return new JsonResult(responseBody);
+            return new OkObjectResult(responseBody);
         }
     }
 }

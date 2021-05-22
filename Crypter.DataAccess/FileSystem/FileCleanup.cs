@@ -1,16 +1,16 @@
 ﻿using System;
 using System.IO;
 
-namespace Crypter.DataAccess.Helpers
+namespace Crypter.DataAccess.FileSystem
 {
     public class FileCleanup
     {
-        public string uploadId { get; set; }
+        public Guid UploadId { get; set; }
         private readonly string folderName;
 
-        public FileCleanup(string guid, string baseFilePath)
+        public FileCleanup(Guid guid, string baseFilePath)
         {
-            uploadId = guid;
+            UploadId = guid;
             folderName = baseFilePath;
         }
 
@@ -26,12 +26,12 @@ namespace Crypter.DataAccess.Helpers
             //create path files
             if (isFile)
             {
-                pathString = Path.GetFullPath(Path.Combine(folderName, $"files/{uploadId}"));
+                pathString = Path.GetFullPath(Path.Combine(folderName, $"files/{UploadId}"));
             }
             //create folder path for message upload
             else
             {
-                pathString = Path.GetFullPath(Path.Combine(folderName, $"messages/{uploadId}"));
+                pathString = Path.GetFullPath(Path.Combine(folderName, $"messages/{UploadId}"));
             }
             try
             {

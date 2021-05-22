@@ -1,27 +1,25 @@
-﻿using System;
-using Microsoft.AspNetCore.Mvc;
-using AutoMapper;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Configuration;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using Crypter.DataAccess;
-using Crypter.DataAccess.Models;
+﻿using Crypter.API.Logic;
+using Crypter.API.Models;
+using Crypter.Contracts.DTO;
+using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests.Registered;
 using Crypter.Contracts.Responses.Registered;
-using Crypter.API.Services;
-using Crypter.API.Helpers;
-using Crypter.Contracts.Enum;
-using System.Linq;
-using Crypter.API.Logic;
-using Newtonsoft.Json;
-using System.Threading.Tasks;
-using Crypter.CryptoLib.Enums;
 using Crypter.Contracts.Responses.Search;
-using Crypter.Contracts.DTO;
+using Crypter.CryptoLib.Enums;
+using Crypter.DataAccess.FileSystem;
+using Crypter.DataAccess.Interfaces;
+using Crypter.DataAccess.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
 {
@@ -31,9 +29,9 @@ namespace Crypter.API.Controllers
     {
         private readonly IUserService _userService;
         private readonly IKeyService _keyService;
-        private readonly IMapper _mapper;
+        private readonly IBaseItemService<MessageItem> _messageService;
+        private readonly IBaseItemService<FileItem> _fileService;
         private readonly AppSettings _appSettings;
-        private readonly CrypterDB Database;
         private readonly string BaseSaveDirectory;
         private readonly long AllocatedDiskSpace;
         private readonly int MaxUploadSize;
@@ -42,17 +40,17 @@ namespace Crypter.API.Controllers
         public UsersController(
             IUserService userService,
             IKeyService keyService,
-            IMapper mapper,
+            IBaseItemService<MessageItem> messageService,
+            IBaseItemService<FileItem> fileService,
             IOptions<AppSettings> appSettings,
-            CrypterDB db,
             IConfiguration configuration
             )
         {
             _userService = userService;
             _keyService = keyService;
-            _mapper = mapper;
+            _messageService = messageService;
+            _fileService = fileService;
             _appSettings = appSettings.Value;
-            Database = db;
             BaseSaveDirectory = configuration["EncryptedFileStore:Location"];
             AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(1024, 3);
             MaxUploadSize = int.Parse(configuration["MaxUploadSizeMB"]) * (int)Math.Pow(1024, 2);
@@ -60,7 +58,7 @@ namespace Crypter.API.Controllers
 
         // POST: crypter.dev/api/user/register
         [HttpPost("register")]
-        public IActionResult Register([FromBody] RegisterUserRequest body)
+        public async Task<IActionResult> RegisterAsync([FromBody] RegisterUserRequest body)
         {
             if (!AuthRules.IsValidPassword(body.Password))
             {
@@ -68,18 +66,16 @@ namespace Crypter.API.Controllers
                     new UserRegisterResponse(ResponseCode.PasswordRequirementsNotMet));
             }
 
-            var user = _mapper.Map<User>(body);
-            try
+            var insertResult = await _userService.InsertAsync(body.Username, body.Password, body.Email);
+            var responseObject = new UserRegisterResponse(insertResult);
+
+            if (insertResult == InsertUserResult.Success)
             {
-                User newUser = _userService.Create(user, body.Password);
-                return new OkObjectResult(
-                    new UserRegisterResponse(ResponseCode.Success));
+                return new OkObjectResult(responseObject);
             }
-            catch (AppException ex)
+            else
             {
-                Console.WriteLine(ex.Message);
-                return new BadRequestObjectResult(
-                    new UserRegisterResponse(ResponseCode.InvalidRequest));
+                return new BadRequestObjectResult(responseObject);
             }
         }
 
@@ -87,128 +83,128 @@ namespace Crypter.API.Controllers
         [HttpPost("authenticate")]
         public async Task<IActionResult> AuthenticateAsync([FromBody] AuthenticateUserRequest body)
         {
-            var user = _userService.Authenticate(body.Username, body.Password);
-
+            var user = await _userService.AuthenticateAsync(body.Username, body.Password);
             if (user == null)
             {
                 return new BadRequestObjectResult(new UserAuthenticateResponse(ResponseCode.InvalidCredentials));
             }
+
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_appSettings.TokenSecretKey);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim(ClaimTypes.Name, user.UserID)
+                    new Claim(ClaimTypes.Name, user.Id.ToString())
                 }),
-                Expires = DateTime.UtcNow.AddDays(7),
+                Expires = DateTime.UtcNow.AddDays(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            var userPersonalKey = await _keyService.GetUserPersonalKeyAsync(user.UserID);
-            Console.WriteLine(tokenString); 
+            var userPersonalKey = await _keyService.GetUserPersonalKeyAsync(user.Id);
 
             return new OkObjectResult(
-                new UserAuthenticateResponse(user.UserID, tokenString, userPersonalKey?.PrivateKey)
+                new UserAuthenticateResponse(user.Id.ToString(), tokenString, userPersonalKey?.PrivateKey)
             );
         }
 
         // GET: crypter.dev/api/user/account-details
         [Authorize]
         [HttpGet("account-details")]
-        public IActionResult GetAccountDetailsAsync()
+        public async Task<IActionResult> GetAccountDetailsAsync()
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
-            try
-            {
-                var user = _userService.GetById(userId);
-                var response = new AccountDetailsResponse(
-                    user.UserName,
-                    user.Email,
-                    user.IsPublic,
-                    user.PublicAlias,
-                    user.AllowAnonFiles,
-                    user.AllowAnonMessages,
-                    user.UserCreated
-                );
+            var user = await _userService.ReadAsync(Guid.Parse(userId));
 
-                return new OkObjectResult(response);
-            }
-            catch (Exception)
+            if (user == null)
             {
                 return new NotFoundObjectResult(
                     new AccountDetailsResponse(ResponseCode.NotFound));
             }
+
+            var response = new AccountDetailsResponse(
+                user.UserName,
+                user.Email,
+                user.IsPublic,
+                user.PublicAlias,
+                user.AllowAnonymousFiles,
+                user.AllowAnonymousMessages,
+                user.Created
+            );
+            return new OkObjectResult(response);
         }
 
         // GET: crypter.dev/api/user/user-uploads
         [Authorize]
         [HttpGet("user-uploads")]
-        public IActionResult GetUserUploads()
+        public async Task<IActionResult> GetUserUploadsAsync()
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
-            try
-            {
-                var uploadList = _userService.GetUploadsById(userId).Select(X => new UserUploadItem(X.ID, X.FileName, X.ExpirationDate));
-                return new OkObjectResult(new UserUploadsResponse(uploadList));
-                /*var uploadsList = _userService.GetUploadsById(userId);
-                Console.WriteLine(JsonConvert.SerializeObject(uploadsList));
-                var response = new UserUploadsResponse(JsonConvert.SerializeObject(uploadsList));
-                return new OkObjectResult(response);*/
-               
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message); 
-                return new NotFoundObjectResult(
-                    new UserUploadsResponse(ResponseCode.InvalidRequest));
-            }
+
+            var sentMessages = await _messageService.FindBySenderAsync(Guid.Parse(userId));
+            var sentFiles = await _fileService.FindBySenderAsync(Guid.Parse(userId));
+
+            var allSentItems = sentMessages
+                .Select(x => new UserUploadItemDTO(x.Id.ToString(), x.Subject, ResourceType.Message, x.Expiration))
+                .Concat(sentFiles
+                    .Select(x => new UserUploadItemDTO(x.Id.ToString(), x.FileName, ResourceType.File, x.Expiration)));
+
+            return new OkObjectResult(new UserUploadsResponse(allSentItems));
         }
 
         // PUT: crypter.dev/api/user/update-credentials
         [Authorize]
         [HttpPut("update-credentials")]
-        public IActionResult UpdateUserCredentials([FromBody] UpdateUserCredentialsRequest body)
+        public async Task<IActionResult> UpdateUserCredentialsAsync([FromBody] UpdateUserCredentialsRequest body)
         {
-            var user = _mapper.Map<User>(body);
-            user.UserID = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            var user = await _userService.ReadAsync(Guid.Parse(userId));
 
-            try
+            if (user == null)
             {
-                // update user 
-                _userService.Update(user, body.Password);
-                return new OkObjectResult(
-                    new UpdateUserCredentialsResponse(ResponseCode.Success));
+                return new NotFoundObjectResult(
+                    new UpdateUserCredentialsResponse(ResponseCode.NotFound));
             }
-            catch (AppException ex)
+
+            var updateResult = await _userService.UpdateCredentialsAsync(Guid.Parse(userId), user.UserName, body.Password);
+            var responseObject = new UpdateUserCredentialsResponse(updateResult);
+
+            if (updateResult == UpdateUserCredentialsResult.Success)
             {
-                Console.WriteLine(ex.Message);
-                return new BadRequestObjectResult(
-                    new UpdateUserCredentialsResponse(ResponseCode.InvalidRequest));
+                return new OkObjectResult(responseObject);
+            }
+            else
+            {
+                return new BadRequestObjectResult(responseObject);
             }
         }
 
         // PUT: crypter.dev/api/user/update-preferences
         [Authorize]
         [HttpPut("update-preferences")]
-        public IActionResult UpdateUserPreferences([FromBody] RegisteredUserPublicSettingsRequest body)
+        public async Task<IActionResult> UpdateUserPreferencesAsync([FromBody] RegisteredUserPublicSettingsRequest body)
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
-            var user = new User(userId, body.PublicAlias, body.IsPublic, body.AllowAnonymousMessages, body.AllowAnonymousFiles);
+            var user = await _userService.ReadAsync(Guid.Parse(userId));
 
-            try
+            if (user == null)
             {
-                _userService.UpdatePublic(user);
-                return new OkObjectResult(
-                    new RegisteredUserPublicSettingsResponse(user.PublicAlias, user.IsPublic, user.AllowAnonMessages, user.AllowAnonFiles));
+                return new NotFoundObjectResult(
+                    new RegisteredUserPublicSettingsResponse(UpdateUserPreferencesResult.UserNotFound));
             }
-            catch (AppException ex)
+
+            var updateResult = await _userService.UpdatePreferencesAsync(Guid.Parse(userId), body.IsPublic, body.AllowAnonymousFiles, body.AllowAnonymousMessages);
+            var responseObject = new RegisteredUserPublicSettingsResponse(updateResult);
+
+            if (updateResult == UpdateUserPreferencesResult.Success)
             {
-                Console.WriteLine(ex.Message);
-                return new BadRequestObjectResult(
-                    new RegisteredUserPublicSettingsResponse(ResponseCode.InvalidRequest));
+                return new OkObjectResult(responseObject);
+            }
+            else
+            {
+                return new BadRequestObjectResult(responseObject);
             }
         }
 
@@ -218,65 +214,85 @@ namespace Crypter.API.Controllers
         public async Task<IActionResult> UploadNewItem([FromBody] RegisteredUserUploadRequest body)
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
-            if (!UploadRules.IsValidRegisteredUserUploadRequest(body))
+
+            if (!UploadRules.IsValidUploadRequest(body.CipherText, body.ServerEncryptionKey))
             {
-                return new OkObjectResult(
+                return new BadRequestObjectResult(
                     new RegisteredUserUploadResponse(ResponseCode.InvalidRequest));
             }
 
-            Database.Connection.Open();
-
-            if (!await UploadRules.AllocatedSpaceRemaining(Database, AllocatedDiskSpace, MaxUploadSize))
+            if (!await UploadRules.AllocatedSpaceRemaining(_messageService, _fileService, AllocatedDiskSpace, MaxUploadSize))
             {
-                return new OkObjectResult(
+                return new BadRequestObjectResult(
                     new RegisteredUserUploadResponse(ResponseCode.DiskFull));
             }
 
             // Digest the ciphertext BEFORE applying server-side encryption
-            var ciphertextBytes = Convert.FromBase64String(body.CipherText);
-            var serverDigest = CryptoLib.Common.GetDigest(ciphertextBytes, ItemDigestAlgorithm);
-            var encodedServerDigest = Convert.ToBase64String(serverDigest);
+            var ciphertextBytesClientEncrypted = Convert.FromBase64String(body.CipherText);
+            var serverDigest = CryptoLib.Common.GetDigest(ciphertextBytesClientEncrypted, ItemDigestAlgorithm);
 
-            Guid newGuid;
-            DateTime expiration;
+            // Apply server-side encryption
+            byte[] hashedSymmetricEncryptionKey = Convert.FromBase64String(body.ServerEncryptionKey);
+            byte[] iv = CryptoLib.BouncyCastle.SymmetricMethods.GenerateIV();
+            var symmetricParams = CryptoLib.Common.MakeSymmetricCryptoParams(hashedSymmetricEncryptionKey, iv);
+            byte[] cipherTextBytesServerEncrypted = CryptoLib.Common.DoSymmetricEncryption(ciphertextBytesClientEncrypted, symmetricParams);
+
+            Guid newGuid = Guid.NewGuid();
+            var now = DateTime.UtcNow;
+            var expiration = now.AddHours(24);
+            var filepaths = new CreateFilePaths(BaseSaveDirectory);
+            bool isFile = body.Type == ResourceType.File;
+
+            var saveResult = filepaths.SaveToFileSystem(newGuid, cipherTextBytesServerEncrypted, body.Signature, isFile);
+            if (!saveResult)
+            {
+                return new BadRequestObjectResult(
+                    new RegisteredUserUploadResponse(ResponseCode.Unknown));
+            }
+            var size = filepaths.FileSizeBytes(filepaths.ActualPathString);
+
             switch (body.Type)
             {
                 case ResourceType.Message:
-                    var newText = new TextUploadItem
-                    {
-                        UserID = userId,
-                        FileName = body.Name,
-                        CipherText = body.CipherText,
-                        Signature = body.Signature,
-                        ServerEncryptionKey = body.ServerEncryptionKey,
-                        ServerDigest = encodedServerDigest
-                    };
-                    await newText.InsertAsync(Database, BaseSaveDirectory);
-                    newGuid = Guid.Parse(newText.ID);
-                    expiration = newText.ExpirationDate;
+
+                    var messageItem = new MessageItem(
+                        newGuid,
+                        Guid.Parse(userId),
+                        body.Name,
+                        size,
+                        filepaths.ActualPathString,
+                        filepaths.SigPathString,
+                        iv,
+                        serverDigest,
+                        now,
+                        expiration);
+
+                    await _messageService.InsertAsync(messageItem);
                     break;
                 case ResourceType.File:
-                    var newFile = new FileUploadItem
-                    {
-                        UserID = userId,
-                        FileName = body.Name,
-                        ContentType = body.ContentType,
-                        CipherText = body.CipherText,
-                        Signature = body.Signature,
-                        ServerEncryptionKey = body.ServerEncryptionKey,
-                        ServerDigest = encodedServerDigest
-                    };
-                    await newFile.InsertAsync(Database, BaseSaveDirectory);
-                    newGuid = Guid.Parse(newFile.ID);
-                    expiration = newFile.ExpirationDate;
+                    var fileItem = new FileItem(
+                        newGuid,
+                        Guid.Parse(userId),
+                        body.Name,
+                        body.ContentType,
+                        size,
+                        filepaths.ActualPathString,
+                        filepaths.SigPathString,
+                        iv,
+                        serverDigest,
+                        now,
+                        expiration);
+
+                    await _fileService.InsertAsync(fileItem);
+                    expiration = fileItem.Expiration;
                     break;
                 default:
                     return new OkObjectResult(
                         new RegisteredUserUploadResponse(ResponseCode.InvalidRequest));
             }
 
-            var responseBody = new RegisteredUserUploadResponse(newGuid, expiration);
-            return new JsonResult(responseBody);
+            return new JsonResult(
+                new RegisteredUserUploadResponse(newGuid, expiration));
         }
 
         // POST: crypter.dev/api/user/update-personal-keys
@@ -286,15 +302,14 @@ namespace Crypter.API.Controllers
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
 
-            try
+            var insertResult = await _keyService.InsertUserPersonalKeyAsync(Guid.Parse(userId), body.EncryptedPrivateKey, body.PublicKey);
+            if (insertResult)
             {
-                await _keyService.InsertUserPersonalKeyAsync(userId, body.EncryptedPrivateKey, body.PublicKey);
                 return new OkObjectResult(
                     new UpdateUserKeysResponse(ResponseCode.Success));
             }
-            catch (AppException ex)
+            else
             {
-                Console.WriteLine(ex.Message);
                 return new BadRequestObjectResult(
                     new UpdateUserKeysResponse(ResponseCode.InvalidRequest));
             }
@@ -304,12 +319,9 @@ namespace Crypter.API.Controllers
         [HttpGet("search/username")]
         public async Task<IActionResult> SearchByUsername([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
         {
-            var allMatchingUsers = await _userService.SearchByUsername(value);
+            var allMatchingUsers = await _userService.SearchByUsernameAsync(value, index, count);
             var filteredMatches = allMatchingUsers
-                .OrderBy(x => x.UserName)
-                .Skip(index)
-                .Take(count)
-                .Select(x => new UserSearchResult(x.UserID, x.UserName, x.PublicAlias))
+                .Select(x => new UserSearchResultDTO(x.Id.ToString(), x.UserName, x.PublicAlias))
                 .ToList();
 
             return new OkObjectResult(
@@ -320,12 +332,9 @@ namespace Crypter.API.Controllers
         [HttpGet("search/public-alias")]
         public async Task<IActionResult> SearchByPublicAlias([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
         {
-            var allMatchingUsers = await _userService.SearchByPublicAlias(value);
+            var allMatchingUsers = await _userService.SearchByPublicAliasAsync(value, index, count);
             var filteredMatches = allMatchingUsers
-                .OrderBy(x => x.PublicAlias)
-                .Skip(index)
-                .Take(count)
-                .Select(x => new UserSearchResult(x.UserID, x.UserName, x.PublicAlias))
+                .Select(x => new UserSearchResultDTO(x.Id.ToString(), x.UserName, x.PublicAlias))
                 .ToList();
 
             return new OkObjectResult(

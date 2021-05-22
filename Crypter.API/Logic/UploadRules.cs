@@ -1,7 +1,5 @@
-﻿using Crypter.Contracts.Requests.Anonymous;
-using Crypter.Contracts.Requests.Registered; 
-using Crypter.DataAccess;
-using Crypter.DataAccess.Queries;
+﻿using Crypter.DataAccess.Interfaces;
+using Crypter.DataAccess.Models;
 using System;
 using System.Threading.Tasks;
 
@@ -9,60 +7,30 @@ namespace Crypter.API.Logic
 {
     public static class UploadRules
     {
-        public static async Task<bool> AllocatedSpaceRemaining(CrypterDB database, long allocatedDiskSpace, int maxUploadSize)
+        public static async Task<bool> AllocatedSpaceRemaining(IBaseItemService<MessageItem> messageService, IBaseItemService<FileItem> fileService, long allocatedDiskSpace, int maxUploadSize)
         {
-            var sizeOfFileUploads = await new FileUploadItemQuery(database).GetSumOfSizeAsync();
-            var sizeOfMessageUploads = await new TextUploadItemQuery(database).GetSumOfSizeAsync();
+            var sizeOfFileUploads = await messageService.GetAggregateSizeAsync();
+            var sizeOfMessageUploads = await fileService.GetAggregateSizeAsync();
             var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
             return (totalSizeOfUploads + maxUploadSize) <= allocatedDiskSpace;
         }
 
-        //this is duplicate code to isValidUploadRequest, is additional validation required for a registered user upload
-        public static bool IsValidRegisteredUserUploadRequest(RegisteredUserUploadRequest request)
+        public static bool IsValidUploadRequest(string cipherText, string serverEncryptionKey)
         {
-            if (string.IsNullOrEmpty(request.CipherText))
+            if (string.IsNullOrEmpty(cipherText))
             {
                 return false;
             }
 
-            if (string.IsNullOrEmpty(request.ServerEncryptionKey))
+            if (string.IsNullOrEmpty(serverEncryptionKey))
             {
                 return false;
             }
 
             try
             {
-                byte[] cipherText = Convert.FromBase64String(request.CipherText);
-                byte[] key = Convert.FromBase64String(request.ServerEncryptionKey);
-                if (Buffer.ByteLength(key) != 32)
-                {
-                    return false;
-                }
-            }
-            catch (FormatException)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public static bool IsValidUploadRequest(AnonymousUploadRequest request)
-        {
-            if (string.IsNullOrEmpty(request.CipherText))
-            {
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(request.ServerEncryptionKey))
-            {
-                return false;
-            }
-
-            try
-            {
-                byte[] cipherText = Convert.FromBase64String(request.CipherText);
-                byte[] key = Convert.FromBase64String(request.ServerEncryptionKey);
+                byte[] cipherTextBytes = Convert.FromBase64String(cipherText);
+                byte[] key = Convert.FromBase64String(serverEncryptionKey);
                 if (Buffer.ByteLength(key) != 32)
                 {
                     return false;

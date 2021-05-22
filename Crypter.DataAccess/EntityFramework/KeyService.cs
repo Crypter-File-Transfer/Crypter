@@ -1,18 +1,12 @@
-﻿using Crypter.API.Helpers;
+﻿using Crypter.DataAccess.Interfaces;
 using Crypter.DataAccess.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Services
+namespace Crypter.DataAccess.EntityFramework
 {
-    public interface IKeyService
-    {
-        Task<Key> GetUserPersonalKeyAsync(string userId);
-        Task<Key> InsertUserPersonalKeyAsync(string userId, string privateKey, string publicKey);
-    }
-
     public class KeyService : IKeyService
     {
         private readonly DataContext _context;
@@ -22,32 +16,32 @@ namespace Crypter.API.Services
             _context = context;
         }
 
-        public async Task<Key> GetUserPersonalKeyAsync(string userId)
+        public async Task<Key> GetUserPersonalKeyAsync(Guid userId)
         {
             return await _context.Keys
-                .Where(x => x.UserId == userId)
+                .Where(x => x.Owner == userId)
                 .Where(x => x.KeyType == KeyType.Personal)
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Key> InsertUserPersonalKeyAsync(string userId, string privateKey, string publicKey)
+        public async Task<bool> InsertUserPersonalKeyAsync(Guid userId, string privateKey, string publicKey)
         {
             if (await GetUserPersonalKeyAsync(userId) != default(Key))
             {
-                throw new AppException("User already has a personal key");
+                return false;
             }
 
             var key = new Key(
-                Guid.NewGuid().ToString(),
+                Guid.NewGuid(),
                 userId,
                 privateKey,
                 publicKey,
                 KeyType.Personal,
                 DateTime.UtcNow);
 
-            var dbKey = await _context.Keys.AddAsync(key);
+            _context.Keys.Add(key);
             await _context.SaveChangesAsync();
-            return dbKey.Entity;
+            return true;
         }
     }
 }

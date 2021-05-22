@@ -3,10 +3,9 @@ using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests.Anonymous;
 using Crypter.Contracts.Responses.Anonymous;
 using Crypter.CryptoLib.Enums;
-using Crypter.DataAccess;
-using Crypter.DataAccess.Helpers;
+using Crypter.DataAccess.FileSystem;
+using Crypter.DataAccess.Interfaces;
 using Crypter.DataAccess.Models;
-using Crypter.DataAccess.Queries;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -15,126 +14,143 @@ using System.Threading.Tasks;
 namespace Crypter.API.Controllers
 {
     [Route("api/anonymous")]
-    [Produces("application/json")]
-    //[ApiController]
     public class AnonymousItemController : ControllerBase
     {
-        private readonly CrypterDB Database;
         private readonly string BaseSaveDirectory;
         private readonly long AllocatedDiskSpace;
         private readonly int MaxUploadSize;
         private const DigestAlgorithm ItemDigestAlgorithm = DigestAlgorithm.SHA256;
+        private readonly IBaseItemService<MessageItem> _messageService;
+        private readonly IBaseItemService<FileItem> _fileService;
 
-        public AnonymousItemController(CrypterDB db, IConfiguration configuration)
+        public AnonymousItemController(IConfiguration configuration,
+            IBaseItemService<MessageItem> messageService,
+            IBaseItemService<FileItem> fileService
+            )
         {
-            Database = db;
             BaseSaveDirectory = configuration["EncryptedFileStore:Location"];
             AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(1024, 3);
             MaxUploadSize = int.Parse(configuration["MaxUploadSizeMB"]) * (int)Math.Pow(1024, 2);
+            _messageService = messageService;
+            _fileService = fileService;
         }
 
         // POST: crypter.dev/api/anonymous/upload
         [HttpPost("upload")]
         public async Task<IActionResult> UploadNewItem([FromBody] AnonymousUploadRequest body)
         {
-            if (!UploadRules.IsValidUploadRequest(body))
+            if (!UploadRules.IsValidUploadRequest(body.CipherText, body.ServerEncryptionKey))
             {
-                return new OkObjectResult(
+                return new BadRequestObjectResult(
                     new AnonymousUploadResponse(ResponseCode.InvalidRequest));
             }
 
-            Database.Connection.Open();
-
-            if (!await UploadRules.AllocatedSpaceRemaining(Database, AllocatedDiskSpace, MaxUploadSize))
+            if (!await UploadRules.AllocatedSpaceRemaining(_messageService, _fileService, AllocatedDiskSpace, MaxUploadSize))
             {
-                return new OkObjectResult(
+                return new BadRequestObjectResult(
                     new AnonymousUploadResponse(ResponseCode.DiskFull));
             }
 
             // Digest the ciphertext BEFORE applying server-side encryption
-            var ciphertextBytes = Convert.FromBase64String(body.CipherText);
-            var serverDigest = CryptoLib.Common.GetDigest(ciphertextBytes, ItemDigestAlgorithm);
-            var encodedServerDigest = Convert.ToBase64String(serverDigest);
+            var ciphertextBytesClientEncrypted = Convert.FromBase64String(body.CipherText);
+            var serverDigest = CryptoLib.Common.GetDigest(ciphertextBytesClientEncrypted, ItemDigestAlgorithm);
 
-            Guid newGuid;
-            DateTime expiration;
+            // Apply server-side encryption
+            byte[] hashedSymmetricEncryptionKey = Convert.FromBase64String(body.ServerEncryptionKey);
+            byte[] iv = CryptoLib.BouncyCastle.SymmetricMethods.GenerateIV();
+            var symmetricParams = CryptoLib.Common.MakeSymmetricCryptoParams(hashedSymmetricEncryptionKey, iv);
+            byte[] cipherTextBytesServerEncrypted = CryptoLib.Common.DoSymmetricEncryption(ciphertextBytesClientEncrypted, symmetricParams);
+
+            Guid newGuid = Guid.NewGuid();
+            var now = DateTime.UtcNow;
+            var expiration = now.AddHours(24);
+            var filepaths = new CreateFilePaths(BaseSaveDirectory);
+            bool isFile = body.Type == ResourceType.File;
+
+            var saveResult = filepaths.SaveToFileSystem(newGuid, cipherTextBytesServerEncrypted, body.Signature, isFile);
+            if (!saveResult)
+            {
+                return new BadRequestObjectResult(
+                    new AnonymousUploadResponse(ResponseCode.Unknown));
+            }
+            var size = filepaths.FileSizeBytes(filepaths.ActualPathString);
+
             switch (body.Type)
             {
                 case ResourceType.Message:
-                    var newText = new TextUploadItem
-                    {
-                        UserID = Guid.Empty.ToString(), 
-                        FileName = body.Name,
-                        CipherText = body.CipherText,
-                        Signature = body.Signature,
-                        ServerEncryptionKey = body.ServerEncryptionKey,
-                        ServerDigest = encodedServerDigest
-                    };
-                    await newText.InsertAsync(Database, BaseSaveDirectory);
-                    newGuid = Guid.Parse(newText.ID);
-                    expiration = newText.ExpirationDate;
+
+                    var messageItem = new MessageItem(
+                        newGuid,
+                        Guid.Empty,
+                        body.Name,
+                        size,
+                        filepaths.ActualPathString,
+                        filepaths.SigPathString,
+                        iv,
+                        serverDigest,
+                        now,
+                        expiration);
+
+                    await _messageService.InsertAsync(messageItem);
                     break;
                 case ResourceType.File:
-                    var newFile = new FileUploadItem
-                    {
-                        UserID = Guid.Empty.ToString(),
-                        FileName = body.Name,
-                        ContentType = body.ContentType,
-                        CipherText = body.CipherText,
-                        Signature = body.Signature,
-                        ServerEncryptionKey = body.ServerEncryptionKey,
-                        ServerDigest = encodedServerDigest
-                    };
-                    await newFile.InsertAsync(Database, BaseSaveDirectory);
-                    newGuid = Guid.Parse(newFile.ID);
-                    expiration = newFile.ExpirationDate;
+                    var fileItem = new FileItem(
+                        newGuid,
+                        Guid.Empty,
+                        body.Name,
+                        body.ContentType,
+                        size,
+                        filepaths.ActualPathString,
+                        filepaths.SigPathString,
+                        iv,
+                        serverDigest,
+                        now,
+                        expiration);
+
+                    await _fileService.InsertAsync(fileItem);
+                    expiration = fileItem.Expiration;
                     break;
                 default:
                     return new OkObjectResult(
                         new AnonymousUploadResponse(ResponseCode.InvalidRequest));
             }
 
-            var responseBody = new AnonymousUploadResponse(newGuid, expiration);
-            return new JsonResult(responseBody);
+            return new OkObjectResult(
+                new AnonymousUploadResponse(newGuid, expiration));
         }
 
         // POST: crypter.dev/api/anonymous/get-preview
         [HttpPost("get-preview")]
         public async Task<IActionResult> GetItemPreview([FromBody] AnonymousPreviewRequest body)
         {
-            Database.Connection.Open();
-
             AnonymousPreviewResponse response;
             switch (body.Type)
             {
                 case ResourceType.Message:
-                    var textQuery = new TextUploadItemQuery(Database);
-                    var textResult = await textQuery.FindOneAsync(body.Id.ToString());
+                    var foundMessage = await _messageService.ReadAsync(body.Id);
 
-                    if (textResult is null)
+                    if (foundMessage is null)
                     {
                         return new NotFoundObjectResult(
                             new AnonymousPreviewResponse(ResponseCode.NotFound));
                     }
-                    response = new AnonymousPreviewResponse(textResult.FileName, "text", textResult.Size, textResult.Created, textResult.ExpirationDate);
+                    response = new AnonymousPreviewResponse(foundMessage.Subject, "text", foundMessage.Size, foundMessage.Created, foundMessage.Expiration);
 
                     break;
                 case ResourceType.File:
-                    var fileQuery = new FileUploadItemQuery(Database);
-                    var fileResult = await fileQuery.FindOneAsync(body.Id.ToString());
+                    var foundFile = await _fileService.ReadAsync(body.Id);
 
-                    if (fileResult is null)
+                    if (foundFile is null)
                     {
                         return new NotFoundObjectResult(
                             new AnonymousPreviewResponse(ResponseCode.NotFound));
                     }
-                    response = new AnonymousPreviewResponse(fileResult.FileName, fileResult.ContentType, fileResult.Size, fileResult.Created, fileResult.ExpirationDate);
+                    response = new AnonymousPreviewResponse(foundFile.FileName, foundFile.ContentType, foundFile.Size, foundFile.Created, foundFile.Expiration);
 
                     break;
                 default:
-                    return new OkObjectResult(
+                    return new BadRequestObjectResult(
                         new AnonymousUploadResponse(ResponseCode.InvalidRequest));
-
             }
 
             return new OkObjectResult(response);
@@ -144,49 +160,42 @@ namespace Crypter.API.Controllers
         [HttpPost("get-item")]
         public async Task<IActionResult> GetItem([FromBody] AnonymousDownloadRequest body)
         {
-            Database.Connection.Open();
-
             byte[] serverDecryptionKey = Convert.FromBase64String(body.ServerDecryptionKey);
             string cipherTextPath;
             byte[] iv;
             byte[] storedServerDigest;
-            Func<CrypterDB, Task> deleteRecord;
             switch (body.Type)
             {
                 case ResourceType.Message:
-                    var textQuery = new TextUploadItemQuery(Database);
-                    var textResult = await textQuery.FindOneAsync(body.Id.ToString());
+                    var foundMessage = await _messageService.ReadAsync(body.Id);
 
-                    if (textResult is null)
+                    if (foundMessage is null)
                     {
                         return new NotFoundObjectResult(
                             new AnonymousDownloadResponse(ResponseCode.NotFound));
                     }
 
-                    cipherTextPath = textResult.CipherTextPath;
-                    iv = Convert.FromBase64String(textResult.InitializationVector);
-                    storedServerDigest = Convert.FromBase64String(textResult.ServerDigest);
-                    deleteRecord = textResult.DeleteAsync;
+                    cipherTextPath = foundMessage.CipherTextPath;
+                    iv = foundMessage.ServerIV;
+                    storedServerDigest = foundMessage.ServerDigest;
 
                     break;
                 case ResourceType.File:
-                    var fileQuery = new FileUploadItemQuery(Database);
-                    var fileResult = await fileQuery.FindOneAsync(body.Id.ToString());
+                    var foundFile = await _fileService.ReadAsync(body.Id);
 
-                    if (fileResult is null)
+                    if (foundFile is null)
                     {
                         return new NotFoundObjectResult(
                             new AnonymousDownloadResponse(ResponseCode.NotFound));
                     }
 
-                    cipherTextPath = fileResult.CipherTextPath;
-                    iv = Convert.FromBase64String(fileResult.InitializationVector);
-                    storedServerDigest = Convert.FromBase64String(fileResult.ServerDigest);
-                    deleteRecord = fileResult.DeleteAsync;
+                    cipherTextPath = foundFile.CipherTextPath;
+                    iv = foundFile.ServerIV;
+                    storedServerDigest = foundFile.ServerDigest;
 
                     break;
                 default:
-                    return new OkObjectResult(
+                    return new BadRequestObjectResult(
                         new AnonymousUploadResponse(ResponseCode.InvalidRequest));
             }
 
@@ -204,8 +213,19 @@ namespace Crypter.API.Controllers
             }
 
             // Delete the item from the server
-            await deleteRecord(Database);
-            FileCleanup DownloadDir = new FileCleanup(body.Id.ToString(), BaseSaveDirectory);
+            switch (body.Type)
+            {
+                case ResourceType.Message:
+                    await _messageService.DeleteAsync(body.Id);
+                    break;
+                case ResourceType.File:
+                    await _fileService.DeleteAsync(body.Id);
+                    break;
+                default:
+                    break;
+            }
+
+            FileCleanup DownloadDir = new FileCleanup(body.Id, BaseSaveDirectory);
             if (body.Type == ResourceType.File)
                 DownloadDir.CleanDirectory(true);
             else
@@ -220,34 +240,30 @@ namespace Crypter.API.Controllers
         [HttpPost("get-signature")]
         public async Task<IActionResult> GetItemSignature([FromBody] AnonymousSignatureRequest request)
         {
-            Database.Connection.Open();
-
             string signaturePath;
             switch (request.Type)
             {
                 case ResourceType.Message:
-                    var textQuery = new TextUploadItemQuery(Database);
-                    var textResult = await textQuery.FindOneAsync(request.Id.ToString());
+                    var foundMessage = await _messageService.ReadAsync(request.Id);
 
-                    if (textResult is null)
+                    if (foundMessage is null)
                     {
-                        return new OkObjectResult(
+                        return new NotFoundObjectResult(
                             new NotFoundObjectResult(ResponseCode.NotFound));
                     }
 
-                    signaturePath = textResult.SignaturePath;
+                    signaturePath = foundMessage.SignaturePath;
                     break;
                 case ResourceType.File:
-                    var fileQuery = new FileUploadItemQuery(Database);
-                    var fileResult = await fileQuery.FindOneAsync(request.Id.ToString());
+                    var foundFile = await _fileService.ReadAsync(request.Id);
 
-                    if (fileResult is null)
+                    if (foundFile is null)
                     {
-                        return new OkObjectResult(
+                        return new NotFoundObjectResult(
                             new NotFoundObjectResult(ResponseCode.NotFound));
                     }
 
-                    signaturePath = fileResult.SignaturePath;
+                    signaturePath = foundFile.SignaturePath;
                     break;
                 default:
                     return new OkObjectResult(

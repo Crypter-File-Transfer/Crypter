@@ -10,17 +10,17 @@ namespace Crypter.DataAccess.Models
 
     public class Key
     {
-        public string KeyId { get; set; }
-        public string UserId { get; set; }
+        public Guid Id { get; set; }
+        public Guid Owner { get; set; }
         public string PrivateKey { get; set; }
         public string PublicKey { get; set; }
         public KeyType KeyType { get; set; }
         public DateTime Created { get; set; }
 
-        public Key(string keyId, string userId, string privateKey, string publicKey, KeyType keyType, DateTime created)
+        public Key(Guid id, Guid owner, string privateKey, string publicKey, KeyType keyType, DateTime created)
         {
-            KeyId = keyId;
-            UserId = userId;
+            Id = id;
+            Owner = owner;
             PrivateKey = privateKey;
             PublicKey = publicKey;
             KeyType = keyType;

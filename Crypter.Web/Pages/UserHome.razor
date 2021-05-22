@@ -46,7 +46,7 @@
                             Loading files...
                         </li>
                         } else { 
-                            foreach (UserUploadItem item in Uploads) { 
+                            foreach (UserUploadItemDTO item in Uploads) {
                                 <li class="list-group-item">
                                     <a href=""><h6 class="card-subtitle my-2">@item.FileName</h6></a>
                                     <div class="row">
@@ -68,7 +68,7 @@
 
     private string SentUploadsStatus = "";
     private int SentUploadsLength = 0;
-    private IEnumerable<UserUploadItem> Uploads;
+    private IEnumerable<UserUploadItemDTO> Uploads;
 
     protected override async Task OnInitializedAsync()
     {
@@ -81,7 +81,7 @@
         Uploads = await GetUserUploads();
     }
 
-    private async Task<IEnumerable<UserUploadItem>> GetUserUploads()
+    private async Task<IEnumerable<UserUploadItemDTO>> GetUserUploads()
     {
         var userUploads = await DownloadUserUploads();
 

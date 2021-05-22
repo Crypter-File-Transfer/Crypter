@@ -1,32 +1,33 @@
-﻿using System;
+﻿using Crypter.DataAccess.Interfaces;
+using System;
 
 namespace Crypter.DataAccess.Models
 {
-    public class User
+    public class User : IUser
     {
-        public string UserID { get; set; }
+        public Guid Id { get; set; }
         public string UserName { get; set; }
         public string Email { get; set; }
-        public string PasswordHash { get; set; }
-        public string PasswordSalt { get; set; }
-        public bool IsPublic { get; set; }
         public string PublicAlias { get; set; }
-        public bool AllowAnonFiles { get; set; }
-        public bool AllowAnonMessages { get; set; }
-        public DateTime UserCreated { get; set; }
+        public byte[] PasswordHash { get; set; }
+        public byte[] PasswordSalt { get; set; }
+        public bool IsPublic { get; set; }
+        public bool AllowAnonymousFiles { get; set; }
+        public bool AllowAnonymousMessages { get; set; }
+        public DateTime Created { get; set; }
 
-        public User()
+        public User(Guid id, string userName, string email, string publicAlias, byte[] passwordHash, byte[] passwordSalt, bool isPublic, bool allowAnonymousFiles, bool allowAnonymousMessages, DateTime created)
         {
-            UserCreated = DateTime.UtcNow;
-        }
-
-        public User(string userid, string publicAlias, bool ispublic, bool allowMessages, bool allowFiles)
-        {
-            UserID = userid;
+            Id = id;
+            UserName = userName;
+            Email = email;
             PublicAlias = publicAlias;
-            IsPublic = ispublic;
-            AllowAnonMessages = allowMessages;
-            AllowAnonFiles = allowFiles;
+            PasswordHash = passwordHash;
+            PasswordSalt = passwordSalt;
+            IsPublic = isPublic;
+            AllowAnonymousFiles = allowAnonymousFiles;
+            AllowAnonymousMessages = allowAnonymousMessages;
+            Created = created;
         }
     }
 }

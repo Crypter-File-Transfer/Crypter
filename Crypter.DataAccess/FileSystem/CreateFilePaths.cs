@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace Crypter.DataAccess.Helpers
+namespace Crypter.DataAccess.FileSystem
 {
     public class CreateFilePaths
     {
@@ -27,7 +27,7 @@ namespace Crypter.DataAccess.Helpers
         /// <returns>true or false to indicate whether the operation was successful</returns>
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=net-5.0
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writeallbytes?view=net-5.0
-        public bool SaveToFileSystem(string guid, byte[] cipherText, string signature, bool isFile)
+        public bool SaveToFileSystem(Guid guid, byte[] cipherText, string signature, bool isFile)
         {
             string pathString;
             //create folder path for file upload

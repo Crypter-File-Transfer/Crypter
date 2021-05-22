@@ -1,5 +1,5 @@
 ﻿using System;
-namespace Crypter.API.Helpers
+namespace Crypter.API.Models
 {
     public class AppSettings
     {

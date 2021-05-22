@@ -1,19 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Crypter.Contracts.Enum;
+using System;
 
 namespace Crypter.Contracts.DTO
 {
-    public class UserUploadItem
+    public class UserUploadItemDTO
     {
         public string Id { get; set; }
         public string FileName { get; set; }
+        public ResourceType ItemType { get; set; }
         public DateTime ExpirationDate { get; set; }
 
-        public UserUploadItem(string id, string filename, DateTime expirationDate)
+        public UserUploadItemDTO(string id, string filename, ResourceType itemType, DateTime expirationDate)
         {
             Id = id;
             FileName = filename;
+            ItemType = itemType;
             ExpirationDate = expirationDate;
         }
     }
