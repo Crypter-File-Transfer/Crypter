@@ -195,7 +195,7 @@ namespace Crypter.API.Controllers
                     new RegisteredUserPublicSettingsResponse(UpdateUserPreferencesResult.UserNotFound));
             }
 
-            var updateResult = await _userService.UpdatePreferencesAsync(Guid.Parse(userId), body.IsPublic, body.AllowAnonymousFiles, body.AllowAnonymousMessages);
+            var updateResult = await _userService.UpdatePreferencesAsync(Guid.Parse(userId), body.PublicAlias, body.IsPublic, body.AllowAnonymousFiles, body.AllowAnonymousMessages);
             var responseObject = new RegisteredUserPublicSettingsResponse(updateResult);
 
             if (updateResult == UpdateUserPreferencesResult.Success)

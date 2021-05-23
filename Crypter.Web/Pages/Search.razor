@@ -1,0 +1,106 @@
+﻿@page "/user/search"
+
+@inject HttpClient HttpClient
+@inject AppSettings AppSettings
+@inject NavigationManager NavManager
+@inject IJSRuntime JsRuntime
+@inject IAuthenticationService AuthenticationService
+
+<NavigationUser />
+<div class="container my-4">
+    <h1>Find a user</h1>
+    <div class="row">
+        <div class="col-md-3">
+            <select @bind="SearchType" class="form-select" aria-label="Select search by">
+                <option selected value="username">Search by Username</option>
+                <option value="public name">Search by Public Name</option>
+            </select>
+        </div>
+        <div class="col-md-9">
+            <div class="input-group mb-3">
+                <input @bind="SearchValue" type="text" class="form-control" placeholder="Enter a @SearchType" aria-label="Recipient's username" aria-describedby="button-addon2">
+                <button class="btn btn-primary" type="button" id="button-addon2" @onclick="PerformUserSearch">Search</button>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        @if (SearchResults != null)
+        {
+            List<UserSearchResultDTO> listResults = SearchResults.Result.ToList();
+            @if (listResults.Count == 0)
+            {
+                <h3 class="text-center">No results found</h3>
+            }
+            else
+            {
+                @foreach (var result in listResults)
+                {
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <a href="">
+                                    @if (result.PublicAlias != null)
+                                    {
+                                        <h5 class="card-title">@result.PublicAlias (@result.Username)</h5>
+                                    }
+                                    else
+                                    {
+                                        <h5 class="card-title">@result.Username</h5>
+                                    }
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private string SearchType = "username";
+    private string SearchValue = "";
+    private int StartIndex = 0;
+    private int NumResults = 20;
+    private bool SearchPerformed = false;
+    private UserSearchResponse SearchResults;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationService.User == null)
+        {
+            NavManager.NavigateTo("login");
+        }
+
+        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Search");
+    }
+
+    private async Task PerformUserSearch()
+    {
+        string url;
+
+        if (SearchType == "username")
+        {
+            url = $"{AppSettings.ApiBaseUrl}/user/search/username";
+        } else {
+            url = $"{AppSettings.ApiBaseUrl}/user/search/public-alias";
+        }
+
+        string query = url + "?value=" + SearchValue + "&index=" + StartIndex + "&count=" + NumResults;
+
+        var token = AuthenticationService.User.Token;
+
+        var request = new HttpRequestMessage(HttpMethod.Get, query);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        using var response = await HttpClient.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // Error handling
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        SearchResults = JsonConvert.DeserializeObject<UserSearchResponse>(content);
+    }
+}

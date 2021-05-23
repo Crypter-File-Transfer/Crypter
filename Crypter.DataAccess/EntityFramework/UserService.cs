@@ -108,7 +108,7 @@ namespace Crypter.DataAccess.EntityFramework
             return UpdateUserCredentialsResult.Success;
         }
 
-        public async Task<UpdateUserPreferencesResult> UpdatePreferencesAsync(Guid id, bool isPublic, bool allowAnonymousFiles, bool allowAnonymousMessages)
+        public async Task<UpdateUserPreferencesResult> UpdatePreferencesAsync(Guid id, string publicAlias, bool isPublic, bool allowAnonymousFiles, bool allowAnonymousMessages)
         {
             User user = await _context.Users
                 .FindAsync(id);
@@ -121,6 +121,7 @@ namespace Crypter.DataAccess.EntityFramework
             user.IsPublic = isPublic;
             if (isPublic)
             {
+                user.PublicAlias = publicAlias;
                 user.AllowAnonymousFiles = allowAnonymousFiles;
                 user.AllowAnonymousMessages = allowAnonymousMessages;
             }

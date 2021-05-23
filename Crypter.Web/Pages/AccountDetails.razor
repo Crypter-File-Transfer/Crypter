@@ -13,13 +13,13 @@
         <h2>User Details for @Username</h2>
         <div class="mb-3">
             <label for="emailFormControl" class="form-label">Email</label>
-            <input @bind="Email" type="email" class="form-control" id="emailFormControl" placeholder="jsmith@email.com" readonly>
+            <input @bind="Email" type="email" class="form-control" id="emailFormControl" placeholder="Email Not Set" readonly>
         </div>
         <button type="button" class="btn btn-secondary float-end mt-4" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
         <h2>Public Details</h2>
         <div class="mb-3">
             <label for="aliasFormControl" class="form-label">Public Alias</label>
-            <input @bind="PublicAlias" type="text" class="form-control" id="aliasFormControl" placeholder="Set Public Alias" readonly>
+            <input @bind="PublicAlias" type="text" class="form-control" id="aliasFormControl" placeholder="Public Alias Not Set" readonly>
         </div>
         <div class="mb-3">
             <div class="form-check form-switch">

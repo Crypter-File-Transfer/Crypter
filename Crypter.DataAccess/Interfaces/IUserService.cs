@@ -11,7 +11,7 @@ namespace Crypter.DataAccess.Interfaces
         Task<InsertUserResult> InsertAsync(string username, string password, string email = null);
         Task<User> ReadAsync(Guid id);
         Task<UpdateUserCredentialsResult> UpdateCredentialsAsync(Guid id, string username, string newPassword, string email = null);
-        Task<UpdateUserPreferencesResult> UpdatePreferencesAsync(Guid id, bool isPublic, bool allowAnonymousFiles, bool allowAnonymousMessages);
+        Task<UpdateUserPreferencesResult> UpdatePreferencesAsync(Guid id, string publicAlias, bool isPublic, bool allowAnonymousFiles, bool allowAnonymousMessages);
         Task DeleteAsync(Guid id);
 
         Task<User> AuthenticateAsync(string username, string password);
