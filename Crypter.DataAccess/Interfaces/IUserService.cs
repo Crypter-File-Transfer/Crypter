@@ -16,8 +16,8 @@ namespace Crypter.DataAccess.Interfaces
 
         Task<User> AuthenticateAsync(string username, string password);
 
-        Task<IEnumerable<User>> SearchByUsernameAsync(string username, int startingIndex, int count);
-        Task<IEnumerable<User>> SearchByPublicAliasAsync(string publicAlias, int startingIndex, int count);
+        Task<(int total, IEnumerable<User> users)> SearchByUsernameAsync(string username, int startingIndex, int count);
+        Task<(int total, IEnumerable<User> users)> SearchByPublicAliasAsync(string publicAlias, int startingIndex, int count);
 
         Task<bool> IsUsernameAvailableAsync(string username);
         Task<bool> IsEmailAvailableAsync(string email);

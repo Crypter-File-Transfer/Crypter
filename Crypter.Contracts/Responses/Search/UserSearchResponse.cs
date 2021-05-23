@@ -6,6 +6,7 @@ namespace Crypter.Contracts.Responses.Search
 {
     public class UserSearchResponse : BaseResponse
     {
+        public int Total { get; set; }
         public IEnumerable<UserSearchResultDTO> Result { get; set; }
 
         /// <summary>
@@ -23,8 +24,9 @@ namespace Crypter.Contracts.Responses.Search
         { }
 
 
-        public UserSearchResponse(IEnumerable<UserSearchResultDTO> result) : base(ResponseCode.Success)
+        public UserSearchResponse(int total, IEnumerable<UserSearchResultDTO> result) : base(ResponseCode.Success)
         {
+            Total = total;
             Result = result;
         }
     }

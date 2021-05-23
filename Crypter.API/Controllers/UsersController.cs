@@ -319,26 +319,26 @@ namespace Crypter.API.Controllers
         [HttpGet("search/username")]
         public async Task<IActionResult> SearchByUsername([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
         {
-            var allMatchingUsers = await _userService.SearchByUsernameAsync(value, index, count);
-            var filteredMatches = allMatchingUsers
+            var (total, users) = await _userService.SearchByUsernameAsync(value, index, count);
+            var dtoUsers = users
                 .Select(x => new UserSearchResultDTO(x.Id.ToString(), x.UserName, x.PublicAlias))
                 .ToList();
 
             return new OkObjectResult(
-                new UserSearchResponse(filteredMatches));
+                new UserSearchResponse(total, dtoUsers));
         }
 
         [Authorize]
         [HttpGet("search/public-alias")]
         public async Task<IActionResult> SearchByPublicAlias([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
         {
-            var allMatchingUsers = await _userService.SearchByPublicAliasAsync(value, index, count);
-            var filteredMatches = allMatchingUsers
+            var (total, users) = await _userService.SearchByPublicAliasAsync(value, index, count);
+            var dtoUsers = users
                 .Select(x => new UserSearchResultDTO(x.Id.ToString(), x.UserName, x.PublicAlias))
                 .ToList();
 
             return new OkObjectResult(
-                new UserSearchResponse(filteredMatches));
+                new UserSearchResponse(total, dtoUsers));
         }
     }
 }

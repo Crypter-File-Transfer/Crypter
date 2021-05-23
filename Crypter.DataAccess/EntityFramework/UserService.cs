@@ -168,26 +168,40 @@ namespace Crypter.DataAccess.EntityFramework
             }
         }
 
-        public async Task<IEnumerable<User>> SearchByUsernameAsync(string username, int startingIndex, int count)
+        public async Task<(int total, IEnumerable<User> users)> SearchByUsernameAsync(string username, int startingIndex, int count)
         {
             var lowerUsername = username.ToLower();
-            return await _context.Users
+
+            int totalMatches = await _context.Users
+                .Where(x => x.PublicAlias.ToLower().StartsWith(lowerUsername))
+                .CountAsync();
+
+            var users = await _context.Users
                 .Where(x => x.UserName.ToLower().StartsWith(lowerUsername))
                 .OrderBy(x => x.UserName)
                 .Skip(startingIndex)
                 .Take(count)
                 .ToListAsync();
+
+            return (totalMatches, users);
         }
 
-        public async Task<IEnumerable<User>> SearchByPublicAliasAsync(string publicAlias, int startingIndex, int count)
+        public async Task<(int total, IEnumerable<User> users)> SearchByPublicAliasAsync(string publicAlias, int startingIndex, int count)
         {
             var lowerPublicAlias = publicAlias.ToLower();
-            return await _context.Users
+
+            int totalMatches = await _context.Users
+                .Where(x => x.PublicAlias.ToLower().StartsWith(lowerPublicAlias))
+                .CountAsync();
+
+            var users = await _context.Users
                 .Where(x => x.PublicAlias.ToLower().StartsWith(lowerPublicAlias))
                 .OrderBy(x => x.PublicAlias)
                 .Skip(startingIndex)
                 .Take(count)
                 .ToListAsync();
+
+            return (totalMatches, users);
         }
 
         public async Task<bool> IsUsernameAvailableAsync(string username)
