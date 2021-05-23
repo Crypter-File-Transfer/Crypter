@@ -173,11 +173,13 @@ namespace Crypter.DataAccess.EntityFramework
             var lowerUsername = username.ToLower();
 
             int totalMatches = await _context.Users
-                .Where(x => x.PublicAlias.ToLower().StartsWith(lowerUsername))
+                .Where(x => x.UserName.ToLower().StartsWith(lowerUsername))
+                .Where(x => x.IsPublic)
                 .CountAsync();
 
             var users = await _context.Users
                 .Where(x => x.UserName.ToLower().StartsWith(lowerUsername))
+                .Where(x => x.IsPublic)
                 .OrderBy(x => x.UserName)
                 .Skip(startingIndex)
                 .Take(count)
@@ -192,10 +194,12 @@ namespace Crypter.DataAccess.EntityFramework
 
             int totalMatches = await _context.Users
                 .Where(x => x.PublicAlias.ToLower().StartsWith(lowerPublicAlias))
+                .Where(x => x.IsPublic)
                 .CountAsync();
 
             var users = await _context.Users
                 .Where(x => x.PublicAlias.ToLower().StartsWith(lowerPublicAlias))
+                .Where(x => x.IsPublic)
                 .OrderBy(x => x.PublicAlias)
                 .Skip(startingIndex)
                 .Take(count)
