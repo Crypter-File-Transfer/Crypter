@@ -28,6 +28,12 @@ namespace CrypterAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<DataContext>();
+
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IKeyService, KeyService>();
+            services.AddScoped<IBaseItemService<MessageItem>, MessageItemService>();
+            services.AddScoped<IBaseItemService<FileItem>, FileItemService>();
+
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsSection);
             var appSettings = appSettingsSection.Get<AppSettings>();
@@ -41,17 +47,16 @@ namespace CrypterAPI
             {
                 x.Events = new JwtBearerEvents
                 {
-                    OnTokenValidated = context =>
+                    OnTokenValidated = async context =>
                     {
                         var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
                         Guid userIdFromToken = Guid.Parse(context.Principal.Identity.Name);
 
-                        var user = userService.ReadAsync(userIdFromToken);
+                        var user = await userService.ReadAsync(userIdFromToken);
                         if (user == null)
                         {
                             context.Fail("Unauthorized");
                         }
-                        return Task.CompletedTask;
                     }
                 };
                 x.RequireHttpsMetadata = false;
@@ -64,12 +69,6 @@ namespace CrypterAPI
                     ValidateAudience = false
                 };
             });
-
-            // configure DI for application services
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IKeyService, KeyService>();
-            services.AddScoped<IBaseItemService<MessageItem>, MessageItemService>();
-            services.AddScoped<IBaseItemService<FileItem>, FileItemService>();
 
             services.AddCors();
             services.AddControllers();
