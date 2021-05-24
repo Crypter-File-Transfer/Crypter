@@ -2,33 +2,9 @@
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
 @inject IAuthenticationService AuthenticationService
+@inject IHttpService HttpService
 
-@if (!RegistrationSuccess)
-{
-    if (RegistrationError)
-    {
-        <div class="alert alert-danger" role="alert">
-            @RegistrationErrorText
-        </div>
-    }
-    <div class="mb-3">
-        <label for="exampleFormControlInput1" class="form-label">Username</label>
-        <input @bind="Username" type="text" class="form-control" id="usernameFormControl">
-    </div>
-    <div class="mb-3">
-        <label for="exampleFormControlInput1" class="form-label">Email <span class="text-black-50">(optional)</span></label>
-        <input @bind="Email" type="email" class="form-control" id="emailFormControl">
-    </div>
-    <div class="mb-3">
-        <label for="exampleFormControlTextarea1" class="form-label">Password</label>
-        <input @bind="Password" type="password" class="form-control" id="passwordFormControl">
-        <a href="/password-reset">Forgot password?</a>
-    </div>
-    <div class="mb-3">
-        <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnRegisterClicked(Username, Email, Password))">Register</button>
-    </div>
-}
-else
+@if (RegistrationSuccess)
 {
     <div class="alert alert-success" role="alert">
         <h4 class="alert-heading">Registration Successful!</h4>
@@ -37,11 +13,38 @@ else
         <p class="mb-0">You will now be redirected to the login page...</p>
     </div>
 }
+else
+{
+    <EditForm Model="@registerInfo" OnValidSubmit="@OnRegisterClicked">
+        <DataAnnotationsValidator />
+        @if (RegistrationError)
+        {
+            <div class="alert alert-danger" role="alert">
+                @RegistrationErrorText
+            </div>
+        }
+        <div class="mb-3">
+            <label for="usernameFormControl" class="form-label">Username</label>
+            <InputText @bind-Value="@registerInfo.Username" class="form-control" id="usernameFormControl" />
+            <ValidationMessage For="@(() => registerInfo.Username)" />
+        </div>
+        <div class="mb-3">
+            <label for="passwordFormControl" class="form-label">Password</label>
+            <InputText type="password" @bind-Value="@registerInfo.Password" class="form-control" id="passwordFormControl" />
+            <ValidationMessage For="@(() => registerInfo.Password)" />
+        </div>
+        <div class="mb-3">
+            <label for="emailFormControl" class="form-label">Email</label>
+            <InputText type="email" @bind-Value="@registerInfo.Email" class="form-control" id="emailFormControl" />
+            <ValidationMessage For="@(() => registerInfo.Email)" />
+        </div>
+        <button type="submit" class="btn btn-primary">Register</button>
+    </EditForm>
+}
 
 @code {
-    private string Username;
-    private string Email;
-    private string Password;
+    private Register registerInfo = new Register();
+
     private bool RegistrationError = false;
     private string RegistrationErrorText = "";
     private bool RegistrationSuccess = false;
@@ -55,25 +58,26 @@ else
         }
     }
 
-    private async Task OnRegisterClicked(string username, string email, string password)
+    private async Task OnRegisterClicked()
     {
         var url = $"{AppSettings.ApiBaseUrl}/user/register";
 
-        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(username, password);
+        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(registerInfo.Username, registerInfo.Password);
         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
-        var requestBody = new RegisterUserRequest(username, digestedPasswordBase64, email);
+        var requestBody = new RegisterUserRequest(registerInfo.Username, digestedPasswordBase64, registerInfo.Email);
         using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
 
         if (!response.IsSuccessStatusCode)
         {
             RegistrationError = true;
             RegistrationErrorText = response.ReasonPhrase;
-        } else
+        }
+        else
         {
             RegistrationSuccess = true;
             StateHasChanged();
-            await Task.Delay(500);
+            await Task.Delay(2000);
             NavManager.NavigateTo("/login");
         }
     }
