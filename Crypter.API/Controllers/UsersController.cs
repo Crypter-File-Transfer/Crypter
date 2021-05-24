@@ -149,7 +149,8 @@ namespace Crypter.API.Controllers
             var allSentItems = sentMessages
                 .Select(x => new UserUploadItemDTO(x.Id.ToString(), x.Subject, ResourceType.Message, x.Expiration))
                 .Concat(sentFiles
-                    .Select(x => new UserUploadItemDTO(x.Id.ToString(), x.FileName, ResourceType.File, x.Expiration)));
+                    .Select(x => new UserUploadItemDTO(x.Id.ToString(), x.FileName, ResourceType.File, x.Expiration)))
+                .OrderBy(x => x.ExpirationDate);
 
             return new OkObjectResult(new UserUploadsResponse(allSentItems));
         }
