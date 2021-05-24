@@ -36,3 +36,12 @@ function copyToClipboard (text) {
     }).catch((error) => {
     });
 }
+
+function setActivePage(page) {
+    var pages = document.getElementsByClassName('page');
+    for (var i = 0; i < pages.length; i++) {
+        if (pages[i].textContent == page) {
+            pages[i].classList.add('active');
+        }
+    }
+}

@@ -26,17 +26,16 @@
     <div class="row">
         @if (SearchResults != null)
         {
-            List<UserSearchResultDTO> listResults = SearchResults.Result.ToList();
-            @if (listResults.Count == 0)
+            @if (SearchResults.Total == 0)
             {
                 <h3 class="text-center">No results found</h3>
             }
             else
             {
-                @foreach (var result in listResults)
+                @foreach (var result in SearchResults.Result)
                 {
                     <div class="col-md-6">
-                        <div class="card">
+                        <div class="card my-1">
                             <div class="card-body">
                                 <a href="">
                                     @if (result.PublicAlias != null)
@@ -52,6 +51,22 @@
                         </div>
                     </div>
                 }
+                if (SearchResults.Total > NumResults)
+                {
+                    decimal numberPages = (SearchResults.Total / NumResults);
+
+                    <nav aria-label="User Search Results">
+                        <ul class="pagination">
+                            @for (int i = 0; i <= Math.Ceiling(numberPages); i++)
+                            {
+                                string pageUrl = "/user/search?query=" + SearchValue + "&type="  + SearchType + "&page=" + (i + 1);
+                                <li class="page-item page"><a class="page-link" @onclick="() => GoToPage(pageUrl)">@(i + 1)</a></li>
+                            }
+                        </ul>
+                    </nav>
+
+                    SetActivePage();
+                }
             }
         }
     </div>
@@ -62,6 +77,7 @@
     private string SearchValue = "";
     private int StartIndex = 0;
     private int NumResults = 20;
+    private int Page = 1;
     private bool SearchPerformed = false;
     private UserSearchResponse SearchResults;
 
@@ -73,6 +89,7 @@
         }
 
         await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Search");
+        await QueriedSearchResults();
     }
 
     private async Task PerformUserSearch()
@@ -102,5 +119,37 @@
 
         var content = await response.Content.ReadAsStringAsync();
         SearchResults = JsonConvert.DeserializeObject<UserSearchResponse>(content);
+    }
+
+    private async Task QueriedSearchResults()
+    {
+        var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("query", out var value))
+        {
+            SearchValue = value.First();
+        }
+
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var qType))
+        {
+            SearchType = qType.First();
+        }
+
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var pageNum))
+        {
+            Page = Int32.Parse(pageNum.First());
+            StartIndex = (Page - 1) * NumResults;
+            await PerformUserSearch();
+        }
+    }
+
+    private void SetActivePage()
+    {
+        JsRuntime.InvokeVoidAsync("setActivePage", Page);
+    }
+
+    private void GoToPage(string pageurl)
+    {
+        NavManager.NavigateTo(pageurl, true);
     }
 }
