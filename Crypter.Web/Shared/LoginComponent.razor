@@ -5,30 +5,32 @@
 @inject IAuthenticationService AuthenticationService
 @inject IHttpService HttpService
 
-@if (LoginError)
-{
+<EditForm Model="@loginInfo" OnValidSubmit="@OnLoginClicked">
+    <DataAnnotationsValidator />
+    @if (LoginError)
+    {
     <div class="alert alert-danger" role="alert">
         @LoginErrorText
     </div>
-}
-<div class="mb-3">
-    <label for="exampleFormControlInput1" class="form-label">Username</label>
-    <input @bind="Username" type="text" class="form-control" id="usernameFormControl">
-    <a href="/request-username">Forgot username?</a>
-</div>
-<div class="mb-3">
-    <label for="exampleFormControlTextarea1" class="form-label">Password</label>
-    <input @bind="Password" type="password" class="form-control" id="passwordFormControl">
-    <a href="/password-reset">Forgot password?</a>
-</div>
-<div class="mb-3">
-    <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnLoginClicked(Username, Password))">Login</button>
-</div>
+    }
+    <div class="mb-3">
+        <label for="usernameFormControl" class="form-label">Username</label>
+        <InputText @bind-Value="@loginInfo.Username" class="form-control" id="usernameFormControl" />
+        <ValidationMessage For="@(() => loginInfo.Username)" />
+    </div>
+    <div class="mb-3">
+        <label for="passwordFormControl" class="form-label">Password</label>
+        <InputText type="password" @bind-Value="@loginInfo.Password" class="form-control" id="passwordFormControl" />
+        <ValidationMessage For="@(() => loginInfo.Password)" />
+    </div>
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
 <BasicModal @ref="Modal" @bind-Subject="ModalSubject" @bind-Message="ModalMessage" @bind-PrimaryButtonText="ModalPrimaryButtonText" @bind-SecondaryButtonText="ModalSecondaryButtonText" @bind-ShowSecondaryButton="ModalShowSecondaryButton" ModalClosed="@ModalClosedHandler" />
 
 @code {
-    private string Username;
-    private string Password;
+    private Login loginInfo = new Login();
+    private EditContext editContext;
+
     private bool LoginError = false;
     private string LoginErrorText = "";
 
@@ -47,14 +49,14 @@
         }
     }
 
-    private async Task OnLoginClicked(string username, string password)
+    private async Task OnLoginClicked()
     {
-        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(username, password);
+        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(loginInfo.Username, loginInfo.Password);
         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
         try
         {
-            await AuthenticationService.Login(username, password, digestedPasswordBase64, $"{AppSettings.ApiBaseUrl}/user/authenticate");
+            await AuthenticationService.Login(loginInfo.Username, loginInfo.Password, digestedPasswordBase64, $"{AppSettings.ApiBaseUrl}/user/authenticate");
             if (string.IsNullOrEmpty(AuthenticationService.User.PrivateKey))
             {
                 PromptUserToCreateKeyPair();
@@ -90,7 +92,7 @@
         var updateKeysUrl = $"{AppSettings.ApiBaseUrl}/user/update-personal-keys";
         var updateKeysRequestBody = new UpdateUserKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
         await HttpService.Post<UpdateUserKeysResponse>(updateKeysUrl, updateKeysRequestBody, true);
-        await OnLoginClicked(Username, Password);  // Login again now that keys have been uploaded and will be returned on login
+        await OnLoginClicked();  // Login again now that keys have been uploaded and will be returned on login
     }
 
     private async Task<(string privateKey, string publicKey)> GenerateUserKeyPair()
@@ -104,7 +106,7 @@
     private byte[] EncryptPrivateKey(string privatePemKey)
     {
         var privateKeyBytes = Encoding.UTF8.GetBytes(privatePemKey);
-        var symmetricEncryptionKey = CryptoLib.Common.CreateSymmetricKeyFromUserDetails(Username, Password, AuthenticationService.User.Id);
+        var symmetricEncryptionKey = CryptoLib.Common.CreateSymmetricKeyFromUserDetails(loginInfo.Username, loginInfo.Password, AuthenticationService.User.Id);
         return CryptoLib.Common.DoSymmetricEncryption(privateKeyBytes, symmetricEncryptionKey);
     }
 
