@@ -5,6 +5,7 @@
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
 @inject IAuthenticationService AuthenticationService
+@inject IHttpService HttpService
 
 <NavigationUser />
 <div class="container my-4">
@@ -13,7 +14,7 @@
         <div class="col-md-3">
             <select @bind="SearchType" class="form-select" aria-label="Select search by">
                 <option selected value="username">Search by Username</option>
-                <option value="public name">Search by Public Name</option>
+                <option value="public-name">Search by Public Name</option>
             </select>
         </div>
         <div class="col-md-9">
@@ -105,20 +106,13 @@
 
         string query = url + "?value=" + SearchValue + "&index=" + StartIndex + "&count=" + NumResults;
 
-        var token = AuthenticationService.User.Token;
-
-        var request = new HttpRequestMessage(HttpMethod.Get, query);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        using var response = await HttpClient.SendAsync(request);
-
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            // Error handling
+            await JsRuntime.InvokeVoidAsync("setPageUrl", "/user/search?query=" + SearchValue + "&type=" + SearchType + "&page=1");
+            SearchResults = await HttpService.Get<UserSearchResponse>(query, true);
+        } catch {
+            SearchResults = null;
         }
-
-        var content = await response.Content.ReadAsStringAsync();
-        SearchResults = JsonConvert.DeserializeObject<UserSearchResponse>(content);
     }
 
     private async Task QueriedSearchResults()

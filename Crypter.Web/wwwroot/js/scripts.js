@@ -45,3 +45,7 @@ function setActivePage(page) {
         }
     }
 }
+
+function setPageUrl(urlString) {
+    window.history.pushState(null, '', urlString);
+}
