@@ -4,6 +4,7 @@ using Crypter.Contracts.DTO;
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests.Registered;
 using Crypter.Contracts.Responses.Registered;
+using Crypter.Contracts.Responses.Anonymous; 
 using Crypter.Contracts.Responses.Search;
 using Crypter.CryptoLib.Enums;
 using Crypter.DataAccess.FileSystem;
@@ -316,6 +317,7 @@ namespace Crypter.API.Controllers
             }
         }
 
+        // GET: crypter.dev/api/user/search/username
         [Authorize]
         [HttpGet("search/username")]
         public async Task<IActionResult> SearchByUsername([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
@@ -329,6 +331,7 @@ namespace Crypter.API.Controllers
                 new UserSearchResponse(total, dtoUsers));
         }
 
+        // GET: crypter.dev/api/user/search/public-alias
         [Authorize]
         [HttpGet("search/public-alias")]
         public async Task<IActionResult> SearchByPublicAlias([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
@@ -340,6 +343,24 @@ namespace Crypter.API.Controllers
 
             return new OkObjectResult(
                 new UserSearchResponse(total, dtoUsers));
+        }
+
+        // GET: crypter.dev/api/user/{username}
+        [HttpGet("{username}")]
+        public async Task<IActionResult> GetPublicUserProfile(string userName)
+        {
+            var profileIsPublic = await _userService.IsRegisteredUserPublicAsync(userName);
+            if (profileIsPublic)
+            {
+                var user = await _userService.ReadPublicUserProfileInformation(userName);
+                return new OkObjectResult(
+                    new AnonymousGetPublicProfileResponse(user.UserName, user.PublicAlias, user.AllowAnonymousFiles, user.AllowAnonymousMessages));
+            }
+            else
+            {
+                return new BadRequestObjectResult(
+                    new AnonymousGetPublicProfileResponse(ResponseCode.NotFound));
+            }
         }
     }
 }
