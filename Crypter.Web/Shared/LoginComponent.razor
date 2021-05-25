@@ -65,10 +65,10 @@
                 OnLoginCompleted();
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             LoginError = true;
-            LoginErrorText = ex.Message;
+            LoginErrorText = "Invalid Credentials";
         }
     }
 

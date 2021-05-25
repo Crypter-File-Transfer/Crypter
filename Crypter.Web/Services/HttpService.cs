@@ -69,8 +69,7 @@ namespace Crypter.Web.Services
 
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-                throw new Exception(error["message"]);
+                throw new Exception(response.Content.ToString());
             }
 
             return await response.Content.ReadFromJsonAsync<T>();
