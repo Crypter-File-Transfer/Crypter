@@ -11,6 +11,7 @@
 <div class="container my-4">
     <h1>Find a user</h1>
     <EditForm Model="@searchInfo" OnValidSubmit="@PerformUserSearch">
+        <DataAnnotationsValidator />
         <div class="row">
             <div class="col-md-3">
                 <InputSelect @bind-Value="searchInfo.Type" class="form-select">
@@ -23,6 +24,7 @@
                     <InputText @bind-Value="searchInfo.Query" class="form-control" />
                     <button class="btn btn-primary" type="submit" id="button-addon2">Search</button>
                 </div>
+                <ValidationMessage For="@(() => searchInfo.Query)" />
             </div>
         </div>
     </EditForm>
