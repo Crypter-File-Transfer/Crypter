@@ -10,20 +10,22 @@
 <NavigationUser />
 <div class="container my-4">
     <h1>Find a user</h1>
-    <div class="row">
-        <div class="col-md-3">
-            <select @bind="SearchType" class="form-select" aria-label="Select search by">
-                <option selected value="username">Search by Username</option>
-                <option value="public-name">Search by Public Name</option>
-            </select>
-        </div>
-        <div class="col-md-9">
-            <div class="input-group mb-3">
-                <input @bind="SearchValue" type="text" class="form-control" placeholder="Enter a @SearchType" aria-label="Recipient's username" aria-describedby="button-addon2">
-                <button class="btn btn-primary" type="button" id="button-addon2" @onclick="PerformUserSearch">Search</button>
+    <EditForm Model="@searchInfo" OnValidSubmit="@PerformUserSearch">
+        <div class="row">
+            <div class="col-md-3">
+                <InputSelect @bind-Value="searchInfo.Type" class="form-select">
+                    <option selected value="username">Search by Username</option>
+                    <option value="public-name">Search by Public Name</option>
+                </InputSelect>
+            </div>
+            <div class="col-md-9">
+                <div class="input-group mb-3">
+                    <InputText @bind-Value="searchInfo.Query" class="form-control" />
+                    <button class="btn btn-primary" type="submit" id="button-addon2">Search</button>
+                </div>
             </div>
         </div>
-    </div>
+    </EditForm>
     <div class="row">
         @if (SearchResults != null)
         {
@@ -52,15 +54,15 @@
                         </div>
                     </div>
                 }
-                if (SearchResults.Total > NumResults)
+                if (SearchResults.Total > searchInfo.NumResults)
                 {
-                    decimal numberPages = (SearchResults.Total / NumResults);
+                    decimal numberPages = (SearchResults.Total / searchInfo.NumResults);
 
                     <nav aria-label="User Search Results">
                         <ul class="pagination">
                             @for (int i = 0; i <= Math.Ceiling(numberPages); i++)
                             {
-                                string pageUrl = "/user/search?query=" + SearchValue + "&type="  + SearchType + "&page=" + (i + 1);
+                                string pageUrl = "/user/search?query=" + searchInfo.Query + "&type="  + searchInfo.Type + "&page=" + (i + 1);
                                 <li class="page-item page"><a class="page-link" @onclick="() => GoToPage(pageUrl)">@(i + 1)</a></li>
                             }
                         </ul>
@@ -74,12 +76,10 @@
 </div>
 
 @code {
-    private string SearchType = "username";
-    private string SearchValue = "";
-    private int StartIndex = 0;
-    private int NumResults = 20;
-    private int Page = 1;
+
     private bool SearchPerformed = false;
+
+    private SearchInfo searchInfo = new SearchInfo();
     private UserSearchResponse SearchResults;
 
     protected override async Task OnInitializedAsync()
@@ -97,18 +97,18 @@
     {
         string url;
 
-        if (SearchType == "username")
+        if (searchInfo.Type == "username")
         {
             url = $"{AppSettings.ApiBaseUrl}/user/search/username";
         } else {
             url = $"{AppSettings.ApiBaseUrl}/user/search/public-alias";
         }
 
-        string query = url + "?value=" + SearchValue + "&index=" + StartIndex + "&count=" + NumResults;
+        string query = url + "?value=" + searchInfo.Query + "&index=" + searchInfo.Index + "&count=" + searchInfo.NumResults;
 
         try
         {
-            await JsRuntime.InvokeVoidAsync("setPageUrl", "/user/search?query=" + SearchValue + "&type=" + SearchType + "&page=1");
+            await JsRuntime.InvokeVoidAsync("setPageUrl", "/user/search?query=" + searchInfo.Query + "&type=" + searchInfo.Type + "&page=" + searchInfo.Page);
             SearchResults = await HttpService.Get<UserSearchResponse>(query, true);
         } catch {
             SearchResults = null;
@@ -121,25 +121,25 @@
 
         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("query", out var value))
         {
-            SearchValue = value.First();
+            searchInfo.Query = value.First();
         }
 
         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var qType))
         {
-            SearchType = qType.First();
+            searchInfo.Type = qType.First();
         }
 
         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var pageNum))
         {
-            Page = Int32.Parse(pageNum.First());
-            StartIndex = (Page - 1) * NumResults;
+            searchInfo.Page = Int32.Parse(pageNum.First());
+            searchInfo.Index = (searchInfo.Page - 1) * searchInfo.NumResults;
             await PerformUserSearch();
         }
     }
 
     private void SetActivePage()
     {
-        JsRuntime.InvokeVoidAsync("setActivePage", Page);
+        JsRuntime.InvokeVoidAsync("setActivePage", searchInfo.Page);
     }
 
     private void GoToPage(string pageurl)
