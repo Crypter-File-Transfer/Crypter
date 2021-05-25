@@ -25,7 +25,7 @@
     </div>
     <div class="row">
         <div class="col-12 p-0">
-            <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => EncryptMessage(MessageText, encryptionStrength))">Encrypt</button>
+            <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptClicked(MessageText, encryptionStrength))">Encrypt</button>
         </div>
     </div>
     <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
@@ -59,34 +59,64 @@
     private string privateKey;
     private string dataFormat;
 
-    private async Task EncryptMessage(string message, CryptoStrength strength)
-    {
-        // Hide file upload on encryption
-        IsEncrypting = true;
-        await SetNewEncryptionStatus("Creating symmetric key");
-        var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
-        var hashedSymmetricKey = CryptoLib.Common.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
+    // Generated keys and crypto params
+    private WrapsAsymmetricCipherKeyPair asymmetricKeyPair;
+    private SymmetricCryptoParams symmetricParams;
+    private byte[] serverEncryptionKey;
 
-        await SetNewEncryptionStatus("Encrypting your message");
-        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-        var cipherText = CryptoLib.Common.DoSymmetricEncryption(messageBytes, symmetricCryptoParams);
+    private async Task OnEncryptClicked(string message, CryptoStrength strength)
+    {
+        IsEncrypting = true;
+        await GenerateKeys(strength);
+        GC.Collect();
+        await EncryptMessage(message, strength);
+        GC.Collect();
+        ClearKeys();
+        GC.Collect();
+    }
+
+    private async Task GenerateKeys(CryptoStrength strength)
+    {
+        await SetNewEncryptionStatus("Creating symmetric key");
+        symmetricParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
+        serverEncryptionKey = CryptoLib.Common.GetDigest(symmetricParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
         await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
-        var asymmetricKeys = CryptoLib.Common.GenerateAsymmetricKeys(strength);
+        asymmetricKeyPair = CryptoLib.Common.GenerateAsymmetricKeys(strength);
+    }
+
+    private void ClearKeys()
+    {
+        asymmetricKeyPair = null;
+        symmetricParams = null;
+        serverEncryptionKey = null;
+    }
+
+    private async Task EncryptMessage(string message, CryptoStrength strength)
+    {
+        await SetNewEncryptionStatus("Encrypting your message");
+        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+        var cipherText = CryptoLib.Common.DoSymmetricEncryption(messageBytes, symmetricParams);
+
+        await SetNewEncryptionStatus("Encrypting symmetric key");
+        var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, asymmetricKeyPair.Public);
 
         await SetNewEncryptionStatus("Creating a signature");
-        var signature = CryptoLib.Common.CreateEncryptedSignature(messageBytes, symmetricCryptoParams, asymmetricKeys.Public, strength);
+        var signature = CryptoLib.Common.SignPlaintext(messageBytes, asymmetricKeyPair.Private);
 
         await SetNewEncryptionStatus("Preparing to upload");
         var encodedCipherText = Convert.ToBase64String(cipherText);
+        var encodedSymmetricInfo = Convert.ToBase64String(encryptedSymmetricInfo);
+        var encodedServerEncryptionKey = Convert.ToBase64String(serverEncryptionKey);
         var encodedSignature = Convert.ToBase64String(signature);
-        var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
+        var encodedPublicKey = Convert.ToBase64String(
+            Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM()));
 
         await SetNewEncryptionStatus("Uploading");
 
         if (AuthenticationService.User == null)
         {
-            var response = await UploadMessageToAPI(encodedCipherText, encodedSignature, serverEncryptionKey);
+            var response = await UploadMessageToAPI(encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
             if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
             {
                 Error = true;
@@ -97,12 +127,13 @@
 
             // Send data to success modal component
             CompletedUpload("message", response.Id,
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
         }
         else
         {
-            var response = await UploadUserMessageToAPI(encodedCipherText, encodedSignature, serverEncryptionKey);
+            // TODO - Need to sign with the user's private key; not the generated private key
+            var response = await UploadUserMessageToAPI(encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
             if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
             {
                 Error = true;
@@ -113,8 +144,8 @@
 
             // Send data to success modal component
             CompletedUpload("message", response.Id,
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
         }
 
         // Open modal
@@ -143,13 +174,13 @@
         privateKey = privKey;
     }
 
-    private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string signature, string serverEncryptionKey)
+    private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
     {
         if (MessageSubject == "")
         {
             MessageSubject = "(no subject)";
         }
-        var postBody = new AnonymousUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, signature, serverEncryptionKey);
+        var postBody = new AnonymousUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey);
         using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/anonymous/upload", postBody);
 
         if (!response.IsSuccessStatusCode)
@@ -161,7 +192,7 @@
         return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
     }
 
-    private async Task<RegisteredUserUploadResponse> UploadUserMessageToAPI(string cipherText, string signature, string serverEncryptionKey)
+    private async Task<RegisteredUserUploadResponse> UploadUserMessageToAPI(string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
     {
         if (MessageSubject == "")
         {
@@ -171,7 +202,7 @@
         var token = AuthenticationService.User.Token;
 
         var request = new HttpRequestMessage(HttpMethod.Post, url);
-        var postBody = new RegisteredUserUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, signature, serverEncryptionKey);
+        var postBody = new RegisteredUserUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey);
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Content = JsonContent.Create(postBody);

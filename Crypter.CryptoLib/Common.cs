@@ -65,29 +65,26 @@ namespace Crypter.CryptoLib
         /// </summary>
         /// <param name="strength"></param>
         /// <returns>An 'AsymmetricCipherKeyPair' instance, which contains a private and public key</returns>
-        public static AsymmetricCipherKeyPair GenerateAsymmetricKeys(CryptoStrength strength)
+        public static WrapsAsymmetricCipherKeyPair GenerateAsymmetricKeys(CryptoStrength strength)
         {
             var rsaKeySize = MapStrengthToRsaKeySize(strength);
-            return AsymmetricMethods.GenerateKeys(rsaKeySize);
+            var keys = AsymmetricMethods.GenerateKeys(rsaKeySize);
+            return new WrapsAsymmetricCipherKeyPair(keys.Public, keys.Private);
         }
 
         /// <summary>
-        /// Create a new, encrypted signature.
+        /// Encrypt symmetric encryption information using an asymmetric public key
         /// </summary>
-        /// <param name="plaintext"></param>
         /// <param name="symmetricParams"></param>
         /// <param name="publicKey"></param>
-        /// <param name="strength"></param>
         /// <returns></returns>
-        public static byte[] CreateEncryptedSignature(byte[] plaintext, SymmetricCryptoParams symmetricParams, AsymmetricKeyParameter publicKey, CryptoStrength strength)
+        public static byte[] EncryptSymmetricInfo(SymmetricCryptoParams symmetricParams, AsymmetricKeyParameter publicKey)
         {
-            var digestAlgorithm = MapStrengthToDigestAlgorithm(strength);
-            byte[] digest = GetDigest(plaintext, digestAlgorithm);
-            var signature = new AnonymousSignature(digestAlgorithm, digest, symmetricParams.Key.ConvertToBytes(), symmetricParams.IV);
-            var signatureString = signature.ToString();
-            var signatureBytes = Encoding.UTF8.GetBytes(signatureString);
+            var symmetricInfo = new SymmetricInfoDTO(symmetricParams.Key.ConvertToBytes(), symmetricParams.IV);
+            var symmetricInfoString = symmetricInfo.ToString();
+            var symmetricInfoBytes = Encoding.UTF8.GetBytes(symmetricInfoString);
 
-            return AsymmetricMethods.Encrypt(signatureBytes, publicKey);
+            return AsymmetricMethods.Encrypt(symmetricInfoBytes, publicKey);
         }
 
         /// <summary>
@@ -97,17 +94,17 @@ namespace Crypter.CryptoLib
         /// <param name="pemKey"></param>
         /// <exception cref="FormatException"></exception>
         /// <returns></returns>
-        public static AnonymousSignature DecryptAndDeserializeSignature(byte[] ciphertext, string pemKey)
+        public static SymmetricInfoDTO DecryptAndDeserializeSymmetricInfo(byte[] ciphertext, string pemKey)
         {
             // Get the private key from the PEM string
             var privateKey = ConvertRsaPrivateKeyFromPEM(pemKey).Private;
 
-            // Attempt to decrypt the signature
-            byte[] decryptedSignatureBytes = AsymmetricMethods.Decrypt(ciphertext, privateKey);
-            string decryptedSignatureString = Encoding.UTF8.GetString(decryptedSignatureBytes);
+            // Attempt to decrypt the symmetric info
+            byte[] decryptedBytes = AsymmetricMethods.Decrypt(ciphertext, privateKey);
+            string decryptedString = Encoding.UTF8.GetString(decryptedBytes);
 
             // Attempt to deserialize the plaintext signature
-            return new AnonymousSignature(decryptedSignatureString);
+            return new SymmetricInfoDTO(decryptedString);
         }
 
         public static AsymmetricCipherKeyPair ConvertRsaPrivateKeyFromPEM(string pemKey)
@@ -115,6 +112,13 @@ namespace Crypter.CryptoLib
             var stringReader = new StringReader(pemKey);
             var pemReader = new PemReader(stringReader);
             return (AsymmetricCipherKeyPair)pemReader.ReadObject();
+        }
+
+        public static AsymmetricKeyParameter ConvertRsaPublicKeyFromPEM(string pemKey)
+        {
+            var stringReader = new StringReader(pemKey);
+            var pemReader = new PemReader(stringReader);
+            return (AsymmetricKeyParameter)pemReader.ReadObject();
         }
 
         /// <summary>
@@ -196,16 +200,17 @@ namespace Crypter.CryptoLib
             return MakeSymmetricCryptoParams(key, iv);
         }
 
-        private static DigestAlgorithm MapStrengthToDigestAlgorithm(CryptoStrength strength)
+        public static byte[] SignPlaintext(byte[] plaintext, AsymmetricKeyParameter privateKey)
         {
-            return strength switch
-            {
-                CryptoStrength.Insecure => DigestAlgorithm.SHA1,
-                CryptoStrength.Minimum => DigestAlgorithm.SHA256,
-                CryptoStrength.Standard => DigestAlgorithm.SHA256,
-                CryptoStrength.Maximum => DigestAlgorithm.SHA256,
-                _ => throw new NotImplementedException()
-            };
+            return AsymmetricMethods.DigestAndSign(plaintext, privateKey);
+        }
+
+        public static bool VerifySignature(byte[] plaintext, byte[] signature, string publicPemKey)
+        {
+            // Get the public key from the PEM string
+            var publicKey = ConvertRsaPublicKeyFromPEM(publicPemKey);
+
+            return AsymmetricMethods.VerifySignature(plaintext, signature, publicKey);
         }
 
         private static AesKeySize MapStrengthToAesKeySize(CryptoStrength strength)

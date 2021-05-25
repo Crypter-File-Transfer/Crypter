@@ -245,7 +245,7 @@ namespace Crypter.API.Controllers
             var filepaths = new CreateFilePaths(BaseSaveDirectory);
             bool isFile = body.Type == ResourceType.File;
 
-            var saveResult = filepaths.SaveToFileSystem(newGuid, cipherTextBytesServerEncrypted, body.Signature, isFile);
+            var saveResult = filepaths.SaveToFileSystem(newGuid, cipherTextBytesServerEncrypted, isFile);
             if (!saveResult)
             {
                 return new BadRequestObjectResult(
@@ -263,7 +263,9 @@ namespace Crypter.API.Controllers
                         body.Name,
                         size,
                         filepaths.ActualPathString,
-                        filepaths.SigPathString,
+                        body.Signature,
+                        body.EncryptedSymmetricInfo,
+                        body.PublicKey,
                         iv,
                         serverDigest,
                         now,
@@ -279,7 +281,9 @@ namespace Crypter.API.Controllers
                         body.ContentType,
                         size,
                         filepaths.ActualPathString,
-                        filepaths.SigPathString,
+                        body.Signature,
+                        body.EncryptedSymmetricInfo,
+                        body.PublicKey,
                         iv,
                         serverDigest,
                         now,

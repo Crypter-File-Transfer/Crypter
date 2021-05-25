@@ -8,7 +8,9 @@ namespace Crypter.DataAccess.Interfaces
         Guid Sender { get; set; }
         int Size { get; set; }
         string CipherTextPath { get; set; }
-        string SignaturePath { get; set; }
+        string Signature { get; set; }
+        string SymmetricInfo { get; set; }
+        string PublicKey { get; set; }
         byte[] ServerIV { get; set; }
         byte[] ServerDigest { get; set; }
         DateTime Created { get; set; }

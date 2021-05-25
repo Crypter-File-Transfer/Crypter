@@ -10,7 +10,9 @@ namespace Crypter.DataAccess.Models
         public Guid Sender { get; set; }
         public int Size { get; set; }
         public string CipherTextPath { get; set; }
-        public string SignaturePath { get; set; }
+        public string Signature { get; set; }
+        public string SymmetricInfo { get; set; }
+        public string PublicKey { get; set; }
         public byte[] ServerIV { get; set; }
         public byte[] ServerDigest { get; set; }
         public DateTime Created { get; set; }
@@ -20,7 +22,7 @@ namespace Crypter.DataAccess.Models
         public string FileName { get; set; }
         public string ContentType { get; set; }
 
-        public FileItem(Guid id, Guid sender, string fileName, string contentType, int size, string cipherTextPath, string signaturePath, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
+        public FileItem(Guid id, Guid sender, string fileName, string contentType, int size, string cipherTextPath, string signature, string symmetricInfo, string publicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
         {
             Id = id;
             Sender = sender;
@@ -28,7 +30,9 @@ namespace Crypter.DataAccess.Models
             ContentType = contentType;
             Size = size;
             CipherTextPath = cipherTextPath;
-            SignaturePath = signaturePath;
+            Signature = signature;
+            SymmetricInfo = symmetricInfo;
+            PublicKey = publicKey;
             ServerIV = serverIV;
             ServerDigest = serverDigest;
             Created = created;

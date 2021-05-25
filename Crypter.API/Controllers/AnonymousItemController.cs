@@ -67,7 +67,7 @@ namespace Crypter.API.Controllers
             var filepaths = new CreateFilePaths(BaseSaveDirectory);
             bool isFile = body.Type == ResourceType.File;
 
-            var saveResult = filepaths.SaveToFileSystem(newGuid, cipherTextBytesServerEncrypted, body.Signature, isFile);
+            var saveResult = filepaths.SaveToFileSystem(newGuid, cipherTextBytesServerEncrypted, isFile);
             if (!saveResult)
             {
                 return new BadRequestObjectResult(
@@ -78,14 +78,15 @@ namespace Crypter.API.Controllers
             switch (body.Type)
             {
                 case ResourceType.Message:
-
                     var messageItem = new MessageItem(
                         newGuid,
                         Guid.Empty,
                         body.Name,
                         size,
                         filepaths.ActualPathString,
-                        filepaths.SigPathString,
+                        body.Signature,
+                        body.EncryptedSymmetricInfo,
+                        body.PublicKey,
                         iv,
                         serverDigest,
                         now,
@@ -101,7 +102,9 @@ namespace Crypter.API.Controllers
                         body.ContentType,
                         size,
                         filepaths.ActualPathString,
-                        filepaths.SigPathString,
+                        body.Signature,
+                        body.EncryptedSymmetricInfo,
+                        body.PublicKey,
                         iv,
                         serverDigest,
                         now,
@@ -240,7 +243,9 @@ namespace Crypter.API.Controllers
         [HttpPost("get-signature")]
         public async Task<IActionResult> GetItemSignature([FromBody] AnonymousSignatureRequest request)
         {
-            string signaturePath;
+            string signature;
+            string publicKey;
+            string symmetricInfo;
             switch (request.Type)
             {
                 case ResourceType.Message:
@@ -252,7 +257,9 @@ namespace Crypter.API.Controllers
                             new NotFoundObjectResult(ResponseCode.NotFound));
                     }
 
-                    signaturePath = foundMessage.SignaturePath;
+                    signature = foundMessage.Signature;
+                    publicKey = foundMessage.PublicKey;
+                    symmetricInfo = foundMessage.SymmetricInfo;
                     break;
                 case ResourceType.File:
                     var foundFile = await _fileService.ReadAsync(request.Id);
@@ -263,16 +270,17 @@ namespace Crypter.API.Controllers
                             new NotFoundObjectResult(ResponseCode.NotFound));
                     }
 
-                    signaturePath = foundFile.SignaturePath;
+                    signature = foundFile.Signature;
+                    publicKey = foundFile.PublicKey;
+                    symmetricInfo = foundFile.SymmetricInfo;
                     break;
                 default:
                     return new OkObjectResult(
                         new AnonymousUploadResponse(ResponseCode.InvalidRequest));
             }
 
-            string signature = System.IO.File.ReadAllText(signaturePath);
             return new OkObjectResult(
-                new AnonymousSignatureResponse(signature));
+                new AnonymousSignatureResponse(signature, publicKey, symmetricInfo));
         }
     }
 }

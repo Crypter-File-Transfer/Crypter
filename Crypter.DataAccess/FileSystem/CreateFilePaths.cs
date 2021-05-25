@@ -7,9 +7,7 @@ namespace Crypter.DataAccess.FileSystem
     {
         private readonly string folderName;
         public string ActualFileName { get; set; }
-        public string SignatureName { get; set; }
         public string ActualPathString { get; set; }
-        public string SigPathString { get; set; }
 
         public CreateFilePaths(string baseFilePath)
         {
@@ -23,11 +21,10 @@ namespace Crypter.DataAccess.FileSystem
         /// <param name="guid"></param>
         /// <param name="isFile"></param>
         /// <param name="cipherText"></param>
-        /// <param name="signature"></param>
         /// <returns>true or false to indicate whether the operation was successful</returns>
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writealltext?view=net-5.0
         /// https://docs.microsoft.com/en-us/dotnet/api/system.io.file.writeallbytes?view=net-5.0
-        public bool SaveToFileSystem(Guid guid, byte[] cipherText, string signature, bool isFile)
+        public bool SaveToFileSystem(Guid guid, byte[] cipherText, bool isFile)
         {
             string pathString;
             //create folder path for file upload
@@ -43,17 +40,13 @@ namespace Crypter.DataAccess.FileSystem
                 ActualFileName = "message";
             }
             //Create folder for uploaded file 
-            System.IO.Directory.CreateDirectory(pathString);
+            Directory.CreateDirectory(pathString);
             ////create paths for encrypted content and signature
-            SignatureName = "signature";
             // Combine paths and use standard directory separator
             ActualPathString = Path.GetFullPath(Path.Combine(pathString, ActualFileName));
-            SigPathString = Path.GetFullPath(Path.Combine(pathString, SignatureName));
             //write signature to path
             try
             {
-                // create file and write all text to file, then close file
-                File.WriteAllText(SigPathString, signature);
                 //decode base64 to bytes and save as binary
                 File.WriteAllBytes(ActualPathString, cipherText);
             }

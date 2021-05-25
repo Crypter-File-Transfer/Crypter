@@ -8,8 +8,10 @@ namespace Crypter.Contracts.Requests.Anonymous
         public ResourceType Type { get; set; }
         public string ContentType { get; set; }
         public string CipherText { get; set; }
+        public string EncryptedSymmetricInfo { get; set; }
         public string Signature { get; set; }
         public string ServerEncryptionKey { get; set; }
+        public string PublicKey { get; set; }
 
         /// <summary>
         /// Do not use!
@@ -18,14 +20,16 @@ namespace Crypter.Contracts.Requests.Anonymous
         public AnonymousUploadRequest()
         { }
 
-        public AnonymousUploadRequest(string name, ResourceType type, string contentType, string cipherTextBase64, string signatureBase64, string serverEncryptionKeyBase64)
+        public AnonymousUploadRequest(string name, ResourceType type, string contentType, string cipherTextBase64, string encryptedSymmetricDataBase64, string signatureBase64, string serverEncryptionKeyBase64, string publicKeyBase64)
         {
             Name = name;
             Type = type;
             ContentType = contentType;
             CipherText = cipherTextBase64;
+            EncryptedSymmetricInfo = encryptedSymmetricDataBase64;
             Signature = signatureBase64;
             ServerEncryptionKey = serverEncryptionKeyBase64;
+            PublicKey = publicKeyBase64;
         }
     }
 }

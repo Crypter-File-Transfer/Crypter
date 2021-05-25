@@ -101,6 +101,11 @@
     private string privateKey;
     private string dataFormat;
 
+    // Generated keys and crypto params
+    private WrapsAsymmetricCipherKeyPair asymmetricKeyPair;
+    private SymmetricCryptoParams symmetricParams;
+    private byte[] serverEncryptionKey;
+
     private void HandleDragEnter()
     {
         dropClass = "dropzone-drag";
@@ -155,40 +160,59 @@
         noFileSelected = files.Count == 0;
         if (!noFileSelected)
         {
+            IsEncrypting = true;
+            await GenerateKeys(strength);
+            GC.Collect();
             await EncryptFile(files[0], strength);
+            GC.Collect();
+            ClearKeys();
             GC.Collect();
         }
     }
 
+    private async Task GenerateKeys(CryptoStrength strength)
+    {
+        await SetNewEncryptionStatus("Creating symmetric key");
+        symmetricParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
+        serverEncryptionKey = CryptoLib.Common.GetDigest(symmetricParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
+
+        await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
+        asymmetricKeyPair = CryptoLib.Common.GenerateAsymmetricKeys(strength);
+    }
+
+    private void ClearKeys()
+    {
+        asymmetricKeyPair = null;
+        symmetricParams = null;
+        serverEncryptionKey = null;
+    }
+
     private async Task EncryptFile(IFileListEntry file, CryptoStrength strength)
     {
-        // Hide file upload on encryption
-        IsEncrypting = true;
-        await SetNewEncryptionStatus("Creating symmetric key");
-        var symmetricCryptoParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
-        var hashedSymmetricKey = CryptoLib.Common.GetDigest(symmetricCryptoParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
-
         await SetNewEncryptionStatus("Encrypting your file");
         using var stream = new MemoryStream();
         await file.Data.CopyToAsync(stream);
         byte[] fileBytes = stream.ToArray();
-        var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricCryptoParams);
+        var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricParams);
 
-        await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
-        var asymmetricKeys = CryptoLib.Common.GenerateAsymmetricKeys(strength);
+        await SetNewEncryptionStatus("Encrypting symmetric key");
+        var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, asymmetricKeyPair.Public);
 
         await SetNewEncryptionStatus("Creating a signature");
-        var signature = CryptoLib.Common.CreateEncryptedSignature(fileBytes, symmetricCryptoParams, asymmetricKeys.Public, strength);
+        var signature = CryptoLib.Common.SignPlaintext(fileBytes, asymmetricKeyPair.Private);
 
         await SetNewEncryptionStatus("Preparing to upload");
         var encodedCipherText = Convert.ToBase64String(cipherText);
+        var encodedSymmetricInfo = Convert.ToBase64String(encryptedSymmetricInfo);
+        var encodedServerEncryptionKey = Convert.ToBase64String(serverEncryptionKey);
         var encodedSignature = Convert.ToBase64String(signature);
-        var serverEncryptionKey = Convert.ToBase64String(hashedSymmetricKey);
+        var encodedPublicKey = Convert.ToBase64String(
+            Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM()));
 
         await SetNewEncryptionStatus("Uploading");
         if (AuthenticationService.User == null)
         {
-            var response = await UploadFileToAPI(file.Name, file.Type, encodedCipherText, encodedSignature, serverEncryptionKey);
+            var response = await UploadFileToAPI(file.Name, file.Type, encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
 
             if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
             {
@@ -199,12 +223,13 @@
 
             // Send data to success modal component
             CompletedUpload("file", response.Id,
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
         }
         else
         {
-            var response = await UploadUserFileToAPI(file.Name, file.Type, encodedCipherText, encodedSignature, serverEncryptionKey);
+            // TODO - Need to sign with the user's private key; not the generated private key
+            var response = await UploadUserFileToAPI(file.Name, file.Type, encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
 
             if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
             {
@@ -215,8 +240,8 @@
 
             // Send data to success modal component
             CompletedUpload("file", response.Id,
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Public.ConvertToPEM())),
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeys.Private.ConvertToPEM())));
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
+               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
         }
 
         // Open modal
@@ -244,9 +269,9 @@
         privateKey = privKey;
     }
 
-    private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string contentType, string cipherText, string signature, string serverEncryptionKey)
+    private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string contentType, string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
     {
-        var requestBody = new AnonymousUploadRequest(filename, ResourceType.File, contentType, cipherText, signature, serverEncryptionKey);
+        var requestBody = new AnonymousUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey);
 
         using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/anonymous/upload", requestBody);
 
@@ -259,13 +284,13 @@
         return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
     }
 
-    private async Task<RegisteredUserUploadResponse> UploadUserFileToAPI(string filename, string contentType, string cipherText, string signature, string serverEncryptionKey)
+    private async Task<RegisteredUserUploadResponse> UploadUserFileToAPI(string filename, string contentType, string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
     {
         var url = $"{AppSettings.ApiBaseUrl}/user/upload";
         var token = AuthenticationService.User.Token;
 
         var request = new HttpRequestMessage(HttpMethod.Post, url);
-        var postBody = new RegisteredUserUploadRequest(filename, ResourceType.File, contentType, cipherText, signature, serverEncryptionKey);
+        var postBody = new RegisteredUserUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey);
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Content = JsonContent.Create(postBody);

@@ -1,6 +1,7 @@
 ﻿@inject HttpClient HttpClient
 @inject AppSettings AppSettings
 @inject IJSRuntime js
+@inject IHttpService HttpService
 
 <div class="row">
     <div class="col-md-4">
@@ -35,15 +36,17 @@
                             @decryptionErrorText
                         </div>
                     }
-                    @if (!IsDecrypting) {
+                    @if (!IsDecrypting)
+                    {
                         <div class="mb-3">
                             <input type="text" class="form-control" id="decryptionKey" @bind="decryptionKey">
                         </div>
                         <div class="mb-3">
                             <button type="button" class="btn btn-primary" @onclick="@(e => OnDecryptClicked(DataFormat, Id, decryptionKey))">Decrypt your @DataFormat</button>
                         </div>
-                    } else 
-                    { 
+                    }
+                    else
+                    {
                         <div class="mb-3">
                             <h3>@DecryptionStatusMessage</h3>
                             <div class="spinner-border" role="status">
@@ -127,11 +130,11 @@
 
         // Attempt to convert the decryption key from Base64
         await SetNewDecryptionStatus("Decoding key");
-        string pemKey;
+        string privatePemKey;
         try
         {
             byte[] pemKeyAsBytes = Convert.FromBase64String(privateDecryptionKey);
-            pemKey = Encoding.UTF8.GetString(pemKeyAsBytes);
+            privatePemKey = Encoding.UTF8.GetString(pemKeyAsBytes);
         }
         catch (FormatException)
         {
@@ -145,29 +148,30 @@
             ? ResourceType.Message
             : ResourceType.File;
 
-        // Request the signature from the API
-        await SetNewDecryptionStatus("Downloading signature");
+        await SetNewDecryptionStatus("Downloading signature and encrypted symmetric details");
         var signatureResponse = await DownloadSignature(resourceType, id);
-        byte[] encryptedSignature = Convert.FromBase64String(signatureResponse.Signature);
+        byte[] signature = Convert.FromBase64String(signatureResponse.Signature);
+        byte[] encryptedSymmetricInfo = Convert.FromBase64String(signatureResponse.EncryptedSymmetricInfo);
+        string publicPemKey = Encoding.UTF8.GetString(Convert.FromBase64String(signatureResponse.PublicKey));
 
         // Attempt to decrypt the signature using the provided key
-        await SetNewDecryptionStatus("Decrypting signature");
-        AnonymousSignature signature;
+        await SetNewDecryptionStatus("Decrypting symmetric details");
+        SymmetricInfoDTO symmetricInfo;
         try
         {
-            signature = CryptoLib.Common.DecryptAndDeserializeSignature(encryptedSignature, pemKey);
+            symmetricInfo = CryptoLib.Common.DecryptAndDeserializeSymmetricInfo(encryptedSymmetricInfo, privatePemKey);
         }
         catch (FormatException)
         {
             decryptionError = true;
             IsDecrypting = false;
-            decryptionErrorText = "Failed to decrypt signature";
+            decryptionErrorText = "Failed to decrypt symmetric details";
             return;
         }
 
         // Request the ciphertext from the server
         await SetNewDecryptionStatus($"Downloading {dataFormat}");
-        var serverDecryptionKey = CryptoLib.Common.GetDigest(signature.Key, DigestAlgorithm.SHA256);
+        var serverDecryptionKey = CryptoLib.Common.GetDigest(symmetricInfo.Key, DigestAlgorithm.SHA256);
         var encodedServerDecryptionKey = Convert.ToBase64String(serverDecryptionKey);
         var ciphertextResponse = await DownloadCiphertext(resourceType, id, encodedServerDecryptionKey);
 
@@ -191,11 +195,11 @@
         // Decrypt the ciphertext using the symmetric key from the signature
         await SetNewDecryptionStatus($"Decrypting {dataFormat}");
         byte[] ciphertextBytes = Convert.FromBase64String(ciphertextResponse.CipherText);
-        var symmetricParams = CryptoLib.Common.MakeSymmetricCryptoParams(signature.Key, signature.IV);
+        var symmetricParams = CryptoLib.Common.MakeSymmetricCryptoParams(symmetricInfo.Key, symmetricInfo.IV);
         byte[] plaintextBytes = CryptoLib.Common.UndoSymmetricEncryption(ciphertextBytes, symmetricParams);
 
         await SetNewDecryptionStatus($"Verifying decrypted {dataFormat}");
-        decryptionSuccess = CryptoLib.Common.VerifyPlaintextAgainstKnownDigest(plaintextBytes, signature.Digest, signature.Algorithm);
+        decryptionSuccess = CryptoLib.Common.VerifySignature(plaintextBytes, signature, publicPemKey);
 
         if (decryptionSuccess)
         {
