@@ -15,6 +15,15 @@
             <label for="emailFormControl" class="form-label">Email</label>
             <input @bind="Email" type="email" class="form-control" id="emailFormControl" placeholder="Email Not Set" readonly>
         </div>
+        <h2>Keys</h2>
+        <div class="mb-3">
+            <label for="privateKey" class="form-label">Private key</label>
+            <textarea @bind="PrivateKey" class="form-control" id="privateKey" disabled />
+        </div>
+        <!--<div class="mb-3">
+            <label for="publicKey" class="form-label">Public key</label>
+            <textarea @bind="PublicKey" class="form-control" id="publicKey" disabled />
+        </div>-->
         <button type="button" class="btn btn-secondary float-end mt-4" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
         <h2>Public Details</h2>
         <div class="mb-3">
@@ -38,15 +47,6 @@
                 <label class="form-check-label" for="acceptAnonymousFiles">Accept files from anonymous users</label>
                 <input @bind="AcceptAnonymousFiles" class="form-check-input" type="checkbox" id="acceptAnonymousFiles" disabled>
             </div>
-        </div>
-        <h2>Keys</h2>
-        <div class="mb-3">
-            <label for="privateKey" class="form-label">Private key</label>
-            <textarea @bind="PrivateKey" class="form-control" id="privateKey" disabled />
-        </div>
-        <div class="mb-3">
-            <label for="publicKey" class="form-label">Public key</label>
-            <textarea @bind="PublicKey" class="form-control" id="publicKey" disabled />
         </div>
         @if (IsEditing)
         {
