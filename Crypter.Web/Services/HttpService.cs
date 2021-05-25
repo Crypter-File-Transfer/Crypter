@@ -57,7 +57,6 @@ namespace Crypter.Web.Services
 
             using var response = await _httpClient.SendAsync(request);
 
-            Console.WriteLine(response);
             // Todo
             // We shouldn't log the user out just because they received an unauthorized response.
             // The user could be legitimately logged in and just tried going to a stale URL.
