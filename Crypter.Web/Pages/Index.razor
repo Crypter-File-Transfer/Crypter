@@ -2,7 +2,9 @@
 
 @inject HttpClient HttpClient
 @inject AppSettings AppSettings
+@inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
+@inject IAuthenticationService AuthenticationService
 
 <div class="container text-center my-4">
     <h1 class="title">Crypter.dev</h1>
@@ -52,6 +54,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+
+        if (AuthenticationService.User != null)
+        {
+            NavManager.NavigateTo("user");
+        }
+
         await JsRuntime.InvokeVoidAsync("setTitle", "Crypter");
         var diskMetricsResponse = await DownloadDiskMetrics();
         ServerHasDiskSpace = !diskMetricsResponse.Full;
