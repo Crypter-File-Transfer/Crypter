@@ -22,10 +22,12 @@ namespace Crypter.API.Controllers
         private const DigestAlgorithm ItemDigestAlgorithm = DigestAlgorithm.SHA256;
         private readonly IBaseItemService<MessageItem> _messageService;
         private readonly IBaseItemService<FileItem> _fileService;
+        private readonly IUserService _userService;
 
         public AnonymousItemController(IConfiguration configuration,
             IBaseItemService<MessageItem> messageService,
-            IBaseItemService<FileItem> fileService
+            IBaseItemService<FileItem> fileService,
+            IUserService userService
             )
         {
             BaseSaveDirectory = configuration["EncryptedFileStore:Location"];
@@ -33,12 +35,15 @@ namespace Crypter.API.Controllers
             MaxUploadSize = int.Parse(configuration["MaxUploadSizeMB"]) * (int)Math.Pow(1024, 2);
             _messageService = messageService;
             _fileService = fileService;
+            _userService = userService;
         }
 
         // POST: crypter.dev/api/anonymous/upload
         [HttpPost("upload")]
         public async Task<IActionResult> UploadNewItem([FromBody] AnonymousUploadRequest body)
         {
+            var recipientId = Guid.Empty.ToString();
+
             if (!UploadRules.IsValidUploadRequest(body.CipherText, body.ServerEncryptionKey))
             {
                 return new BadRequestObjectResult(
@@ -49,6 +54,11 @@ namespace Crypter.API.Controllers
             {
                 return new BadRequestObjectResult(
                     new AnonymousUploadResponse(ResponseCode.DiskFull));
+            }
+            
+            if (body.RecipientUsername != null)
+            {
+                recipientId = _userService.UserIdFromUsernameAsync(body.RecipientUsername).Result;
             }
 
             // Digest the ciphertext BEFORE applying server-side encryption
@@ -81,6 +91,7 @@ namespace Crypter.API.Controllers
                     var messageItem = new MessageItem(
                         newGuid,
                         Guid.Empty,
+                        Guid.Parse(recipientId),
                         body.Name,
                         size,
                         filepaths.ActualPathString,
@@ -98,6 +109,7 @@ namespace Crypter.API.Controllers
                     var fileItem = new FileItem(
                         newGuid,
                         Guid.Empty,
+                        Guid.Parse(recipientId),
                         body.Name,
                         body.ContentType,
                         size,

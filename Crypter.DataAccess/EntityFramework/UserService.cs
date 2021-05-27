@@ -220,11 +220,11 @@ namespace Crypter.DataAccess.EntityFramework
             return !await _context.Users.AnyAsync(x => x.Email.ToLower() == lowerEmail);
         }
 
-        public async Task<bool> IsRegisteredUserPublicAsync(string userName)
+        public async Task<bool> IsRegisteredUserPublicAsync(string username)
         {
             try
             {
-                var user = await _context.Users.DefaultIfEmpty().SingleOrDefaultAsync(x => x.UserName == userName);
+                var user = await _context.Users.DefaultIfEmpty().SingleOrDefaultAsync(x => x.UserName == username);
                 return user.IsPublic;
             }
             catch (Exception ex)
@@ -237,6 +237,12 @@ namespace Crypter.DataAccess.EntityFramework
         public async Task<User> ReadPublicUserProfileInformation(string username)
         {
             return await _context.Users.SingleAsync(x => x.UserName == username);
+        }
+
+        public async Task<string> UserIdFromUsernameAsync(string username)
+        {
+            var user = await _context.Users.SingleAsync(x => x.UserName == username);
+            return user.Id.ToString();
         }
     }
 }

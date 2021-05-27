@@ -8,6 +8,7 @@ namespace Crypter.DataAccess.Models
         // IBaseItem
         public Guid Id { get; set; }
         public Guid Sender { get; set; }
+        public Guid Recipient { get; set; }
         public int Size { get; set; }
         public string CipherTextPath { get; set; }
         public string Signature { get; set; }
@@ -21,10 +22,11 @@ namespace Crypter.DataAccess.Models
         // MessageItem
         public string Subject { get; set; }
 
-        public MessageItem(Guid id, Guid sender, string subject, int size, string cipherTextPath, string signature, string symmetricInfo, string publicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
+        public MessageItem(Guid id, Guid sender, Guid recipient, string subject, int size, string cipherTextPath, string signature, string symmetricInfo, string publicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
         {
             Id = id;
             Sender = sender;
+            Recipient = recipient;
             Subject = subject;
             Size = size;
             CipherTextPath = cipherTextPath;

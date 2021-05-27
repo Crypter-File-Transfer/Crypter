@@ -42,6 +42,13 @@ namespace Crypter.DataAccess.EntityFramework
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<MessageItem>> FindByRecipientAsync(Guid recipientId)
+        {
+            return await _context.Messages
+                .Where(x => x.Recipient == recipientId)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<MessageItem>> FindExpiredAsync()
         {
             return await _context.Messages

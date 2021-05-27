@@ -12,6 +12,7 @@ namespace Crypter.Contracts.Requests.Registered
         public string Signature { get; set; }
         public string ServerEncryptionKey { get; set; }
         public string PublicKey { get; set; }
+        public string RecipientUsername { get; set; }
 
         /// <summary>
         /// Do not use!
@@ -20,7 +21,7 @@ namespace Crypter.Contracts.Requests.Registered
         public RegisteredUserUploadRequest()
         { }
 
-        public RegisteredUserUploadRequest(string name, ResourceType type, string contentType, string cipherTextBase64, string encryptedSymmetricDataBase64, string signatureBase64, string serverEncryptionKeyBase64, string publicKeyBase64)
+        public RegisteredUserUploadRequest(string name, ResourceType type, string contentType, string cipherTextBase64, string encryptedSymmetricDataBase64, string signatureBase64, string serverEncryptionKeyBase64, string publicKeyBase64, string recipientUsername)
         {
             Name = name;
             Type = type;
@@ -30,6 +31,7 @@ namespace Crypter.Contracts.Requests.Registered
             Signature = signatureBase64;
             ServerEncryptionKey = serverEncryptionKeyBase64;
             PublicKey = publicKeyBase64;
+            RecipientUsername = recipientUsername;
         }
     }
 }

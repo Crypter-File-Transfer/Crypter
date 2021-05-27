@@ -8,6 +8,7 @@ namespace Crypter.DataAccess.Models
         // IBaseItem
         public Guid Id { get; set; }
         public Guid Sender { get; set; }
+        public Guid Recipient { get; set; }
         public int Size { get; set; }
         public string CipherTextPath { get; set; }
         public string Signature { get; set; }
@@ -22,10 +23,11 @@ namespace Crypter.DataAccess.Models
         public string FileName { get; set; }
         public string ContentType { get; set; }
 
-        public FileItem(Guid id, Guid sender, string fileName, string contentType, int size, string cipherTextPath, string signature, string symmetricInfo, string publicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
+        public FileItem(Guid id, Guid sender, Guid recipient, string fileName, string contentType, int size, string cipherTextPath, string signature, string symmetricInfo, string publicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
         {
             Id = id;
             Sender = sender;
+            Recipient = recipient; 
             FileName = fileName;
             ContentType = contentType;
             Size = size;

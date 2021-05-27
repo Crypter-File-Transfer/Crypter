@@ -8,6 +8,7 @@ namespace Crypter.Contracts.Responses.Anonymous
         public string PublicAlias { get; set; }
         public bool AllowsFiles { get; set; }
         public bool AllowsMessages { get; set; }
+        public string PublicKey { get; set; }
 
         /// <summary>
         /// Do not use!
@@ -28,12 +29,13 @@ namespace Crypter.Contracts.Responses.Anonymous
         /// </summary>
         /// <param name="username"></param>
         /// /// <param name="publicAlias"></param>
-        public AnonymousGetPublicProfileResponse(string username, string publicAlias, bool allowsFiles, bool allowsMessages) : base(ResponseCode.Success)
+        public AnonymousGetPublicProfileResponse(string username, string publicAlias, bool allowsFiles, bool allowsMessages, string publicKey) : base(ResponseCode.Success)
         {
             UserName = username;
             PublicAlias = publicAlias;
             AllowsFiles = allowsFiles;
             AllowsMessages = allowsMessages;
+            PublicKey = publicKey;
         }
     }
 }

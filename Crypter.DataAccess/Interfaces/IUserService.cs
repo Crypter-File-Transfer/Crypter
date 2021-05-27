@@ -22,7 +22,8 @@ namespace Crypter.DataAccess.Interfaces
         Task<bool> IsUsernameAvailableAsync(string username);
         Task<bool> IsEmailAvailableAsync(string email);
 
-        Task<bool> IsRegisteredUserPublicAsync(string userName);
-        Task<User> ReadPublicUserProfileInformation(string username); 
+        Task<bool> IsRegisteredUserPublicAsync(string username);
+        Task<User> ReadPublicUserProfileInformation(string username);
+        Task<string> UserIdFromUsernameAsync(string username); 
     }
 }

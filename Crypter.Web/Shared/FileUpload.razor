@@ -271,7 +271,7 @@
 
     private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string contentType, string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
     {
-        var requestBody = new AnonymousUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey);
+        var requestBody = new AnonymousUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, "Recipient");
 
         using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/anonymous/upload", requestBody);
 
@@ -290,7 +290,7 @@
         var token = AuthenticationService.User.Token;
 
         var request = new HttpRequestMessage(HttpMethod.Post, url);
-        var postBody = new RegisteredUserUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey);
+        var postBody = new RegisteredUserUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, "Recipient");
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Content = JsonContent.Create(postBody);

@@ -6,6 +6,7 @@ namespace Crypter.DataAccess.Interfaces
     {
         Guid Id { get; set; }
         Guid Sender { get; set; }
+        Guid Recipient { get; set; }
         int Size { get; set; }
         string CipherTextPath { get; set; }
         string Signature { get; set; }

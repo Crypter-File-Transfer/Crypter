@@ -24,6 +24,14 @@ namespace Crypter.DataAccess.EntityFramework
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<string> GetUserPublicKey(Guid userId)
+        {
+            var userKeys =  await _context.Keys
+                .Where(x => x.Owner == userId)
+                .FirstOrDefaultAsync();
+            return userKeys.PublicKey;
+        }
+
         public async Task<bool> InsertUserPersonalKeyAsync(Guid userId, string privateKey, string publicKey)
         {
             if (await GetUserPersonalKeyAsync(userId) != default(Key))

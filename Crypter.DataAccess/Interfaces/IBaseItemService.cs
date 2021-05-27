@@ -11,6 +11,7 @@ namespace Crypter.DataAccess.Interfaces
         Task DeleteAsync(Guid id);
 
         Task<IEnumerable<T>> FindBySenderAsync(Guid senderId);
+        Task<IEnumerable<T>> FindByRecipientAsync(Guid recipientId);
         Task<IEnumerable<T>> FindExpiredAsync();
         Task<long> GetAggregateSizeAsync();
     }

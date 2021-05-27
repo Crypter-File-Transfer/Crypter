@@ -21,6 +21,7 @@ CREATE TABLE `Users` (
 
 CREATE TABLE `Messages` (
   `Id` VARCHAR(36) NOT NULL,
+  `Recipient` VARCHAR(36), 
   `Subject` VARCHAR(256),
   `Sender` VARCHAR(36) NOT NULL,
   `Size` INT NOT NULL,
@@ -37,6 +38,7 @@ CREATE TABLE `Messages` (
 
 CREATE TABLE `Files` (
   `Id` VARCHAR(36) NOT NULL,
+  `Recipient` VARCHAR(36), 
   `Sender` VARCHAR(36),
   `FileName` VARCHAR(256) NOT NULL,
   `ContentType` VARCHAR(256) NOT NULL,

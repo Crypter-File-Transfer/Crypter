@@ -180,7 +180,7 @@
         {
             MessageSubject = "(no subject)";
         }
-        var postBody = new AnonymousUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey);
+        var postBody = new AnonymousUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, "Recipient");
         using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/anonymous/upload", postBody);
 
         if (!response.IsSuccessStatusCode)
@@ -202,7 +202,7 @@
         var token = AuthenticationService.User.Token;
 
         var request = new HttpRequestMessage(HttpMethod.Post, url);
-        var postBody = new RegisteredUserUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey);
+        var postBody = new RegisteredUserUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, "Recipient");
 
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         request.Content = JsonContent.Create(postBody);
