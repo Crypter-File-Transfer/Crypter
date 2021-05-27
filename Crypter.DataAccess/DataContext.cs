@@ -24,5 +24,6 @@ namespace Crypter.DataAccess
         public DbSet<Key> Keys { get; set; }
         public DbSet<FileItem> Files { get; set; }
         public DbSet<MessageItem> Messages { get; set; }
+        public DbSet<BetaKey> BetaKeys { get; set; }
     }
 }

@@ -5,8 +5,10 @@
         Success,
         EmptyUsername,
         EmptyPassword,
+        PasswordRequirementsNotMet,
         EmptyEmail,
         UsernameTaken,
-        EmailTaken
+        EmailTaken,
+        InvalidBetaKey
     }
 }

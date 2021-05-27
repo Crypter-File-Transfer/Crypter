@@ -33,6 +33,7 @@ namespace CrypterAPI
             services.AddScoped<IKeyService, KeyService>();
             services.AddScoped<IBaseItemService<MessageItem>, MessageItemService>();
             services.AddScoped<IBaseItemService<FileItem>, FileItemService>();
+            services.AddScoped<IBetaKeyService, BetaKeyService>();
 
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appSettingsSection);

@@ -5,6 +5,7 @@ namespace Crypter.Contracts.Responses.Registered
     public class UserRegisterResponse : BaseResponse
     {
         public InsertUserResult Result { get; set; }
+        public string ResultMessage { get; set; }
 
         /// <summary>
         /// Do not use!
@@ -23,6 +24,7 @@ namespace Crypter.Contracts.Responses.Registered
         public UserRegisterResponse(InsertUserResult result) : base(ResponseCode.Success)
         {
             Result = result;
+            ResultMessage = result.ToString();
         }
     }
 }

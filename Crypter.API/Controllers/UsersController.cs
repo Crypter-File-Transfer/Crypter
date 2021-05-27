@@ -4,7 +4,7 @@ using Crypter.Contracts.DTO;
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests.Registered;
 using Crypter.Contracts.Responses.Registered;
-using Crypter.Contracts.Responses.Anonymous; 
+using Crypter.Contracts.Responses.Anonymous;
 using Crypter.Contracts.Responses.Search;
 using Crypter.CryptoLib.Enums;
 using Crypter.DataAccess.FileSystem;
@@ -32,6 +32,7 @@ namespace Crypter.API.Controllers
         private readonly IKeyService _keyService;
         private readonly IBaseItemService<MessageItem> _messageService;
         private readonly IBaseItemService<FileItem> _fileService;
+        private readonly IBetaKeyService _betaKeyService;
         private readonly AppSettings _appSettings;
         private readonly string BaseSaveDirectory;
         private readonly long AllocatedDiskSpace;
@@ -43,6 +44,7 @@ namespace Crypter.API.Controllers
             IKeyService keyService,
             IBaseItemService<MessageItem> messageService,
             IBaseItemService<FileItem> fileService,
+            IBetaKeyService betaKeyService,
             IOptions<AppSettings> appSettings,
             IConfiguration configuration
             )
@@ -51,6 +53,7 @@ namespace Crypter.API.Controllers
             _keyService = keyService;
             _messageService = messageService;
             _fileService = fileService;
+            _betaKeyService = betaKeyService;
             _appSettings = appSettings.Value;
             BaseSaveDirectory = configuration["EncryptedFileStore:Location"];
             AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(1024, 3);
@@ -61,10 +64,17 @@ namespace Crypter.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> RegisterAsync([FromBody] RegisterUserRequest body)
         {
+            var foundBetaKey = await _betaKeyService.ReadAsync(body.BetaKey);
+            if (foundBetaKey == null)
+            {
+                return new BadRequestObjectResult(
+                    new UserRegisterResponse(InsertUserResult.InvalidBetaKey));
+            }
+
             if (!AuthRules.IsValidPassword(body.Password))
             {
                 return new BadRequestObjectResult(
-                    new UserRegisterResponse(ResponseCode.PasswordRequirementsNotMet));
+                    new UserRegisterResponse(InsertUserResult.PasswordRequirementsNotMet));
             }
 
             var insertResult = await _userService.InsertAsync(body.Username, body.Password, body.Email);
@@ -72,6 +82,7 @@ namespace Crypter.API.Controllers
 
             if (insertResult == InsertUserResult.Success)
             {
+                await _betaKeyService.DeleteAsync(foundBetaKey.Key);
                 return new OkObjectResult(responseObject);
             }
             else

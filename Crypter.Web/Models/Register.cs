@@ -14,5 +14,8 @@ namespace Crypter.Web.Models
 
         [EmailAddress(ErrorMessage = "Not a valid email address")]
         public string Email { get; set; }
+
+        [Required(ErrorMessage = "A valid beta key is required at this time")]
+        public string BetaKey { get; set; }
     }
 }

@@ -5,6 +5,7 @@
         public string Username { get; set; }
         public string Password { get; set; }
         public string Email { get; set; }
+        public string BetaKey { get; set; }
 
         /// <summary>
         /// Do not use!
@@ -13,10 +14,11 @@
         public RegisterUserRequest()
         { }
 
-        public RegisterUserRequest(string username, string password, string email = null)
+        public RegisterUserRequest(string username, string password, string betaKey, string email = null)
         {
             Username = username;
             Password = password;
+            BetaKey = betaKey;
             Email = email;
         }
     }

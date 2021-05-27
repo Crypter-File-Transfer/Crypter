@@ -15,31 +15,36 @@
 }
 else
 {
-    <EditForm Model="@registerInfo" OnValidSubmit="@OnRegisterClicked">
-        <DataAnnotationsValidator />
-        @if (RegistrationError)
-        {
-            <div class="alert alert-danger" role="alert">
-                @RegistrationErrorText
-            </div>
-        }
-        <div class="mb-3">
-            <label for="usernameFormControl" class="form-label">Username</label>
-            <InputText @bind-Value="@registerInfo.Username" class="form-control" id="usernameFormControl" />
-            <ValidationMessage For="@(() => registerInfo.Username)" />
+<EditForm Model="@registerInfo" OnValidSubmit="@OnRegisterClicked">
+    <DataAnnotationsValidator />
+    @if (RegistrationError)
+    {
+        <div class="alert alert-danger" role="alert">
+            @RegistrationErrorText
         </div>
-        <div class="mb-3">
-            <label for="passwordFormControl" class="form-label">Password</label>
-            <InputText type="password" @bind-Value="@registerInfo.Password" class="form-control" id="passwordFormControl" />
-            <ValidationMessage For="@(() => registerInfo.Password)" />
-        </div>
-        <div class="mb-3">
-            <label for="emailFormControl" class="form-label">Email</label>
-            <InputText type="email" @bind-Value="@registerInfo.Email" class="form-control" id="emailFormControl" />
-            <ValidationMessage For="@(() => registerInfo.Email)" />
-        </div>
-        <button type="submit" class="btn btn-primary">Register</button>
-    </EditForm>
+    }
+    <div class="mb-3">
+        <label for="usernameFormControl" class="form-label">Username</label>
+        <InputText @bind-Value="@registerInfo.Username" class="form-control" id="usernameFormControl" />
+        <ValidationMessage For="@(() => registerInfo.Username)" />
+    </div>
+    <div class="mb-3">
+        <label for="passwordFormControl" class="form-label">Password</label>
+        <InputText type="password" @bind-Value="@registerInfo.Password" class="form-control" id="passwordFormControl" />
+        <ValidationMessage For="@(() => registerInfo.Password)" />
+    </div>
+    <div class="mb-3">
+        <label for="emailFormControl" class="form-label">Email</label>
+        <InputText type="email" @bind-Value="@registerInfo.Email" class="form-control" id="emailFormControl" />
+        <ValidationMessage For="@(() => registerInfo.Email)" />
+    </div>
+    <div class="mb-3">
+        <label for="betaKeyFormControl" class="form-label">Beta Key</label>
+        <InputText @bind-Value="@registerInfo.BetaKey" class="form-control" id="betaKeyFormControl" />
+        <ValidationMessage For="@(() => registerInfo.BetaKey)" />
+    </div>
+    <button type="submit" class="btn btn-primary">Register</button>
+</EditForm>
 }
 
 @code {
@@ -65,13 +70,14 @@ else
         byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(registerInfo.Username, registerInfo.Password);
         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
-        var requestBody = new RegisterUserRequest(registerInfo.Username, digestedPasswordBase64, registerInfo.Email);
+        var requestBody = new RegisterUserRequest(registerInfo.Username, digestedPasswordBase64, registerInfo.BetaKey, registerInfo.Email);
         using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
+        var responseContent = await response.Content.ReadFromJsonAsync<UserRegisterResponse>();
 
         if (!response.IsSuccessStatusCode)
         {
             RegistrationError = true;
-            RegistrationErrorText = response.ReasonPhrase;
+            RegistrationErrorText = responseContent.Result.ToString();
         }
         else
         {
