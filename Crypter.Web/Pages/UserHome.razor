@@ -103,7 +103,6 @@
         {
             // Error handling
             SentUploadsStatus = response.StatusCode.ToString();
-            Console.WriteLine(SentUploadsStatus);
         }
 
         var content = await response.Content.ReadAsStringAsync();

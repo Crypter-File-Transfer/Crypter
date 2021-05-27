@@ -68,7 +68,13 @@
         catch (Exception ex)
         {
             LoginError = true;
-            LoginErrorText = ex.Message;
+            if (ex.Message == "BadRequest")
+            {
+                LoginErrorText = "Incorrect username or password";
+            } else
+            {
+                LoginErrorText = ex.Message;
+            }
         }
     }
 

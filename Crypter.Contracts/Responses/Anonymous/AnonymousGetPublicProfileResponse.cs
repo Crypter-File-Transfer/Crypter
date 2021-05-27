@@ -1,5 +1,4 @@
-﻿using System;
-using Crypter.Contracts.Enum;
+﻿using Crypter.Contracts.Enum;
 
 namespace Crypter.Contracts.Responses.Anonymous
 {
@@ -34,7 +33,6 @@ namespace Crypter.Contracts.Responses.Anonymous
             UserName = username;
             PublicAlias = publicAlias;
             AllowsFiles = allowsFiles;
-            AllowsMessages = allowsMessages;
             AllowsMessages = allowsMessages;
         }
     }

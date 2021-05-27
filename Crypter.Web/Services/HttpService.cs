@@ -67,15 +67,10 @@ namespace Crypter.Web.Services
                 return default;
             }
 
-            if (response.StatusCode == HttpStatusCode.BadRequest)
-            {
-                throw new Exception("Username or password is incorrect");
-            }
-
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-                throw new Exception(error["message"]);
+                var error = response.StatusCode.ToString();
+                throw new Exception(error);
             }
 
             return await response.Content.ReadFromJsonAsync<T>();
