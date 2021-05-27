@@ -8,6 +8,6 @@ namespace Crypter.DataAccess.Interfaces
     {
         Task<Key> GetUserPersonalKeyAsync(Guid userId);
         Task<bool> InsertUserPersonalKeyAsync(Guid userId, string privateKey, string publicKey);
-        Task<string> GetUserPublicKey(Guid userId); 
+        Task<string> GetUserPublicKeyAsync(Guid userId); 
     }
 }

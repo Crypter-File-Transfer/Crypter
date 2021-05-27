@@ -42,7 +42,7 @@ namespace Crypter.API.Controllers
         [HttpPost("upload")]
         public async Task<IActionResult> UploadNewItem([FromBody] AnonymousUploadRequest body)
         {
-            var recipientId = Guid.Empty.ToString();
+            var recipientId = Guid.Empty;
 
             if (!UploadRules.IsValidUploadRequest(body.CipherText, body.ServerEncryptionKey))
             {
@@ -91,7 +91,7 @@ namespace Crypter.API.Controllers
                     var messageItem = new MessageItem(
                         newGuid,
                         Guid.Empty,
-                        Guid.Parse(recipientId),
+                        recipientId,
                         body.Name,
                         size,
                         filepaths.ActualPathString,
@@ -109,7 +109,7 @@ namespace Crypter.API.Controllers
                     var fileItem = new FileItem(
                         newGuid,
                         Guid.Empty,
-                        Guid.Parse(recipientId),
+                        recipientId,
                         body.Name,
                         body.ContentType,
                         size,

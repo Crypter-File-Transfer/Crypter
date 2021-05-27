@@ -239,10 +239,10 @@ namespace Crypter.DataAccess.EntityFramework
             return await _context.Users.SingleAsync(x => x.UserName == username);
         }
 
-        public async Task<string> UserIdFromUsernameAsync(string username)
+        public async Task<Guid> UserIdFromUsernameAsync(string username)
         {
             var user = await _context.Users.SingleAsync(x => x.UserName == username);
-            return user.Id.ToString();
+            return user.Id;
         }
     }
 }

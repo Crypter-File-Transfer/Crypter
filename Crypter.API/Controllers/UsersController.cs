@@ -237,7 +237,7 @@ namespace Crypter.API.Controllers
         public async Task<IActionResult> UploadNewItem([FromBody] RegisteredUserUploadRequest body)
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
-            var recipientId = Guid.Empty.ToString();
+            var recipientId = Guid.Empty;
 
             if (!UploadRules.IsValidUploadRequest(body.CipherText, body.ServerEncryptionKey))
             {
@@ -287,7 +287,7 @@ namespace Crypter.API.Controllers
                     var messageItem = new MessageItem(
                         newGuid,
                         Guid.Parse(userId),
-                        Guid.Parse(recipientId),
+                        recipientId,
                         body.Name,
                         size,
                         filepaths.ActualPathString,
@@ -305,7 +305,7 @@ namespace Crypter.API.Controllers
                     var fileItem = new FileItem(
                         newGuid,
                         Guid.Parse(userId),
-                        Guid.Parse(recipientId),
+                        recipientId,
                         body.Name,
                         body.ContentType,
                         size,
@@ -386,7 +386,7 @@ namespace Crypter.API.Controllers
             if (profileIsPublic)
             {
                 var user = await _userService.ReadPublicUserProfileInformation(userName);
-                var publicKey = await _keyService.GetUserPublicKey(Guid.Parse(await _userService.UserIdFromUsernameAsync(userName)));
+                var publicKey = await _keyService.GetUserPublicKeyAsync(await _userService.UserIdFromUsernameAsync(userName));
                 return new OkObjectResult(
                     new AnonymousGetPublicProfileResponse(user.UserName, user.PublicAlias, user.AllowAnonymousFiles, user.AllowAnonymousMessages, publicKey));
             }
