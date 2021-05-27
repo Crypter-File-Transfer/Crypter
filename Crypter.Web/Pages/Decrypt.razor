@@ -5,13 +5,20 @@
 @inject HttpClient HttpClient
 @inject NavigationManager NavManager
 @inject AppSettings AppSettings
+@inject IAuthenticationService AuthenticationService
 
+@if (AuthenticationService.User != null)
+{
+    <NavigationUser />
+}
 <div class="container my-4">
     <h1>Decrypt your @dataFormat</h1>
     @if (!error)
     {
         <DecryptDetails @bind-DataFormat="dataFormat" @bind-Id="Id" @bind-Name="name" @bind-ContentType="contentType" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
-    } else {
+    }
+    else
+    {
         <div class="container text-center">
             <h2>@errorText</h2>
         </div>

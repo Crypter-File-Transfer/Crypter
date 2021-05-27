@@ -34,7 +34,14 @@
                             foreach (UserUploadItemDTO item in Downloads)
                             {
                                 <li class="list-group-item">
-                                    <a href=""><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                                    @if (item.ItemType == 0)
+                                    {
+                                        <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                                    }
+                                    else
+                                    {
+                                        <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                                    }
                                     <div class="row">
                                         <div class="col-12">
                                             Expires on: @item.ExpirationDate
@@ -66,7 +73,14 @@
                         } else { 
                             foreach (UserUploadItemDTO item in Uploads) {
                                 <li class="list-group-item">
-                                    <a href=""><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                                    @if (item.ItemType == 0)
+                                    {
+                                        <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                                    }
+                                    else
+                                    {
+                                        <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                                    }
                                     <div class="row">
                                         <div class="col-12">
                                             Expires on: @item.ExpirationDate
