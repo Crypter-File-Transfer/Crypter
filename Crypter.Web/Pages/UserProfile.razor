@@ -35,12 +35,12 @@
                         @if (ProfileData.AllowsFiles)
                         {
                             <button class="btn btn-secondary mr-3" @onclick="@OnEncryptAFileClicked">Send a file</button>
-                            <UserFileUploadModal @ref="FileModal" />
+                            <UserFileUploadModal @ref="FileModal" @bind-Username="Username" />
                         }
                         @if (ProfileData.AllowsMessages)
                         {
                             <button class="btn btn-secondary" @onclick="@OnEncryptAMessageClicked">Send a message</button>
-                            <UserMessageUploadModal @ref="MessageModal" />
+                            <UserMessageUploadModal @ref="MessageModal" @bind-Username="Username" />
                         }
                         </div>
                     </div>
@@ -57,6 +57,8 @@
 
     public bool ProfileFound;
     public string NullMessage = "Looking for profile...";
+
+    private Guid UserId;
 
     private AnonymousGetPublicProfileResponse ProfileData;
 
