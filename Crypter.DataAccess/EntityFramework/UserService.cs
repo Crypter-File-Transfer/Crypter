@@ -138,9 +138,8 @@ namespace Crypter.DataAccess.EntityFramework
 
         public async Task DeleteAsync(Guid id)
         {
-            await _context.Users
-                .FromSqlRaw("DELETE FROM User WHERE Id = {0}", id)
-                .ToListAsync();
+            await _context.Database
+                .ExecuteSqlRawAsync("DELETE FROM Users WHERE Id = {0}", id);
         }
 
         public async Task<User> AuthenticateAsync(string username, string password)
