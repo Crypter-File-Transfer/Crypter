@@ -5,6 +5,7 @@ namespace Crypter.Contracts.Responses.Anonymous
 {
    public class AnonymousPreviewResponse : BaseResponse
    {
+      public Guid Recipient { get; set; }
       public string Name { get; set; }
       public string ContentType { get; set; }
       public int Size { get; set; }
@@ -31,8 +32,9 @@ namespace Crypter.Contracts.Responses.Anonymous
       /// <param name="name"></param>
       /// <param name="size"></param>
       /// <param name="expirationUTC"></param>
-      public AnonymousPreviewResponse(string name, string contentType, int size, DateTime creationUTC, DateTime expirationUTC) : base(ResponseCode.Success)
+      public AnonymousPreviewResponse(Guid recipient, string name, string contentType, int size, DateTime creationUTC, DateTime expirationUTC) : base(ResponseCode.Success)
       {
+         Recipient = recipient;
          Name = name;
          ContentType = contentType;
          Size = size;

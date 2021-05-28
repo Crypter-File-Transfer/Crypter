@@ -2,6 +2,7 @@
 @inject AppSettings AppSettings
 @inject IJSRuntime js
 @inject IHttpService HttpService
+@inject IAuthenticationService AuthenticationService
 
 <div class="row">
     <div class="col-md-4">
@@ -114,6 +115,9 @@
     // Store the Content Type received by parent component
     [Parameter] public string ContentType { get; set; }
 
+    // Is for a specific recipient
+    [Parameter] public bool IsCorrectRecipient { get; set; }
+
     // Watch for changes in variable values in parent component to update here
     [Parameter] public EventCallback<string> DataFormatChanged { get; set; }
     [Parameter] public EventCallback<Guid> IdChanged { get; set; }
@@ -122,6 +126,15 @@
     [Parameter] public EventCallback<int> SizeChanged { get; set; }
     [Parameter] public EventCallback<string> ExpirationChanged { get; set; }
     [Parameter] public EventCallback<string> ContentTypeChanged { get; set; }
+    [Parameter] public EventCallback<bool> IsCorrectRecipientChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsCorrectRecipient == true)
+        {
+            await OnDecryptClicked(DataFormat, Id, AuthenticationService.User.PrivateKey);
+        }
+    }
 
     private async Task OnDecryptClicked(string dataFormat, Guid id, string privateDecryptionKey)
     {

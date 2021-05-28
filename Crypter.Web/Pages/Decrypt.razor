@@ -11,19 +11,28 @@
 {
     <NavigationUser />
 }
-<div class="container my-4">
-    <h1>Decrypt your @dataFormat</h1>
-    @if (!error)
-    {
-        <DecryptDetails @bind-DataFormat="dataFormat" @bind-Id="Id" @bind-Name="name" @bind-ContentType="contentType" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
-    }
-    else
-    {
-        <div class="container text-center">
-            <h2>@errorText</h2>
-        </div>
-    }
-</div>
+@if (correctRecipient == true || anonymousRecipient == true)
+{
+    <div class="container my-4">
+        <h1>Decrypt your @dataFormat</h1>
+        @if (!error)
+        {
+            <DecryptDetails @bind-IsCorrectRecipient="correctRecipient" @bind-DataFormat="dataFormat" @bind-Id="Id" @bind-Name="name" @bind-ContentType="contentType" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
+        }
+        else
+        {
+            <div class="container text-center">
+                <h2>@errorText</h2>
+            </div>
+        }
+    </div>
+} else
+{
+    <div class="container my-4">
+        <h2>This message is for a specific recipient.</h2>
+        <p>If you are the intended recipient, please <a href="/login">login</a> and check your received files and messages.</p>
+    </div>
+}
 
 @code {
     string dataFormat = "";
@@ -34,6 +43,8 @@
     string contentType = "";
     private bool error = false;
     private string errorText = "";
+    private bool anonymousRecipient = false;
+    private bool correctRecipient = false;
 
     [Parameter]
     public Guid Id { get; set; }
@@ -55,6 +66,15 @@
         {
             case Contracts.Enum.ResponseCode.Success:
                 PopulatePreview(previewResponse.Name, previewResponse.Size, previewResponse.CreationUTC, previewResponse.ExpirationUTC, previewResponse.ContentType);
+                if (previewResponse.Recipient == Guid.Empty)
+                {
+                    Console.WriteLine(previewResponse.Recipient.ToString());
+                    anonymousRecipient = true;
+                }
+                else if (previewResponse.Recipient.ToString() == AuthenticationService.User.Id)
+                {
+                    correctRecipient = true;
+                }
                 break;
             default:
                 // Failed response must be handled in DownloadMessagePreview

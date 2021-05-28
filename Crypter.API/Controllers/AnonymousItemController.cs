@@ -149,7 +149,7 @@ namespace Crypter.API.Controllers
                         return new NotFoundObjectResult(
                             new AnonymousPreviewResponse(ResponseCode.NotFound));
                     }
-                    response = new AnonymousPreviewResponse(foundMessage.Subject, "text", foundMessage.Size, foundMessage.Created, foundMessage.Expiration);
+                    response = new AnonymousPreviewResponse(foundMessage.Recipient, foundMessage.Subject, "text", foundMessage.Size, foundMessage.Created, foundMessage.Expiration);
 
                     break;
                 case ResourceType.File:
@@ -160,7 +160,7 @@ namespace Crypter.API.Controllers
                         return new NotFoundObjectResult(
                             new AnonymousPreviewResponse(ResponseCode.NotFound));
                     }
-                    response = new AnonymousPreviewResponse(foundFile.FileName, foundFile.ContentType, foundFile.Size, foundFile.Created, foundFile.Expiration);
+                    response = new AnonymousPreviewResponse(foundFile.Recipient, foundFile.FileName, foundFile.ContentType, foundFile.Size, foundFile.Created, foundFile.Expiration);
 
                     break;
                 default:
