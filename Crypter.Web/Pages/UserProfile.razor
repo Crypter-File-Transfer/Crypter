@@ -35,12 +35,12 @@
                         @if (ProfileData.AllowsFiles)
                         {
                             <button class="btn btn-secondary mr-3" @onclick="@OnEncryptAFileClicked">Send a file</button>
-                            <UserFileUploadModal @ref="FileModal" @bind-Username="Username" />
+                            <UserFileUploadModal @ref="FileModal" @bind-Username="Username" @bind-UserPublicKey="UserPublicKey" />
                         }
                         @if (ProfileData.AllowsMessages)
                         {
                             <button class="btn btn-secondary" @onclick="@OnEncryptAMessageClicked">Send a message</button>
-                            <UserMessageUploadModal @ref="MessageModal" @bind-Username="Username" />
+                            <UserMessageUploadModal @ref="MessageModal" @bind-Username="Username" @bind-UserPublicKey="UserPublicKey" />
                         }
                         </div>
                     </div>
@@ -61,11 +61,13 @@
     private Guid UserId;
 
     private AnonymousGetPublicProfileResponse ProfileData;
+    private string UserPublicKey;
 
     protected override async Task OnInitializedAsync()
     {
         await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Profile");
         ProfileData = await DownloadUserProfile();
+        UserPublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(ProfileData.PublicKey));
     }
 
     private async Task<AnonymousGetPublicProfileResponse> DownloadUserProfile()

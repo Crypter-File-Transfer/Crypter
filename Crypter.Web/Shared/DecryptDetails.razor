@@ -43,7 +43,7 @@
                             <input type="text" class="form-control" id="decryptionKey" @bind="decryptionKey">
                         </div>
                         <div class="mb-3">
-                            <button type="button" class="btn btn-primary" @onclick="@(e => OnDecryptClicked(DataFormat, Id, decryptionKey))">Decrypt your @DataFormat</button>
+                            <button type="button" class="btn btn-primary" @onclick="@(e => OnDecryptClicked(DataFormat, Id, decryptionKey, false))">Decrypt your @DataFormat</button>
                         </div>
                     }
                     else
@@ -130,31 +130,38 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (IsCorrectRecipient == true)
+        if (IsCorrectRecipient)
         {
-            await OnDecryptClicked(DataFormat, Id, AuthenticationService.User.PrivateKey);
+            await OnDecryptClicked(DataFormat, Id, AuthenticationService.User.PrivateKey, true);
         }
     }
 
-    private async Task OnDecryptClicked(string dataFormat, Guid id, string privateDecryptionKey)
+    private async Task OnDecryptClicked(string dataFormat, Guid id, string privateKey, bool privateKeyAlreadyDecoded)
     {
         IsDecrypting = true;
         decryptionError = false;
 
-        // Attempt to convert the decryption key from Base64
-        await SetNewDecryptionStatus("Decoding key");
         string privatePemKey;
-        try
+        if (privateKeyAlreadyDecoded)
         {
-            byte[] pemKeyAsBytes = Convert.FromBase64String(privateDecryptionKey);
-            privatePemKey = Encoding.UTF8.GetString(pemKeyAsBytes);
+            privatePemKey = privateKey;
         }
-        catch (FormatException)
+        else
         {
-            decryptionError = true;
-            IsDecrypting = false;
-            decryptionErrorText = "Invalid key format";
-            return;
+            // Attempt to convert the decryption key from Base64
+            await SetNewDecryptionStatus("Decoding key");
+            try
+            {
+                byte[] pemKeyAsBytes = Convert.FromBase64String(privateKey);
+                privatePemKey = Encoding.UTF8.GetString(pemKeyAsBytes);
+            }
+            catch (FormatException)
+            {
+                decryptionError = true;
+                IsDecrypting = false;
+                decryptionErrorText = "Invalid key format";
+                return;
+            }
         }
 
         ResourceType resourceType = DataFormat.ToLower() == "message"

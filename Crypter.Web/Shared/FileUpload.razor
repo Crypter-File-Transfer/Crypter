@@ -196,7 +196,11 @@
         var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricParams);
 
         await SetNewEncryptionStatus("Encrypting symmetric key");
-        var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, asymmetricKeyPair.Public);
+        var publicKeyToEncryptWith = string.IsNullOrEmpty(UserPublicKey)
+            ? asymmetricKeyPair.Public
+            : CryptoLib.Common.ConvertRsaPublicKeyFromPEM(UserPublicKey);
+
+        var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, publicKeyToEncryptWith);
 
         await SetNewEncryptionStatus("Creating a signature");
         var signature = CryptoLib.Common.SignPlaintext(fileBytes, asymmetricKeyPair.Private);
@@ -309,5 +313,7 @@
     private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
 
     [Parameter] public string Username { get; set; }
+    [Parameter] public string UserPublicKey { get; set; }
     [Parameter] public EventCallback<string> UsernameChanged { get; set; }
+    [Parameter] public EventCallback<string> UserPublicKeyChanged { get; set; }
 }
