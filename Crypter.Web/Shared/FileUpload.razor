@@ -18,9 +18,15 @@
                            @ondragenter="HandleDragEnter"
                            @ondragleave="HandleDragLeave" />
             </div>
-            @if ((fileSizeError || fileCountError || noFileSelected || serverIsFull))
+            @if ((filesNotAcceptedByUser || fileSizeError || fileCountError || noFileSelected || serverIsFull))
             {
                 <div class="validation-errors my-3">
+                    @if (filesNotAcceptedByUser)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            This user doesn't allow files from users.
+                        </div>
+                    }
                     @if (fileSizeError)
                     {
                         <div class="alert alert-danger" role="alert">
@@ -96,6 +102,7 @@
     private bool fileCountError = false;
     private bool noFileSelected = false;
     private bool serverIsFull = false;
+    private bool filesNotAcceptedByUser = false;
     private Guid returnedId;
     private string publicKey;
     private string privateKey;
@@ -225,10 +232,17 @@
                 return;
             }
 
+            if (response.Status.Equals(Contracts.Enum.ResponseCode.FilesNotAcceptedByUser))
+            {
+                filesNotAcceptedByUser = true;
+                IsEncrypting = false;
+                return;
+            }
+
             // Send data to success modal component
             CompletedUpload("file", response.Id,
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
+           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
         }
         else
         {
@@ -242,10 +256,17 @@
                 return;
             }
 
+            if (response.Status.Equals(Contracts.Enum.ResponseCode.FilesNotAcceptedByUser))
+            {
+                filesNotAcceptedByUser = true;
+                IsEncrypting = false;
+                return;
+            }
+
             // Send data to success modal component
             CompletedUpload("file", response.Id,
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
+           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
         }
 
         // Open modal

@@ -9,6 +9,8 @@
         DiskFull,
         DecryptFailure,
         InvalidCredentials,
-        DigestsDoNotMatch
+        DigestsDoNotMatch,
+        MessagesNotAcceptedByUser,
+        FilesNotAcceptedByUser
     }
 }

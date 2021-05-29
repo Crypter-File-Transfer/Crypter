@@ -243,5 +243,17 @@ namespace Crypter.DataAccess.EntityFramework
             var user = await _context.Users.SingleAsync(x => x.UserName == username);
             return user.Id;
         }
+
+        public async Task<bool> MessagesAllowedByUserAsync(Guid recipientId)
+        {
+            var user = await _context.Users.DefaultIfEmpty().SingleOrDefaultAsync(x => x.Id == recipientId);
+            return user.AllowAnonymousMessages;
+        }
+
+        public async Task<bool> FilesAllowedByUserAsync(Guid recipientId)
+        {
+            var user = await _context.Users.DefaultIfEmpty().SingleOrDefaultAsync(x => x.Id == recipientId);
+            return user.AllowAnonymousFiles;
+        }
     }
 }

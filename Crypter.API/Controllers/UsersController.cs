@@ -265,6 +265,20 @@ namespace Crypter.API.Controllers
             if (body.RecipientUsername != null)
             { 
                 recipientId = _userService.UserIdFromUsernameAsync(body.RecipientUsername).Result;
+
+                if (body.Type == ResourceType.Message &&
+                    !_userService.MessagesAllowedByUserAsync(recipientId).Result)
+                {
+                    return new BadRequestObjectResult(
+                        new RegisteredUserUploadResponse(ResponseCode.MessagesNotAcceptedByUser));
+                }
+
+                if (body.Type == ResourceType.File &&
+                    !_userService.FilesAllowedByUserAsync(recipientId).Result)
+                {
+                    return new BadRequestObjectResult(
+                        new RegisteredUserUploadResponse(ResponseCode.FilesNotAcceptedByUser));
+                }
             }
 
             // Digest the ciphertext BEFORE applying server-side encryption

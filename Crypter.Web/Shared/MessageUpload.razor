@@ -128,11 +128,18 @@
                 IsEncrypting = false;
                 return;
             }
+            if (response.Status.Equals(Contracts.Enum.ResponseCode.MessagesNotAcceptedByUser))
+            {
+                Error = true;
+                ErrorMessage = "This user doesn't allow anonymous messages.";
+                IsEncrypting = false;
+                return;
+            }
 
             // Send data to success modal component
             CompletedUpload("message", response.Id,
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+       Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
+       Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
         }
         else
         {
@@ -146,10 +153,18 @@
                 return;
             }
 
+            if (response.Status.Equals(Contracts.Enum.ResponseCode.MessagesNotAcceptedByUser))
+            {
+                Error = true;
+                ErrorMessage = "This user doesn't allow messages.";
+                IsEncrypting = false;
+                return;
+            }
+
             // Send data to success modal component
             CompletedUpload("message", response.Id,
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
-               Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
+           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
         }
 
         // Open modal
