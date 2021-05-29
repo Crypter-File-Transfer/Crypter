@@ -68,7 +68,6 @@
                 PopulatePreview(previewResponse.Name, previewResponse.Size, previewResponse.CreationUTC, previewResponse.ExpirationUTC, previewResponse.ContentType);
                 if (previewResponse.Recipient == Guid.Empty)
                 {
-                    Console.WriteLine(previewResponse.Recipient.ToString());
                     anonymousRecipient = true;
                 }
                 else if (previewResponse.Recipient.ToString() == AuthenticationService.User.Id)

@@ -34,23 +34,32 @@
                 </div>
             </div>
         </div>
-        <div class="card mt-3">
-            <div class="card-body">
-                <div class="progress">
-                    <div class="progress-bar" role="progressbar" style="width: @(ServerSpacePercentage + '%')" aria-valuenow="@ServerSpacePercentage" aria-valuemin="0" aria-valuemax="100"></div>
+        @if (!ServerHasDiskSpace || ServerSpacePercentageRemaining < 20)
+        {
+            <div class="card mt-3">
+                <div class="card-body">
+                    @if (!ServerHasDiskSpace)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <h3>Server is currently out of disk space. More space will become available as uploads are downloaded or expired.</h3>
+                        </div>
+                    }
+                    else if (ServerSpacePercentageRemaining < 20)
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <h3>Server is currently low on disk space. Please be mindful when transferring large amounts of data.</h3>
+                        </div>
+                    }
                 </div>
-                <h6 class="card-subtitle mt-2 text-muted">@AvailableServerSpace bytes remaining</h6>
             </div>
-        </div>
+        }
     </div>
 </div>
 
 @code
 {
-    public bool ServerHasDiskSpace = false;
-    public long AllocatedServerSpace = 0;
-    public long AvailableServerSpace = 0;
-    public string ServerSpacePercentage = "0";
+    public bool ServerHasDiskSpace = true;
+    public double ServerSpacePercentageRemaining = 100.00;
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,10 +72,10 @@
         await JsRuntime.InvokeVoidAsync("setTitle", "Crypter");
         var diskMetricsResponse = await DownloadDiskMetrics();
         ServerHasDiskSpace = !diskMetricsResponse.Full;
-        AllocatedServerSpace = long.Parse(diskMetricsResponse.Allocated);
-        AvailableServerSpace = long.Parse(diskMetricsResponse.Available);
+        var allocatedServerSpace = long.Parse(diskMetricsResponse.Allocated);
+        var availableServerSpace = long.Parse(diskMetricsResponse.Available);
 
-        ServerSpacePercentage = ((1 - (AvailableServerSpace / AllocatedServerSpace)) * 100).ToString();
+        ServerSpacePercentageRemaining = 100.00 * ((double)availableServerSpace / (double)allocatedServerSpace);
     }
 
     public async Task<DiskMetricsResponse> DownloadDiskMetrics()
