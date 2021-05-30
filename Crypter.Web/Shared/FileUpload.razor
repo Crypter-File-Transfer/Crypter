@@ -72,7 +72,8 @@
             <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptFileClicked(selectedFiles, encryptionStrength))">Encrypt</button>
         </div>
     </div>
-    <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PublicKey="publicKey" @bind-PrivateKey="privateKey" />
+    <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PrivateKey="privateKey" />
+    <UploadSuccessModalWithRecipient @ref="ModalForRecipient" />
 </div>
 
 <div class="encrypt-status" hidden="@(!IsEncrypting)">
@@ -104,9 +105,9 @@
     private bool serverIsFull = false;
     private bool filesNotAcceptedByUser = false;
     private Guid returnedId;
-    private string publicKey;
     private string privateKey;
     private string dataFormat;
+    private bool isRecipientDefined;
 
     // Generated keys and crypto params
     private WrapsAsymmetricCipherKeyPair asymmetricKeyPair;
@@ -167,6 +168,7 @@
         noFileSelected = files.Count == 0;
         if (!noFileSelected)
         {
+            isRecipientDefined = !string.IsNullOrEmpty(UserPublicKey);
             IsEncrypting = true;
             await GenerateKeys(strength);
             GC.Collect();
@@ -203,9 +205,9 @@
         var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricParams);
 
         await SetNewEncryptionStatus("Encrypting symmetric key");
-        var publicKeyToEncryptWith = string.IsNullOrEmpty(UserPublicKey)
-            ? asymmetricKeyPair.Public
-            : CryptoLib.Common.ConvertRsaPublicKeyFromPEM(UserPublicKey);
+        var publicKeyToEncryptWith = isRecipientDefined
+            ? CryptoLib.Common.ConvertRsaPublicKeyFromPEM(UserPublicKey)
+            : asymmetricKeyPair.Public;
 
         var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, publicKeyToEncryptWith);
 
@@ -240,9 +242,7 @@
             }
 
             // Send data to success modal component
-            CompletedUpload("file", response.Id,
-           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
-           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+            CompletedUpload("file", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
         }
         else
         {
@@ -264,13 +264,18 @@
             }
 
             // Send data to success modal component
-            CompletedUpload("file", response.Id,
-           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM())),
-           Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+            CompletedUpload("file", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
         }
 
-        // Open modal
-        Modal.Open();
+        // Open the correct modal
+        if (isRecipientDefined)
+        {
+            ModalForRecipient.Open();
+        }
+        else
+        {
+            Modal.Open();
+        }
 
         // Reset File Uploads
         RemoveFile(selectedFiles[0]);
@@ -286,11 +291,10 @@
         await Task.Delay(500);
     }
 
-    public void CompletedUpload(string format, Guid id, string pubKey, string privKey)
+    public void CompletedUpload(string format, Guid id, string privKey)
     {
         dataFormat = format;
         returnedId = id;
-        publicKey = pubKey;
         privateKey = privKey;
     }
 
@@ -332,6 +336,7 @@
     }
 
     private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
+    private Crypter.Web.Shared.UploadSuccessModalWithRecipient ModalForRecipient { get; set; }
 
     [Parameter] public string Username { get; set; }
     [Parameter] public string UserPublicKey { get; set; }

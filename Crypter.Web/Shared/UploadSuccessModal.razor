@@ -22,11 +22,6 @@
                     
                     <span class="copiedToolTip toolTipText">Copied</span>
                 </div>
-                <!--
-                <h4>Generated Encryption Key</h4>
-                <p><em>Do not share this key</em></p>
-                <input class="form-control" @bind="PublicKey" type="text" name="publicKey" id="publicKey" readonly />
-                -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close()">Okay</button>
@@ -72,13 +67,11 @@
     // Parameters from parent component
     [Parameter] public string DataFormat { get; set; }
     [Parameter] public Guid ReturnedId { get; set; }
-    [Parameter] public string PublicKey { get; set; }
     [Parameter] public string PrivateKey { get; set; }
 
     // Watch for changes in variable values in parent component to update here
     [Parameter] public EventCallback<string> DataFormatChanged { get; set; }
     [Parameter] public EventCallback<Guid> ReturnedIdChanged { get; set; }
-    [Parameter] public EventCallback<string> PublicKeyChanged { get; set; }
     [Parameter] public EventCallback<string> PrivateKeyChanged { get; set; }
 
     private async Task CopyToClipboard()
