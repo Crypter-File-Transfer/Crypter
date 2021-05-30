@@ -58,17 +58,18 @@ namespace Crypter.API.Controllers
             
             if (body.RecipientUsername != null)
             {
-                recipientId = _userService.UserIdFromUsernameAsync(body.RecipientUsername).Result;
+                recipientId = await _userService.UserIdFromUsernameAsync(body.RecipientUsername);
 
-                if (body.Type == ResourceType.Message &&
-                    !_userService.MessagesAllowedByUserAsync(recipientId).Result)
+                var recipientAllowsMessages = await _userService.MessagesAllowedByUserAsync(recipientId);
+                var recipientAllowsFiles = await _userService.FilesAllowedByUserAsync(recipientId);
+
+                if (body.Type == ResourceType.Message && !recipientAllowsMessages)
                 {
                     return new BadRequestObjectResult(
                         new AnonymousUploadResponse(ResponseCode.MessagesNotAcceptedByUser));
                 }
 
-                if (body.Type == ResourceType.File &&
-                    !_userService.FilesAllowedByUserAsync(recipientId).Result)
+                if (body.Type == ResourceType.File && !recipientAllowsFiles)
                 {
                     return new BadRequestObjectResult(
                         new AnonymousUploadResponse(ResponseCode.FilesNotAcceptedByUser));
