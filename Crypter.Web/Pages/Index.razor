@@ -69,7 +69,7 @@
             NavManager.NavigateTo("user");
         }
 
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter");
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter");
         var diskMetricsResponse = await DownloadDiskMetrics();
         ServerHasDiskSpace = !diskMetricsResponse.Full;
         var allocatedServerSpace = long.Parse(diskMetricsResponse.Allocated);

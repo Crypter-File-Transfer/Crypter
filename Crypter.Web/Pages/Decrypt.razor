@@ -51,7 +51,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Decrypt");
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - Decrypt");
 
         var relativeURL = NavManager.ToBaseRelativePath(NavManager.Uri);
         var urlPieces = relativeURL.Split("/");

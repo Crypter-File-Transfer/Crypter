@@ -126,7 +126,7 @@
             NavManager.NavigateTo("login");
         }
 
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Home");
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Home");
         Uploads = await GetUserUploads();
         Downloads = await GetReceivedUploads();
     }

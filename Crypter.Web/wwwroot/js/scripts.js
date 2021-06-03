@@ -49,3 +49,7 @@ function setActivePage(page) {
 function setPageUrl(urlString) {
     window.history.pushState(null, '', urlString);
 }
+
+function setPageTitle(title) {
+    document.title = title;
+}
