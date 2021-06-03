@@ -88,7 +88,7 @@
             NavManager.NavigateTo("login");
         }
 
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Search");
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Search");
         await QueriedSearchResults();
     }
 

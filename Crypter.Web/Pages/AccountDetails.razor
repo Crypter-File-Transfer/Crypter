@@ -73,7 +73,7 @@
             NavManager.NavigateTo("login");
         }
 
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Account Details");
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - Account Details");
         await GetUserInfo();
     }
 

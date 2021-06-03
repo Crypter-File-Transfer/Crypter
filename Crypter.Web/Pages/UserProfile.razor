@@ -65,7 +65,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Profile");
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Profile");
         ProfileData = await DownloadUserProfile();
         UserPublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(ProfileData.PublicKey));
     }
