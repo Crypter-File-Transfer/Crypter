@@ -48,9 +48,15 @@ namespace Crypter.Web.Services
 
         private async Task<T> SendRequest<T>(HttpRequestMessage request, bool withAuthorization)
         {
-            var user = await _localStorageService.GetItem<User>("user");
-            if (user != null && withAuthorization)
+            
+            if (withAuthorization)
             {
+                var user = await _localStorageService.GetItem<User>("user");
+                if (user == null)
+                {
+                    return HandleMissingUser<T>();
+                }
+
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
             }
 
@@ -58,8 +64,7 @@ namespace Crypter.Web.Services
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                _navigationManager.NavigateTo("logout");
-                return default;
+                return HandleMissingUser<T>();
             }
 
             if (!response.IsSuccessStatusCode)
@@ -69,6 +74,12 @@ namespace Crypter.Web.Services
             }
 
             return await response.Content.ReadFromJsonAsync<T>();
+        }
+
+        private T HandleMissingUser<T>()
+        {
+            _navigationManager.NavigateTo("/", true);
+            return default;
         }
     }
 }

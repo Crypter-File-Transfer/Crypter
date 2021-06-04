@@ -85,7 +85,8 @@
     {
         if (AuthenticationService.User == null)
         {
-            NavManager.NavigateTo("login");
+            NavManager.NavigateTo("/");
+            return;
         }
 
         await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Search");
@@ -94,14 +95,9 @@
 
     private async Task PerformUserSearch()
     {
-        string url;
-
-        if (searchInfo.Type == "username")
-        {
-            url = $"{AppSettings.ApiBaseUrl}/user/search/username";
-        } else {
-            url = $"{AppSettings.ApiBaseUrl}/user/search/public-alias";
-        }
+        var url = searchInfo.Type == "username"
+            ? $"{AppSettings.ApiBaseUrl}/user/search/username"
+            : $"{AppSettings.ApiBaseUrl}/user/search/public-alias";
 
         string query = url + "?value=" + searchInfo.Query + "&index=" + searchInfo.Index + "&count=" + searchInfo.NumResults;
 
