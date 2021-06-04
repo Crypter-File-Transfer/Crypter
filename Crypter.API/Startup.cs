@@ -11,6 +11,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -51,7 +53,7 @@ namespace CrypterAPI
                     OnTokenValidated = async context =>
                     {
                         var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
-                        Guid userIdFromToken = Guid.Parse(context.Principal.Identity.Name);
+                        Guid userIdFromToken = Guid.Parse(context.Principal.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value);
 
                         var user = await userService.ReadAsync(userIdFromToken);
                         if (user == null)
@@ -60,14 +62,15 @@ namespace CrypterAPI
                         }
                     }
                 };
-                x.RequireHttpsMetadata = false;
                 x.SaveToken = true;
                 x.TokenValidationParameters = new TokenValidationParameters
                 {
+                    ValidAudience = "crypter.dev",
+                    ValidIssuer = "crypter.dev/api",
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
                 };
             });
 
