@@ -1,7 +1,6 @@
 ﻿using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -20,16 +19,16 @@ namespace Crypter.Web.Services
     {
         private readonly HttpClient _httpClient;
         private readonly NavigationManager _navigationManager;
-        private readonly ISessionStorageService _sessionStorageService;
+        private readonly ILocalStorageService _localStorageService;
 
         public HttpService(
             HttpClient httpClient,
             NavigationManager navigationManager,
-            ISessionStorageService sessionStorageService
+            ILocalStorageService localStorageService
         ) {
             _httpClient = httpClient;
             _navigationManager = navigationManager;
-            _sessionStorageService = sessionStorageService;
+            _localStorageService = localStorageService;
         }
 
         public async Task<T> Get<T>(string uri, bool withAuthorization)
@@ -49,7 +48,7 @@ namespace Crypter.Web.Services
 
         private async Task<T> SendRequest<T>(HttpRequestMessage request, bool withAuthorization)
         {
-            var user = await _sessionStorageService.GetItem<User>("user");
+            var user = await _localStorageService.GetItem<User>("user");
             if (user != null && withAuthorization)
             {
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
@@ -57,10 +56,6 @@ namespace Crypter.Web.Services
 
             using var response = await _httpClient.SendAsync(request);
 
-            // Todo
-            // We shouldn't log the user out just because they received an unauthorized response.
-            // The user could be legitimately logged in and just tried going to a stale URL.
-            // Send the user to an "unauthorized" page instead.
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 _navigationManager.NavigateTo("logout");

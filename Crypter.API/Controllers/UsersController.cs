@@ -107,8 +107,10 @@ namespace Crypter.API.Controllers
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-                    new Claim(ClaimTypes.Name, user.Id.ToString())
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
                 }),
+                Audience = "crypter.dev",
+                Issuer = "crypter.dev/api",
                 Expires = DateTime.UtcNow.AddDays(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
@@ -127,7 +129,7 @@ namespace Crypter.API.Controllers
         [HttpGet("account-details")]
         public async Task<IActionResult> GetAccountDetailsAsync()
         {
-            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
             var user = await _userService.ReadAsync(Guid.Parse(userId));
 
             if (user == null)
@@ -153,7 +155,7 @@ namespace Crypter.API.Controllers
         [HttpGet("user-uploads")]
         public async Task<IActionResult> GetUserUploadsAsync()
         {
-            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
 
             var sentMessages = await _messageService.FindBySenderAsync(Guid.Parse(userId));
             var sentFiles = await _fileService.FindBySenderAsync(Guid.Parse(userId));
@@ -172,7 +174,7 @@ namespace Crypter.API.Controllers
         [HttpGet("received-uploads")]
         public async Task<IActionResult> GetReceivedUploadsAsync()
         {
-            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
 
             var receivedMessages = await _messageService.FindByRecipientAsync(Guid.Parse(userId));
             var sentFiles = await _fileService.FindByRecipientAsync(Guid.Parse(userId));
@@ -193,7 +195,7 @@ namespace Crypter.API.Controllers
         [HttpPut("update-credentials")]
         public async Task<IActionResult> UpdateUserCredentialsAsync([FromBody] UpdateUserCredentialsRequest body)
         {
-            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
             var user = await _userService.ReadAsync(Guid.Parse(userId));
 
             if (user == null)
@@ -220,7 +222,7 @@ namespace Crypter.API.Controllers
         [HttpPut("update-preferences")]
         public async Task<IActionResult> UpdateUserPreferencesAsync([FromBody] RegisteredUserPublicSettingsRequest body)
         {
-            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
             var user = await _userService.ReadAsync(Guid.Parse(userId));
 
             if (user == null)
@@ -247,7 +249,7 @@ namespace Crypter.API.Controllers
         [HttpPost("upload")]
         public async Task<IActionResult> UploadNewItem([FromBody] RegisteredUserUploadRequest body)
         {
-            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
             var recipientId = Guid.Empty;
 
             if (!UploadRules.IsValidUploadRequest(body.CipherText, body.ServerEncryptionKey))
@@ -361,7 +363,7 @@ namespace Crypter.API.Controllers
         [HttpPost("update-personal-keys")]
         public async Task<IActionResult> UpdatePersonalKeys([FromBody] UpdateUserKeysRequest body)
         {
-            var userId = User.Claims.First(x => x.Type == ClaimTypes.Name).Value;
+            var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
 
             var insertResult = await _keyService.InsertUserPersonalKeyAsync(Guid.Parse(userId), body.EncryptedPrivateKey, body.PublicKey);
             if (insertResult)

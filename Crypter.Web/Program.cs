@@ -1,4 +1,3 @@
-using Crypter.Web.Helpers;
 using Crypter.Web.Services;
 using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -29,7 +28,7 @@ namespace Crypter.Web
                 .AddBlazorDownloadFile()
                 .AddScoped<IAuthenticationService, AuthenticationService>()
                 .AddScoped<IHttpService, HttpService>()
-                .AddScoped<ISessionStorageService, SessionStorageService>();
+                .AddScoped<ILocalStorageService, LocalStorageService>();
 
             var host = builder.Build();
 
