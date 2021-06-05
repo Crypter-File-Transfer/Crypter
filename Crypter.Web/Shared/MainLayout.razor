@@ -1,7 +1,13 @@
 ﻿@inherits LayoutComponentBase
 
+@inject IAuthenticationService AuthenticationService
+
 <NavigationBar />
 <main role="main" class="pb-3">
+    @if (AuthenticationService.User != null)
+    {
+        <NavigationUser />
+    }
     @Body
 </main>
 <Footer />

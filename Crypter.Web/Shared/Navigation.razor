@@ -19,15 +19,8 @@
                 <a class="btn btn-primary" href="/register">Sign Up</a>
             </li>
         }
-        else if (LoggedIn && !InUsersArea)
-        {
-            <li class="nav-item mx-1">
-                <a class="btn btn-secondary" href="/user">Go back to user area</a>
-            </li>
-        }
         else
         {
-
             <li class="nav-item mx-1">
                 <a class="nav-link" href="#" @onclick:preventDefault @onclick="@AuthenticationService.Logout">Logout</a>
             </li>
@@ -50,13 +43,10 @@
 @code {
 
     private bool LoggedIn = false;
-    private bool InUsersArea = false;
 
     protected override void OnInitialized()
     {
         LoggedIn = AuthenticationService.User != null;
-        InUsersArea = NavManager.ToBaseRelativePath(NavManager.Uri).StartsWith("user");
-        NavManager.LocationChanged += HandleLocationChanged;
     }
 
     private void OnEncryptAFileClicked()
@@ -72,7 +62,6 @@
     private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
     {
         LoggedIn = AuthenticationService.User != null;
-        InUsersArea = NavManager.ToBaseRelativePath(NavManager.Uri).StartsWith("user");
         StateHasChanged();
     }
 

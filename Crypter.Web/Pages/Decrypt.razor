@@ -1,16 +1,12 @@
 ﻿@page "/decrypt/message/{id:guid}"
 @page "/decrypt/file/{id:guid}"
 
-@inject IJSRuntime JsRuntime;
-@inject HttpClient HttpClient
+@inject IJSRuntime JsRuntime
 @inject NavigationManager NavManager
 @inject AppSettings AppSettings
 @inject IAuthenticationService AuthenticationService
+@inject IHttpService HttpService
 
-@if (AuthenticationService.User != null)
-{
-    <NavigationUser />
-}
 @if (correctRecipient == true || anonymousRecipient == true)
 {
     <div class="container my-4">
@@ -26,7 +22,8 @@
             </div>
         }
     </div>
-} else
+}
+else
 {
     <div class="container my-4">
         <h2>This message is for a specific recipient.</h2>
@@ -76,26 +73,17 @@
                 }
                 break;
             default:
-                // Failed response must be handled in DownloadMessagePreview
+                error = true;
+                errorText = previewResponse.StatusMessage;
                 break;
         }
     }
 
     private async Task<AnonymousPreviewResponse> DownloadPreviewFromApi(Guid id, ResourceType type)
     {
-        var requestBody = new AnonymousPreviewRequest(id, type);
-
         var url = $"{AppSettings.ApiBaseUrl}/anonymous/get-preview";
-        using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            error = true;
-            errorText = $"{type.ToString()} not found";
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AnonymousPreviewResponse>(content);
+        var requestBody = new AnonymousPreviewRequest(id, type);
+        return await HttpService.Post<AnonymousPreviewResponse>(url, requestBody);
     }
 
     private void PopulatePreview(string aName, int size, DateTime creation, DateTime expiration, string aContentType)

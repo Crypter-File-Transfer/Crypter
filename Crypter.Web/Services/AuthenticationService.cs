@@ -13,7 +13,7 @@ namespace Crypter.Web.Services
     {
         User User { get; }
         Task Initialize();
-        Task Login(string username, string plaintextPassword, string digestedPassword, string authenticationUrl);
+        Task<bool> Login(string username, string plaintextPassword, string digestedPassword, string authenticationUrl);
         Task Logout();
     }
 
@@ -40,9 +40,14 @@ namespace Crypter.Web.Services
             User = await _localStorageService.GetItem<User>("user");
         }
 
-        public async Task Login(string username, string plaintextPassword, string digestedPassword, string authenticationUrl)
+        public async Task<bool> Login(string username, string plaintextPassword, string digestedPassword, string authenticationUrl)
         {
             var authResult = await _httpService.Post<UserAuthenticateResponse>(authenticationUrl, new AuthenticateUserRequest(username, digestedPassword));
+            if (authResult.Status != Contracts.Enum.ResponseCode.Success)
+            {
+                return false;
+            }
+
             User = new User(authResult.Id, authResult.Token);
 
             if (string.IsNullOrEmpty(authResult.EncryptedPrivateKey))
@@ -58,6 +63,7 @@ namespace Crypter.Web.Services
             }
 
             await _localStorageService.SetItem("user", User);
+            return true;
         }
 
         public async Task Logout()
