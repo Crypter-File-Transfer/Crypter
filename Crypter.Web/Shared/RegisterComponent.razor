@@ -1,5 +1,4 @@
 ﻿@inject AppSettings AppSettings
-@inject HttpClient HttpClient
 @inject NavigationManager NavManager
 @inject IAuthenticationService AuthenticationService
 @inject IHttpService HttpService
@@ -71,13 +70,12 @@ else
         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
         var requestBody = new RegisterUserRequest(registerInfo.Username, digestedPasswordBase64, registerInfo.BetaKey, registerInfo.Email);
-        using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
-        var responseContent = await response.Content.ReadFromJsonAsync<UserRegisterResponse>();
+        var response = await HttpService.Post<UserRegisterResponse>(url, requestBody);
 
-        if (!response.IsSuccessStatusCode)
+        if (response.Result != InsertUserResult.Success)
         {
             RegistrationError = true;
-            RegistrationErrorText = responseContent.Result.ToString();
+            RegistrationErrorText = response.ResultMessage;
         }
         else
         {

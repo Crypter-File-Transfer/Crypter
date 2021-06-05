@@ -1,13 +1,11 @@
 ﻿@page "/user/account-details"
 
-@inject HttpClient HttpClient
 @inject AppSettings AppSettings
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
 @inject IAuthenticationService AuthenticationService
 @inject IHttpService HttpService
 
-<NavigationUser />
 <div class="container my-4">
     <h1>Account Details</h1>
     <form id="DetailsForm">
@@ -65,7 +63,6 @@
     private bool AcceptAnonymousMessages;
     private bool AcceptAnonymousFiles;
     private string PrivateKey;
-    private string PublicKey;
 
     protected override async Task OnInitializedAsync()
     {

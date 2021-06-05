@@ -10,7 +10,7 @@ namespace Crypter.Contracts.Responses.Anonymous
         /// Do not use!
         /// For deserialization purposes only.
         /// </summary>
-        private AnonymousDownloadResponse()
+        public AnonymousDownloadResponse()
         { }
 
         /// <summary>

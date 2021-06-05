@@ -60,20 +60,25 @@ namespace Crypter.Web.Services
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
             }
 
-            using var response = await _httpClient.SendAsync(request);
+            HttpResponseMessage response;
+            try
+            {
+                response = await _httpClient.SendAsync(request);
+            }
+            catch (Exception)
+            {
+                return default;
+            }
 
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
                 return HandleMissingUser<T>();
             }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var error = response.StatusCode.ToString();
-                throw new Exception(error);
-            }
+            T content = await response.Content.ReadFromJsonAsync<T>();
+            response.Dispose();
 
-            return await response.Content.ReadFromJsonAsync<T>();
+            return content;
         }
 
         private T HandleMissingUser<T>()

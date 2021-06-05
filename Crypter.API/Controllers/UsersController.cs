@@ -98,7 +98,7 @@ namespace Crypter.API.Controllers
             var user = await _userService.AuthenticateAsync(body.Username, body.Password);
             if (user == null)
             {
-                return new BadRequestObjectResult(new UserAuthenticateResponse(ResponseCode.InvalidCredentials));
+                return new NotFoundObjectResult(new UserAuthenticateResponse(ResponseCode.InvalidCredentials));
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -192,7 +192,7 @@ namespace Crypter.API.Controllers
 
         // PUT: crypter.dev/api/user/update-credentials
         [Authorize]
-        [HttpPut("update-credentials")]
+        [HttpPost("update-credentials")]
         public async Task<IActionResult> UpdateUserCredentialsAsync([FromBody] UpdateUserCredentialsRequest body)
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
@@ -219,7 +219,7 @@ namespace Crypter.API.Controllers
 
         // PUT: crypter.dev/api/user/update-preferences
         [Authorize]
-        [HttpPut("update-preferences")]
+        [HttpPost("update-preferences")]
         public async Task<IActionResult> UpdateUserPreferencesAsync([FromBody] RegisteredUserPublicSettingsRequest body)
         {
             var userId = User.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value;
