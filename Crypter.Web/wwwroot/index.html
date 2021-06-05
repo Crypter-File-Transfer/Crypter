@@ -9,9 +9,10 @@
                block-all-mixed-content;
                default-src localhost:*
                           'self';
-               img-src https:;
+               img-src data: https:;
                object-src 'none';
                script-src 'self'
+                          data:
                           'sha256-v8v3RKRPmN4odZ1CWM5gw80QKPCCWMcpNeOmimNL2AA='
                           'unsafe-eval';
                style-src 'self'
