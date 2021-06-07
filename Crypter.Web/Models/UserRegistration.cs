@@ -2,7 +2,7 @@
 
 namespace Crypter.Web.Models
 {
-    public class Register
+    public class UserRegistration
     {
         [Required(ErrorMessage = "Username is required")]
         [StringLength(32, ErrorMessage = "Username cannot be more than 32 characters")]
@@ -11,6 +11,10 @@ namespace Crypter.Web.Models
 
         [Required(ErrorMessage = "Password is required")]
         public string Password { get; set; }
+
+        [Required(ErrorMessage = "Password confirmation is required")]
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
+        public string PasswordConfirm { get; set; }
 
         [EmailAddress(ErrorMessage = "Not a valid email address")]
         public string Email { get; set; }

@@ -14,8 +14,9 @@
 }
 else
 {
-<EditForm Model="@registerInfo" OnValidSubmit="@OnRegisterClicked">
+<EditForm Model="@RegistrationInfo" OnValidSubmit="@OnRegisterClicked">
     <DataAnnotationsValidator />
+
     @if (RegistrationError)
     {
         <div class="alert alert-danger" role="alert">
@@ -24,30 +25,35 @@ else
     }
     <div class="mb-3">
         <label for="usernameFormControl" class="form-label">Username</label>
-        <InputText @bind-Value="@registerInfo.Username" class="form-control" id="usernameFormControl" />
-        <ValidationMessage For="@(() => registerInfo.Username)" />
+        <InputText @bind-Value="@RegistrationInfo.Username" class="form-control" id="usernameFormControl" />
+        <ValidationMessage For="@(() => RegistrationInfo.Username)" />
     </div>
     <div class="mb-3">
         <label for="passwordFormControl" class="form-label">Password</label>
-        <InputText type="password" @bind-Value="@registerInfo.Password" class="form-control" id="passwordFormControl" />
-        <ValidationMessage For="@(() => registerInfo.Password)" />
+        <InputText type="password" @bind-Value="@RegistrationInfo.Password" class="form-control" id="passwordFormControl" />
+        <ValidationMessage For="@(() => RegistrationInfo.Password)" />
+    </div>
+    <div class="mb-3">
+        <label for="passwordConfirmFormControl" class="form-label">Confirm Your Password</label>
+        <InputText type="password" @bind-Value="@RegistrationInfo.PasswordConfirm" class="form-control" id="passwordConfirmFormControl" />
+        <ValidationMessage For="@(() => RegistrationInfo.PasswordConfirm)" />
     </div>
     <div class="mb-3">
         <label for="emailFormControl" class="form-label">Email</label>
-        <InputText type="email" @bind-Value="@registerInfo.Email" class="form-control" id="emailFormControl" />
-        <ValidationMessage For="@(() => registerInfo.Email)" />
+        <InputText type="email" @bind-Value="@RegistrationInfo.Email" class="form-control" id="emailFormControl" />
+        <ValidationMessage For="@(() => RegistrationInfo.Email)" />
     </div>
     <div class="mb-3">
         <label for="betaKeyFormControl" class="form-label">Beta Key</label>
-        <InputText @bind-Value="@registerInfo.BetaKey" class="form-control" id="betaKeyFormControl" />
-        <ValidationMessage For="@(() => registerInfo.BetaKey)" />
+        <InputText @bind-Value="@RegistrationInfo.BetaKey" class="form-control" id="betaKeyFormControl" />
+        <ValidationMessage For="@(() => RegistrationInfo.BetaKey)" />
     </div>
     <button type="submit" class="btn btn-primary">Register</button>
 </EditForm>
 }
 
 @code {
-    private Register registerInfo = new Register();
+    private UserRegistration RegistrationInfo = new UserRegistration();
 
     private bool RegistrationError = false;
     private string RegistrationErrorText = "";
@@ -57,7 +63,6 @@ else
     {
         if (AuthenticationService.User != null)
         {
-            //TODO: Revise to Auth homepage when complete
             NavManager.NavigateTo("/user");
         }
     }
@@ -66,10 +71,10 @@ else
     {
         var url = $"{AppSettings.ApiBaseUrl}/user/register";
 
-        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(registerInfo.Username, registerInfo.Password);
+        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(RegistrationInfo.Username, RegistrationInfo.Password);
         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
-        var requestBody = new RegisterUserRequest(registerInfo.Username, digestedPasswordBase64, registerInfo.BetaKey, registerInfo.Email);
+        var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.BetaKey, RegistrationInfo.Email);
         var response = await HttpService.Post<UserRegisterResponse>(url, requestBody);
 
         if (response.Result != InsertUserResult.Success)
