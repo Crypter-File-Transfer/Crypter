@@ -19,10 +19,6 @@
             <label for="privateKey" class="form-label">Private key</label>
             <textarea @bind="PrivateKey" class="form-control" id="privateKey" disabled />
         </div>
-        <!--<div class="mb-3">
-            <label for="publicKey" class="form-label">Public key</label>
-            <textarea @bind="PublicKey" class="form-control" id="publicKey" disabled />
-        </div>-->
         <button type="button" class="btn btn-secondary float-end mt-4" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
         <h2>Public Details</h2>
         <div class="mb-3">

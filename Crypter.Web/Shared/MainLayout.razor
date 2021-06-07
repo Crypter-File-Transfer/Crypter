@@ -2,12 +2,14 @@
 
 @inject IAuthenticationService AuthenticationService
 
-<NavigationBar />
-<main role="main" class="pb-3">
-    @if (AuthenticationService.User != null)
-    {
-        <NavigationUser />
-    }
-    @Body
-</main>
-<Footer />
+<div class="page h-100">
+    <NavigationBar />
+    <main role="main" class="pb-3">
+        @if (AuthenticationService.User != null)
+        {
+            <NavigationUser />
+        }
+        @Body
+    </main>
+    <Footer />
+</div>
