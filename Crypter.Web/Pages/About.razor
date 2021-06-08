@@ -3,48 +3,52 @@
 @inject IJSRuntime JsRuntime;
 
 <div class="container my-4">
-    <h1>About Crypter.dev</h1>
-    <p>The goal of Crypter is to provide a private, secure, and simple solution for messaging and file transfer.</p>
-    <h3>Private</h3>
-    <p>Crypter does not collect any personal or device information.  Users are not tracked whatsoever.</p>
-    <h3>Secure</h3>
-    <p>Crypter uses modern cryptography to encrypt messages and files in the browser.  The only person who possesses the decryption key is <b>you</b>!  It is up to <b>you</b> to share the decryption key with your intended recipient.</p>
-    <h3>Simple</h3>
-    <p>Anything can be encrypted and sent to someone else just by using the Crypter homepage.  No sign-up required.</p>
-
-    <h2>How It Works (In Plain English)</h2>
-    <p>Step one: Select a <b>File</b> from your device or provide a <b>Message</b>.</p>
-    <p>Step two: Hit <b>Encrypt</b> and wait a brief moment while your submission is encrypted and uploaded.</p>
-    <p>Step three: Share the provided link and decryption key with whoever you want.</p>
-    <h3>Deletion Policies</h3>
-    <h4>Delete on Receipt</h4>
-    <p>Uploads are deleted after they are successfully decrypted.</p>
-    <h4>Delete After 24 Hours</h4>
-    <p>Uploads are automatically deleted after 24 hours.</p>
-
-    <h2>How It Works (Let's Get Technical)</h2>
-    <h3>Client-side Encryption</h3>
-    <ol>
-        <li value="1">A random symmetric key is generated.</li>
-        <li value="2">Plaintext is encrypted using symmetric key to form the ciphertext.</li>
-    </ol>
-    <h3>Client-side Signing</h3>
-    <ol>
-        <li value="3">A digest of the plaintext, the digest algorithm, and symmetric key details are combined to form a signature.</li>
-        <li value="4">A random asymmetric key-pair is generated.</li>
-        <li value="5">The signature is encrypted using the public key.</li>
-    </ol>
-    <h3>Upload</h3>
-    <ol>
-        <li value="6">The ciphertext, encrypted signature, and a digest of the symmetric key are uploaded to the Crypter public API.</li>
-    </ol>
-    <h3>Server-side Encryption and Signing</h3>
-    <ol>
-        <li value="7">A digest of the provided ciphertext is taken and stored on the server</li>
-        <li value="8">A second layer of encryption is applied using the digest of the original symmetric key.  This digest is not stored on the server.  The same digest must be provided during download in order to remove the server-side decryption.</li>
-    </ol>
-    <p>Server-side encryption makes absolutely sure Crypter is not hosting sensitive information as plaintext.  This could occur if someone attempts to bypass our web app or upload to our API directly.</p>
-    <p>This also enables Crypter to withold the ciphertext until server-side decryption and verification succeed.  It becomes impossible for anyone without the correct decryption key to access the ciphertext.</p>
+    <h1>About</h1>
+    <p>
+        We are a small team of dedicated developers who just want to make end-to-end encryption and data transfer easy and approachable.
+    </p>
+    <p>
+        No need to sign up for an account.
+        No need to provide any personally identifiable information.
+    </p>
+    <p>
+        And no need to manage your own cryptographic keys or secrets.
+    </p>
+    <p>
+        Simply upload your data and share the decryption details that we provide with whoever you need to.
+    </p>
+    <p>
+        Uploads are deleted immediately after download.  Uploads that never get downloaded are deleted after 24 hours.
+    </p>
+    <h3>Privacy</h3>
+    <p>
+        Privacy begins with anonymity.
+        That's not a line you read everyday, but we take it very seriously.
+    </p>
+    <p>
+        Crypter does not collect any personal information or device information.
+        Users are not tracked whatsoever.
+    </p>
+    <p>
+        Visitors will always be able to transfer files without signing up for an account.
+    </p>
+    <h3>Security</h3>
+    <p>
+        Crypter uses modern cryptography to encrypt and decrypt right in the browser.
+    </p>
+    <p>
+        The only person who possesses the key to decrypt something you have uploaded is <b>you</b>!
+    </p>
+    <p>
+        It is up to <b>you</b> to share the decryption key with your intended recipient.
+    </p>
+    <h3>Simplicity</h3>
+    <p>
+        Anything can be encrypted and sent to someone else just by using the Crypter homepage.
+    </p>
+    <p>
+        Try it out!
+    </p>
 </div>
 
 @code {
