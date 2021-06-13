@@ -1,4 +1,3 @@
-using Crypter.Web.Helpers;
 using Crypter.Web.Services;
 using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -16,9 +15,9 @@ namespace Crypter.Web
         public static async Task Main(string[] args)
         {
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
-            builder.RootComponents.Add<App>("app");
+            builder.RootComponents.Add<App>("#app");
 
-            builder.Services.AddTransient(_ =>
+            builder.Services.AddScoped(_ =>
             {
                 return LoadAppSettings("Crypter.Web.appsettings.json")
                             .Get<AppSettings>();
@@ -29,7 +28,7 @@ namespace Crypter.Web
                 .AddBlazorDownloadFile()
                 .AddScoped<IAuthenticationService, AuthenticationService>()
                 .AddScoped<IHttpService, HttpService>()
-                .AddScoped<ISessionStorageService, SessionStorageService>();
+                .AddScoped<ILocalStorageService, LocalStorageService>();
 
             var host = builder.Build();
 

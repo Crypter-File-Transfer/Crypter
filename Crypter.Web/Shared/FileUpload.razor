@@ -1,9 +1,9 @@
 @using BlazorInputFile
 
-@inject IJSRuntime jsRuntime
-@inject HttpClient HttpClient
 @inject AppSettings AppSettings
+@inject IJSRuntime jsRuntime
 @inject IAuthenticationService AuthenticationService
+@inject IHttpService HttpService
 
 <div class="file-upload" hidden="@IsEncrypting">
     <div class="row">
@@ -13,7 +13,7 @@
                     <i class="bi bi-file-arrow-up d-block fs-1 my-3"></i>
                     <span class="fw-bold">Choose a file</span> or drag it here to upload
                 </p>
-                <InputFile id="fileInput"
+                <BlazorInputFile.InputFile id="fileInput"
                            OnChange="HandleFileInputChange"
                            @ondragenter="HandleDragEnter"
                            @ondragleave="HandleDragLeave" />
@@ -300,39 +300,18 @@
 
     private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string contentType, string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
     {
+        var url = $"{AppSettings.ApiBaseUrl}/anonymous/upload";
         var requestBody = new AnonymousUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
 
-        using var response = await HttpClient.PostAsJsonAsync($"{AppSettings.ApiBaseUrl}/anonymous/upload", requestBody);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            // insert error handling
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AnonymousUploadResponse>(content);
+        return await HttpService.Post<AnonymousUploadResponse>(url, requestBody);
     }
 
     private async Task<RegisteredUserUploadResponse> UploadUserFileToAPI(string filename, string contentType, string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
     {
         var url = $"{AppSettings.ApiBaseUrl}/user/upload";
-        var token = AuthenticationService.User.Token;
-
-        var request = new HttpRequestMessage(HttpMethod.Post, url);
         var postBody = new RegisteredUserUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
 
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        request.Content = JsonContent.Create(postBody);
-
-        using var response = await HttpClient.SendAsync(request);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            // insert error handling
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<RegisteredUserUploadResponse>(content);
+        return await HttpService.Post<RegisteredUserUploadResponse>(url, postBody, true);
     }
 
     private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }

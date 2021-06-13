@@ -1,12 +1,11 @@
 ﻿@page "/user"
 
-@inject HttpClient HttpClient
 @inject AppSettings AppSettings
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
 @inject IAuthenticationService AuthenticationService
+@inject IHttpService HttpService
 
-<NavigationUser />
 <div class="container my-4">
     <div class="row">
         <div class="col-md-6">
@@ -15,42 +14,39 @@
                     <h5 class="card-title">Received files and messages</h5>
                 </div>
                 <ul class="list-group list-group-flush">
-                    @if (ReceivedUploadsStatus == "NotFound")
+                @if (Downloads == null)
+                {
+                    <li class="list-group-item">
+                        Loading files...
+                    </li>
+                }
+                else if (Downloads.Count() == 0)
+                {
+                    <li class="list-group-item">
+                        You do not have any items to download
+                    </li>
+                }
+                else
+                {
+                    foreach (UserUploadItemDTO item in Downloads)
                     {
                         <li class="list-group-item">
-                            No files or messages found
+                            @if (item.ItemType == 0)
+                            {
+                                <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                            }
+                            else
+                            {
+                                <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                            }
+                            <div class="row">
+                                <div class="col-12">
+                                    Expires on: @item.ExpirationDate
+                                </div>
+                            </div>
                         </li>
                     }
-                    else
-                    {
-                        if (Downloads == null)
-                        {
-                            <li class="list-group-item">
-                                Loading files...
-                            </li>
-                        }
-                        else
-                        {
-                            foreach (UserUploadItemDTO item in Downloads)
-                            {
-                                <li class="list-group-item">
-                                    @if (item.ItemType == 0)
-                                    {
-                                        <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
-                                    }
-                                    else
-                                    {
-                                        <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
-                                    }
-                                    <div class="row">
-                                        <div class="col-12">
-                                            Expires on: @item.ExpirationDate
-                                        </div>
-                                    </div>
-                                </li>
-                            }
-                        }
-                    }
+                }
                 </ul>
             </div>
         </div>
@@ -60,34 +56,37 @@
                     <h5 class="card-title">Sent files and messages</h5>
                 </div>
                 <ul class="list-group list-group-flush">
-                    @if (SentUploadsStatus == "NotFound")
+                    @if (Uploads == null)
                     {
-                        <li class="list-group-item">
-                            No files or messages found
-                        </li>
-                    } else { 
-                        if (Uploads == null) { 
                         <li class="list-group-item">
                             Loading files...
                         </li>
-                        } else { 
-                            foreach (UserUploadItemDTO item in Uploads) {
-                                <li class="list-group-item">
-                                    @if (item.ItemType == 0)
-                                    {
-                                        <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
-                                    }
-                                    else
-                                    {
-                                        <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
-                                    }
-                                    <div class="row">
-                                        <div class="col-12">
-                                            Expires on: @item.ExpirationDate
-                                        </div>
+                    }
+                    else if (Uploads.Count() == 0)
+                    {
+                        <li class="list-group-item">
+                            You do not have any uploads
+                        </li>
+                    }
+                    else
+                    {
+                        foreach (UserUploadItemDTO item in Uploads)
+                        {
+                            <li class="list-group-item">
+                                @if (item.ItemType == 0)
+                                {
+                                    <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                                }
+                                else
+                                {
+                                    <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                                }
+                                <div class="row">
+                                    <div class="col-12">
+                                        Expires on: @item.ExpirationDate
                                     </div>
-                                </li>
-                            }
+                                </div>
+                            </li>
                         }
                     }
                 </ul>
@@ -113,9 +112,6 @@
 </div>
 
 @code {
-
-    private string SentUploadsStatus = "";
-    private string ReceivedUploadsStatus = "";
     private IEnumerable<UserUploadItemDTO> Uploads;
     private IEnumerable<UserUploadItemDTO> Downloads;
 
@@ -123,69 +119,25 @@
     {
         if (AuthenticationService.User == null)
         {
-            NavManager.NavigateTo("login");
+            NavManager.NavigateTo("/");
         }
 
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Home");
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Home");
         Uploads = await GetUserUploads();
         Downloads = await GetReceivedUploads();
     }
 
     private async Task<IEnumerable<UserUploadItemDTO>> GetUserUploads()
     {
-        var userUploads = await DownloadUserUploads();
-
-        SentUploadsStatus = userUploads.Status.ToString();
-        return userUploads.UserUploadsList;
-
-    }
-
-    private async Task<UserUploadsResponse> DownloadUserUploads()
-    {
         var url = $"{AppSettings.ApiBaseUrl}/user/user-uploads";
-        var token = AuthenticationService.User.Token;
-
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        using var response = await HttpClient.SendAsync(request);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            // Error handling
-            SentUploadsStatus = response.StatusCode.ToString();
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<UserUploadsResponse>(content);
+        var userUploads = await HttpService.Get<UserUploadsResponse>(url, true);
+        return userUploads.UserUploadsList;
     }
 
     private async Task<IEnumerable<UserUploadItemDTO>> GetReceivedUploads()
     {
-        var userUploads = await DownloadReceivedUploads();
-
-        ReceivedUploadsStatus = userUploads.Status.ToString();
-        return userUploads.UserUploadsList;
-
-    }
-
-    private async Task<UserUploadsResponse> DownloadReceivedUploads()
-    {
         var url = $"{AppSettings.ApiBaseUrl}/user/received-uploads";
-        var token = AuthenticationService.User.Token;
-
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        using var response = await HttpClient.SendAsync(request);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            // Error handling
-            ReceivedUploadsStatus = response.StatusCode.ToString();
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<UserUploadsResponse>(content);
+        var userUploads = await HttpService.Get<UserUploadsResponse>(url, true);
+        return userUploads.UserUploadsList;
     }
 }

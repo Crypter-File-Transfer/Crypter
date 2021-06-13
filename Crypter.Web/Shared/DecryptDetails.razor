@@ -1,5 +1,4 @@
-﻿@inject HttpClient HttpClient
-@inject AppSettings AppSettings
+﻿@inject AppSettings AppSettings
 @inject IJSRuntime js
 @inject IHttpService HttpService
 @inject IAuthenticationService AuthenticationService
@@ -202,10 +201,14 @@
                 break;
             case ResponseCode.DecryptFailure:
                 decryptionErrorText = "Failed to remove server-side encryption";
-                break;
+                decryptionError = true;
+                IsDecrypting = false;
+                return;
             case ResponseCode.DigestsDoNotMatch:
                 decryptionErrorText = "Wrong symmetric key provided to API";
-                break;
+                decryptionError = true;
+                IsDecrypting = false;
+                return;
             default:
                 decryptionError = true;
                 IsDecrypting = false;
@@ -251,16 +254,7 @@
     {
         var url = $"{AppSettings.ApiBaseUrl}/anonymous/get-signature";
         var requestBody = new AnonymousSignatureRequest(id, type);
-        using var response = await HttpClient.PostAsJsonAsync(url, requestBody);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            decryptionError = true;
-            decryptionErrorText = "Error: Failed to decrypt signature";
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AnonymousSignatureResponse>(content);
+        return await HttpService.Post<AnonymousSignatureResponse>(url, requestBody);
     }
 
     /// <summary>
@@ -272,20 +266,9 @@
     /// <returns></returns>
     private async Task<AnonymousDownloadResponse> DownloadCiphertext(ResourceType type, Guid id, string serverDecryptionKey)
     {
-        var requestBody = new AnonymousDownloadRequest(id, type, serverDecryptionKey);
-
         var url = $"{AppSettings.ApiBaseUrl}/anonymous/get-item";
-
-        var response = await HttpClient.PostAsJsonAsync(url, requestBody);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            decryptionError = true;
-            decryptionErrorText = $"Error: Unable to decrypt {type.ToString().ToLower()}";
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AnonymousDownloadResponse>(content);
+        var requestBody = new AnonymousDownloadRequest(id, type, serverDecryptionKey);
+        return await HttpService.Post<AnonymousDownloadResponse>(url, requestBody);
     }
 
     private async Task DownloadFile(string fileName, byte[] fileContent, string contentType)

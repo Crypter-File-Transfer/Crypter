@@ -12,7 +12,7 @@ namespace Crypter.Contracts.Responses.Metrics
         /// Do not use!
         /// For deserialization purposes only.
         /// </summary>
-        private DiskMetricsResponse()
+        public DiskMetricsResponse()
         { }
 
         /// <summary>

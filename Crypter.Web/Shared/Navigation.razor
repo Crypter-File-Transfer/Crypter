@@ -1,5 +1,6 @@
 ﻿@inject IAuthenticationService AuthenticationService
 @inject NavigationManager NavManager
+@implements IDisposable
 
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
@@ -20,7 +21,6 @@
         }
         else
         {
-
             <li class="nav-item mx-1">
                 <a class="nav-link" href="#" @onclick:preventDefault @onclick="@AuthenticationService.Logout">Logout</a>
             </li>
@@ -44,22 +44,9 @@
 
     private bool LoggedIn = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await CheckAuthentication();
-    }
-
-    public Task CheckAuthentication()
-    {
-        if (AuthenticationService.User != null)
-        {
-            LoggedIn = true;
-        }
-        else
-        {
-            LoggedIn = false;
-        }
-        return Task.CompletedTask;
+        LoggedIn = AuthenticationService.User != null;
     }
 
     private void OnEncryptAFileClicked()
@@ -70,6 +57,17 @@
     private void OnEncryptAMessageClicked()
     {
         MessageModal.Open();
+    }
+
+    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        LoggedIn = AuthenticationService.User != null;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavManager.LocationChanged -= HandleLocationChanged;
     }
 
     private Crypter.Web.Shared.UserFileUploadModal FileModal { get; set; }

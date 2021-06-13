@@ -13,7 +13,7 @@ namespace Crypter.Web.Services
     {
         User User { get; }
         Task Initialize();
-        Task Login(string username, string plaintextPassword, string digestedPassword, string authenticationUrl);
+        Task<bool> Login(string username, string plaintextPassword, string digestedPassword, string authenticationUrl);
         Task Logout();
     }
 
@@ -21,28 +21,33 @@ namespace Crypter.Web.Services
     {
         private readonly IHttpService _httpService;
         private readonly NavigationManager _navigationManager;
-        private readonly ISessionStorageService _sessionStorageService;
+        private readonly ILocalStorageService _localStorageService;
 
         public User User { get; private set; }
 
         public AuthenticationService(
             IHttpService httpService,
             NavigationManager navigationManager,
-            ISessionStorageService sessionStorageService
+            ILocalStorageService localStorageService
         ) {
             _httpService = httpService;
             _navigationManager = navigationManager;
-            _sessionStorageService = sessionStorageService;
+            _localStorageService = localStorageService;
         }
 
         public async Task Initialize()
         {
-            User = await _sessionStorageService.GetItem<User>("user");
+            User = await _localStorageService.GetItem<User>("user");
         }
 
-        public async Task Login(string username, string plaintextPassword, string digestedPassword, string authenticationUrl)
+        public async Task<bool> Login(string username, string plaintextPassword, string digestedPassword, string authenticationUrl)
         {
             var authResult = await _httpService.Post<UserAuthenticateResponse>(authenticationUrl, new AuthenticateUserRequest(username, digestedPassword));
+            if (authResult.Status != Contracts.Enum.ResponseCode.Success)
+            {
+                return false;
+            }
+
             User = new User(authResult.Id, authResult.Token);
 
             if (string.IsNullOrEmpty(authResult.EncryptedPrivateKey))
@@ -57,13 +62,14 @@ namespace Crypter.Web.Services
                 User.PrivateKey = Encoding.UTF8.GetString(decryptedPrivateKey);
             }
 
-            await _sessionStorageService.SetItem("user", User);
+            await _localStorageService.SetItem("user", User);
+            return true;
         }
 
         public async Task Logout()
         {
             User = null;
-            await _sessionStorageService.RemoveItem("user");
+            await _localStorageService.RemoveItem("user");
             _navigationManager.NavigateTo("/", true);
         }
     }

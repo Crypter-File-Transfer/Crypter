@@ -2,38 +2,11 @@
 
 <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark mb-auto">
     <div class="container-fluid">
-        @if (!LoggedIn)
-        {
-            <a class="navbar-brand" href="/">Crypter.dev</a>
-        }
-        else
-        {
-            <a class="navbar-brand" href="/user">Crypter.dev</a>
-        }
-        
+        <a class="navbar-brand" href="/">Crypter.dev</a>
         <Navigation />
     </div>
 </nav>
 
 @code {
 
-    private bool LoggedIn = false;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await CheckAuthentication();
-    }
-
-    public Task CheckAuthentication()
-    {
-        if (AuthenticationService.User != null)
-        {
-            LoggedIn = true;
-        }
-        else
-        {
-            LoggedIn = false;
-        }
-        return Task.CompletedTask;
-    }
 }

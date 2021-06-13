@@ -1,16 +1,11 @@
 ﻿@page "/user/profile/{Username}"
 
-@inject HttpClient HttpClient
 @inject NavigationManager NavManager
 @inject AppSettings AppSettings
 @inject IJSRuntime JsRuntime
 @inject IAuthenticationService AuthenticationService
 @inject IHttpService HttpService
 
-@if (AuthenticationService.User != null)
-{
-    <NavigationUser />
-}
 <div class="container my-4">
     @if (ProfileData != null)
     {
@@ -58,34 +53,28 @@
     public bool ProfileFound;
     public string NullMessage = "Looking for profile...";
 
-    private Guid UserId;
-
     private AnonymousGetPublicProfileResponse ProfileData;
     private string UserPublicKey;
 
     protected override async Task OnInitializedAsync()
     {
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Profile");
-        ProfileData = await DownloadUserProfile();
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Profile");
+        var responseData = await DownloadUserProfile();
+        if (responseData == null)
+        {
+            ProfileFound = false;
+            return;
+        }
+
+        ProfileFound = true;
+        ProfileData = responseData;
         UserPublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(ProfileData.PublicKey));
     }
 
     private async Task<AnonymousGetPublicProfileResponse> DownloadUserProfile()
     {
         string url = $"{AppSettings.ApiBaseUrl}/user/" + Username;
-
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-
-        using var response = await HttpClient.SendAsync(request);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            ProfileFound = false;
-        }
-
-        ProfileFound = true;
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<AnonymousGetPublicProfileResponse>(content);
+        return await HttpService.Get<AnonymousGetPublicProfileResponse>(url);
     }
 
     private void OnEncryptAFileClicked()

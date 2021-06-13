@@ -4,18 +4,32 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta http-equiv="Content-Security-Policy"
+          content="base-uri 'self';
+               block-all-mixed-content;
+               default-src localhost:*
+                          'self';
+               img-src data: https:;
+               object-src 'none';
+               script-src 'self'
+                          data:
+                          'sha256-v8v3RKRPmN4odZ1CWM5gw80QKPCCWMcpNeOmimNL2AA='
+                          'unsafe-eval';
+               style-src 'self'
+                         'unsafe-inline';
+               upgrade-insecure-requests;">
     <title>Crypter</title>
     <base href="/" />
+    <link rel="stylesheet" href="Crypter.Web.styles.css"/>
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css">
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="lib/bootstrap-local/bootstrap-icons.css">
+    <link rel="stylesheet" href="lib/fonts-local/google/Rubik.css">
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="css/main.css" />
 </head>
 
 <body class="grt h-100">
-    <app class="d-flex flex-column h-100">Loading...</app>
+    <div id="app" class="d-flex flex-column h-100">Loading...</div>
     <div id="blazor-error-ui">
         An unhandled error has occurred.
         <a href="" class="reload">Reload</a>
@@ -26,12 +40,6 @@
     <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="_content/BlazorInputFile/inputfile.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
-
-    <script>
-        window.setTitle = (title) => {
-            document.title = title;
-        }
-    </script>
 </body>
 
 </html>

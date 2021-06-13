@@ -1,13 +1,11 @@
 ﻿@page "/user/search"
 
-@inject HttpClient HttpClient
 @inject AppSettings AppSettings
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
 @inject IAuthenticationService AuthenticationService
 @inject IHttpService HttpService
 
-<NavigationUser />
 <div class="container my-4">
     <h1>Find a user</h1>
     <EditForm Model="@searchInfo" OnValidSubmit="@PerformUserSearch">
@@ -85,33 +83,25 @@
     {
         if (AuthenticationService.User == null)
         {
-            NavManager.NavigateTo("login");
+            NavManager.NavigateTo("/");
+            return;
         }
 
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - User Search");
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Search");
         await QueriedSearchResults();
     }
 
     private async Task PerformUserSearch()
     {
-        string url;
-
-        if (searchInfo.Type == "username")
-        {
-            url = $"{AppSettings.ApiBaseUrl}/user/search/username";
-        } else {
-            url = $"{AppSettings.ApiBaseUrl}/user/search/public-alias";
-        }
+        var url = searchInfo.Type == "username"
+            ? $"{AppSettings.ApiBaseUrl}/user/search/username"
+            : $"{AppSettings.ApiBaseUrl}/user/search/public-alias";
 
         string query = url + "?value=" + searchInfo.Query + "&index=" + searchInfo.Index + "&count=" + searchInfo.NumResults;
 
-        try
-        {
-            await JsRuntime.InvokeVoidAsync("setPageUrl", "/user/search?query=" + searchInfo.Query + "&type=" + searchInfo.Type + "&page=" + searchInfo.Page);
-            SearchResults = await HttpService.Get<UserSearchResponse>(query, true);
-        } catch {
-            SearchResults = null;
-        }
+        await JsRuntime.InvokeVoidAsync("setPageUrl", "/user/search?query=" + searchInfo.Query + "&type=" + searchInfo.Type + "&page=" + searchInfo.Page);
+
+        SearchResults = await HttpService.Get<UserSearchResponse>(query, true);
     }
 
     private async Task QueriedSearchResults()

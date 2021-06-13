@@ -5,22 +5,15 @@
 <div class="container my-4">
     <h1>Privacy Policy</h1>
     <h3>Effective date</h3>
-    <p>April 27, 2021</p>
+    <p>May 7, 2021</p>
     <h3>Policy</h3>
-    <p>Crypter does not collect user information.</p>
-    <h3>Notice</h3>
-    <p>The Crypter team expects to update this policy when user accounts are implemented.  The team expects to collect the following pieces of information:</p>
-    <ul>
-        <li>A username of your choosing</li>
-        <li>An optional "public alias" of your choosing</li>
-        <li>An optional email address</li>
-    </ul>
-    <p>Crypter will never share your username or email address.  Public aliases will be made public to site visitors and other users.</p>
+    <h4>Email Communication</h4>
+    <p>Crypter may collect your email address during user registration.  Users who provide their email address may receive emails regarding their Crypter account.</p>
 </div>
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter - Privacy Policy");
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - Privacy Policy");
     }
 }

@@ -1,10 +1,6 @@
 ﻿@page "/"
 
-@inject HttpClient HttpClient
-@inject AppSettings AppSettings
-@inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
-@inject IAuthenticationService AuthenticationService
 
 <div class="container text-center my-4">
     <h1 class="title">Crypter.dev</h1>
@@ -34,61 +30,14 @@
                 </div>
             </div>
         </div>
-        @if (!ServerHasDiskSpace || ServerSpacePercentageRemaining < 20)
-        {
-            <div class="card mt-3">
-                <div class="card-body">
-                    @if (!ServerHasDiskSpace)
-                    {
-                        <div class="alert alert-danger" role="alert">
-                            <h3>Server is currently out of disk space. More space will become available as uploads are downloaded or expired.</h3>
-                        </div>
-                    }
-                    else if (ServerSpacePercentageRemaining < 20)
-                    {
-                        <div class="alert alert-warning" role="alert">
-                            <h3>Server is currently low on disk space. Please be mindful when transferring large amounts of data.</h3>
-                        </div>
-                    }
-                </div>
-            </div>
-        }
+        <ServerDiskSpaceComponent></ServerDiskSpaceComponent>
     </div>
 </div>
 
 @code
 {
-    public bool ServerHasDiskSpace = true;
-    public double ServerSpacePercentageRemaining = 100.00;
-
     protected override async Task OnInitializedAsync()
     {
-
-        if (AuthenticationService.User != null)
-        {
-            NavManager.NavigateTo("user");
-        }
-
-        await JsRuntime.InvokeVoidAsync("setTitle", "Crypter");
-        var diskMetricsResponse = await DownloadDiskMetrics();
-        ServerHasDiskSpace = !diskMetricsResponse.Full;
-        var allocatedServerSpace = long.Parse(diskMetricsResponse.Allocated);
-        var availableServerSpace = long.Parse(diskMetricsResponse.Available);
-
-        ServerSpacePercentageRemaining = 100.00 * ((double)availableServerSpace / (double)allocatedServerSpace);
-    }
-
-    public async Task<DiskMetricsResponse> DownloadDiskMetrics()
-    {
-        var url = $"{AppSettings.ApiBaseUrl}/metrics/disk";
-        using var response = await HttpClient.GetAsync(url);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            // insert error handling
-        }
-
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonConvert.DeserializeObject<DiskMetricsResponse>(content);
+        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter");
     }
 }
