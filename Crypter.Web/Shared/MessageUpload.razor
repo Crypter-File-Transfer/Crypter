@@ -4,228 +4,230 @@
 @inject IHttpService HttpService
 
 <div class="message-upload" hidden="@IsEncrypting">
-    <div class="row">
-        <div class="col-12 p-0 my-3">
-            <input type="text" class="form-control" @bind="MessageSubject" @bind:event="oninput" id="messageSubject" name="messageSubject" placeholder="Subject">
-        </div>
-        <div class="col-12 p-0">
-            <textarea class="form-control" @bind="MessageText" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
-            <label><small class="align-text-bottom">@(MaxMessageLength - MessageText.Count()) remaining</small></label>
-        </div>
-    </div>
-    <div class="row">
-        @if (Error)
-        {
-            <div class="validation-errors my-3">
-                <div class="alert alert-danger" role="alert">
-                    @ErrorMessage
-                </div>
+   <div class="row">
+      <div class="col-12 p-0 my-3">
+         <input type="text" class="form-control" @bind="MessageSubject" @bind:event="oninput" id="messageSubject" name="messageSubject" placeholder="Subject">
+      </div>
+      <div class="col-12 p-0">
+         <textarea class="form-control" @bind="MessageText" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
+         <label><small class="align-text-bottom">@(MaxMessageLength - MessageText.Count()) remaining</small></label>
+      </div>
+   </div>
+   <div class="row">
+      @if (Error)
+      {
+         <div class="validation-errors my-3">
+            <div class="alert alert-danger" role="alert">
+               @ErrorMessage
             </div>
-        }
-    </div>
-    <div class="row">
-        <div class="col-12 p-0">
-            <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptClicked(MessageText, encryptionStrength))">Encrypt</button>
-        </div>
-    </div>
-    <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PrivateKey="privateKey" />
-    <UploadSuccessModalWithRecipient @ref="ModalForRecipient" />
+         </div>
+      }
+   </div>
+   <div class="row">
+      <div class="col-12 p-0">
+         <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptClicked(MessageText, encryptionStrength))">Encrypt</button>
+      </div>
+   </div>
+   <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PrivateKey="privateKey" />
+   <UploadSuccessModalWithRecipient @ref="ModalForRecipient" />
 </div>
 
 <div class="encrypt-status" hidden="@(!IsEncrypting)">
-    <h3>@EncryptionStatusMessage</h3>
-    <div class="spinner-border" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
+   <h3>@EncryptionStatusMessage</h3>
+   <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+   </div>
 </div>
 
 @code {
-    // Constants
-    private const int MaxMessageLength = 1024;
+   // Constants
+   private const int MaxMessageLength = 1024;
 
-    // State
-    private bool IsEncrypting = false;
-    private string EncryptionStatusMessage = "";
-    private bool Error = false;
-    private string ErrorMessage = "";
+   // State
+   private bool IsEncrypting = false;
+   private string EncryptionStatusMessage = "";
+   private bool Error = false;
+   private string ErrorMessage = "";
 
-    // User input
-    private string MessageText = "";
-    private string MessageSubject = "";
-    CryptoStrength encryptionStrength = CryptoStrength.Minimum;
+   // User input
+   private string MessageText = "";
+   private string MessageSubject = "";
+   CryptoStrength encryptionStrength = CryptoStrength.Minimum;
 
-    // Variables we control
-    private Guid returnedId;
-    private string privateKey;
-    private string dataFormat;
-    private bool isRecipientDefined;
+   // Variables we control
+   private Guid returnedId;
+   private string privateKey;
+   private string dataFormat;
+   private bool isRecipientDefined;
 
-    // Generated keys and crypto params
-    private WrapsAsymmetricCipherKeyPair asymmetricKeyPair;
-    private SymmetricCryptoParams symmetricParams;
-    private byte[] serverEncryptionKey;
+   // Generated keys and crypto params
+   private WrapsAsymmetricCipherKeyPair asymmetricKeyPair;
+   private SymmetricCryptoParams symmetricParams;
+   private byte[] serverEncryptionKey;
 
-    private async Task OnEncryptClicked(string message, CryptoStrength strength)
-    {
-        IsEncrypting = true;
-        isRecipientDefined = !string.IsNullOrEmpty(UserPublicKey);
-        await GenerateKeys(strength);
-        GC.Collect();
-        await EncryptMessage(message, strength);
-        GC.Collect();
-        ClearKeys();
-        GC.Collect();
-    }
+   private async Task OnEncryptClicked(string message, CryptoStrength strength)
+   {
+      IsEncrypting = true;
+      isRecipientDefined = !string.IsNullOrEmpty(UserPublicKey);
+      await GenerateKeys(strength);
+      GC.Collect();
+      await EncryptMessage(message, strength);
+      GC.Collect();
+      ClearKeys();
+      GC.Collect();
+   }
 
-    private async Task GenerateKeys(CryptoStrength strength)
-    {
-        await SetNewEncryptionStatus("Creating symmetric key");
-        symmetricParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
-        serverEncryptionKey = CryptoLib.Common.GetDigest(symmetricParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
+   private async Task GenerateKeys(CryptoStrength strength)
+   {
+      await SetNewEncryptionStatus("Creating symmetric key");
+      symmetricParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
+      serverEncryptionKey = CryptoLib.Common.GetDigest(symmetricParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
-        await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
-        asymmetricKeyPair = CryptoLib.Common.GenerateAsymmetricKeys(strength);
-    }
+      await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
+      asymmetricKeyPair = CryptoLib.Common.GenerateAsymmetricKeys(strength);
+   }
 
-    private void ClearKeys()
-    {
-        asymmetricKeyPair = null;
-        symmetricParams = null;
-        serverEncryptionKey = null;
-    }
+   private void ClearKeys()
+   {
+      asymmetricKeyPair = null;
+      symmetricParams = null;
+      serverEncryptionKey = null;
+   }
 
-    private async Task EncryptMessage(string message, CryptoStrength strength)
-    {
-        await SetNewEncryptionStatus("Encrypting your message");
-        byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-        var cipherText = CryptoLib.Common.DoSymmetricEncryption(messageBytes, symmetricParams);
+   private async Task EncryptMessage(string message, CryptoStrength strength)
+   {
+      await SetNewEncryptionStatus("Encrypting your message");
+      byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+      var cipherText = CryptoLib.Common.DoSymmetricEncryption(messageBytes, symmetricParams);
 
-        await SetNewEncryptionStatus("Encrypting symmetric key");
-        var publicKeyToEncryptWith = isRecipientDefined
-            ? CryptoLib.Common.ConvertRsaPublicKeyFromPEM(UserPublicKey)
-            : asymmetricKeyPair.Public;
+      await SetNewEncryptionStatus("Encrypting symmetric key");
+      var publicKeyToEncryptWith = isRecipientDefined
+          ? CryptoLib.Common.ConvertRsaPublicKeyFromPEM(UserPublicKey)
+          : asymmetricKeyPair.Public;
 
-        var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, publicKeyToEncryptWith);
+      var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, publicKeyToEncryptWith);
 
-        await SetNewEncryptionStatus("Creating a signature");
-        var signature = CryptoLib.Common.SignPlaintext(messageBytes, asymmetricKeyPair.Private);
+      await SetNewEncryptionStatus("Creating a signature");
+      var signature = CryptoLib.Common.SignPlaintext(messageBytes, asymmetricKeyPair.Private);
 
-        await SetNewEncryptionStatus("Preparing to upload");
-        var encodedCipherText = Convert.ToBase64String(cipherText);
-        var encodedSymmetricInfo = Convert.ToBase64String(encryptedSymmetricInfo);
-        var encodedServerEncryptionKey = Convert.ToBase64String(serverEncryptionKey);
-        var encodedSignature = Convert.ToBase64String(signature);
-        var encodedPublicKey = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM()));
+      await SetNewEncryptionStatus("Preparing to upload");
+      var encodedCipherText = Convert.ToBase64String(cipherText);
+      var encodedSymmetricInfo = Convert.ToBase64String(encryptedSymmetricInfo);
+      var encodedServerEncryptionKey = Convert.ToBase64String(serverEncryptionKey);
+      var encodedSignature = Convert.ToBase64String(signature);
+      var encodedPublicKey = Convert.ToBase64String(
+          Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM()));
 
-        await SetNewEncryptionStatus("Uploading");
+      await SetNewEncryptionStatus("Uploading");
 
-        if (AuthenticationService.User == null)
-        {
-            var response = await UploadMessageToAPI(encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
-            if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
-            {
-                Error = true;
-                ErrorMessage = "The server is full.  Try again later.";
-                IsEncrypting = false;
-                return;
-            }
-            if (response.Status.Equals(Contracts.Enum.ResponseCode.MessagesNotAcceptedByUser))
-            {
-                Error = true;
-                ErrorMessage = "This user doesn't allow anonymous messages.";
-                IsEncrypting = false;
-                return;
-            }
+      if (AuthenticationService.User == null)
+      {
+         var response = await UploadMessageToAPI(encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
+         if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+         {
+            Error = true;
+            ErrorMessage = "The server is full.  Try again later.";
+            IsEncrypting = false;
+            return;
+         }
+         if (response.Status.Equals(Contracts.Enum.ResponseCode.MessagesNotAcceptedByUser))
+         {
+            Error = true;
+            ErrorMessage = "This user doesn't allow anonymous messages.";
+            IsEncrypting = false;
+            return;
+         }
 
-            // Send data to success modal component
-            CompletedUpload("message", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
-        }
-        else
-        {
-            // TODO - Need to sign with the user's private key; not the generated private key
-            var response = await UploadUserMessageToAPI(encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
-            if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
-            {
-                Error = true;
-                ErrorMessage = "The server is full.  Try again later.";
-                IsEncrypting = false;
-                return;
-            }
+         // Send data to success modal component
+         CompletedUpload("message", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+      }
+      else
+      {
+         // TODO - Need to sign with the user's private key; not the generated private key
+         var response = await UploadUserMessageToAPI(encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
+         if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+         {
+            Error = true;
+            ErrorMessage = "The server is full.  Try again later.";
+            IsEncrypting = false;
+            return;
+         }
 
-            if (response.Status.Equals(Contracts.Enum.ResponseCode.MessagesNotAcceptedByUser))
-            {
-                Error = true;
-                ErrorMessage = "This user doesn't allow messages.";
-                IsEncrypting = false;
-                return;
-            }
+         if (response.Status.Equals(Contracts.Enum.ResponseCode.MessagesNotAcceptedByUser))
+         {
+            Error = true;
+            ErrorMessage = "This user doesn't allow messages.";
+            IsEncrypting = false;
+            return;
+         }
 
-            // Send data to success modal component
-            CompletedUpload("message", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
-        }
+         // Send data to success modal component
+         CompletedUpload("message", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+      }
 
-        // Open the correct modal
-        if (isRecipientDefined)
-        {
-            ModalForRecipient.Open();
-        }
-        else
-        {
-            Modal.Open();
-        }
+      // Open the correct modal
+      if (isRecipientDefined)
+      {
+         ModalForRecipient.Open();
+      }
+      else
+      {
+         Modal.Open();
+      }
 
-        // Reset message subject and text
-        MessageSubject = "";
-        MessageText = "";
+      // Reset message subject and text
+      MessageSubject = "";
+      MessageText = "";
 
-        // No longer encrypting
-        IsEncrypting = false;
-    }
+      // No longer encrypting
+      IsEncrypting = false;
+   }
 
-    public async Task SetNewEncryptionStatus(string status)
-    {
-        EncryptionStatusMessage = status;
-        StateHasChanged();
-        await Task.Delay(500);
-    }
+   public async Task SetNewEncryptionStatus(string status)
+   {
+      EncryptionStatusMessage = status;
+      StateHasChanged();
+      await Task.Delay(500);
+   }
 
-    public void CompletedUpload(string format, Guid id, string privKey)
-    {
-        dataFormat = format;
-        returnedId = id;
-        privateKey = privKey;
-    }
+   public void CompletedUpload(string format, Guid id, string privKey)
+   {
+      dataFormat = format;
+      returnedId = id;
+      privateKey = privKey;
+   }
 
-    private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
-    {
-        if (MessageSubject == "")
-        {
-            MessageSubject = "(no subject)";
-        }
-        var url = $"{AppSettings.ApiBaseUrl}/anonymous/upload";
-        var postBody = new AnonymousUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
+   private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
+   {
+      if (MessageSubject == "")
+      {
+         MessageSubject = "(no subject)";
+      }
+      var url = $"{AppSettings.ApiBaseUrl}/anonymous/upload";
+      var postBody = new AnonymousUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
 
-        return await HttpService.Post<AnonymousUploadResponse>(url, postBody);
-    }
+      var (_, payload) = await HttpService.Post<AnonymousUploadResponse>(url, postBody);
+      return payload;
+   }
 
-    private async Task<RegisteredUserUploadResponse> UploadUserMessageToAPI(string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
-    {
-        if (MessageSubject == "")
-        {
-            MessageSubject = "(no subject)";
-        }
-        var url = $"{AppSettings.ApiBaseUrl}/user/upload";
-        var postBody = new RegisteredUserUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
+   private async Task<RegisteredUserUploadResponse> UploadUserMessageToAPI(string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
+   {
+      if (MessageSubject == "")
+      {
+         MessageSubject = "(no subject)";
+      }
+      var url = $"{AppSettings.ApiBaseUrl}/user/upload";
+      var postBody = new RegisteredUserUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
 
-        return await HttpService.Post<RegisteredUserUploadResponse>(url, postBody, true);
-    }
+      var (_, payload) = await HttpService.Post<RegisteredUserUploadResponse>(url, postBody, true);
+      return payload;
+   }
 
-    private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
-    private Crypter.Web.Shared.UploadSuccessModalWithRecipient ModalForRecipient { get; set; }
+   private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
+   private Crypter.Web.Shared.UploadSuccessModalWithRecipient ModalForRecipient { get; set; }
 
-    [Parameter] public string Username { get; set; }
-    [Parameter] public string UserPublicKey { get; set; }
-    [Parameter] public EventCallback<string> UsernameChanged { get; set; }
-    [Parameter] public EventCallback<string> UserPublicKeyChanged { get; set; }
+   [Parameter] public string Username { get; set; }
+   [Parameter] public string UserPublicKey { get; set; }
+   [Parameter] public EventCallback<string> UsernameChanged { get; set; }
+   [Parameter] public EventCallback<string> UserPublicKeyChanged { get; set; }
 }

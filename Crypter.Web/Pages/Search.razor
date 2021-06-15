@@ -7,132 +7,133 @@
 @inject IHttpService HttpService
 
 <div class="container my-4">
-    <h1>Find a user</h1>
-    <EditForm Model="@searchInfo" OnValidSubmit="@PerformUserSearch">
-        <DataAnnotationsValidator />
-        <div class="row">
-            <div class="col-md-3">
-                <InputSelect @bind-Value="searchInfo.Type" class="form-select">
-                    <option selected value="username">Search by Username</option>
-                    <option value="public-name">Search by Public Name</option>
-                </InputSelect>
+   <h1>Find a user</h1>
+   <EditForm Model="@searchInfo" OnValidSubmit="@PerformUserSearch">
+      <DataAnnotationsValidator />
+      <div class="row">
+         <div class="col-md-3">
+            <InputSelect @bind-Value="searchInfo.Type" class="form-select">
+               <option selected value="username">Search by Username</option>
+               <option value="public-name">Search by Public Name</option>
+            </InputSelect>
+         </div>
+         <div class="col-md-9">
+            <div class="input-group mb-3">
+               <InputText @bind-Value="searchInfo.Query" class="form-control" />
+               <button class="btn btn-primary" type="submit" id="button-addon2">Search</button>
             </div>
-            <div class="col-md-9">
-                <div class="input-group mb-3">
-                    <InputText @bind-Value="searchInfo.Query" class="form-control" />
-                    <button class="btn btn-primary" type="submit" id="button-addon2">Search</button>
-                </div>
-                <ValidationMessage For="@(() => searchInfo.Query)" />
-            </div>
-        </div>
-    </EditForm>
-    <div class="row">
-        @if (SearchResults != null)
-        {
-            @if (SearchResults.Total == 0)
+            <ValidationMessage For="@(() => searchInfo.Query)" />
+         </div>
+      </div>
+   </EditForm>
+   <div class="row">
+      @if (SearchResults != null)
+      {
+         @if (SearchResults.Total == 0)
+         {
+            <h3 class="text-center">No results found</h3>
+         }
+         else
+         {
+            @foreach (var result in SearchResults.Result)
             {
-                <h3 class="text-center">No results found</h3>
+               <div class="col-md-6">
+                  <div class="card my-1">
+                     <div class="card-body">
+                        <a href="/user/profile/@result.Username">
+                           @if (result.PublicAlias != null)
+                           {
+                              <h5 class="card-title">@result.PublicAlias (@result.Username)</h5>
+                           }
+                           else
+                           {
+                              <h5 class="card-title">@result.Username</h5>
+                           }
+                        </a>
+                     </div>
+                  </div>
+               </div>
             }
-            else
+            if (SearchResults.Total > searchInfo.NumResults)
             {
-                @foreach (var result in SearchResults.Result)
-                {
-                    <div class="col-md-6">
-                        <div class="card my-1">
-                            <div class="card-body">
-                                <a href="/user/profile/@result.Username">
-                                    @if (result.PublicAlias != null)
-                                    {
-                                        <h5 class="card-title">@result.PublicAlias (@result.Username)</h5>
-                                    }
-                                    else
-                                    {
-                                        <h5 class="card-title">@result.Username</h5>
-                                    }
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                }
-                if (SearchResults.Total > searchInfo.NumResults)
-                {
-                    decimal numberPages = (SearchResults.Total / searchInfo.NumResults);
+               decimal numberPages = (SearchResults.Total / searchInfo.NumResults);
 
-                    <nav aria-label="User Search Results">
-                        <ul class="pagination">
-                            @for (int i = 0; i <= Math.Ceiling(numberPages); i++)
-                            {
-                                string pageUrl = "/user/search?query=" + searchInfo.Query + "&type="  + searchInfo.Type + "&page=" + (i + 1);
-                                <li class="page-item page"><a class="page-link" @onclick="() => GoToPage(pageUrl)">@(i + 1)</a></li>
-                            }
-                        </ul>
-                    </nav>
+               <nav aria-label="User Search Results">
+                  <ul class="pagination">
+                     @for (int i = 0; i <= Math.Ceiling(numberPages); i++)
+                     {
+                        string pageUrl = "/user/search?query=" + searchInfo.Query + "&type=" + searchInfo.Type + "&page=" + (i + 1);
+                        <li class="page-item page"><a class="page-link" @onclick="() => GoToPage(pageUrl)">@(i + 1)</a></li>
+                     }
+                  </ul>
+               </nav>
 
-                    SetActivePage();
-                }
+               SetActivePage();
             }
-        }
-    </div>
+         }
+      }
+   </div>
 </div>
 
 @code {
-    private SearchInfo searchInfo = new SearchInfo();
-    private UserSearchResponse SearchResults;
+   private SearchInfo searchInfo = new SearchInfo();
+   private UserSearchResponse SearchResults;
 
-    protected override async Task OnInitializedAsync()
-    {
-        if (AuthenticationService.User == null)
-        {
-            NavManager.NavigateTo("/");
-            return;
-        }
+   protected override async Task OnInitializedAsync()
+   {
+      if (AuthenticationService.User == null)
+      {
+         NavManager.NavigateTo("/");
+         return;
+      }
 
-        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Search");
-        await QueriedSearchResults();
-    }
+      await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Search");
+      await QueriedSearchResults();
+   }
 
-    private async Task PerformUserSearch()
-    {
-        var url = searchInfo.Type == "username"
-            ? $"{AppSettings.ApiBaseUrl}/user/search/username"
-            : $"{AppSettings.ApiBaseUrl}/user/search/public-alias";
+   private async Task PerformUserSearch()
+   {
+      var url = searchInfo.Type == "username"
+          ? $"{AppSettings.ApiBaseUrl}/user/search/username"
+          : $"{AppSettings.ApiBaseUrl}/user/search/public-alias";
 
-        string query = url + "?value=" + searchInfo.Query + "&index=" + searchInfo.Index + "&count=" + searchInfo.NumResults;
+      string query = url + "?value=" + searchInfo.Query + "&index=" + searchInfo.Index + "&count=" + searchInfo.NumResults;
 
-        await JsRuntime.InvokeVoidAsync("setPageUrl", "/user/search?query=" + searchInfo.Query + "&type=" + searchInfo.Type + "&page=" + searchInfo.Page);
+      await JsRuntime.InvokeVoidAsync("setPageUrl", "/user/search?query=" + searchInfo.Query + "&type=" + searchInfo.Type + "&page=" + searchInfo.Page);
 
-        SearchResults = await HttpService.Get<UserSearchResponse>(query, true);
-    }
+      var (_, payload) = await HttpService.Get<UserSearchResponse>(query, true);
+      SearchResults = payload;
+   }
 
-    private async Task QueriedSearchResults()
-    {
-        var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+   private async Task QueriedSearchResults()
+   {
+      var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
 
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("query", out var value))
-        {
-            searchInfo.Query = value.First();
-        }
+      if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("query", out var value))
+      {
+         searchInfo.Query = value.First();
+      }
 
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var qType))
-        {
-            searchInfo.Type = qType.First();
-        }
+      if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var qType))
+      {
+         searchInfo.Type = qType.First();
+      }
 
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var pageNum))
-        {
-            searchInfo.Page = Int32.Parse(pageNum.First());
-            searchInfo.Index = (searchInfo.Page - 1) * searchInfo.NumResults;
-            await PerformUserSearch();
-        }
-    }
+      if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var pageNum))
+      {
+         searchInfo.Page = Int32.Parse(pageNum.First());
+         searchInfo.Index = (searchInfo.Page - 1) * searchInfo.NumResults;
+         await PerformUserSearch();
+      }
+   }
 
-    private void SetActivePage()
-    {
-        JsRuntime.InvokeVoidAsync("setActivePage", searchInfo.Page);
-    }
+   private void SetActivePage()
+   {
+      JsRuntime.InvokeVoidAsync("setActivePage", searchInfo.Page);
+   }
 
-    private void GoToPage(string pageurl)
-    {
-        NavManager.NavigateTo(pageurl, true);
-    }
+   private void GoToPage(string pageurl)
+   {
+      NavManager.NavigateTo(pageurl, true);
+   }
 }
