@@ -75,12 +75,12 @@ else
         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
         var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.BetaKey, RegistrationInfo.Email);
-        var response = await HttpService.Post<UserRegisterResponse>(url, requestBody);
+        var (_, payload) = await HttpService.Post<UserRegisterResponse>(url, requestBody);
 
-        if (response.Result != InsertUserResult.Success)
+        if (payload.Result != InsertUserResult.Success)
         {
             RegistrationError = true;
-            RegistrationErrorText = response.ResultMessage;
+            RegistrationErrorText = payload.ResultMessage;
         }
         else
         {

@@ -6,319 +6,321 @@
 @inject IHttpService HttpService
 
 <div class="file-upload" hidden="@IsEncrypting">
-    <div class="row">
-        <div class="col-12 p-0">
-            <div class="card dropzone @dropClass rounded mb-3">
-                <p class="card-text dz-text">
-                    <i class="bi bi-file-arrow-up d-block fs-1 my-3"></i>
-                    <span class="fw-bold">Choose a file</span> or drag it here to upload
-                </p>
-                <BlazorInputFile.InputFile id="fileInput"
-                           OnChange="HandleFileInputChange"
-                           @ondragenter="HandleDragEnter"
-                           @ondragleave="HandleDragLeave" />
+   <div class="row">
+      <div class="col-12 p-0">
+         <div class="card dropzone @dropClass rounded mb-3">
+            <p class="card-text dz-text">
+               <i class="bi bi-file-arrow-up d-block fs-1 my-3"></i>
+               <span class="fw-bold">Choose a file</span> or drag it here to upload
+            </p>
+            <BlazorInputFile.InputFile id="fileInput"
+                                       OnChange="HandleFileInputChange"
+                                       @ondragenter="HandleDragEnter"
+                                       @ondragleave="HandleDragLeave" />
+         </div>
+         @if ((filesNotAcceptedByUser || fileSizeError || fileCountError || noFileSelected || serverIsFull))
+         {
+            <div class="validation-errors my-3">
+               @if (filesNotAcceptedByUser)
+               {
+                  <div class="alert alert-danger" role="alert">
+                     This user does not accept files.
+                  </div>
+               }
+               @if (fileSizeError)
+               {
+                  <div class="alert alert-danger" role="alert">
+                     The max file size is @MaxFileSizeMB MB.
+                  </div>
+               }
+
+               @if (fileCountError)
+               {
+                  <div class="alert alert-danger" role="alert">
+                     You can only upload @MaxFileCount file(s).
+                  </div>
+               }
+
+               @if (noFileSelected)
+               {
+                  <div class="alert alert-danger" role="alert">
+                     No file selected.
+                  </div>
+               }
+
+               @if (serverIsFull)
+               {
+                  <div class="alert alert-danger" role="alert">
+                     The server is full. Try again later.
+                  </div>
+               }
             </div>
-            @if ((filesNotAcceptedByUser || fileSizeError || fileCountError || noFileSelected || serverIsFull))
-            {
-                <div class="validation-errors my-3">
-                    @if (filesNotAcceptedByUser)
-                    {
-                        <div class="alert alert-danger" role="alert">
-                            This user does not accept files.
-                        </div>
-                    }
-                    @if (fileSizeError)
-                    {
-                        <div class="alert alert-danger" role="alert">
-                            The max file size is @MaxFileSizeMB MB.
-                        </div>
-                    }
-
-                    @if (fileCountError)
-                    {
-                        <div class="alert alert-danger" role="alert">
-                            You can only upload @MaxFileCount file(s).
-                        </div>
-                    }
-
-                    @if (noFileSelected)
-                    {
-                        <div class="alert alert-danger" role="alert">
-                            No file selected.
-                        </div>
-                    }
-
-                    @if (serverIsFull)
-                    {
-                        <div class="alert alert-danger" role="alert">
-                            The server is full. Try again later.
-                        </div>
-                    }
-                </div>
-            }
-            @if (selectedFiles != null && selectedFiles.Count > 0)
-            {
-                <div class="card my-3">
-                    <div class="card-body">
-                        @selectedFiles[0].Name
-                        <button type="button" class="btn-close float-end" aria-label="Remove file" @onclick="@(e => RemoveFile(selectedFiles[0]))"></button>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12 p-0">
-            <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptFileClicked(selectedFiles, encryptionStrength))">Encrypt</button>
-        </div>
-    </div>
-    <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PrivateKey="privateKey" />
-    <UploadSuccessModalWithRecipient @ref="ModalForRecipient" />
+         }
+         @if (selectedFiles != null && selectedFiles.Count > 0)
+         {
+            <div class="card my-3">
+               <div class="card-body">
+                  @selectedFiles[0].Name
+                  <button type="button" class="btn-close float-end" aria-label="Remove file" @onclick="@(e => RemoveFile(selectedFiles[0]))"></button>
+               </div>
+            </div>
+         }
+      </div>
+   </div>
+   <div class="row">
+      <div class="col-12 p-0">
+         <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptFileClicked(selectedFiles, encryptionStrength))">Encrypt</button>
+      </div>
+   </div>
+   <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PrivateKey="privateKey" />
+   <UploadSuccessModalWithRecipient @ref="ModalForRecipient" />
 </div>
 
 <div class="encrypt-status" hidden="@(!IsEncrypting)">
-    <h3>@EncryptionStatusMessage</h3>
-    <div class="spinner-border" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
+   <h3>@EncryptionStatusMessage</h3>
+   <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+   </div>
 </div>
 
 @code {
-    // Constants
-    private const int MaxFileSizeMB = 10;
-    private const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
-    private const int MaxFileCount = 1;
+   // Constants
+   private const int MaxFileSizeMB = 10;
+   private const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
+   private const int MaxFileCount = 1;
 
-    // State
-    private bool IsEncrypting = false;
-    private string EncryptionStatusMessage = "";
+   // State
+   private bool IsEncrypting = false;
+   private string EncryptionStatusMessage = "";
 
-    // User input
-    private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
-    private CryptoStrength encryptionStrength = CryptoStrength.Minimum;
+   // User input
+   private List<IFileListEntry> selectedFiles = new List<IFileListEntry>();
+   private CryptoStrength encryptionStrength = CryptoStrength.Minimum;
 
-    // Variables we control
-    private string dropClass = "";
-    private bool fileSizeError = false;
-    private bool fileCountError = false;
-    private bool noFileSelected = false;
-    private bool serverIsFull = false;
-    private bool filesNotAcceptedByUser = false;
-    private Guid returnedId;
-    private string privateKey;
-    private string dataFormat;
-    private bool isRecipientDefined;
+   // Variables we control
+   private string dropClass = "";
+   private bool fileSizeError = false;
+   private bool fileCountError = false;
+   private bool noFileSelected = false;
+   private bool serverIsFull = false;
+   private bool filesNotAcceptedByUser = false;
+   private Guid returnedId;
+   private string privateKey;
+   private string dataFormat;
+   private bool isRecipientDefined;
 
-    // Generated keys and crypto params
-    private WrapsAsymmetricCipherKeyPair asymmetricKeyPair;
-    private SymmetricCryptoParams symmetricParams;
-    private byte[] serverEncryptionKey;
+   // Generated keys and crypto params
+   private WrapsAsymmetricCipherKeyPair asymmetricKeyPair;
+   private SymmetricCryptoParams symmetricParams;
+   private byte[] serverEncryptionKey;
 
-    private void HandleDragEnter()
-    {
-        dropClass = "dropzone-drag";
-    }
+   private void HandleDragEnter()
+   {
+      dropClass = "dropzone-drag";
+   }
 
-    private void HandleDragLeave()
-    {
-        dropClass = "";
-    }
+   private void HandleDragLeave()
+   {
+      dropClass = "";
+   }
 
-    private void HandleFileInputChange(IFileListEntry[] files)
-    {
-        dropClass = "";
-        fileSizeError = false;
-        fileCountError = false;
+   private void HandleFileInputChange(IFileListEntry[] files)
+   {
+      dropClass = "";
+      fileSizeError = false;
+      fileCountError = false;
 
-        if (files != null)
-        {
-            foreach (var file in files)
+      if (files != null)
+      {
+         foreach (var file in files)
+         {
+            bool error = false;
+            if (file.Size > MaxFileSize)
             {
-                bool error = false;
-                if (file.Size > MaxFileSize)
-                {
-                    error = true;
-                    fileSizeError = true;
-                }
-
-                if (selectedFiles.Count == MaxFileCount)
-                {
-
-                    error = true;
-                    fileCountError = true;
-                }
-
-                if (!error)
-                {
-                    noFileSelected = false;
-                    selectedFiles.Add(file);
-                }
-            }
-        }
-    }
-
-    private void RemoveFile(IFileListEntry file)
-    {
-        selectedFiles.Remove(file);
-        fileCountError = false;
-    }
-
-    private async Task OnEncryptFileClicked(List<IFileListEntry> files, CryptoStrength strength)
-    {
-        noFileSelected = files.Count == 0;
-        if (!noFileSelected)
-        {
-            isRecipientDefined = !string.IsNullOrEmpty(UserPublicKey);
-            IsEncrypting = true;
-            await GenerateKeys(strength);
-            GC.Collect();
-            await EncryptFile(files[0], strength);
-            GC.Collect();
-            ClearKeys();
-            GC.Collect();
-        }
-    }
-
-    private async Task GenerateKeys(CryptoStrength strength)
-    {
-        await SetNewEncryptionStatus("Creating symmetric key");
-        symmetricParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
-        serverEncryptionKey = CryptoLib.Common.GetDigest(symmetricParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
-
-        await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
-        asymmetricKeyPair = CryptoLib.Common.GenerateAsymmetricKeys(strength);
-    }
-
-    private void ClearKeys()
-    {
-        asymmetricKeyPair = null;
-        symmetricParams = null;
-        serverEncryptionKey = null;
-    }
-
-    private async Task EncryptFile(IFileListEntry file, CryptoStrength strength)
-    {
-        await SetNewEncryptionStatus("Encrypting your file");
-        using var stream = new MemoryStream();
-        await file.Data.CopyToAsync(stream);
-        byte[] fileBytes = stream.ToArray();
-        var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricParams);
-
-        await SetNewEncryptionStatus("Encrypting symmetric key");
-        var publicKeyToEncryptWith = isRecipientDefined
-            ? CryptoLib.Common.ConvertRsaPublicKeyFromPEM(UserPublicKey)
-            : asymmetricKeyPair.Public;
-
-        var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, publicKeyToEncryptWith);
-
-        await SetNewEncryptionStatus("Creating a signature");
-        var signature = CryptoLib.Common.SignPlaintext(fileBytes, asymmetricKeyPair.Private);
-
-        await SetNewEncryptionStatus("Preparing to upload");
-        var encodedCipherText = Convert.ToBase64String(cipherText);
-        var encodedSymmetricInfo = Convert.ToBase64String(encryptedSymmetricInfo);
-        var encodedServerEncryptionKey = Convert.ToBase64String(serverEncryptionKey);
-        var encodedSignature = Convert.ToBase64String(signature);
-        var encodedPublicKey = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM()));
-
-        await SetNewEncryptionStatus("Uploading");
-        if (AuthenticationService.User == null)
-        {
-            var response = await UploadFileToAPI(file.Name, file.Type, encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
-
-            if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
-            {
-                serverIsFull = true;
-                IsEncrypting = false;
-                return;
+               error = true;
+               fileSizeError = true;
             }
 
-            if (response.Status.Equals(Contracts.Enum.ResponseCode.FilesNotAcceptedByUser))
+            if (selectedFiles.Count == MaxFileCount)
             {
-                filesNotAcceptedByUser = true;
-                IsEncrypting = false;
-                return;
+
+               error = true;
+               fileCountError = true;
             }
 
-            // Send data to success modal component
-            CompletedUpload("file", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
-        }
-        else
-        {
-            // TODO - Need to sign with the user's private key; not the generated private key
-            var response = await UploadUserFileToAPI(file.Name, file.Type, encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
-
-            if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+            if (!error)
             {
-                serverIsFull = true;
-                IsEncrypting = false;
-                return;
+               noFileSelected = false;
+               selectedFiles.Add(file);
             }
+         }
+      }
+   }
 
-            if (response.Status.Equals(Contracts.Enum.ResponseCode.FilesNotAcceptedByUser))
-            {
-                filesNotAcceptedByUser = true;
-                IsEncrypting = false;
-                return;
-            }
+   private void RemoveFile(IFileListEntry file)
+   {
+      selectedFiles.Remove(file);
+      fileCountError = false;
+   }
 
-            // Send data to success modal component
-            CompletedUpload("file", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
-        }
+   private async Task OnEncryptFileClicked(List<IFileListEntry> files, CryptoStrength strength)
+   {
+      noFileSelected = files.Count == 0;
+      if (!noFileSelected)
+      {
+         isRecipientDefined = !string.IsNullOrEmpty(UserPublicKey);
+         IsEncrypting = true;
+         await GenerateKeys(strength);
+         GC.Collect();
+         await EncryptFile(files[0], strength);
+         GC.Collect();
+         ClearKeys();
+         GC.Collect();
+      }
+   }
 
-        // Open the correct modal
-        if (isRecipientDefined)
-        {
-            ModalForRecipient.Open();
-        }
-        else
-        {
-            Modal.Open();
-        }
+   private async Task GenerateKeys(CryptoStrength strength)
+   {
+      await SetNewEncryptionStatus("Creating symmetric key");
+      symmetricParams = CryptoLib.Common.GenerateSymmetricCryptoParams(strength);
+      serverEncryptionKey = CryptoLib.Common.GetDigest(symmetricParams.Key.ConvertToBytes(), DigestAlgorithm.SHA256);
 
-        // Reset File Uploads
-        RemoveFile(selectedFiles[0]);
+      await SetNewEncryptionStatus("Creating asymmetric keys. This may take a while.");
+      asymmetricKeyPair = CryptoLib.Common.GenerateAsymmetricKeys(strength);
+   }
 
-        // Show file upload after encryption
-        IsEncrypting = false;
-    }
+   private void ClearKeys()
+   {
+      asymmetricKeyPair = null;
+      symmetricParams = null;
+      serverEncryptionKey = null;
+   }
 
-    public async Task SetNewEncryptionStatus(string status)
-    {
-        EncryptionStatusMessage = status;
-        StateHasChanged();
-        await Task.Delay(500);
-    }
+   private async Task EncryptFile(IFileListEntry file, CryptoStrength strength)
+   {
+      await SetNewEncryptionStatus("Encrypting your file");
+      using var stream = new MemoryStream();
+      await file.Data.CopyToAsync(stream);
+      byte[] fileBytes = stream.ToArray();
+      var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricParams);
 
-    public void CompletedUpload(string format, Guid id, string privKey)
-    {
-        dataFormat = format;
-        returnedId = id;
-        privateKey = privKey;
-    }
+      await SetNewEncryptionStatus("Encrypting symmetric key");
+      var publicKeyToEncryptWith = isRecipientDefined
+          ? CryptoLib.Common.ConvertRsaPublicKeyFromPEM(UserPublicKey)
+          : asymmetricKeyPair.Public;
 
-    private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string contentType, string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
-    {
-        var url = $"{AppSettings.ApiBaseUrl}/anonymous/upload";
-        var requestBody = new AnonymousUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
+      var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, publicKeyToEncryptWith);
 
-        return await HttpService.Post<AnonymousUploadResponse>(url, requestBody);
-    }
+      await SetNewEncryptionStatus("Creating a signature");
+      var signature = CryptoLib.Common.SignPlaintext(fileBytes, asymmetricKeyPair.Private);
 
-    private async Task<RegisteredUserUploadResponse> UploadUserFileToAPI(string filename, string contentType, string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
-    {
-        var url = $"{AppSettings.ApiBaseUrl}/user/upload";
-        var postBody = new RegisteredUserUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
+      await SetNewEncryptionStatus("Preparing to upload");
+      var encodedCipherText = Convert.ToBase64String(cipherText);
+      var encodedSymmetricInfo = Convert.ToBase64String(encryptedSymmetricInfo);
+      var encodedServerEncryptionKey = Convert.ToBase64String(serverEncryptionKey);
+      var encodedSignature = Convert.ToBase64String(signature);
+      var encodedPublicKey = Convert.ToBase64String(
+          Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM()));
 
-        return await HttpService.Post<RegisteredUserUploadResponse>(url, postBody, true);
-    }
+      await SetNewEncryptionStatus("Uploading");
+      if (AuthenticationService.User == null)
+      {
+         var response = await UploadFileToAPI(file.Name, file.Type, encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
 
-    private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
-    private Crypter.Web.Shared.UploadSuccessModalWithRecipient ModalForRecipient { get; set; }
+         if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+         {
+            serverIsFull = true;
+            IsEncrypting = false;
+            return;
+         }
 
-    [Parameter] public string Username { get; set; }
-    [Parameter] public string UserPublicKey { get; set; }
-    [Parameter] public EventCallback<string> UsernameChanged { get; set; }
-    [Parameter] public EventCallback<string> UserPublicKeyChanged { get; set; }
+         if (response.Status.Equals(Contracts.Enum.ResponseCode.FilesNotAcceptedByUser))
+         {
+            filesNotAcceptedByUser = true;
+            IsEncrypting = false;
+            return;
+         }
+
+         // Send data to success modal component
+         CompletedUpload("file", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+      }
+      else
+      {
+         // TODO - Need to sign with the user's private key; not the generated private key
+         var response = await UploadUserFileToAPI(file.Name, file.Type, encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
+
+         if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
+         {
+            serverIsFull = true;
+            IsEncrypting = false;
+            return;
+         }
+
+         if (response.Status.Equals(Contracts.Enum.ResponseCode.FilesNotAcceptedByUser))
+         {
+            filesNotAcceptedByUser = true;
+            IsEncrypting = false;
+            return;
+         }
+
+         // Send data to success modal component
+         CompletedUpload("file", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+      }
+
+      // Open the correct modal
+      if (isRecipientDefined)
+      {
+         ModalForRecipient.Open();
+      }
+      else
+      {
+         Modal.Open();
+      }
+
+      // Reset File Uploads
+      RemoveFile(selectedFiles[0]);
+
+      // Show file upload after encryption
+      IsEncrypting = false;
+   }
+
+   public async Task SetNewEncryptionStatus(string status)
+   {
+      EncryptionStatusMessage = status;
+      StateHasChanged();
+      await Task.Delay(500);
+   }
+
+   public void CompletedUpload(string format, Guid id, string privKey)
+   {
+      dataFormat = format;
+      returnedId = id;
+      privateKey = privKey;
+   }
+
+   private async Task<AnonymousUploadResponse> UploadFileToAPI(string filename, string contentType, string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
+   {
+      var url = $"{AppSettings.ApiBaseUrl}/anonymous/upload";
+      var requestBody = new AnonymousUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
+
+      var (_, payload) = await HttpService.Post<AnonymousUploadResponse>(url, requestBody);
+      return payload;
+   }
+
+   private async Task<RegisteredUserUploadResponse> UploadUserFileToAPI(string filename, string contentType, string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
+   {
+      var url = $"{AppSettings.ApiBaseUrl}/user/upload";
+      var postBody = new RegisteredUserUploadRequest(filename, ResourceType.File, contentType, cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
+
+      var (_, payload) = await HttpService.Post<RegisteredUserUploadResponse>(url, postBody, true);
+      return payload;
+   }
+
+   private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
+   private Crypter.Web.Shared.UploadSuccessModalWithRecipient ModalForRecipient { get; set; }
+
+   [Parameter] public string Username { get; set; }
+   [Parameter] public string UserPublicKey { get; set; }
+   [Parameter] public EventCallback<string> UsernameChanged { get; set; }
+   [Parameter] public EventCallback<string> UserPublicKeyChanged { get; set; }
 }

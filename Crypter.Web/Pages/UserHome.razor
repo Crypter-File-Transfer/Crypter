@@ -7,137 +7,137 @@
 @inject IHttpService HttpService
 
 <div class="container my-4">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Received files and messages</h5>
-                </div>
-                <ul class="list-group list-group-flush">
-                @if (Downloads == null)
-                {
-                    <li class="list-group-item">
-                        Loading files...
-                    </li>
-                }
-                else if (Downloads.Count() == 0)
-                {
-                    <li class="list-group-item">
-                        You do not have any items to download
-                    </li>
-                }
-                else
-                {
-                    foreach (UserUploadItemDTO item in Downloads)
-                    {
-                        <li class="list-group-item">
-                            @if (item.ItemType == 0)
-                            {
-                                <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
-                            }
-                            else
-                            {
-                                <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
-                            }
-                            <div class="row">
-                                <div class="col-12">
-                                    Expires on: @item.ExpirationDate
-                                </div>
-                            </div>
-                        </li>
-                    }
-                }
-                </ul>
+   <div class="row">
+      <div class="col-md-6">
+         <div class="card mb-4">
+            <div class="card-body">
+               <h5 class="card-title">Received files and messages</h5>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Sent files and messages</h5>
-                </div>
-                <ul class="list-group list-group-flush">
-                    @if (Uploads == null)
-                    {
-                        <li class="list-group-item">
-                            Loading files...
-                        </li>
-                    }
-                    else if (Uploads.Count() == 0)
-                    {
-                        <li class="list-group-item">
-                            You do not have any uploads
-                        </li>
-                    }
-                    else
-                    {
-                        foreach (UserUploadItemDTO item in Uploads)
+            <ul class="list-group list-group-flush">
+               @if (Downloads == null)
+               {
+                  <li class="list-group-item">
+                     Loading files...
+                  </li>
+               }
+               else if (Downloads.Count() == 0)
+               {
+                  <li class="list-group-item">
+                     You do not have any items to download
+                  </li>
+               }
+               else
+               {
+                  foreach (UserUploadItemDTO item in Downloads)
+                  {
+                     <li class="list-group-item">
+                        @if (item.ItemType == 0)
                         {
-                            <li class="list-group-item">
-                                @if (item.ItemType == 0)
-                                {
-                                    <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
-                                }
-                                else
-                                {
-                                    <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
-                                }
-                                <div class="row">
-                                    <div class="col-12">
-                                        Expires on: @item.ExpirationDate
-                                    </div>
-                                </div>
-                            </li>
+                           <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
                         }
-                    }
-                </ul>
+                        else
+                        {
+                           <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                        }
+                        <div class="row">
+                           <div class="col-12">
+                              Expires on: @item.ExpirationDate
+                           </div>
+                        </div>
+                     </li>
+                  }
+               }
+            </ul>
+         </div>
+      </div>
+      <div class="col-md-6">
+         <div class="card mb-4">
+            <div class="card-body">
+               <h5 class="card-title">Sent files and messages</h5>
             </div>
-        </div>
-    </div>
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">A message from the developers</h5>
-                    <p>
-                        Thank you for signing up to use Crypter and participating in our beta program.
-                        The purpose of this beta program is to discover bugs and gather real feedback from friends, family, and colleagues.
-                        It also gives us time to finish adding some important features to this part of the website before we open it up to the public.
-                    </p>
-                    <p>Do not hesitate to contact us with your feedback and suggestions.  We really do want to hear from you!</p>
-                    <p class="float-end"> - Jack, Santiago, & Steven</p>
-                </div>
+            <ul class="list-group list-group-flush">
+               @if (Uploads == null)
+               {
+                  <li class="list-group-item">
+                     Loading files...
+                  </li>
+               }
+               else if (Uploads.Count() == 0)
+               {
+                  <li class="list-group-item">
+                     You do not have any uploads
+                  </li>
+               }
+               else
+               {
+                  foreach (UserUploadItemDTO item in Uploads)
+                  {
+                     <li class="list-group-item">
+                        @if (item.ItemType == 0)
+                        {
+                           <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                        }
+                        else
+                        {
+                           <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                        }
+                        <div class="row">
+                           <div class="col-12">
+                              Expires on: @item.ExpirationDate
+                           </div>
+                        </div>
+                     </li>
+                  }
+               }
+            </ul>
+         </div>
+      </div>
+   </div>
+   <div class="row justify-content-center">
+      <div class="col-md-8">
+         <div class="card mb-4">
+            <div class="card-body">
+               <h5 class="card-title">A message from the developers</h5>
+               <p>
+                  Thank you for signing up to use Crypter and participating in our beta program.
+                  The purpose of this beta program is to discover bugs and gather real feedback from friends, family, and colleagues.
+                  It also gives us time to finish adding some important features to this part of the website before we open it up to the public.
+               </p>
+               <p>Do not hesitate to contact us with your feedback and suggestions.  We really do want to hear from you!</p>
+               <p class="float-end"> - Jack, Santiago, & Steven</p>
             </div>
-        </div>
-    </div>
+         </div>
+      </div>
+   </div>
 </div>
 
 @code {
-    private IEnumerable<UserUploadItemDTO> Uploads;
-    private IEnumerable<UserUploadItemDTO> Downloads;
+   private IEnumerable<UserUploadItemDTO> Uploads;
+   private IEnumerable<UserUploadItemDTO> Downloads;
 
-    protected override async Task OnInitializedAsync()
-    {
-        if (AuthenticationService.User == null)
-        {
-            NavManager.NavigateTo("/");
-        }
+   protected override async Task OnInitializedAsync()
+   {
+      if (AuthenticationService.User == null)
+      {
+         NavManager.NavigateTo("/");
+      }
 
-        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Home");
-        Uploads = await GetUserUploads();
-        Downloads = await GetReceivedUploads();
-    }
+      await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Home");
+      Uploads = await GetUserUploads();
+      Downloads = await GetReceivedUploads();
+   }
 
-    private async Task<IEnumerable<UserUploadItemDTO>> GetUserUploads()
-    {
-        var url = $"{AppSettings.ApiBaseUrl}/user/user-uploads";
-        var userUploads = await HttpService.Get<UserUploadsResponse>(url, true);
-        return userUploads.UserUploadsList;
-    }
+   private async Task<IEnumerable<UserUploadItemDTO>> GetUserUploads()
+   {
+      var url = $"{AppSettings.ApiBaseUrl}/user/user-uploads";
+      var (_, payload) = await HttpService.Get<UserUploadsResponse>(url, true);
+      return payload.UserUploadsList;
+   }
 
-    private async Task<IEnumerable<UserUploadItemDTO>> GetReceivedUploads()
-    {
-        var url = $"{AppSettings.ApiBaseUrl}/user/received-uploads";
-        var userUploads = await HttpService.Get<UserUploadsResponse>(url, true);
-        return userUploads.UserUploadsList;
-    }
+   private async Task<IEnumerable<UserUploadItemDTO>> GetReceivedUploads()
+   {
+      var url = $"{AppSettings.ApiBaseUrl}/user/received-uploads";
+      var (_, payload) = await HttpService.Get<UserUploadsResponse>(url, true);
+      return payload.UserUploadsList;
+   }
 }
