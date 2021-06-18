@@ -1,7 +1,6 @@
 @inject IJSRuntime jsRuntime
-@inject AppSettings AppSettings
 @inject IAuthenticationService AuthenticationService
-@inject IHttpService HttpService
+@inject IUploadService UploadService
 
 <div class="message-upload" hidden="@IsEncrypting">
    <div class="row">
@@ -40,6 +39,12 @@
 </div>
 
 @code {
+   [Parameter]
+   public string RecipientUsername { get; set; }
+
+   [Parameter]
+   public string RecipientPublicKey { get; set; }
+
    // Constants
    private const int MaxMessageLength = 1024;
 
@@ -58,7 +63,6 @@
    private Guid returnedId;
    private string privateKey;
    private string dataFormat;
-   private bool isRecipientDefined;
 
    // Generated keys and crypto params
    private WrapsAsymmetricCipherKeyPair asymmetricKeyPair;
@@ -68,7 +72,6 @@
    private async Task OnEncryptClicked(string message, CryptoStrength strength)
    {
       IsEncrypting = true;
-      isRecipientDefined = !string.IsNullOrEmpty(UserPublicKey);
       await GenerateKeys(strength);
       GC.Collect();
       await EncryptMessage(message, strength);
@@ -101,9 +104,9 @@
       var cipherText = CryptoLib.Common.DoSymmetricEncryption(messageBytes, symmetricParams);
 
       await SetNewEncryptionStatus("Encrypting symmetric key");
-      var publicKeyToEncryptWith = isRecipientDefined
-          ? CryptoLib.Common.ConvertRsaPublicKeyFromPEM(UserPublicKey)
-          : asymmetricKeyPair.Public;
+      var publicKeyToEncryptWith = string.IsNullOrEmpty(RecipientUsername)
+          ? asymmetricKeyPair.Public
+          : CryptoLib.Common.ConvertRsaPublicKeyFromPEM(RecipientPublicKey);
 
       var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, publicKeyToEncryptWith);
 
@@ -119,67 +122,40 @@
           Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM()));
 
       await SetNewEncryptionStatus("Uploading");
+      var withAuth = AuthenticationService.User is not null;
 
-      if (AuthenticationService.User == null)
+      // TODO - Need to sign with the user's private key; not the generated private key
+      var request = new MessageUploadRequest(MessageSubject, encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey, RecipientUsername);
+      var (_, response) = await UploadService.UploadMessageAsync(request, withAuth);
+      switch (response.Result)
       {
-         var response = await UploadMessageToAPI(encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
-         if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
-         {
+         case UploadResult.BlockedByUserPrivacy:
+            Error = true;
+            ErrorMessage = "This user does not accept messages.";
+            IsEncrypting = false;
+            return;
+         case UploadResult.OutOfSpace:
             Error = true;
             ErrorMessage = "The server is full.  Try again later.";
             IsEncrypting = false;
             return;
-         }
-         if (response.Status.Equals(Contracts.Enum.ResponseCode.MessagesNotAcceptedByUser))
-         {
-            Error = true;
-            ErrorMessage = "This user doesn't allow anonymous messages.";
-            IsEncrypting = false;
-            return;
-         }
-
-         // Send data to success modal component
-         CompletedUpload("message", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
-      }
-      else
-      {
-         // TODO - Need to sign with the user's private key; not the generated private key
-         var response = await UploadUserMessageToAPI(encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey);
-         if (response.Status.Equals(Contracts.Enum.ResponseCode.DiskFull))
-         {
-            Error = true;
-            ErrorMessage = "The server is full.  Try again later.";
-            IsEncrypting = false;
-            return;
-         }
-
-         if (response.Status.Equals(Contracts.Enum.ResponseCode.MessagesNotAcceptedByUser))
-         {
-            Error = true;
-            ErrorMessage = "This user doesn't allow messages.";
-            IsEncrypting = false;
-            return;
-         }
-
-         // Send data to success modal component
-         CompletedUpload("message", response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+         default:
+            break;
       }
 
-      // Open the correct modal
-      if (isRecipientDefined)
-      {
-         ModalForRecipient.Open();
-      }
-      else
+      CompletedUpload(response.Id, Convert.ToBase64String(Encoding.UTF8.GetBytes(asymmetricKeyPair.Private.ConvertToPEM())));
+
+      if (string.IsNullOrEmpty(RecipientUsername))
       {
          Modal.Open();
       }
+      else
+      {
+         ModalForRecipient.Open();
+      }
 
-      // Reset message subject and text
       MessageSubject = "";
       MessageText = "";
-
-      // No longer encrypting
       IsEncrypting = false;
    }
 
@@ -190,44 +166,19 @@
       await Task.Delay(500);
    }
 
-   public void CompletedUpload(string format, Guid id, string privKey)
+   public void CompletedUpload(Guid id, string privKey)
    {
-      dataFormat = format;
+      dataFormat = "message";
       returnedId = id;
       privateKey = privKey;
-   }
-
-   private async Task<AnonymousUploadResponse> UploadMessageToAPI(string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
-   {
-      if (MessageSubject == "")
-      {
-         MessageSubject = "(no subject)";
-      }
-      var url = $"{AppSettings.ApiBaseUrl}/anonymous/upload";
-      var postBody = new AnonymousUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
-
-      var (_, payload) = await HttpService.Post<AnonymousUploadResponse>(url, postBody);
-      return payload;
-   }
-
-   private async Task<RegisteredUserUploadResponse> UploadUserMessageToAPI(string cipherText, string encryptedSymmetricInfo, string signature, string serverEncryptionKey, string publicKey)
-   {
-      if (MessageSubject == "")
-      {
-         MessageSubject = "(no subject)";
-      }
-      var url = $"{AppSettings.ApiBaseUrl}/user/upload";
-      var postBody = new RegisteredUserUploadRequest(MessageSubject, ResourceType.Message, "text", cipherText, encryptedSymmetricInfo, signature, serverEncryptionKey, publicKey, Username);
-
-      var (_, payload) = await HttpService.Post<RegisteredUserUploadResponse>(url, postBody, true);
-      return payload;
    }
 
    private Crypter.Web.Shared.UploadSuccessModal Modal { get; set; }
    private Crypter.Web.Shared.UploadSuccessModalWithRecipient ModalForRecipient { get; set; }
 
-   [Parameter] public string Username { get; set; }
-   [Parameter] public string UserPublicKey { get; set; }
-   [Parameter] public EventCallback<string> UsernameChanged { get; set; }
-   [Parameter] public EventCallback<string> UserPublicKeyChanged { get; set; }
+   [Parameter]
+   public EventCallback<string> RecipientUsernameChanged { get; set; }
+
+   [Parameter]
+   public EventCallback<string> RecipientPublicKeyChanged { get; set; }
 }

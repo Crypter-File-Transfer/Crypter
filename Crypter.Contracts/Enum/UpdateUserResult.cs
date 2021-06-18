@@ -3,7 +3,7 @@
     public enum UpdateUserCredentialsResult
     {
         Success,
-        UserNotFound,
+        NotFound,
         UsernameUnavailable,
         EmailUnavailable,
         PasswordValidationFailed
@@ -12,6 +12,6 @@
     public enum UpdateUserPreferencesResult
     {
         Success,
-        UserNotFound
+        NotFound
     }
 }

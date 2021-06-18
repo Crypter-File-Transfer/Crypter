@@ -1,81 +1,70 @@
 ﻿@page "/user/profile/{Username}"
 
 @inject NavigationManager NavManager
-@inject AppSettings AppSettings
 @inject IJSRuntime JsRuntime
-@inject IAuthenticationService AuthenticationService
-@inject IHttpService HttpService
+@inject IUserService UserService;
 
 <div class="container my-4">
-   @if (ProfileData != null)
-   {
-      <div class="row">
-         <div class="col-md-6 offset-md-3">
-            @if (ProfileData.StatusMessage.ToString() == "NotFound")
-            {
-               <h3 class="text-center">Profile is either not public or does not exist.</h3>
-            }
-            else
-            {
-               @if (ProfileData.PublicAlias != null)
+   <div class="row">
+      <div class="col-md-6 offset-md-3">
+      @if (!ProfileFound)
+      {
+         <h3 class="text-center">Profile is either not public or does not exist.</h3>
+      }
+      else
+      {
+         @if (!string.IsNullOrEmpty(PublicAlias))
+         {
+            <h2>@PublicAlias</h2>
+         }
+         <h3>@($@"{ActualUsername}")</h3>
+         <div class="row">
+            <div class="col-12">
+               @if (AllowsFiles)
                {
-                  <h3>@ProfileData.PublicAlias (@ProfileData.UserName)</h3>
+                  <button class="btn btn-secondary mr-3" @onclick="@OnEncryptAFileClicked">Send a file</button>
+                  <UserFileUploadModal @ref="FileModal" @bind-RecipientUsername="Username" @bind-RecipientPublicKey="UserPublicKey" />
                }
-               else
+               @if (AllowsMessages)
                {
-                  <h3>@ProfileData.UserName</h3>
+                  <button class="btn btn-secondary" @onclick="@OnEncryptAMessageClicked">Send a message</button>
+                  <UserMessageUploadModal @ref="MessageModal" @bind-RecipientUsername="Username" @bind-RecipientPublicKey="UserPublicKey" />
                }
-               <div class="row">
-                  <div class="col-12">
-                     @if (ProfileData.AllowsFiles)
-                     {
-                        <button class="btn btn-secondary mr-3" @onclick="@OnEncryptAFileClicked">Send a file</button>
-                        <UserFileUploadModal @ref="FileModal" @bind-Username="Username" @bind-UserPublicKey="UserPublicKey" />
-                     }
-                     @if (ProfileData.AllowsMessages)
-                     {
-                        <button class="btn btn-secondary" @onclick="@OnEncryptAMessageClicked">Send a message</button>
-                        <UserMessageUploadModal @ref="MessageModal" @bind-Username="Username" @bind-UserPublicKey="UserPublicKey" />
-                     }
-                  </div>
-               </div>
-
-            }
+            </div>
          </div>
+
+      }
       </div>
-   }
+   </div>
 </div>
 
 @code {
    [Parameter]
    public string Username { get; set; }
 
-   public bool ProfileFound;
-   public string NullMessage = "Looking for profile...";
-
-   private AnonymousGetPublicProfileResponse ProfileData;
+   private bool ProfileFound { get; set; }
+   private string PublicAlias;
+   private string ActualUsername;
+   private bool AllowsFiles;
+   private bool AllowsMessages;
    private string UserPublicKey;
 
    protected override async Task OnInitializedAsync()
    {
       await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Profile");
-      var responseData = await DownloadUserProfile();
-      if (responseData == null)
+      var (httpStatus, response) = await UserService.GetUserPublicProfileAsync(Username);
+      if (httpStatus == HttpStatusCode.NotFound)
       {
          ProfileFound = false;
          return;
       }
 
       ProfileFound = true;
-      ProfileData = responseData;
-      UserPublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(ProfileData.PublicKey));
-   }
-
-   private async Task<AnonymousGetPublicProfileResponse> DownloadUserProfile()
-   {
-      string url = $"{AppSettings.ApiBaseUrl}/user/" + Username;
-      var (_, payload) = await HttpService.Get<AnonymousGetPublicProfileResponse>(url);
-      return payload;
+      PublicAlias = response.PublicAlias;
+      ActualUsername = response.UserName;
+      AllowsFiles = response.AllowsFiles;
+      AllowsMessages = response.AllowsMessages;
+      UserPublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(response.PublicKey));
    }
 
    private void OnEncryptAFileClicked()
