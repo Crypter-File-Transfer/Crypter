@@ -1,10 +1,9 @@
 ﻿@page "/user"
 
-@inject AppSettings AppSettings
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
 @inject IAuthenticationService AuthenticationService
-@inject IHttpService HttpService
+@inject IUserService UserService
 
 <div class="container my-4">
    <div class="row">
@@ -14,13 +13,13 @@
                <h5 class="card-title">Received files and messages</h5>
             </div>
             <ul class="list-group list-group-flush">
-               @if (Downloads == null)
+               @if (Received == null)
                {
                   <li class="list-group-item">
                      Loading files...
                   </li>
                }
-               else if (Downloads.Count() == 0)
+               else if (Received.Count() == 0)
                {
                   <li class="list-group-item">
                      You do not have any items to download
@@ -28,20 +27,36 @@
                }
                else
                {
-                  foreach (UserUploadItemDTO item in Downloads)
+                  foreach (var item in Received)
                   {
                      <li class="list-group-item">
-                        @if (item.ItemType == 0)
+                        @if (item.IsFile)
                         {
-                           <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                           <h6 class="card-subtitle my-2">
+                              Filename: <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")">@item.Name</a>
+                           </h6>
                         }
                         else
                         {
-                           <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                           <h6 class="card-subtitle my-2">
+                              Subject: <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")">@item.Name</a>
+                           </h6>
                         }
                         <div class="row">
                            <div class="col-12">
-                              Expires on: @item.ExpirationDate
+                              @if (string.IsNullOrEmpty(item.SenderUsername))
+                              {
+                                 <span>From: Unknown</span>
+                              }
+                              else
+                              {
+                                 <span>From: <a href="@($"/user/profile/{item.SenderUsername}")">@($"@{item.SenderUsername}")</a></span>
+                              }
+                           </div>
+                        </div>
+                        <div class="row">
+                           <div class="col-12">
+                              Expires on: @item.ExpirationUTC.ToLocalTime().ToString()
                            </div>
                         </div>
                      </li>
@@ -56,13 +71,13 @@
                <h5 class="card-title">Sent files and messages</h5>
             </div>
             <ul class="list-group list-group-flush">
-               @if (Uploads == null)
+               @if (Sent == null)
                {
                   <li class="list-group-item">
                      Loading files...
                   </li>
                }
-               else if (Uploads.Count() == 0)
+               else if (Sent.Count() == 0)
                {
                   <li class="list-group-item">
                      You do not have any uploads
@@ -70,20 +85,37 @@
                }
                else
                {
-                  foreach (UserUploadItemDTO item in Uploads)
+                  foreach (var item in Sent)
                   {
                      <li class="list-group-item">
-                        @if (item.ItemType == 0)
+
+                        @if (item.IsFile)
                         {
-                           <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                           <h6 class="card-subtitle my-2">
+                              Filename: <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")">@item.Name</a>
+                           </h6>
                         }
                         else
                         {
-                           <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")"><h6 class="card-subtitle my-2">@item.FileName</h6></a>
+                           <h6 class="card-subtitle my-2">
+                              Subject: <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")">@item.Name</a>
+                           </h6>
                         }
                         <div class="row">
                            <div class="col-12">
-                              Expires on: @item.ExpirationDate
+                              @if (string.IsNullOrEmpty(item.RecipientUsername))
+                              {
+                                 <span>To: Unknown</span>
+                              }
+                              else
+                              {
+                                 <span>To: <a href="@($"/user/profile/{item.RecipientUsername}")">@($"@{item.RecipientUsername}")</a></span>
+                              }
+                           </div>
+                        </div>
+                        <div class="row">
+                           <div class="col-12">
+                              Expires on: @item.ExpirationUTC.ToLocalTime().ToString()
                            </div>
                         </div>
                      </li>
@@ -112,8 +144,8 @@
 </div>
 
 @code {
-   private IEnumerable<UserUploadItemDTO> Uploads;
-   private IEnumerable<UserUploadItemDTO> Downloads;
+   private IEnumerable<UserSentItem> Sent;
+   private IEnumerable<UserReceivedItem> Received;
 
    protected override async Task OnInitializedAsync()
    {
@@ -123,21 +155,67 @@
       }
 
       await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Home");
-      Uploads = await GetUserUploads();
-      Downloads = await GetReceivedUploads();
+      Sent = await GetUserSentItems();
+      Received = await GetUserReceivedItems();
    }
 
-   private async Task<IEnumerable<UserUploadItemDTO>> GetUserUploads()
+   private async Task<IEnumerable<UserSentItem>> GetUserSentItems()
    {
-      var url = $"{AppSettings.ApiBaseUrl}/user/user-uploads";
-      var (_, payload) = await HttpService.Get<UserUploadsResponse>(url, true);
-      return payload.UserUploadsList;
+      var (_, sentMessagesResponse) = await UserService.GetUserSentMessagesAsync();
+      var (_, sentFilesresponse) = await UserService.GetUserSentFilesAsync();
+
+      return sentMessagesResponse.Messages
+         .Select(x => new UserSentItem
+         {
+            Id = x.Id,
+            Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
+            RecipientId = x.RecipientId,
+            RecipientUsername = x.RecipientUsername,
+            RecipientPublicAlias = x.RecipientPublicAlias,
+            IsFile = false,
+            ExpirationUTC = x.ExpirationUTC
+         })
+         .Concat(sentFilesresponse.Files
+            .Select(x => new UserSentItem
+            {
+               Id = x.Id,
+               Name = x.FileName,
+               RecipientId = x.RecipientId,
+               RecipientUsername = x.RecipientUsername,
+               RecipientPublicAlias = x.RecipientPublicAlias,
+               IsFile = true,
+               ExpirationUTC = x.ExpirationUTC
+            }))
+         .OrderBy(x => x.ExpirationUTC);
    }
 
-   private async Task<IEnumerable<UserUploadItemDTO>> GetReceivedUploads()
+   private async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
    {
-      var url = $"{AppSettings.ApiBaseUrl}/user/received-uploads";
-      var (_, payload) = await HttpService.Get<UserUploadsResponse>(url, true);
-      return payload.UserUploadsList;
+      var (_, receivedMessagesResponse) = await UserService.GetUserReceivedMessagesAsync();
+      var (_, receivedFilesresponse) = await UserService.GetUserReceivedFilesAsync();
+
+      return receivedMessagesResponse.Messages
+         .Select(x => new UserReceivedItem
+         {
+            Id = x.Id,
+            Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
+            SenderId = x.SenderId,
+            SenderUsername = x.SenderUsername,
+            SenderPublicAlias = x.SenderPublicAlias,
+            IsFile = false,
+            ExpirationUTC = x.ExpirationUTC
+         })
+         .Concat(receivedFilesresponse.Files
+            .Select(x => new UserReceivedItem
+            {
+               Id = x.Id,
+               Name = x.FileName,
+               SenderId = x.SenderId,
+               SenderUsername = x.SenderUsername,
+               SenderPublicAlias = x.SenderPublicAlias,
+               IsFile = true,
+               ExpirationUTC = x.ExpirationUTC
+            }))
+         .OrderBy(x => x.ExpirationUTC);
    }
 }

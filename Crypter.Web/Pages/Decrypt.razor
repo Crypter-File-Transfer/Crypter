@@ -7,44 +7,63 @@
 @inject IAuthenticationService AuthenticationService
 @inject IHttpService HttpService
 
-@if (correctRecipient == true || anonymousRecipient == true)
+@if (Found)
 {
    <div class="container my-4">
-      <h1>Decrypt your @dataFormat</h1>
-      @if (!error)
+      <h1>Decrypt @DataFormat</h1>
+      @if (DataFormat == "message")
       {
-         <DecryptDetails @bind-IsCorrectRecipient="correctRecipient" @bind-DataFormat="dataFormat" @bind-Id="Id" @bind-Name="name" @bind-ContentType="contentType" @bind-Created="creationDate" @bind-Expiration="expirationDate" @bind-Size="fileSize"></DecryptDetails>
+         <DecryptMessageDetails @bind-Id="Id" @bind-Subject="Subject" @bind-Created="Created" @bind-Expiration="Expiration" @bind-Size="Size"
+                                @bind-SenderId="SenderId" @bind-SenderUsername="SenderUsername" @bind-SenderPublicAlias="SenderPublicAlias" @bind-RecipientId="RecipientId"></DecryptMessageDetails>
       }
       else
       {
-         <div class="container text-center">
-            <h2>@errorText</h2>
-         </div>
+         <DecryptFileDetails @bind-Id="Id" @bind-FileName="FileName" @bind-ContentType="ContentType" @bind-Created="Created" @bind-Expiration="Expiration" @bind-Size="Size"
+                             @bind-SenderId="SenderId" @bind-SenderUsername="SenderUsername" @bind-SenderPublicAlias="SenderPublicAlias" @bind-RecipientId="RecipientId"></DecryptFileDetails>
       }
    </div>
 }
 else
 {
    <div class="container my-4">
-      <h2>This message is for a specific recipient.</h2>
-      <p>If you are the intended recipient, please <a href="/login">login</a> and check your received files and messages.</p>
+      <h2>Not Found</h2>
+      <p>The @DataFormat you are looking for is either unavailable or does not exist.</p>
+      <p>Possible reasons include:</p>
+      <ul>
+         <li>
+            The URL you were given is invalid
+         </li>
+         <li>
+            The @DataFormat was already decrypted by someone else
+         </li>
+         <li>
+            The @DataFormat automatically expired after 24 hours
+         </li>
+      </ul>
    </div>
 }
 
 @code {
-   string dataFormat = "";
-   string name = "";
-   string creationDate = DateTime.Now.ToString("MM/dd/yyyy");
-   string expirationDate = "Never";
-   int fileSize = 0;
-   string contentType = "";
-   private bool error = false;
-   private string errorText = "";
-   private bool anonymousRecipient = false;
-   private bool correctRecipient = false;
-
    [Parameter]
    public Guid Id { get; set; }
+
+   // Common properties
+   private bool Found;
+   private string DataFormat;
+   private string Created;
+   private string Expiration;
+   private int Size;
+   private Guid SenderId;
+   private string SenderUsername;
+   private string SenderPublicAlias;
+   private Guid RecipientId;
+
+   // Message properties
+   private string Subject;
+
+   // File properties
+   private string FileName;
+   private string ContentType;
 
    protected override async Task OnInitializedAsync()
    {
@@ -52,47 +71,72 @@ else
 
       var relativeURL = NavManager.ToBaseRelativePath(NavManager.Uri);
       var urlPieces = relativeURL.Split("/");
-      dataFormat = urlPieces[1].ToLower();
+      DataFormat = urlPieces[1].ToLower();
 
-      ResourceType type = dataFormat == "message"
-          ? ResourceType.Message
-          : ResourceType.File;
-
-      var previewResponse = await DownloadPreviewFromApi(Id, type);
-      switch (previewResponse.Status)
+      if (DataFormat == "message")
       {
-         case Contracts.Enum.ResponseCode.Success:
-            PopulatePreview(previewResponse.Name, previewResponse.Size, previewResponse.CreationUTC, previewResponse.ExpirationUTC, previewResponse.ContentType);
-            if (previewResponse.Recipient == Guid.Empty)
-            {
-               anonymousRecipient = true;
-            }
-            else if (previewResponse.Recipient.ToString() == AuthenticationService.User.Id)
-            {
-               correctRecipient = true;
-            }
-            break;
-         default:
-            error = true;
-            errorText = previewResponse.StatusMessage;
-            break;
+         var (httpStatus, response) = await DownloadMessagePreview(Id);
+         Found = httpStatus != HttpStatusCode.NotFound;
+         if (Found)
+         {
+            PopulateMessagePreview(response.Subject, response.Size, response.CreationUTC, response.ExpirationUTC, response.SenderId, response.SenderUsername, response.SenderPublicAlias, response.RecipientId);
+         }
+      }
+      else
+      {
+         var (httpStatus, response) = await DownloadFilePreview(Id);
+         Found = httpStatus != HttpStatusCode.NotFound;
+         if (Found)
+         {
+            PopulateFilePreview(response.FileName, response.ContentType, response.Size, response.CreationUTC, response.ExpirationUTC, response.SenderId, response.SenderUsername, response.SenderPublicAlias, response.RecipientId);
+         }
       }
    }
 
-   private async Task<AnonymousPreviewResponse> DownloadPreviewFromApi(Guid id, ResourceType type)
+   private async Task<(HttpStatusCode HttpStatus, MessagePreviewResponse Response)> DownloadMessagePreview(Guid id)
    {
-      var url = $"{AppSettings.ApiBaseUrl}/anonymous/get-preview";
-      var requestBody = new AnonymousPreviewRequest(id, type);
-      var (_, payload) = await HttpService.Post<AnonymousPreviewResponse>(url, requestBody);
-      return payload;
+      var url = AuthenticationService.User is null
+         ? $"{AppSettings.ApiBaseUrl}/download/message/preview/anon"
+         : $"{AppSettings.ApiBaseUrl}/download/message/preview/auth";
+      var requestBody = new GenericPreviewRequest(id);
+
+      var withAuth = AuthenticationService.User != null;
+      return await HttpService.Post<MessagePreviewResponse>(url, requestBody, withAuth);
    }
 
-   private void PopulatePreview(string aName, int size, DateTime creation, DateTime expiration, string aContentType)
+   private async Task<(HttpStatusCode HttpStatus, FilePreviewResponse Response)> DownloadFilePreview(Guid id)
    {
-      name = aName;
-      creationDate = creation.ToLocalTime().ToString();
-      expirationDate = expiration.ToLocalTime().ToString();
-      fileSize = size;
-      contentType = aContentType;
+      var url = AuthenticationService.User is null
+         ? $"{AppSettings.ApiBaseUrl}/download/file/preview/anon"
+         : $"{AppSettings.ApiBaseUrl}/download/file/preview/auth";
+      var requestBody = new GenericPreviewRequest(id);
+
+      var withAuth = AuthenticationService.User != null;
+      return await HttpService.Post<FilePreviewResponse>(url, requestBody, withAuth);
+   }
+
+   private void PopulateMessagePreview(string subject, int size, DateTime created, DateTime expiration, Guid senderId, string senderUsername, string senderPublicAlias, Guid recipientId)
+   {
+      Subject = subject;
+      Created = created.ToLocalTime().ToString();
+      Expiration = expiration.ToLocalTime().ToString();
+      Size = size;
+      SenderId = senderId;
+      SenderUsername = senderUsername;
+      SenderPublicAlias = senderPublicAlias;
+      RecipientId = recipientId;
+   }
+
+   private void PopulateFilePreview(string fileName, string contentType, int size, DateTime created, DateTime expiration, Guid senderId, string senderUsername, string senderPublicAlias, Guid recipientId)
+   {
+      FileName = fileName;
+      ContentType = contentType;
+      Created = created.ToLocalTime().ToString();
+      Expiration = expiration.ToLocalTime().ToString();
+      Size = size;
+      SenderId = senderId;
+      SenderUsername = senderUsername;
+      SenderPublicAlias = senderPublicAlias;
+      RecipientId = recipientId;
    }
 }

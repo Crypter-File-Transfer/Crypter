@@ -1,10 +1,11 @@
 ﻿using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
-using Crypter.Contracts.Requests.Registered;
-using Crypter.Contracts.Responses.Registered;
+using Crypter.Contracts.Requests;
+using Crypter.Contracts.Responses;
 using System;
 using System.Text;
+using System.Net;
 
 namespace Crypter.Web.Services
 {
@@ -13,66 +14,85 @@ namespace Crypter.Web.Services
    {
       User User { get; }
       Task Initialize();
-      Task<bool> Login(string username, string plaintextPassword, string digestedPassword, string authenticationUrl);
+      Task<bool> Login(string username, string plaintextPassword, string digestedPassword);
+      Task Refresh();
       Task Logout();
    }
 
    public class AuthenticationService : IAuthenticationService
    {
-      private readonly IHttpService _httpService;
-      private readonly NavigationManager _navigationManager;
-      private readonly ILocalStorageService _localStorageService;
+      private readonly NavigationManager NavigationManager;
+      private readonly ILocalStorageService LocalStorageService;
+      private readonly IUserService UserService;
 
       public User User { get; private set; }
 
       public AuthenticationService(
-          IHttpService httpService,
           NavigationManager navigationManager,
-          ILocalStorageService localStorageService
+          ILocalStorageService localStorageService,
+          IUserService userService
       )
       {
-         _httpService = httpService;
-         _navigationManager = navigationManager;
-         _localStorageService = localStorageService;
+         NavigationManager = navigationManager;
+         LocalStorageService = localStorageService;
+         UserService = userService;
       }
 
       public async Task Initialize()
       {
-         User = await _localStorageService.GetItem<User>("user");
+         User = await LocalStorageService.GetItem<User>("user");
+         if (User is not null)
+         {
+            await Refresh();
+         }
       }
 
-      public async Task<bool> Login(string username, string plaintextPassword, string digestedPassword, string authenticationUrl)
+      public async Task<bool> Login(string username, string plaintextPassword, string digestedPassword)
       {
-         var (_, payload) = await _httpService.Post<UserAuthenticateResponse>(authenticationUrl, new AuthenticateUserRequest(username, digestedPassword));
-         var authResult = payload;
-         if (authResult.Status != Contracts.Enum.ResponseCode.Success)
+         var loginRequest = new AuthenticateUserRequest(username, digestedPassword);
+         var (httpStatus, authResponse) = await UserService.AuthenticateUserAsync(loginRequest);
+         if (httpStatus != HttpStatusCode.OK)
          {
             return false;
          }
 
-         User = new User(authResult.Id, authResult.Token);
+         User = new User(authResponse.Id, authResponse.Token);
 
-         if (string.IsNullOrEmpty(authResult.EncryptedPrivateKey))
+         if (string.IsNullOrEmpty(authResponse.EncryptedPrivateKey))
          {
             User.PrivateKey = null;
          }
          else
          {
-            var decryptionKey = CryptoLib.Common.CreateSymmetricKeyFromUserDetails(username, plaintextPassword, authResult.Id);
-            byte[] decodedPrivateKey = Convert.FromBase64String(authResult.EncryptedPrivateKey);
+            var decryptionKey = CryptoLib.Common.CreateSymmetricKeyFromUserDetails(username, plaintextPassword, authResponse.Id.ToString());
+            byte[] decodedPrivateKey = Convert.FromBase64String(authResponse.EncryptedPrivateKey);
             byte[] decryptedPrivateKey = CryptoLib.Common.UndoSymmetricEncryption(decodedPrivateKey, decryptionKey);
             User.PrivateKey = Encoding.UTF8.GetString(decryptedPrivateKey);
          }
 
-         await _localStorageService.SetItem("user", User);
+         await LocalStorageService.SetItem("user", User);
          return true;
+      }
+
+      public async Task Refresh()
+      {
+         var (httpStatus, refreshResponse) = await UserService.RefreshAuthenticationAsync();
+         if (httpStatus == HttpStatusCode.Unauthorized)
+         {
+            await Logout();
+         }
+         else
+         {
+            User.Token = refreshResponse.Token;
+            await LocalStorageService.SetItem("user", User);
+         }
       }
 
       public async Task Logout()
       {
          User = null;
-         await _localStorageService.RemoveItem("user");
-         _navigationManager.NavigateTo("/", true);
+         await LocalStorageService.RemoveItem("user");
+         NavigationManager.NavigateTo("/", true);
       }
    }
 }

@@ -2,56 +2,60 @@
 @inject IJSRuntime js
 
 <div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="my-0">Upload a Message</h3>
-            </div>
-            <div class="modal-body">
-                <MessageUpload @bind-Username="Username" @bind-UserPublicKey="UserPublicKey" />
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close()">Close</button>
-            </div>
-        </div>
-    </div>
+   <div class="modal-dialog" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h3 class="my-0">Upload a Message</h3>
+         </div>
+         <div class="modal-body">
+            <MessageUpload @bind-RecipientUsername="RecipientUsername" @bind-RecipientPublicKey="RecipientPublicKey" />
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close()">Close</button>
+         </div>
+      </div>
+   </div>
 </div>
-
 
 @if (ShowBackdrop)
 {
-    <div class="modal-backdrop fade show"></div>
+   <div class="modal-backdrop fade show"></div>
 }
 
-
 @code {
-    public string ModalDisplay = "none;";
-    public string ModalClass = "";
-    public bool ShowBackdrop = false;
+   [Parameter]
+   public string RecipientUsername { get; set; }
 
-    // Resource for modal functionality in Blazor: https://bit.ly/3mSI22z
-    // Open the success modal
-    public void Open()
-    {
-        ModalDisplay = "block;";
-        ModalClass = "Show";
-        ShowBackdrop = true;
-        StateHasChanged();
-    }
+   [Parameter]
+   public string RecipientPublicKey { get; set; }
 
-    // Close the success modal
-    public void Close()
-    {
-        ModalDisplay = "none";
-        ModalClass = "";
-        ShowBackdrop = false;
-        StateHasChanged();
-        Navigator.NavigateTo("/user", true);
-    }
+   public string ModalDisplay = "none;";
+   public string ModalClass = "";
+   public bool ShowBackdrop = false;
 
+   // Resource for modal functionality in Blazor: https://bit.ly/3mSI22z
+   // Open the success modal
+   public void Open()
+   {
+      ModalDisplay = "block;";
+      ModalClass = "Show";
+      ShowBackdrop = true;
+      StateHasChanged();
+   }
 
-    [Parameter] public string Username { get; set; }
-    [Parameter] public string UserPublicKey { get; set; }
-    [Parameter] public EventCallback<string> UsernameChanged { get; set; }
-    [Parameter] public EventCallback<string> UserPublicKeyChanged { get; set; }
+   // Close the success modal
+   public void Close()
+   {
+      ModalDisplay = "none";
+      ModalClass = "";
+      ShowBackdrop = false;
+      StateHasChanged();
+      Navigator.NavigateTo("/user", true);
+   }
+
+   [Parameter]
+   public EventCallback<string> RecipientUsernameChanged { get; set; }
+
+   [Parameter]
+   public EventCallback<string> RecipientPublicKeyChanged { get; set; }
 }

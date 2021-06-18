@@ -51,7 +51,7 @@
         byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(loginInfo.Username, loginInfo.Password);
         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
-        var authSuccess = await AuthenticationService.Login(loginInfo.Username, loginInfo.Password, digestedPasswordBase64, $"{AppSettings.ApiBaseUrl}/user/authenticate");
+        var authSuccess = await AuthenticationService.Login(loginInfo.Username, loginInfo.Password, digestedPasswordBase64);
 
         if (authSuccess)
         {
@@ -104,7 +104,7 @@
     private byte[] EncryptPrivateKey(string privatePemKey)
     {
         var privateKeyBytes = Encoding.UTF8.GetBytes(privatePemKey);
-        var symmetricEncryptionKey = CryptoLib.Common.CreateSymmetricKeyFromUserDetails(loginInfo.Username, loginInfo.Password, AuthenticationService.User.Id);
+        var symmetricEncryptionKey = CryptoLib.Common.CreateSymmetricKeyFromUserDetails(loginInfo.Username, loginInfo.Password, AuthenticationService.User.Id.ToString());
         return CryptoLib.Common.DoSymmetricEncryption(privateKeyBytes, symmetricEncryptionKey);
     }
 
