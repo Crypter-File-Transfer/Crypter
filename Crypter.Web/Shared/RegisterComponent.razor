@@ -1,7 +1,6 @@
-﻿@inject AppSettings AppSettings
-@inject NavigationManager NavManager
+﻿@inject NavigationManager NavManager
 @inject IAuthenticationService AuthenticationService
-@inject IHttpService HttpService
+@inject IUserService UserService; 
 
 @if (RegistrationSuccess)
 {
@@ -69,18 +68,17 @@ else
 
     private async Task OnRegisterClicked()
     {
-        var url = $"{AppSettings.ApiBaseUrl}/user/register";
 
         byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(RegistrationInfo.Username, RegistrationInfo.Password);
         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
         var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.BetaKey, RegistrationInfo.Email);
-        var response = await HttpService.Post<UserRegisterResponse>(url, requestBody);
+        var (_, registerResponse) = await UserService.RegisterUserAsync(requestBody);
 
-        if (response.Result != InsertUserResult.Success)
+        if (registerResponse.Result != InsertUserResult.Success)
         {
             RegistrationError = true;
-            RegistrationErrorText = response.ResultMessage;
+            RegistrationErrorText = registerResponse.ResultMessage;
         }
         else
         {

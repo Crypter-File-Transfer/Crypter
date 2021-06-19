@@ -10,42 +10,45 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web
 {
-    public class Program
-    {
-        public static async Task Main(string[] args)
-        {
-            var builder = WebAssemblyHostBuilder.CreateDefault(args);
-            builder.RootComponents.Add<App>("#app");
+   public class Program
+   {
+      public static async Task Main(string[] args)
+      {
+         var builder = WebAssemblyHostBuilder.CreateDefault(args);
+         builder.RootComponents.Add<App>("#app");
 
-            builder.Services.AddScoped(_ =>
-            {
-                return LoadAppSettings("Crypter.Web.appsettings.json")
-                            .Get<AppSettings>();
-            });
+         builder.Services.AddScoped(_ =>
+         {
+            return LoadAppSettings("Crypter.Web.appsettings.json")
+                           .Get<AppSettings>();
+         });
 
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-            builder.Services
-                .AddBlazorDownloadFile()
-                .AddScoped<IAuthenticationService, AuthenticationService>()
-                .AddScoped<IHttpService, HttpService>()
-                .AddScoped<ILocalStorageService, LocalStorageService>();
+         builder.Services
+            .AddBlazorDownloadFile()
+            .AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) })
+            .AddScoped<IAuthenticationService, AuthenticationService>()
+            .AddScoped<IHttpService, HttpService>()
+            .AddScoped<ILocalStorageService, LocalStorageService>()
+            .AddScoped<IUploadService, UploadService>()
+            .AddScoped<IDownloadService, DownloadService>()
+            .AddScoped<IUserService, UserService>();
 
-            var host = builder.Build();
+         var host = builder.Build();
 
-            var authenticationService = host.Services.GetRequiredService<IAuthenticationService>();
-            await authenticationService.Initialize();
+         var authenticationService = host.Services.GetRequiredService<IAuthenticationService>();
+         await authenticationService.Initialize();
 
-            await host.RunAsync();
-        }
+         await host.RunAsync();
+      }
 
-        public static IConfigurationRoot LoadAppSettings(string filename)
-        {
-            var stream = Assembly.GetExecutingAssembly()
-                                 .GetManifestResourceStream(filename);
+      public static IConfigurationRoot LoadAppSettings(string filename)
+      {
+         var stream = Assembly.GetExecutingAssembly()
+                              .GetManifestResourceStream(filename);
 
-            return new ConfigurationBuilder()
-                    .AddJsonStream(stream)
-                    .Build();
-        }
-    }
+         return new ConfigurationBuilder()
+                 .AddJsonStream(stream)
+                 .Build();
+      }
+   }
 }
