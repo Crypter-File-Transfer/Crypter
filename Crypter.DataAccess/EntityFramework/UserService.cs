@@ -149,7 +149,7 @@ namespace Crypter.DataAccess.EntityFramework
             return null;
          }
 
-         var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName == username.ToLower());
+         var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName.ToLower() == username);
 
          if (user == null)
          {
@@ -221,38 +221,30 @@ namespace Crypter.DataAccess.EntityFramework
 
       public async Task<bool> IsRegisteredUserPublicAsync(string username)
       {
-         try
-         {
-            var user = await _context.Users.DefaultIfEmpty().SingleOrDefaultAsync(x => x.UserName == username);
-            return user.IsPublic;
-         }
-         catch (Exception ex)
-         {
-            Console.WriteLine(ex.Message);
-            return false;
-         }
+         var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName.ToLower() == username);
+         return user?.IsPublic ?? false;
       }
 
       public async Task<User> ReadPublicUserProfileInformation(string username)
       {
-         return await _context.Users.SingleAsync(x => x.UserName == username);
+         return await _context.Users.SingleOrDefaultAsync(x => x.UserName.ToLower() == username);
       }
 
       public async Task<Guid> UserIdFromUsernameAsync(string username)
       {
-         var user = await _context.Users.SingleAsync(x => x.UserName == username);
+         var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName.ToLower() == username);
          return user.Id;
       }
 
       public async Task<bool> MessagesAllowedByUserAsync(Guid recipientId)
       {
-         var user = await _context.Users.DefaultIfEmpty().SingleOrDefaultAsync(x => x.Id == recipientId);
+         var user = await _context.Users.SingleOrDefaultAsync(x => x.Id == recipientId);
          return user.AllowAnonymousMessages;
       }
 
       public async Task<bool> FilesAllowedByUserAsync(Guid recipientId)
       {
-         var user = await _context.Users.DefaultIfEmpty().SingleOrDefaultAsync(x => x.Id == recipientId);
+         var user = await _context.Users.SingleOrDefaultAsync(x => x.Id == recipientId);
          return user.AllowAnonymousFiles;
       }
    }

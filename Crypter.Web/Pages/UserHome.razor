@@ -91,15 +91,33 @@
 
                         @if (item.IsFile)
                         {
-                           <h6 class="card-subtitle my-2">
-                              Filename: <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")">@item.Name</a>
-                           </h6>
+                           @if (string.IsNullOrEmpty(item.RecipientUsername))
+                           {
+                              <h6 class="card-subtitle my-2">
+                                 Filename: <a href="@($"{ NavManager.BaseUri}decrypt/file/{item.Id}")">@item.Name</a>
+                              </h6>
+                           }
+                           else
+                           {
+                              <h6 class="card-subtitle my-2">
+                                 Filename: @item.Name
+                              </h6>
+                           }
                         }
                         else
                         {
-                           <h6 class="card-subtitle my-2">
-                              Subject: <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")">@item.Name</a>
-                           </h6>
+                           @if (string.IsNullOrEmpty(item.RecipientUsername))
+                           {
+                              <h6 class="card-subtitle my-2">
+                                 Subject: <a href="@($"{ NavManager.BaseUri}decrypt/message/{item.Id}")">@item.Name</a>
+                              </h6>
+                           }
+                           else
+                           {
+                              <h6 class="card-subtitle my-2">
+                                 Subject: @item.Name
+                              </h6>
+                           }
                         }
                         <div class="row">
                            <div class="col-12">
