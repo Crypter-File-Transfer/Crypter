@@ -3,14 +3,30 @@
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
 @inject IAuthenticationService AuthenticationService
-@inject IUserService UserService 
+@inject IUserService UserService
 
 <div class="container my-4">
    <h1>Settings</h1>
    <form id="DetailsForm">
       <h2>Details for @Username</h2>
       <div class="mb-3">
-         <label for="emailFormControl" class="form-label">Email</label>
+         <label for="publicUrl">Profile Link</label>
+         @if (!AppearPubliclyPersistedValue)
+         {
+            <span class="text-muted"><br />(Your profile is currently hidden)</span>
+         }
+         <div class="copiedTooltip">
+            <div class="input-group mb-3">
+               <input @bind="ProfileUrl" class="form-control" type="url" id="publicUrl" disabled @onclick="CopyToClipboard" />
+               <div class="input-group-append">
+                  <button class="btn btn-secondary" type="button" @onclick="CopyToClipboard">Copy</button>
+               </div>
+            </div>
+            <span class="copiedToolTip toolTipText">Copied</span>
+         </div>
+      </div>
+      <div class="mb-3">
+         <label for="emailFormControl" class="form-label">Email Address</label>
          <input @bind="Email" type="email" class="form-control" id="emailFormControl" placeholder="Email Not Set" readonly>
       </div>
       <button type="button" class="btn btn-secondary float-end mt-4" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
@@ -55,9 +71,11 @@
    private string Email;
    private string PublicAlias;
    private bool AppearPublicly;
+   private bool AppearPubliclyPersistedValue;
    private bool AcceptAnonymousMessages;
    private bool AcceptAnonymousFiles;
    private string PrivateKey;
+   private string ProfileUrl;
 
    protected override async Task OnInitializedAsync()
    {
@@ -83,6 +101,7 @@
       var request = new UpdateUserPrivacyRequest(PublicAlias, AppearPublicly, AcceptAnonymousMessages, AcceptAnonymousFiles);
       await UserService.UpdateUserPrivacyAsync(request);
       IsEditing = false;
+      AppearPubliclyPersistedValue = AppearPublicly;
    }
 
    private async Task GetUserInfo()
@@ -91,9 +110,15 @@
       Username = userAccountInfo.UserName;
       Email = userAccountInfo.Email;
       PublicAlias = userAccountInfo.PublicAlias;
-      AppearPublicly = userAccountInfo.IsPublic;
+      AppearPublicly = AppearPubliclyPersistedValue = userAccountInfo.IsPublic;
       AcceptAnonymousFiles = userAccountInfo.AllowAnonymousFiles;
       AcceptAnonymousMessages = userAccountInfo.AllowAnonymousMessages;
       PrivateKey = AuthenticationService.User.PrivateKey;
+      ProfileUrl = $"{NavManager.BaseUri}user/profile/{Username}";
+   }
+
+   private async Task CopyToClipboard()
+   {
+      await JsRuntime.InvokeVoidAsync("copyToClipboard", ProfileUrl);
    }
 }

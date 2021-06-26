@@ -1,0 +1,87 @@
+﻿@inject NavigationManager NavManager
+
+<div class="col-md-6">
+   <div class="card mb-4">
+      <div class="card-body">
+         <h5 class="card-title">Sent files and messages</h5>
+      </div>
+      <ul class="list-group list-group-flush">
+         @if (Items == null)
+         {
+            <li class="list-group-item">
+               Loading files...
+            </li>
+         }
+         else if (Items.Count() == 0)
+         {
+            <li class="list-group-item">
+               You do not have any uploads
+            </li>
+         }
+         else
+         {
+            foreach (var item in Items)
+            {
+               <li class="list-group-item">
+
+                  @if (item.IsFile)
+                  {
+                     @if (string.IsNullOrEmpty(item.RecipientUsername))
+                     {
+                        <h6 class="card-subtitle my-2">
+                           Filename: <a href="@($"{ NavManager.BaseUri}decrypt/file/{item.Id}")">@item.Name</a>
+                        </h6>
+                     }
+                     else
+                     {
+                        <h6 class="card-subtitle my-2">
+                           Filename: @item.Name
+                        </h6>
+                     }
+                  }
+                  else
+                  {
+                     @if (string.IsNullOrEmpty(item.RecipientUsername))
+                     {
+                        <h6 class="card-subtitle my-2">
+                           Subject: <a href="@($"{ NavManager.BaseUri}decrypt/message/{item.Id}")">@item.Name</a>
+                        </h6>
+                     }
+                     else
+                     {
+                        <h6 class="card-subtitle my-2">
+                           Subject: @item.Name
+                        </h6>
+                     }
+                  }
+                  <div class="row">
+                     <div class="col-12">
+                        @if (string.IsNullOrEmpty(item.RecipientUsername))
+                        {
+                           <span>To: Unknown</span>
+                        }
+                        else
+                        {
+                           <span>To: <a href="@($"/user/profile/{item.RecipientUsername}")">@($"@{item.RecipientUsername}")</a></span>
+                        }
+                     </div>
+                  </div>
+                  <div class="row">
+                     <div class="col-12">
+                        Expires on: @item.ExpirationUTC.ToLocalTime().ToString()
+                     </div>
+                  </div>
+               </li>
+            }
+         }
+      </ul>
+   </div>
+</div>
+
+@code {
+   [Parameter]
+   public IEnumerable<UserSentItem> Items { get; set; }
+
+   [Parameter]
+   public EventCallback<IEnumerable<UserSentItem>> ItemsChanged { get; set; }
+}
