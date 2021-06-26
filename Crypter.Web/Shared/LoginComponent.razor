@@ -5,125 +5,124 @@
 @inject IHttpService HttpService
 
 <EditForm Model="@loginInfo" OnValidSubmit="@OnLoginClicked">
-    <DataAnnotationsValidator />
-    @if (LoginError)
-    {
-    <div class="alert alert-danger" role="alert">
-        @LoginErrorText
-    </div>
-    }
-    <div class="mb-3">
-        <label for="usernameFormControl" class="form-label">Username</label>
-        <InputText @bind-Value="@loginInfo.Username" class="form-control" id="usernameFormControl" />
-        <ValidationMessage For="@(() => loginInfo.Username)" />
-    </div>
-    <div class="mb-3">
-        <label for="passwordFormControl" class="form-label">Password</label>
-        <InputText type="password" @bind-Value="@loginInfo.Password" class="form-control" id="passwordFormControl" />
-        <ValidationMessage For="@(() => loginInfo.Password)" />
-    </div>
-    <button type="submit" class="btn btn-primary">Login</button>
+   <DataAnnotationsValidator />
+   @if (LoginError)
+   {
+      <div class="alert alert-danger" role="alert">
+         @LoginErrorText
+      </div>
+   }
+   <div class="mb-3">
+      <label for="usernameFormControl" class="form-label">Username</label>
+      <InputText @bind-Value="@loginInfo.Username" class="form-control" id="usernameFormControl" />
+      <ValidationMessage For="@(() => loginInfo.Username)" />
+   </div>
+   <div class="mb-3">
+      <label for="passwordFormControl" class="form-label">Password</label>
+      <InputText type="password" @bind-Value="@loginInfo.Password" class="form-control" id="passwordFormControl" />
+      <ValidationMessage For="@(() => loginInfo.Password)" />
+   </div>
+   <button type="submit" class="btn btn-primary">Login</button>
 </EditForm>
 <BasicModal @ref="Modal" @bind-Subject="ModalSubject" @bind-Message="ModalMessage" @bind-PrimaryButtonText="ModalPrimaryButtonText" @bind-SecondaryButtonText="ModalSecondaryButtonText" @bind-ShowSecondaryButton="ModalShowSecondaryButton" ModalClosed="@ModalClosedHandler" />
 
 @code {
-    private Login loginInfo = new Login();
+   private Login loginInfo = new Login();
 
-    private bool LoginError = false;
-    private string LoginErrorText = "";
+   private bool LoginError = false;
+   private string LoginErrorText = "";
 
-    private string ModalSubject;
-    private string ModalMessage;
-    private string ModalPrimaryButtonText;
-    private string ModalSecondaryButtonText;
-    private bool ModalShowSecondaryButton;
+   private string ModalSubject;
+   private string ModalMessage;
+   private string ModalPrimaryButtonText;
+   private string ModalSecondaryButtonText;
+   private bool ModalShowSecondaryButton;
 
-    protected override void OnInitialized()
-    {
-        if (AuthenticationService.User != null)
-        {
-            NavManager.NavigateTo("/user");
-        }
-    }
+   protected override void OnInitialized()
+   {
+      if (AuthenticationService.User != null)
+      {
+         NavManager.NavigateTo("/user/home");
+      }
+   }
 
-    private async Task OnLoginClicked()
-    {
-        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(loginInfo.Username, loginInfo.Password);
-        string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
+   private async Task OnLoginClicked()
+   {
+      byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(loginInfo.Username, loginInfo.Password);
+      string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
-        var authSuccess = await AuthenticationService.Login(loginInfo.Username, loginInfo.Password, digestedPasswordBase64);
+      var authSuccess = await AuthenticationService.Login(loginInfo.Username, loginInfo.Password, digestedPasswordBase64);
 
-        if (authSuccess)
-        {
-            if (string.IsNullOrEmpty(AuthenticationService.User.PrivateKey))
-            {
-                PromptUserToCreateKeyPair();
-            }
-            else
-            {
-                OnLoginCompleted();
-            }
-        }
-        else
-        {
-            LoginError = true;
-            LoginErrorText = "Incorrect username or password";
-        }
-    }
+      if (authSuccess)
+      {
+         if (string.IsNullOrEmpty(AuthenticationService.User.PrivateKey))
+         {
+            PromptUserToCreateKeyPair();
+         }
+         else
+         {
+            OnLoginCompleted();
+         }
+      }
+      else
+      {
+         LoginError = true;
+         LoginErrorText = "Incorrect username or password";
+      }
+   }
 
-    private void OnLoginCompleted()
-    {
-        // TODO: Revide to Auth homepage when complete
-        var returnUrl = NavManager.QueryString("returnUrl") ?? "user";
-        NavManager.NavigateTo(returnUrl, true);
-    }
+   private void OnLoginCompleted()
+   {
+      var returnUrl = NavManager.QueryString("returnUrl") ?? "user/home";
+      NavManager.NavigateTo(returnUrl, true);
+   }
 
-    private async Task GenerateAndUploadKeys()
-    {
-        var keyPair = await GenerateUserKeyPair();
-        var encodedPublicKey = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(keyPair.publicKey));
+   private async Task GenerateAndUploadKeys()
+   {
+      var keyPair = await GenerateUserKeyPair();
+      var encodedPublicKey = Convert.ToBase64String(
+          Encoding.UTF8.GetBytes(keyPair.publicKey));
 
-        var encodedEncryptedPrivateKey = Convert.ToBase64String(
-            EncryptPrivateKey(keyPair.privateKey));
+      var encodedEncryptedPrivateKey = Convert.ToBase64String(
+          EncryptPrivateKey(keyPair.privateKey));
 
-        var updateKeysUrl = $"{AppSettings.ApiBaseUrl}/user/update-personal-keys";
-        var updateKeysRequestBody = new UpdateUserKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
-        await HttpService.Post<UpdateUserKeysResponse>(updateKeysUrl, updateKeysRequestBody, true);
-        await OnLoginClicked();  // Login again now that keys have been uploaded and will be returned on login
-    }
+      var updateKeysUrl = $"{AppSettings.ApiBaseUrl}/user/update-personal-keys";
+      var updateKeysRequestBody = new UpdateUserKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
+      await HttpService.Post<UpdateUserKeysResponse>(updateKeysUrl, updateKeysRequestBody, true);
+      await OnLoginClicked();  // Login again now that keys have been uploaded and will be returned on login
+   }
 
-    private async Task<(string privateKey, string publicKey)> GenerateUserKeyPair()
-    {
-        var keyPair = await Task.Run(() => CryptoLib.Common.GenerateAsymmetricKeys(CryptoStrength.Standard));
-        var privateKey = keyPair.Private.ConvertToPEM();
-        var publicKey = keyPair.Public.ConvertToPEM();
-        return (privateKey, publicKey);
-    }
+   private async Task<(string privateKey, string publicKey)> GenerateUserKeyPair()
+   {
+      var keyPair = await Task.Run(() => CryptoLib.Common.GenerateAsymmetricKeys(CryptoStrength.Standard));
+      var privateKey = keyPair.Private.ConvertToPEM();
+      var publicKey = keyPair.Public.ConvertToPEM();
+      return (privateKey, publicKey);
+   }
 
-    private byte[] EncryptPrivateKey(string privatePemKey)
-    {
-        var privateKeyBytes = Encoding.UTF8.GetBytes(privatePemKey);
-        var symmetricEncryptionKey = CryptoLib.Common.CreateSymmetricKeyFromUserDetails(loginInfo.Username, loginInfo.Password, AuthenticationService.User.Id.ToString());
-        return CryptoLib.Common.DoSymmetricEncryption(privateKeyBytes, symmetricEncryptionKey);
-    }
+   private byte[] EncryptPrivateKey(string privatePemKey)
+   {
+      var privateKeyBytes = Encoding.UTF8.GetBytes(privatePemKey);
+      var symmetricEncryptionKey = CryptoLib.Common.CreateSymmetricKeyFromUserDetails(loginInfo.Username, loginInfo.Password, AuthenticationService.User.Id.ToString());
+      return CryptoLib.Common.DoSymmetricEncryption(privateKeyBytes, symmetricEncryptionKey);
+   }
 
-    private void PromptUserToCreateKeyPair()
-    {
-        ModalSubject = "Generate your keys";
-        ModalMessage = "We need to generate a private/public key-pair to finish setting up your Crypter account." +
-                " This usually takes a while and your browser may stop responding." +
-                "\nPlease be patient.";
-        ModalPrimaryButtonText = "OK";
-        ModalSecondaryButtonText = "";
-        ModalShowSecondaryButton = false;
-        Modal.Open();
-    }
+   private void PromptUserToCreateKeyPair()
+   {
+      ModalSubject = "Generate your keys";
+      ModalMessage = "We need to generate a private/public key-pair to finish setting up your Crypter account." +
+              " This usually takes a while and your browser may stop responding." +
+              "\nPlease be patient.";
+      ModalPrimaryButtonText = "OK";
+      ModalSecondaryButtonText = "";
+      ModalShowSecondaryButton = false;
+      Modal.Open();
+   }
 
-    private async Task ModalClosedHandler(bool affirmative)
-    {
-        await GenerateAndUploadKeys();
-    }
+   private async Task ModalClosedHandler(bool affirmative)
+   {
+      await GenerateAndUploadKeys();
+   }
 
-    private Crypter.Web.Shared.BasicModal Modal { get; set; }
+   private Crypter.Web.Shared.BasicModal Modal { get; set; }
 }
