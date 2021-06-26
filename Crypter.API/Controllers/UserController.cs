@@ -351,7 +351,7 @@ namespace Crypter.API.Controllers
          }
          else
          {
-            return new BadRequestObjectResult(
+            return new NotFoundObjectResult(
                 new UserPublicProfileResponse(null, null, false, false, null));
          }
       }
