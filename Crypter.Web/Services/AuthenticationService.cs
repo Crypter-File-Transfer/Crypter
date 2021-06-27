@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 using Crypter.Contracts.Requests;
-using Crypter.Contracts.Responses;
 using System;
 using System.Text;
 using System.Net;
@@ -43,7 +42,15 @@ namespace Crypter.Web.Services
          User = await LocalStorageService.GetItem<User>("user");
          if (User is not null)
          {
-            await Refresh();
+            if (string.IsNullOrEmpty(User.PrivateKey))
+            {
+               await Logout();
+            }
+            else
+            {
+               await Refresh();
+            }
+
          }
       }
 
@@ -92,7 +99,7 @@ namespace Crypter.Web.Services
       {
          User = null;
          await LocalStorageService.RemoveItem("user");
-         NavigationManager.NavigateTo("/", true);
+         NavigationManager.NavigateTo("/");
       }
    }
 }

@@ -3,73 +3,81 @@
 @implements IDisposable
 
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
+   <span class="navbar-toggler-icon"></span>
 </button>
 <div class="collapse navbar-collapse justify-content-end" id="mainNavigation">
-    <ul class="navbar-nav">
-        <li class="nav-item mx-1">
-            <a class="nav-link" href="/about">About Crypter.dev</a>
-        </li>
-        @if (!LoggedIn)
-        {
-            <li class="nav-item mx-1">
-                <a class="btn btn-secondary" href="/login">Login</a>
-            </li>
-            <li class="nav-item mx-1">
-                <a class="btn btn-primary" href="/register">Sign Up</a>
-            </li>
-        }
-        else
-        {
-            <li class="nav-item mx-1">
-                <a class="nav-link" href="#" @onclick:preventDefault @onclick="@AuthenticationService.Logout">Logout</a>
-            </li>
-            <div class="btn-group">
-                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    Encrypt
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptAFileClicked">Encrypt a file</a></li>
-                    <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptAMessageClicked">Encrypt a message</a></li>
-                </ul>
-            </div>
+   <ul class="navbar-nav">
+      <li class="nav-item mx-1">
+         <a class="nav-link" href="/about">About Crypter.dev</a>
+      </li>
+      @if (!LoggedIn)
+      {
+         <li class="nav-item mx-1">
+            <a class="btn btn-secondary" href="/login">Login</a>
+         </li>
+         <li class="nav-item mx-1">
+            <a class="btn btn-primary" href="/register">Sign Up</a>
+         </li>
+      }
+      else
+      {
+         <li class="nav-item mx-1">
+            <a class="nav-link" href="#" @onclick:preventDefault @onclick="@OnLogoutClicked">Logout</a>
+         </li>
+         <div class="btn-group">
+            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+               Encrypt
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptAFileClicked">Encrypt a file</a></li>
+               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptAMessageClicked">Encrypt a message</a></li>
+            </ul>
+         </div>
 
-            <UserFileUploadModal @ref="FileModal" />
-            <UserMessageUploadModal @ref="MessageModal" />
-        }
-    </ul>
+         <UserFileUploadModal @ref="FileModal" />
+         <UserMessageUploadModal @ref="MessageModal" />
+      }
+   </ul>
 </div>
 
 @code {
 
-    private bool LoggedIn = false;
+   private bool LoggedIn = false;
 
-    protected override void OnInitialized()
-    {
-        LoggedIn = AuthenticationService.User != null;
-    }
+   protected override void OnInitialized()
+   {
+      LoggedIn = AuthenticationService.User != null;
+      NavManager.LocationChanged += HandleLocationChanged;
+      base.OnInitialized();
+   }
 
-    private void OnEncryptAFileClicked()
-    {
-        FileModal.Open();
-    }
+   private void OnEncryptAFileClicked()
+   {
+      FileModal.Open();
+   }
 
-    private void OnEncryptAMessageClicked()
-    {
-        MessageModal.Open();
-    }
+   private void OnEncryptAMessageClicked()
+   {
+      MessageModal.Open();
+   }
 
-    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
-    {
-        LoggedIn = AuthenticationService.User != null;
-        StateHasChanged();
-    }
+   private async Task OnLogoutClicked()
+   {
+      await AuthenticationService.Logout();
+      LoggedIn = false;
+   }
 
-    public void Dispose()
-    {
-        NavManager.LocationChanged -= HandleLocationChanged;
-    }
+   private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+   {
+      LoggedIn = AuthenticationService.User != null;
+      StateHasChanged();
+   }
 
-    private Crypter.Web.Shared.UserFileUploadModal FileModal { get; set; }
-    private Crypter.Web.Shared.UserMessageUploadModal MessageModal { get; set; }
+   public void Dispose()
+   {
+      //NavManager.LocationChanged -= HandleLocationChanged;
+   }
+
+   private Crypter.Web.Shared.Modal.UserFileUploadModal FileModal { get; set; }
+   private Crypter.Web.Shared.Modal.UserMessageUploadModal MessageModal { get; set; }
 }
