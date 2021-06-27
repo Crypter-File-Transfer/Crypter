@@ -2,7 +2,7 @@
 
 @inject NavigationManager NavManager
 @inject IJSRuntime JsRuntime
-@inject IUserService UserService;
+@inject IUserService UserService
 
 <div class="container my-4">
    <div class="row">
@@ -82,6 +82,6 @@
       MessageModal.Open();
    }
 
-   private Crypter.Web.Shared.UserFileUploadModal FileModal { get; set; }
-   private Crypter.Web.Shared.UserMessageUploadModal MessageModal { get; set; }
+   private Crypter.Web.Shared.Modal.UserFileUploadModal FileModal { get; set; }
+   private Crypter.Web.Shared.Modal.UserMessageUploadModal MessageModal { get; set; }
 }

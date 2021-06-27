@@ -1,0 +1,81 @@
+﻿@inject NavigationManager Navigator
+@inject IJSRuntime js
+
+<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+   <div class="modal-dialog" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h3 class="my-0">Upload Successful</h3>
+         </div>
+         <div class="modal-body">
+            <p>Your encrypted message will expire in 24 hours and will automatically be deleted once downloaded or expired.</p>
+            <p>Download Link: <a href=@($"{Navigator.BaseUri}decrypt/{DataFormat}/{ReturnedId}") target="_blank">@($"{Navigator.BaseUri}decrypt/{DataFormat}/{ReturnedId}")</a></p>
+            <h4>Decryption Key</h4>
+            <p><em>Share this key with the receiving party</em></p>
+            <div class="copiedTooltip">
+               <div class="input-group mb-3">
+                  <input class="form-control" @bind="PrivateKey" type="text" name="privateKey" id="privateKey" readonly @onclick="CopyToClipboard" />
+                  <div class="input-group-append">
+                     <button class="btn btn-secondary" type="button" @onclick="CopyToClipboard">Copy</button>
+                  </div>
+               </div>
+
+               <span class="copiedToolTip toolTipText">Copied</span>
+            </div>
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close()">Okay</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+
+@if (ShowBackdrop)
+{
+   <div class="modal-backdrop fade show"></div>
+}
+
+
+@code {
+   public string ModalDisplay = "none;";
+   public string ModalClass = "";
+   public bool ShowBackdrop = false;
+
+   // Resource for modal functionality in Blazor: https://bit.ly/3mSI22z
+   // Open the success modal
+   public void Open()
+   {
+      ModalDisplay = "block;";
+      ModalClass = "Show";
+      ShowBackdrop = true;
+      StateHasChanged();
+   }
+
+   // Close the success modal
+   public void Close()
+   {
+      ModalDisplay = "none";
+      ModalClass = "";
+      ShowBackdrop = false;
+      StateHasChanged();
+   }
+
+   // Parameters for component reference
+   // Resource: https://bit.ly/3wYHWuT
+
+   // Parameters from parent component
+   [Parameter] public string DataFormat { get; set; }
+   [Parameter] public Guid ReturnedId { get; set; }
+   [Parameter] public string PrivateKey { get; set; }
+
+   // Watch for changes in variable values in parent component to update here
+   [Parameter] public EventCallback<string> DataFormatChanged { get; set; }
+   [Parameter] public EventCallback<Guid> ReturnedIdChanged { get; set; }
+   [Parameter] public EventCallback<string> PrivateKeyChanged { get; set; }
+
+   private async Task CopyToClipboard()
+   {
+      await js.InvokeVoidAsync("copyToClipboard", PrivateKey);
+   }
+}
