@@ -27,11 +27,11 @@
          <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptClicked(MessageText, encryptionStrength))">Encrypt</button>
       </div>
    </div>
-   <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PrivateKey="privateKey" />
-   <UploadSuccessModalWithRecipient @ref="ModalForRecipient" />
+   <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PrivateKey="privateKey" ModalClosedEvent="@UploadCompletedEvent" />
+   <BasicModal @ref="ModalForRecipient" Subject="Upload Successful" Message=@UploadSuccessForUserMessage PrimaryButtonText="Okay" ModalClosedEvent="@UploadCompletedEvent" />
 </div>
 
-<div class="encrypt-status" hidden="@(!IsEncrypting)">
+<div class="encrypt-status text-center" hidden="@(!IsEncrypting)">
    <h3>@EncryptionStatusMessage</h3>
    <div class="spinner-border" role="status">
       <span class="visually-hidden">Loading...</span>
@@ -68,6 +68,10 @@
    private WrapsAsymmetricCipherKeyPair asymmetricKeyPair;
    private SymmetricCryptoParams symmetricParams;
    private byte[] serverEncryptionKey;
+
+   private string UploadSuccessForUserMessage = "Your message has been encrypted and uploaded." +
+      " The recipient will see the message during their next login." +
+      "\nUploads automatically expire in 24 hours.";
 
    private async Task OnEncryptClicked(string message, CryptoStrength strength)
    {
@@ -154,7 +158,7 @@
          ModalForRecipient.Open();
       }
 
-      MessageSubject = "";
+   MessageSubject = "";
       MessageText = "";
       IsEncrypting = false;
    }
@@ -174,11 +178,14 @@
    }
 
    private Crypter.Web.Shared.Modal.UploadSuccessModal Modal { get; set; }
-   private Crypter.Web.Shared.Modal.UploadSuccessModalWithRecipient ModalForRecipient { get; set; }
+   private Crypter.Web.Shared.Modal.BasicModal ModalForRecipient { get; set; }
 
    [Parameter]
    public EventCallback<string> RecipientUsernameChanged { get; set; }
 
    [Parameter]
    public EventCallback<string> RecipientPublicKeyChanged { get; set; }
+
+   [Parameter]
+   public EventCallback UploadCompletedEvent { get; set; }
 }

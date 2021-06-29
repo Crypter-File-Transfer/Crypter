@@ -7,8 +7,8 @@
          <div class="modal-header">
             <h3 class="my-0">Upload a Message</h3>
          </div>
-         <div class="modal-body">
-            <MessageUpload @bind-RecipientUsername="RecipientUsername" @bind-RecipientPublicKey="RecipientPublicKey" />
+         <div class="modal-body justify-content-center">
+            <MessageUpload @bind-RecipientUsername="RecipientUsername" @bind-RecipientPublicKey="RecipientPublicKey" UploadCompletedEvent="@Close" />
          </div>
          <div class="modal-footer">
             <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close()">Close</button>
@@ -29,12 +29,13 @@
    [Parameter]
    public string RecipientPublicKey { get; set; }
 
+   [Parameter]
+   public EventCallback ModalClosedEvent { get; set; }
+
    public string ModalDisplay = "none;";
    public string ModalClass = "";
    public bool ShowBackdrop = false;
 
-   // Resource for modal functionality in Blazor: https://bit.ly/3mSI22z
-   // Open the success modal
    public void Open()
    {
       ModalDisplay = "block;";
@@ -43,14 +44,13 @@
       StateHasChanged();
    }
 
-   // Close the success modal
-   public void Close()
+   public async Task Close()
    {
       ModalDisplay = "none";
       ModalClass = "";
       ShowBackdrop = false;
       StateHasChanged();
-      Navigator.NavigateTo("/user", true);
+      await ModalClosedEvent.InvokeAsync();
    }
 
    [Parameter]

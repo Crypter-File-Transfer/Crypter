@@ -4,7 +4,7 @@
          <div class="modal-header">
             <h3>@Subject</h3>
          </div>
-         <div class="modal-body text-center">
+         <div class="modal-body justify-content-center">
             <p class="word-wrap">@Message</p>
          </div>
          <div class="modal-footer">
@@ -36,7 +36,7 @@
    [Parameter] public EventCallback<string> SecondaryButtonTextChanged { get; set; }
    [Parameter] public EventCallback<bool> ShowSecondaryButtonChanged { get; set; }
 
-   [Parameter] public EventCallback<bool> ModalClosed { get; set; }
+   [Parameter] public EventCallback<bool> ModalClosedEvent { get; set; }
 
    public string ModalDisplay = "none;";
    public string ModalClass = "";
@@ -56,6 +56,6 @@
       ModalClass = "";
       ShowBackdrop = false;
       StateHasChanged();
-      await ModalClosed.InvokeAsync(affirmative);
+      await ModalClosedEvent.InvokeAsync(affirmative);
    }
 }
