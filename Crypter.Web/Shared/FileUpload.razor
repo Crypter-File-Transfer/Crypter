@@ -44,11 +44,11 @@
          <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptFileClicked(selectedFiles, encryptionStrength))">Encrypt</button>
       </div>
    </div>
-   <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PrivateKey="privateKey" />
-   <UploadSuccessModalWithRecipient @ref="ModalForRecipient" />
+   <UploadSuccessModal @ref="Modal" @bind-DataFormat="dataFormat" @bind-ReturnedId="returnedId" @bind-PrivateKey="privateKey" ModalClosedEvent="@UploadCompletedEvent" />
+   <BasicModal @ref="ModalForRecipient" Subject="Upload Successful" Message=@UploadSuccessForUserMessage PrimaryButtonText="Okay" ModalClosedEvent="@UploadCompletedEvent" />
 </div>
 
-<div class="encrypt-status" hidden="@(!IsEncrypting)">
+<div class="encrypt-status text-center" hidden="@(!IsEncrypting)">
    <h3>@EncryptionStatusMessage</h3>
    <div class="spinner-border" role="status">
       <span class="visually-hidden">Loading...</span>
@@ -87,6 +87,10 @@
    private WrapsAsymmetricCipherKeyPair asymmetricKeyPair;
    private SymmetricCryptoParams symmetricParams;
    private byte[] serverEncryptionKey;
+
+   private string UploadSuccessForUserMessage = "Your file has been encrypted and uploaded." +
+      " The recipient will see the file during their next login." +
+      "\nUploads automatically expire in 24 hours.";
 
    private void HandleDragEnter()
    {
@@ -193,7 +197,6 @@
       var encodedSignature = Convert.ToBase64String(signature);
       var encodedPublicKey = Convert.ToBase64String(
           Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM()));
-      Console.WriteLine(file.Type);
       var fileType = string.IsNullOrEmpty(file.Type)
          ? "application/unknown"
          : file.Type;
@@ -249,11 +252,14 @@
    }
 
    private Crypter.Web.Shared.Modal.UploadSuccessModal Modal { get; set; }
-   private Crypter.Web.Shared.Modal.UploadSuccessModalWithRecipient ModalForRecipient { get; set; }
+   private Crypter.Web.Shared.Modal.BasicModal ModalForRecipient { get; set; }
 
    [Parameter]
    public EventCallback<string> RecipientUsernameChanged { get; set; }
 
    [Parameter]
    public EventCallback<string> RecipientPublicKeyChanged { get; set; }
+
+   [Parameter]
+   public EventCallback UploadCompletedEvent { get; set; }
 }
