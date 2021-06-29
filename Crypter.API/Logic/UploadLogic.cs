@@ -69,13 +69,6 @@ namespace Crypter.API.Logic
 
       private static UploadResult ValidateNecessaryRequestProperties(MessageUploadRequest request)
       {
-         /* TODO - The web client needs to enforce this first
-         if (string.IsNullOrEmpty(request.CipherTextBase64))
-         {
-            return UploadResult.InvalidCipherText;
-         }
-         */
-
          if (string.IsNullOrEmpty(request.ServerEncryptionKeyBase64))
          {
             return UploadResult.InvalidServerEncryptionKey;
@@ -109,11 +102,6 @@ namespace Crypter.API.Logic
          if (string.IsNullOrEmpty(request.ContentType))
          {
             return UploadResult.InvalidContentType;
-         }
-
-         if (string.IsNullOrEmpty(request.CipherTextBase64))
-         {
-            return UploadResult.InvalidCipherText;
          }
 
          if (string.IsNullOrEmpty(request.ServerEncryptionKeyBase64))
