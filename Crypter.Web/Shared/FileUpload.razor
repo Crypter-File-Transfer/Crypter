@@ -193,10 +193,14 @@
       var encodedSignature = Convert.ToBase64String(signature);
       var encodedPublicKey = Convert.ToBase64String(
           Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM()));
+      Console.WriteLine(file.Type);
+      var fileType = string.IsNullOrEmpty(file.Type)
+         ? "application/unknown"
+         : file.Type;
 
       await SetNewEncryptionStatus("Uploading");
       var withAuth = AuthenticationService.User is not null;
-      var request = new FileUploadRequest(file.Name, file.Type, encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey, RecipientUsername);
+      var request = new FileUploadRequest(file.Name, fileType, encodedCipherText, encodedSymmetricInfo, encodedSignature, encodedServerEncryptionKey, encodedPublicKey, RecipientUsername);
       var (_, response) = await UploadService.UploadFileAsync(request, withAuth);
 
       switch (response.Result)
