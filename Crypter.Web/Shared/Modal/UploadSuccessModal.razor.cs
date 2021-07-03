@@ -23,10 +23,10 @@ namespace Crypter.Web.Shared.Modal
       public string PrivateKey { get; set; }
 
       [Parameter]
-      public EventCallback<string> DataFormatChanged { get; set; }
+      public EventCallback<string> UploadTypeChanged { get; set; }
 
       [Parameter]
-      public EventCallback<Guid> ReturnedIdChanged { get; set; }
+      public EventCallback<Guid> ItemIdChanged { get; set; }
 
       [Parameter]
       public EventCallback<string> PrivateKeyChanged { get; set; }

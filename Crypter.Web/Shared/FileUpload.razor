@@ -36,8 +36,8 @@
          <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptFileClicked(SelectedFiles, encryptionStrength))">Encrypt</button>
       </div>
    </div>
-   <UploadSuccessModal @ref="SuccessModal" DataFormat="file" @bind-ReturnedId="returnedId" @bind-PrivateKey="privateKey" ModalClosedEvent="@UploadCompletedEvent" />
-   <BasicModal @ref="ModalForRecipient" Subject="Upload Successful" Message=@UploadSuccessForUserMessage PrimaryButtonText="Okay" ModalClosedEvent="@UploadCompletedEvent" />
+   <UploadSuccessModal @ref="SuccessModal" UploadType="file" @bind-ItemId="returnedId" @bind-PrivateKey="privateKey" ModalClosedCallback="@UploadCompletedEvent" />
+   <BasicModal @ref="ModalForRecipient" Subject="Upload Successful" Message=@UploadSuccessForUserMessage PrimaryButtonText="Okay" ModalClosedCallback="@UploadCompletedEvent" />
 </div>
 
 <div class="encrypt-status text-center" hidden="@(!IsEncrypting)">

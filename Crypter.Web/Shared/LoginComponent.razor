@@ -20,5 +20,5 @@
    </div>
    <button type="submit" class="btn btn-primary">Login</button>
 </EditForm>
-<BasicModal @ref="BasicModal" @bind-Subject="BasicModalSubject" @bind-Message="BasicModalMessage" @bind-PrimaryButtonText="BasicModalPrimaryButtonText" @bind-SecondaryButtonText="BasicModalSecondaryButtonText" @bind-ShowSecondaryButton="BasicModalShowSecondaryButton" ModalClosedEvent="@BasicModalClosedHandler" />
-<SpinnerModal @ref="SpinnerModal" @bind-Subject="SpinnerModalSubject" @bind-Message="SpinnerModalMessage" @bind-ShowPrimaryButton="SpinnerModalShowPrimaryButton" @bind-PrimaryButtonText="SpinnerModalPrimaryButtonText" ModalClosedEvent="@SpinnerModalClosedHandler" />
+<BasicModal @ref="BasicModal" @bind-Subject="BasicModalSubject" @bind-Message="BasicModalMessage" @bind-PrimaryButtonText="BasicModalPrimaryButtonText" @bind-SecondaryButtonText="BasicModalSecondaryButtonText" @bind-ShowSecondaryButton="BasicModalShowSecondaryButton" ModalClosedCallback="@BasicModalClosedCallback" />
+<SpinnerModal @ref="SpinnerModal" @bind-Subject="SpinnerModalSubject" @bind-Message="SpinnerModalMessage" @bind-ShowPrimaryButton="SpinnerModalShowPrimaryButton" @bind-PrimaryButtonText="SpinnerModalPrimaryButtonText" ModalClosedCallback="@SpinnerModalClosedCallback" />
