@@ -1,0 +1,68 @@
+﻿using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using System;
+using System.Threading.Tasks;
+
+namespace Crypter.Web.Shared.Modal
+{
+   public partial class UploadSuccessModalBase : ComponentBase
+   {
+      [Inject]
+      IJSRuntime JSRuntime { get; set; }
+
+      [Inject]
+      NavigationManager NavigationManager { get; set; }
+
+      [Parameter]
+      public string UploadType { get; set; }
+
+      [Parameter]
+      public Guid ItemId { get; set; }
+
+      [Parameter]
+      public string PrivateKey { get; set; }
+
+      [Parameter]
+      public EventCallback<string> DataFormatChanged { get; set; }
+
+      [Parameter]
+      public EventCallback<Guid> ReturnedIdChanged { get; set; }
+
+      [Parameter]
+      public EventCallback<string> PrivateKeyChanged { get; set; }
+
+      [Parameter]
+      public EventCallback ModalClosedCallback { get; set; }
+
+      public string ModalDisplay = "none;";
+      public string ModalClass = "";
+      public bool ShowBackdrop = false;
+
+      public void Open()
+      {
+         ModalDisplay = "block;";
+         ModalClass = "Show";
+         ShowBackdrop = true;
+         StateHasChanged();
+      }
+
+      public async Task CloseAsync()
+      {
+         ModalDisplay = "none";
+         ModalClass = "";
+         ShowBackdrop = false;
+         StateHasChanged();
+         await ModalClosedCallback.InvokeAsync();
+      }
+
+      protected string GetDownloadLink()
+      {
+         return $"{NavigationManager.BaseUri}decrypt/{UploadType}/{ItemId}";
+      }
+
+      protected async Task CopyToClipboardAsync()
+      {
+         await JSRuntime.InvokeVoidAsync("copyToClipboard", PrivateKey);
+      }
+   }
+}

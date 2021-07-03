@@ -1,91 +1,50 @@
-﻿@inject NavigationManager NavManager
-@inject IAuthenticationService AuthenticationService
-@inject IUserService UserService; 
+﻿@inherits RegisterComponentBase
 
 @if (RegistrationSuccess)
 {
-    <div class="alert alert-success" role="alert">
-        <h4 class="alert-heading">Registration Successful!</h4>
-        <p>Your account has been registered.</p>
-        <hr>
-        <p class="mb-0">You will now be redirected to the login page...</p>
-    </div>
+   <div class="alert alert-success" role="alert">
+      <h4 class="alert-heading">Registration Successful!</h4>
+      <p>Your account has been created.</p>
+      <hr>
+      <p class="mb-0">You will now be redirected to the login page...</p>
+   </div>
 }
 else
 {
-<EditForm Model="@RegistrationInfo" OnValidSubmit="@OnRegisterClicked">
-    <DataAnnotationsValidator />
+   <EditForm Model="@RegistrationInfo" OnValidSubmit="@OnRegisterClicked">
+      <DataAnnotationsValidator />
 
-    @if (RegistrationError)
-    {
-        <div class="alert alert-danger" role="alert">
+      @if (RegistrationError)
+      {
+         <div class="alert alert-danger" role="alert">
             @RegistrationErrorText
-        </div>
-    }
-    <div class="mb-3">
-        <label for="usernameFormControl" class="form-label">Username</label>
-        <InputText @bind-Value="@RegistrationInfo.Username" class="form-control" id="usernameFormControl" />
-        <ValidationMessage For="@(() => RegistrationInfo.Username)" />
-    </div>
-    <div class="mb-3">
-        <label for="passwordFormControl" class="form-label">Password</label>
-        <InputText type="password" @bind-Value="@RegistrationInfo.Password" class="form-control" id="passwordFormControl" />
-        <ValidationMessage For="@(() => RegistrationInfo.Password)" />
-    </div>
-    <div class="mb-3">
-        <label for="passwordConfirmFormControl" class="form-label">Confirm Your Password</label>
-        <InputText type="password" @bind-Value="@RegistrationInfo.PasswordConfirm" class="form-control" id="passwordConfirmFormControl" />
-        <ValidationMessage For="@(() => RegistrationInfo.PasswordConfirm)" />
-    </div>
-    <div class="mb-3">
-        <label for="emailFormControl" class="form-label">Email</label>
-        <InputText type="email" @bind-Value="@RegistrationInfo.Email" class="form-control" id="emailFormControl" />
-        <ValidationMessage For="@(() => RegistrationInfo.Email)" />
-    </div>
-    <div class="mb-3">
-        <label for="betaKeyFormControl" class="form-label">Beta Key</label>
-        <InputText @bind-Value="@RegistrationInfo.BetaKey" class="form-control" id="betaKeyFormControl" />
-        <ValidationMessage For="@(() => RegistrationInfo.BetaKey)" />
-    </div>
-    <button type="submit" class="btn btn-primary">Register</button>
-</EditForm>
-}
-
-@code {
-    private UserRegistration RegistrationInfo = new UserRegistration();
-
-    private bool RegistrationError = false;
-    private string RegistrationErrorText = "";
-    private bool RegistrationSuccess = false;
-
-    protected override void OnInitialized()
-    {
-        if (AuthenticationService.User != null)
-        {
-            NavManager.NavigateTo("/user");
-        }
-    }
-
-    private async Task OnRegisterClicked()
-    {
-
-        byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(RegistrationInfo.Username, RegistrationInfo.Password);
-        string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
-
-        var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.BetaKey, RegistrationInfo.Email);
-        var (_, registerResponse) = await UserService.RegisterUserAsync(requestBody);
-
-        if (registerResponse.Result != InsertUserResult.Success)
-        {
-            RegistrationError = true;
-            RegistrationErrorText = registerResponse.ResultMessage;
-        }
-        else
-        {
-            RegistrationSuccess = true;
-            StateHasChanged();
-            await Task.Delay(2000);
-            NavManager.NavigateTo("/login");
-        }
-    }
+         </div>
+      }
+      <div class="mb-3">
+         <label for="usernameFormControl" class="form-label">Username</label>
+         <InputText @bind-Value="@RegistrationInfo.Username" class="form-control" id="usernameFormControl" />
+         <ValidationMessage For="@(() => RegistrationInfo.Username)" />
+      </div>
+      <div class="mb-3">
+         <label for="passwordFormControl" class="form-label">Password</label>
+         <InputText type="password" @bind-Value="@RegistrationInfo.Password" class="form-control" id="passwordFormControl" />
+         <ValidationMessage For="@(() => RegistrationInfo.Password)" />
+      </div>
+      <div class="mb-3">
+         <label for="passwordConfirmFormControl" class="form-label">Confirm Your Password</label>
+         <InputText type="password" @bind-Value="@RegistrationInfo.PasswordConfirm" class="form-control" id="passwordConfirmFormControl" />
+         <ValidationMessage For="@(() => RegistrationInfo.PasswordConfirm)" />
+      </div>
+      <div class="mb-3">
+         <label for="emailFormControl" class="form-label">Email</label>
+         <InputText type="email" @bind-Value="@RegistrationInfo.Email" class="form-control" id="emailFormControl" />
+         <ValidationMessage For="@(() => RegistrationInfo.Email)" />
+      </div>
+      <div class="mb-3">
+         <label for="betaKeyFormControl" class="form-label">Beta Key</label>
+         <InputText @bind-Value="@RegistrationInfo.BetaKey" class="form-control" id="betaKeyFormControl" />
+         <ValidationMessage For="@(() => RegistrationInfo.BetaKey)" />
+      </div>
+      <button type="submit" class="btn btn-primary">Register</button>
+   </EditForm>
 }

@@ -1,0 +1,19 @@
+﻿@page "/decrypt/file/{itemId:guid}"
+
+@inherits DecryptFileBase
+
+@if (!Loading)
+{
+   if (ItemFound)
+   {
+      <div class="container my-4">
+         <h1>Decrypt File</h1>
+         <DecryptFileDetails @bind-Id="ItemId" @bind-FileName="FileName" @bind-ContentType="ContentType" @bind-Created="Created" @bind-Expiration="Expiration" @bind-Size="Size"
+                             @bind-SenderId="SenderId" @bind-SenderUsername="SenderUsername" @bind-SenderPublicAlias="SenderPublicAlias" @bind-RecipientId="RecipientId"></DecryptFileDetails>
+      </div>
+   }
+   else
+   {
+      <ItemNotFoundComponent></ItemNotFoundComponent>
+   }
+}

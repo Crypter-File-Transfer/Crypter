@@ -7,6 +7,7 @@ using System;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
+using Crypter.Web.Services.API;
 
 namespace Crypter.Web
 {
@@ -31,7 +32,8 @@ namespace Crypter.Web
             .AddScoped<ILocalStorageService, LocalStorageService>()
             .AddScoped<IUploadService, UploadService>()
             .AddScoped<IDownloadService, DownloadService>()
-            .AddScoped<IUserService, UserService>();
+            .AddScoped<IUserService, UserService>()
+            .AddScoped<IMetricsService, MetricsService>();
 
          var host = builder.Build();
 

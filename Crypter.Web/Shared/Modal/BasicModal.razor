@@ -1,4 +1,6 @@
-﻿<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+﻿@inherits BasicModalBase
+
+<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
    <div class="modal-dialog" role="document">
       <div class="modal-content">
          <div class="modal-header">
@@ -10,9 +12,9 @@
          <div class="modal-footer">
             @if (ShowSecondaryButton)
             {
-               <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="() => Close(false)">@SecondaryButtonText</button>
+               <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="() => CloseAsync(false)">@SecondaryButtonText</button>
             }
-            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close(true)">@PrimaryButtonText</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => CloseAsync(true)">@PrimaryButtonText</button>
          </div>
       </div>
    </div>
@@ -21,41 +23,4 @@
 @if (ShowBackdrop)
 {
    <div class="modal-backdrop fade show"></div>
-}
-
-@code {
-   [Parameter] public string Subject { get; set; }
-   [Parameter] public string Message { get; set; }
-   [Parameter] public string PrimaryButtonText { get; set; }
-   [Parameter] public string SecondaryButtonText { get; set; }
-   [Parameter] public bool ShowSecondaryButton { get; set; }
-
-   [Parameter] public EventCallback<string> SubjectChanged { get; set; }
-   [Parameter] public EventCallback<string> MessageChanged { get; set; }
-   [Parameter] public EventCallback<string> PrimaryButtonTextChanged { get; set; }
-   [Parameter] public EventCallback<string> SecondaryButtonTextChanged { get; set; }
-   [Parameter] public EventCallback<bool> ShowSecondaryButtonChanged { get; set; }
-
-   [Parameter] public EventCallback<bool> ModalClosedEvent { get; set; }
-
-   public string ModalDisplay = "none;";
-   public string ModalClass = "";
-   public bool ShowBackdrop = false;
-
-   public void Open()
-   {
-      ModalDisplay = "block;";
-      ModalClass = "Show";
-      ShowBackdrop = true;
-      StateHasChanged();
-   }
-
-   public async Task Close(bool affirmative)
-   {
-      ModalDisplay = "none";
-      ModalClass = "";
-      ShowBackdrop = false;
-      StateHasChanged();
-      await ModalClosedEvent.InvokeAsync(affirmative);
-   }
 }

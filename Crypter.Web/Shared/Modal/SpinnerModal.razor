@@ -1,4 +1,6 @@
-﻿<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+﻿@inherits SpinnerModalBase
+
+<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
    <div class="modal-dialog" role="document">
       <div class="modal-content">
          <div class="modal-header">
@@ -15,7 +17,7 @@
          @if (ShowPrimaryButton)
          {
             <div class="modal-footer">
-               <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close(true)">@PrimaryButtonText</button>
+               <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => CloseAsync()">@PrimaryButtonText</button>
             </div>
          }
       </div>
@@ -25,39 +27,4 @@
 @if (ShowBackdrop)
 {
    <div class="modal-backdrop fade show"></div>
-}
-
-@code {
-   [Parameter] public string Subject { get; set; }
-   [Parameter] public string Message { get; set; }
-   [Parameter] public bool ShowPrimaryButton { get; set; }
-   [Parameter] public string PrimaryButtonText { get; set; }
-
-   [Parameter] public EventCallback<string> SubjectChanged { get; set; }
-   [Parameter] public EventCallback<string> MessageChanged { get; set; }
-   [Parameter] public EventCallback<bool> ShowPrimaryButtonChanged { get; set; }
-   [Parameter] public EventCallback<string> PrimaryButtonTextChanged { get; set; }
-
-   [Parameter] public EventCallback<bool> ModalClosedEvent { get; set; }
-
-   public string ModalDisplay = "none;";
-   public string ModalClass = "";
-   public bool ShowBackdrop = false;
-
-   public void Open()
-   {
-      ModalDisplay = "block;";
-      ModalClass = "Show";
-      ShowBackdrop = true;
-      StateHasChanged();
-   }
-
-   public async Task Close(bool affirmative)
-   {
-      ModalDisplay = "none";
-      ModalClass = "";
-      ShowBackdrop = false;
-      StateHasChanged();
-      await ModalClosedEvent.InvokeAsync(affirmative);
-   }
 }
