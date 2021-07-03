@@ -1,6 +1,4 @@
-﻿@inject IAuthenticationService AuthenticationService
-@inject NavigationManager NavManager
-@implements IDisposable
+﻿@inherits NavigationBase
 
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" aria-label="Toggle navigation">
    <span class="navbar-toggler-icon"></span>
@@ -10,7 +8,7 @@
       <li class="nav-item mx-1">
          <a class="nav-link" href="/about">About Crypter.dev</a>
       </li>
-      @if (!LoggedIn)
+      @if (AuthenticationService.User is null)
       {
          <li class="nav-item mx-1">
             <a class="btn btn-secondary" href="/login">Login</a>
@@ -29,8 +27,8 @@
                Encrypt
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptAFileClicked">Encrypt a file</a></li>
-               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptAMessageClicked">Encrypt a message</a></li>
+               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptFileClicked">Encrypt a file</a></li>
+               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptMessageClicked">Encrypt a message</a></li>
             </ul>
          </div>
 
@@ -39,45 +37,3 @@
       }
    </ul>
 </div>
-
-@code {
-
-   private bool LoggedIn = false;
-
-   protected override void OnInitialized()
-   {
-      LoggedIn = AuthenticationService.User != null;
-      NavManager.LocationChanged += HandleLocationChanged;
-      base.OnInitialized();
-   }
-
-   private void OnEncryptAFileClicked()
-   {
-      FileModal.Open();
-   }
-
-   private void OnEncryptAMessageClicked()
-   {
-      MessageModal.Open();
-   }
-
-   private async Task OnLogoutClicked()
-   {
-      await AuthenticationService.Logout();
-      LoggedIn = false;
-   }
-
-   private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
-   {
-      LoggedIn = AuthenticationService.User != null;
-      StateHasChanged();
-   }
-
-   public void Dispose()
-   {
-      NavManager.LocationChanged -= HandleLocationChanged;
-   }
-
-   private Crypter.Web.Shared.Modal.UserFileUploadModal FileModal { get; set; }
-   private Crypter.Web.Shared.Modal.UserMessageUploadModal MessageModal { get; set; }
-}

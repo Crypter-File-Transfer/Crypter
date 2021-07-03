@@ -1,5 +1,4 @@
-﻿@inject NavigationManager Navigator
-@inject IJSRuntime js
+﻿@inherits UserMessageUploadModalBase
 
 <div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
    <div class="modal-dialog" role="document">
@@ -8,10 +7,10 @@
             <h3 class="my-0">Upload a Message</h3>
          </div>
          <div class="modal-body justify-content-center">
-            <MessageUpload @bind-RecipientUsername="RecipientUsername" @bind-RecipientPublicKey="RecipientPublicKey" UploadCompletedEvent="@Close" />
+            <MessageUpload @bind-RecipientUsername="RecipientUsername" @bind-RecipientPublicKey="RecipientPublicKey" UploadCompletedEvent="@CloseAsync" />
          </div>
          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => Close()">Close</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => CloseAsync()">Close</button>
          </div>
       </div>
    </div>
@@ -20,42 +19,4 @@
 @if (ShowBackdrop)
 {
    <div class="modal-backdrop fade show"></div>
-}
-
-@code {
-   [Parameter]
-   public string RecipientUsername { get; set; }
-
-   [Parameter]
-   public string RecipientPublicKey { get; set; }
-
-   [Parameter]
-   public EventCallback ModalClosedEvent { get; set; }
-
-   public string ModalDisplay = "none;";
-   public string ModalClass = "";
-   public bool ShowBackdrop = false;
-
-   public void Open()
-   {
-      ModalDisplay = "block;";
-      ModalClass = "Show";
-      ShowBackdrop = true;
-      StateHasChanged();
-   }
-
-   public async Task Close()
-   {
-      ModalDisplay = "none";
-      ModalClass = "";
-      ShowBackdrop = false;
-      StateHasChanged();
-      await ModalClosedEvent.InvokeAsync();
-   }
-
-   [Parameter]
-   public EventCallback<string> RecipientUsernameChanged { get; set; }
-
-   [Parameter]
-   public EventCallback<string> RecipientPublicKeyChanged { get; set; }
 }

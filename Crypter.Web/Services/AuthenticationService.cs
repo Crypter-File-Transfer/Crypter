@@ -5,6 +5,7 @@ using Crypter.Contracts.Requests;
 using System;
 using System.Text;
 using System.Net;
+using Crypter.Web.Services.API;
 
 namespace Crypter.Web.Services
 {

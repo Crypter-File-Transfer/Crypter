@@ -1,0 +1,19 @@
+﻿@page "/decrypt/message/{itemId:guid}"
+
+@inherits DecryptMessageBase
+
+@if (!Loading)
+{
+   if (ItemFound)
+   {
+      <div class="container my-4">
+         <h1>Decrypt Message</h1>
+         <DecryptMessageDetails @bind-Id="ItemId" @bind-Subject="Subject" @bind-Created="Created" @bind-Expiration="Expiration" @bind-Size="Size"
+                                @bind-SenderId="SenderId" @bind-SenderUsername="SenderUsername" @bind-SenderPublicAlias="SenderPublicAlias" @bind-RecipientId="RecipientId"></DecryptMessageDetails>
+      </div>
+   }
+   else
+   {
+      <ItemNotFoundComponent></ItemNotFoundComponent>
+   }
+}
