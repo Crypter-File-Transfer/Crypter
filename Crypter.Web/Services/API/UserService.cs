@@ -4,13 +4,14 @@ using Crypter.Web.Models;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Crypter.Web.Services
+namespace Crypter.Web.Services.API
 {
    public interface IUserService
    {
       Task<(HttpStatusCode HttpStatus, UserAuthenticateResponse Response)> AuthenticateUserAsync(AuthenticateUserRequest loginRequest);
       Task<(HttpStatusCode HttpStatus, UserAuthenticationRefreshResponse Response)> RefreshAuthenticationAsync();
       Task<(HttpStatusCode HttpStatus, UserRegisterResponse Response)> RegisterUserAsync(RegisterUserRequest registerRequest);
+      Task<(HttpStatusCode HttpStatus, UpdateUserKeysResponse Response)> UpdateUserKeysAsync(UpdateUserKeysRequest request);
       Task<(HttpStatusCode HttpStatus, UserPublicProfileResponse Response)> GetUserPublicProfileAsync(string username);
       Task<(HttpStatusCode HttpStatus, UserSettingsResponse Response)> GetUserSettingsAsync();
       Task<(HttpStatusCode HttpStatus, UpdateUserPrivacyResponse Response)> UpdateUserPrivacyAsync(UpdateUserPrivacyRequest request);
@@ -18,6 +19,7 @@ namespace Crypter.Web.Services
       Task<(HttpStatusCode HttpStatus, UserSentFilesResponse Response)> GetUserSentFilesAsync();
       Task<(HttpStatusCode HttpStatus, UserReceivedMessagesResponse Response)> GetUserReceivedMessagesAsync();
       Task<(HttpStatusCode HttpStatus, UserReceivedFilesResponse Response)> GetUserReceivedFilesAsync();
+      Task<(HttpStatusCode HttpStatus, UserSearchResponse Response)> GetUserSearchResultsAsync(UserSearchParams searchInfo);
    }
 
    public class UserService : IUserService
@@ -47,6 +49,12 @@ namespace Crypter.Web.Services
       {
          var url = $"{BaseUserUrl}/register";
          return await HttpService.Post<UserRegisterResponse>(url, registerRequest);
+      }
+
+      public async Task<(HttpStatusCode, UpdateUserKeysResponse)> UpdateUserKeysAsync(UpdateUserKeysRequest request)
+      {
+         var url = $"{BaseUserUrl}/update-personal-keys";
+         return await HttpService.Post<UpdateUserKeysResponse>(url, request, true);
       }
 
       public async Task<(HttpStatusCode, UserPublicProfileResponse)> GetUserPublicProfileAsync(string username)
@@ -89,6 +97,13 @@ namespace Crypter.Web.Services
       {
          var url = $"{BaseUserUrl}/received/files";
          return await HttpService.Get<UserReceivedFilesResponse>(url, true);
+      }
+
+      public async Task<(HttpStatusCode, UserSearchResponse)> GetUserSearchResultsAsync(UserSearchParams searchInfo)
+      {
+         var url = $"{BaseUserUrl}/search/{searchInfo.Type}";
+         var urlWithParams = url + "?value=" + searchInfo.Query + "&index=" + searchInfo.Index + "&count=" + searchInfo.Results;
+         return await HttpService.Get<UserSearchResponse>(urlWithParams, true);
       }
    }
 }

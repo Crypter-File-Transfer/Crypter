@@ -1,5 +1,4 @@
-﻿@inject AppSettings AppSettings
-@inject IHttpService HttpService
+﻿@inherits ServerDiskSpaceComponentBase
 
 @if (!ServerHasDiskSpace || ServerSpacePercentageRemaining < 20)
 {
@@ -19,32 +18,4 @@
          }
       </div>
    </div>
-}
-
-@code {
-   public bool ServerHasDiskSpace = true;
-   public double ServerSpacePercentageRemaining = 100.00;
-
-   protected override async Task OnInitializedAsync()
-   {
-      var diskMetricsResponse = await DownloadDiskMetrics();
-      if (diskMetricsResponse == null)
-      {
-         ServerHasDiskSpace = false;
-      }
-      else
-      {
-         ServerHasDiskSpace = !diskMetricsResponse.Full;
-         var allocatedServerSpace = long.Parse(diskMetricsResponse.Allocated);
-         var availableServerSpace = long.Parse(diskMetricsResponse.Available);
-         ServerSpacePercentageRemaining = 100.00 * ((double)availableServerSpace / (double)allocatedServerSpace);
-      }
-   }
-
-   public async Task<DiskMetricsResponse> DownloadDiskMetrics()
-   {
-      var url = $"{AppSettings.ApiBaseUrl}/metrics/disk";
-      var (_, payload) = await HttpService.Get<DiskMetricsResponse>(url);
-      return payload;
-   }
 }

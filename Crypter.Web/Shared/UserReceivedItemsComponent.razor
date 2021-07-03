@@ -1,4 +1,4 @@
-﻿@inject NavigationManager NavManager
+﻿@inherits UserReceivedItemsComponentBase
 
 <div class="col-md-6">
    <div class="card mb-4">
@@ -26,13 +26,13 @@
                   @if (item.IsFile)
                   {
                      <h6 class="card-subtitle my-2">
-                        Filename: <a href="@($"{NavManager.BaseUri}decrypt/file/{item.Id}")">@item.Name</a>
+                        Filename: <a href="@($"{NavigationManager.BaseUri}decrypt/file/{item.Id}")">@item.Name</a>
                      </h6>
                   }
                   else
                   {
                      <h6 class="card-subtitle my-2">
-                        Subject: <a href="@($"{NavManager.BaseUri}decrypt/message/{item.Id}")">@item.Name</a>
+                        Subject: <a href="@($"{NavigationManager.BaseUri}decrypt/message/{item.Id}")">@item.Name</a>
                      </h6>
                   }
                   <div class="row">
@@ -58,11 +58,3 @@
       </ul>
    </div>
 </div>
-
-@code {
-   [Parameter]
-   public IEnumerable<UserReceivedItem> Items { get; set; }
-
-   [Parameter]
-   public EventCallback<IEnumerable<UserReceivedItem>> ItemsChanged { get; set; }
-}

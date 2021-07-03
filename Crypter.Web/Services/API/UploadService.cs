@@ -4,7 +4,7 @@ using Crypter.Web.Models;
 using System.Net;
 using System.Threading.Tasks;
 
-namespace Crypter.Web.Services
+namespace Crypter.Web.Services.API
 {
    public interface IUploadService
    {
