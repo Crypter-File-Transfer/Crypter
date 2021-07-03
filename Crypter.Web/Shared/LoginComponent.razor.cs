@@ -42,13 +42,13 @@ namespace Crypter.Web.Shared
       protected string BasicModalPrimaryButtonText;
       protected string BasicModalSecondaryButtonText;
       protected bool BasicModalShowSecondaryButton;
-      protected Func<bool, Task> BasicModalClosedHandler;
+      protected Func<bool, Task> BasicModalClosedCallback;
 
       protected string SpinnerModalSubject;
       protected string SpinnerModalMessage;
       protected string SpinnerModalPrimaryButtonText;
       protected bool SpinnerModalShowPrimaryButton;
-      protected Action<bool> SpinnerModalClosedHandler;
+      protected Action<bool> SpinnerModalClosedCallback;
 
       protected override async Task OnInitializedAsync()
       {
@@ -127,7 +127,7 @@ namespace Crypter.Web.Shared
          BasicModalPrimaryButtonText = "Generate Keys";
          BasicModalSecondaryButtonText = "";
          BasicModalShowSecondaryButton = false;
-         BasicModalClosedHandler = ProceedWithKeyCreation;
+         BasicModalClosedCallback = ProceedWithKeyCreation;
          BasicModal.Open();
       }
 
@@ -146,7 +146,7 @@ namespace Crypter.Web.Shared
             " Please be patient.";
          SpinnerModalPrimaryButtonText = "";
          SpinnerModalShowPrimaryButton = false;
-         SpinnerModalClosedHandler = InformUserKeysCreated;
+         SpinnerModalClosedCallback = InformUserKeysCreated;
          SpinnerModal.Open();
          StateHasChanged();
          await Task.Delay(500);
@@ -157,7 +157,7 @@ namespace Crypter.Web.Shared
          BasicModalSubject = "Done";
          BasicModalMessage = "Your keys have been generated. Click 'OK' to continue logging in.";
          BasicModalPrimaryButtonText = "OK";
-         BasicModalClosedHandler = ProceedWithLoginAfterKeyCreation;
+         BasicModalClosedCallback = ProceedWithLoginAfterKeyCreation;
          StateHasChanged();
          BasicModal.Open();
       }
