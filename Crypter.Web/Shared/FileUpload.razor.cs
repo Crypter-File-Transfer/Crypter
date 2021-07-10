@@ -50,6 +50,8 @@ namespace Crypter.Web.Shared
       // State
       protected bool IsEncrypting = false;
       protected string EncryptionStatusMessage = "";
+      protected bool ShowProgressBar = false;
+      protected double ProgressPercent = 0.0;
 
       // User input
       protected List<IFileListEntry> SelectedFiles = new();
@@ -144,11 +146,37 @@ namespace Crypter.Web.Shared
       protected async Task EncryptFile(IFileListEntry file)
       {
          ErrorMessages.Clear();
-         await SetNewEncryptionStatus("Encrypting your file");
+
+         await SetNewEncryptionStatus("Creating a signature");
          using var stream = new MemoryStream();
          await file.Data.CopyToAsync(stream);
          byte[] fileBytes = stream.ToArray();
-         var cipherText = CryptoLib.Common.DoSymmetricEncryption(fileBytes, symmetricParams);
+         var signature = CryptoLib.Common.SignPlaintext(fileBytes, asymmetricKeyPair.Private);
+
+         await SetNewEncryptionStatus("Encrypting your file");
+         await ShowEncryptionProgress(0.0);
+         var symmetricEncryption = new SymmetricCrypto();
+         symmetricEncryption.InitializeForEncryption(symmetricParams.Key, symmetricParams.IV);
+
+         int processedBytes = 0;
+         int currentCiphertextSize = 0;
+         int chunkSize = 1048576;
+         List<byte> ciphertext = new(symmetricEncryption.GetOutputSize(fileBytes.Length));
+         while (processedBytes + chunkSize < fileBytes.Length)
+         {
+            var plaintextChunk = new byte[chunkSize];
+            var ciphertextChunk = symmetricEncryption.EncryptChunk(fileBytes[processedBytes..(processedBytes + chunkSize)]);
+
+            ciphertext.InsertRange(currentCiphertextSize, ciphertextChunk);
+            processedBytes += chunkSize;
+            currentCiphertextSize += ciphertextChunk.Length;
+            await ShowEncryptionProgress((double)processedBytes / fileBytes.Length);
+         }
+
+         var finalCiphertextChunk = symmetricEncryption.EncryptFinal(fileBytes[processedBytes..]);
+         ciphertext.InsertRange(currentCiphertextSize, finalCiphertextChunk);
+         await ShowEncryptionProgress(1.0);
+         await HideEncryptionProgress();
 
          await SetNewEncryptionStatus("Encrypting symmetric key");
          var publicKeyToEncryptWith = string.IsNullOrEmpty(RecipientUsername)
@@ -157,11 +185,8 @@ namespace Crypter.Web.Shared
 
          var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, publicKeyToEncryptWith);
 
-         await SetNewEncryptionStatus("Creating a signature");
-         var signature = CryptoLib.Common.SignPlaintext(fileBytes, asymmetricKeyPair.Private);
-
          await SetNewEncryptionStatus("Preparing to upload");
-         var encodedCipherText = Convert.ToBase64String(cipherText);
+         var encodedCipherText = Convert.ToBase64String(ciphertext.ToArray());
          var encodedSymmetricInfo = Convert.ToBase64String(encryptedSymmetricInfo);
          var encodedServerEncryptionKey = Convert.ToBase64String(serverEncryptionKey);
          var encodedSignature = Convert.ToBase64String(signature);
@@ -209,7 +234,23 @@ namespace Crypter.Web.Shared
       {
          EncryptionStatusMessage = status;
          StateHasChanged();
+         GC.Collect();
          await Task.Delay(500);
+      }
+
+      protected async Task ShowEncryptionProgress(double percentComplete)
+      {
+         ShowProgressBar = true;
+         ProgressPercent = percentComplete;
+         StateHasChanged();
+         await Task.Delay(500);
+      }
+
+      protected async Task HideEncryptionProgress()
+      {
+         ShowProgressBar = false;
+         StateHasChanged();
+         await Task.Delay(250);
       }
 
       protected void CompletedUpload(Guid id, string privKey)
