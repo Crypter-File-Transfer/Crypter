@@ -95,8 +95,11 @@ namespace Crypter.Web.Shared
 
       protected async Task EncryptMessage(string message)
       {
-         await SetNewEncryptionStatus("Encrypting your message");
+         await SetNewEncryptionStatus("Creating a signature");
          byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+         var signature = CryptoLib.Common.SignPlaintext(messageBytes, asymmetricKeyPair.Private);
+
+         await SetNewEncryptionStatus("Encrypting your message");
          var cipherText = CryptoLib.Common.DoSymmetricEncryption(messageBytes, symmetricParams);
 
          await SetNewEncryptionStatus("Encrypting symmetric key");
@@ -105,9 +108,6 @@ namespace Crypter.Web.Shared
              : CryptoLib.Common.ConvertRsaPublicKeyFromPEM(RecipientPublicKey);
 
          var encryptedSymmetricInfo = CryptoLib.Common.EncryptSymmetricInfo(symmetricParams, publicKeyToEncryptWith);
-
-         await SetNewEncryptionStatus("Creating a signature");
-         var signature = CryptoLib.Common.SignPlaintext(messageBytes, asymmetricKeyPair.Private);
 
          await SetNewEncryptionStatus("Preparing to upload");
          var encodedCipherText = Convert.ToBase64String(cipherText);
