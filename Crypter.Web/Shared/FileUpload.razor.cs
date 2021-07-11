@@ -1,5 +1,4 @@
-﻿using BlazorInputFile;
-using Crypter.Contracts.Enum;
+﻿using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.CryptoLib.BouncyCastle;
 using Crypter.CryptoLib.Enums;
@@ -7,9 +6,9 @@ using Crypter.CryptoLib.Models;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -54,7 +53,7 @@ namespace Crypter.Web.Shared
       protected double ProgressPercent = 0.0;
 
       // User input
-      protected List<IFileListEntry> SelectedFiles = new();
+      protected List<IBrowserFile> SelectedFiles = new();
       protected CryptoStrength encryptionStrength = CryptoStrength.Minimum;
 
       protected string dropClass = "";
@@ -81,10 +80,12 @@ namespace Crypter.Web.Shared
          dropClass = "";
       }
 
-      protected void HandleFileInputChange(IFileListEntry[] files)
+      protected void HandleFileInputChange(InputFileChangeEventArgs e)
       {
          dropClass = "";
          ErrorMessages.Clear();
+
+         var files = e.GetMultipleFiles();
 
          if (!files.Any())
          {
@@ -92,7 +93,7 @@ namespace Crypter.Web.Shared
             return;
          }
 
-         if (files.Length > MaxFileCount || SelectedFiles.Count >= MaxFileCount)
+         if (files.Count > MaxFileCount || SelectedFiles.Count >= MaxFileCount)
          {
             ErrorMessages.Add($"You can only upload {MaxFileCount} file(s) at a time.");
             return;
@@ -107,7 +108,7 @@ namespace Crypter.Web.Shared
          SelectedFiles.Add(files[0]);
       }
 
-      protected async Task OnEncryptFileClicked(List<IFileListEntry> files, CryptoStrength strength)
+      protected async Task OnEncryptFileClicked(List<IBrowserFile> files, CryptoStrength strength)
       {
          if (files.Count == 1)
          {
@@ -143,39 +144,64 @@ namespace Crypter.Web.Shared
          serverEncryptionKey = null;
       }
 
-      protected async Task EncryptFile(IFileListEntry file)
+      protected async Task EncryptFile(IBrowserFile file)
       {
          ErrorMessages.Clear();
 
-         await SetNewEncryptionStatus("Creating a signature");
-         using var stream = new MemoryStream();
-         await file.Data.CopyToAsync(stream);
-         byte[] fileBytes = stream.ToArray();
-         var signature = CryptoLib.Common.SignPlaintext(fileBytes, asymmetricKeyPair.Private);
-
          await SetNewEncryptionStatus("Encrypting your file");
-         await ShowEncryptionProgress(0.0);
+         await SetProgressBar(0.0);
+         var fileStream = file.OpenReadStream(MaxFileSize);
+         var fileSize = (int)file.Size;
          var symmetricEncryption = new SymmetricCrypto();
-         symmetricEncryption.InitializeForEncryption(symmetricParams.Key, symmetricParams.IV);
+         symmetricEncryption.Initialize(symmetricParams.Key, symmetricParams.IV, true);
 
          int processedBytes = 0;
          int currentCiphertextSize = 0;
          int chunkSize = 1048576;
-         List<byte> ciphertext = new(symmetricEncryption.GetOutputSize(fileBytes.Length));
-         while (processedBytes + chunkSize < fileBytes.Length)
+         List<byte> ciphertext = new(symmetricEncryption.GetOutputSize(fileSize));
+         while (processedBytes + chunkSize < fileSize)
          {
             var plaintextChunk = new byte[chunkSize];
-            var ciphertextChunk = symmetricEncryption.EncryptChunk(fileBytes[processedBytes..(processedBytes + chunkSize)]);
+            await fileStream.ReadAsync(plaintextChunk, 0, plaintextChunk.Length);
+            var ciphertextChunk = symmetricEncryption.EncryptChunk(plaintextChunk);
 
             ciphertext.InsertRange(currentCiphertextSize, ciphertextChunk);
             processedBytes += chunkSize;
             currentCiphertextSize += ciphertextChunk.Length;
-            await ShowEncryptionProgress((double)processedBytes / fileBytes.Length);
+            await SetProgressBar((double)processedBytes / fileSize);
          }
 
-         var finalCiphertextChunk = symmetricEncryption.EncryptFinal(fileBytes[processedBytes..]);
+         var finalPlaintextChunk = new byte[fileSize - processedBytes];
+         await fileStream.ReadAsync(finalPlaintextChunk, 0, finalPlaintextChunk.Length);
+         var finalCiphertextChunk = symmetricEncryption.EncryptFinal(finalPlaintextChunk);
          ciphertext.InsertRange(currentCiphertextSize, finalCiphertextChunk);
-         await ShowEncryptionProgress(1.0);
+         await SetProgressBar(1.0);
+         await HideEncryptionProgress();
+
+         await SetNewEncryptionStatus("Creating a signature");
+         await SetProgressBar(0.0);
+         var signer = new AsymmetricSigner();
+         signer.Initialize(asymmetricKeyPair.Private);
+         processedBytes = 0;
+         await fileStream.DisposeAsync();
+         fileStream = file.OpenReadStream(MaxFileSize);
+         while (processedBytes + chunkSize < fileSize)
+         {
+            var plaintextChunk = new byte[chunkSize];
+            await fileStream.ReadAsync(plaintextChunk, 0, plaintextChunk.Length);
+
+            signer.DigestChunk(plaintextChunk);
+
+            processedBytes += chunkSize;
+            await SetProgressBar((double)processedBytes / fileSize);
+         }
+
+         finalPlaintextChunk = new byte[fileSize - processedBytes];
+         await fileStream.ReadAsync(finalPlaintextChunk, 0, finalPlaintextChunk.Length);
+         signer.DigestChunk(finalPlaintextChunk);
+
+         var signature = signer.GenerateSignature();
+         await SetProgressBar(1.0);
          await HideEncryptionProgress();
 
          await SetNewEncryptionStatus("Encrypting symmetric key");
@@ -192,9 +218,9 @@ namespace Crypter.Web.Shared
          var encodedSignature = Convert.ToBase64String(signature);
          var encodedPublicKey = Convert.ToBase64String(
              Encoding.UTF8.GetBytes(asymmetricKeyPair.Public.ConvertToPEM()));
-         var fileType = string.IsNullOrEmpty(file.Type)
+         var fileType = string.IsNullOrEmpty(file.ContentType)
             ? "application/unknown"
-            : file.Type;
+            : file.ContentType;
 
          await SetNewEncryptionStatus("Uploading");
          var withAuth = AuthenticationService.User is not null;
@@ -238,7 +264,7 @@ namespace Crypter.Web.Shared
          await Task.Delay(500);
       }
 
-      protected async Task ShowEncryptionProgress(double percentComplete)
+      protected async Task SetProgressBar(double percentComplete)
       {
          ShowProgressBar = true;
          ProgressPercent = percentComplete;

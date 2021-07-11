@@ -13,9 +13,9 @@ namespace Crypter.CryptoLib.BouncyCastle
          Cipher = CipherUtilities.GetCipher("AES/CTR/NoPadding");
       }
 
-      public void InitializeForEncryption(KeyParameter key, byte[] iv)
+      public void Initialize(KeyParameter key, byte[] iv, bool forEncryption)
       {
-         Cipher.Init(true, new ParametersWithIV(key, iv));
+         Cipher.Init(forEncryption, new ParametersWithIV(key, iv));
       }
 
       public int GetOutputSize(int plaintextLength)

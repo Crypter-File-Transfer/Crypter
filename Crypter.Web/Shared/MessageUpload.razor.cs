@@ -95,12 +95,12 @@ namespace Crypter.Web.Shared
 
       protected async Task EncryptMessage(string message)
       {
-         await SetNewEncryptionStatus("Creating a signature");
-         byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-         var signature = CryptoLib.Common.SignPlaintext(messageBytes, asymmetricKeyPair.Private);
-
          await SetNewEncryptionStatus("Encrypting your message");
+         byte[] messageBytes = Encoding.UTF8.GetBytes(message);
          var cipherText = CryptoLib.Common.DoSymmetricEncryption(messageBytes, symmetricParams);
+
+         await SetNewEncryptionStatus("Creating a signature");
+         var signature = CryptoLib.Common.SignPlaintext(messageBytes, asymmetricKeyPair.Private);
 
          await SetNewEncryptionStatus("Encrypting symmetric key");
          var publicKeyToEncryptWith = string.IsNullOrEmpty(RecipientUsername)
