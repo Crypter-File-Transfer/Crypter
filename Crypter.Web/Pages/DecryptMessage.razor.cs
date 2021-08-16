@@ -53,11 +53,11 @@ namespace Crypter.Web.Pages
          var (httpStatus, response) = await DownloadService.DownloadMessagePreviewAsync(messagePreviewRequest, withAuth);
 
          ItemFound = httpStatus != HttpStatusCode.NotFound;
-         if (httpStatus != HttpStatusCode.NotFound)
+         if (ItemFound)
          {
             Subject = response.Subject;
             Created = response.CreationUTC.ToLocalTime().ToString();
-            Expiration = response.CreationUTC.ToLocalTime().ToString();
+            Expiration = response.ExpirationUTC.ToLocalTime().ToString();
             Size = response.Size;
             SenderId = response.SenderId;
             SenderUsername = response.SenderUsername;
