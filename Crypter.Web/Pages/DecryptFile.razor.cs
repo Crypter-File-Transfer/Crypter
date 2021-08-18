@@ -54,7 +54,7 @@ namespace Crypter.Web.Pages
          var (httpStatus, response) = await DownloadService.DownloadFilePreviewAsync(filePreviewRequest, withAuth);
 
          ItemFound = httpStatus != HttpStatusCode.NotFound;
-         if (httpStatus != HttpStatusCode.NotFound)
+         if (ItemFound)
          {
             FileName = response.FileName;
             ContentType = response.ContentType;
