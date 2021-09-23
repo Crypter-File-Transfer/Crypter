@@ -1,16 +1,18 @@
-﻿namespace Crypter.Contracts.DTO
+﻿using System;
+
+namespace Crypter.Contracts.DTO
 {
     public class UserSearchResultDTO
     {
-        public string Id { get; set; }
+        public Guid Id { get; set; }
         public string Username { get; set; }
-        public string PublicAlias { get; set; }
+        public string Alias { get; set; }
 
-        public UserSearchResultDTO(string id, string username, string publicAlias)
+        public UserSearchResultDTO(Guid id, string username, string alias)
         {
             Id = id;
             Username = username;
-            PublicAlias = publicAlias;
+            Alias = alias;
         }
     }
 }

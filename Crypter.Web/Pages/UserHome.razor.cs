@@ -1,4 +1,5 @@
-﻿using Crypter.Web.Models;
+﻿using Crypter.Contracts.Enum;
+using Crypter.Web.Models;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
@@ -52,8 +53,8 @@ namespace Crypter.Web.Pages
                Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
                RecipientId = x.RecipientId,
                RecipientUsername = x.RecipientUsername,
-               RecipientPublicAlias = x.RecipientPublicAlias,
-               IsFile = false,
+               RecipientAlias = x.RecipientAlias,
+               ItemType = TransferItemType.Message,
                ExpirationUTC = x.ExpirationUTC
             })
             .Concat(sentFilesresponse.Files
@@ -63,8 +64,8 @@ namespace Crypter.Web.Pages
                   Name = x.FileName,
                   RecipientId = x.RecipientId,
                   RecipientUsername = x.RecipientUsername,
-                  RecipientPublicAlias = x.RecipientPublicAlias,
-                  IsFile = true,
+                  RecipientAlias = x.RecipientAlias,
+                  ItemType = TransferItemType.File,
                   ExpirationUTC = x.ExpirationUTC
                }))
             .OrderBy(x => x.ExpirationUTC);
@@ -82,8 +83,8 @@ namespace Crypter.Web.Pages
                Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
                SenderId = x.SenderId,
                SenderUsername = x.SenderUsername,
-               SenderPublicAlias = x.SenderPublicAlias,
-               IsFile = false,
+               SenderAlias = x.SenderAlias,
+               ItemType = TransferItemType.Message,
                ExpirationUTC = x.ExpirationUTC
             })
             .Concat(receivedFilesresponse.Files
@@ -93,8 +94,8 @@ namespace Crypter.Web.Pages
                   Name = x.FileName,
                   SenderId = x.SenderId,
                   SenderUsername = x.SenderUsername,
-                  SenderPublicAlias = x.SenderPublicAlias,
-                  IsFile = true,
+                  SenderAlias = x.SenderAlias,
+                  ItemType = TransferItemType.File,
                   ExpirationUTC = x.ExpirationUTC
                }))
             .OrderBy(x => x.ExpirationUTC);

@@ -1,6 +1,7 @@
-﻿using Crypter.DataAccess.FileSystem;
-using Crypter.DataAccess.Interfaces;
-using Crypter.DataAccess.Models;
+﻿using Crypter.Contracts.Enum;
+using Crypter.Core.Interfaces;
+using Crypter.Core.Models;
+using Crypter.Core.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
@@ -10,11 +11,11 @@ namespace Crypter.Console.Jobs
    public class DeleteExpired
    {
       private string FileStorePath { get; }
-      private IBaseItemService<MessageItem> MessageService { get; }
-      private IBaseItemService<FileItem> FileService { get; }
+      private IBaseTransferService<MessageTransfer> MessageService { get; }
+      private IBaseTransferService<FileTransfer> FileService { get; }
       private readonly ILogger<DeleteExpired> Logger;
 
-      public DeleteExpired(string fileStorePath, IBaseItemService<MessageItem> messageService, IBaseItemService<FileItem> fileService, ILogger<DeleteExpired> logger)
+      public DeleteExpired(string fileStorePath, IBaseTransferService<MessageTransfer> messageService, IBaseTransferService<FileTransfer> fileService, ILogger<DeleteExpired> logger)
       {
          FileStorePath = fileStorePath;
          MessageService = messageService;
@@ -26,24 +27,24 @@ namespace Crypter.Console.Jobs
       {
          Logger.LogInformation($"{DateTime.Now:HH:mm:ss} DeleteExpired is working.");
 
+         var messageStorageService = new TransferItemStorageService(FileStorePath, TransferItemType.Message);
          var expiredMessages = await MessageService.FindExpiredAsync();
-         foreach (MessageItem expiredItem in expiredMessages)
+         foreach (MessageTransfer expiredItem in expiredMessages)
          {
             Logger.LogInformation($"Deleting message {expiredItem.Id}");
             await MessageService.DeleteAsync(expiredItem.Id);
-            var DeleteItem = new FileCleanup(expiredItem.Id, FileStorePath);
-            DeleteItem.CleanDirectory(false);
-            Logger.LogInformation($"Delete success");
+            messageStorageService.Delete(expiredItem.Id);
+            Logger.LogInformation($"Delete complete");
          }
 
+         var fileStorageService = new TransferItemStorageService(FileStorePath, TransferItemType.File);
          var expiredFiles = await FileService.FindExpiredAsync();
-         foreach (FileItem expiredItem in expiredFiles)
+         foreach (FileTransfer expiredItem in expiredFiles)
          {
             Logger.LogInformation($"Deleting file {expiredItem.Id}");
             await FileService.DeleteAsync(expiredItem.Id);
-            var DeleteItem = new FileCleanup(expiredItem.Id, FileStorePath);
-            DeleteItem.CleanDirectory(true);
-            Logger.LogInformation($"Delete success");
+            fileStorageService.Delete(expiredItem.Id);
+            Logger.LogInformation($"Delete complete");
          }
       }
    }

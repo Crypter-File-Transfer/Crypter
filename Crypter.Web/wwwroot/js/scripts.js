@@ -1,32 +1,4 @@
-﻿function EditAccountDetails() {
-   var fields = [
-      document.getElementById("aliasFormControl"),
-      document.getElementById("appearPublicly"),
-      document.getElementById("acceptAnonymousMessages"),
-      document.getElementById("acceptAnonymousFiles")
-   ];
-
-   for (var i in fields) {
-      fields[i].readOnly = false;
-      fields[i].disabled = false;
-   }
-}
-
-function SaveAccountDetails() {
-   var fields = [
-      document.getElementById("aliasFormControl"),
-      document.getElementById("appearPublicly"),
-      document.getElementById("acceptAnonymousMessages"),
-      document.getElementById("acceptAnonymousFiles")
-   ];
-
-   for (var i in fields) {
-      fields[i].readOnly = true;
-      fields[i].disabled = true;
-   }
-}
-
-function copyToClipboard(text) {
+﻿function copyToClipboard(text) {
    navigator.clipboard.writeText(text).then(() => {
       $('.copiedToolTip').css('display', 'block');
       $('.copiedToolTip').animate({

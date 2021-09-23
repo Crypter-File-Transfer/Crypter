@@ -18,10 +18,10 @@ namespace Crypter.Web.Pages
       IAuthenticationService AuthenticationService { get; set; }
 
       [Inject]
-      protected IDownloadService DownloadService { get; set; }
+      protected ITransferService TransferService { get; set; }
 
       [Parameter]
-      public Guid ItemId { get; set; }
+      public Guid TransferId { get; set; }
 
       protected bool Loading;
       protected bool ItemFound;
@@ -34,8 +34,9 @@ namespace Crypter.Web.Pages
 
       protected Guid SenderId;
       protected string SenderUsername;
-      protected string SenderPublicAlias;
-      
+      protected string SenderAlias;
+      protected string X25519PublicKey;
+
       protected Guid RecipientId;
 
       protected override async Task OnInitializedAsync()
@@ -49,9 +50,9 @@ namespace Crypter.Web.Pages
 
       protected async Task PrepareFilePreviewAsync()
       {
-         var filePreviewRequest = new GenericPreviewRequest(ItemId);
+         var filePreviewRequest = new GetTransferPreviewRequest(TransferId);
          var withAuth = AuthenticationService.User is not null;
-         var (httpStatus, response) = await DownloadService.DownloadFilePreviewAsync(filePreviewRequest, withAuth);
+         var (httpStatus, response) = await TransferService.DownloadFilePreviewAsync(filePreviewRequest, withAuth);
 
          ItemFound = httpStatus != HttpStatusCode.NotFound;
          if (ItemFound)
@@ -63,8 +64,9 @@ namespace Crypter.Web.Pages
             Size = response.Size;
             SenderId = response.SenderId;
             SenderUsername = response.SenderUsername;
-            SenderPublicAlias = response.SenderPublicAlias;
+            SenderAlias = response.SenderAlias;
             RecipientId = response.RecipientId;
+            X25519PublicKey = response.X25519PublicKey;
          }
       }
    }

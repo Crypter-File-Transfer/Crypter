@@ -8,7 +8,7 @@
     <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj">
       <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
     </ProjectReference>
-    <ProjectReference Include="..\Crypter.DataAccess\Crypter.DataAccess.csproj" />
+    <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.11.0" />

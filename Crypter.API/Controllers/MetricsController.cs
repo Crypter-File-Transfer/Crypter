@@ -1,6 +1,6 @@
 ﻿using Crypter.Contracts.Responses;
-using Crypter.DataAccess.Interfaces;
-using Crypter.DataAccess.Models;
+using Crypter.Core.Interfaces;
+using Crypter.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
@@ -11,12 +11,12 @@ namespace Crypter.API.Controllers
    public class MetricsController : ControllerBase
    {
       private readonly long AllocatedDiskSpace;
-      private readonly IBaseItemService<MessageItem> _messageService;
-      private readonly IBaseItemService<FileItem> _fileService;
+      private readonly IBaseTransferService<MessageTransfer> _messageService;
+      private readonly IBaseTransferService<FileTransfer> _fileService;
 
       public MetricsController(IConfiguration configuration,
-          IBaseItemService<MessageItem> messageService,
-          IBaseItemService<FileItem> fileService
+          IBaseTransferService<MessageTransfer> messageService,
+          IBaseTransferService<FileTransfer> fileService
           )
       {
          AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * 1024 * 1024 * 1024;

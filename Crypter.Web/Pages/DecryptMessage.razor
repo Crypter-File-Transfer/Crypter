@@ -1,4 +1,4 @@
-﻿@page "/decrypt/message/{itemId:guid}"
+﻿@page "/decrypt/message/{transferId:guid}"
 
 @inherits DecryptMessageBase
 
@@ -8,8 +8,8 @@
    {
       <div class="container my-4">
          <h1>Decrypt Message</h1>
-         <DecryptMessageDetails @bind-Id="ItemId" @bind-Subject="Subject" @bind-Created="Created" @bind-Expiration="Expiration" @bind-Size="Size"
-                                @bind-SenderId="SenderId" @bind-SenderUsername="SenderUsername" @bind-SenderPublicAlias="SenderPublicAlias" @bind-RecipientId="RecipientId"></DecryptMessageDetails>
+         <DownloadMessageTransfer @bind-TransferId="TransferId" @bind-Subject="Subject" @bind-Created="Created" @bind-Expiration="Expiration" @bind-Size="Size"
+                                @bind-SenderId="SenderId" @bind-SenderUsername="SenderUsername" @bind-SenderAlias="SenderAlias" @bind-RecipientId="RecipientId" @bind-SenderX25519PublicKey="X25519PublicKey"></DownloadMessageTransfer>
       </div>
    }
    else

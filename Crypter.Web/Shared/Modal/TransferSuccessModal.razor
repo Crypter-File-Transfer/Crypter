@@ -1,0 +1,35 @@
+﻿@inherits TranferSuccessModalBase
+
+<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+   <div class="modal-dialog" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h3 class="my-0">Upload Successful</h3>
+         </div>
+         <div class="modal-body justify-content-center">
+            <p>Your encrypted @UploadType will expire in 24 hours and will automatically be deleted once downloaded or expired.</p>
+            <p>Download Link: <a href=@GetDownloadLink() target="_blank">@GetDownloadLink()</a></p>
+            <h4>Decryption Key</h4>
+            <p><em>Share this key with the receiving party</em></p>
+            <div class="copiedTooltip">
+               <div class="input-group mb-3">
+                  <input class="form-control" @bind="RecipientX25519PrivateKey" type="text" name="privateKey" id="privateKey" readonly @onclick="CopyToClipboardAsync" />
+                  <div class="input-group-append">
+                     <button class="btn btn-secondary" type="button" @onclick="CopyToClipboardAsync">Copy</button>
+                  </div>
+               </div>
+
+               <span class="copiedToolTip toolTipText">Copied</span>
+            </div>
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => CloseAsync()">Okay</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+@if (ShowBackdrop)
+{
+   <div class="modal-backdrop fade show"></div>
+}
