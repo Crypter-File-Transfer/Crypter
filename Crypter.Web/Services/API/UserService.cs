@@ -11,10 +11,13 @@ namespace Crypter.Web.Services.API
       Task<(HttpStatusCode HttpStatus, UserAuthenticateResponse Response)> AuthenticateUserAsync(AuthenticateUserRequest loginRequest);
       Task<(HttpStatusCode HttpStatus, UserAuthenticationRefreshResponse Response)> RefreshAuthenticationAsync();
       Task<(HttpStatusCode HttpStatus, UserRegisterResponse Response)> RegisterUserAsync(RegisterUserRequest registerRequest);
-      Task<(HttpStatusCode HttpStatus, UpdateUserKeysResponse Response)> UpdateUserKeysAsync(UpdateUserKeysRequest request);
-      Task<(HttpStatusCode HttpStatus, UserPublicProfileResponse Response)> GetUserPublicProfileAsync(string username);
+      Task<(HttpStatusCode HttpStatus, UserPublicProfileResponse Response)> GetUserPublicProfileAsync(string username, bool withAuthentication);
       Task<(HttpStatusCode HttpStatus, UserSettingsResponse Response)> GetUserSettingsAsync();
-      Task<(HttpStatusCode HttpStatus, UpdateUserPrivacyResponse Response)> UpdateUserPrivacyAsync(UpdateUserPrivacyRequest request);
+      Task<(HttpStatusCode HttpStatus, UpdateProfileResponse Response)> UpdateUserProfileInfoAsync(UpdateProfileRequest request);
+      Task<(HttpStatusCode HttpStatus, UpdateContactInfoResponse Response)> UpdateUserContactInfoAsync(UpdateContactInfoRequest request);
+      Task<(HttpStatusCode HttpStatus, UpdatePrivacyResponse Response)> UpdateUserPrivacyAsync(UpdatePrivacyRequest request);
+      Task<(HttpStatusCode HttpStatus, UpdateKeysResponse Response)> InsertUserX25519KeysAsync(UpdateKeysRequest request);
+      Task<(HttpStatusCode HttpStatus, UpdateKeysResponse Response)> InsertUserEd25519KeysAsync(UpdateKeysRequest request);
       Task<(HttpStatusCode HttpStatus, UserSentMessagesResponse Response)> GetUserSentMessagesAsync();
       Task<(HttpStatusCode HttpStatus, UserSentFilesResponse Response)> GetUserSentFilesAsync();
       Task<(HttpStatusCode HttpStatus, UserReceivedMessagesResponse Response)> GetUserReceivedMessagesAsync();
@@ -51,16 +54,10 @@ namespace Crypter.Web.Services.API
          return await HttpService.Post<UserRegisterResponse>(url, registerRequest);
       }
 
-      public async Task<(HttpStatusCode, UpdateUserKeysResponse)> UpdateUserKeysAsync(UpdateUserKeysRequest request)
-      {
-         var url = $"{BaseUserUrl}/update-personal-keys";
-         return await HttpService.Post<UpdateUserKeysResponse>(url, request, true);
-      }
-
-      public async Task<(HttpStatusCode, UserPublicProfileResponse)> GetUserPublicProfileAsync(string username)
+      public async Task<(HttpStatusCode, UserPublicProfileResponse)> GetUserPublicProfileAsync(string username, bool withAuthentication)
       {
          var url = $"{BaseUserUrl}/{username}";
-         return await HttpService.Get<UserPublicProfileResponse>(url);
+         return await HttpService.Get<UserPublicProfileResponse>(url, withAuthentication);
       }
 
       public async Task<(HttpStatusCode, UserSettingsResponse)> GetUserSettingsAsync()
@@ -69,10 +66,34 @@ namespace Crypter.Web.Services.API
          return await HttpService.Get<UserSettingsResponse>(url, true);
       }
 
-      public async Task<(HttpStatusCode, UpdateUserPrivacyResponse)> UpdateUserPrivacyAsync(UpdateUserPrivacyRequest request)
+      public async Task<(HttpStatusCode, UpdateProfileResponse)> UpdateUserProfileInfoAsync(UpdateProfileRequest request)
       {
-         var url = $"{BaseUserUrl}/update-privacy";
-         return await HttpService.Post<UpdateUserPrivacyResponse>(url, request, true);
+         var url = $"{BaseUserUrl}/settings/profile";
+         return await HttpService.Post<UpdateProfileResponse>(url, request, true);
+      }
+
+      public async Task<(HttpStatusCode, UpdateContactInfoResponse)> UpdateUserContactInfoAsync(UpdateContactInfoRequest request)
+      {
+         var url = $"{BaseUserUrl}/settings/contact";
+         return await HttpService.Post<UpdateContactInfoResponse>(url, request, true);
+      }
+
+      public async Task<(HttpStatusCode, UpdatePrivacyResponse)> UpdateUserPrivacyAsync(UpdatePrivacyRequest request)
+      {
+         var url = $"{BaseUserUrl}/settings/privacy";
+         return await HttpService.Post<UpdatePrivacyResponse>(url, request, true);
+      }
+
+      public async Task<(HttpStatusCode, UpdateKeysResponse)> InsertUserX25519KeysAsync(UpdateKeysRequest request)
+      {
+         var url = $"{BaseUserUrl}/settings/keys/x25519";
+         return await HttpService.Post<UpdateKeysResponse>(url, request, true);
+      }
+
+      public async Task<(HttpStatusCode, UpdateKeysResponse)> InsertUserEd25519KeysAsync(UpdateKeysRequest request)
+      {
+         var url = $"{BaseUserUrl}/settings/keys/ed25519";
+         return await HttpService.Post<UpdateKeysResponse>(url, request, true);
       }
 
       public async Task<(HttpStatusCode, UserSentMessagesResponse)> GetUserSentMessagesAsync()

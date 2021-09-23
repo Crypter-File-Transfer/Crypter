@@ -37,13 +37,13 @@
                   <div class="card my-1">
                      <div class="card-body">
                         <a href="/user/profile/@result.Username">
-                           @if (string.IsNullOrEmpty(result.PublicAlias))
+                           @if (string.IsNullOrEmpty(result.Alias))
                            {
                               <h5 class="card-title">@result.Username</h5>
                            }
                            else
                            {
-                              <h5 class="card-title">@result.PublicAlias (@result.Username)</h5>
+                              <h5 class="card-title">@result.Alias (@result.Username)</h5>
                            }
                         </a>
                      </div>

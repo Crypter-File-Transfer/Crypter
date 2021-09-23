@@ -18,10 +18,10 @@ namespace Crypter.Web.Pages
       IAuthenticationService AuthenticationService { get; set; }
 
       [Inject]
-      protected IDownloadService DownloadService { get; set; }
+      protected ITransferService TransferService { get; set; }
 
       [Parameter]
-      public Guid ItemId { get; set; }
+      public Guid TransferId { get; set; }
 
       protected bool Loading;
       protected bool ItemFound;
@@ -33,7 +33,8 @@ namespace Crypter.Web.Pages
       
       protected Guid SenderId;
       protected string SenderUsername;
-      protected string SenderPublicAlias;
+      protected string SenderAlias;
+      protected string X25519PublicKey;
 
       protected Guid RecipientId;
 
@@ -48,21 +49,24 @@ namespace Crypter.Web.Pages
 
       protected async Task PrepareMessagePreviewAsync()
       {
-         var messagePreviewRequest = new GenericPreviewRequest(ItemId);
+         var messagePreviewRequest = new GetTransferPreviewRequest(TransferId);
          var withAuth = AuthenticationService.User is not null;
-         var (httpStatus, response) = await DownloadService.DownloadMessagePreviewAsync(messagePreviewRequest, withAuth);
+         var (httpStatus, response) = await TransferService.DownloadMessagePreviewAsync(messagePreviewRequest, withAuth);
 
          ItemFound = httpStatus != HttpStatusCode.NotFound;
          if (ItemFound)
          {
-            Subject = response.Subject;
+            Subject = string.IsNullOrEmpty(response.Subject)
+               ? "{ no subject }"
+               : response.Subject;
             Created = response.CreationUTC.ToLocalTime().ToString();
             Expiration = response.ExpirationUTC.ToLocalTime().ToString();
             Size = response.Size;
             SenderId = response.SenderId;
             SenderUsername = response.SenderUsername;
-            SenderPublicAlias = response.SenderPublicAlias;
+            SenderAlias = response.SenderAlias;
             RecipientId = response.RecipientId;
+            X25519PublicKey = response.X25519PublicKey;
          }
       }
    }

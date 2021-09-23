@@ -1,7 +1,7 @@
-using Crypter.DataAccess;
-using Crypter.DataAccess.EntityFramework;
-using Crypter.DataAccess.Interfaces;
-using Crypter.DataAccess.Models;
+using Crypter.Core;
+using Crypter.Core.Interfaces;
+using Crypter.Core.Models;
+using Crypter.Core.Services.DataAccess;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -30,9 +30,13 @@ namespace CrypterAPI
          services.AddDbContext<DataContext>();
 
          services.AddScoped<IUserService, UserService>();
-         services.AddScoped<IKeyService, KeyService>();
-         services.AddScoped<IBaseItemService<MessageItem>, MessageItemService>();
-         services.AddScoped<IBaseItemService<FileItem>, FileItemService>();
+         services.AddScoped<IUserProfileService, UserProfileService>();
+         services.AddScoped<IUserPrivacyService, UserPrivacyService>();
+         services.AddScoped<IUserPublicKeyPairService<UserX25519KeyPair>, UserX25519KeyPairService>();
+         services.AddScoped<IUserPublicKeyPairService<UserEd25519KeyPair>, UserEd25519KeyPairService>();
+         services.AddScoped<IUserSearchService, UserSearchService>();
+         services.AddScoped<IBaseTransferService<MessageTransfer>, MessageTransferItemService>();
+         services.AddScoped<IBaseTransferService<FileTransfer>, FileTransferItemService>();
          services.AddScoped<IBetaKeyService, BetaKeyService>();
 
          var tokenSecretKey = Configuration["TokenSecretKey"];
@@ -84,6 +88,10 @@ namespace CrypterAPI
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .SetIsOriginAllowed(origin => true)); // allow any origin
+
+            using var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope();
+            var context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+            context.Database.EnsureCreated();
          }
 
          app.UseHttpsRedirection();

@@ -1,8 +1,10 @@
-﻿using Crypter.Contracts.Requests;
+﻿using Crypter.Contracts.Enum;
+using Crypter.Contracts.Requests;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -23,20 +25,51 @@ namespace Crypter.Web.Pages
 
       protected bool Loading;
       protected bool IsEditing;
+      protected bool AreProfileControlsEnabled;
+      protected bool AreContactInfoControlsEnabled;
+      protected bool ArePasswordControlsEnabled;
+      protected bool ArePrivacyControlsEnabled;
+
       protected string Username;
-      protected string Email;
-      protected string PublicAlias;
-      protected bool AppearPublicly;
-      protected bool AppearPubliclyPersistedValue;
-      protected bool AcceptAnonymousMessages;
-      protected bool AcceptAnonymousFiles;
-      protected string PrivateKey;
       protected string ProfileUrl;
+
+      // Profile
+      protected string Alias;
+      protected string EditedAlias;
+      protected string About;
+      protected string EditedAbout;
+
+      // Contact Info
+      protected string Email;
+      protected string EditedEmail;
+      protected string CurrentPasswordForContactInfo;
+
+      // Password
+      protected string NewPassword;
+      protected string CurrentPasswordForPasswordSection;
+
+      // Privacy
+      protected int Visibility;
+      protected int EditedVisibility;
+      protected bool AllowKeyExchangeRequests;
+      protected bool EditedAllowKeyExchangeRequests;
+      protected int MessageTransferPermission;
+      protected int EditedMessageTransferPermission;
+      protected int FileTransferPermission;
+      protected int EditedFileTransferPermission;
+
+      // Keys
+      protected string X25519PrivateKey;
+      protected string Ed25519PrivateKey;
 
       protected override async Task OnInitializedAsync()
       {
          Loading = true;
          IsEditing = false;
+         AreProfileControlsEnabled = false;
+         AreContactInfoControlsEnabled = false;
+         ArePasswordControlsEnabled = false;
+         ArePrivacyControlsEnabled = false;
 
          await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Search");
 
@@ -52,31 +85,135 @@ namespace Crypter.Web.Pages
          Loading = false;
       }
 
-      protected async Task OnEditClicked()
+      protected void OnEditProfileInfoClicked()
       {
-         await JSRuntime.InvokeVoidAsync("EditAccountDetails");
+         AreProfileControlsEnabled = true;
          IsEditing = true;
       }
 
-      protected async Task OnSaveClicked()
+      protected void OnCancelProfileInfoClicked()
       {
-         await JSRuntime.InvokeVoidAsync("SaveAccountDetails");
-         var request = new UpdateUserPrivacyRequest(PublicAlias, AppearPublicly, AcceptAnonymousMessages, AcceptAnonymousFiles);
-         var (_, _) = await UserService.UpdateUserPrivacyAsync(request);
+         EditedAlias = Alias;
+         EditedAbout = About;
+         AreProfileControlsEnabled = false;
          IsEditing = false;
-         AppearPubliclyPersistedValue = AppearPublicly;
+      }
+
+      protected async Task OnSaveProfileInfoClickedAsync()
+      {
+         var request = new UpdateProfileRequest(EditedAlias, EditedAbout);
+         (var _, var _) = await UserService.UpdateUserProfileInfoAsync(request);
+
+         Alias = EditedAlias;
+         About = EditedAbout;
+         AreProfileControlsEnabled = false;
+         IsEditing = false;
+      }
+
+      protected void OnEditContactInfoClicked()
+      {
+         AreContactInfoControlsEnabled = true;
+         IsEditing = true;
+      }
+
+      protected void OnCancelContactInfoClicked()
+      {
+         EditedEmail = Email;
+         CurrentPasswordForContactInfo = "";
+         AreContactInfoControlsEnabled = false;
+         IsEditing = false;
+      }
+
+      protected async Task OnSaveContactInfoClickedAsync()
+      {
+         if (string.IsNullOrEmpty(CurrentPasswordForContactInfo))
+         {
+            // todo
+            Console.WriteLine("fail");
+            return;
+         }
+         byte[] digestedPassword = CryptoLib.UserFunctions.DigestUserCredentials(Username, CurrentPasswordForContactInfo);
+         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
+
+         var request = new UpdateContactInfoRequest(EditedEmail, digestedPasswordBase64);
+         (var _, var result) = await UserService.UpdateUserContactInfoAsync(request);
+
+         if (result.Result != UpdateContactInfoResult.Success)
+         {
+            // todo
+            Console.WriteLine("fail");
+            return;
+         }
+
+         Email = EditedEmail;
+         CurrentPasswordForContactInfo = "";
+         AreContactInfoControlsEnabled = false;
+         IsEditing = false;
+      }
+
+      protected void OnEditPasswordClicked()
+      {
+         ArePasswordControlsEnabled = true;
+         IsEditing = true;
+      }
+
+      protected void OnCancelPasswordClicked()
+      {
+         NewPassword = "";
+         ArePasswordControlsEnabled = false;
+         IsEditing = false;
+      }
+
+      protected async Task OnSavePasswordClickedAsync()
+      {
+         NewPassword = "";
+         ArePasswordControlsEnabled = false;
+         IsEditing = false;
+      }
+
+      protected void OnEditPrivacyClicked()
+      {
+         ArePrivacyControlsEnabled = true;
+         IsEditing = true;
+      }
+
+      protected void OnCancelPrivacyClicked()
+      {
+         EditedAllowKeyExchangeRequests = AllowKeyExchangeRequests;
+         EditedVisibility = Visibility;
+         EditedMessageTransferPermission = MessageTransferPermission;
+         EditedFileTransferPermission = FileTransferPermission;
+         ArePrivacyControlsEnabled = false;
+         IsEditing = false;
+      }
+
+      protected async Task OnSavePrivacyClickedAsync()
+      {
+         var request = new UpdatePrivacyRequest(EditedAllowKeyExchangeRequests, (UserVisibilityLevel)EditedVisibility, (UserItemTransferPermission)EditedMessageTransferPermission, (UserItemTransferPermission)EditedFileTransferPermission);
+         var (_, _) = await UserService.UpdateUserPrivacyAsync(request);
+
+         AllowKeyExchangeRequests = EditedAllowKeyExchangeRequests;
+         Visibility = EditedVisibility;
+         MessageTransferPermission = EditedMessageTransferPermission;
+         FileTransferPermission = EditedFileTransferPermission;
+         ArePrivacyControlsEnabled = false;
+         IsEditing = false;
       }
 
       protected async Task GetUserInfo()
       {
          var (_, userAccountInfo) = await UserService.GetUserSettingsAsync();
-         Username = userAccountInfo.UserName;
-         Email = userAccountInfo.Email;
-         PublicAlias = userAccountInfo.PublicAlias;
-         AppearPublicly = AppearPubliclyPersistedValue = userAccountInfo.IsPublic;
-         AcceptAnonymousFiles = userAccountInfo.AllowAnonymousFiles;
-         AcceptAnonymousMessages = userAccountInfo.AllowAnonymousMessages;
-         PrivateKey = AuthenticationService.User.PrivateKey;
+         Username = userAccountInfo.Username;
+         EditedEmail = Email = userAccountInfo.Email;
+         EditedAlias = Alias = userAccountInfo.Alias;
+         EditedAbout = About = userAccountInfo.About;
+         EditedVisibility = Visibility = (int)userAccountInfo.Visibility;
+         EditedAllowKeyExchangeRequests = AllowKeyExchangeRequests = userAccountInfo.AllowKeyExchangeRequests;
+         EditedMessageTransferPermission = MessageTransferPermission = (int)userAccountInfo.MessageTransferPermission;
+         EditedFileTransferPermission = FileTransferPermission = (int)userAccountInfo.FileTransferPermission;
+         
+         X25519PrivateKey = AuthenticationService.User.X25519PrivateKey;
+         Ed25519PrivateKey = AuthenticationService.User.Ed25519PrivateKey;
          ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
       }
 

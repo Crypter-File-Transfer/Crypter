@@ -9,30 +9,30 @@
          {
             if (ProfileFound)
             {
-               @if (!string.IsNullOrEmpty(PublicAlias))
+               @if (!string.IsNullOrEmpty(Alias))
                {
-                  <h2>@PublicAlias</h2>
+                  <h2>@Alias</h2>
                }
                <h3>@($@"{ActualUsername}")</h3>
+               <p>@About</p>
                <div class="row">
                   <div class="col-12">
                      @if (AllowsFiles)
                      {
                         <button class="btn btn-secondary mr-3" @onclick="() => FileModal.Open()">Send a file</button>
-                        <UserFileUploadModal @ref="FileModal" @bind-RecipientUsername="Username" @bind-RecipientPublicKey="UserPublicKey" />
+                        <UploadFileTransferModal @ref="FileModal" IsRecipientDefined=true RecipientId="@UserId" RecipientX25519PublicKey="@UserX25519PublicKey" RecipientEd25519PublicKey="@UserEd25519PublicKey" />
                      }
                      @if (AllowsMessages)
                      {
                         <button class="btn btn-secondary" @onclick="() => MessageModal.Open()">Send a message</button>
-                        <UserMessageUploadModal @ref="MessageModal" @bind-RecipientUsername="Username" @bind-RecipientPublicKey="UserPublicKey" />
+                        <UploadMessageTransferModal @ref="MessageModal" IsRecipientDefined=true RecipientId="@UserId" RecipientX25519PublicKey="@UserX25519PublicKey" RecipientEd25519PublicKey="@UserEd25519PublicKey" />
                      }
                   </div>
                </div>
-
             }
             else
             {
-               <h3 class="text-center">Profile is either not public or does not exist.</h3>
+               <h3 class="text-center">Profile is unavailable.</h3>
             }
          }
       </div>

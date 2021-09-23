@@ -15,7 +15,6 @@ namespace Crypter.Web.Helpers
       public static string QueryString(this NavigationManager navigationManager, string key)
       {
          return navigationManager.QueryString()[key];
-
       }
    }
 }

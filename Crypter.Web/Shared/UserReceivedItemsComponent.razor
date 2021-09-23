@@ -23,7 +23,7 @@
             foreach (var item in Items)
             {
                <li class="list-group-item">
-                  @if (item.IsFile)
+                  @if (item.ItemType == TransferItemType.File)
                   {
                      <h6 class="card-subtitle my-2">
                         Filename: <a href="@($"{NavigationManager.BaseUri}decrypt/file/{item.Id}")">@item.Name</a>

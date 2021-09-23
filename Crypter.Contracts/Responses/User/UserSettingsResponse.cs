@@ -1,27 +1,32 @@
 ﻿using System;
+using Crypter.Contracts.Enum;
 using Newtonsoft.Json;
 
 namespace Crypter.Contracts.Responses
 {
    public class UserSettingsResponse
    {
-      public string UserName { get; set; }
+      public string Username { get; set; }
       public string Email { get; set; }
-      public bool IsPublic { get; set; }
-      public string PublicAlias { get; set; }
-      public bool AllowAnonymousFiles { get; set; }
-      public bool AllowAnonymousMessages { get; set; }
+      public string Alias { get; set; }
+      public string About { get; set; }
+      public UserVisibilityLevel Visibility { get; set; }
+      public bool AllowKeyExchangeRequests { get; set; }
+      public UserItemTransferPermission MessageTransferPermission { get; set; }
+      public UserItemTransferPermission FileTransferPermission { get; set; }
       public DateTime UserCreated { get; set; }
 
       [JsonConstructor]
-      public UserSettingsResponse(string username, string email, bool isPublic, string publicAlias, bool allowAnonymousFiles, bool allowAnonymousMessages, DateTime userCreated)
+      public UserSettingsResponse(string username, string email, string alias, string about, UserVisibilityLevel visibility, bool allowKeyExchangeRequests, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission, DateTime userCreated)
       {
-         UserName = username;
+         Username = username;
          Email = email;
-         IsPublic = isPublic;
-         PublicAlias = publicAlias;
-         AllowAnonymousFiles = allowAnonymousFiles;
-         AllowAnonymousMessages = allowAnonymousMessages;
+         Alias = alias;
+         About = about;
+         Visibility = visibility;
+         AllowKeyExchangeRequests = allowKeyExchangeRequests;
+         MessageTransferPermission = messageTransferPermission;
+         FileTransferPermission = fileTransferPermission;
          UserCreated = userCreated;
       }
    }

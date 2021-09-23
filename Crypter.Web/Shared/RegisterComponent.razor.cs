@@ -37,7 +37,7 @@ namespace Crypter.Web.Shared
 
       protected async Task OnRegisterClicked()
       {
-         byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(RegistrationInfo.Username, RegistrationInfo.Password);
+         byte[] digestedPassword = CryptoLib.UserFunctions.DigestUserCredentials(RegistrationInfo.Username, RegistrationInfo.Password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.BetaKey, RegistrationInfo.Email);

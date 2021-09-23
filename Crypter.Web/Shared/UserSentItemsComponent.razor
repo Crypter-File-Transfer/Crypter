@@ -24,7 +24,7 @@
             {
                <li class="list-group-item">
 
-                  @if (item.IsFile)
+                  @if (item.ItemType == TransferItemType.File)
                   {
                      @if (string.IsNullOrEmpty(item.RecipientUsername))
                      {
