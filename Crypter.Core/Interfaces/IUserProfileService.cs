@@ -6,6 +6,6 @@ namespace Crypter.Core.Interfaces
    public interface IUserProfileService
    {
       Task<IUserProfile> ReadAsync(Guid id);
-      Task<bool> UpdateAsync(Guid id, string alias, string about);
+      Task<bool> UpsertAsync(Guid id, string alias, string about);
    }
 }

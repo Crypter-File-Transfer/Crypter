@@ -1,4 +1,5 @@
 ﻿using Crypter.Core.Interfaces;
+using Crypter.Core.Models;
 using System;
 using System.Threading.Tasks;
 
@@ -18,17 +19,19 @@ namespace Crypter.Core.Services.DataAccess
          return await _context.UserProfile.FindAsync(id);
       }
 
-      public async Task<bool> UpdateAsync(Guid id, string alias, string about)
+      public async Task<bool> UpsertAsync(Guid id, string alias, string about)
       {
          var userProfile = await ReadAsync(id);
-
          if (userProfile == null)
          {
-            return false;
+            var newProfile = new UserProfile(id, alias, about, null);
+            _context.UserProfile.Add(newProfile);
          }
-
-         userProfile.Alias = alias;
-         userProfile.About = about;
+         else
+         {
+            userProfile.Alias = alias;
+            userProfile.About = about;
+         }
 
          await _context.SaveChangesAsync();
          return true;
