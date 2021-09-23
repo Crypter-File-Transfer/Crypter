@@ -30,3 +30,8 @@ function setPageUrl(urlString) {
 function setPageTitle(title) {
    document.title = title;
 }
+
+function collapseNavBar() {
+   var nav = document.getElementById('mainNavigation');
+   nav.classList.remove('show');
+}

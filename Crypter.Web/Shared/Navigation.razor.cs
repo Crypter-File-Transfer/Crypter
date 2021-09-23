@@ -1,6 +1,7 @@
 ﻿using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
+using Microsoft.JSInterop;
 using System;
 using System.Threading.Tasks;
 
@@ -8,6 +9,9 @@ namespace Crypter.Web.Shared
 {
    public partial class NavigationBase : ComponentBase, IDisposable
    {
+      [Inject]
+      IJSRuntime JSRuntime { get; set; }
+
       [Inject]
       NavigationManager NavigationManager { get; set; }
 
@@ -30,7 +34,10 @@ namespace Crypter.Web.Shared
 
       protected void HandleLocationChanged(object sender, LocationChangedEventArgs e)
       {
-         StateHasChanged();
+         InvokeAsync(async () =>
+         {
+            await CollapseNavigationMenuAsync();
+         });
       }
 
       protected void OnEncryptFileClicked()
@@ -41,6 +48,12 @@ namespace Crypter.Web.Shared
       protected void OnEncryptMessageClicked()
       {
          MessageTransferModal.Open();
+      }
+
+      public async Task CollapseNavigationMenuAsync()
+      {
+         await JSRuntime.InvokeVoidAsync("collapseNavBar");
+         StateHasChanged();
       }
 
       public void Dispose()

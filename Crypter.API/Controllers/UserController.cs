@@ -284,7 +284,7 @@ namespace Crypter.API.Controllers
       public async Task<IActionResult> UpdateUserProfileAsync([FromBody] UpdateProfileRequest request)
       {
          var userId = ClaimsParser.ParseUserId(User);
-         var updateResult = await UserProfileService.UpdateAsync(userId, request.Alias, request.About);
+         var updateResult = await UserProfileService.UpsertAsync(userId, request.Alias, request.About);
          var responseObject = new UpdateProfileResponse();
 
          if (updateResult)
