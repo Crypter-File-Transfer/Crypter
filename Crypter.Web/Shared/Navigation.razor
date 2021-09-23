@@ -32,8 +32,8 @@
             </ul>
          </div>
 
-         <UploadFileTransferModal @ref="FileTransferModal" IsRecipientDefined=false />
-         <UploadMessageTransferModal @ref="MessageTransferModal" IsRecipientDefined=false />
+         <UploadFileTransferModal @ref="FileTransferModal" IsRecipientDefined=false ModalClosedCallback="@CollapseNavigationMenuAsync"/>
+         <UploadMessageTransferModal @ref="MessageTransferModal" IsRecipientDefined=false ModalClosedCallback="@CollapseNavigationMenuAsync" />
       }
    </ul>
 </div>
