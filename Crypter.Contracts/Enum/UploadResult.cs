@@ -7,9 +7,10 @@
       InvalidContentType,
       InvalidCipherText,
       InvalidServerEncryptionKey,
-      InvalidEncryptedSymmetricInfo,
+      InvalidClientEncryptionIV,
       InvalidSignature,
-      InvalidPublicKey,
+      InvalidX25519PublicKey,
+      InvalidEd25519PublicKey,
       BlockedByUserPrivacy,
       OutOfSpace,
       Unknown

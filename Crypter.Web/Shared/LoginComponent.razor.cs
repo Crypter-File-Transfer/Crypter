@@ -1,6 +1,4 @@
 ﻿using Crypter.Contracts.Requests;
-using Crypter.CryptoLib.BouncyCastle;
-using Crypter.CryptoLib.Enums;
 using Crypter.Web.Helpers;
 using Crypter.Web.Models;
 using Crypter.Web.Services;
@@ -21,7 +19,7 @@ namespace Crypter.Web.Shared
       protected IAuthenticationService AuthenticationService { get; set; }
 
       [Inject]
-      protected IUploadService UploadService { get; set; }
+      protected ITransferService UploadService { get; set; }
 
       [Inject]
       protected IUserService UserService { get; set; }
@@ -29,26 +27,10 @@ namespace Crypter.Web.Shared
       [Inject]
       protected AppSettings AppSettings { get; set; }
 
-      protected Modal.BasicModal BasicModal { get; set; }
-      protected Modal.SpinnerModal SpinnerModal { get; set; }
-
       protected Login loginInfo = new();
 
       protected bool LoginError = false;
       protected string LoginErrorText = "";
-
-      protected string BasicModalSubject;
-      protected string BasicModalMessage;
-      protected string BasicModalPrimaryButtonText;
-      protected string BasicModalSecondaryButtonText;
-      protected bool BasicModalShowSecondaryButton;
-      protected Func<bool, Task> BasicModalClosedCallback;
-
-      protected string SpinnerModalSubject;
-      protected string SpinnerModalMessage;
-      protected string SpinnerModalPrimaryButtonText;
-      protected bool SpinnerModalShowPrimaryButton;
-      protected Action<bool> SpinnerModalClosedCallback;
 
       protected override async Task OnInitializedAsync()
       {
@@ -59,22 +41,38 @@ namespace Crypter.Web.Shared
          await base.OnInitializedAsync();
       }
 
-      protected async Task OnLoginClicked()
+      protected async Task OnLoginClicked(int recurseCount = 0)
       {
-         byte[] digestedPassword = CryptoLib.Common.DigestUsernameAndPasswordForAuthentication(loginInfo.Username, loginInfo.Password);
+         if (recurseCount > 1)
+         {
+            LoginErrorText = "Something went wrong";
+            return;
+         }
+
+         byte[] digestedPassword = CryptoLib.UserFunctions.DigestUserCredentials(loginInfo.Username, loginInfo.Password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var authSuccess = await AuthenticationService.Login(loginInfo.Username, loginInfo.Password, digestedPasswordBase64);
          if (authSuccess)
          {
-            if (string.IsNullOrEmpty(AuthenticationService.User.PrivateKey))
-            {
-               PromptUserToCreateKeyPair();
-            }
-            else
+            if (!string.IsNullOrEmpty(AuthenticationService.User.X25519PrivateKey)
+               && !string.IsNullOrEmpty(AuthenticationService.User.Ed25519PrivateKey))
             {
                OnLoginCompleted();
+               return;
             }
+
+            if (string.IsNullOrEmpty(AuthenticationService.User.X25519PrivateKey))
+            {
+               await GenerateAndUploadX25519Keys();
+            }
+            
+            if (string.IsNullOrEmpty(AuthenticationService.User.Ed25519PrivateKey))
+            {
+               await GenerateAndUploadEd25519Keys();
+            }
+
+            await OnLoginClicked(recurseCount++);
          }
          else
          {
@@ -89,82 +87,56 @@ namespace Crypter.Web.Shared
          NavigationManager.NavigateTo(returnUrl);
       }
 
-      protected async Task GenerateAndUploadKeys()
+      protected async Task GenerateAndUploadX25519Keys()
       {
-         var (privateKey, publicKey) = await GenerateUserKeyPair();
+         var (dhPrivateKey, dhPublicKey) = GenerateUserDHKeyPair();
          var encodedPublicKey = Convert.ToBase64String(
-             Encoding.UTF8.GetBytes(publicKey));
+             Encoding.UTF8.GetBytes(dhPublicKey));
 
          var encodedEncryptedPrivateKey = Convert.ToBase64String(
-             EncryptPrivateKey(privateKey));
+             EncryptPrivateKey(dhPrivateKey, AuthenticationService.User.Id));
 
 
-         var request = new UpdateUserKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
-         await UserService.UpdateUserKeysAsync(request);
+         var request = new UpdateKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
+         await UserService.InsertUserX25519KeysAsync(request);
       }
 
-      protected static async Task<(string privateKey, string publicKey)> GenerateUserKeyPair()
+      protected async Task GenerateAndUploadEd25519Keys()
       {
-         var keyPair = await Task.Run(() => CryptoLib.Common.GenerateAsymmetricKeys(CryptoStrength.Standard));
-         var privateKey = keyPair.Private.ConvertToPEM();
-         var publicKey = keyPair.Public.ConvertToPEM();
+         var (dhPrivateKey, dhPublicKey) = GenerateUserDSAKeyPair();
+         var encodedPublicKey = Convert.ToBase64String(
+             Encoding.UTF8.GetBytes(dhPublicKey));
+
+         var encodedEncryptedPrivateKey = Convert.ToBase64String(
+             EncryptPrivateKey(dhPrivateKey, AuthenticationService.User.Id));
+
+
+         var request = new UpdateKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
+         await UserService.InsertUserEd25519KeysAsync(request);
+      }
+
+      protected static (string privateKey, string publicKey) GenerateUserDHKeyPair()
+      {
+         var keyPair = CryptoLib.Crypto.ECDH.GenerateKeys();
+         var privateKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Private);
+         var publicKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Public);
          return (privateKey, publicKey);
       }
 
-      protected byte[] EncryptPrivateKey(string privatePemKey)
+      protected static (string privateKey, string publicKey) GenerateUserDSAKeyPair()
       {
-         var privateKeyBytes = Encoding.UTF8.GetBytes(privatePemKey);
-         var symmetricEncryptionKey = CryptoLib.Common.CreateSymmetricKeyFromUserDetails(loginInfo.Username, loginInfo.Password, AuthenticationService.User.Id.ToString());
-         return CryptoLib.Common.DoSymmetricEncryption(privateKeyBytes, symmetricEncryptionKey);
+         var keyPair = CryptoLib.Crypto.ECDSA.GenerateKeys();
+         var privateKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Private);
+         var publicKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Public);
+         return (privateKey, publicKey);
       }
 
-      protected void PromptUserToCreateKeyPair()
+      protected byte[] EncryptPrivateKey(string privatePemKey, Guid userId)
       {
-         BasicModalSubject = "Generate your keys";
-         BasicModalMessage = "We need to generate some cryptographic keys to finish setting up your Crypter account." +
-            " This usually takes a while and your browser may stop responding." +
-            " Please be patient.";
-         BasicModalPrimaryButtonText = "Generate Keys";
-         BasicModalSecondaryButtonText = "";
-         BasicModalShowSecondaryButton = false;
-         BasicModalClosedCallback = ProceedWithKeyCreation;
-         BasicModal.Open();
-      }
-
-      protected async Task ProceedWithKeyCreation(bool closedInTheAffirmative)
-      {
-         await ShowSpinnerWhileCreatingKeyPair();
-         await GenerateAndUploadKeys();
-         await SpinnerModal.CloseAsync();
-      }
-
-      protected async Task ShowSpinnerWhileCreatingKeyPair()
-      {
-         SpinnerModalSubject = "Generating your keys";
-         SpinnerModalMessage = "Your keys are being generated." +
-            " This usually takes a while and your browser may stop responding." +
-            " Please be patient.";
-         SpinnerModalPrimaryButtonText = "";
-         SpinnerModalShowPrimaryButton = false;
-         SpinnerModalClosedCallback = InformUserKeysCreated;
-         SpinnerModal.Open();
-         StateHasChanged();
-         await Task.Delay(500);
-      }
-
-      protected void InformUserKeysCreated(bool closedInTheAffirmative)
-      {
-         BasicModalSubject = "Done";
-         BasicModalMessage = "Your keys have been generated. Click 'OK' to continue logging in.";
-         BasicModalPrimaryButtonText = "OK";
-         BasicModalClosedCallback = ProceedWithLoginAfterKeyCreation;
-         StateHasChanged();
-         BasicModal.Open();
-      }
-
-      protected async Task ProceedWithLoginAfterKeyCreation(bool closedInTheAffirmative)
-      {
-         await OnLoginClicked();
+         (var key, var iv) = CryptoLib.UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(loginInfo.Username.ToLower(), loginInfo.Password, userId);
+         var encrypter = new CryptoLib.Crypto.AES();
+         encrypter.Initialize(key, iv, true);
+         return encrypter.ProcessFinal(Encoding.UTF8.GetBytes(privatePemKey));
       }
    }
 }

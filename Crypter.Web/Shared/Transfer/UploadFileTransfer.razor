@@ -1,0 +1,49 @@
+@inherits UploadFileTransferBase
+
+<div class="file-upload" hidden="@EncryptionInProgress">
+   <div class="row">
+      <div class="col-12 p-0">
+         <div class="card dropzone @DropClass rounded mb-3">
+            <p class="card-text dz-text">
+               <i class="bi bi-file-arrow-up d-block fs-1 my-3"></i>
+               <span class="fw-bold">Choose a file</span> or drag it here to upload
+            </p>
+            <InputFile id="fileInput" OnChange="@HandleFileInputChange" @ondragenter="HandleDragEnter" @ondragleave="HandleDragLeave" />
+         </div>
+         @foreach (var errorMessage in ErrorMessages)
+         {
+            <div class="validation-errors my-3">
+               <div class="alert alert-danger" role="alert">
+                  @errorMessage
+               </div>
+            </div>
+         }
+         @if (SelectedFile != null)
+         {
+            <div class="card my-3">
+               <div class="card-body">
+                  @SelectedFile.Name
+                  <button type="button" class="btn-close float-end" aria-label="Remove file" @onclick="@(e => SelectedFile = null)"></button>
+               </div>
+            </div>
+         }
+      </div>
+      <div class="row">
+         <div class="col-12 p-0">
+            <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptClicked())">Encrypt</button>
+         </div>
+      </div>
+      <TransferSuccessModal @ref="ModalForAnonymousRecipient" UploadType="file" ItemId="@TransferId" RecipientX25519PrivateKey="@EncodedRecipientX25519PrivateKey" ModalClosedCallback="@UploadCompletedEvent" />
+      <BasicModal @ref="ModalForUserRecipient" Subject="Upload Successful" Message=@UploadSuccessForUserMessage PrimaryButtonText="Okay" ModalClosedCallback="@UploadCompletedEvent" />
+   </div>
+</div>
+
+<div class="encrypt-status text-center" hidden="@(!EncryptionInProgress)">
+   <h3>@EncryptionStatusMessage</h3>
+   <div class="spinner-border" role="status" hidden="@(ShowProgressBar)">
+      <span class="visually-hidden">Loading...</span>
+   </div>
+   <div class="progress" hidden="@(!ShowProgressBar)">
+      <div class="progress-bar" role="progressbar" style="width: @($"{ProgressPercent * 100}%"); transition: width @(ProgressTransition) ease;" aria-valuenow="@(ProgressPercent * 100)" aria-valuemin="0" aria-valuemax="100"></div>
+   </div>
+</div>

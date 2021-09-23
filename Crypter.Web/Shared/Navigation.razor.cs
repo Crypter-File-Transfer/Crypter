@@ -14,8 +14,8 @@ namespace Crypter.Web.Shared
       [Inject]
       protected IAuthenticationService AuthenticationService { get; set; }
 
-      protected Modal.UserFileUploadModal FileModal { get; set; }
-      protected Modal.UserMessageUploadModal MessageModal { get; set; }
+      protected Modal.UploadFileTransferModal FileTransferModal { get; set; }
+      protected Modal.UploadMessageTransferModal MessageTransferModal { get; set; }
 
       protected override async Task OnInitializedAsync()
       {
@@ -35,12 +35,12 @@ namespace Crypter.Web.Shared
 
       protected void OnEncryptFileClicked()
       {
-         FileModal.Open();
+         FileTransferModal.Open();
       }
 
       protected void OnEncryptMessageClicked()
       {
-         MessageModal.Open();
+         MessageTransferModal.Open();
       }
 
       public void Dispose()

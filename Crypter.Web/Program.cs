@@ -30,8 +30,7 @@ namespace Crypter.Web
             .AddScoped<IAuthenticationService, AuthenticationService>()
             .AddScoped<IHttpService, HttpService>()
             .AddScoped<ILocalStorageService, LocalStorageService>()
-            .AddScoped<IUploadService, UploadService>()
-            .AddScoped<IDownloadService, DownloadService>()
+            .AddScoped<ITransferService, TransferService>()
             .AddScoped<IUserService, UserService>()
             .AddScoped<IMetricsService, MetricsService>();
 

@@ -8,16 +8,16 @@ namespace Crypter.Contracts.DTO
       public string FileName { get; set; }
       public Guid RecipientId { get; set; }
       public string RecipientUsername { get; set; }
-      public string RecipientPublicAlias { get; set; }
+      public string RecipientAlias { get; set; }
       public DateTime ExpirationUTC { get; set; }
 
-      public UserSentFileDTO(Guid id, string fileName, Guid recipientId, string recipientUsername, string recipientPublicAlias, DateTime expirationUTC)
+      public UserSentFileDTO(Guid id, string fileName, Guid recipientId, string recipientUsername, string recipientAlias, DateTime expirationUTC)
       {
          Id = id;
          FileName = fileName;
          RecipientId = recipientId;
          RecipientUsername = recipientUsername;
-         RecipientPublicAlias = recipientPublicAlias;
+         RecipientAlias = recipientAlias;
          ExpirationUTC = expirationUTC;
       }
    }

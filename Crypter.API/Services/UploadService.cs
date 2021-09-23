@@ -1,55 +1,53 @@
-﻿using Crypter.API.Logic;
-using Crypter.Contracts.Enum;
+﻿using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.Contracts.Responses;
 using Crypter.CryptoLib.Enums;
-using Crypter.DataAccess.FileSystem;
-using Crypter.DataAccess.Interfaces;
-using Crypter.DataAccess.Models;
+using Crypter.Core.Interfaces;
+using Crypter.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
+using Crypter.Core.Services;
 
 namespace Crypter.API.Services
 {
    public class UploadService
    {
-      private readonly string BaseSaveDirectory;
       private readonly long AllocatedDiskSpace;
       private readonly int MaxUploadSize;
-      private const DigestAlgorithm ItemDigestAlgorithm = DigestAlgorithm.SHA256;
+      private const SHAFunction ItemDigestAlgorithm = SHAFunction.SHA256;
 
-      private readonly IBaseItemService<MessageItem> MessageService;
-      private readonly IBaseItemService<FileItem> FileService;
+      private readonly IBaseTransferService<MessageTransfer> MessageTransferService;
+      private readonly IBaseTransferService<FileTransfer> FileTransferService;
       private readonly IUserService UserService;
+
+      private readonly ITransferItemStorageService MessageTransferItemStorageService;
+      private readonly ITransferItemStorageService FileTransferItemStorageService;
 
       public UploadService(
          IConfiguration configuration,
-         IBaseItemService<MessageItem> messageService,
-         IBaseItemService<FileItem> fileService,
+         IBaseTransferService<MessageTransfer> messageTransferService,
+         IBaseTransferService<FileTransfer> fileTransferService,
          IUserService userService
          )
       {
-         BaseSaveDirectory = configuration["EncryptedFileStore:Location"];
          AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(1024, 3);
          MaxUploadSize = int.Parse(configuration["MaxUploadSizeMB"]) * (int)Math.Pow(1024, 2);
-         MessageService = messageService;
-         FileService = fileService;
+         MessageTransferService = messageTransferService;
+         FileTransferService = fileTransferService;
          UserService = userService;
+
+         MessageTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.Message);
+         FileTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.File);
       }
 
-      public async Task<IActionResult> UploadMessageAsync(MessageUploadRequest request, Guid senderId)
+      private async Task<(UploadResult Result, BaseTransfer GenericTransferData, byte[] ServerEncryptedCipherText)> ReceiveTransferAsync(ITransferRequest request, Guid senderId, Guid recipientId)
       {
-         var recipientId = string.IsNullOrEmpty(request.RecipientUsername)
-            ? Guid.Empty
-            : await UserService.UserIdFromUsernameAsync(request.RecipientUsername.ToLower());
-
-         var initialValidationResult = await UploadLogic.PassesInitialValidation(request, recipientId, MessageService, FileService, UserService, AllocatedDiskSpace, MaxUploadSize);
-         if (initialValidationResult != UploadResult.Success)
+         var serverHasSpaceRemaining = await ValidationService.IsEnoughSpaceForNewTransfer(MessageTransferService, FileTransferService, AllocatedDiskSpace, MaxUploadSize);
+         if (!serverHasSpaceRemaining)
          {
-            return new BadRequestObjectResult(
-               new GenericUploadResponse(initialValidationResult, default, default));
+            return (UploadResult.OutOfSpace, null, null);
          }
 
          // Digest the ciphertext BEFORE applying server-side encryption
@@ -60,10 +58,11 @@ namespace Crypter.API.Services
          }
          catch (Exception)
          {
-            return new BadRequestObjectResult(
-                new GenericUploadResponse(UploadResult.InvalidCipherText, default, default));
+            return (UploadResult.InvalidCipherText, null, null);
          }
-         var serverDigest = CryptoLib.Common.GetDigest(originalCiphertextBytes, ItemDigestAlgorithm);
+         var digestor = new CryptoLib.Crypto.SHA(ItemDigestAlgorithm);
+         digestor.BlockUpdate(originalCiphertextBytes);
+         var serverDigest = digestor.GetDigest();
 
          // Apply server-side encryption
          byte[] hashedSymmetricEncryptionKey;
@@ -73,133 +72,102 @@ namespace Crypter.API.Services
          }
          catch (Exception)
          {
-            return new BadRequestObjectResult(
-               new GenericUploadResponse(UploadResult.InvalidServerEncryptionKey, default, default));
+            return (UploadResult.InvalidServerEncryptionKey, null, null);
          }
 
          if (hashedSymmetricEncryptionKey.Length != 32)
          {
-            return new BadRequestObjectResult(
-               new GenericUploadResponse(UploadResult.InvalidServerEncryptionKey, default, default));
+            return (UploadResult.InvalidServerEncryptionKey, null, null);
          }
 
-         var iv = CryptoLib.BouncyCastle.SymmetricMethods.GenerateIV();
-         var symmetricParams = CryptoLib.Common.MakeSymmetricCryptoParams(hashedSymmetricEncryptionKey, iv);
-         var cipherTextBytesServerEncrypted = CryptoLib.Common.DoSymmetricEncryption(originalCiphertextBytes, symmetricParams);
+         var serverEncryptionIV = CryptoLib.Crypto.AES.GenerateIV();
+         var encrypter = new CryptoLib.Crypto.AES();
+         encrypter.Initialize(hashedSymmetricEncryptionKey, serverEncryptionIV, true);
+         var ciphertextServerEncrypted = encrypter.ProcessFinal(originalCiphertextBytes);
 
-         Guid itemGuid = Guid.NewGuid();
+         Guid itemId = Guid.NewGuid();
          var itemCreated = DateTime.UtcNow;
          var itemExpires = itemCreated.AddDays(1);
-         var filepaths = new CreateFilePaths(BaseSaveDirectory);
 
-         var saveResult = filepaths.SaveToFileSystem(itemGuid, cipherTextBytesServerEncrypted, false);
+         var returnItem = new BaseTransfer(itemId, senderId, recipientId, originalCiphertextBytes.Length, request.ClientEncryptionIVBase64, request.SignatureBase64, request.X25519PublicKeyBase64, request.Ed25519PublicKeyBase64, serverEncryptionIV, serverDigest, itemCreated, itemExpires);
+         return (UploadResult.Success, returnItem, ciphertextServerEncrypted);
+      }
+
+      public async Task<IActionResult> ReceiveMessageTransferAsync(MessageTransferRequest request, Guid senderId, Guid recipientId)
+      {
+         (var receiveResult, var genericTransferData, var ciphertextServerEncrypted) = await ReceiveTransferAsync(request, senderId, recipientId);
+
+         if (receiveResult != UploadResult.Success)
+         {
+            return new BadRequestObjectResult(
+               new TransferUploadResponse(receiveResult, default, default));
+         }
+
+         var saveResult = await MessageTransferItemStorageService.SaveAsync(genericTransferData.Id, ciphertextServerEncrypted);
          if (!saveResult)
          {
             return new BadRequestObjectResult(
-                new GenericUploadResponse(UploadResult.Unknown, default, default));
+                new TransferUploadResponse(UploadResult.Unknown, default, default));
          }
 
-         var messageItem = new MessageItem(
-               itemGuid,
+         var messageItem = new MessageTransfer(
+               genericTransferData.Id,
                senderId,
                recipientId,
                request.Subject,
-               filepaths.FileSizeBytes(filepaths.ActualPathString),
-               filepaths.ActualPathString,
-               request.SignatureBase64,
-               request.EncryptedSymmetricInfoBase64,
-               request.PublicKeyBase64,
-               iv,
-               serverDigest,
-               itemCreated,
-               itemExpires);
+               genericTransferData.Size,
+               genericTransferData.ClientIV,
+               genericTransferData.Signature,
+               genericTransferData.X25519PublicKey,
+               genericTransferData.Ed25519PublicKey,
+               genericTransferData.ServerIV,
+               genericTransferData.ServerDigest,
+               genericTransferData.Created,
+               genericTransferData.Expiration);
 
-         await MessageService.InsertAsync(messageItem);
+         await MessageTransferService.InsertAsync(messageItem);
 
          return new OkObjectResult(
-             new GenericUploadResponse(UploadResult.Success, itemGuid, itemExpires));
+             new TransferUploadResponse(UploadResult.Success, genericTransferData.Id, genericTransferData.Expiration));
       }
 
-      public async Task<IActionResult> UploadFileAsync(FileUploadRequest request, Guid senderId)
+      public async Task<IActionResult> ReceiveFileTransferAsync(FileTransferRequest request, Guid senderId, Guid recipientId)
       {
-         var recipientId = string.IsNullOrEmpty(request.RecipientUsername)
-            ? Guid.Empty
-            : await UserService.UserIdFromUsernameAsync(request.RecipientUsername.ToLower());
+         (var receiveResult, var genericTransferData, var ciphertextServerEncrypted) = await ReceiveTransferAsync(request, senderId, recipientId);
 
-         var initialValidationResult = await UploadLogic.PassesInitialValidation(request, recipientId, MessageService, FileService, UserService, AllocatedDiskSpace, MaxUploadSize);
-         if (initialValidationResult != UploadResult.Success)
+         if (receiveResult != UploadResult.Success)
          {
             return new BadRequestObjectResult(
-               new GenericUploadResponse(initialValidationResult, default, default));
+               new TransferUploadResponse(receiveResult, default, default));
          }
 
-         // Digest the ciphertext BEFORE applying server-side encryption
-         byte[] originalCiphertextBytes;
-         try
-         {
-            originalCiphertextBytes = Convert.FromBase64String(request.CipherTextBase64);
-         }
-         catch (Exception)
-         {
-            return new BadRequestObjectResult(
-                new GenericUploadResponse(UploadResult.InvalidCipherText, default, default));
-         }
-         var serverDigest = CryptoLib.Common.GetDigest(originalCiphertextBytes, ItemDigestAlgorithm);
-
-         // Apply server-side encryption
-         byte[] hashedSymmetricEncryptionKey;
-         try
-         {
-            hashedSymmetricEncryptionKey = Convert.FromBase64String(request.ServerEncryptionKeyBase64);
-         }
-         catch (Exception)
-         {
-            return new BadRequestObjectResult(
-               new GenericUploadResponse(UploadResult.InvalidServerEncryptionKey, default, default));
-         }
-
-         if (hashedSymmetricEncryptionKey.Length != 32)
-         {
-            return new BadRequestObjectResult(
-               new GenericUploadResponse(UploadResult.InvalidServerEncryptionKey, default, default));
-         }
-
-         var iv = CryptoLib.BouncyCastle.SymmetricMethods.GenerateIV();
-         var symmetricParams = CryptoLib.Common.MakeSymmetricCryptoParams(hashedSymmetricEncryptionKey, iv);
-         var cipherTextBytesServerEncrypted = CryptoLib.Common.DoSymmetricEncryption(originalCiphertextBytes, symmetricParams);
-
-         Guid itemGuid = Guid.NewGuid();
-         var itemCreated = DateTime.UtcNow;
-         var itemExpires = itemCreated.AddDays(1);
-         var filepaths = new CreateFilePaths(BaseSaveDirectory);
-
-         var saveResult = filepaths.SaveToFileSystem(itemGuid, cipherTextBytesServerEncrypted, true);
+         var saveResult = await FileTransferItemStorageService.SaveAsync(genericTransferData.Id, ciphertextServerEncrypted);
          if (!saveResult)
          {
             return new BadRequestObjectResult(
-                new GenericUploadResponse(UploadResult.Unknown, default, default));
+                new TransferUploadResponse(UploadResult.Unknown, default, default));
          }
 
-         var fileItem = new FileItem(
-               itemGuid,
+         var fileItem = new FileTransfer(
+               genericTransferData.Id,
                senderId,
                recipientId,
                request.FileName,
                request.ContentType,
-               filepaths.FileSizeBytes(filepaths.ActualPathString),
-               filepaths.ActualPathString,
-               request.SignatureBase64,
-               request.EncryptedSymmetricInfoBase64,
-               request.PublicKeyBase64,
-               iv,
-               serverDigest,
-               itemCreated,
-               itemExpires);
+               genericTransferData.Size,
+               genericTransferData.ClientIV,
+               genericTransferData.Signature,
+               genericTransferData.X25519PublicKey,
+               genericTransferData.Ed25519PublicKey,
+               genericTransferData.ServerIV,
+               genericTransferData.ServerDigest,
+               genericTransferData.Created,
+               genericTransferData.Expiration);
 
-         await FileService.InsertAsync(fileItem);
+         await FileTransferService.InsertAsync(fileItem);
 
          return new OkObjectResult(
-             new GenericUploadResponse(UploadResult.Success, itemGuid, itemExpires));
+             new TransferUploadResponse(UploadResult.Success, genericTransferData.Id, genericTransferData.Expiration));
       }
    }
 }
