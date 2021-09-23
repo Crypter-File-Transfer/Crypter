@@ -105,9 +105,6 @@ namespace Crypter.Web.Shared.Transfer
 
       protected static (byte[] SendKey, byte[] ServerKey) DeriveSymmetricKeys(string senderX25519PrivateKey, string recipientX25519PublicKey)
       {
-         Console.WriteLine(senderX25519PrivateKey);
-         Console.WriteLine(recipientX25519PublicKey);
-
          var senderX25519PrivateDecoded = KeyConversion.ConvertX25519PrivateKeyFromPEM(senderX25519PrivateKey);
          var senderX25519PublicDecoded = senderX25519PrivateDecoded.GeneratePublicKey();
          var senderKeyPair = new AsymmetricCipherKeyPair(senderX25519PublicDecoded, senderX25519PrivateDecoded);
