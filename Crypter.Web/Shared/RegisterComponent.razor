@@ -11,40 +11,51 @@
 }
 else
 {
-   <EditForm Model="@RegistrationInfo" OnValidSubmit="@OnRegisterClicked">
-      <DataAnnotationsValidator />
+   @if (RegistrationError)
+   {
+      <div class="alert alert-danger" role="alert">
+         @RegistrationErrorText
+      </div>
+   }
 
-      @if (RegistrationError)
-      {
-         <div class="alert alert-danger" role="alert">
-            @RegistrationErrorText
-         </div>
-      }
+   <form>
       <div class="mb-3">
          <label for="usernameFormControl" class="form-label">Username</label>
-         <InputText @bind-Value="@RegistrationInfo.Username" class="form-control" id="usernameFormControl" />
-         <ValidationMessage For="@(() => RegistrationInfo.Username)" />
+         <div class="input-group has-validation">
+            <input @bind="RegistrationInfo.Username" type="text" class="form-control @UsernameInvalidClass" id="usernameFormControl" />
+            <div class="invalid-feedback">@UsernameValidationMessage</div>
+         </div>
       </div>
+
       <div class="mb-3">
          <label for="passwordFormControl" class="form-label">Password</label>
-         <InputText type="password" @bind-Value="@RegistrationInfo.Password" class="form-control" id="passwordFormControl" />
-         <ValidationMessage For="@(() => RegistrationInfo.Password)" />
+         <div class="input-group has-validation">
+            <input @bind="RegistrationInfo.Password" type="password" class="form-control @PasswordInvalidClass" id="passwordFormControl" />
+            <div class="invalid-feedback">@PasswordValidationMessage</div>
+         </div>
       </div>
+
       <div class="mb-3">
          <label for="passwordConfirmFormControl" class="form-label">Confirm Your Password</label>
-         <InputText type="password" @bind-Value="@RegistrationInfo.PasswordConfirm" class="form-control" id="passwordConfirmFormControl" />
-         <ValidationMessage For="@(() => RegistrationInfo.PasswordConfirm)" />
+         <div class="input-group has-validation">
+            <input @bind="RegistrationInfo.PasswordConfirm" type="password" class="form-control @PasswordConfirmInvalidClass" id="passwordConfirmFormControl" />
+            <div class="invalid-feedback">@PasswordConfirmValidationMessage</div>
+         </div>
       </div>
+
       <div class="mb-3">
-         <label for="emailFormControl" class="form-label">Email</label>
-         <InputText type="email" @bind-Value="@RegistrationInfo.Email" class="form-control" id="emailFormControl" />
-         <ValidationMessage For="@(() => RegistrationInfo.Email)" />
+         <label for="emailAddressFormControl" class="form-label">Email Address</label>
+         <input @bind="RegistrationInfo.EmailAddress" type="email" class="form-control" id="emailAddressFormControl" placeholder="Optional" />
       </div>
+
       <div class="mb-3">
          <label for="betaKeyFormControl" class="form-label">Beta Key</label>
-         <InputText @bind-Value="@RegistrationInfo.BetaKey" class="form-control" id="betaKeyFormControl" />
-         <ValidationMessage For="@(() => RegistrationInfo.BetaKey)" />
+         <div class="input-group has-validation">
+            <input @bind="RegistrationInfo.BetaKey" type="text" class="form-control @BetaKeyInvalidClass" id="betaKeyFormControl" />
+            <div class="invalid-feedback">@BetaKeyValidationMessage</div>
+         </div>
       </div>
-      <button type="submit" class="btn btn-primary">Register</button>
-   </EditForm>
+
+      <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="OnRegisterClickedAsync">Register</button>
+   </form>
 }
