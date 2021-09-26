@@ -385,7 +385,7 @@ namespace Crypter.API.Controllers
       }
 
       [Authorize]
-      [HttpGet("search/public-alias")]
+      [HttpGet("search/alias")]
       public async Task<IActionResult> SearchByAliasAsync([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
       {
          var searchPartyId = ClaimsParser.ParseUserId(User);
