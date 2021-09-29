@@ -3,10 +3,10 @@
 @inherits SettingsBase
 
 <div class="container-sm my-4">
-   <h1>Settings</h1>
-   <form id="DetailsForm">
-      @if (!Loading)
-      {
+   @if (!Loading)
+   {
+      <h1>Settings</h1>
+      <form id="publicDetailsForm">
          <h2>Public Details</h2>
          <div class="mb-3">
             <label for="publicUrl">Profile Link</label>
@@ -31,6 +31,8 @@
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditProfileInfoClicked" hidden="@IsEditing">Edit Profile</button>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelProfileInfoClicked" hidden="@(!AreProfileControlsEnabled)">Cancel</button>
          <button type="button" class="btn btn-primary mx-auto" @onclick="OnSaveProfileInfoClickedAsync" hidden="@(!AreProfileControlsEnabled)">Save Profile</button>
+      </form>
+      <form>
          <h2>Contact Information</h2>
          <div class="mb-3">
             <label for="emailFormControl" class="form-label">Email Address</label>
@@ -43,20 +45,24 @@
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditContactInfoClicked" hidden="@IsEditing">Edit Contact Info</button>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelContactInfoClicked" hidden="@(!AreContactInfoControlsEnabled)">Cancel</button>
          <button type="button" class="btn btn-primary mx-auto" @onclick="OnSaveContactInfoClickedAsync" hidden="@(!AreContactInfoControlsEnabled)">Save Contact Info</button>
+      </form>
          <!--
-         <h2>Password</h2>
-         <div class="mb-3">
-            <label for="newPasswordFormControl" class="form-label">Password</label>
-            <input @bind="NewPassword" type="password" class="form-control" id="newPasswordFormControl" placeholder="Hidden" readonly="@(!ArePasswordControlsEnabled)" />
-         </div>
-         <div class="mb-3" hidden="@(!ArePasswordControlsEnabled)">
-            <label for="currentPasswordForPasswordChangeFormControl" class="form-label">Current Password</label>
-            <input @bind="CurrentPasswordForPasswordSection" type="password" class="form-control" id="currentPasswordForPasswordChangeFormControl" />
-         </div>
-         <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditPasswordClicked" hidden="@IsEditing">Edit Password</button>
-         <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelPasswordClicked" hidden="@(!ArePasswordControlsEnabled)">Cancel</button>
-         <button type="button" class="btn btn-primary mx-auto" @onclick="OnSavePasswordClickedAsync" hidden="@(!ArePasswordControlsEnabled)">Save Password</button>
+            <form>
+               <h2>Password</h2>
+               <div class="mb-3">
+                  <label for="newPasswordFormControl" class="form-label">Password</label>
+                  <input @bind="NewPassword" type="password" class="form-control" id="newPasswordFormControl" placeholder="Hidden" readonly="@(!ArePasswordControlsEnabled)" />
+               </div>
+               <div class="mb-3" hidden="@(!ArePasswordControlsEnabled)">
+                  <label for="currentPasswordForPasswordChangeFormControl" class="form-label">Current Password</label>
+                  <input @bind="CurrentPasswordForPasswordSection" type="password" class="form-control" id="currentPasswordForPasswordChangeFormControl" />
+               </div>
+               <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditPasswordClicked" hidden="@IsEditing">Edit Password</button>
+               <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelPasswordClicked" hidden="@(!ArePasswordControlsEnabled)">Cancel</button>
+               <button type="button" class="btn btn-primary mx-auto" @onclick="OnSavePasswordClickedAsync" hidden="@(!ArePasswordControlsEnabled)">Save Password</button>
+            </form>
          -->
+      <form>
          <h2>Privacy Settings</h2>
          <div class="mb-3">
             <div class="form-check form-switch">
@@ -127,15 +133,15 @@
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditPrivacyClicked" hidden="@IsEditing">Edit Privacy</button>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelPrivacyClicked" hidden="@(!ArePrivacyControlsEnabled)">Cancel</button>
          <button type="button" class="btn btn-primary mx-auto" @onclick="OnSavePrivacyClickedAsync" hidden="@(!ArePrivacyControlsEnabled)">Save Privacy</button>
-         <h2>Keys</h2>
-         <div class="mb-3">
-            <label for="privateKey" class="form-label">X25519 - Private Key</label>
-            <textarea @bind="X25519PrivateKey" class="form-control" id="x25519PrivateKey" disabled />
-         </div>
-         <div class="mb-3">
-            <label for="privateKey" class="form-label">Ed25519 - Private Key</label>
-            <textarea @bind="Ed25519PrivateKey" class="form-control" id="ed25519PrivateKey" disabled />
-         </div>
-      }
-   </form>
+      </form>
+      <h2>Keys</h2>
+      <div class="mb-3">
+         <label for="privateKey" class="form-label">X25519 - Private Key</label>
+         <textarea @bind="X25519PrivateKey" class="form-control" id="x25519PrivateKey" disabled />
+      </div>
+      <div class="mb-3">
+         <label for="privateKey" class="form-label">Ed25519 - Private Key</label>
+         <textarea @bind="Ed25519PrivateKey" class="form-control" id="ed25519PrivateKey" disabled />
+      </div>
+   }
 </div>

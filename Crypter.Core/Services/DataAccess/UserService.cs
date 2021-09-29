@@ -41,7 +41,7 @@ namespace Crypter.Core.Services.DataAccess
 
          (var passwordKey, var passwordHash) = PasswordHashService.MakeSecurePasswordHash(password);
 
-         User user = new User(
+         var user = new User(
              Guid.NewGuid(),
              username.ToLower(),
              email?.ToLower(),
@@ -50,10 +50,15 @@ namespace Crypter.Core.Services.DataAccess
              false,
              DateTime.UtcNow,
              DateTime.MinValue);
-
          _context.User.Add(user);
-         await _context.SaveChangesAsync();
 
+         var userProfile = new UserProfile(user.Id, null, null, null);
+         _context.UserProfile.Add(userProfile);
+
+         var userPrivacy = new UserPrivacy(user.Id, false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None);
+         _context.UserPrivacy.Add(userPrivacy);
+
+         await _context.SaveChangesAsync();
          return InsertUserResult.Success;
       }
 
