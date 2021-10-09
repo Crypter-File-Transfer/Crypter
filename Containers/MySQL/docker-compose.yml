@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+   database:
+      image: mysql:latest
+      command: --default-authentication-plugin=mysql_native_password
+      volumes:
+         - "./mysql-init-files:/docker-entrypoint-initdb.d"
+         - "${MYSQL_DATA_DIR:?err}:/var/lib/mysql"
+      restart: unless-stopped
+      environment:
+         MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?err}
+         MYSQL_DATABASE: crypter
+         MYSQL_USER: cryptuser
+         MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD:?err}
+      ports: 
+         - 3306:3306
