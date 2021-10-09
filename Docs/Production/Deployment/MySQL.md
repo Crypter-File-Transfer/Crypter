@@ -4,10 +4,13 @@ This document describes how to setup MySQL using docker-compose.
 
 ## Steps
 
-1. Copy the [./Containers/MySQL](../Containers/MySQL) directory to the database server.
+1. Copy the [./Containers/MySQL](../../../Containers/MySQL) directory to the database server.
 2. Review and configure the `.env` file.
-3. Review and configure the `privileges.sql` file *(see notes below)*.
-4. Invoke `docker-compose up -d`.
+3. Confirm `privileges.sql` is located within the `mysql-init-files` directory.
+4. Review and configure the `privileges.sql` file *(see notes below)*.
+5. Grant `read` permission to `mysql_init_files` for the `mysql` user created inside the container.
+   * `chmod o+r mysql_init_files`
+6. Invoke `docker-compose up -d`.
 
 ## Notes
 
