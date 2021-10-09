@@ -1,7 +1,8 @@
-version: '3.8'
+version: '3.7'
 
 services:
    database:
+      container_name: crypter-db
       image: mysql:latest
       command: --default-authentication-plugin=mysql_native_password
       volumes:
