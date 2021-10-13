@@ -32,7 +32,7 @@ namespace Crypter.Core.Services.DataAccess
       public async Task DeleteAsync(string key)
       {
          await _context.Database
-             .ExecuteSqlRawAsync("DELETE FROM BetaKey WHERE `Key` = {0}", key);
+             .ExecuteSqlRawAsync("DELETE FROM \"BetaKey\" WHERE \"BetaKey\".\"Key\" = {0}", key);
       }
    }
 }

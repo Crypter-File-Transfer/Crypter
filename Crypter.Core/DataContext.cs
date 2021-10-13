@@ -16,8 +16,7 @@ namespace Crypter.Core
       protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
       {
          var connectionString = Configuration.GetConnectionString("DefaultConnection");
-         var serverVersion = ServerVersion.AutoDetect(connectionString);
-         optionsBuilder.UseMySql(connectionString, serverVersion);
+         optionsBuilder.UseNpgsql(connectionString);
       }
 
       public DbSet<User> User { get; set; }

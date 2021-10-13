@@ -103,7 +103,7 @@ namespace Crypter.Core.Services.DataAccess
       public async Task DeleteAsync(Guid id)
       {
          await _context.Database
-             .ExecuteSqlRawAsync("DELETE FROM Users WHERE Id = {0}", id);
+             .ExecuteSqlRawAsync("DELETE FROM \"Users\" WHERE \"Users\".\"Id\" = {0}", id);
       }
 
       public async Task<User> AuthenticateAsync(string username, string password)

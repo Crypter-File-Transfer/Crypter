@@ -1,16 +1,12 @@
 # Development Environment Setup
 
-This section details how to setup a basic development environment, without containers.
+This section details how to setup a basic development environment.
 
-## MySQL
+## PostgreSQL
 
-Download MySQL: https://dev.mysql.com/downloads/installer/
+Download and install PGAdmin: [PGAdmin Downloads Page](https://www.pgadmin.org/download/)
 
-Make sure to include MySQL Workbench in the installation.
-
-You will be prompted to enter a password for the `root` user during installation.  This password will need to be copied into your local `Crypter.API/appsettings.json` and `Crypter.Console/appsettings.json` files whenever you run these apps.
-
-After installation, a Windows service named `MySQL80` will exist on your system.  Make sure this service is running anytime you want to access your local database.
+Follow the instructions for a production deployment.
 
 ## Crypter.API
 
