@@ -4,7 +4,6 @@ services:
    database:
       container_name: postgres
       image: postgres:14.0
-      command: -c listen_addresses=${POSTGRES_LISTEN_ADDRESSES:?err}
       volumes:
          - "./postgres-init-files:/docker-entrypoint-initdb.d"
          - "${POSTGRES_DATA_DIR:?err}:/var/lib/postgresql/data"
@@ -15,5 +14,6 @@ services:
          POSTGRES_USER: postgres
          POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?err}
          POSTGRES_DB: postgres
-      ports: 
-         - 5432:5432
+      ports:
+         - 127.0.0.1:5432:5432
+         - ${CONTAINER_LISTEN_IP:?err}:5432:5432

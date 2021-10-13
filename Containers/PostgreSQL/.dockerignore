@@ -1,3 +1,7 @@
+# Custom entries
+**/postgres-data
+
+# Auto-generated VS entries
 **/.classpath
 **/.dockerignore
 **/.env
