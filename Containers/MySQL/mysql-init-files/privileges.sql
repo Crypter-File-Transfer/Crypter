@@ -1,2 +1,0 @@
-GRANT SELECT, INSERT, UPDATE, DELETE ON crypter.* TO 'cryptuser'@'%';
-FLUSH PRIVILEGES;
