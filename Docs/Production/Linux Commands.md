@@ -30,6 +30,6 @@ A cron job exists to periodically run `Crypter.Console` in order to delete expir
 
 Run `$ crontab -e` to view and edit the cron job.
 
-## MySQL
+## PostgreSQL
 
-Run `$ mysql -u {user} -p` to login to the MySQL server.  You will be prompted for a password.
+Run `$ psql --username {user} --password --dbname {dbname}` to login to the PostgreSQL server.  You will be prompted for a password.

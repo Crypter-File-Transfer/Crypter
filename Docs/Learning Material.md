@@ -6,3 +6,4 @@
 ## Containers
 * [Development workflow for Docker apps](https://docs.microsoft.com/en-us/dotnet/architecture/microservices/docker-application-development-process/docker-app-development-workflow) - Microsoft Docs
 * [MySQL + Docker](https://hub.docker.com/_/mysql) - Docker Hub
+* [PostgreSQL + Docker](https://hub.docker.com/_/postgres/) - Docker Hub
