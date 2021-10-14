@@ -32,7 +32,7 @@ namespace Crypter.Core.Services.DataAccess
       public async Task DeleteAsync(Guid id)
       {
          await _context.Database
-             .ExecuteSqlRawAsync("DELETE FROM FileTransfer WHERE Id = {0}", id);
+             .ExecuteSqlRawAsync("DELETE FROM \"FileTransfer\" WHERE \"FileTransfer\".\"Id\" = {0}", id);
       }
 
       public async Task<IEnumerable<FileTransfer>> FindBySenderAsync(Guid senderId)
