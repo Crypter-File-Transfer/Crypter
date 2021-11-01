@@ -1,13 +1,13 @@
 ---
-name: Enhancement request
+name: Feature request
 about: Request a new feature or improvement from the team
-title: "[Enhancement]"
+title: "[Feature] enter title here"
 labels: 'enhancement, triage'
 assignees: Jack-Edwards
 
 ---
 
-**Describe the enhancement.**
+**Describe the feature**
 
 A clear and concise description of what is being requested.
 
