@@ -4,6 +4,17 @@ using System.Security.Cryptography;
 
 namespace Crypter.Core.Services
 {
+   /// <summary>
+   /// Contains methods to securely hash passwords prior to saving them in the database.
+   /// </summary>
+   /// <remarks>
+   /// Do not move this class outside of Crypter.Core!
+   /// Although you may think this class belongs in a more common library,
+   ///   nothing outside of Crypter.Core will ever need to perform these functions.
+   /// Moving this to a different library runs the risk that it will be distributed with
+   ///   front-end applications.  Someone could potentially decompile that library and
+   ///   discover our password hashing implementation.
+   /// </remarks>
    public class PasswordHashService
    {
       private static readonly int Iterations = 100001;
@@ -15,7 +26,7 @@ namespace Crypter.Core.Services
       {
          if (string.IsNullOrEmpty(password))
          {
-            throw new ArgumentNullException("Password cannot be null or empty", "password");
+            throw new ArgumentNullException("Password cannot be null or empty");
          }
 
          byte[] salt = new byte[SaltByteLength];
@@ -30,17 +41,17 @@ namespace Crypter.Core.Services
       {
          if (string.IsNullOrEmpty(password))
          {
-            throw new ArgumentNullException("Password cannot be null or empty", "password");
+            throw new ArgumentNullException("Password cannot be null or empty");
          }
 
          if (existingHash.Length != HashByteLength)
          {
-            throw new ArgumentException("Invalid length of password hash (64 bytes expected).", "existingHash");
+            throw new ArgumentException("Invalid length of password hash (64 bytes expected).");
          }
 
          if (existingSalt.Length != SaltByteLength)
          {
-            throw new ArgumentException("Invalid length of password salt (16 bytes expected).", "existingHash");
+            throw new ArgumentException("Invalid length of password salt (16 bytes expected).");
          }
 
          var computedHash = KeyDerivation.Pbkdf2(password, existingSalt, KeyDerivationAlgorithm, Iterations, HashByteLength);

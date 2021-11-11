@@ -4,6 +4,7 @@ using System;
 
 namespace Crypter.Test.CryptoLib_Tests
 {
+   [TestFixture]
    public class UserFunctions_Tests
    {
       [SetUp]

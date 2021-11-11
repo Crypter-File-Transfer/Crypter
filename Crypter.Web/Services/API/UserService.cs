@@ -23,6 +23,7 @@ namespace Crypter.Web.Services.API
       Task<(HttpStatusCode HttpStatus, UserReceivedMessagesResponse Response)> GetUserReceivedMessagesAsync();
       Task<(HttpStatusCode HttpStatus, UserReceivedFilesResponse Response)> GetUserReceivedFilesAsync();
       Task<(HttpStatusCode HttpStatus, UserSearchResponse Response)> GetUserSearchResultsAsync(UserSearchParams searchInfo);
+      Task<(HttpStatusCode HttpStatus, UserEmailVerificationResponse Response)> VerifyUserEmailAddressAsync(VerifyUserEmailAddressRequest verificationInfo);
    }
 
    public class UserService : IUserService
@@ -125,6 +126,12 @@ namespace Crypter.Web.Services.API
          var url = $"{BaseUserUrl}/search/{searchInfo.Type}";
          var urlWithParams = url + "?value=" + searchInfo.Query + "&index=" + searchInfo.Index + "&count=" + searchInfo.Results;
          return await HttpService.Get<UserSearchResponse>(urlWithParams, true);
+      }
+
+      public async Task<(HttpStatusCode HttpStatus, UserEmailVerificationResponse Response)> VerifyUserEmailAddressAsync(VerifyUserEmailAddressRequest verificationInfo)
+      {
+         var url = $"{BaseUserUrl}/verify";
+         return await HttpService.Post<UserEmailVerificationResponse>(url, verificationInfo, false);
       }
    }
 }

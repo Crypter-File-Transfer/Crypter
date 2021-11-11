@@ -1,11 +1,15 @@
 ﻿using Crypter.API.Controllers.Methods;
 using Crypter.API.Services;
+using Crypter.Common.Services;
 using Crypter.Contracts.DTO;
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.Contracts.Responses;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
+using Crypter.CryptoLib;
+using Crypter.CryptoLib.Crypto;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -30,9 +34,10 @@ namespace Crypter.API.Controllers
       private readonly IUserPublicKeyPairService<UserEd25519KeyPair> UserDigitalSignatureKeyPairService;
       private readonly IUserSearchService UserSearchService;
       private readonly IUserPrivacyService UserPrivacyService;
+      private readonly IUserEmailVerificationService UserEmailVerificationService;
       private readonly IBaseTransferService<MessageTransfer> MessageService;
       private readonly IBaseTransferService<FileTransfer> FileService;
-      private readonly IBetaKeyService BetaKeyService;
+      private readonly IEmailService EmailService;
       private readonly byte[] TokenSecretKey;
 
       public UserController(
@@ -42,9 +47,10 @@ namespace Crypter.API.Controllers
           IUserPublicKeyPairService<UserEd25519KeyPair> userDigitalSignatureKeyPairService,
           IUserSearchService userSearchService,
           IUserPrivacyService userPrivacyService,
+          IUserEmailVerificationService userEmailVerificationService,
           IBaseTransferService<MessageTransfer> messageService,
           IBaseTransferService<FileTransfer> fileService,
-          IBetaKeyService betaKeyService,
+          IEmailService emailService,
           IConfiguration configuration
           )
       {
@@ -54,34 +60,39 @@ namespace Crypter.API.Controllers
          UserDigitalSignatureKeyPairService = userDigitalSignatureKeyPairService;
          UserSearchService = userSearchService;
          UserPrivacyService = userPrivacyService;
+         UserEmailVerificationService = userEmailVerificationService;
          MessageService = messageService;
          FileService = fileService;
-         BetaKeyService = betaKeyService;
-         TokenSecretKey = Encoding.UTF8.GetBytes(configuration["TokenSecretKey"]);
+         EmailService = emailService;
+         TokenSecretKey = Encoding.UTF8.GetBytes(configuration["Secrets:TokenSigningKey"]);
       }
 
       [HttpPost("register")]
       public async Task<IActionResult> RegisterAsync([FromBody] RegisterUserRequest request)
       {
-         var foundBetaKey = await BetaKeyService.ReadAsync(request.BetaKey);
-         if (foundBetaKey == null)
-         {
-            return new BadRequestObjectResult(
-                new UserRegisterResponse(InsertUserResult.InvalidBetaKey));
-         }
-
          if (!ValidationService.IsValidPassword(request.Password))
          {
             return new BadRequestObjectResult(
                 new UserRegisterResponse(InsertUserResult.PasswordRequirementsNotMet));
          }
 
-         var insertResult = await UserService.InsertAsync(request.Username, request.Password, request.Email);
+         if (request.Email is not null
+            && request.Email.Length > 0
+            && !ValidationService.IsValidEmailAddress(request.Email))
+         {
+            return new BadRequestObjectResult(
+               new UserRegisterResponse(InsertUserResult.InvalidEmailAddress));
+         }
+
+         (var insertResult, var userId) = await UserService.InsertAsync(request.Username, request.Password, request.Email);
          var responseObject = new UserRegisterResponse(insertResult);
 
          if (insertResult == InsertUserResult.Success)
          {
-            await BetaKeyService.DeleteAsync(foundBetaKey.Key);
+            if (!string.IsNullOrEmpty(request.Email))
+            {
+               BackgroundJob.Enqueue(() => EmailService.HangfireSendEmailVerificationAsync(userId));
+            }
             return new OkObjectResult(responseObject);
          }
          else
@@ -118,6 +129,8 @@ namespace Crypter.API.Controllers
          var userDHKeyPair = await UserDiffieHellmanKeyPairService.GetUserPublicKeyPairAsync(user.Id);
          var userDSAKeyPair = await UserDigitalSignatureKeyPairService.GetUserPublicKeyPairAsync(user.Id);
 
+         BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(user.Id, DateTime.UtcNow));
+
          return new OkObjectResult(
              new UserAuthenticateResponse(user.Id, tokenString, userDHKeyPair?.PrivateKey, userDSAKeyPair?.PrivateKey)
          );
@@ -143,6 +156,8 @@ namespace Crypter.API.Controllers
          };
          var token = tokenHandler.CreateToken(tokenDescriptor);
          var tokenString = tokenHandler.WriteToken(token);
+
+         BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(userId, DateTime.UtcNow));
 
          return new OkObjectResult(
             new UserAuthenticationRefreshResponse(tokenString));
@@ -440,6 +455,39 @@ namespace Crypter.API.Controllers
          {
             return new NotFoundObjectResult(notFoundResponse);
          }
+      }
+
+      [HttpPost("verify")]
+      public async Task<IActionResult> VerifyUserEmailAddressAsync([FromBody] VerifyUserEmailAddressRequest request)
+      {
+         var verificationCode = EmailVerificationEncoder.DecodeVerificationCodeFromUrlSafe(request.Code);
+
+         var emailVerificationEntity = await UserEmailVerificationService.ReadCodeAsync(verificationCode);
+         if (emailVerificationEntity is null)
+         {
+            return new NotFoundObjectResult(
+               new UserEmailVerificationResponse(false));
+         }
+
+         var signature = EmailVerificationEncoder.DecodeSignatureFromUrlSafe(request.Signature);
+
+         var verificationKeyPem = Encoding.UTF8.GetString(emailVerificationEntity.VerificationKey);
+         var verificationKey = KeyConversion.ConvertEd25519PublicKeyFromPEM(verificationKeyPem);
+
+         var verifier = new ECDSA();
+         verifier.InitializeVerifier(verificationKey);
+         verifier.VerifierDigestChunk(verificationCode.ToByteArray());
+         if (!verifier.VerifySignature(signature))
+         {
+            return new NotFoundObjectResult(
+               new UserEmailVerificationResponse(false));
+         }
+
+         await UserService.UpdateEmailAddressVerification(emailVerificationEntity.Owner, true);
+         await UserEmailVerificationService.DeleteAsync(emailVerificationEntity.Owner);
+
+         return new OkObjectResult(
+            new UserEmailVerificationResponse(true));
       }
    }
 }

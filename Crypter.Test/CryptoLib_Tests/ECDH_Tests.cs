@@ -5,6 +5,7 @@ using System.IO;
 
 namespace Crypter.Test.CryptoLib_Tests
 {
+   [TestFixture]
    public class ECDH_Tests
    {
       [SetUp]

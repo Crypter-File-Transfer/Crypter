@@ -60,14 +60,14 @@ namespace Crypter.Web.Pages
       {
          var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
 
-         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("query", out var value))
+         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("query", out var query))
          {
-            SearchParams.Query = value.First();
+            SearchParams.Query = query.First();
          }
 
-         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var qType))
+         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var queryType))
          {
-            SearchParams.Type = qType.First();
+            SearchParams.Type = queryType.First();
          }
 
          if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var pageNum))

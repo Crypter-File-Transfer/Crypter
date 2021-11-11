@@ -4,6 +4,7 @@ using NUnit.Framework;
 
 namespace Crypter.Test.CryptoLib_Tests
 {
+   [TestFixture]
    public class ECDSA_Tests
    {
       [SetUp]

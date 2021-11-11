@@ -4,13 +4,8 @@ using System.Threading.Tasks;
 
 namespace Crypter.API.Services
 {
-   public class ValidationService
+   public class ApiValidationService
    {
-      public static bool IsValidPassword(string password)
-      {
-         return !string.IsNullOrWhiteSpace(password);
-      }
-
       public static async Task<bool> IsEnoughSpaceForNewTransfer(IBaseTransferService<MessageTransfer> messageTransferService, IBaseTransferService<FileTransfer> fileTransferService, long allocatedDiskSpace, int maxUploadSize)
       {
          var sizeOfFileUploads = await messageTransferService.GetAggregateSizeAsync();

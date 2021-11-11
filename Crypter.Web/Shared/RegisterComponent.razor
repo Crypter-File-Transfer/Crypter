@@ -48,14 +48,6 @@ else
          <input @bind="RegistrationInfo.EmailAddress" type="email" class="form-control" id="emailAddressFormControl" placeholder="Optional" />
       </div>
 
-      <div class="mb-3">
-         <label for="betaKeyFormControl" class="form-label">Beta Key</label>
-         <div class="input-group has-validation">
-            <input @bind="RegistrationInfo.BetaKey" type="text" class="form-control @BetaKeyInvalidClass" id="betaKeyFormControl" />
-            <div class="invalid-feedback">@BetaKeyValidationMessage</div>
-         </div>
-      </div>
-
       <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="OnRegisterClickedAsync">Register</button>
    </form>
 }
