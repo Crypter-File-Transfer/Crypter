@@ -48,6 +48,33 @@ namespace Crypter.Test.Common_Tests
       }
 
       [Test]
+      public void Null_Is_Not_A_Possible_Email_Address()
+      {
+         string email = null;
+         var result = ValidationService.IsPossibleEmailAddress(email);
+
+         Assert.IsFalse(result);
+      }
+
+      [Test]
+      public void Empty_String_Is_Not_A_Possible_Email_Address()
+      {
+         string email = "";
+         var result = ValidationService.IsPossibleEmailAddress(email);
+
+         Assert.IsFalse(result);
+      }
+
+      [Test]
+      public void Whitespace_Is_A_Possible_Email_Address()
+      {
+         string email = " ";
+         var result = ValidationService.IsPossibleEmailAddress(email);
+
+         Assert.IsTrue(result);
+      }
+
+      [Test]
       public void Null_Is_Invalid_Email_Address()
       {
          string email = null;

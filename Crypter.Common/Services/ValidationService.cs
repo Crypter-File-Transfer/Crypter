@@ -7,6 +7,11 @@
          return !string.IsNullOrWhiteSpace(password);
       }
 
+      public static bool IsPossibleEmailAddress(string email)
+      {
+         return !string.IsNullOrEmpty(email);
+      }
+
       public static bool IsValidEmailAddress(string email)
       {
          if (email is null)

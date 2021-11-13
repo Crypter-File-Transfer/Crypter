@@ -5,6 +5,7 @@
         Success,
         UserNotFound,
         EmailUnavailable,
+        EmailInvalid,
         PasswordValidationFailed
     }
 }

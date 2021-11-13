@@ -30,8 +30,7 @@ namespace Crypter.Core.Services.DataAccess
             return (InsertUserResult.EmptyPassword, Guid.Empty);
          }
 
-         if (email != null
-            && email.Length > 0
+         if (ValidationService.IsPossibleEmailAddress(email)
             && !ValidationService.IsValidEmailAddress(email))
          {
             return (InsertUserResult.InvalidEmailAddress, Guid.Empty);
@@ -42,7 +41,8 @@ namespace Crypter.Core.Services.DataAccess
             return (InsertUserResult.UsernameTaken, Guid.Empty);
          }
 
-         if (!await IsEmailAddressAvailableAsync(email))
+         if (ValidationService.IsPossibleEmailAddress(email)
+            && !await IsEmailAddressAvailableAsync(email))
          {
             return (InsertUserResult.EmailTaken, Guid.Empty);
          }
@@ -97,7 +97,15 @@ namespace Crypter.Core.Services.DataAccess
             return UpdateContactInfoResult.PasswordValidationFailed;
          }
 
-         if (user.Email != email.ToLower() && !await IsEmailAddressAvailableAsync(email))
+         if (ValidationService.IsPossibleEmailAddress(email)
+            && !ValidationService.IsValidEmailAddress(email))
+         {
+            return UpdateContactInfoResult.EmailInvalid;
+         }
+
+         if (ValidationService.IsPossibleEmailAddress(email)
+            && user.Email != email
+            && !await IsEmailAddressAvailableAsync(email))
          {
             return UpdateContactInfoResult.EmailUnavailable;
          }

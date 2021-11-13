@@ -76,8 +76,7 @@ namespace Crypter.API.Controllers
                 new UserRegisterResponse(InsertUserResult.PasswordRequirementsNotMet));
          }
 
-         if (request.Email is not null
-            && request.Email.Length > 0
+         if (ValidationService.IsPossibleEmailAddress(request.Email)
             && !ValidationService.IsValidEmailAddress(request.Email))
          {
             return new BadRequestObjectResult(
@@ -89,7 +88,7 @@ namespace Crypter.API.Controllers
 
          if (insertResult == InsertUserResult.Success)
          {
-            if (!string.IsNullOrEmpty(request.Email))
+            if (ValidationService.IsPossibleEmailAddress(request.Email))
             {
                BackgroundJob.Enqueue(() => EmailService.HangfireSendEmailVerificationAsync(userId));
             }
