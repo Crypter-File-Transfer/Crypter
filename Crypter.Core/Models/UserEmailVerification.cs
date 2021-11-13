@@ -9,14 +9,19 @@ namespace Crypter.Core.Models
    public class UserEmailVerification : IUserEmailVerification
    {
       [Key]
+      [ForeignKey("User")]
       public Guid Owner { get; set; }
-      public string VerificationCode { get; set; }
+      public Guid Code { get; set; }
+      public byte[] VerificationKey { get; set; }
       public DateTime Created { get; set; }
 
-      public UserEmailVerification(Guid owner, string verificationCode, DateTime created)
+      public virtual User User { get; set; }
+
+      public UserEmailVerification(Guid owner, Guid code, byte[] verificationKey, DateTime created)
       {
          Owner = owner;
-         VerificationCode = verificationCode;
+         Code = code;
+         VerificationKey = verificationKey;
          Created = created;
       }
    }

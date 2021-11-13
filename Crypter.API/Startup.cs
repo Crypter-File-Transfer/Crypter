@@ -1,7 +1,11 @@
+using Crypter.API.Controllers.Methods;
+using Crypter.API.Services;
 using Crypter.Core;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using Crypter.Core.Services.DataAccess;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,12 +22,12 @@ namespace CrypterAPI
 {
    public class Startup
    {
+      public IConfiguration Configuration { get; }
+
       public Startup(IConfiguration configuration)
       {
          Configuration = configuration;
       }
-
-      public IConfiguration Configuration { get; }
 
       public void ConfigureServices(IServiceCollection services)
       {
@@ -35,12 +39,21 @@ namespace CrypterAPI
          services.AddScoped<IUserPublicKeyPairService<UserX25519KeyPair>, UserX25519KeyPairService>();
          services.AddScoped<IUserPublicKeyPairService<UserEd25519KeyPair>, UserEd25519KeyPairService>();
          services.AddScoped<IUserSearchService, UserSearchService>();
+         services.AddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
          services.AddScoped<IBaseTransferService<MessageTransfer>, MessageTransferItemService>();
          services.AddScoped<IBaseTransferService<FileTransfer>, FileTransferItemService>();
-         services.AddScoped<IBetaKeyService, BetaKeyService>();
 
-         var tokenSecretKey = Configuration["TokenSecretKey"];
-         var key = Encoding.UTF8.GetBytes(tokenSecretKey);
+         services.AddScoped<IEmailService, EmailService>();
+
+         services.AddHangfire(config =>
+              config.UsePostgreSqlStorage(Configuration.GetConnectionString("HangfireConnection")));
+
+         services.AddHangfireServer(options =>
+            options.WorkerCount = Configuration.GetValue<int>("HangfireSettings:Workers"));
+
+         var tokenSigningKey = Encoding.UTF8.GetBytes(
+            Configuration.GetValue<string>("Secrets:TokenSigningKey"));
+
          services.AddAuthentication(x =>
          {
             x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -51,16 +64,16 @@ namespace CrypterAPI
             x.Events = new JwtBearerEvents
             {
                OnTokenValidated = async context =>
-                  {
-                    var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
-                    Guid userIdFromToken = Guid.Parse(context.Principal.Claims.First(x => x.Type == ClaimTypes.NameIdentifier).Value);
+               {
+                  var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
+                  var userIdFromJWT = ClaimsParser.ParseUserId(context.Principal);
 
-                    var user = await userService.ReadAsync(userIdFromToken);
-                    if (user == null)
-                    {
-                       context.Fail("Unauthorized");
-                    }
-                 }
+                  var user = await userService.ReadAsync(userIdFromJWT);
+                  if (user == null)
+                  {
+                     context.Fail("Unauthorized");
+                  }
+               }
             };
             x.SaveToken = true;
             x.TokenValidationParameters = new TokenValidationParameters
@@ -68,7 +81,7 @@ namespace CrypterAPI
                ValidAudience = "crypter.dev",
                ValidIssuer = "crypter.dev/api",
                ValidateIssuerSigningKey = true,
-               IssuerSigningKey = new SymmetricSecurityKey(key),
+               IssuerSigningKey = new SymmetricSecurityKey(tokenSigningKey),
                ValidateLifetime = true,
                ClockSkew = TimeSpan.Zero
             };
@@ -102,6 +115,7 @@ namespace CrypterAPI
          app.UseEndpoints(endpoints =>
          {
             endpoints.MapControllers();
+            endpoints.MapHangfireDashboard();
          });
       }
    }

@@ -6,6 +6,5 @@
       public string Password { get; set; }
       public string PasswordConfirm { get; set; }
       public string EmailAddress { get; set; }
-      public string BetaKey { get; set; }
    }
 }

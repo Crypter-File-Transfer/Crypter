@@ -1,4 +1,5 @@
-﻿using Crypter.Contracts.Enum;
+﻿using Crypter.Common.Services;
+using Crypter.Contracts.Enum;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
@@ -17,26 +18,33 @@ namespace Crypter.Core.Services.DataAccess
          _context = context;
       }
 
-      public async Task<InsertUserResult> InsertAsync(string username, string password, string email)
+      public async Task<(InsertUserResult result, Guid id)> InsertAsync(string username, string password, string email)
       {
          if (string.IsNullOrEmpty(username))
          {
-            return InsertUserResult.EmptyUsername;
+            return (InsertUserResult.EmptyUsername, Guid.Empty);
          }
 
          if (string.IsNullOrEmpty(password))
          {
-            return InsertUserResult.EmptyPassword;
+            return (InsertUserResult.EmptyPassword, Guid.Empty);
          }
 
-         if (email == "")
+         if (ValidationService.IsPossibleEmailAddress(email)
+            && !ValidationService.IsValidEmailAddress(email))
          {
-            return InsertUserResult.EmptyEmail;
+            return (InsertUserResult.InvalidEmailAddress, Guid.Empty);
          }
 
          if (!await IsUsernameAvailableAsync(username))
          {
-            return InsertUserResult.UsernameTaken;
+            return (InsertUserResult.UsernameTaken, Guid.Empty);
+         }
+
+         if (ValidationService.IsPossibleEmailAddress(email)
+            && !await IsEmailAddressAvailableAsync(email))
+         {
+            return (InsertUserResult.EmailTaken, Guid.Empty);
          }
 
          (var passwordKey, var passwordHash) = PasswordHashService.MakeSecurePasswordHash(password);
@@ -59,7 +67,7 @@ namespace Crypter.Core.Services.DataAccess
          _context.UserPrivacy.Add(userPrivacy);
 
          await _context.SaveChangesAsync();
-         return InsertUserResult.Success;
+         return (InsertUserResult.Success, user.Id);
       }
 
       public async Task<IUser> ReadAsync(Guid id)
@@ -89,7 +97,15 @@ namespace Crypter.Core.Services.DataAccess
             return UpdateContactInfoResult.PasswordValidationFailed;
          }
 
-         if (user.Email != email.ToLower() && !await IsEmailAddressAvailableAsync(email))
+         if (ValidationService.IsPossibleEmailAddress(email)
+            && !ValidationService.IsValidEmailAddress(email))
+         {
+            return UpdateContactInfoResult.EmailInvalid;
+         }
+
+         if (ValidationService.IsPossibleEmailAddress(email)
+            && user.Email != email
+            && !await IsEmailAddressAvailableAsync(email))
          {
             return UpdateContactInfoResult.EmailUnavailable;
          }
@@ -98,6 +114,20 @@ namespace Crypter.Core.Services.DataAccess
          user.EmailVerified = false;
          await _context.SaveChangesAsync();
          return UpdateContactInfoResult.Success;
+      }
+
+      public async Task<bool> UpdateEmailAddressVerification(Guid id, bool isVerified)
+      {
+         var user = await ReadAsync(id);
+
+         if (user == null)
+         {
+            return false;
+         }
+
+         user.EmailVerified = isVerified;
+         await _context.SaveChangesAsync();
+         return true;
       }
 
       public async Task DeleteAsync(Guid id)
@@ -124,6 +154,16 @@ namespace Crypter.Core.Services.DataAccess
          return passwordsMatch
             ? user
             : null;
+      }
+
+      public async Task UpdateLastLoginTime(Guid id, DateTime dateTime)
+      {
+         var user = await ReadAsync(id);
+         if (user != null)
+         {
+            user.LastLogin = dateTime;
+            await _context.SaveChangesAsync();
+         }
       }
 
       public async Task<bool> IsUsernameAvailableAsync(string username)

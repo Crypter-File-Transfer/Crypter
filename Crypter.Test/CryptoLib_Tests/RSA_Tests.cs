@@ -5,6 +5,7 @@ using NUnit.Framework;
 
 namespace Crypter.Test.CryptoLib_Tests
 {
+   [TestFixture]
    public class RSA_Tests
    {
       [SetUp]

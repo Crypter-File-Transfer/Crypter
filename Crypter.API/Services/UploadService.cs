@@ -44,7 +44,7 @@ namespace Crypter.API.Services
 
       private async Task<(UploadResult Result, BaseTransfer GenericTransferData, byte[] ServerEncryptedCipherText)> ReceiveTransferAsync(ITransferRequest request, Guid senderId, Guid recipientId)
       {
-         var serverHasSpaceRemaining = await ValidationService.IsEnoughSpaceForNewTransfer(MessageTransferService, FileTransferService, AllocatedDiskSpace, MaxUploadSize);
+         var serverHasSpaceRemaining = await ApiValidationService.IsEnoughSpaceForNewTransfer(MessageTransferService, FileTransferService, AllocatedDiskSpace, MaxUploadSize);
          if (!serverHasSpaceRemaining)
          {
             return (UploadResult.OutOfSpace, null, null);

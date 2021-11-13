@@ -1,6 +1,5 @@
 ﻿using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
-using Crypter.Web.Models;
 using Crypter.Web.Models.Forms;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
@@ -45,10 +44,6 @@ namespace Crypter.Web.Shared
       private readonly static string MissingPasswordConfirm = "Please confirm your password";
       private readonly static string PasswordConfirmDoesNotMatch = "Passwords do not match";
 
-      protected string BetaKeyInvalidClass = "";
-      protected string BetaKeyValidationMessage;
-      private readonly static string MissingBetaKey = "Please enter a valid beta key";
-
       protected override async Task OnInitializedAsync()
       {
          if (AuthenticationService.User != null)
@@ -73,11 +68,6 @@ namespace Crypter.Web.Shared
          }
 
          if (!ValidatePasswordConfirmation())
-         {
-            formIsValid = false;
-         }
-
-         if (!ValidateBetaKey())
          {
             formIsValid = false;
          }
@@ -142,19 +132,6 @@ namespace Crypter.Web.Shared
          return true;
       }
 
-      protected bool ValidateBetaKey()
-      {
-         if (string.IsNullOrEmpty(RegistrationInfo.BetaKey))
-         {
-            BetaKeyValidationMessage = MissingBetaKey;
-            BetaKeyInvalidClass = IsInvalid;
-            return false;
-         }
-
-         BetaKeyInvalidClass = "";
-         return true;
-      }
-
       protected async Task OnRegisterClickedAsync()
       {
          if (!ValidateForm())
@@ -165,13 +142,22 @@ namespace Crypter.Web.Shared
          byte[] digestedPassword = CryptoLib.UserFunctions.DigestUserCredentials(RegistrationInfo.Username, RegistrationInfo.Password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
-         var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.BetaKey, RegistrationInfo.EmailAddress);
+         var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.EmailAddress);
          var (_, registerResponse) = await UserService.RegisterUserAsync(requestBody);
 
          if (registerResponse.Result != InsertUserResult.Success)
          {
             RegistrationError = true;
-            RegistrationErrorText = registerResponse.ResultMessage;
+            RegistrationErrorText = registerResponse.Result switch
+            {
+               InsertUserResult.EmptyUsername => "Invalid username",
+               InsertUserResult.EmptyPassword
+                  or InsertUserResult.PasswordRequirementsNotMet => "Invalid password",
+               InsertUserResult.InvalidEmailAddress => "Invalid email address",
+               InsertUserResult.UsernameTaken => "Username is already taken",
+               InsertUserResult.EmailTaken => "Email address is associated with an existing account",
+               _ => "???"
+            };
          }
          else
          {

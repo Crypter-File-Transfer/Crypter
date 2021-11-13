@@ -6,9 +6,8 @@
         EmptyUsername,
         EmptyPassword,
         PasswordRequirementsNotMet,
-        EmptyEmail,
+        InvalidEmailAddress,
         UsernameTaken,
-        EmailTaken,
-        InvalidBetaKey
+        EmailTaken
     }
 }

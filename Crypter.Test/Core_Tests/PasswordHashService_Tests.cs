@@ -3,11 +3,21 @@ using NUnit.Framework;
 
 namespace Crypter.Test.Core_Tests
 {
+   [TestFixture]
    public class PasswordHashService_Tests
    {
       [SetUp]
       public void Setup()
       {
+      }
+
+      [Test]
+      public void Service_Exists_In_Crypter_Core()
+      {
+         // See remarks on the PasswordHashService class for why this test exists
+
+         var assembly = typeof(PasswordHashService);
+         Assert.AreEqual("Crypter.Core.Services.PasswordHashService", assembly.FullName);
       }
 
       [Test]

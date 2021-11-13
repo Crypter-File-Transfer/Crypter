@@ -7,13 +7,15 @@ namespace Crypter.Core.Interfaces
 {
    public interface IUserService
    {
-      Task<InsertUserResult> InsertAsync(string username, string password, string email = null);
+      Task<(InsertUserResult result, Guid id)> InsertAsync(string username, string password, string email = null);
       Task<IUser> ReadAsync(Guid id);
       Task<IUser> ReadAsync(string username);
       Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword);
+      Task<bool> UpdateEmailAddressVerification(Guid id, bool isVerified);
       Task DeleteAsync(Guid id);
 
       Task<User> AuthenticateAsync(string username, string password);
+      Task UpdateLastLoginTime(Guid id, DateTime dateTime);
 
       Task<bool> IsUsernameAvailableAsync(string username);
       Task<bool> IsEmailAddressAvailableAsync(string email);

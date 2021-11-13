@@ -9,9 +9,17 @@ namespace Crypter.API.Controllers.Methods
       public static Guid ParseUserId(ClaimsPrincipal user)
       {
          var userClaim = user.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
-         return userClaim is null
-            ? Guid.Empty
-            : Guid.Parse(userClaim.Value);
+         if (userClaim is null)
+         {
+            return Guid.Empty;
+         }
+
+         if (!Guid.TryParse(userClaim.Value, out Guid userId))
+         {
+            return Guid.Empty;
+         }
+
+         return userId;
       }
    }
 }
