@@ -51,7 +51,12 @@ namespace Crypter.Test.API_Tests
             .Setup(x => x.ReadAsync(It.IsAny<Guid>()))
             .ReturnsAsync((Guid userId) => null);
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object)
+         var mockNotificationService = new Mock<IUserNotificationSettingService>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+
+         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
          };
@@ -77,7 +82,12 @@ namespace Crypter.Test.API_Tests
             .Setup(x => x.ReadAsync(It.IsAny<Guid>()))
             .ReturnsAsync((Guid userId) => null);
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object)
+         var mockNotificationService = new Mock<IUserNotificationSettingService>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+
+         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
          };
@@ -103,7 +113,12 @@ namespace Crypter.Test.API_Tests
             .Setup(x => x.ReadAsync(It.IsAny<Guid>()))
             .ReturnsAsync((Guid userId) => null);
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object)
+         var mockNotificationService = new Mock<IUserNotificationSettingService>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+
+         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
          };
@@ -129,7 +144,12 @@ namespace Crypter.Test.API_Tests
             .Setup(x => x.ReadAsync(It.IsAny<Guid>()))
             .ReturnsAsync((Guid userId) => null);
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object)
+         var mockNotificationService = new Mock<IUserNotificationSettingService>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+
+         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
          };
@@ -157,7 +177,12 @@ namespace Crypter.Test.API_Tests
             .Setup(x => x.ReadAsync(It.IsAny<Guid>()))
             .ReturnsAsync((Guid userId) => userVerification);
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object)
+         var mockNotificationService = new Mock<IUserNotificationSettingService>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+
+         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
          };
@@ -183,7 +208,12 @@ namespace Crypter.Test.API_Tests
             .Setup(x => x.ReadAsync(It.IsAny<Guid>()))
             .ReturnsAsync((Guid userId) => null);
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object)
+         var mockNotificationService = new Mock<IUserNotificationSettingService>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+
+         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
          };
@@ -200,7 +230,12 @@ namespace Crypter.Test.API_Tests
          var mockUserService = new Mock<IUserService>();
          var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object)
+         var mockNotificationService = new Mock<IUserNotificationSettingService>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+
+         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
          };

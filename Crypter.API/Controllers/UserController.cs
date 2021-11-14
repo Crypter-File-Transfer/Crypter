@@ -33,8 +33,9 @@ namespace Crypter.API.Controllers
       private readonly IUserPublicKeyPairService<UserX25519KeyPair> UserDiffieHellmanKeyPairService;
       private readonly IUserPublicKeyPairService<UserEd25519KeyPair> UserDigitalSignatureKeyPairService;
       private readonly IUserSearchService UserSearchService;
-      private readonly IUserPrivacyService UserPrivacyService;
+      private readonly IUserPrivacySettingService UserPrivacySettingService;
       private readonly IUserEmailVerificationService UserEmailVerificationService;
+      private readonly IUserNotificationSettingService UserNotificationSettingService;
       private readonly IBaseTransferService<MessageTransfer> MessageService;
       private readonly IBaseTransferService<FileTransfer> FileService;
       private readonly IEmailService EmailService;
@@ -46,8 +47,9 @@ namespace Crypter.API.Controllers
           IUserPublicKeyPairService<UserX25519KeyPair> userDiffieHellmanKeyPairService,
           IUserPublicKeyPairService<UserEd25519KeyPair> userDigitalSignatureKeyPairService,
           IUserSearchService userSearchService,
-          IUserPrivacyService userPrivacyService,
+          IUserPrivacySettingService userPrivacySettingService,
           IUserEmailVerificationService userEmailVerificationService,
+          IUserNotificationSettingService userNotificationSettingService,
           IBaseTransferService<MessageTransfer> messageService,
           IBaseTransferService<FileTransfer> fileService,
           IEmailService emailService,
@@ -59,8 +61,9 @@ namespace Crypter.API.Controllers
          UserDiffieHellmanKeyPairService = userDiffieHellmanKeyPairService;
          UserDigitalSignatureKeyPairService = userDigitalSignatureKeyPairService;
          UserSearchService = userSearchService;
-         UserPrivacyService = userPrivacyService;
+         UserPrivacySettingService = userPrivacySettingService;
          UserEmailVerificationService = userEmailVerificationService;
+         UserNotificationSettingService = userNotificationSettingService;
          MessageService = messageService;
          FileService = fileService;
          EmailService = emailService;
@@ -277,18 +280,22 @@ namespace Crypter.API.Controllers
          var userId = ClaimsParser.ParseUserId(User);
          var user = await UserService.ReadAsync(userId);
          var userProfile = await UserProfileService.ReadAsync(userId);
-         var userPrivacy = await UserPrivacyService.ReadAsync(userId);
+         var userPrivacy = await UserPrivacySettingService.ReadAsync(userId);
+         var userNotification = await UserNotificationSettingService.ReadAsync(userId);
 
          return new OkObjectResult(
             new UserSettingsResponse(
              user.Username,
              user.Email,
+             user.EmailVerified,
              userProfile?.Alias,
              userProfile?.About,
              userPrivacy?.Visibility ?? UserVisibilityLevel.None,
              userPrivacy?.AllowKeyExchangeRequests ?? false,
              userPrivacy?.ReceiveMessages ?? UserItemTransferPermission.None,
              userPrivacy?.ReceiveFiles ?? UserItemTransferPermission.None,
+             userNotification?.EnableTransferNotifications ?? false,
+             userNotification?.EmailNotifications ?? false,
              user.Created
          ));
       }
@@ -316,33 +323,64 @@ namespace Crypter.API.Controllers
       public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request)
       {
          var userId = ClaimsParser.ParseUserId(User);
-         var updateResult = await UserService.UpdateContactInfoAsync(userId, request.Email, request.CurrentPassword);
-         var responseObject = new UpdateContactInfoResponse(updateResult);
+         var updateContactInfoResult = await UserService.UpdateContactInfoAsync(userId, request.Email, request.CurrentPassword);
 
-         if (updateResult == UpdateContactInfoResult.Success)
+         if (updateContactInfoResult != UpdateContactInfoResult.Success)
          {
-            return new OkObjectResult(responseObject);
+            var responseObject = new UpdateContactInfoResponse(updateContactInfoResult);
+            return new BadRequestObjectResult(responseObject);
+         }
+
+         var resetNotificationSettingResult = await UserNotificationSettingService.UpsertAsync(userId, false, false);
+         if (!resetNotificationSettingResult)
+         {
+            var responseObject = new UpdateContactInfoResponse(UpdateContactInfoResult.ErrorResettingNotificationPreferences);
+            return new BadRequestObjectResult(responseObject);
+         }
+
+         var successResponse = new UpdateContactInfoResponse(UpdateContactInfoResult.Success);
+         return new OkObjectResult(successResponse);
+      }
+
+      [Authorize]
+      [HttpPost("settings/notification")]
+      public async Task<IActionResult> UpdateUserNotificationPreferencesAsync([FromBody] UpdateNotificationSettingRequest request)
+      {
+         var userId = ClaimsParser.ParseUserId(User);
+         var user = await UserService.ReadAsync(userId);
+
+         if (request.EnableTransferNotifications 
+            && request.EmailNotifications
+            && !user.EmailVerified)
+         {
+            return new BadRequestObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.EmailAddressNotVerified));
+         }
+
+         var updateResult = await UserNotificationSettingService.UpsertAsync(userId, request.EnableTransferNotifications, request.EmailNotifications);
+         if (updateResult)
+         {
+            return new OkObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.Success));
          }
          else
          {
-            return new BadRequestObjectResult(responseObject);
+            return new BadRequestObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.UnknownFailure));
          }
       }
 
       [Authorize]
       [HttpPost("settings/privacy")]
-      public async Task<IActionResult> UpdateUserPrivacyAsync([FromBody] UpdatePrivacyRequest request)
+      public async Task<IActionResult> UpdateUserPrivacyAsync([FromBody] UpdatePrivacySettingRequest request)
       {
          var userId = ClaimsParser.ParseUserId(User);
-         var updateSuccess = await UserPrivacyService.UpsertAsync(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission);
+         var updateSuccess = await UserPrivacySettingService.UpsertAsync(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission);
 
          if (updateSuccess)
          {
-            return new OkObjectResult(new UpdatePrivacyResponse());
+            return new OkObjectResult(new UpdatePrivacySettingResponse());
          }
          else
          {
-            return new BadRequestObjectResult(new UpdatePrivacyResponse());
+            return new BadRequestObjectResult(new UpdatePrivacySettingResponse());
          }
       }
 
@@ -431,20 +469,20 @@ namespace Crypter.API.Controllers
             return new NotFoundObjectResult(notFoundResponse);
          }
 
-         var userPrivacy = await UserPrivacyService.ReadAsync(user.Id);
+         var userPrivacy = await UserPrivacySettingService.ReadAsync(user.Id);
          if (userPrivacy is null)
          {
             return new NotFoundObjectResult(notFoundResponse);
          }
 
-         var userAllowsRequestorToViewProfile = await UserPrivacyService.IsUserViewableByPartyAsync(user.Id, requestor);
+         var userAllowsRequestorToViewProfile = await UserPrivacySettingService.IsUserViewableByPartyAsync(user.Id, requestor);
          if (userAllowsRequestorToViewProfile)
          {
             var userPublicDHKey = await UserDiffieHellmanKeyPairService.GetUserPublicKeyAsync(user.Id);
             var userPublicDSAKey = await UserDigitalSignatureKeyPairService.GetUserPublicKeyAsync(user.Id);
 
-            var visitorCanSendMessages = await UserPrivacyService.DoesUserAcceptMessagesFromOtherPartyAsync(user.Id, visitorId);
-            var visitorCanSendFiles = await UserPrivacyService.DoesUserAcceptFilesFromOtherPartyAsync(user.Id, visitorId);
+            var visitorCanSendMessages = await UserPrivacySettingService.DoesUserAcceptMessagesFromOtherPartyAsync(user.Id, visitorId);
+            var visitorCanSendFiles = await UserPrivacySettingService.DoesUserAcceptFilesFromOtherPartyAsync(user.Id, visitorId);
 
             return new OkObjectResult(
                new UserPublicProfileResponse(user.Id, user.Username, userProfile.Alias, userProfile.About, userPrivacy.AllowKeyExchangeRequests,

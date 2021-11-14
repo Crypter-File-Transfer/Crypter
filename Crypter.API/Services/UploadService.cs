@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
 using Crypter.Core.Services;
+using Hangfire;
 
 namespace Crypter.API.Services
 {
@@ -20,7 +21,8 @@ namespace Crypter.API.Services
 
       private readonly IBaseTransferService<MessageTransfer> MessageTransferService;
       private readonly IBaseTransferService<FileTransfer> FileTransferService;
-      private readonly IUserService UserService;
+
+      private readonly IEmailService EmailService;
 
       private readonly ITransferItemStorageService MessageTransferItemStorageService;
       private readonly ITransferItemStorageService FileTransferItemStorageService;
@@ -29,14 +31,14 @@ namespace Crypter.API.Services
          IConfiguration configuration,
          IBaseTransferService<MessageTransfer> messageTransferService,
          IBaseTransferService<FileTransfer> fileTransferService,
-         IUserService userService
+         IEmailService emailService
          )
       {
          AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(1024, 3);
          MaxUploadSize = int.Parse(configuration["MaxUploadSizeMB"]) * (int)Math.Pow(1024, 2);
          MessageTransferService = messageTransferService;
          FileTransferService = fileTransferService;
-         UserService = userService;
+         EmailService = emailService;
 
          MessageTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.Message);
          FileTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.File);
@@ -127,6 +129,11 @@ namespace Crypter.API.Services
 
          await MessageTransferService.InsertAsync(messageItem);
 
+         if (recipientId != Guid.Empty)
+         {
+            BackgroundJob.Enqueue(() => EmailService.HangfireSendTransferNotificationAsync(TransferItemType.Message, messageItem.Id));
+         }
+
          return new OkObjectResult(
              new TransferUploadResponse(UploadResult.Success, genericTransferData.Id, genericTransferData.Expiration));
       }
@@ -165,6 +172,11 @@ namespace Crypter.API.Services
                genericTransferData.Expiration);
 
          await FileTransferService.InsertAsync(fileItem);
+
+         if (recipientId != Guid.Empty)
+         {
+            BackgroundJob.Enqueue(() => EmailService.HangfireSendTransferNotificationAsync(TransferItemType.File, fileItem.Id));
+         }
 
          return new OkObjectResult(
              new TransferUploadResponse(UploadResult.Success, genericTransferData.Id, genericTransferData.Expiration));

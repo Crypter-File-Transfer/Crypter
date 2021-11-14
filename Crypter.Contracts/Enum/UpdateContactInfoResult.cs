@@ -6,6 +6,8 @@
         UserNotFound,
         EmailUnavailable,
         EmailInvalid,
-        PasswordValidationFailed
+        PasswordValidationFailed,
+        ErrorResettingNotificationPreferences,
+        UnknownError
     }
 }

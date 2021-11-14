@@ -4,9 +4,14 @@
 {
    <div class="alert alert-success" role="alert">
       <h4 class="alert-heading">Registration Successful!</h4>
-      <p>Your account has been created.</p>
+      <p>Your account was created successfully.</p>
       <hr>
-      <p class="mb-0">You will now be redirected to the login page...</p>
+      @if (UserProvidedEmailDuringRegistration)
+            {
+               <p>Thank you for providing an email address.</p>
+               <p>A verification email has been sent to your inbox. Verifying your email address will allow you to enable notifications and perform password resets.</p>
+            }
+      <p>You may now login.</p>
    </div>
 }
 else

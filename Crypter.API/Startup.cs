@@ -35,11 +35,12 @@ namespace CrypterAPI
 
          services.AddScoped<IUserService, UserService>();
          services.AddScoped<IUserProfileService, UserProfileService>();
-         services.AddScoped<IUserPrivacyService, UserPrivacyService>();
+         services.AddScoped<IUserPrivacySettingService, UserPrivacySettingService>();
          services.AddScoped<IUserPublicKeyPairService<UserX25519KeyPair>, UserX25519KeyPairService>();
          services.AddScoped<IUserPublicKeyPairService<UserEd25519KeyPair>, UserEd25519KeyPairService>();
          services.AddScoped<IUserSearchService, UserSearchService>();
          services.AddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
+         services.AddScoped<IUserNotificationSettingService, UserNotificationSettingService>();
          services.AddScoped<IBaseTransferService<MessageTransfer>, MessageTransferItemService>();
          services.AddScoped<IBaseTransferService<FileTransfer>, FileTransferItemService>();
 

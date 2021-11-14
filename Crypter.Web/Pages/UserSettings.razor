@@ -1,6 +1,6 @@
 ﻿@page "/user/settings"
 
-@inherits SettingsBase
+@inherits UserSettingsBase
 
 <div class="container-sm my-4">
    @if (!Loading)
@@ -12,9 +12,9 @@
             <label for="publicUrl">Profile Link</label>
             <div class="copiedTooltip">
                <div class="input-group mb-3">
-                  <input @bind="ProfileUrl" class="form-control" type="url" id="publicUrl" disabled @onclick="CopyToClipboard" />
+                  <input @bind="ProfileUrl" class="form-control" type="url" id="publicUrl" disabled @onclick="CopyToClipboardAsync" />
                   <div class="input-group-append">
-                     <button class="btn btn-secondary" type="button" @onclick="CopyToClipboard">Copy</button>
+                     <button class="btn btn-secondary" type="button" @onclick="CopyToClipboardAsync">Copy</button>
                   </div>
                </div>
                <span class="copiedToolTip toolTipText">Copied</span>
@@ -37,6 +37,14 @@
          <div class="mb-3">
             <label for="emailFormControl" class="form-label">Email Address</label>
             <input @bind="EditedEmail" type="email" class="form-control" id="emailFormControl" placeholder="Email Not Set" readonly="@(!AreContactInfoControlsEnabled)" />
+            @if (EmailVerified)
+            {
+               <span class="text-success">Verified</span>
+            }
+            else
+            {
+               <span class="text-danger">Not verified</span>
+            }
          </div>
          <div class="mb-3" hidden="@(!AreContactInfoControlsEnabled)">
             <label for="currentPasswordForContactInfoFormControl" class="form-label">Current Password</label>
@@ -46,6 +54,31 @@
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelContactInfoClicked" hidden="@(!AreContactInfoControlsEnabled)">Cancel</button>
          <button type="button" class="btn btn-primary mx-auto" @onclick="OnSaveContactInfoClickedAsync" hidden="@(!AreContactInfoControlsEnabled)">Save Contact Info</button>
       </form>
+      <form>
+         <h2>Notification Settings</h2>
+         <div class="form-check form-switch">
+            <label class="form-check-label" for="enableTransferNotifications">Notify me when I receive something</label>
+            <input @bind="EditedEnableTransferNotifications" class="form-check-input" type="checkbox" id="enableTransferNotifications" disabled="@(!AreNotificationControlsEnabled)" />
+         </div>
+         <h3>Notification Methods</h3>
+         <div class="form-check form-switch">
+            <label class="form-check-label" for="enableEmailNotifications">Email</label>
+            <input @bind="EditedEnableTransferNotifications" class="form-check-input" type="checkbox" id="enableEmailNotifications" disabled="@(!AreNotificationControlsEnabled)" />
+         </div>
+         <div class="mb-3">
+            <span class="small text-secondary">*Alternative notifications methods are not available yet</span>
+         </div>
+         <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditNotificationPreferencesClicked" hidden="@IsEditing" disabled="@(!EmailVerified)">Edit Notification Preferences</button>
+         <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelNotificationPreferencesClicked" hidden="@(!AreNotificationControlsEnabled)">Cancel</button>
+         <button type="button" class="btn btn-primary mx-auto" @onclick="OnSaveNotificationPreferencesClickedAsync" hidden="@(!AreNotificationControlsEnabled)">Save Notification Preferences</button>
+
+         @if (!EmailVerified)
+         {
+         <div>
+            <span class="text-danger">Notifications require a verified email address</span>
+         </div>
+         }
+         </form>
          <!--
             <form>
                <h2>Password</h2>

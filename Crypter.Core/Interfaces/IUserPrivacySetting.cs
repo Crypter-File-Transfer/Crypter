@@ -3,7 +3,7 @@ using System;
 
 namespace Crypter.Core.Interfaces
 {
-   public interface IUserPrivacy
+   public interface IUserPrivacySetting
    {
       public Guid Owner { get; set; }
       public bool AllowKeyExchangeRequests { get; set; }

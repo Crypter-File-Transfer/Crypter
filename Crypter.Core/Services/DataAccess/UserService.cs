@@ -63,8 +63,8 @@ namespace Crypter.Core.Services.DataAccess
          var userProfile = new UserProfile(user.Id, null, null, null);
          _context.UserProfile.Add(userProfile);
 
-         var userPrivacy = new UserPrivacy(user.Id, false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None);
-         _context.UserPrivacy.Add(userPrivacy);
+         var userPrivacy = new UserPrivacySetting(user.Id, false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None);
+         _context.UserPrivacySetting.Add(userPrivacy);
 
          await _context.SaveChangesAsync();
          return (InsertUserResult.Success, user.Id);

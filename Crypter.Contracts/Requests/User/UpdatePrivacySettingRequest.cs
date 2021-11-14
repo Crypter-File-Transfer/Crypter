@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Crypter.Contracts.Requests
 {
-   public class UpdatePrivacyRequest
+   public class UpdatePrivacySettingRequest
    {
       public bool AllowKeyExchangeRequests { get; set; }
       public UserVisibilityLevel VisibilityLevel { get; set; }
@@ -11,7 +11,7 @@ namespace Crypter.Contracts.Requests
       public UserItemTransferPermission FileTransferPermission { get; set; }
 
       [JsonConstructor]
-      public UpdatePrivacyRequest(bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission)
+      public UpdatePrivacySettingRequest(bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission)
       {
          AllowKeyExchangeRequests = allowKeyExchangeRequests;
          VisibilityLevel = visibilityLevel;
