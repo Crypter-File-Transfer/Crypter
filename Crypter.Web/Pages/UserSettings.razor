@@ -37,13 +37,16 @@
          <div class="mb-3">
             <label for="emailFormControl" class="form-label">Email Address</label>
             <input @bind="EditedEmail" type="email" class="form-control" id="emailFormControl" placeholder="Email Not Set" readonly="@(!AreContactInfoControlsEnabled)" />
-            @if (EmailVerified)
+            @if (!AreContactInfoControlsEnabled)
             {
-               <span class="text-success">Verified</span>
-            }
-            else
-            {
-               <span class="text-danger">Not verified</span>
+               @if (EmailVerified)
+               {
+                  <span class="text-success">Verified</span>
+               }
+               else
+               {
+                  <span class="text-danger">Not verified</span>
+               }
             }
          </div>
          <div class="mb-3" hidden="@(!AreContactInfoControlsEnabled)">

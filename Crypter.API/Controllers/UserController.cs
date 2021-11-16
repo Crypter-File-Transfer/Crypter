@@ -91,7 +91,7 @@ namespace Crypter.API.Controllers
 
          if (insertResult == InsertUserResult.Success)
          {
-            if (ValidationService.IsPossibleEmailAddress(request.Email))
+            if (ValidationService.IsValidEmailAddress(request.Email))
             {
                BackgroundJob.Enqueue(() => EmailService.HangfireSendEmailVerificationAsync(userId));
             }
@@ -338,6 +338,13 @@ namespace Crypter.API.Controllers
             return new BadRequestObjectResult(responseObject);
          }
 
+         await UserEmailVerificationService.DeleteAsync(userId);
+
+         if (ValidationService.IsValidEmailAddress(request.Email))
+         {
+            BackgroundJob.Enqueue(() => EmailService.HangfireSendEmailVerificationAsync(userId));
+         }
+
          var successResponse = new UpdateContactInfoResponse(UpdateContactInfoResult.Success);
          return new OkObjectResult(successResponse);
       }
@@ -349,7 +356,7 @@ namespace Crypter.API.Controllers
          var userId = ClaimsParser.ParseUserId(User);
          var user = await UserService.ReadAsync(userId);
 
-         if (request.EnableTransferNotifications 
+         if (request.EnableTransferNotifications
             && request.EmailNotifications
             && !user.EmailVerified)
          {
