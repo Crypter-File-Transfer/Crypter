@@ -154,6 +154,8 @@ namespace Crypter.Web.Pages
 
          Email = EditedEmail;
          CurrentPasswordForContactInfo = "";
+         EditedEnableTransferNotifications = false;
+         EmailVerified = false;
          AreContactInfoControlsEnabled = false;
          IsEditing = false;
       }
