@@ -24,14 +24,14 @@ namespace Crypter.Core.Services.DataAccess
 
          int totalMatches = await _context.User
             .Where(x => x.Username.ToLower().StartsWith(lowerUsername))
-            .Where(x => x.Privacy.Visibility == UserVisibilityLevel.Everyone
-               || (x.Privacy.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
+            .Where(x => x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
+               || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
             .CountAsync();
 
          var users = await _context.User
             .Where(x => x.Username.ToLower().StartsWith(lowerUsername))
-            .Where(x => x.Privacy.Visibility == UserVisibilityLevel.Everyone
-               || (x.Privacy.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
+            .Where(x => x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
+               || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
             .OrderBy(x => x.Username)
             .Skip(startingIndex)
             .Take(count)
@@ -52,14 +52,14 @@ namespace Crypter.Core.Services.DataAccess
 
          int totalMatches = await _context.UserProfile
             .Where(x => x.Alias.ToLower().StartsWith(lowerAlias))
-            .Where(x => x.User.Privacy.Visibility == UserVisibilityLevel.Everyone
-               || (x.User.Privacy.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
+            .Where(x => x.User.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
+               || (x.User.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
             .CountAsync();
 
          var users = await _context.UserProfile
             .Where(x => x.Alias.ToLower().StartsWith(lowerAlias))
-            .Where(x => x.User.Privacy.Visibility == UserVisibilityLevel.Everyone
-               || (x.User.Privacy.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
+            .Where(x => x.User.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
+               || (x.User.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
             .OrderBy(x => x.Alias)
             .Skip(startingIndex)
             .Take(count)

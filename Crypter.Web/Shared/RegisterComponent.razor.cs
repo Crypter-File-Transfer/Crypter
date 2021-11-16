@@ -44,6 +44,8 @@ namespace Crypter.Web.Shared
       private readonly static string MissingPasswordConfirm = "Please confirm your password";
       private readonly static string PasswordConfirmDoesNotMatch = "Passwords do not match";
 
+      protected bool UserProvidedEmailDuringRegistration = false;
+
       protected override async Task OnInitializedAsync()
       {
          if (AuthenticationService.User != null)
@@ -161,10 +163,8 @@ namespace Crypter.Web.Shared
          }
          else
          {
+            UserProvidedEmailDuringRegistration = !string.IsNullOrEmpty(RegistrationInfo.EmailAddress);
             RegistrationSuccess = true;
-            StateHasChanged();
-            await Task.Delay(2000);
-            NavigationManager.NavigateTo("/login");
          }
       }
    }

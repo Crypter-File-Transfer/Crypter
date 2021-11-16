@@ -6,8 +6,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Models
 {
-   [Table("UserPrivacy")]
-   public class UserPrivacy : IUserPrivacy
+   [Table("UserPrivacySetting")]
+   public class UserPrivacySetting : IUserPrivacySetting
    {
       [Key]
       [ForeignKey("User")]
@@ -19,7 +19,7 @@ namespace Crypter.Core.Models
 
       public virtual User User { get; set; }
 
-      public UserPrivacy(Guid owner, bool allowKeyExchangeRequests, UserVisibilityLevel visibility, UserItemTransferPermission receiveFiles, UserItemTransferPermission receiveMessages)
+      public UserPrivacySetting(Guid owner, bool allowKeyExchangeRequests, UserVisibilityLevel visibility, UserItemTransferPermission receiveFiles, UserItemTransferPermission receiveMessages)
       {
          Owner = owner;
          AllowKeyExchangeRequests = allowKeyExchangeRequests;

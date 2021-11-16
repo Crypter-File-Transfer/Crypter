@@ -15,7 +15,8 @@ namespace Crypter.Web.Services.API
       Task<(HttpStatusCode HttpStatus, UserSettingsResponse Response)> GetUserSettingsAsync();
       Task<(HttpStatusCode HttpStatus, UpdateProfileResponse Response)> UpdateUserProfileInfoAsync(UpdateProfileRequest request);
       Task<(HttpStatusCode HttpStatus, UpdateContactInfoResponse Response)> UpdateUserContactInfoAsync(UpdateContactInfoRequest request);
-      Task<(HttpStatusCode HttpStatus, UpdatePrivacyResponse Response)> UpdateUserPrivacyAsync(UpdatePrivacyRequest request);
+      Task<(HttpStatusCode HttpStatus, UpdatePrivacySettingResponse Response)> UpdateUserPrivacyAsync(UpdatePrivacySettingRequest request);
+      Task<(HttpStatusCode HttpStatus, UpdateNotificationSettingResponse Response)> UpdateUserNotificationAsync(UpdateNotificationSettingRequest request);
       Task<(HttpStatusCode HttpStatus, UpdateKeysResponse Response)> InsertUserX25519KeysAsync(UpdateKeysRequest request);
       Task<(HttpStatusCode HttpStatus, UpdateKeysResponse Response)> InsertUserEd25519KeysAsync(UpdateKeysRequest request);
       Task<(HttpStatusCode HttpStatus, UserSentMessagesResponse Response)> GetUserSentMessagesAsync();
@@ -79,10 +80,16 @@ namespace Crypter.Web.Services.API
          return await HttpService.Post<UpdateContactInfoResponse>(url, request, true);
       }
 
-      public async Task<(HttpStatusCode, UpdatePrivacyResponse)> UpdateUserPrivacyAsync(UpdatePrivacyRequest request)
+      public async Task<(HttpStatusCode, UpdatePrivacySettingResponse)> UpdateUserPrivacyAsync(UpdatePrivacySettingRequest request)
       {
          var url = $"{BaseUserUrl}/settings/privacy";
-         return await HttpService.Post<UpdatePrivacyResponse>(url, request, true);
+         return await HttpService.Post<UpdatePrivacySettingResponse>(url, request, true);
+      }
+
+      public async Task<(HttpStatusCode HttpStatus, UpdateNotificationSettingResponse Response)> UpdateUserNotificationAsync(UpdateNotificationSettingRequest request)
+      {
+         var url = $"{BaseUserUrl}/settings/notification";
+         return await HttpService.Post<UpdateNotificationSettingResponse>(url, request, true);
       }
 
       public async Task<(HttpStatusCode, UpdateKeysResponse)> InsertUserX25519KeysAsync(UpdateKeysRequest request)

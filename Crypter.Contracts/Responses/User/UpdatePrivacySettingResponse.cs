@@ -1,6 +1,6 @@
 ﻿namespace Crypter.Contracts.Responses
 {
-   public class UpdatePrivacyResponse
+   public class UpdatePrivacySettingResponse
    {
    }
 }

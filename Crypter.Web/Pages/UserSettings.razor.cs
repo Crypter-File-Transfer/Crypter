@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class SettingsBase : ComponentBase
+   public partial class UserSettingsBase : ComponentBase
    {
       [Inject]
       IJSRuntime JSRuntime { get; set; }
@@ -27,6 +27,7 @@ namespace Crypter.Web.Pages
       protected bool IsEditing;
       protected bool AreProfileControlsEnabled;
       protected bool AreContactInfoControlsEnabled;
+      protected bool AreNotificationControlsEnabled;
       protected bool ArePasswordControlsEnabled;
       protected bool ArePrivacyControlsEnabled;
 
@@ -43,6 +44,11 @@ namespace Crypter.Web.Pages
       protected string Email;
       protected string EditedEmail;
       protected string CurrentPasswordForContactInfo;
+      protected bool EmailVerified;
+
+      // Notification Settings
+      protected bool EnableTransferNotifications;
+      protected bool EditedEnableTransferNotifications;
 
       // Password
       protected string NewPassword;
@@ -68,6 +74,7 @@ namespace Crypter.Web.Pages
          IsEditing = false;
          AreProfileControlsEnabled = false;
          AreContactInfoControlsEnabled = false;
+         AreNotificationControlsEnabled = false;
          ArePasswordControlsEnabled = false;
          ArePrivacyControlsEnabled = false;
 
@@ -81,7 +88,7 @@ namespace Crypter.Web.Pages
 
          await base.OnInitializedAsync();
 
-         await GetUserInfo();
+         await GetUserInfoAsync();
          Loading = false;
       }
 
@@ -164,7 +171,7 @@ namespace Crypter.Web.Pages
          IsEditing = false;
       }
 
-      protected async Task OnSavePasswordClickedAsync()
+      protected void OnSavePasswordClicked()
       {
          NewPassword = "";
          ArePasswordControlsEnabled = false;
@@ -189,7 +196,7 @@ namespace Crypter.Web.Pages
 
       protected async Task OnSavePrivacyClickedAsync()
       {
-         var request = new UpdatePrivacyRequest(EditedAllowKeyExchangeRequests, (UserVisibilityLevel)EditedVisibility, (UserItemTransferPermission)EditedMessageTransferPermission, (UserItemTransferPermission)EditedFileTransferPermission);
+         var request = new UpdatePrivacySettingRequest(EditedAllowKeyExchangeRequests, (UserVisibilityLevel)EditedVisibility, (UserItemTransferPermission)EditedMessageTransferPermission, (UserItemTransferPermission)EditedFileTransferPermission);
          var (_, _) = await UserService.UpdateUserPrivacyAsync(request);
 
          AllowKeyExchangeRequests = EditedAllowKeyExchangeRequests;
@@ -200,10 +207,34 @@ namespace Crypter.Web.Pages
          IsEditing = false;
       }
 
-      protected async Task GetUserInfo()
+      protected void OnEditNotificationPreferencesClicked()
+      {
+         AreNotificationControlsEnabled = true;
+         IsEditing = true;
+      }
+
+      protected void OnCancelNotificationPreferencesClicked()
+      {
+         EditedEnableTransferNotifications = EnableTransferNotifications;
+         AreNotificationControlsEnabled = false;
+         IsEditing = false;
+      }
+
+      protected async Task OnSaveNotificationPreferencesClickedAsync()
+      {
+         var request = new UpdateNotificationSettingRequest(EditedEnableTransferNotifications, EditedEnableTransferNotifications);
+         var (_, _) = await UserService.UpdateUserNotificationAsync(request);
+
+         EnableTransferNotifications = EditedEnableTransferNotifications;
+         AreNotificationControlsEnabled = false;
+         IsEditing = false;
+      }
+
+      protected async Task GetUserInfoAsync()
       {
          var (_, userAccountInfo) = await UserService.GetUserSettingsAsync();
          Username = userAccountInfo.Username;
+         EmailVerified = userAccountInfo.EmailVerified;
          EditedEmail = Email = userAccountInfo.Email;
          EditedAlias = Alias = userAccountInfo.Alias;
          EditedAbout = About = userAccountInfo.About;
@@ -211,13 +242,15 @@ namespace Crypter.Web.Pages
          EditedAllowKeyExchangeRequests = AllowKeyExchangeRequests = userAccountInfo.AllowKeyExchangeRequests;
          EditedMessageTransferPermission = MessageTransferPermission = (int)userAccountInfo.MessageTransferPermission;
          EditedFileTransferPermission = FileTransferPermission = (int)userAccountInfo.FileTransferPermission;
-         
+
+         EnableTransferNotifications = EditedEnableTransferNotifications = userAccountInfo.EnableTransferNotifications;
+
          X25519PrivateKey = AuthenticationService.User.X25519PrivateKey;
          Ed25519PrivateKey = AuthenticationService.User.Ed25519PrivateKey;
          ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
       }
 
-      protected async Task CopyToClipboard()
+      protected async Task CopyToClipboardAsync()
       {
          await JSRuntime.InvokeVoidAsync("copyToClipboard", ProfileUrl);
       }
