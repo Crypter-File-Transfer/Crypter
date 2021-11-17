@@ -23,6 +23,7 @@ namespace Crypter.API.Services
       private readonly IBaseTransferService<FileTransfer> FileTransferService;
 
       private readonly IEmailService EmailService;
+      private readonly IApiValidationService ApiValidationService;
 
       private readonly ITransferItemStorageService MessageTransferItemStorageService;
       private readonly ITransferItemStorageService FileTransferItemStorageService;
@@ -31,7 +32,8 @@ namespace Crypter.API.Services
          IConfiguration configuration,
          IBaseTransferService<MessageTransfer> messageTransferService,
          IBaseTransferService<FileTransfer> fileTransferService,
-         IEmailService emailService
+         IEmailService emailService,
+         IApiValidationService apiValidationService
          )
       {
          AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(1024, 3);
@@ -39,6 +41,7 @@ namespace Crypter.API.Services
          MessageTransferService = messageTransferService;
          FileTransferService = fileTransferService;
          EmailService = emailService;
+         ApiValidationService = apiValidationService;
 
          MessageTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.Message);
          FileTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.File);
@@ -46,7 +49,7 @@ namespace Crypter.API.Services
 
       private async Task<(UploadResult Result, BaseTransfer GenericTransferData, byte[] ServerEncryptedCipherText)> ReceiveTransferAsync(ITransferRequest request, Guid senderId, Guid recipientId)
       {
-         var serverHasSpaceRemaining = await ApiValidationService.IsEnoughSpaceForNewTransfer(MessageTransferService, FileTransferService, AllocatedDiskSpace, MaxUploadSize);
+         var serverHasSpaceRemaining = await ApiValidationService.IsEnoughSpaceForNewTransfer(AllocatedDiskSpace, MaxUploadSize);
          if (!serverHasSpaceRemaining)
          {
             return (UploadResult.OutOfSpace, null, null);

@@ -14,7 +14,7 @@ namespace Crypter.Core.Services.DataAccess
          _context = context;
       }
 
-      public async Task<bool> UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications)
+      public async Task UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications)
       {
          var userNotificationSettings = await ReadAsync(userId);
          if (userNotificationSettings == null)
@@ -29,7 +29,6 @@ namespace Crypter.Core.Services.DataAccess
          }
 
          await _context.SaveChangesAsync();
-         return true;
       }
 
       public async Task<IUserNotificationSetting> ReadAsync(Guid userId)

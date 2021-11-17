@@ -21,10 +21,11 @@ namespace Crypter.API.Controllers
           IBaseTransferService<FileTransfer> fileService,
           IUserService userService,
           IUserProfileService userProfileService,
-          IEmailService emailService
+          IEmailService emailService,
+          IApiValidationService apiValidationService
          )
       {
-         UploadService = new UploadService(configuration, messageService, fileService, emailService);
+         UploadService = new UploadService(configuration, messageService, fileService, emailService, apiValidationService);
          DownloadService = new DownloadService(configuration, messageService, fileService, userService, userProfileService);
       }
 

@@ -152,9 +152,8 @@ namespace Crypter.Web.Shared
             RegistrationError = true;
             RegistrationErrorText = registerResponse.Result switch
             {
-               InsertUserResult.EmptyUsername => "Invalid username",
-               InsertUserResult.EmptyPassword
-                  or InsertUserResult.PasswordRequirementsNotMet => "Invalid password",
+               InsertUserResult.InvalidUsername => "Invalid username",
+               InsertUserResult.InvalidPassword => "Invalid password",
                InsertUserResult.InvalidEmailAddress => "Invalid email address",
                InsertUserResult.UsernameTaken => "Username is already taken",
                InsertUserResult.EmailTaken => "Email address is associated with an existing account",

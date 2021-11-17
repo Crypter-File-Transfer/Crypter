@@ -6,6 +6,6 @@ namespace Crypter.Core.Interfaces
    public interface IUserNotificationSettingService
    {
       Task<IUserNotificationSetting> ReadAsync(Guid userId);
-      Task<bool> UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications);
+      Task UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications);
    }
 }
