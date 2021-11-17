@@ -54,6 +54,11 @@ namespace Crypter.Web.Pages
          await JSRuntime.InvokeVoidAsync("setPageUrl", "/user/search?query=" + SearchParams.Query + "&type=" + SearchParams.Type + "&page=" + SearchParams.Page);
          var (_, response) = await UserService.GetUserSearchResultsAsync(SearchParams);
          SearchResults = response;
+
+         if (SearchResults.Total > SearchParams.Results)
+         {
+            await SetActivePageAsync();
+         }
       }
 
       protected void ParseSearchParamsFromUri()
