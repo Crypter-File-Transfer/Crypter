@@ -39,6 +39,7 @@ namespace Crypter.API.Controllers
       private readonly IBaseTransferService<MessageTransfer> MessageService;
       private readonly IBaseTransferService<FileTransfer> FileService;
       private readonly IEmailService EmailService;
+      private readonly IApiValidationService ApiValidationService;
       private readonly byte[] TokenSecretKey;
 
       public UserController(
@@ -53,6 +54,7 @@ namespace Crypter.API.Controllers
           IBaseTransferService<MessageTransfer> messageService,
           IBaseTransferService<FileTransfer> fileService,
           IEmailService emailService,
+          IApiValidationService apiValidationService,
           IConfiguration configuration
           )
       {
@@ -67,40 +69,31 @@ namespace Crypter.API.Controllers
          MessageService = messageService;
          FileService = fileService;
          EmailService = emailService;
+         ApiValidationService = apiValidationService;
          TokenSecretKey = Encoding.UTF8.GetBytes(configuration["Secrets:TokenSigningKey"]);
       }
 
       [HttpPost("register")]
       public async Task<IActionResult> RegisterAsync([FromBody] RegisterUserRequest request)
       {
-         if (!ValidationService.IsValidPassword(request.Password))
+         var validationResult = await ApiValidationService.IsValidUserRegistrationRequest(request);
+         if (validationResult != InsertUserResult.Success)
          {
             return new BadRequestObjectResult(
-                new UserRegisterResponse(InsertUserResult.PasswordRequirementsNotMet));
+               new UserRegisterResponse(validationResult));
          }
 
-         if (ValidationService.IsPossibleEmailAddress(request.Email)
-            && !ValidationService.IsValidEmailAddress(request.Email))
-         {
-            return new BadRequestObjectResult(
-               new UserRegisterResponse(InsertUserResult.InvalidEmailAddress));
-         }
+         var userId = await UserService.InsertAsync(request.Username, request.Password, request.Email);
 
-         (var insertResult, var userId) = await UserService.InsertAsync(request.Username, request.Password, request.Email);
-         var responseObject = new UserRegisterResponse(insertResult);
+         await UserProfileService.UpsertAsync(userId, null, null);
+         await UserPrivacySettingService.UpsertAsync(userId, false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None);
 
-         if (insertResult == InsertUserResult.Success)
+         if (ValidationService.IsPossibleEmailAddress(request.Email))
          {
-            if (ValidationService.IsValidEmailAddress(request.Email))
-            {
-               BackgroundJob.Enqueue(() => EmailService.HangfireSendEmailVerificationAsync(userId));
-            }
-            return new OkObjectResult(responseObject);
+            BackgroundJob.Enqueue(() => EmailService.HangfireSendEmailVerificationAsync(userId));
          }
-         else
-         {
-            return new BadRequestObjectResult(responseObject);
-         }
+         return new OkObjectResult(
+            new UserRegisterResponse(InsertUserResult.Success));
       }
 
       [HttpPost("authenticate")]
@@ -323,6 +316,23 @@ namespace Crypter.API.Controllers
       public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request)
       {
          var userId = ClaimsParser.ParseUserId(User);
+
+         if (ValidationService.IsPossibleEmailAddress(request.Email)
+            && !ValidationService.IsValidEmailAddress(request.Email))
+         {
+            return new BadRequestObjectResult(
+               new UpdateContactInfoResponse(UpdateContactInfoResult.EmailInvalid));
+         }
+
+         var user = await UserService.ReadAsync(userId);
+         if (ValidationService.IsPossibleEmailAddress(request.Email)
+            && user.Email.ToLower() != request.Email.ToLower()
+            && !await UserService.IsEmailAddressAvailableAsync(request.Email))
+         {
+            return new BadRequestObjectResult(
+               new UpdateContactInfoResponse(UpdateContactInfoResult.EmailUnavailable));
+         }
+
          var updateContactInfoResult = await UserService.UpdateContactInfoAsync(userId, request.Email, request.CurrentPassword);
 
          if (updateContactInfoResult != UpdateContactInfoResult.Success)
@@ -331,13 +341,7 @@ namespace Crypter.API.Controllers
             return new BadRequestObjectResult(responseObject);
          }
 
-         var resetNotificationSettingResult = await UserNotificationSettingService.UpsertAsync(userId, false, false);
-         if (!resetNotificationSettingResult)
-         {
-            var responseObject = new UpdateContactInfoResponse(UpdateContactInfoResult.ErrorResettingNotificationPreferences);
-            return new BadRequestObjectResult(responseObject);
-         }
-
+         await UserNotificationSettingService.UpsertAsync(userId, false, false);
          await UserEmailVerificationService.DeleteAsync(userId);
 
          if (ValidationService.IsValidEmailAddress(request.Email))
@@ -363,15 +367,8 @@ namespace Crypter.API.Controllers
             return new BadRequestObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.EmailAddressNotVerified));
          }
 
-         var updateResult = await UserNotificationSettingService.UpsertAsync(userId, request.EnableTransferNotifications, request.EmailNotifications);
-         if (updateResult)
-         {
-            return new OkObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.Success));
-         }
-         else
-         {
-            return new BadRequestObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.UnknownFailure));
-         }
+         await UserNotificationSettingService.UpsertAsync(userId, request.EnableTransferNotifications, request.EmailNotifications);
+         return new OkObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.Success));
       }
 
       [Authorize]

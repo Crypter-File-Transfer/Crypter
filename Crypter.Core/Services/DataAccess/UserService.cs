@@ -18,35 +18,8 @@ namespace Crypter.Core.Services.DataAccess
          _context = context;
       }
 
-      public async Task<(InsertUserResult result, Guid id)> InsertAsync(string username, string password, string email)
+      public async Task<Guid> InsertAsync(string username, string password, string email)
       {
-         if (string.IsNullOrEmpty(username))
-         {
-            return (InsertUserResult.EmptyUsername, Guid.Empty);
-         }
-
-         if (string.IsNullOrEmpty(password))
-         {
-            return (InsertUserResult.EmptyPassword, Guid.Empty);
-         }
-
-         if (ValidationService.IsPossibleEmailAddress(email)
-            && !ValidationService.IsValidEmailAddress(email))
-         {
-            return (InsertUserResult.InvalidEmailAddress, Guid.Empty);
-         }
-
-         if (!await IsUsernameAvailableAsync(username))
-         {
-            return (InsertUserResult.UsernameTaken, Guid.Empty);
-         }
-
-         if (ValidationService.IsPossibleEmailAddress(email)
-            && !await IsEmailAddressAvailableAsync(email))
-         {
-            return (InsertUserResult.EmailTaken, Guid.Empty);
-         }
-
          (var passwordKey, var passwordHash) = PasswordHashService.MakeSecurePasswordHash(password);
 
          var user = new User(
@@ -60,14 +33,8 @@ namespace Crypter.Core.Services.DataAccess
              DateTime.MinValue);
          _context.User.Add(user);
 
-         var userProfile = new UserProfile(user.Id, null, null, null);
-         _context.UserProfile.Add(userProfile);
-
-         var userPrivacy = new UserPrivacySetting(user.Id, false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None);
-         _context.UserPrivacySetting.Add(userPrivacy);
-
          await _context.SaveChangesAsync();
-         return (InsertUserResult.Success, user.Id);
+         return user.Id;
       }
 
       public async Task<IUser> ReadAsync(Guid id)
@@ -85,49 +52,23 @@ namespace Crypter.Core.Services.DataAccess
       public async Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword)
       {
          var user = await ReadAsync(id);
-
-         if (user == null)
-         {
-            return UpdateContactInfoResult.UserNotFound;
-         }
-
          var passwordsMatch = PasswordHashService.VerifySecurePasswordHash(currentPassword, user.PasswordHash, user.PasswordSalt);
          if (!passwordsMatch)
          {
             return UpdateContactInfoResult.PasswordValidationFailed;
          }
 
-         if (ValidationService.IsPossibleEmailAddress(email)
-            && !ValidationService.IsValidEmailAddress(email))
-         {
-            return UpdateContactInfoResult.EmailInvalid;
-         }
-
-         if (ValidationService.IsPossibleEmailAddress(email)
-            && user.Email != email
-            && !await IsEmailAddressAvailableAsync(email))
-         {
-            return UpdateContactInfoResult.EmailUnavailable;
-         }
-
-         user.Email = email.ToLower();
+         user.Email = email;
          user.EmailVerified = false;
          await _context.SaveChangesAsync();
          return UpdateContactInfoResult.Success;
       }
 
-      public async Task<bool> UpdateEmailAddressVerification(Guid id, bool isVerified)
+      public async Task UpdateEmailAddressVerification(Guid id, bool isVerified)
       {
          var user = await ReadAsync(id);
-
-         if (user == null)
-         {
-            return false;
-         }
-
          user.EmailVerified = isVerified;
          await _context.SaveChangesAsync();
-         return true;
       }
 
       public async Task DeleteAsync(Guid id)

@@ -34,5 +34,10 @@
             return false;
          }
       }
+
+      public static bool IsValidUsername(string username)
+      {
+         return !string.IsNullOrEmpty(username);
+      }
    }
 }

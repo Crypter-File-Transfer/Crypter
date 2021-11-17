@@ -118,5 +118,32 @@ namespace Crypter.Test.Common_Tests
 
          Assert.IsTrue(result);
       }
+
+      [Test]
+      public void Null_Is_Not_A_Valid_Username()
+      {
+         string username = null;
+         var result = ValidationService.IsValidUsername(username);
+
+         Assert.IsFalse(result);
+      }
+
+      [Test]
+      public void Empty_String_Is_Not_A_Valid_Username()
+      {
+         string username = "";
+         var result = ValidationService.IsValidUsername(username);
+
+         Assert.IsFalse(result);
+      }
+
+      [Test]
+      public void Whitespace_Is_A_Valid_Username()
+      {
+         string username = " ";
+         var result = ValidationService.IsValidUsername(username);
+
+         Assert.IsTrue(result);
+      }
    }
 }

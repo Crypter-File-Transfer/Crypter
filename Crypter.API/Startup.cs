@@ -45,6 +45,7 @@ namespace CrypterAPI
          services.AddScoped<IBaseTransferService<FileTransfer>, FileTransferItemService>();
 
          services.AddScoped<IEmailService, EmailService>();
+         services.AddScoped<IApiValidationService, ApiValidationService>();
 
          services.AddHangfire(config =>
               config.UsePostgreSqlStorage(Configuration.GetConnectionString("HangfireConnection")));
