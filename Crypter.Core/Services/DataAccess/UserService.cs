@@ -24,8 +24,8 @@ namespace Crypter.Core.Services.DataAccess
 
          var user = new User(
              Guid.NewGuid(),
-             username.ToLower(),
-             email?.ToLower(),
+             username,
+             email,
              passwordHash,
              passwordKey,
              false,
