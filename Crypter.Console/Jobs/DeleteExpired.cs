@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Console.Jobs
 {
-   public class DeleteExpired
+   internal class DeleteExpired
    {
       private string FileStorePath { get; }
       private IBaseTransferService<MessageTransfer> MessageService { get; }
