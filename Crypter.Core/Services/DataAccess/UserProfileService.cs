@@ -7,16 +7,16 @@ namespace Crypter.Core.Services.DataAccess
 {
    public class UserProfileService : IUserProfileService
    {
-      private readonly DataContext _context;
+      private readonly DataContext Context;
 
       public UserProfileService(DataContext context)
       {
-         _context = context;
+         Context = context;
       }
 
       public async Task<IUserProfile> ReadAsync(Guid id)
       {
-         return await _context.UserProfile.FindAsync(id);
+         return await Context.UserProfile.FindAsync(id);
       }
 
       public async Task<bool> UpsertAsync(Guid id, string alias, string about)
@@ -25,7 +25,7 @@ namespace Crypter.Core.Services.DataAccess
          if (userProfile == null)
          {
             var newProfile = new UserProfile(id, alias, about, null);
-            _context.UserProfile.Add(newProfile);
+            Context.UserProfile.Add(newProfile);
          }
          else
          {
@@ -33,7 +33,7 @@ namespace Crypter.Core.Services.DataAccess
             userProfile.About = about;
          }
 
-         await _context.SaveChangesAsync();
+         await Context.SaveChangesAsync();
          return true;
       }
    }

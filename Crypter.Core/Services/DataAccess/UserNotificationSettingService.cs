@@ -7,11 +7,11 @@ namespace Crypter.Core.Services.DataAccess
 {
    public class UserNotificationSettingService : IUserNotificationSettingService
    {
-      private readonly DataContext _context;
+      private readonly DataContext Context;
 
       public UserNotificationSettingService(DataContext context)
       {
-         _context = context;
+         Context = context;
       }
 
       public async Task UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications)
@@ -20,7 +20,7 @@ namespace Crypter.Core.Services.DataAccess
          if (userNotificationSettings == null)
          {
             var newUserNotificationSettings = new UserNotificationSetting(userId, enableTransferNotifications, emailNotifications);
-            _context.UserNotificationSetting.Add(newUserNotificationSettings);
+            Context.UserNotificationSetting.Add(newUserNotificationSettings);
          }
          else
          {
@@ -28,12 +28,12 @@ namespace Crypter.Core.Services.DataAccess
             userNotificationSettings.EmailNotifications = emailNotifications;
          }
 
-         await _context.SaveChangesAsync();
+         await Context.SaveChangesAsync();
       }
 
       public async Task<IUserNotificationSetting> ReadAsync(Guid userId)
       {
-         return await _context.UserNotificationSetting.FindAsync(userId);
+         return await Context.UserNotificationSetting.FindAsync(userId);
       }
    }
 }

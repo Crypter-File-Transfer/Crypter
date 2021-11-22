@@ -9,36 +9,36 @@ namespace Crypter.Core.Services.DataAccess
 {
    public class UserEmailVerificationService : IUserEmailVerificationService
    {
-      private readonly DataContext _context;
+      private readonly DataContext Context;
 
       public UserEmailVerificationService(DataContext context)
       {
-         _context = context;
+         Context = context;
       }
 
       public async Task<bool> InsertAsync(Guid userId, Guid code, byte[] verificationKey)
       {
          var emailVerification = new UserEmailVerification(userId, code, verificationKey, DateTime.UtcNow);
-         _context.UserEmailVerification.Add(emailVerification);
-         await _context.SaveChangesAsync();
+         Context.UserEmailVerification.Add(emailVerification);
+         await Context.SaveChangesAsync();
          return true;
       }
 
       public async Task<IUserEmailVerification> ReadAsync(Guid userId)
       {
-         return await _context.UserEmailVerification.FindAsync(userId);
+         return await Context.UserEmailVerification.FindAsync(userId);
       }
 
       public async Task<IUserEmailVerification> ReadCodeAsync(Guid code)
       {
-         return await _context.UserEmailVerification
+         return await Context.UserEmailVerification
             .Where(x => x.Code == code)
             .FirstOrDefaultAsync();
       }
 
       public async Task DeleteAsync(Guid userId)
       {
-         await _context.Database
+         await Context.Database
              .ExecuteSqlRawAsync("DELETE FROM \"UserEmailVerification\" WHERE \"UserEmailVerification\".\"Owner\" = {0}", userId);
       }
    }

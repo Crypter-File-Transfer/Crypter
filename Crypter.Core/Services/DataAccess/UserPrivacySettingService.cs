@@ -10,11 +10,11 @@ namespace Crypter.Core.Services.DataAccess
 {
    public class UserPrivacySettingService : IUserPrivacySettingService
    {
-      private readonly DataContext _context;
+      private readonly DataContext Context;
 
       public UserPrivacySettingService(DataContext context)
       {
-         _context = context;
+         Context = context;
       }
 
       public async Task<bool> UpsertAsync(Guid userId, bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission receiveFilesPermission, UserItemTransferPermission receiveMessagesPermission)
@@ -23,7 +23,7 @@ namespace Crypter.Core.Services.DataAccess
          if (userPrivacySettings == null)
          {
             var newPrivacySettings = new UserPrivacySetting(userId, allowKeyExchangeRequests, visibilityLevel, receiveFilesPermission, receiveMessagesPermission);
-            _context.UserPrivacySetting.Add(newPrivacySettings);
+            Context.UserPrivacySetting.Add(newPrivacySettings);
          }
          else
          {
@@ -33,13 +33,13 @@ namespace Crypter.Core.Services.DataAccess
             userPrivacySettings.ReceiveMessages = receiveMessagesPermission;
          }
 
-         await _context.SaveChangesAsync();
+         await Context.SaveChangesAsync();
          return true;
       }
 
       public async Task<IUserPrivacySetting> ReadAsync(Guid userId)
       {
-         return await _context.UserPrivacySetting.FindAsync(userId);
+         return await Context.UserPrivacySetting.FindAsync(userId);
       }
 
       public async Task<bool> IsUserViewableByPartyAsync(Guid userId, Guid otherPartyId)
@@ -49,7 +49,7 @@ namespace Crypter.Core.Services.DataAccess
             return true;
          }
 
-         var userVisibility = (await _context.UserPrivacySetting
+         var userVisibility = (await Context.UserPrivacySetting
             .Where(x => x.Owner == userId)
             .FirstOrDefaultAsync())
             .Visibility;
@@ -66,7 +66,7 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<bool> DoesUserAcceptMessagesFromOtherPartyAsync(Guid userId, Guid otherPartyId)
       {
-         var messageTransferPermission = (await _context.UserPrivacySetting
+         var messageTransferPermission = (await Context.UserPrivacySetting
             .Where(x => x.Owner == userId)
             .FirstOrDefaultAsync())
             .ReceiveMessages;
@@ -84,7 +84,7 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<bool> DoesUserAcceptFilesFromOtherPartyAsync(Guid userId, Guid otherPartyId)
       {
-         var fileTransferPermission = (await _context.UserPrivacySetting
+         var fileTransferPermission = (await Context.UserPrivacySetting
             .Where(x => x.Owner == userId)
             .FirstOrDefaultAsync())
             .ReceiveFiles;

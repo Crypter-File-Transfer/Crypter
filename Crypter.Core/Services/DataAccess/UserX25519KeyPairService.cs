@@ -9,23 +9,23 @@ namespace Crypter.Core.Services.DataAccess
 {
    public class UserX25519KeyPairService : IUserPublicKeyPairService<UserX25519KeyPair>
    {
-      private readonly DataContext _context;
+      private readonly DataContext Context;
 
       public UserX25519KeyPairService(DataContext context)
       {
-         _context = context;
+         Context = context;
       }
 
       public async Task<IUserPublicKeyPair> GetUserPublicKeyPairAsync(Guid userId)
       {
-         return await _context.UserX25519KeyPair
+         return await Context.UserX25519KeyPair
              .Where(x => x.Owner == userId)
              .FirstOrDefaultAsync();
       }
 
       public async Task<string> GetUserPublicKeyAsync(Guid userId)
       {
-         var keyPair = await _context.UserX25519KeyPair
+         var keyPair = await Context.UserX25519KeyPair
              .Where(x => x.Owner == userId)
              .FirstOrDefaultAsync();
          return keyPair?.PublicKey;
@@ -45,8 +45,8 @@ namespace Crypter.Core.Services.DataAccess
              publicKey,
              DateTime.UtcNow);
 
-         _context.UserX25519KeyPair.Add(key);
-         await _context.SaveChangesAsync();
+         Context.UserX25519KeyPair.Add(key);
+         await Context.SaveChangesAsync();
          return true;
       }
    }
