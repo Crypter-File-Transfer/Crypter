@@ -28,5 +28,6 @@ namespace Crypter.Core
       public DbSet<UserNotificationSetting> UserNotificationSetting { get; set; }
       public DbSet<FileTransfer> FileTransfer { get; set; }
       public DbSet<MessageTransfer> MessageTransfer { get; set; }
+      public DbSet<Schema> Schema { get; set; }
    }
 }
