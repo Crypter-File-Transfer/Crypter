@@ -1,7 +1,5 @@
 ﻿-- Table: public.UserPrivacySetting
 
--- DROP TABLE IF EXISTS public."UserPrivacySetting";
-
 CREATE TABLE IF NOT EXISTS public."UserPrivacySetting"
 (
     "Owner" uuid NOT NULL,

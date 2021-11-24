@@ -1,7 +1,5 @@
 ﻿-- Table: public.UserProfile
 
--- DROP TABLE IF EXISTS public."UserProfile";
-
 CREATE TABLE IF NOT EXISTS public."UserProfile"
 (
     "Owner" uuid NOT NULL,

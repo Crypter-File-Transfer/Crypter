@@ -31,10 +31,11 @@ namespace Crypter.Console.Jobs
                await GetTableCreationScriptAsync("Create_UserNotificationSetting.sql"),
                await GetTableCreationScriptAsync("Create_UserPrivacySetting.sql"),
                await GetTableCreationScriptAsync("Create_UserProfile.sql"),
-               await GetTableCreationScriptAsync("Create_UserX25519KeyPair.sql")
+               await GetTableCreationScriptAsync("Create_UserX25519KeyPair.sql"),
+               await GetTableCreationScriptAsync("Create_Schema.sql")
             };
 
-            scripts.ForEach(x => ExecuteSqlScript(connection, x));
+            scripts.ForEach(x => ExecuteSqlScriptNonQuery(connection, x));
          }
          catch (System.Exception e)
          {
@@ -64,10 +65,36 @@ namespace Crypter.Console.Jobs
                await GetTableDropScriptAsync("Drop_UserPrivacySetting.sql"),
                await GetTableDropScriptAsync("Drop_UserProfile.sql"),
                await GetTableDropScriptAsync("Drop_UserX25519KeyPair.sql"),
-               await GetTableDropScriptAsync("Drop_User.sql")
+               await GetTableDropScriptAsync("Drop_User.sql"),
+               await GetTableDropScriptAsync("Drop_Schema.sql")
             };
 
-            scripts.ForEach(x => ExecuteSqlScript(connection, x));
+            scripts.ForEach(x => ExecuteSqlScriptNonQuery(connection, x));
+         }
+         catch (System.Exception e)
+         {
+            System.Console.WriteLine(e.Message);
+            throw;
+         }
+         finally
+         {
+            connection.Close();
+         }
+      }
+      
+      /// <summary>
+      /// Perform the first, codified migration of the Crypter database.
+      /// </summary>
+      /// <returns></returns>
+      public async Task PerformInitialMigration()
+      {
+         await using var connection = new NpgsqlConnection(ConnectionString);
+         await connection.OpenAsync();
+
+         try
+         {
+            var migration = await GetMigrationScriptAsync("Migration1.sql");
+            ExecuteSqlScriptNonQuery(connection, migration);
          }
          catch (System.Exception e)
          {
@@ -106,7 +133,20 @@ namespace Crypter.Console.Jobs
          return await File.ReadAllTextAsync(filePath);
       }
 
-      private static void ExecuteSqlScript(NpgsqlConnection openConnection, string sql)
+      private static async Task<string> GetMigrationScriptAsync(string scriptFilename)
+      {
+         var pathSegments = new string[]
+         {
+            "SqlScripts",
+            "Crypter",
+            "Migrations",
+            scriptFilename
+         };
+         var filePath = Path.Join(pathSegments);
+         return await File.ReadAllTextAsync(filePath);
+      }
+
+      private static void ExecuteSqlScriptNonQuery(NpgsqlConnection openConnection, string sql)
       {
          using var cmd = new NpgsqlCommand(sql, openConnection);
          cmd.ExecuteNonQuery();

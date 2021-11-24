@@ -1,7 +1,5 @@
 ﻿--Table: public.UserX25519KeyPair
 
--- DROP TABLE IF EXISTS public."UserX25519KeyPair";
-
 CREATE TABLE IF NOT EXISTS public."UserX25519KeyPair"
 (
     "Id" uuid NOT NULL,
@@ -24,11 +22,3 @@ ALTER TABLE IF EXISTS public."UserX25519KeyPair"
 GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."UserX25519KeyPair" TO cryptuser;
 
 GRANT ALL ON TABLE public."UserX25519KeyPair" TO postgres;
---Index: IX_UserX25519KeyPair_Owner
-
--- DROP INDEX IF EXISTS public."IX_UserX25519KeyPair_Owner";
-
-CREATE UNIQUE INDEX IF NOT EXISTS "IX_UserX25519KeyPair_Owner"
-    ON public."UserX25519KeyPair" USING btree
-    ("Owner" ASC NULLS LAST)
-    TABLESPACE pg_default;
