@@ -42,7 +42,7 @@ namespace Crypter.Web.Pages
       protected override async Task OnInitializedAsync()
       {
          Loading = true;
-         await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - Decrypt");
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - Decrypt");
          await PrepareFilePreviewAsync(); 
          await base.OnInitializedAsync();
          Loading = false;

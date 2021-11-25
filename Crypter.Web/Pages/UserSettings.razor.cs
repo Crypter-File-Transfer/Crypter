@@ -78,7 +78,7 @@ namespace Crypter.Web.Pages
          ArePasswordControlsEnabled = false;
          ArePrivacyControlsEnabled = false;
 
-         await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Search");
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Search");
 
          if (AuthenticationService.User == null)
          {
@@ -254,7 +254,7 @@ namespace Crypter.Web.Pages
 
       protected async Task CopyToClipboardAsync()
       {
-         await JSRuntime.InvokeVoidAsync("copyToClipboard", ProfileUrl);
+         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", ProfileUrl);
       }
    }
 }

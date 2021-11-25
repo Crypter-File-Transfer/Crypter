@@ -29,7 +29,7 @@ namespace Crypter.Web.Pages
 
       protected override async Task OnInitializedAsync()
       {
-         await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Search");
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Search");
 
          if (AuthenticationService.User == null)
          {
@@ -51,7 +51,7 @@ namespace Crypter.Web.Pages
             return;
          }
 
-         await JSRuntime.InvokeVoidAsync("setPageUrl", "/user/search?query=" + SearchParams.Query + "&type=" + SearchParams.Type + "&page=" + SearchParams.Page);
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageUrl", "/user/search?query=" + SearchParams.Query + "&type=" + SearchParams.Type + "&page=" + SearchParams.Page);
          var (_, response) = await UserService.GetUserSearchResultsAsync(SearchParams);
          SearchResults = response;
 
@@ -84,7 +84,7 @@ namespace Crypter.Web.Pages
 
       protected async Task SetActivePageAsync()
       {
-         await JSRuntime.InvokeVoidAsync("setActivePage", SearchParams.Page);
+         await JSRuntime.InvokeVoidAsync("Crypter.SetActivePage", SearchParams.Page);
       }
 
       protected void GoToPage(string pageurl)

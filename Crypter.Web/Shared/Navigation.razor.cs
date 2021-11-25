@@ -52,7 +52,7 @@ namespace Crypter.Web.Shared
 
       public async Task CollapseNavigationMenuAsync()
       {
-         await JSRuntime.InvokeVoidAsync("collapseNavBar");
+         await JSRuntime.InvokeVoidAsync("Crypter.CollapseNavBar");
          StateHasChanged();
       }
 

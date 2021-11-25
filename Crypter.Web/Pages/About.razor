@@ -54,6 +54,6 @@
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await JsRuntime.InvokeVoidAsync("setPageTitle", "Crypter - About");
+        await JsRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - About");
     }
 }

@@ -46,7 +46,7 @@ namespace Crypter.Web.Pages
       {
          Loading = true;
 
-         await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Profile");
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Profile");
          await base.OnInitializedAsync();
 
          await PrepareUserProfileAsync();

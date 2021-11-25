@@ -34,7 +34,7 @@ namespace Crypter.Web.Pages
             NavigationManager.NavigateTo("/");
          }
 
-         await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Home");
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Home");
          await base.OnInitializedAsync();
 
          Sent = await GetUserSentItems();
