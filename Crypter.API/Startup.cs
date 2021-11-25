@@ -14,8 +14,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Linq;
-using System.Security.Claims;
 using System.Text;
 
 namespace CrypterAPI
@@ -43,6 +41,7 @@ namespace CrypterAPI
          services.AddScoped<IUserNotificationSettingService, UserNotificationSettingService>();
          services.AddScoped<IBaseTransferService<MessageTransfer>, MessageTransferItemService>();
          services.AddScoped<IBaseTransferService<FileTransfer>, FileTransferItemService>();
+         services.AddScoped<ISchemaService, SchemaService>();
 
          services.AddScoped<IEmailService, EmailService>();
          services.AddScoped<IApiValidationService, ApiValidationService>();

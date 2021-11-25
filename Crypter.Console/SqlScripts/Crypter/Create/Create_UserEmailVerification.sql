@@ -1,7 +1,5 @@
 ﻿-- Table: public.UserEmailVerification
 
--- DROP TABLE IF EXISTS public."UserEmailVerification";
-
 CREATE TABLE IF NOT EXISTS public."UserEmailVerification"
 (
     "Owner" uuid NOT NULL,

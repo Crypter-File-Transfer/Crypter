@@ -1,7 +1,5 @@
 ﻿-- Table: public.UserNotificationSetting
 
--- DROP TABLE IF EXISTS public."UserNotificationSetting";
-
 CREATE TABLE IF NOT EXISTS public."UserNotificationSetting"
 (
     "Owner" uuid NOT NULL,
