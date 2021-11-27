@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Services.API
 {
-   public interface ITransferService
+   public interface ITransferApiService
    {
       Task<(HttpStatusCode HttpStatus, TransferUploadResponse Response)> UploadMessageTransferAsync(MessageTransferRequest uploadRequest, Guid recipient, bool withAuthentication);
       Task<(HttpStatusCode HttpStatus, TransferUploadResponse Response)> UploadFileTransferAsync(FileTransferRequest uploadRequest, Guid recipient, bool withAuthentication);
@@ -19,12 +19,12 @@ namespace Crypter.Web.Services.API
       Task<(HttpStatusCode HttpStatus, GetTransferCiphertextResponse Response)> DownloadFileCiphertextAsync(GetTransferCiphertextRequest downloadRequest, bool withAuthentication);
    }
 
-   public class TransferService : ITransferService
+   public class TransferApiService : ITransferApiService
    {
       private readonly string BaseTransferUrl;
       private readonly IHttpService HttpService;
 
-      public TransferService(AppSettings appSettings, IHttpService httpService)
+      public TransferApiService(AppSettings appSettings, IHttpService httpService)
       {
          BaseTransferUrl = $"{appSettings.ApiBaseUrl}/transfer";
          HttpService = httpService;

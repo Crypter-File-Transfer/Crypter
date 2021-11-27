@@ -17,19 +17,19 @@ namespace Crypter.Web.Services
 
    public class HttpService : IHttpService
    {
-      private readonly HttpClient _httpClient;
-      private readonly NavigationManager _navigationManager;
-      private readonly ILocalStorageService _localStorageService;
+      private readonly HttpClient HttpClient;
+      private readonly NavigationManager NavigationManager;
+      private readonly ILocalStorageService LocalStorage;
 
       public HttpService(
           HttpClient httpClient,
           NavigationManager navigationManager,
-          ILocalStorageService localStorageService
+          ILocalStorageService localStorage
       )
       {
-         _httpClient = httpClient;
-         _navigationManager = navigationManager;
-         _localStorageService = localStorageService;
+         HttpClient = httpClient;
+         NavigationManager = navigationManager;
+         LocalStorage = localStorage;
       }
 
       public async Task<(HttpStatusCode HttpStatus, T Payload)> Get<T>(string uri, bool withAuthorization)
@@ -52,19 +52,18 @@ namespace Crypter.Web.Services
 
          if (withAuthorization)
          {
-            var user = await _localStorageService.GetItem<User>("user");
-            if (user == null)
+            var token = (await LocalStorage.GetItem<UserSession>(StoredObjectType.UserSession))?.Token;
+            if (string.IsNullOrEmpty(token))
             {
                return HandleMissingUser<T>();
             }
-
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
          }
 
          HttpResponseMessage response;
          try
          {
-            response = await _httpClient.SendAsync(request);
+            response = await HttpClient.SendAsync(request);
          }
          catch (Exception)
          {
@@ -84,7 +83,7 @@ namespace Crypter.Web.Services
 
       private (HttpStatusCode HttpStatus, T Payload) HandleMissingUser<T>()
       {
-         _navigationManager.NavigateTo("/", true);
+         NavigationManager.NavigateTo("/");
          return (HttpStatusCode.Unauthorized, default);
       }
    }

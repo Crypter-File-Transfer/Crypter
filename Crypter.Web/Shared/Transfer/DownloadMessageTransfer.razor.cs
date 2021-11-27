@@ -1,5 +1,6 @@
 ﻿using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
+using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Text;
@@ -23,7 +24,7 @@ namespace Crypter.Web.Shared.Transfer
          ErrorMessage = "";
 
          await SetNewDecryptionStatus("Decoding keys");
-         (var decodeSuccess, var recipientX25519PrivateKeyPEM) = DecodeX25519RecipientKey();
+         (var decodeSuccess, var recipientX25519PrivateKeyPEM) = await DecodeX25519RecipientKey();
          if (!decodeSuccess)
          {
             return;
@@ -45,7 +46,7 @@ namespace Crypter.Web.Shared.Transfer
 
          // Get the signature before downloading the ciphertext
          // Remember, the API will DELETE the ciphertext and it's database records as soon as the ciphertext is downloaded
-         var requestWithAuth = AuthenticationService.User is not null;
+         var requestWithAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
          var signatureRequest = new GetTransferSignatureRequest(TransferId);
          var (_, signatureResponse) = await TransferService.DownloadMessageSignatureAsync(signatureRequest, requestWithAuth);
          byte[] signature = Convert.FromBase64String(signatureResponse.SignatureBase64);

@@ -15,10 +15,10 @@ namespace Crypter.Web.Pages
       IJSRuntime JSRuntime { get; set; }
 
       [Inject]
-      IUserService UserService { get; set; }
+      IUserApiService UserService { get; set; }
 
       [Inject]
-      IAuthenticationService AuthenticationService { get; set; }
+      ILocalStorageService LocalStorage { get; set; }
 
       [Parameter]
       public string Username { get; set; }
@@ -37,34 +37,21 @@ namespace Crypter.Web.Pages
       protected string UserX25519PublicKey;
       protected string UserEd25519PublicKey;
 
-      protected bool IsVisitorAuthenticated = false;
-      protected Guid VisitorId;
-      protected string VisitorX25519PrivateKey;
-      protected string VisitorEd25519PrivateKey;
-
       protected override async Task OnInitializedAsync()
       {
          Loading = true;
 
-         await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Profile");
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Profile");
          await base.OnInitializedAsync();
 
          await PrepareUserProfileAsync();
-
-         if (AuthenticationService.User is not null)
-         {
-            IsVisitorAuthenticated = true;
-            VisitorId = AuthenticationService.User.Id;
-            VisitorX25519PrivateKey = AuthenticationService.User.X25519PrivateKey;
-            VisitorEd25519PrivateKey = AuthenticationService.User.Ed25519PrivateKey;
-         }
 
          Loading = false;
       }
 
       protected async Task PrepareUserProfileAsync()
       {
-         var requestWithAuthentication = AuthenticationService.User is not null;
+         var requestWithAuthentication = LocalStorage.HasItem(StoredObjectType.UserSession);
          var (httpStatus, response) = await UserService.GetUserPublicProfileAsync(Username, requestWithAuthentication);
          ProfileFound = httpStatus != HttpStatusCode.NotFound;
          if (ProfileFound)

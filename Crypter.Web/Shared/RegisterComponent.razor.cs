@@ -15,10 +15,10 @@ namespace Crypter.Web.Shared
       protected NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected IAuthenticationService AuthenticationService { get; set; }
+      protected ILocalStorageService LocalStorageService { get; set; }
 
       [Inject]
-      protected IUserService UserService { get; set; }
+      protected IUserApiService UserService { get; set; }
 
       protected UserRegistration RegistrationInfo = new();
 
@@ -48,7 +48,7 @@ namespace Crypter.Web.Shared
 
       protected override async Task OnInitializedAsync()
       {
-         if (AuthenticationService.User != null)
+         if (LocalStorageService.HasItem(StoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/user");
          }

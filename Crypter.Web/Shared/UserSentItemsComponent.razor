@@ -29,7 +29,7 @@
                      @if (string.IsNullOrEmpty(item.RecipientUsername))
                      {
                         <h6 class="card-subtitle my-2">
-                           Filename: <a href="@($"{NavigationManager.BaseUri}decrypt/file/{item.Id}")">@item.Name</a>
+                           Filename: <a href="@($"/decrypt/file/{item.Id}")">@item.Name</a>
                         </h6>
                      }
                      else
@@ -44,7 +44,7 @@
                      @if (string.IsNullOrEmpty(item.RecipientUsername))
                      {
                         <h6 class="card-subtitle my-2">
-                           Subject: <a href="@($"{NavigationManager.BaseUri}decrypt/message/{item.Id}")">@item.Name</a>
+                           Subject: <a href="@($"/decrypt/message/{item.Id}")">@item.Name</a>
                         </h6>
                      }
                      else

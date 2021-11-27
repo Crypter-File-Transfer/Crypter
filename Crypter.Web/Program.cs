@@ -30,14 +30,14 @@ namespace Crypter.Web
             .AddScoped<IAuthenticationService, AuthenticationService>()
             .AddScoped<IHttpService, HttpService>()
             .AddScoped<ILocalStorageService, LocalStorageService>()
-            .AddScoped<ITransferService, TransferService>()
-            .AddScoped<IUserService, UserService>()
-            .AddScoped<IMetricsService, MetricsService>();
+            .AddScoped<ITransferApiService, TransferApiService>()
+            .AddScoped<IUserApiService, UserApiService>()
+            .AddScoped<IMetricsApiService, MetricsApiService>()
+            .AddScoped<IUserKeysService, UserKeysService>();
 
          var host = builder.Build();
 
          var authenticationService = host.Services.GetRequiredService<IAuthenticationService>();
-         await authenticationService.Initialize();
 
          await host.RunAsync();
       }

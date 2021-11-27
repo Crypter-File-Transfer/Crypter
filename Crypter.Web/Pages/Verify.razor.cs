@@ -18,7 +18,7 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IUserService UserService { get; set; }
+      IUserApiService UserService { get; set; }
 
       protected EmailVerificationParams EmailVerificationParams = new();
 
@@ -27,7 +27,7 @@ namespace Crypter.Web.Pages
 
       protected override async Task OnInitializedAsync()
       {
-         await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - Verify");
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - Verify");
          ParseVerificationParamsFromUri();
          await VerifyEmailAddressAsync();
 

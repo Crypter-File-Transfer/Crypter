@@ -2,6 +2,7 @@
 using Crypter.Contracts.Requests;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
+using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components.Forms;
 using System;
 using System.Collections.Generic;
@@ -97,7 +98,7 @@ namespace Crypter.Web.Shared.Transfer
             : SelectedFile.ContentType;
          var encodedClientIV = Convert.ToBase64String(iv);
 
-         var withAuth = AuthenticationService.User is not null;
+         var withAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
          var request = new FileTransferRequest(SelectedFile.Name, fileType, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey);
          var (_, response) = await UploadService.UploadFileTransferAsync(request, RecipientId, withAuth);
 

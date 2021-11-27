@@ -16,6 +16,9 @@ namespace Crypter.Web.Shared
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
+      protected ILocalStorageService LocalStorageService { get; set; }
+
+      [Inject]
       protected IAuthenticationService AuthenticationService { get; set; }
 
       protected Modal.UploadFileTransferModal FileTransferModal { get; set; }
@@ -27,9 +30,9 @@ namespace Crypter.Web.Shared
          await base.OnInitializedAsync();
       }
 
-      protected async Task OnLogoutClicked()
+      protected void OnLogoutClicked()
       {
-         await AuthenticationService.Logout();
+         AuthenticationService.Logout();
       }
 
       protected void HandleLocationChanged(object sender, LocationChangedEventArgs e)
@@ -40,19 +43,19 @@ namespace Crypter.Web.Shared
          });
       }
 
-      protected void OnEncryptFileClicked()
+      protected async Task OnEncryptFileClicked()
       {
-         FileTransferModal.Open();
+         await FileTransferModal.Open();
       }
 
-      protected void OnEncryptMessageClicked()
+      protected async Task OnEncryptMessageClicked()
       {
-         MessageTransferModal.Open();
+         await MessageTransferModal.Open();
       }
 
       public async Task CollapseNavigationMenuAsync()
       {
-         await JSRuntime.InvokeVoidAsync("collapseNavBar");
+         await JSRuntime.InvokeVoidAsync("Crypter.CollapseNavBar");
          StateHasChanged();
       }
 

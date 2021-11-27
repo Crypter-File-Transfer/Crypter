@@ -15,10 +15,10 @@ namespace Crypter.Web.Pages
       IJSRuntime JSRuntime { get; set; }
 
       [Inject]
-      IAuthenticationService AuthenticationService { get; set; }
+      ILocalStorageService LocalStorage { get; set; }
 
       [Inject]
-      protected ITransferService TransferService { get; set; }
+      protected ITransferApiService TransferService { get; set; }
 
       [Parameter]
       public Guid TransferId { get; set; }
@@ -41,7 +41,7 @@ namespace Crypter.Web.Pages
       protected override async Task OnInitializedAsync()
       {
          Loading = true;
-         await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - Decrypt");
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - Decrypt");
          await PrepareMessagePreviewAsync();
          await base.OnInitializedAsync();
          Loading = false;
@@ -50,7 +50,7 @@ namespace Crypter.Web.Pages
       protected async Task PrepareMessagePreviewAsync()
       {
          var messagePreviewRequest = new GetTransferPreviewRequest(TransferId);
-         var withAuth = AuthenticationService.User is not null;
+         var withAuth = LocalStorage.HasItem(StoredObjectType.UserSession);
          var (httpStatus, response) = await TransferService.DownloadMessagePreviewAsync(messagePreviewRequest, withAuth);
 
          ItemFound = httpStatus != HttpStatusCode.NotFound;
