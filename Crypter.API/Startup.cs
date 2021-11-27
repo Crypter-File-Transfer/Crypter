@@ -6,6 +6,7 @@ using Crypter.Core.Models;
 using Crypter.Core.Services.DataAccess;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -15,6 +16,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CrypterAPI
 {
@@ -55,29 +57,27 @@ namespace CrypterAPI
          var tokenSigningKey = Encoding.UTF8.GetBytes(
             Configuration.GetValue<string>("Secrets:TokenSigningKey"));
 
-         services.AddAuthentication(x =>
+         services.AddAuthentication(options =>
          {
-            x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
          })
-         .AddJwtBearer(x =>
+         .AddJwtBearer(options =>
          {
-            x.Events = new JwtBearerEvents
+            options.Events = new JwtBearerEvents
             {
                OnTokenValidated = async context =>
                {
-                  var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
-                  var userIdFromJWT = ClaimsParser.ParseUserId(context.Principal);
-
-                  var user = await userService.ReadAsync(userIdFromJWT);
-                  if (user == null)
+                  if (!await UserStillExists(context))
                   {
                      context.Fail("Unauthorized");
                   }
                }
             };
-            x.SaveToken = true;
-            x.TokenValidationParameters = new TokenValidationParameters
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
             {
                ValidAudience = "crypter.dev",
                ValidIssuer = "crypter.dev/api",
@@ -118,6 +118,15 @@ namespace CrypterAPI
             endpoints.MapControllers();
             endpoints.MapHangfireDashboard();
          });
+      }
+
+      private static async Task<bool> UserStillExists(TokenValidatedContext context)
+      {
+         var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
+         var userIdFromJWT = ClaimsParser.ParseUserId(context.Principal);
+
+         var user = await userService.ReadAsync(userIdFromJWT);
+         return user != null;
       }
    }
 }

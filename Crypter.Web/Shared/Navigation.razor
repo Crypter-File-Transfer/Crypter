@@ -1,11 +1,12 @@
-﻿@inherits NavigationBase
+﻿@using Crypter.Web.Services
+@inherits NavigationBase
 
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" aria-label="Toggle navigation">
    <span class="navbar-toggler-icon"></span>
 </button>
 <div class="collapse navbar-collapse justify-content-end" id="mainNavigation">
    <ul class="navbar-nav">
-      @if (AuthenticationService.User is null)
+      @if (!LocalStorageService.HasItem(StoredObjectType.UserSession))
       {
          <li class="nav-item m-1">
             <a class="btn btn-secondary" href="/login">Login</a>

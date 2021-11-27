@@ -15,10 +15,10 @@ namespace Crypter.Web.Pages
       IJSRuntime JSRuntime { get; set; }
 
       [Inject]
-      IAuthenticationService AuthenticationService { get; set; }
+      ILocalStorageService LocalStorage { get; set; }
 
       [Inject]
-      protected ITransferService TransferService { get; set; }
+      protected ITransferApiService TransferService { get; set; }
 
       [Parameter]
       public Guid TransferId { get; set; }
@@ -51,7 +51,7 @@ namespace Crypter.Web.Pages
       protected async Task PrepareFilePreviewAsync()
       {
          var filePreviewRequest = new GetTransferPreviewRequest(TransferId);
-         var withAuth = AuthenticationService.User is not null;
+         var withAuth = LocalStorage.HasItem(StoredObjectType.UserSession);
          var (httpStatus, response) = await TransferService.DownloadFilePreviewAsync(filePreviewRequest, withAuth);
 
          ItemFound = httpStatus != HttpStatusCode.NotFound;

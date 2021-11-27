@@ -19,10 +19,10 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IAuthenticationService AuthenticationService { get; set; }
+      ILocalStorageService LocalStorage { get; set; }
 
       [Inject]
-      IUserService UserService { get; set; }
+      IUserApiService UserService { get; set; }
 
       protected UserSearchParams SearchParams = new();
       protected UserSearchResponse SearchResults;
@@ -31,7 +31,7 @@ namespace Crypter.Web.Pages
       {
          await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Search");
 
-         if (AuthenticationService.User == null)
+         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/");
             return;

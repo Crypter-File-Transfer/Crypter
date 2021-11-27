@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Services.API
 {
-   public interface IUserService
+   public interface IUserApiService
    {
       Task<(HttpStatusCode HttpStatus, UserAuthenticateResponse Response)> AuthenticateUserAsync(AuthenticateUserRequest loginRequest);
       Task<(HttpStatusCode HttpStatus, UserAuthenticationRefreshResponse Response)> RefreshAuthenticationAsync();
@@ -27,12 +27,12 @@ namespace Crypter.Web.Services.API
       Task<(HttpStatusCode HttpStatus, UserEmailVerificationResponse Response)> VerifyUserEmailAddressAsync(VerifyUserEmailAddressRequest verificationInfo);
    }
 
-   public class UserService : IUserService
+   public class UserApiService : IUserApiService
    {
       private readonly string BaseUserUrl;
       private readonly IHttpService HttpService;
 
-      public UserService(AppSettings appSettings, IHttpService httpService)
+      public UserApiService(AppSettings appSettings, IHttpService httpService)
       {
          BaseUserUrl = $"{appSettings.ApiBaseUrl}/user";
          HttpService = httpService;

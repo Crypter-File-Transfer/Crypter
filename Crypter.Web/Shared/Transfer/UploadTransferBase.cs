@@ -14,10 +14,10 @@ namespace Crypter.Web.Shared.Transfer
    public abstract class UploadTransferBase : ComponentBase
    {
       [Inject]
-      protected IAuthenticationService AuthenticationService { get; set; }
+      protected ILocalStorageService LocalStorageService { get; set; }
 
       [Inject]
-      protected ITransferService UploadService { get; set; }
+      protected ITransferApiService UploadService { get; set; }
 
       [Parameter]
       public bool IsSenderDefined { get; set; }

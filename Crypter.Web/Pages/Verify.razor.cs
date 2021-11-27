@@ -18,7 +18,7 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IUserService UserService { get; set; }
+      IUserApiService UserService { get; set; }
 
       protected EmailVerificationParams EmailVerificationParams = new();
 

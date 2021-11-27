@@ -103,7 +103,7 @@ namespace Crypter.API.Controllers
          if (user == null)
          {
             return new NotFoundObjectResult(
-               new UserAuthenticateResponse(default, null));
+               new UserAuthenticateResponse(default, default, default));
          }
 
          var tokenHandler = new JwtSecurityTokenHandler();
@@ -115,7 +115,7 @@ namespace Crypter.API.Controllers
             }),
             Audience = "crypter.dev",
             Issuer = "crypter.dev/api",
-            Expires = DateTime.UtcNow.AddDays(1),
+            Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(TokenSecretKey), SecurityAlgorithms.HmacSha256Signature)
          };
          var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -127,7 +127,7 @@ namespace Crypter.API.Controllers
          BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(user.Id, DateTime.UtcNow));
 
          return new OkObjectResult(
-             new UserAuthenticateResponse(user.Id, tokenString, userDHKeyPair?.PrivateKey, userDSAKeyPair?.PrivateKey)
+             new UserAuthenticateResponse(user.Id, tokenString, TimeSpan.FromHours(1), userDHKeyPair?.PrivateKey, userDSAKeyPair?.PrivateKey)
          );
       }
 
@@ -146,7 +146,7 @@ namespace Crypter.API.Controllers
             }),
             Audience = "crypter.dev",
             Issuer = "crypter.dev/api",
-            Expires = DateTime.UtcNow.AddDays(1),
+            Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(TokenSecretKey), SecurityAlgorithms.HmacSha256Signature)
          };
          var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -155,7 +155,7 @@ namespace Crypter.API.Controllers
          BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(userId, DateTime.UtcNow));
 
          return new OkObjectResult(
-            new UserAuthenticationRefreshResponse(tokenString));
+            new UserAuthenticationRefreshResponse(tokenString, TimeSpan.FromHours(1)));
       }
 
       [Authorize]

@@ -1,6 +1,7 @@
 ﻿using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
+using Crypter.Web.Models;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
@@ -14,10 +15,10 @@ namespace Crypter.Web.Shared.Transfer
    public abstract class DownloadTransferBase : ComponentBase
    {
       [Inject]
-      protected IAuthenticationService AuthenticationService { get; set; }
+      protected ILocalStorageService LocalStorageService { get; set; }
 
       [Inject]
-      protected ITransferService TransferService { get; set; }
+      protected ITransferApiService TransferService { get; set; }
 
       [Parameter]
       public Guid TransferId { get; set; }
@@ -79,19 +80,26 @@ namespace Crypter.Web.Shared.Transfer
       protected bool DecryptionCompleted = false;
       protected string DecryptionStatusMessage = "";
       protected string ErrorMessage = "";
+      protected bool IsUserRecipient = false;
 
-      protected bool IsUserRecipient()
+      protected override async Task OnParametersSetAsync()
       {
-         return RecipientId.Equals(AuthenticationService.User?.Id);
+         if (!LocalStorageService.HasItem(StoredObjectType.UserSession))
+         {
+            IsUserRecipient = false;
+            return;
+         }
+         var session = await LocalStorageService.GetItem<UserSession>(StoredObjectType.UserSession);
+         IsUserRecipient = RecipientId.Equals(session.UserId);
       }
 
       protected abstract Task OnDecryptClicked();
 
-      protected (bool Success, string RecipientX25519PrivateKey) DecodeX25519RecipientKey()
+      protected async Task<(bool Success, string RecipientX25519PrivateKey)> DecodeX25519RecipientKey()
       {
-         if (IsUserRecipient())
+         if (IsUserRecipient)
          {
-            return (true, AuthenticationService.User.X25519PrivateKey);
+            return (true, await LocalStorageService.GetItem<string>(StoredObjectType.PlaintextX25519PrivateKey));
          }
 
          try

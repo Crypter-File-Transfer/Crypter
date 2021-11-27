@@ -1,115 +1,137 @@
-﻿using Crypter.Web.Models;
-using Microsoft.AspNetCore.Components;
-using System.Threading.Tasks;
-using Crypter.Contracts.Requests;
-using System;
-using System.Text;
-using System.Net;
+﻿using Crypter.Contracts.Requests;
+using Crypter.Contracts.Responses;
+using Crypter.Web.Models;
 using Crypter.Web.Services.API;
+using Microsoft.AspNetCore.Components;
+using System;
+using System.Net;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Crypter.Web.Services
 {
-
    public interface IAuthenticationService
    {
-      User User { get; }
-      Task Initialize();
       Task<bool> Login(string username, string plaintextPassword, string digestedPassword);
-      Task Refresh();
       Task Logout();
    }
 
    public class AuthenticationService : IAuthenticationService
    {
       private readonly NavigationManager NavigationManager;
-      private readonly ILocalStorageService LocalStorageService;
-      private readonly IUserService UserService;
-
-      public User User { get; private set; }
+      private readonly IUserApiService UserApiService;
+      private readonly IUserKeysService UserKeysService;
+      private readonly ILocalStorageService LocalStorage;
 
       public AuthenticationService(
           NavigationManager navigationManager,
-          ILocalStorageService localStorageService,
-          IUserService userService
+          IUserApiService userApiService,
+          IUserKeysService userKeysService,
+          ILocalStorageService localStorage
       )
       {
          NavigationManager = navigationManager;
-         LocalStorageService = localStorageService;
-         UserService = userService;
-      }
-
-      public async Task Initialize()
-      {
-         User = await LocalStorageService.GetItem<User>("user");
-         if (User is not null)
-         {
-            if (string.IsNullOrEmpty(User.X25519PrivateKey) || string.IsNullOrEmpty(User.Ed25519PrivateKey))
-            {
-               await Logout();
-            }
-            else
-            {
-               await Refresh();
-            }
-
-         }
+         UserApiService = userApiService;
+         UserKeysService = userKeysService;
+         LocalStorage = localStorage;
       }
 
       public async Task<bool> Login(string username, string plaintextPassword, string digestedPassword)
       {
          var loginRequest = new AuthenticateUserRequest(username, digestedPassword);
-         var (httpStatus, authResponse) = await UserService.AuthenticateUserAsync(loginRequest);
+         var (httpStatus, authResponse) = await UserApiService.AuthenticateUserAsync(loginRequest);
          if (httpStatus != HttpStatusCode.OK)
          {
             return false;
          }
 
-         User = new User(authResponse.Id, authResponse.Token);
+         var userSession = new UserSession(authResponse.Id, username, authResponse.Token, DateTime.UtcNow + authResponse.TokenDuration);
+         await LocalStorage.SetItem(StoredObjectType.UserSession, userSession, StorageLocation.InMemory);
 
-         if (string.IsNullOrEmpty(authResponse.EncryptedX25519PrivateKey))
-         {
-            User.X25519PrivateKey = null;
-         }
-         else
-         {
-            (var key, var iv) = CryptoLib.UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(username, plaintextPassword, authResponse.Id);
-            var decodedX25519PrivateKey = Convert.FromBase64String(authResponse.EncryptedX25519PrivateKey);
-            var decodedEd25519PrivateKey = Convert.FromBase64String(authResponse.EncryptedEd25519PrivateKey);
+         await InitializeUserKeys(authResponse, username, plaintextPassword);
 
-            var decrypter = new CryptoLib.Crypto.AES();
-            decrypter.Initialize(key, iv, false);
-            var decryptedX25519PrivateKey = decrypter.ProcessFinal(decodedX25519PrivateKey);
-
-            decrypter.Initialize(key, iv, false);
-            var decryptedEd25519PrivateKey = decrypter.ProcessFinal(decodedEd25519PrivateKey);
-
-            User.X25519PrivateKey = Encoding.UTF8.GetString(decryptedX25519PrivateKey);
-            User.Ed25519PrivateKey = Encoding.UTF8.GetString(decryptedEd25519PrivateKey);
-         }
-
-         await LocalStorageService.SetItem("user", User);
          return true;
-      }
-
-      public async Task Refresh()
-      {
-         var (httpStatus, refreshResponse) = await UserService.RefreshAuthenticationAsync();
-         if (httpStatus == HttpStatusCode.Unauthorized)
-         {
-            await Logout();
-         }
-         else
-         {
-            User.Token = refreshResponse.Token;
-            await LocalStorageService.SetItem("user", User);
-         }
       }
 
       public async Task Logout()
       {
-         User = null;
-         await LocalStorageService.RemoveItem("user");
+         await LocalStorage.Dispose();
          NavigationManager.NavigateTo("/");
+      }
+
+      private async Task InitializeUserKeys(UserAuthenticateResponse response, string username, string password)
+      {
+         if (string.IsNullOrEmpty(response.EncryptedX25519PrivateKey))
+         {
+            await HandleMissingX25519Keys(response.Id, username, password);
+         }
+         else
+         {
+            var decodedX25519Key = Convert.FromBase64String(response.EncryptedX25519PrivateKey);
+            await LocalStorage.SetItem(StoredObjectType.EncryptedX25519PrivateKey, decodedX25519Key, StorageLocation.InMemory);
+
+            var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, response.Id, decodedX25519Key);
+            await LocalStorage.SetItem(StoredObjectType.PlaintextX25519PrivateKey, decryptedKey, StorageLocation.InMemory);
+         }
+
+         if (string.IsNullOrEmpty(response.EncryptedEd25519PrivateKey))
+         {
+            await HandleMissingEd25519Keys(response.Id, username, password);
+         }
+         else
+         {
+            var decodedEd25519Key = Convert.FromBase64String(response.EncryptedEd25519PrivateKey);
+            await LocalStorage.SetItem(StoredObjectType.EncryptedEd25519PrivateKey, decodedEd25519Key, StorageLocation.InMemory);
+
+            var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, response.Id, decodedEd25519Key);
+            await LocalStorage.SetItem(StoredObjectType.PlaintextEd25519PrivateKey, decryptedKey, StorageLocation.InMemory);
+         }
+      }
+
+      /// <summary>
+      /// Generate and upload a new X25519 key pair.
+      /// </summary>
+      /// <param name="userId"></param>
+      /// <param name="username"></param>
+      /// <param name="password"></param>
+      private async Task HandleMissingX25519Keys(Guid userId, string username, string password)
+      {
+         var (encryptedPrivateKey, publicKey) = UserKeysService.GenerateNewX25519KeyPair(userId, username, password);
+
+         var encodedPublicKey = Convert.ToBase64String(
+            Encoding.UTF8.GetBytes(publicKey));
+
+         var encodedEncryptedPrivateKey = Convert.ToBase64String(encryptedPrivateKey);
+
+         var request = new UpdateKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
+         await UserApiService.InsertUserX25519KeysAsync(request);
+         await LocalStorage.SetItem(StoredObjectType.EncryptedX25519PrivateKey, encryptedPrivateKey, StorageLocation.InMemory);
+
+         var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, userId, encryptedPrivateKey);
+         await LocalStorage.SetItem(StoredObjectType.PlaintextX25519PrivateKey, decryptedKey, StorageLocation.InMemory);
+      }
+
+      /// <summary>
+      /// Generate and upload a new Ed25519 key pair.
+      /// </summary>
+      /// <param name="userId"></param>
+      /// <param name="username"></param>
+      /// <param name="password"></param>
+      private async Task HandleMissingEd25519Keys(Guid userId, string username, string password)
+      {
+         var (encryptedPrivateKey, publicKey) = UserKeysService.GenerateNewEd25519KeyPair(userId, username, password);
+
+         var encodedPublicKey = Convert.ToBase64String(
+            Encoding.UTF8.GetBytes(publicKey));
+
+         var encodedEncryptedPrivateKey = Convert.ToBase64String(encryptedPrivateKey);
+
+         var request = new UpdateKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
+         await UserApiService.InsertUserEd25519KeysAsync(request);
+         await LocalStorage.SetItem(StoredObjectType.EncryptedEd25519PrivateKey, encryptedPrivateKey, StorageLocation.InMemory);
+
+         var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, userId, encryptedPrivateKey);
+         await LocalStorage.SetItem(StoredObjectType.PlaintextEd25519PrivateKey, decryptedKey, StorageLocation.InMemory);
       }
    }
 }

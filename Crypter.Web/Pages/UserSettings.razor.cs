@@ -18,10 +18,10 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IAuthenticationService AuthenticationService { get; set; }
+      ILocalStorageService LocalStorage { get; set; }
 
       [Inject]
-      IUserService UserService { get; set; }
+      IUserApiService UserApiService { get; set; }
 
       protected bool Loading;
       protected bool IsEditing;
@@ -80,7 +80,7 @@ namespace Crypter.Web.Pages
 
          await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Search");
 
-         if (AuthenticationService.User == null)
+         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/");
             return;
@@ -109,7 +109,7 @@ namespace Crypter.Web.Pages
       protected async Task OnSaveProfileInfoClickedAsync()
       {
          var request = new UpdateProfileRequest(EditedAlias, EditedAbout);
-         (var _, var _) = await UserService.UpdateUserProfileInfoAsync(request);
+         (var _, var _) = await UserApiService.UpdateUserProfileInfoAsync(request);
 
          Alias = EditedAlias;
          About = EditedAbout;
@@ -143,7 +143,7 @@ namespace Crypter.Web.Pages
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var request = new UpdateContactInfoRequest(EditedEmail, digestedPasswordBase64);
-         (var _, var result) = await UserService.UpdateUserContactInfoAsync(request);
+         (var _, var result) = await UserApiService.UpdateUserContactInfoAsync(request);
 
          if (result.Result != UpdateContactInfoResult.Success)
          {
@@ -199,7 +199,7 @@ namespace Crypter.Web.Pages
       protected async Task OnSavePrivacyClickedAsync()
       {
          var request = new UpdatePrivacySettingRequest(EditedAllowKeyExchangeRequests, (UserVisibilityLevel)EditedVisibility, (UserItemTransferPermission)EditedMessageTransferPermission, (UserItemTransferPermission)EditedFileTransferPermission);
-         var (_, _) = await UserService.UpdateUserPrivacyAsync(request);
+         var (_, _) = await UserApiService.UpdateUserPrivacyAsync(request);
 
          AllowKeyExchangeRequests = EditedAllowKeyExchangeRequests;
          Visibility = EditedVisibility;
@@ -225,7 +225,7 @@ namespace Crypter.Web.Pages
       protected async Task OnSaveNotificationPreferencesClickedAsync()
       {
          var request = new UpdateNotificationSettingRequest(EditedEnableTransferNotifications, EditedEnableTransferNotifications);
-         var (_, _) = await UserService.UpdateUserNotificationAsync(request);
+         var (_, _) = await UserApiService.UpdateUserNotificationAsync(request);
 
          EnableTransferNotifications = EditedEnableTransferNotifications;
          AreNotificationControlsEnabled = false;
@@ -234,7 +234,7 @@ namespace Crypter.Web.Pages
 
       protected async Task GetUserInfoAsync()
       {
-         var (_, userAccountInfo) = await UserService.GetUserSettingsAsync();
+         var (_, userAccountInfo) = await UserApiService.GetUserSettingsAsync();
          Username = userAccountInfo.Username;
          EmailVerified = userAccountInfo.EmailVerified;
          EditedEmail = Email = userAccountInfo.Email;
@@ -247,8 +247,8 @@ namespace Crypter.Web.Pages
 
          EnableTransferNotifications = EditedEnableTransferNotifications = userAccountInfo.EnableTransferNotifications;
 
-         X25519PrivateKey = AuthenticationService.User.X25519PrivateKey;
-         Ed25519PrivateKey = AuthenticationService.User.Ed25519PrivateKey;
+         X25519PrivateKey = "Encrypted";
+         Ed25519PrivateKey = "Encrypted";
          ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
       }
 
