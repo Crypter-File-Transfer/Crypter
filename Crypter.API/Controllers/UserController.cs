@@ -127,7 +127,7 @@ namespace Crypter.API.Controllers
          BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(user.Id, DateTime.UtcNow));
 
          return new OkObjectResult(
-             new UserAuthenticateResponse(user.Id, tokenString, TimeSpan.FromHours(1), userDHKeyPair?.PrivateKey, userDSAKeyPair?.PrivateKey)
+             new UserAuthenticateResponse(user.Id, tokenString, userDHKeyPair?.PrivateKey, userDSAKeyPair?.PrivateKey)
          );
       }
 
@@ -155,7 +155,7 @@ namespace Crypter.API.Controllers
          BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(userId, DateTime.UtcNow));
 
          return new OkObjectResult(
-            new UserAuthenticationRefreshResponse(tokenString, TimeSpan.FromHours(1)));
+            new UserAuthenticationRefreshResponse(tokenString));
       }
 
       [Authorize]

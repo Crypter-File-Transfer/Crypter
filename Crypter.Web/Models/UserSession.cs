@@ -7,14 +7,12 @@ namespace Crypter.Web.Models
       public Guid UserId { get; set; }
       public string Username { get; set; }
       public string Token { get; set; }
-      public DateTime Expiration { get; set; }
 
-      public UserSession(Guid userId, string username, string token, DateTime expiration)
+      public UserSession(Guid userId, string username, string token)
       {
          UserId = userId;
          Username = username;
          Token = token;
-         Expiration = expiration;
       }
    }
 }

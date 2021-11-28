@@ -45,7 +45,7 @@ namespace Crypter.Web.Services
             return false;
          }
 
-         var userSession = new UserSession(authResponse.Id, username, authResponse.Token, DateTime.UtcNow + authResponse.TokenDuration);
+         var userSession = new UserSession(authResponse.Id, username, authResponse.Token);
          await LocalStorage.SetItem(StoredObjectType.UserSession, userSession, StorageLocation.InMemory);
 
          await InitializeUserKeys(authResponse, username, plaintextPassword);
