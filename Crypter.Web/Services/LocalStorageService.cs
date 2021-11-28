@@ -54,6 +54,7 @@ namespace Crypter.Web.Services
          foreach (StoredObjectType item in Enum.GetValues(typeof(StoredObjectType)))
          {
             await InitializeItemFromLocalStorage(item);
+            await InitializeItemFromSessionStorage(item);
          }
       }
 
@@ -63,6 +64,15 @@ namespace Crypter.Web.Services
          if (!string.IsNullOrEmpty(value))
          {
             ObjectLocations.Add(itemType.ToString(), StorageLocation.LocalStorage);
+         }
+      }
+
+      private async Task InitializeItemFromSessionStorage(StoredObjectType itemType)
+      {
+         var value = await JSRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.getItem", itemType.ToString());
+         if (!string.IsNullOrEmpty(value))
+         {
+            ObjectLocations.Add(itemType.ToString(), StorageLocation.SessionStorage);
          }
       }
 
