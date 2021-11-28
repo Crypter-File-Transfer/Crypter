@@ -10,55 +10,55 @@ namespace Crypter.Core.Services.DataAccess
 {
    public class MessageTransferItemService : IBaseTransferService<MessageTransfer>
    {
-      private readonly DataContext _context;
+      private readonly DataContext Context;
 
       public MessageTransferItemService(DataContext context)
       {
-         _context = context;
+         Context = context;
       }
 
       public async Task InsertAsync(MessageTransfer item)
       {
-         _context.MessageTransfer.Add(item);
-         await _context.SaveChangesAsync();
+         Context.MessageTransfer.Add(item);
+         await Context.SaveChangesAsync();
       }
 
       public async Task<MessageTransfer> ReadAsync(Guid id)
       {
-         return await _context.MessageTransfer
+         return await Context.MessageTransfer
              .FindAsync(id);
       }
 
       public async Task DeleteAsync(Guid id)
       {
-         await _context.Database
+         await Context.Database
              .ExecuteSqlRawAsync("DELETE FROM \"MessageTransfer\" WHERE \"MessageTransfer\".\"Id\" = {0}", id);
       }
 
       public async Task<IEnumerable<MessageTransfer>> FindBySenderAsync(Guid ownerId)
       {
-         return await _context.MessageTransfer
+         return await Context.MessageTransfer
              .Where(x => x.Sender == ownerId)
              .ToListAsync();
       }
 
       public async Task<IEnumerable<MessageTransfer>> FindByRecipientAsync(Guid recipientId)
       {
-         return await _context.MessageTransfer
+         return await Context.MessageTransfer
              .Where(x => x.Recipient == recipientId)
              .ToListAsync();
       }
 
       public async Task<IEnumerable<MessageTransfer>> FindExpiredAsync()
       {
-         return await _context.MessageTransfer
+         return await Context.MessageTransfer
              .Where(x => x.Expiration < DateTime.UtcNow)
              .ToListAsync();
       }
 
       public async Task<long> GetAggregateSizeAsync()
       {
-         return await _context.MessageTransfer
+         return await Context.MessageTransfer
              .SumAsync(x => x.Size);
       }
    }

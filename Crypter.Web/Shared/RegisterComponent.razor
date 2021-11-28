@@ -4,9 +4,14 @@
 {
    <div class="alert alert-success" role="alert">
       <h4 class="alert-heading">Registration Successful!</h4>
-      <p>Your account has been created.</p>
+      <p>Your account was created successfully.</p>
       <hr>
-      <p class="mb-0">You will now be redirected to the login page...</p>
+      @if (UserProvidedEmailDuringRegistration)
+            {
+               <p>Thank you for providing an email address.</p>
+               <p>A verification email has been sent to your inbox. Verifying your email address will allow you to enable notifications and perform password resets.</p>
+            }
+      <p>You may now login.</p>
    </div>
 }
 else
@@ -46,14 +51,6 @@ else
       <div class="mb-3">
          <label for="emailAddressFormControl" class="form-label">Email Address</label>
          <input @bind="RegistrationInfo.EmailAddress" type="email" class="form-control" id="emailAddressFormControl" placeholder="Optional" />
-      </div>
-
-      <div class="mb-3">
-         <label for="betaKeyFormControl" class="form-label">Beta Key</label>
-         <div class="input-group has-validation">
-            <input @bind="RegistrationInfo.BetaKey" type="text" class="form-control @BetaKeyInvalidClass" id="betaKeyFormControl" />
-            <div class="invalid-feedback">@BetaKeyValidationMessage</div>
-         </div>
       </div>
 
       <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="OnRegisterClickedAsync">Register</button>

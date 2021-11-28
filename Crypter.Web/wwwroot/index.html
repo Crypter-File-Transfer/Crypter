@@ -7,16 +7,19 @@
     <meta http-equiv="Content-Security-Policy"
           content="base-uri 'self';
                block-all-mixed-content;
-               default-src localhost:*
-                          'self';
+               default-src 'self';
                img-src data: https:;
                object-src 'none';
-               script-src 'self'
+               script-src localhost:*
+                          'self'
                           data:
                           'sha256-v8v3RKRPmN4odZ1CWM5gw80QKPCCWMcpNeOmimNL2AA='
                           'unsafe-eval';
                style-src 'self'
                          'unsafe-inline';
+               connect-src localhost:*
+                           ws://localhost:*
+                           'self';
                upgrade-insecure-requests;">
     <title>Crypter</title>
     <base href="/" />

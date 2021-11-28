@@ -8,7 +8,7 @@ namespace Crypter.Web.Shared
    public partial class ServerDiskSpaceComponentBase : ComponentBase
    {
       [Inject]
-      protected IMetricsService MetricsService { get; set; }
+      protected IMetricsApiService MetricsService { get; set; }
 
       protected bool ServerHasDiskSpace = true;
       protected double ServerSpacePercentageRemaining = 100.00;

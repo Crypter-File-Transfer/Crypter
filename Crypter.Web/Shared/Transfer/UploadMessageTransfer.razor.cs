@@ -2,6 +2,7 @@
 using Crypter.Contracts.Requests;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
+using Crypter.Web.Services;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -47,7 +48,7 @@ namespace Crypter.Web.Shared.Transfer
          var encodedSignature = Convert.ToBase64String(signature);
          var encodedClientIV = Convert.ToBase64String(iv);
 
-         var withAuth = AuthenticationService.User is not null;
+         var withAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
          var request = new MessageTransferRequest(MessageSubject, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey);
          var (_, response) = await UploadService.UploadMessageTransferAsync(request, RecipientId, withAuth);
 

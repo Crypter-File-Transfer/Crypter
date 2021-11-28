@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Report a bug to the team so we can fix it
-title: "[Bug]"
+title: "[Bug] enter title here"
 labels: bug, triage
 assignees: Jack-Edwards
 

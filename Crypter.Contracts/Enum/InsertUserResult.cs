@@ -3,12 +3,10 @@
     public enum InsertUserResult
     {
         Success,
-        EmptyUsername,
-        EmptyPassword,
-        PasswordRequirementsNotMet,
-        EmptyEmail,
+        InvalidUsername,
+        InvalidPassword,
+        InvalidEmailAddress,
         UsernameTaken,
-        EmailTaken,
-        InvalidBetaKey
+        EmailTaken
     }
 }

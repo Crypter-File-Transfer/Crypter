@@ -1,11 +1,15 @@
 ﻿using Crypter.API.Controllers.Methods;
 using Crypter.API.Services;
+using Crypter.Common.Services;
 using Crypter.Contracts.DTO;
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.Contracts.Responses;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
+using Crypter.CryptoLib;
+using Crypter.CryptoLib.Crypto;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -29,10 +33,13 @@ namespace Crypter.API.Controllers
       private readonly IUserPublicKeyPairService<UserX25519KeyPair> UserDiffieHellmanKeyPairService;
       private readonly IUserPublicKeyPairService<UserEd25519KeyPair> UserDigitalSignatureKeyPairService;
       private readonly IUserSearchService UserSearchService;
-      private readonly IUserPrivacyService UserPrivacyService;
+      private readonly IUserPrivacySettingService UserPrivacySettingService;
+      private readonly IUserEmailVerificationService UserEmailVerificationService;
+      private readonly IUserNotificationSettingService UserNotificationSettingService;
       private readonly IBaseTransferService<MessageTransfer> MessageService;
       private readonly IBaseTransferService<FileTransfer> FileService;
-      private readonly IBetaKeyService BetaKeyService;
+      private readonly IEmailService EmailService;
+      private readonly IApiValidationService ApiValidationService;
       private readonly byte[] TokenSecretKey;
 
       public UserController(
@@ -41,10 +48,13 @@ namespace Crypter.API.Controllers
           IUserPublicKeyPairService<UserX25519KeyPair> userDiffieHellmanKeyPairService,
           IUserPublicKeyPairService<UserEd25519KeyPair> userDigitalSignatureKeyPairService,
           IUserSearchService userSearchService,
-          IUserPrivacyService userPrivacyService,
+          IUserPrivacySettingService userPrivacySettingService,
+          IUserEmailVerificationService userEmailVerificationService,
+          IUserNotificationSettingService userNotificationSettingService,
           IBaseTransferService<MessageTransfer> messageService,
           IBaseTransferService<FileTransfer> fileService,
-          IBetaKeyService betaKeyService,
+          IEmailService emailService,
+          IApiValidationService apiValidationService,
           IConfiguration configuration
           )
       {
@@ -53,41 +63,37 @@ namespace Crypter.API.Controllers
          UserDiffieHellmanKeyPairService = userDiffieHellmanKeyPairService;
          UserDigitalSignatureKeyPairService = userDigitalSignatureKeyPairService;
          UserSearchService = userSearchService;
-         UserPrivacyService = userPrivacyService;
+         UserPrivacySettingService = userPrivacySettingService;
+         UserEmailVerificationService = userEmailVerificationService;
+         UserNotificationSettingService = userNotificationSettingService;
          MessageService = messageService;
          FileService = fileService;
-         BetaKeyService = betaKeyService;
-         TokenSecretKey = Encoding.UTF8.GetBytes(configuration["TokenSecretKey"]);
+         EmailService = emailService;
+         ApiValidationService = apiValidationService;
+         TokenSecretKey = Encoding.UTF8.GetBytes(configuration["Secrets:TokenSigningKey"]);
       }
 
       [HttpPost("register")]
       public async Task<IActionResult> RegisterAsync([FromBody] RegisterUserRequest request)
       {
-         var foundBetaKey = await BetaKeyService.ReadAsync(request.BetaKey);
-         if (foundBetaKey == null)
+         var validationResult = await ApiValidationService.IsValidUserRegistrationRequest(request);
+         if (validationResult != InsertUserResult.Success)
          {
             return new BadRequestObjectResult(
-                new UserRegisterResponse(InsertUserResult.InvalidBetaKey));
+               new UserRegisterResponse(validationResult));
          }
 
-         if (!ValidationService.IsValidPassword(request.Password))
-         {
-            return new BadRequestObjectResult(
-                new UserRegisterResponse(InsertUserResult.PasswordRequirementsNotMet));
-         }
+         var userId = await UserService.InsertAsync(request.Username, request.Password, request.Email);
 
-         var insertResult = await UserService.InsertAsync(request.Username, request.Password, request.Email);
-         var responseObject = new UserRegisterResponse(insertResult);
+         await UserProfileService.UpsertAsync(userId, null, null);
+         await UserPrivacySettingService.UpsertAsync(userId, false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None);
 
-         if (insertResult == InsertUserResult.Success)
+         if (ValidationService.IsPossibleEmailAddress(request.Email))
          {
-            await BetaKeyService.DeleteAsync(foundBetaKey.Key);
-            return new OkObjectResult(responseObject);
+            BackgroundJob.Enqueue(() => EmailService.HangfireSendEmailVerificationAsync(userId));
          }
-         else
-         {
-            return new BadRequestObjectResult(responseObject);
-         }
+         return new OkObjectResult(
+            new UserRegisterResponse(InsertUserResult.Success));
       }
 
       [HttpPost("authenticate")]
@@ -97,7 +103,7 @@ namespace Crypter.API.Controllers
          if (user == null)
          {
             return new NotFoundObjectResult(
-               new UserAuthenticateResponse(default, null));
+               new UserAuthenticateResponse(default, default, default));
          }
 
          var tokenHandler = new JwtSecurityTokenHandler();
@@ -109,7 +115,7 @@ namespace Crypter.API.Controllers
             }),
             Audience = "crypter.dev",
             Issuer = "crypter.dev/api",
-            Expires = DateTime.UtcNow.AddDays(1),
+            Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(TokenSecretKey), SecurityAlgorithms.HmacSha256Signature)
          };
          var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -117,6 +123,8 @@ namespace Crypter.API.Controllers
 
          var userDHKeyPair = await UserDiffieHellmanKeyPairService.GetUserPublicKeyPairAsync(user.Id);
          var userDSAKeyPair = await UserDigitalSignatureKeyPairService.GetUserPublicKeyPairAsync(user.Id);
+
+         BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(user.Id, DateTime.UtcNow));
 
          return new OkObjectResult(
              new UserAuthenticateResponse(user.Id, tokenString, userDHKeyPair?.PrivateKey, userDSAKeyPair?.PrivateKey)
@@ -138,11 +146,13 @@ namespace Crypter.API.Controllers
             }),
             Audience = "crypter.dev",
             Issuer = "crypter.dev/api",
-            Expires = DateTime.UtcNow.AddDays(1),
+            Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(TokenSecretKey), SecurityAlgorithms.HmacSha256Signature)
          };
          var token = tokenHandler.CreateToken(tokenDescriptor);
          var tokenString = tokenHandler.WriteToken(token);
+
+         BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(userId, DateTime.UtcNow));
 
          return new OkObjectResult(
             new UserAuthenticationRefreshResponse(tokenString));
@@ -263,18 +273,22 @@ namespace Crypter.API.Controllers
          var userId = ClaimsParser.ParseUserId(User);
          var user = await UserService.ReadAsync(userId);
          var userProfile = await UserProfileService.ReadAsync(userId);
-         var userPrivacy = await UserPrivacyService.ReadAsync(userId);
+         var userPrivacy = await UserPrivacySettingService.ReadAsync(userId);
+         var userNotification = await UserNotificationSettingService.ReadAsync(userId);
 
          return new OkObjectResult(
             new UserSettingsResponse(
              user.Username,
              user.Email,
+             user.EmailVerified,
              userProfile?.Alias,
              userProfile?.About,
              userPrivacy?.Visibility ?? UserVisibilityLevel.None,
              userPrivacy?.AllowKeyExchangeRequests ?? false,
              userPrivacy?.ReceiveMessages ?? UserItemTransferPermission.None,
              userPrivacy?.ReceiveFiles ?? UserItemTransferPermission.None,
+             userNotification?.EnableTransferNotifications ?? false,
+             userNotification?.EmailNotifications ?? false,
              user.Created
          ));
       }
@@ -302,33 +316,75 @@ namespace Crypter.API.Controllers
       public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request)
       {
          var userId = ClaimsParser.ParseUserId(User);
-         var updateResult = await UserService.UpdateContactInfoAsync(userId, request.Email, request.CurrentPassword);
-         var responseObject = new UpdateContactInfoResponse(updateResult);
 
-         if (updateResult == UpdateContactInfoResult.Success)
+         if (ValidationService.IsPossibleEmailAddress(request.Email)
+            && !ValidationService.IsValidEmailAddress(request.Email))
          {
-            return new OkObjectResult(responseObject);
+            return new BadRequestObjectResult(
+               new UpdateContactInfoResponse(UpdateContactInfoResult.EmailInvalid));
          }
-         else
+
+         var user = await UserService.ReadAsync(userId);
+         if (ValidationService.IsPossibleEmailAddress(request.Email)
+            && user.Email.ToLower() != request.Email.ToLower()
+            && !await UserService.IsEmailAddressAvailableAsync(request.Email))
          {
+            return new BadRequestObjectResult(
+               new UpdateContactInfoResponse(UpdateContactInfoResult.EmailUnavailable));
+         }
+
+         var updateContactInfoResult = await UserService.UpdateContactInfoAsync(userId, request.Email, request.CurrentPassword);
+
+         if (updateContactInfoResult != UpdateContactInfoResult.Success)
+         {
+            var responseObject = new UpdateContactInfoResponse(updateContactInfoResult);
             return new BadRequestObjectResult(responseObject);
          }
+
+         await UserNotificationSettingService.UpsertAsync(userId, false, false);
+         await UserEmailVerificationService.DeleteAsync(userId);
+
+         if (ValidationService.IsValidEmailAddress(request.Email))
+         {
+            BackgroundJob.Enqueue(() => EmailService.HangfireSendEmailVerificationAsync(userId));
+         }
+
+         var successResponse = new UpdateContactInfoResponse(UpdateContactInfoResult.Success);
+         return new OkObjectResult(successResponse);
+      }
+
+      [Authorize]
+      [HttpPost("settings/notification")]
+      public async Task<IActionResult> UpdateUserNotificationPreferencesAsync([FromBody] UpdateNotificationSettingRequest request)
+      {
+         var userId = ClaimsParser.ParseUserId(User);
+         var user = await UserService.ReadAsync(userId);
+
+         if (request.EnableTransferNotifications
+            && request.EmailNotifications
+            && !user.EmailVerified)
+         {
+            return new BadRequestObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.EmailAddressNotVerified));
+         }
+
+         await UserNotificationSettingService.UpsertAsync(userId, request.EnableTransferNotifications, request.EmailNotifications);
+         return new OkObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.Success));
       }
 
       [Authorize]
       [HttpPost("settings/privacy")]
-      public async Task<IActionResult> UpdateUserPrivacyAsync([FromBody] UpdatePrivacyRequest request)
+      public async Task<IActionResult> UpdateUserPrivacyAsync([FromBody] UpdatePrivacySettingRequest request)
       {
          var userId = ClaimsParser.ParseUserId(User);
-         var updateSuccess = await UserPrivacyService.UpsertAsync(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission);
+         var updateSuccess = await UserPrivacySettingService.UpsertAsync(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission);
 
          if (updateSuccess)
          {
-            return new OkObjectResult(new UpdatePrivacyResponse());
+            return new OkObjectResult(new UpdatePrivacySettingResponse());
          }
          else
          {
-            return new BadRequestObjectResult(new UpdatePrivacyResponse());
+            return new BadRequestObjectResult(new UpdatePrivacySettingResponse());
          }
       }
 
@@ -417,20 +473,20 @@ namespace Crypter.API.Controllers
             return new NotFoundObjectResult(notFoundResponse);
          }
 
-         var userPrivacy = await UserPrivacyService.ReadAsync(user.Id);
+         var userPrivacy = await UserPrivacySettingService.ReadAsync(user.Id);
          if (userPrivacy is null)
          {
             return new NotFoundObjectResult(notFoundResponse);
          }
 
-         var userAllowsRequestorToViewProfile = await UserPrivacyService.IsUserViewableByPartyAsync(user.Id, requestor);
+         var userAllowsRequestorToViewProfile = await UserPrivacySettingService.IsUserViewableByPartyAsync(user.Id, requestor);
          if (userAllowsRequestorToViewProfile)
          {
             var userPublicDHKey = await UserDiffieHellmanKeyPairService.GetUserPublicKeyAsync(user.Id);
             var userPublicDSAKey = await UserDigitalSignatureKeyPairService.GetUserPublicKeyAsync(user.Id);
 
-            var visitorCanSendMessages = await UserPrivacyService.DoesUserAcceptMessagesFromOtherPartyAsync(user.Id, visitorId);
-            var visitorCanSendFiles = await UserPrivacyService.DoesUserAcceptFilesFromOtherPartyAsync(user.Id, visitorId);
+            var visitorCanSendMessages = await UserPrivacySettingService.DoesUserAcceptMessagesFromOtherPartyAsync(user.Id, visitorId);
+            var visitorCanSendFiles = await UserPrivacySettingService.DoesUserAcceptFilesFromOtherPartyAsync(user.Id, visitorId);
 
             return new OkObjectResult(
                new UserPublicProfileResponse(user.Id, user.Username, userProfile.Alias, userProfile.About, userPrivacy.AllowKeyExchangeRequests,
@@ -440,6 +496,39 @@ namespace Crypter.API.Controllers
          {
             return new NotFoundObjectResult(notFoundResponse);
          }
+      }
+
+      [HttpPost("verify")]
+      public async Task<IActionResult> VerifyUserEmailAddressAsync([FromBody] VerifyUserEmailAddressRequest request)
+      {
+         var verificationCode = EmailVerificationEncoder.DecodeVerificationCodeFromUrlSafe(request.Code);
+
+         var emailVerificationEntity = await UserEmailVerificationService.ReadCodeAsync(verificationCode);
+         if (emailVerificationEntity is null)
+         {
+            return new NotFoundObjectResult(
+               new UserEmailVerificationResponse(false));
+         }
+
+         var signature = EmailVerificationEncoder.DecodeSignatureFromUrlSafe(request.Signature);
+
+         var verificationKeyPem = Encoding.UTF8.GetString(emailVerificationEntity.VerificationKey);
+         var verificationKey = KeyConversion.ConvertEd25519PublicKeyFromPEM(verificationKeyPem);
+
+         var verifier = new ECDSA();
+         verifier.InitializeVerifier(verificationKey);
+         verifier.VerifierDigestChunk(verificationCode.ToByteArray());
+         if (!verifier.VerifySignature(signature))
+         {
+            return new NotFoundObjectResult(
+               new UserEmailVerificationResponse(false));
+         }
+
+         await UserService.UpdateEmailAddressVerification(emailVerificationEntity.Owner, true);
+         await UserEmailVerificationService.DeleteAsync(emailVerificationEntity.Owner);
+
+         return new OkObjectResult(
+            new UserEmailVerificationResponse(true));
       }
    }
 }

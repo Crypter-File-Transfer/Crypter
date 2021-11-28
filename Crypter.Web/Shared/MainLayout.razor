@@ -1,9 +1,10 @@
-﻿@inherits MainLayoutBase
+﻿@using Crypter.Web.Services
+@inherits MainLayoutBase
 
 <div class="page h-100">
    <NavigationBar />
    <main role="main" class="pb-3">
-      @if (AuthenticationService.User is not null)
+      @if (LocalStorage.HasItem(StoredObjectType.UserSession))
       {
          <NavigationUser />
       }

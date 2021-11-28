@@ -10,66 +10,40 @@ namespace Crypter.Core.Services.DataAccess
 {
    public class UserService : IUserService
    {
-      private readonly DataContext _context;
+      private readonly DataContext Context;
 
       public UserService(DataContext context)
       {
-         _context = context;
+         Context = context;
       }
 
-      public async Task<InsertUserResult> InsertAsync(string username, string password, string email)
+      public async Task<Guid> InsertAsync(string username, string password, string email)
       {
-         if (string.IsNullOrEmpty(username))
-         {
-            return InsertUserResult.EmptyUsername;
-         }
-
-         if (string.IsNullOrEmpty(password))
-         {
-            return InsertUserResult.EmptyPassword;
-         }
-
-         if (email == "")
-         {
-            return InsertUserResult.EmptyEmail;
-         }
-
-         if (!await IsUsernameAvailableAsync(username))
-         {
-            return InsertUserResult.UsernameTaken;
-         }
-
          (var passwordKey, var passwordHash) = PasswordHashService.MakeSecurePasswordHash(password);
 
          var user = new User(
              Guid.NewGuid(),
-             username.ToLower(),
-             email?.ToLower(),
+             username,
+             email,
              passwordHash,
              passwordKey,
              false,
              DateTime.UtcNow,
              DateTime.MinValue);
-         _context.User.Add(user);
+         Context.User.Add(user);
 
-         var userProfile = new UserProfile(user.Id, null, null, null);
-         _context.UserProfile.Add(userProfile);
-
-         var userPrivacy = new UserPrivacy(user.Id, false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None);
-         _context.UserPrivacy.Add(userPrivacy);
-
-         await _context.SaveChangesAsync();
-         return InsertUserResult.Success;
+         await Context.SaveChangesAsync();
+         return user.Id;
       }
 
       public async Task<IUser> ReadAsync(Guid id)
       {
-         return await _context.User.FindAsync(id);
+         return await Context.User.FindAsync(id);
       }
 
       public async Task<IUser> ReadAsync(string username)
       {
-         return await _context.User
+         return await Context.User
             .Where(user => user.Username.ToLower() == username.ToLower())
             .FirstOrDefaultAsync();
       }
@@ -77,32 +51,28 @@ namespace Crypter.Core.Services.DataAccess
       public async Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword)
       {
          var user = await ReadAsync(id);
-
-         if (user == null)
-         {
-            return UpdateContactInfoResult.UserNotFound;
-         }
-
          var passwordsMatch = PasswordHashService.VerifySecurePasswordHash(currentPassword, user.PasswordHash, user.PasswordSalt);
          if (!passwordsMatch)
          {
             return UpdateContactInfoResult.PasswordValidationFailed;
          }
 
-         if (user.Email != email.ToLower() && !await IsEmailAddressAvailableAsync(email))
-         {
-            return UpdateContactInfoResult.EmailUnavailable;
-         }
-
-         user.Email = email.ToLower();
+         user.Email = email;
          user.EmailVerified = false;
-         await _context.SaveChangesAsync();
+         await Context.SaveChangesAsync();
          return UpdateContactInfoResult.Success;
+      }
+
+      public async Task UpdateEmailAddressVerification(Guid id, bool isVerified)
+      {
+         var user = await ReadAsync(id);
+         user.EmailVerified = isVerified;
+         await Context.SaveChangesAsync();
       }
 
       public async Task DeleteAsync(Guid id)
       {
-         await _context.Database
+         await Context.Database
              .ExecuteSqlRawAsync("DELETE FROM \"Users\" WHERE \"Users\".\"Id\" = {0}", id);
       }
 
@@ -113,7 +83,7 @@ namespace Crypter.Core.Services.DataAccess
             return null;
          }
 
-         var user = await _context.User.SingleOrDefaultAsync(x => x.Username.ToLower() == username);
+         var user = await Context.User.SingleOrDefaultAsync(x => x.Username.ToLower() == username);
 
          if (user == null)
          {
@@ -126,16 +96,26 @@ namespace Crypter.Core.Services.DataAccess
             : null;
       }
 
+      public async Task UpdateLastLoginTime(Guid id, DateTime dateTime)
+      {
+         var user = await ReadAsync(id);
+         if (user != null)
+         {
+            user.LastLogin = dateTime;
+            await Context.SaveChangesAsync();
+         }
+      }
+
       public async Task<bool> IsUsernameAvailableAsync(string username)
       {
          string lowerUsername = username.ToLower();
-         return !await _context.User.AnyAsync(x => x.Username.ToLower() == lowerUsername);
+         return !await Context.User.AnyAsync(x => x.Username.ToLower() == lowerUsername);
       }
 
       public async Task<bool> IsEmailAddressAvailableAsync(string email)
       {
          string lowerEmail = email.ToLower();
-         return !await _context.User.AnyAsync(x => x.Email.ToLower() == lowerEmail);
+         return !await Context.User.AnyAsync(x => x.Email.ToLower() == lowerEmail);
       }
    }
 }

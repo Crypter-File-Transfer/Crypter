@@ -19,22 +19,23 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IAuthenticationService AuthenticationService { get; set; }
+      ILocalStorageService LocalStorage { get; set; }
 
       [Inject]
-      IUserService UserService { get; set; }
+      IUserApiService UserService { get; set; }
 
       protected IEnumerable<UserSentItem> Sent;
       protected IEnumerable<UserReceivedItem> Received;
 
       protected override async Task OnInitializedAsync()
       {
-         if (AuthenticationService.User == null)
+         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/");
+            return;
          }
 
-         await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Home");
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Home");
          await base.OnInitializedAsync();
 
          Sent = await GetUserSentItems();

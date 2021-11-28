@@ -8,7 +8,7 @@ namespace Crypter.Web.Shared.Modal
    public partial class UploadMessageTransferModalBase : ComponentBase
    {
       [Inject]
-      protected IAuthenticationService AuthenticationService { get; set; }
+      protected ILocalStorageService LocalStorage { get; set; }
 
       [Parameter]
       public bool IsRecipientDefined { get; set; }
@@ -45,13 +45,13 @@ namespace Crypter.Web.Shared.Modal
       protected string ModalClass = "";
       protected bool ShowBackdrop = false;
 
-      public void Open()
+      public async Task Open()
       {
-         if (AuthenticationService.User is not null)
+         if (LocalStorage.HasItem(StoredObjectType.UserSession))
          {
             IsSenderDefined = true;
-            SenderX25519PrivateKey = AuthenticationService.User.X25519PrivateKey;
-            SenderEd25519PrivateKey = AuthenticationService.User.Ed25519PrivateKey;
+            SenderX25519PrivateKey = await LocalStorage.GetItem<string>(StoredObjectType.PlaintextX25519PrivateKey);
+            SenderEd25519PrivateKey = await LocalStorage.GetItem<string>(StoredObjectType.PlaintextEd25519PrivateKey);
          }
 
          ModalDisplay = "block;";

@@ -1,6 +1,5 @@
 ﻿using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
-using Crypter.Web.Models;
 using Crypter.Web.Models.Forms;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
@@ -16,10 +15,10 @@ namespace Crypter.Web.Shared
       protected NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected IAuthenticationService AuthenticationService { get; set; }
+      protected ILocalStorageService LocalStorageService { get; set; }
 
       [Inject]
-      protected IUserService UserService { get; set; }
+      protected IUserApiService UserService { get; set; }
 
       protected UserRegistration RegistrationInfo = new();
 
@@ -45,13 +44,11 @@ namespace Crypter.Web.Shared
       private readonly static string MissingPasswordConfirm = "Please confirm your password";
       private readonly static string PasswordConfirmDoesNotMatch = "Passwords do not match";
 
-      protected string BetaKeyInvalidClass = "";
-      protected string BetaKeyValidationMessage;
-      private readonly static string MissingBetaKey = "Please enter a valid beta key";
+      protected bool UserProvidedEmailDuringRegistration = false;
 
       protected override async Task OnInitializedAsync()
       {
-         if (AuthenticationService.User != null)
+         if (LocalStorageService.HasItem(StoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/user");
          }
@@ -73,11 +70,6 @@ namespace Crypter.Web.Shared
          }
 
          if (!ValidatePasswordConfirmation())
-         {
-            formIsValid = false;
-         }
-
-         if (!ValidateBetaKey())
          {
             formIsValid = false;
          }
@@ -142,19 +134,6 @@ namespace Crypter.Web.Shared
          return true;
       }
 
-      protected bool ValidateBetaKey()
-      {
-         if (string.IsNullOrEmpty(RegistrationInfo.BetaKey))
-         {
-            BetaKeyValidationMessage = MissingBetaKey;
-            BetaKeyInvalidClass = IsInvalid;
-            return false;
-         }
-
-         BetaKeyInvalidClass = "";
-         return true;
-      }
-
       protected async Task OnRegisterClickedAsync()
       {
          if (!ValidateForm())
@@ -165,20 +144,26 @@ namespace Crypter.Web.Shared
          byte[] digestedPassword = CryptoLib.UserFunctions.DigestUserCredentials(RegistrationInfo.Username, RegistrationInfo.Password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
-         var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.BetaKey, RegistrationInfo.EmailAddress);
+         var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.EmailAddress);
          var (_, registerResponse) = await UserService.RegisterUserAsync(requestBody);
 
          if (registerResponse.Result != InsertUserResult.Success)
          {
             RegistrationError = true;
-            RegistrationErrorText = registerResponse.ResultMessage;
+            RegistrationErrorText = registerResponse.Result switch
+            {
+               InsertUserResult.InvalidUsername => "Invalid username",
+               InsertUserResult.InvalidPassword => "Invalid password",
+               InsertUserResult.InvalidEmailAddress => "Invalid email address",
+               InsertUserResult.UsernameTaken => "Username is already taken",
+               InsertUserResult.EmailTaken => "Email address is associated with an existing account",
+               _ => "???"
+            };
          }
          else
          {
+            UserProvidedEmailDuringRegistration = !string.IsNullOrEmpty(RegistrationInfo.EmailAddress);
             RegistrationSuccess = true;
-            StateHasChanged();
-            await Task.Delay(2000);
-            NavigationManager.NavigateTo("/login");
          }
       }
    }

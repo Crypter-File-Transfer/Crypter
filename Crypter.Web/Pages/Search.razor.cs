@@ -19,19 +19,19 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IAuthenticationService AuthenticationService { get; set; }
+      ILocalStorageService LocalStorage { get; set; }
 
       [Inject]
-      IUserService UserService { get; set; }
+      IUserApiService UserService { get; set; }
 
       protected UserSearchParams SearchParams = new();
       protected UserSearchResponse SearchResults;
 
       protected override async Task OnInitializedAsync()
       {
-         await JSRuntime.InvokeVoidAsync("setPageTitle", "Crypter - User Search");
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Search");
 
-         if (AuthenticationService.User == null)
+         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/");
             return;
@@ -51,23 +51,28 @@ namespace Crypter.Web.Pages
             return;
          }
 
-         await JSRuntime.InvokeVoidAsync("setPageUrl", "/user/search?query=" + SearchParams.Query + "&type=" + SearchParams.Type + "&page=" + SearchParams.Page);
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageUrl", "/user/search?query=" + SearchParams.Query + "&type=" + SearchParams.Type + "&page=" + SearchParams.Page);
          var (_, response) = await UserService.GetUserSearchResultsAsync(SearchParams);
          SearchResults = response;
+
+         if (SearchResults.Total > SearchParams.Results)
+         {
+            await SetActivePageAsync();
+         }
       }
 
       protected void ParseSearchParamsFromUri()
       {
          var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
 
-         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("query", out var value))
+         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("query", out var query))
          {
-            SearchParams.Query = value.First();
+            SearchParams.Query = query.First();
          }
 
-         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var qType))
+         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var queryType))
          {
-            SearchParams.Type = qType.First();
+            SearchParams.Type = queryType.First();
          }
 
          if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var pageNum))
@@ -79,7 +84,7 @@ namespace Crypter.Web.Pages
 
       protected async Task SetActivePageAsync()
       {
-         await JSRuntime.InvokeVoidAsync("setActivePage", SearchParams.Page);
+         await JSRuntime.InvokeVoidAsync("Crypter.SetActivePage", SearchParams.Page);
       }
 
       protected void GoToPage(string pageurl)

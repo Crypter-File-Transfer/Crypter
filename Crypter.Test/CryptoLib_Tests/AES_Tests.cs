@@ -6,6 +6,7 @@ using System.IO;
 
 namespace Crypter.Test.CryptoLib_Tests
 {
+   [TestFixture]
    public class AES_Tests
    {
       [SetUp]
