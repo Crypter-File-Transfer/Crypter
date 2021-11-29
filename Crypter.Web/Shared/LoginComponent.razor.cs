@@ -1,7 +1,6 @@
 ﻿using Crypter.Web.Helpers;
 using Crypter.Web.Models;
 using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -18,15 +17,6 @@ namespace Crypter.Web.Shared
 
       [Inject]
       protected ILocalStorageService LocalStorage { get; set; }
-
-      [Inject]
-      protected ITransferApiService UploadService { get; set; }
-
-      [Inject]
-      protected IUserApiService UserService { get; set; }
-
-      [Inject]
-      protected AppSettings AppSettings { get; set; }
 
       protected Login loginInfo = new();
 
