@@ -20,6 +20,13 @@ namespace Crypter.Web.Shared.Transfer
 
       protected override async Task OnDecryptClicked()
       {
+         if (string.IsNullOrEmpty(EncodedX25519PrivateKey))
+         {
+            DecryptionInProgress = false;
+            ErrorMessage = "You must enter a decryption key";
+            return;
+         }
+
          DecryptionInProgress = true;
          ErrorMessage = "";
 
