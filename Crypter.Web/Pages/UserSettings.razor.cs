@@ -5,6 +5,7 @@ using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -143,9 +144,10 @@ namespace Crypter.Web.Pages
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var request = new UpdateContactInfoRequest(EditedEmail, digestedPasswordBase64);
-         (var _, var result) = await UserApiService.UpdateUserContactInfoAsync(request);
+         (var status, var result) = await UserApiService.UpdateUserContactInfoAsync(request);
 
-         if (result.Result != UpdateContactInfoResult.Success)
+         if (status != HttpStatusCode.OK
+            || result.Result != UpdateContactInfoResult.Success)
          {
             // todo
             Console.WriteLine("fail");
@@ -234,7 +236,12 @@ namespace Crypter.Web.Pages
 
       protected async Task GetUserInfoAsync()
       {
-         var (_, userAccountInfo) = await UserApiService.GetUserSettingsAsync();
+         var (status, userAccountInfo) = await UserApiService.GetUserSettingsAsync();
+         if (status != HttpStatusCode.OK)
+         {
+            return;
+         }
+
          Username = userAccountInfo.Username;
          EmailVerified = userAccountInfo.EmailVerified;
          EditedEmail = Email = userAccountInfo.Email;
