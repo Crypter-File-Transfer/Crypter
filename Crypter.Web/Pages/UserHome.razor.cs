@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -44,8 +45,14 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserSentItem>> GetUserSentItems()
       {
-         var (_, sentMessagesResponse) = await UserService.GetUserSentMessagesAsync();
-         var (_, sentFilesresponse) = await UserService.GetUserSentFilesAsync();
+         var (messageRequestStatus, sentMessagesResponse) = await UserService.GetUserSentMessagesAsync();
+         var (fileRequestStatus, sentFilesresponse) = await UserService.GetUserSentFilesAsync();
+
+         if (messageRequestStatus != HttpStatusCode.OK
+            || fileRequestStatus != HttpStatusCode.OK)
+         {
+            return default;
+         }
 
          return sentMessagesResponse.Messages
             .Select(x => new UserSentItem
@@ -74,8 +81,14 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
       {
-         var (_, receivedMessagesResponse) = await UserService.GetUserReceivedMessagesAsync();
-         var (_, receivedFilesresponse) = await UserService.GetUserReceivedFilesAsync();
+         var (messageRequestStatus, receivedMessagesResponse) = await UserService.GetUserReceivedMessagesAsync();
+         var (fileRequestStatus, receivedFilesresponse) = await UserService.GetUserReceivedFilesAsync();
+
+         if (messageRequestStatus != HttpStatusCode.OK
+            || fileRequestStatus != HttpStatusCode.OK)
+         {
+            return default;
+         }
 
          return receivedMessagesResponse.Messages
             .Select(x => new UserReceivedItem

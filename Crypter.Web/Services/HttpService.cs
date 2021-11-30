@@ -55,7 +55,7 @@ namespace Crypter.Web.Services
             var token = (await LocalStorage.GetItem<UserSession>(StoredObjectType.UserSession))?.Token;
             if (string.IsNullOrEmpty(token))
             {
-               return HandleMissingUser<T>();
+               return await HandleMissingUserAsync<T>();
             }
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
          }
@@ -72,7 +72,7 @@ namespace Crypter.Web.Services
 
          if (response.StatusCode == HttpStatusCode.Unauthorized)
          {
-            return HandleMissingUser<T>();
+            return await HandleMissingUserAsync<T>();
          }
 
          T content = await response.Content.ReadFromJsonAsync<T>();
@@ -81,8 +81,9 @@ namespace Crypter.Web.Services
          return (response.StatusCode, content);
       }
 
-      private (HttpStatusCode HttpStatus, T Payload) HandleMissingUser<T>()
+      private async Task<(HttpStatusCode HttpStatus, T Payload)> HandleMissingUserAsync<T>()
       {
+         await LocalStorage.Dispose();
          NavigationManager.NavigateTo("/");
          return (HttpStatusCode.Unauthorized, default);
       }
