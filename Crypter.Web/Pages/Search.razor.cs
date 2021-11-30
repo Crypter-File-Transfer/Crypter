@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -52,12 +53,15 @@ namespace Crypter.Web.Pages
          }
 
          await JSRuntime.InvokeVoidAsync("Crypter.SetPageUrl", "/user/search?query=" + SearchParams.Query + "&type=" + SearchParams.Type + "&page=" + SearchParams.Page);
-         var (_, response) = await UserService.GetUserSearchResultsAsync(SearchParams);
-         SearchResults = response;
-
-         if (SearchResults.Total > SearchParams.Results)
+         var (status, response) = await UserService.GetUserSearchResultsAsync(SearchParams);
+         if (status == HttpStatusCode.OK)
          {
-            await SetActivePageAsync();
+            SearchResults = response;
+
+            if (SearchResults.Total > SearchParams.Results)
+            {
+               await SetActivePageAsync();
+            }
          }
       }
 
