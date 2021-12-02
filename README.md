@@ -1,5 +1,13 @@
 # Crypter
 
+## Licensing
+
+Crypter is open-source software that is free for non-commercial use under the AGPLv3. A copy of the AGLPv3 is provided in [LICENSE.md](LICENSE.md).
+
+You and/or your organization may be released from the terms of the AGLPv3 by purchasing a commercial license from the copyright holder.
+
+Please reach out to the copyright holder if you believe these licensing terms are a cause for concern.
+
 ## Getting started as a developer
 
 Check out these documents to get started as a Crypter developer:
