@@ -1,32 +1,12 @@
 # Crypter
 
-## Coding Standard
+## Getting started as a developer
 
-### No object initializers for custom classes
-Use a constructor instead.
+Check out these documents to get started as a Crypter developer:
 
-This helps make sure we never have object instances with missing properties.  For example, we may add a new property to a class down the road.  Chances are we would forget to go back and update all the existing object initializers.
+* [Coding Standard](<./Docs/Development/Coding Standard.md>)
+* [Development Environment Setup](<./Docs/Development/Development Environment Setup.md>)
 
-If we enforce all properties via constructors, the build will fail until we update all pre-existing calls to create an instance of that class.
+Helpful learning material:
 
-#### Good
-
-```
-var student = new Student("Craig", "Playstead");
-```
-
-#### Bad
-
-```
-Student student = new Student
-{
-    FirstName = "Craig",
-    LastName = "Playstead"
-};
-```
-
-### No blocking calls in the API
-
-Examples:
-
-* Always query the database asynchronously
+* [Learning Material](<./Docs/Learning Material.md>)
