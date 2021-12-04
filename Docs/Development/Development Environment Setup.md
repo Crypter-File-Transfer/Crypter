@@ -2,6 +2,24 @@
 
 This section details how to setup a basic development environment.
 
+## Visual Studio
+
+As you may have guessed, some version of Visual Studio is required in order to work on Crypter.
+
+[Visual Studio Download Page](https://visualstudio.microsoft.com/)
+
+I recommend using Visual Studio 2022 for Crypter development.
+The only workload you need to install is `ASP.NET and web development`.
+
+Make sure these individual components are also installed:
+* `.NET 5.0 Runtime`
+* `.NET 6.0 Runtime` (for future use)
+* `.NET WebAssembly build tools`
+
+Visual Studio 2019 should still work fine for regular development, but do not publish Crypter.Web using the project's currently saved publish profile.
+This publish profile contains options which were added in Visual Studio 2022.
+
+
 ## Docker
 
 Docker is required to run the PostgreSQL database. Get Docker setup on your development machine.
@@ -12,7 +30,8 @@ Docker is required to run the PostgreSQL database. Get Docker setup on your deve
 
 Download and install PGAdmin: [PGAdmin Downloads Page](https://www.pgadmin.org/download/)
 
-Follow the instructions for a production deployment.
+Follow the instructions for a production deployment to get the container running on your development machine.
+Those instructions are located [here](../Production/Deployment/PostgreSQL.md).
 
 ## Crypter.API
 

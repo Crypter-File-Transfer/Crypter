@@ -129,3 +129,7 @@ Commit messages should be concise and informative.
 
 A pull request may consist of multiple, related commits.
 However, be sure to squash any "work-in-progress" commits before making the pull request.
+
+### Branches
+
+Delete remote branches after they are merged or are abandoned. 
