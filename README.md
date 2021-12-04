@@ -1,32 +1,20 @@
 # Crypter
 
-## Coding Standard
+## Licensing
 
-### No object initializers for custom classes
-Use a constructor instead.
+Crypter is open-source software that is free for non-commercial use under the AGPLv3. A copy of the AGLPv3 is provided in [LICENSE.md](LICENSE.md).
 
-This helps make sure we never have object instances with missing properties.  For example, we may add a new property to a class down the road.  Chances are we would forget to go back and update all the existing object initializers.
+You and/or your organization may be released from the terms of the AGLPv3 by purchasing a commercial license from the copyright holder.
 
-If we enforce all properties via constructors, the build will fail until we update all pre-existing calls to create an instance of that class.
+Please reach out to the copyright holder if you believe these licensing terms are a cause for concern.
 
-#### Good
+## Getting started as a developer
 
-```
-var student = new Student("Craig", "Playstead");
-```
+Check out these documents to get started as a Crypter developer:
 
-#### Bad
+* [Coding Standard](<./Docs/Development/Coding Standard.md>)
+* [Development Environment Setup](<./Docs/Development/Development Environment Setup.md>)
 
-```
-Student student = new Student
-{
-    FirstName = "Craig",
-    LastName = "Playstead"
-};
-```
+Helpful learning material:
 
-### No blocking calls in the API
-
-Examples:
-
-* Always query the database asynchronously
+* [Learning Material](<./Docs/Learning Material.md>)
