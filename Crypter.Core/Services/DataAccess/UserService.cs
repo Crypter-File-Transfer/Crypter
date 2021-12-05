@@ -109,7 +109,7 @@ namespace Crypter.Core.Services.DataAccess
             return null;
          }
 
-         var user = await Context.User.SingleOrDefaultAsync(x => x.Username.ToLower() == username);
+         var user = await Context.User.SingleOrDefaultAsync(x => x.Username.ToLower() == username.ToLower());
 
          if (user == null)
          {
