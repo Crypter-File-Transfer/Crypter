@@ -33,11 +33,11 @@ namespace Crypter.Console.Jobs
          System.Console.WriteLine(@"
 Commands:
 
-    -h --help /?            Show this menu
-    -d --delete-expired     Delete expired uploads
-    --create-schema {connection-string}       Create tables for the 'crypter' database
-    --migrate-schema-v1 {connection-string}   Migrate the 'crypter' database to schema v1
-    --delete-schema {connection-string}       Delete tables for the 'crypter' database
+    -h --help /?                                      Show this menu
+    -d --delete-expired                               Delete expired uploads
+    --create-schema {connection-string}               Create tables for the 'crypter' database
+    --migrate-schema {filename} {connection-string}   Migrate the 'crypter' database schema
+    --delete-schema {connection-string}               Delete tables for the 'crypter' database
 ");
       }
    }

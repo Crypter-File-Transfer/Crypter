@@ -24,24 +24,28 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
--- Table: public.Schema
+BEGIN;
 
-CREATE TABLE IF NOT EXISTS public."Schema"
-(
-    "Version" integer NOT NULL,
-    "Updated" timestamp without time zone NOT NULL
-)
+   -- Alter UserX25519KeyPair
 
-TABLESPACE pg_default;
+   ALTER TABLE IF EXISTS public."UserX25519KeyPair"
+      ADD COLUMN "ClientIV" text COLLATE pg_catalog."default";
 
-ALTER TABLE IF EXISTS public."Schema"
-    OWNER to postgres;
+   -- Alter UserEd25519KeyPair
 
-GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."Schema" TO cryptuser;
+   ALTER TABLE IF EXISTS public."UserEd25519KeyPair"
+      ADD COLUMN "ClientIV" text COLLATE pg_catalog."default";
 
-GRANT ALL ON TABLE public."Schema" TO postgres;
+   -- Delete rows from UserX25519KeyPair
 
--- Insert current schema version
+   DELETE FROM public."UserX25519KeyPair";
 
-INSERT INTO public."Schema" ("Version", "Updated")
-   VALUES (2, CURRENT_TIMESTAMP);
+   -- Delete rows from UserX25519KeyPair
+
+   DELETE FROM public."UserEd25519KeyPair";
+
+   -- Update schema version
+
+   UPDATE public."Schema" SET "Version" = 2, "Updated" = CURRENT_TIMESTAMP;
+
+COMMIT;
