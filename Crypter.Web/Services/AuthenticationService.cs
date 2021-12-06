@@ -96,7 +96,8 @@ namespace Crypter.Web.Services
             var decodedX25519Key = Convert.FromBase64String(response.EncryptedX25519PrivateKey);
             await LocalStorage.SetItem(StoredObjectType.EncryptedX25519PrivateKey, decodedX25519Key, StorageLocation.InMemory);
 
-            var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, response.Id, decodedX25519Key);
+            var decodedIV = Convert.FromBase64String(response.X25519IV);
+            var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, decodedX25519Key, decodedIV);
             await LocalStorage.SetItem(StoredObjectType.PlaintextX25519PrivateKey, decryptedKey, StorageLocation.InMemory);
          }
 
@@ -109,7 +110,8 @@ namespace Crypter.Web.Services
             var decodedEd25519Key = Convert.FromBase64String(response.EncryptedEd25519PrivateKey);
             await LocalStorage.SetItem(StoredObjectType.EncryptedEd25519PrivateKey, decodedEd25519Key, StorageLocation.InMemory);
 
-            var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, response.Id, decodedEd25519Key);
+            var decodedIV = Convert.FromBase64String(response.Ed25519IV);
+            var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, decodedEd25519Key, decodedIV);
             await LocalStorage.SetItem(StoredObjectType.PlaintextEd25519PrivateKey, decryptedKey, StorageLocation.InMemory);
          }
       }
@@ -122,18 +124,17 @@ namespace Crypter.Web.Services
       /// <param name="password"></param>
       private async Task HandleMissingX25519Keys(Guid userId, string username, string password)
       {
-         var (encryptedPrivateKey, publicKey) = UserKeysService.GenerateNewX25519KeyPair(userId, username, password);
+         var (encryptedPrivateKey, publicKey, iv) = UserKeysService.GenerateNewX25519KeyPair(username, password);
 
-         var encodedPublicKey = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(publicKey));
-
+         var encodedPublicKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(publicKey));
          var encodedEncryptedPrivateKey = Convert.ToBase64String(encryptedPrivateKey);
+         var encodedIV = Convert.ToBase64String(iv);
 
-         var request = new UpdateKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
+         var request = new UpdateKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey, encodedIV);
          await UserApiService.InsertUserX25519KeysAsync(request);
          await LocalStorage.SetItem(StoredObjectType.EncryptedX25519PrivateKey, encryptedPrivateKey, StorageLocation.InMemory);
 
-         var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, userId, encryptedPrivateKey);
+         var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, encryptedPrivateKey, iv);
          await LocalStorage.SetItem(StoredObjectType.PlaintextX25519PrivateKey, decryptedKey, StorageLocation.InMemory);
       }
 
@@ -145,18 +146,17 @@ namespace Crypter.Web.Services
       /// <param name="password"></param>
       private async Task HandleMissingEd25519Keys(Guid userId, string username, string password)
       {
-         var (encryptedPrivateKey, publicKey) = UserKeysService.GenerateNewEd25519KeyPair(userId, username, password);
+         var (encryptedPrivateKey, publicKey, iv) = UserKeysService.GenerateNewEd25519KeyPair(username, password);
 
-         var encodedPublicKey = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(publicKey));
-
+         var encodedPublicKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(publicKey));
          var encodedEncryptedPrivateKey = Convert.ToBase64String(encryptedPrivateKey);
+         var encodedIV = Convert.ToBase64String(iv);
 
-         var request = new UpdateKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey);
+         var request = new UpdateKeysRequest(encodedEncryptedPrivateKey, encodedPublicKey, encodedIV);
          await UserApiService.InsertUserEd25519KeysAsync(request);
          await LocalStorage.SetItem(StoredObjectType.EncryptedEd25519PrivateKey, encryptedPrivateKey, StorageLocation.InMemory);
 
-         var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, userId, encryptedPrivateKey);
+         var decryptedKey = UserKeysService.DecryptPrivateKey(username, password, encryptedPrivateKey, iv);
          await LocalStorage.SetItem(StoredObjectType.PlaintextEd25519PrivateKey, decryptedKey, StorageLocation.InMemory);
       }
    }

@@ -25,13 +25,21 @@
  */
 
 using Crypter.CryptoLib.Enums;
-using System;
 using System.Text;
 
 namespace Crypter.CryptoLib
 {
    public static class UserFunctions
    {
+      /// <summary>
+      /// Digest a user's login information.
+      /// </summary>
+      /// <param name="username"></param>
+      /// <param name="password"></param>
+      /// <returns>Array of 64 bytes.</returns>
+      /// <remarks>
+      /// The result of this method is used as the user's password during authentication requests.
+      /// </remarks>
       public static byte[] DigestUserCredentials(string username, string password)
       {
          var digestor = new Crypto.SHA(SHAFunction.SHA512);
@@ -41,23 +49,17 @@ namespace Crypter.CryptoLib
       }
 
       /// <summary>
-      /// Create the symmetric parameters to encrypt/decrypt a user's stored data
+      /// Derive a symmetric encryption key from the user's login information
       /// </summary>
       /// <param name="username"></param>
       /// <param name="password"></param>
-      /// <param name="userId"></param>
-      /// <returns></returns>
-      public static (byte[] Key, byte[] IV) DeriveSymmetricCryptoParamsFromUserDetails(string username, string password, Guid userId)
+      /// <returns>Array of 32 bytes.</returns>
+      public static byte[] DeriveSymmetricCryptoParamsFromUserDetails(string username, string password)
       {
          var keyDigestor = new Crypto.SHA(SHAFunction.SHA256);
          keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(username.ToLower()));
          keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(password));
-         var key = keyDigestor.GetDigest();
-
-         var ivDigestor = new Crypto.SHA(SHAFunction.SHA256);
-         ivDigestor.BlockUpdate(Encoding.UTF8.GetBytes(userId.ToString().ToLower()));
-         var iv = ivDigestor.GetDigest()[0..16];
-         return (key, iv);
+         return keyDigestor.GetDigest();
       }
    }
 }

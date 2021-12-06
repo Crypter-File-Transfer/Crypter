@@ -26,7 +26,6 @@
 
 using Crypter.CryptoLib;
 using NUnit.Framework;
-using System;
 
 namespace Crypter.Test.CryptoLib_Tests
 {
@@ -85,11 +84,10 @@ namespace Crypter.Test.CryptoLib_Tests
       }
 
       [Test]
-      public void Symmetric_Crypto_Params_Can_Be_Derived_From_User_Details()
+      public void Symmetric_Key_Can_Be_Derived_From_User_Login_Information()
       {
          var username = "Samwise";
          var password = "Gamgee";
-         var userId = Guid.Parse("77164afe-2c54-4b4a-b2aa-1a35bf2101b9");
 
          var knownKey = new byte[]
          {
@@ -99,43 +97,32 @@ namespace Crypter.Test.CryptoLib_Tests
             0xfb, 0x91, 0x38, 0x41, 0x2d, 0xa4, 0xde, 0x52
          };
 
-         var knownIV = new byte[]
-         {
-            0x18, 0xd0, 0xaf, 0x02, 0x1f, 0x4f, 0xa9, 0x13,
-            0xb1, 0xe5, 0x22, 0x1b, 0x37, 0x52, 0xf5, 0x22
-         };
-
-         (var key, var iv) = UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(username, password, userId);
+         var key = UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(username, password);
          Assert.AreEqual(knownKey, key);
-         Assert.AreEqual(knownIV, iv);
       }
 
       [Test]
-      public void Symmetric_Crypto_Params_Can_Be_Derived_From_User_Details_Username_Is_Case_Insensitive()
+      public void Symmetric_Key_Derivation_Outputs_Same_Key_Regardless_Of_Username_Capitalization()
       {
          var usernameLowercase = "gimli";
          var usernameUppercase = "GIMLI";
          var password = "TheDwarf";
-         var userId = Guid.NewGuid();
 
-         (var lowercaseKey, var lowercaseIV) = UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(usernameLowercase, password, userId);
-         (var uppercaseKey, var uppercaseIV) = UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(usernameUppercase, password, userId);
+         var lowercaseKey = UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(usernameLowercase, password);
+         var uppercaseKey = UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(usernameUppercase, password);
          Assert.AreEqual(lowercaseKey, uppercaseKey);
-         Assert.AreEqual(lowercaseIV, uppercaseIV);
       }
 
       [Test]
-      public void Symmetric_Crypto_Params_Can_Be_Derived_From_User_Details_Password_Is_Case_Sensitive()
+      public void Symmetric_Key_Derivation_Different_Key_When_Password_Capitalization_Changes()
       {
          var username = "Aragon";
          var lowercasePassword = "son_of_arathorn";
          var uppercasePassword = "SON_OF_ARATHORN";
-         var userId = Guid.NewGuid();
 
-         (var lowercaseKey, var lowercaseIV) = UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(username, lowercasePassword, userId);
-         (var uppercaseKey, var uppercaseIV) = UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(username, uppercasePassword, userId);
+         var lowercaseKey = UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(username, lowercasePassword);
+         var uppercaseKey = UserFunctions.DeriveSymmetricCryptoParamsFromUserDetails(username, uppercasePassword);
          Assert.AreNotEqual(lowercaseKey, uppercaseKey);
-         Assert.AreEqual(lowercaseIV, uppercaseIV); // IV is derived from the userId
       }
    }
 }

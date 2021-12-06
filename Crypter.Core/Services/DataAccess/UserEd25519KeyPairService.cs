@@ -57,7 +57,7 @@ namespace Crypter.Core.Services.DataAccess
          return keyPair?.PublicKey;
       }
 
-      public async Task<bool> InsertUserPublicKeyPairAsync(Guid userId, string privateKey, string publicKey)
+      public async Task<bool> InsertUserPublicKeyPairAsync(Guid userId, string privateKey, string publicKey, string clientIV)
       {
          if (await GetUserPublicKeyPairAsync(userId) != default(UserEd25519KeyPair))
          {
@@ -69,6 +69,7 @@ namespace Crypter.Core.Services.DataAccess
              userId,
              privateKey,
              publicKey,
+             clientIV,
              DateTime.UtcNow);
 
          Context.UserEd25519KeyPair.Add(key);
