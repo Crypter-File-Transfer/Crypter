@@ -34,6 +34,7 @@ namespace Crypter.Core.Interfaces
       public Guid Owner { get; set; }
       public string PrivateKey { get; set; }
       public string PublicKey { get; set; }
+      public string ClientIV { get; set; }
       public DateTime Created { get; set; }
    }
 }

@@ -44,4 +44,4 @@ GRANT ALL ON TABLE public."Schema" TO postgres;
 -- Insert current schema version
 
 INSERT INTO public."Schema" ("Version", "Updated")
-   VALUES (1, CURRENT_TIMESTAMP);
+   VALUES (2, CURRENT_TIMESTAMP);

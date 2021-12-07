@@ -82,17 +82,24 @@ namespace Crypter.Console
             return 0;
          }
 
-         if (RequestInitialCrypterMigration(args[0]))
+         if (RequestCrypterSchemaMigration(args[0]))
          {
             if (args.Length < 2)
             {
-               System.Console.WriteLine("This command requires a connection string as the second argument");
+               System.Console.WriteLine("This command requires a filename as the second argument");
                return -2;
             }
 
-            var connectionString = args[1];
+            if (args.Length < 3)
+            {
+               System.Console.WriteLine("This command requires a connection string as the third argument");
+               return -2;
+            }
+
+            var migrationFilename = args[1];
+            var connectionString = args[2];
             var schemaManager = new ManageSchema(connectionString);
-            await schemaManager.PerformInitialMigration();
+            await schemaManager.PerformMigration(migrationFilename);
             return 0;
          }
 
@@ -137,9 +144,9 @@ namespace Crypter.Console
          return param == "--create-schema";
       }
 
-      private static bool RequestInitialCrypterMigration(string param)
+      private static bool RequestCrypterSchemaMigration(string param)
       {
-         return param == "--migrate-schema-v1";
+         return param == "--migrate-schema";
       }
 
       private static bool RequestDeleteCrypterSchema(string param)

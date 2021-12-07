@@ -33,6 +33,6 @@ namespace Crypter.Core.Interfaces
    {
       Task<IUserPublicKeyPair> GetUserPublicKeyPairAsync(Guid userId);
       Task<string> GetUserPublicKeyAsync(Guid userId);
-      Task<bool> InsertUserPublicKeyPairAsync(Guid userId, string privateKey, string publicKey);
+      Task<bool> InsertUserPublicKeyPairAsync(Guid userId, string privateKey, string publicKey, string clientIV);
    }
 }
