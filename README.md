@@ -8,13 +8,14 @@ You and/or your organization may be released from the terms of the AGLPv3 by pur
 
 Please reach out to jackedwards@protonmail.com or submit an issue if you believe these licensing terms are a cause for concern.
 
-## Getting started as a developer
+## Getting started
 
-Check out these documents to get started as a Crypter developer:
+Check out these documents to get started working on Crypter:
 
+* [Contribution Guide](./CONTRIBUTING.md)
 * [Coding Standard](<./Docs/Development/Coding Standard.md>)
 * [Development Environment Setup](<./Docs/Development/Development Environment Setup.md>)
 
-And a growing collection of articles that have come in handy:
+Also take a look at some of the articles that have come in handy while working on the project:
 
 * [Learning Material](<./Docs/Learning Material.md>)
