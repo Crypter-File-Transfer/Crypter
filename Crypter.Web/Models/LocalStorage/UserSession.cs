@@ -26,19 +26,21 @@
 
 using System;
 
-namespace Crypter.Web.Models
+namespace Crypter.Web.Models.LocalStorage
 {
    public class UserSession
    {
       public Guid UserId { get; set; }
       public string Username { get; set; }
-      public string Token { get; set; }
+      public string EncryptedAuthToken { get; set; }
+      public string AuthTokenIV { get; set; }
 
-      public UserSession(Guid userId, string username, string token)
+      public UserSession(Guid userId, string username, string encryptedAuthToken, string authTokenIV)
       {
          UserId = userId;
          Username = username;
-         Token = token;
+         EncryptedAuthToken = encryptedAuthToken;
+         AuthTokenIV = authTokenIV;
       }
    }
 }

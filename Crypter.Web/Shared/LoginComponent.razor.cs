@@ -25,10 +25,9 @@
  */
 
 using Crypter.Web.Helpers;
-using Crypter.Web.Models;
+using Crypter.Web.Models.Forms;
 using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
@@ -44,10 +43,20 @@ namespace Crypter.Web.Shared
       [Inject]
       protected ILocalStorageService LocalStorage { get; set; }
 
-      protected Login loginInfo = new();
+      protected LoginModel LoginModel = new();
 
       protected bool LoginError = false;
       protected string LoginErrorText = "";
+
+      protected string IsInvalid = "is-invalid";
+
+      protected string UsernameInvalidClass = "";
+      protected string UsernameValidationMessage;
+      private readonly static string MissingUsername = "Please enter your username";
+
+      protected string PasswordInvalidClass = "";
+      protected string PasswordValidationMessage;
+      private readonly static string MissingPassword = "Please enter your password";
 
       protected override async Task OnInitializedAsync()
       {
@@ -58,12 +67,14 @@ namespace Crypter.Web.Shared
          await base.OnInitializedAsync();
       }
 
-      protected async Task OnLoginClicked()
+      protected async Task OnLoginClickedAsync()
       {
-         byte[] digestedPassword = CryptoLib.UserFunctions.DigestUserCredentials(loginInfo.Username, loginInfo.Password);
-         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
+         if (!ValidateForm())
+         {
+            return;
+         }
 
-         var authSuccess = await AuthenticationService.Login(loginInfo.Username, loginInfo.Password, digestedPasswordBase64);
+         var authSuccess = await AuthenticationService.LoginAsync(LoginModel.Username, LoginModel.Password, LoginModel.RememberMe);
          if (authSuccess)
          {
             var returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/home";
@@ -73,6 +84,38 @@ namespace Crypter.Web.Shared
 
          LoginError = true;
          LoginErrorText = "Incorrect username or password";
+      }
+
+      private bool ValidateForm()
+      {
+         return ValidateUsername()
+            && ValidatePassword();
+      }
+
+      private bool ValidateUsername()
+      {
+         if (string.IsNullOrEmpty(LoginModel.Username))
+         {
+            UsernameValidationMessage = MissingUsername;
+            UsernameInvalidClass = IsInvalid;
+            return false;
+         }
+
+         UsernameInvalidClass = "";
+         return true;
+      }
+
+      private bool ValidatePassword()
+      {
+         if (string.IsNullOrEmpty(LoginModel.Password))
+         {
+            PasswordValidationMessage = MissingPassword;
+            PasswordInvalidClass = IsInvalid;
+            return false;
+         }
+
+         PasswordInvalidClass = "";
+         return true;
       }
    }
 }

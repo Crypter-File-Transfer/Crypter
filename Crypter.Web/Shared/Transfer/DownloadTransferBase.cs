@@ -28,6 +28,7 @@ using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
 using Crypter.Web.Models;
+using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
@@ -115,7 +116,7 @@ namespace Crypter.Web.Shared.Transfer
             IsUserRecipient = false;
             return;
          }
-         var session = await LocalStorageService.GetItem<UserSession>(StoredObjectType.UserSession);
+         var session = await LocalStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
          IsUserRecipient = RecipientId.Equals(session.UserId);
       }
 
@@ -125,7 +126,7 @@ namespace Crypter.Web.Shared.Transfer
       {
          if (IsUserRecipient)
          {
-            return (true, await LocalStorageService.GetItem<string>(StoredObjectType.PlaintextX25519PrivateKey));
+            return (true, await LocalStorageService.GetItemAsync<string>(StoredObjectType.PlaintextX25519PrivateKey));
          }
 
          try

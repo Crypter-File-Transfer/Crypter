@@ -59,7 +59,8 @@ namespace Crypter.Web
             .AddScoped<ITransferApiService, TransferApiService>()
             .AddScoped<IUserApiService, UserApiService>()
             .AddScoped<IMetricsApiService, MetricsApiService>()
-            .AddScoped<IUserKeysService, UserKeysService>();
+            .AddScoped<IUserKeysService, UserKeysService>()
+            .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>();
 
          var host = builder.Build();
 
