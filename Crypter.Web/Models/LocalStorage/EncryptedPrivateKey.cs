@@ -24,13 +24,17 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-namespace Crypter.Web.Models.Forms
+namespace Crypter.Web.Models.LocalStorage
 {
-   public class UserRegistration
+   public class EncryptedPrivateKey
    {
-      public string Username { get; set; }
-      public string Password { get; set; }
-      public string PasswordConfirm { get; set; }
-      public string EmailAddress { get; set; }
+      public string Key { get; set; }
+      public string IV { get; set; }
+
+      public EncryptedPrivateKey(string key, string iv)
+      {
+         Key = key;
+         IV = iv;
+      }
    }
 }

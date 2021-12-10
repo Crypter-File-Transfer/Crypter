@@ -76,8 +76,8 @@ namespace Crypter.Web.Shared.Modal
          if (LocalStorage.HasItem(StoredObjectType.UserSession))
          {
             IsSenderDefined = true;
-            SenderX25519PrivateKey = await LocalStorage.GetItem<string>(StoredObjectType.PlaintextX25519PrivateKey);
-            SenderEd25519PrivateKey = await LocalStorage.GetItem<string>(StoredObjectType.PlaintextEd25519PrivateKey);
+            SenderX25519PrivateKey = await LocalStorage.GetItemAsync<string>(StoredObjectType.PlaintextX25519PrivateKey);
+            SenderEd25519PrivateKey = await LocalStorage.GetItemAsync<string>(StoredObjectType.PlaintextEd25519PrivateKey);
          }
 
          ModalDisplay = "block;";

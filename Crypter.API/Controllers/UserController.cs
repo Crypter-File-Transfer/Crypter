@@ -139,8 +139,8 @@ namespace Crypter.API.Controllers
             {
                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             }),
-            Audience = "crypter.dev",
-            Issuer = "crypter.dev/api",
+            Audience = "www.crypter.dev",
+            Issuer = "www.crypter.dev/api",
             Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(TokenSecretKey), SecurityAlgorithms.HmacSha256Signature)
          };
@@ -153,7 +153,7 @@ namespace Crypter.API.Controllers
          BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(user.Id, DateTime.UtcNow));
 
          return new OkObjectResult(
-             new UserAuthenticateResponse(user.Id, tokenString, userX25519KeyPair?.PrivateKey, userEd25519KeyPair?.PrivateKey, userX25519KeyPair.ClientIV, userEd25519KeyPair.ClientIV)
+             new UserAuthenticateResponse(user.Id, tokenString, userX25519KeyPair?.PrivateKey, userEd25519KeyPair?.PrivateKey, userX25519KeyPair?.ClientIV, userEd25519KeyPair?.ClientIV)
          );
       }
 

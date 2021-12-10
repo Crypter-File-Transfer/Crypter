@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Web.Models;
+using Crypter.Web.Models.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Net;
@@ -43,9 +43,9 @@ namespace Crypter.Web.Services
 
    public class HttpService : IHttpService
    {
-      private readonly HttpClient HttpClient;
-      private readonly NavigationManager NavigationManager;
-      private readonly ILocalStorageService LocalStorage;
+      private readonly HttpClient _httpClient;
+      private readonly NavigationManager _navigationManager;
+      private readonly ILocalStorageService _localStorageService;
 
       public HttpService(
           HttpClient httpClient,
@@ -53,9 +53,9 @@ namespace Crypter.Web.Services
           ILocalStorageService localStorage
       )
       {
-         HttpClient = httpClient;
-         NavigationManager = navigationManager;
-         LocalStorage = localStorage;
+         _httpClient = httpClient;
+         _navigationManager = navigationManager;
+         _localStorageService = localStorage;
       }
 
       public async Task<(HttpStatusCode HttpStatus, T Payload)> Get<T>(string uri, bool withAuthorization)
@@ -78,18 +78,20 @@ namespace Crypter.Web.Services
 
          if (withAuthorization)
          {
-            var token = (await LocalStorage.GetItem<UserSession>(StoredObjectType.UserSession))?.Token;
-            if (string.IsNullOrEmpty(token))
+            if (!_localStorageService.HasItem(StoredObjectType.UserSession)
+               || !_localStorageService.HasItem(StoredObjectType.AuthToken))
             {
-               return await HandleMissingUserAsync<T>();
+               return await HandleMissingAuthorization<T>();
             }
+
+            var token = (await _localStorageService.GetItemAsync<string>(StoredObjectType.AuthToken));
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
          }
 
          HttpResponseMessage response;
          try
          {
-            response = await HttpClient.SendAsync(request);
+            response = await _httpClient.SendAsync(request);
          }
          catch (Exception)
          {
@@ -98,7 +100,7 @@ namespace Crypter.Web.Services
 
          if (response.StatusCode == HttpStatusCode.Unauthorized)
          {
-            return await HandleMissingUserAsync<T>();
+            return await HandleMissingAuthorization<T>();
          }
 
          T content = await response.Content.ReadFromJsonAsync<T>();
@@ -107,10 +109,10 @@ namespace Crypter.Web.Services
          return (response.StatusCode, content);
       }
 
-      private async Task<(HttpStatusCode HttpStatus, T Payload)> HandleMissingUserAsync<T>()
+      private async Task<(HttpStatusCode HttpStatus, T Payload)> HandleMissingAuthorization<T>()
       {
-         await LocalStorage.Dispose();
-         NavigationManager.NavigateTo("/");
+         await _localStorageService.DisposeAsync();
+         _navigationManager.NavigateTo("/");
          return (HttpStatusCode.Unauthorized, default);
       }
    }

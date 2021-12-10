@@ -42,20 +42,22 @@ namespace Crypter.Web.Services
    public enum StoredObjectType
    {
       UserSession,
-      EncryptedX25519PrivateKey,
-      EncryptedEd25519PrivateKey,
+      AuthToken,
       PlaintextX25519PrivateKey,
-      PlaintextEd25519PrivateKey
+      PlaintextEd25519PrivateKey,
+      EncryptedX25519PrivateKey,
+      EncryptedEd25519PrivateKey
    }
 
    public interface ILocalStorageService
    {
-      Task Initialize();
-      Task<T> GetItem<T>(StoredObjectType itemType);
+      bool IsInitialized { get; }
+      Task InitializeAsync();
+      Task<T> GetItemAsync<T>(StoredObjectType itemType);
       bool HasItem(StoredObjectType itemType);
-      Task SetItem<T>(StoredObjectType itemType, T value, StorageLocation location);
-      Task RemoveItem(StoredObjectType itemType);
-      Task Dispose();
+      Task SetItemAsync<T>(StoredObjectType itemType, T value, StorageLocation location);
+      Task RemoveItemAsync(StoredObjectType itemType);
+      Task DisposeAsync();
    }
 
    public class LocalStorageService : ILocalStorageService
@@ -68,6 +70,8 @@ namespace Crypter.Web.Services
       private readonly Dictionary<string, object> InMemoryStorage;
       private readonly Dictionary<string, StorageLocation> ObjectLocations;
 
+      public bool IsInitialized { get; private set; } = false;
+
       public LocalStorageService(IJSRuntime jSRuntime)
       {
          JSRuntime = jSRuntime;
@@ -75,12 +79,16 @@ namespace Crypter.Web.Services
          ObjectLocations = new Dictionary<string, StorageLocation>();
       }
 
-      public async Task Initialize()
+      public async Task InitializeAsync()
       {
-         foreach (StoredObjectType item in Enum.GetValues(typeof(StoredObjectType)))
+         if (!IsInitialized)
          {
-            await InitializeItemFromLocalStorage(item);
-            await InitializeItemFromSessionStorage(item);
+            foreach (StoredObjectType item in Enum.GetValues(typeof(StoredObjectType)))
+            {
+               await InitializeItemFromLocalStorage(item);
+               await InitializeItemFromSessionStorage(item);
+            }
+            IsInitialized = true;
          }
       }
 
@@ -102,7 +110,7 @@ namespace Crypter.Web.Services
          }
       }
 
-      public async Task<T> GetItem<T>(StoredObjectType itemType)
+      public async Task<T> GetItemAsync<T>(StoredObjectType itemType)
       {
          if (ObjectLocations.TryGetValue(itemType.ToString(), out var location))
          {
@@ -130,10 +138,9 @@ namespace Crypter.Web.Services
          return ObjectLocations.ContainsKey(itemType.ToString());
       }
 
-      public async Task SetItem<T>(StoredObjectType itemType, T value, StorageLocation location)
+      public async Task SetItemAsync<T>(StoredObjectType itemType, T value, StorageLocation location)
       {
-         await RemoveItem(itemType);
-         ObjectLocations.Add(itemType.ToString(), location);
+         ObjectLocations.TryAdd(itemType.ToString(), location);
          switch (location)
          {
             case StorageLocation.InMemory:
@@ -143,14 +150,14 @@ namespace Crypter.Web.Services
                await JSRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.setItem", itemType.ToString(), JsonSerializer.Serialize(value));
                break;
             case StorageLocation.LocalStorage:
-               await JSRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.removeItem", itemType.ToString(), JsonSerializer.Serialize(value));
+               await JSRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.setItem", itemType.ToString(), JsonSerializer.Serialize(value));
                break;
             default:
                throw new NotImplementedException();
          }
       }
 
-      public async Task RemoveItem(StoredObjectType itemType)
+      public async Task RemoveItemAsync(StoredObjectType itemType)
       {
          if (ObjectLocations.TryGetValue(itemType.ToString(), out var location))
          {
@@ -172,11 +179,11 @@ namespace Crypter.Web.Services
          }
       }
 
-      public async Task Dispose()
+      public async Task DisposeAsync()
       {
          foreach (StoredObjectType item in Enum.GetValues(typeof(StoredObjectType)))
          {
-            await RemoveItem(item);
+            await RemoveItemAsync(item);
          }
       }
    }

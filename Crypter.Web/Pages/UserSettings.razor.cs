@@ -26,6 +26,7 @@
 
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
+using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
@@ -166,7 +167,7 @@ namespace Crypter.Web.Pages
             Console.WriteLine("fail");
             return;
          }
-         byte[] digestedPassword = CryptoLib.UserFunctions.DigestUserCredentials(Username, CurrentPasswordForContactInfo);
+         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(Username, CurrentPasswordForContactInfo);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var request = new UpdateContactInfoRequest(EditedEmail, digestedPasswordBase64);
@@ -280,8 +281,11 @@ namespace Crypter.Web.Pages
 
          EnableTransferNotifications = EditedEnableTransferNotifications = userAccountInfo.EnableTransferNotifications;
 
-         X25519PrivateKey = "Encrypted";
-         Ed25519PrivateKey = "Encrypted";
+         var encryptedX25519PrivateKey = (await LocalStorage.GetItemAsync<EncryptedPrivateKey>(StoredObjectType.EncryptedX25519PrivateKey)).Key;
+         var encryptedEd25519PrivateKey = (await LocalStorage.GetItemAsync<EncryptedPrivateKey>(StoredObjectType.EncryptedEd25519PrivateKey)).Key;
+
+         X25519PrivateKey = encryptedX25519PrivateKey;
+         Ed25519PrivateKey = encryptedEd25519PrivateKey;
          ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
       }
 

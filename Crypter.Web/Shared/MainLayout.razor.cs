@@ -38,14 +38,47 @@ namespace Crypter.Web.Shared
       [Inject]
       protected ILocalStorageService LocalStorage { get; set; }
 
+      protected Modal.ReAuthenticationModal ReAuthenticationModal { get; set; }
+
       protected override async Task OnInitializedAsync()
       {
-         await LocalStorage.Initialize();
+         await LocalStorage.InitializeAsync();
+         StateHasChanged();
+
+         if (UserNeedsReauthentication())
+         {
+            ReAuthenticationModal.Open();
+            return;
+         }
+
          if (LocalStorage.HasItem(StoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/user/home");
          }
-         await base.OnInitializedAsync();
+      }
+
+      protected bool UserNeedsReauthentication()
+      {
+         // User session does not exist. There is nobody to reauthenticate.
+         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
+         {
+            return false;
+         }
+
+         // User session and the auth token both exist. No need to reauthenticate.
+         if (LocalStorage.HasItem(StoredObjectType.UserSession)
+            && LocalStorage.HasItem(StoredObjectType.AuthToken))
+         {
+            return false;
+         }
+
+         // Reauthenticate!
+         return true;
+      }
+
+      public void OnReauthenticationModalClosed()
+      {
+         StateHasChanged();
       }
    }
 }
