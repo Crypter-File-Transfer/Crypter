@@ -55,7 +55,7 @@
                      @if (string.IsNullOrEmpty(item.RecipientUsername))
                      {
                         <h6 class="card-subtitle my-2">
-                           Filename: <a href="@($"/decrypt/file/{item.Id}")">@item.Name</a>
+                           Filename: <a class="text-decoration-none" href="@($"/decrypt/file/{item.Id}")">@item.Name</a>
                         </h6>
                      }
                      else
@@ -70,7 +70,7 @@
                      @if (string.IsNullOrEmpty(item.RecipientUsername))
                      {
                         <h6 class="card-subtitle my-2">
-                           Subject: <a href="@($"/decrypt/message/{item.Id}")">@item.Name</a>
+                           Subject: <a class="text-decoration-none" href="@($"/decrypt/message/{item.Id}")">@item.Name</a>
                         </h6>
                      }
                      else
@@ -88,7 +88,7 @@
                         }
                         else
                         {
-                           <span>To: <a href="@($"/user/profile/{item.RecipientUsername}")">@($"@{item.RecipientUsername}")</a></span>
+                           <span>To: <a class="text-decoration-none" href="@($"/user/profile/{item.RecipientUsername}")">@($"@{item.RecipientUsername}")</a></span>
                         }
                      </div>
                   </div>
