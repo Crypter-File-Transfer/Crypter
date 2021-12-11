@@ -109,17 +109,17 @@ namespace Crypter.Console.Jobs
       }
       
       /// <summary>
-      /// Perform the first, codified migration of the Crypter database.
+      /// Perform a migration of the Crypter database.
       /// </summary>
       /// <returns></returns>
-      public async Task PerformInitialMigration()
+      public async Task PerformMigration(string filename)
       {
          await using var connection = new NpgsqlConnection(ConnectionString);
          await connection.OpenAsync();
 
          try
          {
-            var migration = await GetMigrationScriptAsync("Migration1.sql");
+            var migration = await GetMigrationScriptAsync(filename);
             ExecuteSqlScriptNonQuery(connection, migration);
          }
          catch (System.Exception e)

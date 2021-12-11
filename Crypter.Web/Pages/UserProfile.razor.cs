@@ -53,7 +53,7 @@ namespace Crypter.Web.Pages
       protected Shared.Modal.UploadMessageTransferModal MessageModal { get; set; }
 
       protected bool Loading;
-      protected bool ProfileFound;
+      protected bool IsProfileAvailable;
       protected Guid UserId;
       protected string Alias;
       protected string About;
@@ -79,8 +79,11 @@ namespace Crypter.Web.Pages
       {
          var requestWithAuthentication = LocalStorage.HasItem(StoredObjectType.UserSession);
          var (httpStatus, response) = await UserService.GetUserPublicProfileAsync(Username, requestWithAuthentication);
-         ProfileFound = httpStatus != HttpStatusCode.NotFound;
-         if (ProfileFound)
+         IsProfileAvailable = httpStatus == HttpStatusCode.OK
+            && !string.IsNullOrEmpty(response.PublicDHKey)
+            && !string.IsNullOrEmpty(response.PublicDSAKey);
+
+         if (IsProfileAvailable)
          {
             UserId = response.Id;
             Alias = response.Alias;

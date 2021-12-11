@@ -105,8 +105,8 @@ namespace CrypterAPI
             options.SaveToken = true;
             options.TokenValidationParameters = new TokenValidationParameters
             {
-               ValidAudience = "crypter.dev",
-               ValidIssuer = "crypter.dev/api",
+               ValidAudience = "www.crypter.dev",
+               ValidIssuer = "www.crypter.dev/api",
                ValidateIssuerSigningKey = true,
                IssuerSigningKey = new SymmetricSecurityKey(tokenSigningKey),
                ValidateLifetime = true,

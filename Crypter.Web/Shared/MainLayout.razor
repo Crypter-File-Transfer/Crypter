@@ -28,13 +28,22 @@
 @inherits MainLayoutBase
 
 <div class="page h-100">
-   <NavigationBar />
-   <main role="main" class="pb-3">
-      @if (LocalStorage.HasItem(StoredObjectType.UserSession))
-      {
-         <NavigationUser />
-      }
-      @Body
-   </main>
-   <Footer />
+   @if (LocalStorage.IsInitialized)
+   {
+      <NavigationBar />
+      <main role="main" class="pb-3">
+         
+         @if (LocalStorage.HasItem(StoredObjectType.UserSession))
+         {
+            <NavigationUser />
+            <ReAuthenticationModal @ref="ReAuthenticationModal" ModalClosedCallback="@OnReauthenticationModalClosed" />
+         }
+
+         @if (!UserNeedsReauthentication())
+         {
+            @Body
+         }
+      </main>
+      <Footer></Footer>
+   }
 </div>

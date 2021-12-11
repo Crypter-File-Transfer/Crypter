@@ -24,35 +24,11 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Core.Interfaces;
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Crypter.Core.Models
+namespace Crypter.Contracts.Enum
 {
-   [Table("UserX25519KeyPair")]
-   public class UserX25519KeyPair : IUserPublicKeyPair
+   public enum PublicKeyType
    {
-      [Key]
-      public Guid Id { get; set; }
-      [ForeignKey("User")]
-      public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
-      public DateTime Created { get; set; }
-
-      public virtual User User { get; set; }
-
-      public UserX25519KeyPair(Guid id, Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
-      {
-         Id = id;
-         Owner = owner;
-         PrivateKey = privateKey;
-         PublicKey = publicKey;
-         ClientIV = clientIV;
-         Created = created;
-      }
+      X25519,
+      Ed25519
    }
 }

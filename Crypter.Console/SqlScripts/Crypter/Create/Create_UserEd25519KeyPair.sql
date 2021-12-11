@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS public."UserEd25519KeyPair"
     "Owner" uuid NOT NULL,
     "PrivateKey" text COLLATE pg_catalog."default",
     "PublicKey" text COLLATE pg_catalog."default",
+    "ClientIV" text COLLATE pg_catalog."default",
     "Created" timestamp without time zone NOT NULL,
     CONSTRAINT "PK_UserEd25519KeyPair" PRIMARY KEY ("Id"),
     CONSTRAINT "FK_UserEd25519KeyPair_User_Owner" FOREIGN KEY ("Owner")

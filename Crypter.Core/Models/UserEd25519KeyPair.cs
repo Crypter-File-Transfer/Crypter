@@ -40,16 +40,18 @@ namespace Crypter.Core.Models
       public Guid Owner { get; set; }
       public string PrivateKey { get; set; }
       public string PublicKey { get; set; }
+      public string ClientIV { get; set; }
       public DateTime Created { get; set; }
 
       public virtual User User { get; set; }
 
-      public UserEd25519KeyPair(Guid id, Guid owner, string privateKey, string publicKey, DateTime created)
+      public UserEd25519KeyPair(Guid id, Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
       {
          Id = id;
          Owner = owner;
          PrivateKey = privateKey;
          PublicKey = publicKey;
+         ClientIV = clientIV;
          Created = created;
       }
    }

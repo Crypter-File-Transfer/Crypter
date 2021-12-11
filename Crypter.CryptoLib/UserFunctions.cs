@@ -25,14 +25,23 @@
  */
 
 using Crypter.CryptoLib.Enums;
-using System;
 using System.Text;
 
 namespace Crypter.CryptoLib
 {
    public static class UserFunctions
    {
-      public static byte[] DigestUserCredentials(string username, string password)
+      /// <summary>
+      /// Digest the user's credentials.
+      /// </summary>
+      /// <param name="username">Username will be lowercased within the method.</param>
+      /// <param name="password"></param>
+      /// <returns>Array of 64 bytes.</returns>
+      /// <remarks>
+      /// The result of this method gets used as the user's password during authentication requests.
+      /// The reason for doing this is to keep the user's real password a secret from even our own API.
+      /// </remarks>
+      public static byte[] DeriveAuthenticationPasswordFromUserCredentials(string username, string password)
       {
          var digestor = new Crypto.SHA(SHAFunction.SHA512);
          digestor.BlockUpdate(Encoding.UTF8.GetBytes(password));
@@ -41,23 +50,17 @@ namespace Crypter.CryptoLib
       }
 
       /// <summary>
-      /// Create the symmetric parameters to encrypt/decrypt a user's stored data
+      /// Use the user's credentials to create a symmetric key.
       /// </summary>
-      /// <param name="username"></param>
+      /// <param name="username">Username will be lowercased within the method.</param>
       /// <param name="password"></param>
-      /// <param name="userId"></param>
-      /// <returns></returns>
-      public static (byte[] Key, byte[] IV) DeriveSymmetricCryptoParamsFromUserDetails(string username, string password, Guid userId)
+      /// <returns>Array of 32 bytes.</returns>
+      public static byte[] DeriveSymmetricKeyFromUserCredentials(string username, string password)
       {
          var keyDigestor = new Crypto.SHA(SHAFunction.SHA256);
          keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(username.ToLower()));
          keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(password));
-         var key = keyDigestor.GetDigest();
-
-         var ivDigestor = new Crypto.SHA(SHAFunction.SHA256);
-         ivDigestor.BlockUpdate(Encoding.UTF8.GetBytes(userId.ToString().ToLower()));
-         var iv = ivDigestor.GetDigest()[0..16];
-         return (key, iv);
+         return keyDigestor.GetDigest();
       }
    }
 }

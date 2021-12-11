@@ -56,8 +56,8 @@ namespace Crypter.API.Controllers
    {
       private readonly IUserService UserService;
       private readonly IUserProfileService UserProfileService;
-      private readonly IUserPublicKeyPairService<UserX25519KeyPair> UserDiffieHellmanKeyPairService;
-      private readonly IUserPublicKeyPairService<UserEd25519KeyPair> UserDigitalSignatureKeyPairService;
+      private readonly IUserPublicKeyPairService<UserX25519KeyPair> UserX25519KeyPairService;
+      private readonly IUserPublicKeyPairService<UserEd25519KeyPair> UserEd25519KeyPairService;
       private readonly IUserSearchService UserSearchService;
       private readonly IUserPrivacySettingService UserPrivacySettingService;
       private readonly IUserEmailVerificationService UserEmailVerificationService;
@@ -71,8 +71,8 @@ namespace Crypter.API.Controllers
       public UserController(
           IUserService userService,
           IUserProfileService userProfileService,
-          IUserPublicKeyPairService<UserX25519KeyPair> userDiffieHellmanKeyPairService,
-          IUserPublicKeyPairService<UserEd25519KeyPair> userDigitalSignatureKeyPairService,
+          IUserPublicKeyPairService<UserX25519KeyPair> userX25519KeyPairService,
+          IUserPublicKeyPairService<UserEd25519KeyPair> userEd25519KeyPairService,
           IUserSearchService userSearchService,
           IUserPrivacySettingService userPrivacySettingService,
           IUserEmailVerificationService userEmailVerificationService,
@@ -86,8 +86,8 @@ namespace Crypter.API.Controllers
       {
          UserService = userService;
          UserProfileService = userProfileService;
-         UserDiffieHellmanKeyPairService = userDiffieHellmanKeyPairService;
-         UserDigitalSignatureKeyPairService = userDigitalSignatureKeyPairService;
+         UserX25519KeyPairService = userX25519KeyPairService;
+         UserEd25519KeyPairService = userEd25519KeyPairService;
          UserSearchService = userSearchService;
          UserPrivacySettingService = userPrivacySettingService;
          UserEmailVerificationService = userEmailVerificationService;
@@ -139,21 +139,21 @@ namespace Crypter.API.Controllers
             {
                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             }),
-            Audience = "crypter.dev",
-            Issuer = "crypter.dev/api",
+            Audience = "www.crypter.dev",
+            Issuer = "www.crypter.dev/api",
             Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(TokenSecretKey), SecurityAlgorithms.HmacSha256Signature)
          };
          var token = tokenHandler.CreateToken(tokenDescriptor);
          var tokenString = tokenHandler.WriteToken(token);
 
-         var userDHKeyPair = await UserDiffieHellmanKeyPairService.GetUserPublicKeyPairAsync(user.Id);
-         var userDSAKeyPair = await UserDigitalSignatureKeyPairService.GetUserPublicKeyPairAsync(user.Id);
+         var userX25519KeyPair = await UserX25519KeyPairService.GetUserPublicKeyPairAsync(user.Id);
+         var userEd25519KeyPair = await UserEd25519KeyPairService.GetUserPublicKeyPairAsync(user.Id);
 
          BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(user.Id, DateTime.UtcNow));
 
          return new OkObjectResult(
-             new UserAuthenticateResponse(user.Id, tokenString, userDHKeyPair?.PrivateKey, userDSAKeyPair?.PrivateKey)
+             new UserAuthenticateResponse(user.Id, tokenString, userX25519KeyPair?.PrivateKey, userEd25519KeyPair?.PrivateKey, userX25519KeyPair?.ClientIV, userEd25519KeyPair?.ClientIV)
          );
       }
 
@@ -420,7 +420,7 @@ namespace Crypter.API.Controllers
       {
          var userId = ClaimsParser.ParseUserId(User);
 
-         var insertResult = await UserDiffieHellmanKeyPairService.InsertUserPublicKeyPairAsync(userId, body.EncryptedPrivateKeyBase64, body.PublicKey);
+         var insertResult = await UserX25519KeyPairService.InsertUserPublicKeyPairAsync(userId, body.EncryptedPrivateKeyBase64, body.PublicKeyBase64, body.ClientIVBase64);
          if (insertResult)
          {
             return new OkObjectResult(
@@ -439,7 +439,7 @@ namespace Crypter.API.Controllers
       {
          var userId = ClaimsParser.ParseUserId(User);
 
-         var insertResult = await UserDigitalSignatureKeyPairService.InsertUserPublicKeyPairAsync(userId, body.EncryptedPrivateKeyBase64, body.PublicKey);
+         var insertResult = await UserEd25519KeyPairService.InsertUserPublicKeyPairAsync(userId, body.EncryptedPrivateKeyBase64, body.PublicKeyBase64, body.ClientIVBase64);
          if (insertResult)
          {
             return new OkObjectResult(
@@ -508,8 +508,8 @@ namespace Crypter.API.Controllers
          var userAllowsRequestorToViewProfile = await UserPrivacySettingService.IsUserViewableByPartyAsync(user.Id, requestor);
          if (userAllowsRequestorToViewProfile)
          {
-            var userPublicDHKey = await UserDiffieHellmanKeyPairService.GetUserPublicKeyAsync(user.Id);
-            var userPublicDSAKey = await UserDigitalSignatureKeyPairService.GetUserPublicKeyAsync(user.Id);
+            var userPublicDHKey = await UserX25519KeyPairService.GetUserPublicKeyAsync(user.Id);
+            var userPublicDSAKey = await UserEd25519KeyPairService.GetUserPublicKeyAsync(user.Id);
 
             var visitorCanSendMessages = await UserPrivacySettingService.DoesUserAcceptMessagesFromOtherPartyAsync(user.Id, visitorId);
             var visitorCanSendFiles = await UserPrivacySettingService.DoesUserAcceptFilesFromOtherPartyAsync(user.Id, visitorId);

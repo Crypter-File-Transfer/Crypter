@@ -24,35 +24,28 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Core.Interfaces;
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+BEGIN;
 
-namespace Crypter.Core.Models
-{
-   [Table("UserX25519KeyPair")]
-   public class UserX25519KeyPair : IUserPublicKeyPair
-   {
-      [Key]
-      public Guid Id { get; set; }
-      [ForeignKey("User")]
-      public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
-      public DateTime Created { get; set; }
+   -- Alter UserX25519KeyPair
 
-      public virtual User User { get; set; }
+   ALTER TABLE IF EXISTS public."UserX25519KeyPair"
+      ADD COLUMN "ClientIV" text COLLATE pg_catalog."default";
 
-      public UserX25519KeyPair(Guid id, Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
-      {
-         Id = id;
-         Owner = owner;
-         PrivateKey = privateKey;
-         PublicKey = publicKey;
-         ClientIV = clientIV;
-         Created = created;
-      }
-   }
-}
+   -- Alter UserEd25519KeyPair
+
+   ALTER TABLE IF EXISTS public."UserEd25519KeyPair"
+      ADD COLUMN "ClientIV" text COLLATE pg_catalog."default";
+
+   -- Delete rows from UserX25519KeyPair
+
+   DELETE FROM public."UserX25519KeyPair";
+
+   -- Delete rows from UserX25519KeyPair
+
+   DELETE FROM public."UserEd25519KeyPair";
+
+   -- Update schema version
+
+   UPDATE public."Schema" SET "Version" = 2, "Updated" = CURRENT_TIMESTAMP;
+
+COMMIT;

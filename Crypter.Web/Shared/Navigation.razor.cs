@@ -47,6 +47,7 @@ namespace Crypter.Web.Shared
       [Inject]
       protected IAuthenticationService AuthenticationService { get; set; }
 
+      protected bool UserIsAuthenticated { get; set; } = false;
       protected Modal.UploadFileTransferModal FileTransferModal { get; set; }
       protected Modal.UploadMessageTransferModal MessageTransferModal { get; set; }
 
@@ -58,7 +59,8 @@ namespace Crypter.Web.Shared
 
       protected void OnLogoutClicked()
       {
-         AuthenticationService.Logout();
+         AuthenticationService.LogoutAsync();
+         NavigationManager.NavigateTo("/");
       }
 
       protected void HandleLocationChanged(object sender, LocationChangedEventArgs e)

@@ -31,13 +31,15 @@ namespace Crypter.Contracts.Requests
    public class UpdateKeysRequest
    {
       public string EncryptedPrivateKeyBase64 { get; set; }
-      public string PublicKey { get; set; }
+      public string PublicKeyBase64 { get; set; }
+      public string ClientIVBase64 { get; set; }
 
       [JsonConstructor]
-      public UpdateKeysRequest(string encryptedPrivateKeyBase64, string publicKey)
+      public UpdateKeysRequest(string encryptedPrivateKeyBase64, string publicKeyBase64, string clientIVBase64)
       {
          EncryptedPrivateKeyBase64 = encryptedPrivateKeyBase64;
-         PublicKey = publicKey;
+         PublicKeyBase64 = publicKeyBase64;
+         ClientIVBase64 = clientIVBase64;
       }
    }
 }

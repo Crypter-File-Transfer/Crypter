@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31129.286
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.API", "Crypter.API\Crypter.API.csproj", "{F9208A53-1847-4B7E-A867-C5D17F52410C}"
 EndProject
@@ -16,7 +16,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Test", "Crypter.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Console", "Crypter.Console\Crypter.Console.csproj", "{7D8A5A7F-4C0D-4F48-8913-ACCCD945DE82}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypter.Common", "Crypter.Common\Crypter.Common.csproj", "{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Common", "Crypter.Common\Crypter.Common.csproj", "{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

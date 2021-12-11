@@ -26,23 +26,30 @@
 
 @inherits LoginComponentBase
 
-<EditForm Model="@loginInfo" OnValidSubmit="@(e => OnLoginClicked())">
-   <DataAnnotationsValidator />
+<form>
+   <div class="mb-3">
+      <label for="usernameFormControl" class="form-label">Username</label>
+      <input @bind="LoginModel.Username" class="form-control @UsernameInvalidClass" id="usernameFormControl" />
+      <div class="invalid-feedback">@UsernameValidationMessage</div>
+   </div>
+
+   <div class="mb-3">
+      <label for="passwordFormControl" class="form-label">Password</label>
+      <input type="password" @bind="LoginModel.Password" class="form-control @PasswordInvalidClass" id="passwordFormControl" />
+      <div class="invalid-feedback">@PasswordValidationMessage</div>
+   </div>
+
    @if (LoginError)
    {
       <div class="alert alert-danger" role="alert">
          @LoginErrorText
       </div>
    }
-   <div class="mb-3">
-      <label for="usernameFormControl" class="form-label">Username</label>
-      <InputText @bind-Value="@loginInfo.Username" class="form-control" id="usernameFormControl" />
-      <ValidationMessage For="@(() => loginInfo.Username)" />
+
+   <div class="form-check form-switch">
+      <label class="form-check-label" for="rememberMe">Remember me on this device</label>
+      <input @bind="LoginModel.RememberMe" class="form-check-input" type="checkbox" id="rememberMe" />
    </div>
-   <div class="mb-3">
-      <label for="passwordFormControl" class="form-label">Password</label>
-      <InputText type="password" @bind-Value="@loginInfo.Password" class="form-control" id="passwordFormControl" />
-      <ValidationMessage For="@(() => loginInfo.Password)" />
-   </div>
-   <button type="submit" class="btn btn-primary">Login</button>
-</EditForm>
+
+   <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="OnLoginClickedAsync">Login</button>
+</form>

@@ -46,13 +46,12 @@ namespace Crypter.Web.Shared
       [Inject]
       protected IUserApiService UserService { get; set; }
 
-      protected UserRegistration RegistrationInfo = new();
+      protected UserRegistrationModel RegistrationInfo = new();
 
       protected bool RegistrationError = false;
       protected string RegistrationErrorText = "";
       protected bool RegistrationSuccess = false;
 
-      protected string IsValid = "is-valid";
       protected string IsInvalid = "is-invalid";
 
       protected string UsernameInvalidClass = "";
@@ -81,29 +80,14 @@ namespace Crypter.Web.Shared
          await base.OnInitializedAsync();
       }
 
-      protected bool ValidateForm()
+      private bool ValidateForm()
       {
-         var formIsValid = true;
-
-         if (!ValidateUsername())
-         {
-            formIsValid = false;
-         }
-
-         if (!ValidatePassword())
-         {
-            formIsValid = false;
-         }
-
-         if (!ValidatePasswordConfirmation())
-         {
-            formIsValid = false;
-         }
-
-         return formIsValid;
+         return ValidateUsername()
+            && ValidatePassword()
+            && ValidatePasswordConfirmation();
       }
 
-      protected bool ValidateUsername()
+      private bool ValidateUsername()
       {
          if (string.IsNullOrEmpty(RegistrationInfo.Username))
          {
@@ -128,7 +112,7 @@ namespace Crypter.Web.Shared
          return true;
       }
 
-      protected bool ValidatePassword()
+      private bool ValidatePassword()
       {
          if (string.IsNullOrEmpty(RegistrationInfo.Password))
          {
@@ -141,7 +125,7 @@ namespace Crypter.Web.Shared
          return true;
       }
 
-      protected bool ValidatePasswordConfirmation()
+      private bool ValidatePasswordConfirmation()
       {
          if (string.IsNullOrEmpty(RegistrationInfo.PasswordConfirm))
          {
@@ -167,7 +151,7 @@ namespace Crypter.Web.Shared
             return;
          }
 
-         byte[] digestedPassword = CryptoLib.UserFunctions.DigestUserCredentials(RegistrationInfo.Username, RegistrationInfo.Password);
+         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(RegistrationInfo.Username, RegistrationInfo.Password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.EmailAddress);
