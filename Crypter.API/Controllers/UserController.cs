@@ -353,7 +353,7 @@ namespace Crypter.API.Controllers
 
          var user = await UserService.ReadAsync(userId, cancellationToken);
          if (ValidationService.IsPossibleEmailAddress(request.Email)
-            && user.Email.ToLower() != request.Email.ToLower()
+            && user.Email?.ToLower() != request.Email.ToLower()
             && !await UserService.IsEmailAddressAvailableAsync(request.Email, cancellationToken))
          {
             return new BadRequestObjectResult(
