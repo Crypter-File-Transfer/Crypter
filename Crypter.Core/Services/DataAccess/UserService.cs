@@ -30,6 +30,7 @@ using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
@@ -43,7 +44,7 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task<Guid> InsertAsync(string username, string password, string email)
+      public async Task<Guid> InsertAsync(string username, string password, string email, CancellationToken cancellationToken)
       {
          (var passwordKey, var passwordHash) = PasswordHashService.MakeSecurePasswordHash(password);
 
@@ -58,25 +59,25 @@ namespace Crypter.Core.Services.DataAccess
              DateTime.MinValue);
          Context.User.Add(user);
 
-         await Context.SaveChangesAsync();
+         await Context.SaveChangesAsync(cancellationToken);
          return user.Id;
       }
 
-      public async Task<IUser> ReadAsync(Guid id)
+      public async Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
-         return await Context.User.FindAsync(id);
+         return await Context.User.FindAsync(new object[] { id }, cancellationToken);
       }
 
-      public async Task<IUser> ReadAsync(string username)
+      public async Task<IUser> ReadAsync(string username, CancellationToken cancellationToken)
       {
          return await Context.User
             .Where(user => user.Username.ToLower() == username.ToLower())
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
       }
 
-      public async Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword)
+      public async Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken)
       {
-         var user = await ReadAsync(id);
+         var user = await ReadAsync(id, cancellationToken);
          var passwordsMatch = PasswordHashService.VerifySecurePasswordHash(currentPassword, user.PasswordHash, user.PasswordSalt);
          if (!passwordsMatch)
          {
@@ -85,31 +86,31 @@ namespace Crypter.Core.Services.DataAccess
 
          user.Email = email;
          user.EmailVerified = false;
-         await Context.SaveChangesAsync();
+         await Context.SaveChangesAsync(cancellationToken);
          return UpdateContactInfoResult.Success;
       }
 
-      public async Task UpdateEmailAddressVerification(Guid id, bool isVerified)
+      public async Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken)
       {
-         var user = await ReadAsync(id);
+         var user = await ReadAsync(id, cancellationToken);
          user.EmailVerified = isVerified;
          await Context.SaveChangesAsync();
       }
 
-      public async Task DeleteAsync(Guid id)
+      public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
       {
          await Context.Database
-             .ExecuteSqlRawAsync("DELETE FROM \"Users\" WHERE \"Users\".\"Id\" = {0}", id);
+             .ExecuteSqlRawAsync("DELETE FROM \"Users\" WHERE \"Users\".\"Id\" = {0}", new object[] { id }, cancellationToken);
       }
 
-      public async Task<User> AuthenticateAsync(string username, string password)
+      public async Task<User> AuthenticateAsync(string username, string password, CancellationToken cancellationToken)
       {
          if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
          {
             return null;
          }
 
-         var user = await Context.User.SingleOrDefaultAsync(x => x.Username.ToLower() == username.ToLower());
+         var user = await Context.User.SingleOrDefaultAsync(x => x.Username.ToLower() == username.ToLower(), cancellationToken);
 
          if (user == null)
          {
@@ -122,9 +123,9 @@ namespace Crypter.Core.Services.DataAccess
             : null;
       }
 
-      public async Task UpdateLastLoginTime(Guid id, DateTime dateTime)
+      public async Task UpdateLastLoginTime(Guid id, DateTime dateTime, CancellationToken cancellationToken)
       {
-         var user = await ReadAsync(id);
+         var user = await ReadAsync(id, cancellationToken);
          if (user != null)
          {
             user.LastLogin = dateTime;
@@ -132,16 +133,16 @@ namespace Crypter.Core.Services.DataAccess
          }
       }
 
-      public async Task<bool> IsUsernameAvailableAsync(string username)
+      public async Task<bool> IsUsernameAvailableAsync(string username, CancellationToken cancellationToken)
       {
          string lowerUsername = username.ToLower();
-         return !await Context.User.AnyAsync(x => x.Username.ToLower() == lowerUsername);
+         return !await Context.User.AnyAsync(x => x.Username.ToLower() == lowerUsername, cancellationToken);
       }
 
-      public async Task<bool> IsEmailAddressAvailableAsync(string email)
+      public async Task<bool> IsEmailAddressAvailableAsync(string email, CancellationToken cancellationToken)
       {
          string lowerEmail = email.ToLower();
-         return !await Context.User.AnyAsync(x => x.Email.ToLower() == lowerEmail);
+         return !await Context.User.AnyAsync(x => x.Email.ToLower() == lowerEmail, cancellationToken);
       }
    }
 }

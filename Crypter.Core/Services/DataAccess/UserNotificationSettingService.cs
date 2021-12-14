@@ -27,6 +27,7 @@
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
@@ -40,9 +41,9 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications)
+      public async Task UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications, CancellationToken cancellationToken)
       {
-         var userNotificationSettings = await ReadAsync(userId);
+         var userNotificationSettings = await ReadAsync(userId, cancellationToken);
          if (userNotificationSettings == null)
          {
             var newUserNotificationSettings = new UserNotificationSetting(userId, enableTransferNotifications, emailNotifications);
@@ -54,12 +55,12 @@ namespace Crypter.Core.Services.DataAccess
             userNotificationSettings.EmailNotifications = emailNotifications;
          }
 
-         await Context.SaveChangesAsync();
+         await Context.SaveChangesAsync(cancellationToken);
       }
 
-      public async Task<IUserNotificationSetting> ReadAsync(Guid userId)
+      public async Task<IUserNotificationSetting> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
-         return await Context.UserNotificationSetting.FindAsync(userId);
+         return await Context.UserNotificationSetting.FindAsync(new object[] { userId }, cancellationToken);
       }
    }
 }

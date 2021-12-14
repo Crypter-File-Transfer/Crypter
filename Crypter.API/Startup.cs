@@ -30,6 +30,7 @@ using Crypter.Core;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using Crypter.Core.Services.DataAccess;
+using Crypter.CryptoLib.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -70,9 +71,11 @@ namespace CrypterAPI
          services.AddScoped<IBaseTransferService<MessageTransfer>, MessageTransferItemService>();
          services.AddScoped<IBaseTransferService<FileTransfer>, FileTransferItemService>();
          services.AddScoped<ISchemaService, SchemaService>();
-
          services.AddScoped<IEmailService, EmailService>();
          services.AddScoped<IApiValidationService, ApiValidationService>();
+         services.AddScoped<ISimpleEncryptionService, SimpleEncryptionService>();
+         services.AddScoped<ISimpleHashService, SimpleHashService>();
+         services.AddScoped<ISimpleSignatureService, SimpleSignatureService>();
 
          services.AddHangfire(config =>
               config.UsePostgreSqlStorage(Configuration.GetConnectionString("HangfireConnection")));
@@ -151,7 +154,7 @@ namespace CrypterAPI
          var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
          var userIdFromJWT = ClaimsParser.ParseUserId(context.Principal);
 
-         var user = await userService.ReadAsync(userIdFromJWT);
+         var user = await userService.ReadAsync(userIdFromJWT, default);
          return user != null;
       }
    }

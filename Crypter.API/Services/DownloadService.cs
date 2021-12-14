@@ -30,46 +30,51 @@ using Crypter.Contracts.Responses;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
-using Crypter.CryptoLib.Enums;
+using Crypter.CryptoLib.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.API.Services
 {
    public class DownloadService
    {
-      private const SHAFunction ItemDigestAlgorithm = SHAFunction.SHA256;
-
       private readonly IBaseTransferService<MessageTransfer> MessageService;
       private readonly IBaseTransferService<FileTransfer> FileService;
       private readonly IUserService UserService;
       private readonly IUserProfileService UserProfileService;
-
       private readonly ITransferItemStorageService MessageTransferItemStorageService;
       private readonly ITransferItemStorageService FileTransferItemStorageService;
+      private readonly ISimpleEncryptionService SimpleEncryptionService;
+      private readonly ISimpleHashService SimpleHashService;
+      private readonly Func<byte[], byte[]> ItemDigestFunction;
 
       public DownloadService(
          IConfiguration configuration,
          IBaseTransferService<MessageTransfer> messageService,
          IBaseTransferService<FileTransfer> fileService,
          IUserService userService,
-         IUserProfileService userProfileService
+         IUserProfileService userProfileService,
+         ISimpleEncryptionService simpleEncryptionService,
+         ISimpleHashService simpleHashService
          )
       {
          MessageService = messageService;
          FileService = fileService;
          UserService = userService;
          UserProfileService = userProfileService;
-
          MessageTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.Message);
          FileTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.File);
+         SimpleEncryptionService = simpleEncryptionService;
+         SimpleHashService = simpleHashService;
+         ItemDigestFunction = SimpleHashService.DigestSha256;
       }
 
-      public async Task<IActionResult> GetMessagePreviewAsync(GetTransferPreviewRequest request, Guid requestorId)
+      public async Task<IActionResult> GetMessagePreviewAsync(GetTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
-         var possibleMessage = await MessageService.ReadAsync(request.Id);
+         var possibleMessage = await MessageService.ReadAsync(request.Id, cancellationToken);
          if (possibleMessage is null)
          {
             return new NotFoundObjectResult(
@@ -87,13 +92,13 @@ namespace Crypter.API.Services
          string senderAlias = null;
          if (possibleMessage.Sender != Guid.Empty)
          {
-            var possibleUser = await UserService.ReadAsync(possibleMessage.Sender);
+            var possibleUser = await UserService.ReadAsync(possibleMessage.Sender, cancellationToken);
             if (possibleUser != null)
             {
                senderUsername = possibleUser.Username;
             }
 
-            var possibleUserProfile = await UserProfileService.ReadAsync(possibleMessage.Sender);
+            var possibleUserProfile = await UserProfileService.ReadAsync(possibleMessage.Sender, cancellationToken);
             if (possibleUserProfile != null)
             {
                senderAlias = possibleUserProfile.Alias;
@@ -104,9 +109,9 @@ namespace Crypter.API.Services
             new MessagePreviewResponse(possibleMessage.Subject, possibleMessage.Size, possibleMessage.Sender, senderUsername, senderAlias, possibleMessage.Recipient, possibleMessage.X25519PublicKey, possibleMessage.Created, possibleMessage.Expiration));
       }
 
-      public async Task<IActionResult> GetFilePreviewAsync(GetTransferPreviewRequest request, Guid requestorId)
+      public async Task<IActionResult> GetFilePreviewAsync(GetTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
-         var possibleFile = await FileService.ReadAsync(request.Id);
+         var possibleFile = await FileService.ReadAsync(request.Id, cancellationToken);
          if (possibleFile is null)
          {
             return new NotFoundObjectResult(
@@ -124,13 +129,13 @@ namespace Crypter.API.Services
          string senderAlias = null;
          if (possibleFile.Sender != Guid.Empty)
          {
-            var possibleUser = await UserService.ReadAsync(possibleFile.Sender);
+            var possibleUser = await UserService.ReadAsync(possibleFile.Sender, cancellationToken);
             if (possibleUser != null)
             {
                senderUsername = possibleUser.Username;
             }
 
-            var possibleUserProfile = await UserProfileService.ReadAsync(possibleFile.Sender);
+            var possibleUserProfile = await UserProfileService.ReadAsync(possibleFile.Sender, cancellationToken);
             if (possibleUserProfile != null)
             {
                senderAlias = possibleUserProfile.Alias;
@@ -141,9 +146,9 @@ namespace Crypter.API.Services
             new FilePreviewResponse(possibleFile.FileName, possibleFile.ContentType, possibleFile.Size, possibleFile.Sender, senderUsername, senderAlias, possibleFile.Recipient, possibleFile.X25519PublicKey, possibleFile.Created, possibleFile.Expiration));
       }
 
-      public async Task<IActionResult> GetMessageCiphertextAsync(GetTransferCiphertextRequest request, Guid requestorId)
+      public async Task<IActionResult> GetMessageCiphertextAsync(GetTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
-         var possibleMessage = await MessageService.ReadAsync(request.Id);
+         var possibleMessage = await MessageService.ReadAsync(request.Id, cancellationToken);
          if (possibleMessage is null)
          {
             return new NotFoundObjectResult(
@@ -159,14 +164,12 @@ namespace Crypter.API.Services
 
          // Remove server-side encryption
          var serverDecryptionKey = Convert.FromBase64String(request.ServerDecryptionKeyBase64);
-         var cipherTextServer = await MessageTransferItemStorageService.ReadAsync(request.Id);
-
-         var decrypter = new CryptoLib.Crypto.AES();
-         decrypter.Initialize(serverDecryptionKey, possibleMessage.ServerIV, false);
-         var cipherTextClient = decrypter.ProcessFinal(cipherTextServer);
+         var cipherTextServer = await MessageTransferItemStorageService.ReadAsync(request.Id, cancellationToken);
+         var cipherTextClient = SimpleEncryptionService.Decrypt(serverDecryptionKey, possibleMessage.ServerIV, cipherTextServer);
 
          // Compare digests AFTER removing server-side encryption
-         var digestsMatch = new CryptoLib.Crypto.SHA(ItemDigestAlgorithm).CompareNewInputAgainstKnownDigest(cipherTextClient, possibleMessage.ServerDigest);
+         var cipherTextClientDigest = ItemDigestFunction(cipherTextClient);
+         var digestsMatch = SimpleHashService.CompareDigests(possibleMessage.ServerDigest, cipherTextClientDigest);
          if (!digestsMatch)
          {
             return new BadRequestObjectResult(
@@ -175,7 +178,7 @@ namespace Crypter.API.Services
 
          if (possibleMessage.Recipient == Guid.Empty)
          {
-            await MessageService.DeleteAsync(request.Id);
+            await MessageService.DeleteAsync(request.Id, cancellationToken);
             MessageTransferItemStorageService.Delete(request.Id);
          }
 
@@ -183,9 +186,9 @@ namespace Crypter.API.Services
              new GetTransferCiphertextResponse(DownloadCiphertextResult.Success, Convert.ToBase64String(cipherTextClient), possibleMessage.ClientIV));
       }
 
-      public async Task<IActionResult> GetFileCiphertextAsync(GetTransferCiphertextRequest request, Guid requestorId)
+      public async Task<IActionResult> GetFileCiphertextAsync(GetTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
-         var possibleFile = await FileService.ReadAsync(request.Id);
+         var possibleFile = await FileService.ReadAsync(request.Id, cancellationToken);
          if (possibleFile is null)
          {
             return new NotFoundObjectResult(
@@ -201,14 +204,12 @@ namespace Crypter.API.Services
 
          // Remove server-side encryption
          var serverDecryptionKey = Convert.FromBase64String(request.ServerDecryptionKeyBase64);
-         var cipherTextServer = await FileTransferItemStorageService.ReadAsync(request.Id);
-
-         var decrypter = new CryptoLib.Crypto.AES();
-         decrypter.Initialize(serverDecryptionKey, possibleFile.ServerIV, false);
-         var cipherTextClient = decrypter.ProcessFinal(cipherTextServer);
+         var cipherTextServer = await MessageTransferItemStorageService.ReadAsync(request.Id, cancellationToken);
+         var cipherTextClient = SimpleEncryptionService.Decrypt(serverDecryptionKey, possibleFile.ServerIV, cipherTextServer);
 
          // Compare digests AFTER removing server-side encryption
-         var digestsMatch = new CryptoLib.Crypto.SHA(ItemDigestAlgorithm).CompareNewInputAgainstKnownDigest(cipherTextClient, possibleFile.ServerDigest);
+         var cipherTextClientDigest = ItemDigestFunction(cipherTextClient);
+         var digestsMatch = SimpleHashService.CompareDigests(possibleFile.ServerDigest, cipherTextClientDigest);
          if (!digestsMatch)
          {
             return new BadRequestObjectResult(
@@ -217,7 +218,7 @@ namespace Crypter.API.Services
 
          if (possibleFile.Recipient == Guid.Empty)
          {
-            await FileService.DeleteAsync(request.Id);
+            await FileService.DeleteAsync(request.Id, cancellationToken);
             FileTransferItemStorageService.Delete(request.Id);
          }
 
@@ -225,9 +226,9 @@ namespace Crypter.API.Services
              new GetTransferCiphertextResponse(DownloadCiphertextResult.Success, Convert.ToBase64String(cipherTextClient), possibleFile.ClientIV));
       }
 
-      public async Task<IActionResult> GetMessageSignatureAsync(GetTransferSignatureRequest request, Guid requestorId)
+      public async Task<IActionResult> GetMessageSignatureAsync(GetTransferSignatureRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
-         var possibleMessage = await MessageService.ReadAsync(request.Id);
+         var possibleMessage = await MessageService.ReadAsync(request.Id, cancellationToken);
          if (possibleMessage is null)
          {
             return new NotFoundObjectResult(
@@ -245,9 +246,9 @@ namespace Crypter.API.Services
             new GetTransferSignatureResponse(DownloadSignatureResult.Success, possibleMessage.Signature, possibleMessage.Ed25519PublicKey));
       }
 
-      public async Task<IActionResult> GetFileSignatureAsync(GetTransferSignatureRequest request, Guid requestorId)
+      public async Task<IActionResult> GetFileSignatureAsync(GetTransferSignatureRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
-         var possibleFile = await FileService.ReadAsync(request.Id);
+         var possibleFile = await FileService.ReadAsync(request.Id, cancellationToken);
          if (possibleFile is null)
          {
             return new NotFoundObjectResult(

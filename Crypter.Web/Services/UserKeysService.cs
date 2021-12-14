@@ -51,13 +51,6 @@ namespace Crypter.Web.Services
 
    public class UserKeysService : IUserKeysService
    {
-      private readonly ISimpleEncryptionService _simpleEncryptionService;
-
-      public UserKeysService(ISimpleEncryptionService simpleEncryptionService)
-      {
-         _simpleEncryptionService = simpleEncryptionService;
-      }
-
       public (string privateKey, string publicKey) NewX25519KeyPair()
       {
          var keyPair = CryptoLib.Crypto.ECDH.GenerateKeys();

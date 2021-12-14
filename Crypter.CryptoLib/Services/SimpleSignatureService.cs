@@ -24,27 +24,36 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Enum;
-using Crypter.Core.Models;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+using Crypter.CryptoLib.Crypto;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.CryptoLib.Services
 {
-   public interface IUserService
+   public interface ISimpleSignatureService
    {
-      Task<Guid> InsertAsync(string username, string password, string email, CancellationToken cancellationToken);
-      Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task<IUser> ReadAsync(string username, CancellationToken cancellationToken);
-      Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
-      Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
-      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+      public byte[] Sign(string ed25519PrivateKeyPEM, byte[] data);
+      public bool Verify(string ed25519PublicKeyPEM, byte[] data, byte[] signature);
+   }
 
-      Task<User> AuthenticateAsync(string username, string password, CancellationToken cancellationToken);
-      Task UpdateLastLoginTime(Guid id, DateTime dateTime, CancellationToken cancellationToken);
+   public class SimpleSignatureService : ISimpleSignatureService
+   {
+      public byte[] Sign(string ed25519PrivateKeyPEM, byte[] data)
+      {
+         var privateKey = KeyConversion.ConvertEd25519PrivateKeyFromPEM(ed25519PrivateKeyPEM);
 
-      Task<bool> IsUsernameAvailableAsync(string username, CancellationToken cancellationToken);
-      Task<bool> IsEmailAddressAvailableAsync(string email, CancellationToken cancellationToken);
+         var signer = new ECDSA();
+         signer.InitializeSigner(privateKey);
+         signer.SignerDigestChunk(data);
+         return signer.GenerateSignature();
+      }
+
+      public bool Verify(string ed25519PublicKeyPEM, byte[] data, byte[] signature)
+      {
+         var publicKey = KeyConversion.ConvertEd25519PublicKeyFromPEM(ed25519PublicKeyPEM);
+
+         var verifier = new ECDSA();
+         verifier.InitializeVerifier(publicKey);
+         verifier.VerifierDigestChunk(data);
+         return verifier.VerifySignature(signature);
+      }
    }
 }
