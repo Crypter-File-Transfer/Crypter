@@ -33,6 +33,7 @@ using NUnit.Framework;
 using Org.BouncyCastle.Crypto;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.API_Tests
@@ -70,12 +71,12 @@ namespace Crypter.Test.API_Tests
          var mockUserService = new Mock<IUserService>();
          mockUserService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => null);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
          mockUserEmailVerificationService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => null);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
@@ -101,12 +102,12 @@ namespace Crypter.Test.API_Tests
          var mockUserService = new Mock<IUserService>();
          mockUserService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => user);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
 
          var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
          mockUserEmailVerificationService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => null);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
@@ -132,12 +133,12 @@ namespace Crypter.Test.API_Tests
          var mockUserService = new Mock<IUserService>();
          mockUserService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => user);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
 
          var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
          mockUserEmailVerificationService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => null);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
@@ -163,12 +164,12 @@ namespace Crypter.Test.API_Tests
          var mockUserService = new Mock<IUserService>();
          mockUserService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => user);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
 
          var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
          mockUserEmailVerificationService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => null);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
@@ -194,14 +195,14 @@ namespace Crypter.Test.API_Tests
          var mockUserService = new Mock<IUserService>();
          mockUserService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => user);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
 
          var userVerification = new UserEmailVerification(user.Id, Guid.NewGuid(), default, DateTime.UtcNow);
 
          var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
          mockUserEmailVerificationService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => userVerification);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => userVerification);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
@@ -227,12 +228,12 @@ namespace Crypter.Test.API_Tests
          var mockUserService = new Mock<IUserService>();
          mockUserService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => user);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
 
          var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
          mockUserEmailVerificationService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId) => null);
+            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
