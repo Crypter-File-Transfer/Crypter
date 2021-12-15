@@ -26,19 +26,20 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Interfaces
 {
    public interface IBaseTransferService<T>
    {
-      Task InsertAsync(T item);
-      Task<T> ReadAsync(Guid id);
-      Task DeleteAsync(Guid id);
+      Task InsertAsync(T item, CancellationToken cancellationToken);
+      Task<T> ReadAsync(Guid id, CancellationToken cancellationToken);
+      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 
-      Task<IEnumerable<T>> FindBySenderAsync(Guid senderId);
-      Task<IEnumerable<T>> FindByRecipientAsync(Guid recipientId);
-      Task<IEnumerable<T>> FindExpiredAsync();
-      Task<long> GetAggregateSizeAsync();
+      Task<IEnumerable<T>> FindBySenderAsync(Guid senderId, CancellationToken cancellationToken);
+      Task<IEnumerable<T>> FindByRecipientAsync(Guid recipientId, CancellationToken cancellationToken);
+      Task<IEnumerable<T>> FindExpiredAsync(CancellationToken cancellationToken);
+      Task<long> GetAggregateSizeAsync(CancellationToken cancellationToken);
    }
 }

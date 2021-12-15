@@ -25,15 +25,16 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Interfaces
 {
    public interface IUserEmailVerificationService
    {
-      Task<bool> InsertAsync(Guid userId, Guid code, byte[] verificationKey);
-      Task<IUserEmailVerification> ReadAsync(Guid userId);
-      Task<IUserEmailVerification> ReadCodeAsync(Guid code);
-      Task DeleteAsync(Guid userId);
+      Task<bool> InsertAsync(Guid userId, Guid code, byte[] verificationKey, CancellationToken cancellationToken);
+      Task<IUserEmailVerification> ReadAsync(Guid userId, CancellationToken cancellationToken);
+      Task<IUserEmailVerification> ReadCodeAsync(Guid code, CancellationToken cancellationToken);
+      Task DeleteAsync(Guid userId, CancellationToken cancellationToken);
    }
 }

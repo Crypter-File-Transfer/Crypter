@@ -27,6 +27,7 @@
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.Contracts.Responses;
+using Crypter.CryptoLib.Services;
 using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services.API;
 using System;

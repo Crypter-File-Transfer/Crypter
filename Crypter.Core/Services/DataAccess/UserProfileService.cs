@@ -27,6 +27,7 @@
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
@@ -40,14 +41,14 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task<IUserProfile> ReadAsync(Guid id)
+      public async Task<IUserProfile> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
-         return await Context.UserProfile.FindAsync(id);
+         return await Context.UserProfile.FindAsync(new object[] { id }, cancellationToken);
       }
 
-      public async Task<bool> UpsertAsync(Guid id, string alias, string about)
+      public async Task<bool> UpsertAsync(Guid id, string alias, string about, CancellationToken cancellationToken)
       {
-         var userProfile = await ReadAsync(id);
+         var userProfile = await ReadAsync(id, cancellationToken);
          if (userProfile == null)
          {
             var newProfile = new UserProfile(id, alias, about, null);
@@ -59,7 +60,7 @@ namespace Crypter.Core.Services.DataAccess
             userProfile.About = about;
          }
 
-         await Context.SaveChangesAsync();
+         await Context.SaveChangesAsync(cancellationToken);
          return true;
       }
    }

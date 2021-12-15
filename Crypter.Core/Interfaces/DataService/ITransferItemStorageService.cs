@@ -25,14 +25,15 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Interfaces
 {
    public interface ITransferItemStorageService
    {
-      Task<bool> SaveAsync(Guid id, byte[] data);
-      Task<byte[]> ReadAsync(Guid id);
+      Task<bool> SaveAsync(Guid id, byte[] data, CancellationToken cancellationToken);
+      Task<byte[]> ReadAsync(Guid id, CancellationToken cancellationToken);
       bool Delete(Guid id);
    }
 }

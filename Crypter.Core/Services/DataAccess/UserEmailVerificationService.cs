@@ -29,6 +29,7 @@ using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
@@ -42,30 +43,30 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task<bool> InsertAsync(Guid userId, Guid code, byte[] verificationKey)
+      public async Task<bool> InsertAsync(Guid userId, Guid code, byte[] verificationKey, CancellationToken cancellationToken)
       {
          var emailVerification = new UserEmailVerification(userId, code, verificationKey, DateTime.UtcNow);
          Context.UserEmailVerification.Add(emailVerification);
-         await Context.SaveChangesAsync();
+         await Context.SaveChangesAsync(cancellationToken);
          return true;
       }
 
-      public async Task<IUserEmailVerification> ReadAsync(Guid userId)
+      public async Task<IUserEmailVerification> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
-         return await Context.UserEmailVerification.FindAsync(userId);
+         return await Context.UserEmailVerification.FindAsync(new object[] { userId }, cancellationToken);
       }
 
-      public async Task<IUserEmailVerification> ReadCodeAsync(Guid code)
+      public async Task<IUserEmailVerification> ReadCodeAsync(Guid code, CancellationToken cancellationToken)
       {
          return await Context.UserEmailVerification
             .Where(x => x.Code == code)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
       }
 
-      public async Task DeleteAsync(Guid userId)
+      public async Task DeleteAsync(Guid userId, CancellationToken cancellationToken)
       {
          await Context.Database
-             .ExecuteSqlRawAsync("DELETE FROM \"UserEmailVerification\" WHERE \"UserEmailVerification\".\"Owner\" = {0}", userId);
+             .ExecuteSqlRawAsync("DELETE FROM \"UserEmailVerification\" WHERE \"UserEmailVerification\".\"Owner\" = {0}", new object[] { userId }, cancellationToken);
       }
    }
 }

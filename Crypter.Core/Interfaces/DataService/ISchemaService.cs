@@ -24,12 +24,13 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Interfaces
 {
    public interface ISchemaService
    {
-      Task<ISchema> ReadAsync();
+      Task<ISchema> ReadAsync(CancellationToken cancellationToken);
    }
 }

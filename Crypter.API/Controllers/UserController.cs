@@ -46,6 +46,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
@@ -100,19 +101,19 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("register")]
-      public async Task<IActionResult> RegisterAsync([FromBody] RegisterUserRequest request)
+      public async Task<IActionResult> RegisterAsync([FromBody] RegisterUserRequest request, CancellationToken cancellationToken)
       {
-         var validationResult = await ApiValidationService.IsValidUserRegistrationRequest(request);
+         var validationResult = await ApiValidationService.IsValidUserRegistrationRequestAsync(request, cancellationToken);
          if (validationResult != InsertUserResult.Success)
          {
             return new BadRequestObjectResult(
                new UserRegisterResponse(validationResult));
          }
 
-         var userId = await UserService.InsertAsync(request.Username, request.Password, request.Email);
+         var userId = await UserService.InsertAsync(request.Username, request.Password, request.Email, cancellationToken);
 
-         await UserProfileService.UpsertAsync(userId, null, null);
-         await UserPrivacySettingService.UpsertAsync(userId, false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None);
+         await UserProfileService.UpsertAsync(userId, null, null, default);
+         await UserPrivacySettingService.UpsertAsync(userId, false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None, default);
 
          if (ValidationService.IsPossibleEmailAddress(request.Email))
          {
@@ -123,9 +124,9 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("authenticate")]
-      public async Task<IActionResult> AuthenticateAsync([FromBody] AuthenticateUserRequest request)
+      public async Task<IActionResult> AuthenticateAsync([FromBody] AuthenticateUserRequest request, CancellationToken cancellationToken)
       {
-         var user = await UserService.AuthenticateAsync(request.Username, request.Password);
+         var user = await UserService.AuthenticateAsync(request.Username, request.Password, cancellationToken);
          if (user == null)
          {
             return new NotFoundObjectResult(
@@ -147,10 +148,10 @@ namespace Crypter.API.Controllers
          var token = tokenHandler.CreateToken(tokenDescriptor);
          var tokenString = tokenHandler.WriteToken(token);
 
-         var userX25519KeyPair = await UserX25519KeyPairService.GetUserPublicKeyPairAsync(user.Id);
-         var userEd25519KeyPair = await UserEd25519KeyPairService.GetUserPublicKeyPairAsync(user.Id);
+         var userX25519KeyPair = await UserX25519KeyPairService.GetUserPublicKeyPairAsync(user.Id, cancellationToken);
+         var userEd25519KeyPair = await UserEd25519KeyPairService.GetUserPublicKeyPairAsync(user.Id, cancellationToken);
 
-         BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(user.Id, DateTime.UtcNow));
+         BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(user.Id, DateTime.UtcNow, default));
 
          return new OkObjectResult(
              new UserAuthenticateResponse(user.Id, tokenString, userX25519KeyPair?.PrivateKey, userEd25519KeyPair?.PrivateKey, userX25519KeyPair?.ClientIV, userEd25519KeyPair?.ClientIV)
@@ -159,7 +160,7 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpGet("authenticate/refresh")]
-      public IActionResult RefreshAuthenticationAsync()
+      public IActionResult RefreshAuthenticationAsync(CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
 
@@ -178,7 +179,7 @@ namespace Crypter.API.Controllers
          var token = tokenHandler.CreateToken(tokenDescriptor);
          var tokenString = tokenHandler.WriteToken(token);
 
-         BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(userId, DateTime.UtcNow));
+         BackgroundJob.Enqueue(() => UserService.UpdateLastLoginTime(userId, DateTime.UtcNow, cancellationToken));
 
          return new OkObjectResult(
             new UserAuthenticationRefreshResponse(tokenString));
@@ -186,11 +187,11 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpGet("sent/messages")]
-      public async Task<IActionResult> GetSentMessagesAsync()
+      public async Task<IActionResult> GetSentMessagesAsync(CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
 
-         var sentMessagesSansRecipientInfo = (await MessageService.FindBySenderAsync(userId))
+         var sentMessagesSansRecipientInfo = (await MessageService.FindBySenderAsync(userId, cancellationToken))
             .Select(x => new { x.Id, x.Subject, x.Recipient, x.Expiration })
             .OrderBy(x => x.Expiration);
 
@@ -201,8 +202,8 @@ namespace Crypter.API.Controllers
             IUserProfile recipientProfile = null;
             if (item.Recipient != Guid.Empty)
             {
-               recipient = await UserService.ReadAsync(item.Recipient);
-               recipientProfile = await UserProfileService.ReadAsync(item.Recipient);
+               recipient = await UserService.ReadAsync(item.Recipient, cancellationToken);
+               recipientProfile = await UserProfileService.ReadAsync(item.Recipient, cancellationToken);
             }
             sentMessages.Add(new UserSentMessageDTO(item.Id, item.Subject, item.Recipient, recipient?.Username, recipientProfile?.Alias, item.Expiration));
          }
@@ -213,11 +214,11 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpGet("sent/files")]
-      public async Task<IActionResult> GetSentFilesAsync()
+      public async Task<IActionResult> GetSentFilesAsync(CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
 
-         var sentFilesSansRecipientInfo = (await FileService.FindBySenderAsync(userId))
+         var sentFilesSansRecipientInfo = (await FileService.FindBySenderAsync(userId, cancellationToken))
             .Select(x => new { x.Id, x.FileName, x.Recipient, x.Expiration })
             .OrderBy(x => x.Expiration);
 
@@ -228,8 +229,8 @@ namespace Crypter.API.Controllers
             IUserProfile recipientProfile = null;
             if (item.Recipient != Guid.Empty)
             {
-               recipient = await UserService.ReadAsync(item.Recipient);
-               recipientProfile = await UserProfileService.ReadAsync(item.Recipient);
+               recipient = await UserService.ReadAsync(item.Recipient, cancellationToken);
+               recipientProfile = await UserProfileService.ReadAsync(item.Recipient, cancellationToken);
             }
             sentFiles.Add(new UserSentFileDTO(item.Id, item.FileName, item.Recipient, recipient?.Username, recipientProfile?.Alias, item.Expiration));
          }
@@ -240,11 +241,11 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpGet("received/messages")]
-      public async Task<IActionResult> GetReceivedMessagesAsync()
+      public async Task<IActionResult> GetReceivedMessagesAsync(CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
 
-         var receivedMessagesSansSenderInfo = (await MessageService.FindByRecipientAsync(userId))
+         var receivedMessagesSansSenderInfo = (await MessageService.FindByRecipientAsync(userId, cancellationToken))
             .Select(x => new { x.Id, x.Subject, x.Sender, x.Expiration })
             .OrderBy(x => x.Expiration);
 
@@ -255,8 +256,8 @@ namespace Crypter.API.Controllers
             IUserProfile senderProfile = null;
             if (item.Sender != Guid.Empty)
             {
-               sender = await UserService.ReadAsync(item.Sender);
-               senderProfile = await UserProfileService.ReadAsync(item.Sender);
+               sender = await UserService.ReadAsync(item.Sender, cancellationToken);
+               senderProfile = await UserProfileService.ReadAsync(item.Sender, cancellationToken);
             }
             receivedMessages.Add(new UserReceivedMessageDTO(item.Id, item.Subject, item.Sender, sender?.Username, senderProfile?.Alias, item.Expiration));
          }
@@ -267,11 +268,11 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpGet("received/files")]
-      public async Task<IActionResult> GetReceivedFilesAsync()
+      public async Task<IActionResult> GetReceivedFilesAsync(CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
 
-         var receivedFilesSansSenderInfo = (await FileService.FindByRecipientAsync(userId))
+         var receivedFilesSansSenderInfo = (await FileService.FindByRecipientAsync(userId, cancellationToken))
             .Select(x => new { x.Id, x.FileName, x.Sender, x.Expiration })
             .OrderBy(x => x.Expiration);
 
@@ -282,8 +283,8 @@ namespace Crypter.API.Controllers
             IUserProfile senderProfile = null;
             if (item.Sender != Guid.Empty)
             {
-               sender = await UserService.ReadAsync(item.Sender);
-               senderProfile = await UserProfileService.ReadAsync(item.Sender);
+               sender = await UserService.ReadAsync(item.Sender, cancellationToken);
+               senderProfile = await UserProfileService.ReadAsync(item.Sender, cancellationToken);
             }
             receivedFiles.Add(new UserReceivedFileDTO(item.Id, item.FileName, item.Sender, sender?.Username, senderProfile?.Alias, item.Expiration));
          }
@@ -294,13 +295,13 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpGet("settings")]
-      public async Task<IActionResult> GetUserSettingsAsync()
+      public async Task<IActionResult> GetUserSettingsAsync(CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
-         var user = await UserService.ReadAsync(userId);
-         var userProfile = await UserProfileService.ReadAsync(userId);
-         var userPrivacy = await UserPrivacySettingService.ReadAsync(userId);
-         var userNotification = await UserNotificationSettingService.ReadAsync(userId);
+         var user = await UserService.ReadAsync(userId, cancellationToken);
+         var userProfile = await UserProfileService.ReadAsync(userId, cancellationToken);
+         var userPrivacy = await UserPrivacySettingService.ReadAsync(userId, cancellationToken);
+         var userNotification = await UserNotificationSettingService.ReadAsync(userId, cancellationToken);
 
          return new OkObjectResult(
             new UserSettingsResponse(
@@ -321,10 +322,10 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpPost("settings/profile")]
-      public async Task<IActionResult> UpdateUserProfileAsync([FromBody] UpdateProfileRequest request)
+      public async Task<IActionResult> UpdateUserProfileAsync([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
-         var updateResult = await UserProfileService.UpsertAsync(userId, request.Alias, request.About);
+         var updateResult = await UserProfileService.UpsertAsync(userId, request.Alias, request.About, cancellationToken);
          var responseObject = new UpdateProfileResponse();
 
          if (updateResult)
@@ -339,7 +340,7 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpPost("settings/contact")]
-      public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request)
+      public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request, CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
 
@@ -350,16 +351,16 @@ namespace Crypter.API.Controllers
                new UpdateContactInfoResponse(UpdateContactInfoResult.EmailInvalid));
          }
 
-         var user = await UserService.ReadAsync(userId);
+         var user = await UserService.ReadAsync(userId, cancellationToken);
          if (ValidationService.IsPossibleEmailAddress(request.Email)
-            && user.Email.ToLower() != request.Email.ToLower()
-            && !await UserService.IsEmailAddressAvailableAsync(request.Email))
+            && user.Email?.ToLower() != request.Email.ToLower()
+            && !await UserService.IsEmailAddressAvailableAsync(request.Email, cancellationToken))
          {
             return new BadRequestObjectResult(
                new UpdateContactInfoResponse(UpdateContactInfoResult.EmailUnavailable));
          }
 
-         var updateContactInfoResult = await UserService.UpdateContactInfoAsync(userId, request.Email, request.CurrentPassword);
+         var updateContactInfoResult = await UserService.UpdateContactInfoAsync(userId, request.Email, request.CurrentPassword, cancellationToken);
 
          if (updateContactInfoResult != UpdateContactInfoResult.Success)
          {
@@ -367,8 +368,8 @@ namespace Crypter.API.Controllers
             return new BadRequestObjectResult(responseObject);
          }
 
-         await UserNotificationSettingService.UpsertAsync(userId, false, false);
-         await UserEmailVerificationService.DeleteAsync(userId);
+         await UserNotificationSettingService.UpsertAsync(userId, false, false, default);
+         await UserEmailVerificationService.DeleteAsync(userId, default);
 
          if (ValidationService.IsValidEmailAddress(request.Email))
          {
@@ -381,10 +382,10 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpPost("settings/notification")]
-      public async Task<IActionResult> UpdateUserNotificationPreferencesAsync([FromBody] UpdateNotificationSettingRequest request)
+      public async Task<IActionResult> UpdateUserNotificationPreferencesAsync([FromBody] UpdateNotificationSettingRequest request, CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
-         var user = await UserService.ReadAsync(userId);
+         var user = await UserService.ReadAsync(userId, cancellationToken);
 
          if (request.EnableTransferNotifications
             && request.EmailNotifications
@@ -393,16 +394,16 @@ namespace Crypter.API.Controllers
             return new BadRequestObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.EmailAddressNotVerified));
          }
 
-         await UserNotificationSettingService.UpsertAsync(userId, request.EnableTransferNotifications, request.EmailNotifications);
+         await UserNotificationSettingService.UpsertAsync(userId, request.EnableTransferNotifications, request.EmailNotifications, cancellationToken);
          return new OkObjectResult(new UpdateNotificationSettingResponse(UpdateUserNotificationSettingResult.Success));
       }
 
       [Authorize]
       [HttpPost("settings/privacy")]
-      public async Task<IActionResult> UpdateUserPrivacyAsync([FromBody] UpdatePrivacySettingRequest request)
+      public async Task<IActionResult> UpdateUserPrivacyAsync([FromBody] UpdatePrivacySettingRequest request, CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
-         var updateSuccess = await UserPrivacySettingService.UpsertAsync(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission);
+         var updateSuccess = await UserPrivacySettingService.UpsertAsync(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission, cancellationToken);
 
          if (updateSuccess)
          {
@@ -416,11 +417,11 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpPost("settings/keys/x25519")]
-      public async Task<IActionResult> UpdateDiffieHellmanKeysAsync([FromBody] UpdateKeysRequest body)
+      public async Task<IActionResult> UpdateDiffieHellmanKeysAsync([FromBody] UpdateKeysRequest body, CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
 
-         var insertResult = await UserX25519KeyPairService.InsertUserPublicKeyPairAsync(userId, body.EncryptedPrivateKeyBase64, body.PublicKeyBase64, body.ClientIVBase64);
+         var insertResult = await UserX25519KeyPairService.InsertUserPublicKeyPairAsync(userId, body.EncryptedPrivateKeyBase64, body.PublicKeyBase64, body.ClientIVBase64, cancellationToken);
          if (insertResult)
          {
             return new OkObjectResult(
@@ -435,11 +436,11 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpPost("settings/keys/ed25519")]
-      public async Task<IActionResult> UpdateDigitalSignatureKeysAsync([FromBody] UpdateKeysRequest body)
+      public async Task<IActionResult> UpdateDigitalSignatureKeysAsync([FromBody] UpdateKeysRequest body, CancellationToken cancellationToken)
       {
          var userId = ClaimsParser.ParseUserId(User);
 
-         var insertResult = await UserEd25519KeyPairService.InsertUserPublicKeyPairAsync(userId, body.EncryptedPrivateKeyBase64, body.PublicKeyBase64, body.ClientIVBase64);
+         var insertResult = await UserEd25519KeyPairService.InsertUserPublicKeyPairAsync(userId, body.EncryptedPrivateKeyBase64, body.PublicKeyBase64, body.ClientIVBase64, cancellationToken);
          if (insertResult)
          {
             return new OkObjectResult(
@@ -454,10 +455,10 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpGet("search/username")]
-      public async Task<IActionResult> SearchByUsernameAsync([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
+      public async Task<IActionResult> SearchByUsernameAsync([FromQuery] string value, [FromQuery] int index, [FromQuery] int count, CancellationToken cancellationToken)
       {
          var searchPartyId = ClaimsParser.ParseUserId(User);
-         var (total, users) = await UserSearchService.SearchByUsernameAsync(searchPartyId, value, index, count);
+         var (total, users) = await UserSearchService.SearchByUsernameAsync(searchPartyId, value, index, count, cancellationToken);
          var dtoUsers = users
              .Select(x => new UserSearchResultDTO(x.Id, x.Username, x.Alias))
              .ToList();
@@ -468,10 +469,10 @@ namespace Crypter.API.Controllers
 
       [Authorize]
       [HttpGet("search/alias")]
-      public async Task<IActionResult> SearchByAliasAsync([FromQuery] string value, [FromQuery] int index, [FromQuery] int count)
+      public async Task<IActionResult> SearchByAliasAsync([FromQuery] string value, [FromQuery] int index, [FromQuery] int count, CancellationToken cancellationToken)
       {
          var searchPartyId = ClaimsParser.ParseUserId(User);
-         var (total, users) = await UserSearchService.SearchByAliasAsync(searchPartyId, value, index, count);
+         var (total, users) = await UserSearchService.SearchByAliasAsync(searchPartyId, value, index, count, cancellationToken);
          var dtoUsers = users
              .Select(x => new UserSearchResultDTO(x.Id, x.Username, x.Alias))
              .ToList();
@@ -481,38 +482,38 @@ namespace Crypter.API.Controllers
       }
 
       [HttpGet("{username}")]
-      public async Task<IActionResult> GetPublicUserProfileAsync(string username)
+      public async Task<IActionResult> GetPublicUserProfileAsync(string username, CancellationToken cancellationToken)
       {
          var visitorId = ClaimsParser.ParseUserId(User);
          var notFoundResponse = new UserPublicProfileResponse(default, null, null, null, false, false, false, false, null, null);
 
          var requestor = ClaimsParser.ParseUserId(User);
-         var user = await UserService.ReadAsync(username);
+         var user = await UserService.ReadAsync(username, cancellationToken);
          if (user is null)
          {
             return new NotFoundObjectResult(notFoundResponse);
          }
 
-         var userProfile = await UserProfileService.ReadAsync(user.Id);
+         var userProfile = await UserProfileService.ReadAsync(user.Id, cancellationToken);
          if (userProfile is null)
          {
             return new NotFoundObjectResult(notFoundResponse);
          }
 
-         var userPrivacy = await UserPrivacySettingService.ReadAsync(user.Id);
+         var userPrivacy = await UserPrivacySettingService.ReadAsync(user.Id, cancellationToken);
          if (userPrivacy is null)
          {
             return new NotFoundObjectResult(notFoundResponse);
          }
 
-         var userAllowsRequestorToViewProfile = await UserPrivacySettingService.IsUserViewableByPartyAsync(user.Id, requestor);
+         var userAllowsRequestorToViewProfile = await UserPrivacySettingService.IsUserViewableByPartyAsync(user.Id, requestor, cancellationToken);
          if (userAllowsRequestorToViewProfile)
          {
-            var userPublicDHKey = await UserX25519KeyPairService.GetUserPublicKeyAsync(user.Id);
-            var userPublicDSAKey = await UserEd25519KeyPairService.GetUserPublicKeyAsync(user.Id);
+            var userPublicDHKey = await UserX25519KeyPairService.GetUserPublicKeyAsync(user.Id, cancellationToken);
+            var userPublicDSAKey = await UserEd25519KeyPairService.GetUserPublicKeyAsync(user.Id, cancellationToken);
 
-            var visitorCanSendMessages = await UserPrivacySettingService.DoesUserAcceptMessagesFromOtherPartyAsync(user.Id, visitorId);
-            var visitorCanSendFiles = await UserPrivacySettingService.DoesUserAcceptFilesFromOtherPartyAsync(user.Id, visitorId);
+            var visitorCanSendMessages = await UserPrivacySettingService.DoesUserAcceptMessagesFromOtherPartyAsync(user.Id, visitorId, cancellationToken);
+            var visitorCanSendFiles = await UserPrivacySettingService.DoesUserAcceptFilesFromOtherPartyAsync(user.Id, visitorId, cancellationToken);
 
             return new OkObjectResult(
                new UserPublicProfileResponse(user.Id, user.Username, userProfile.Alias, userProfile.About, userPrivacy.AllowKeyExchangeRequests,
@@ -525,11 +526,11 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("verify")]
-      public async Task<IActionResult> VerifyUserEmailAddressAsync([FromBody] VerifyUserEmailAddressRequest request)
+      public async Task<IActionResult> VerifyUserEmailAddressAsync([FromBody] VerifyUserEmailAddressRequest request, CancellationToken cancellationToken)
       {
          var verificationCode = EmailVerificationEncoder.DecodeVerificationCodeFromUrlSafe(request.Code);
 
-         var emailVerificationEntity = await UserEmailVerificationService.ReadCodeAsync(verificationCode);
+         var emailVerificationEntity = await UserEmailVerificationService.ReadCodeAsync(verificationCode, cancellationToken);
          if (emailVerificationEntity is null)
          {
             return new NotFoundObjectResult(
@@ -550,8 +551,8 @@ namespace Crypter.API.Controllers
                new UserEmailVerificationResponse(false));
          }
 
-         await UserService.UpdateEmailAddressVerification(emailVerificationEntity.Owner, true);
-         await UserEmailVerificationService.DeleteAsync(emailVerificationEntity.Owner);
+         await UserService.UpdateEmailAddressVerification(emailVerificationEntity.Owner, true, default);
+         await UserEmailVerificationService.DeleteAsync(emailVerificationEntity.Owner, default);
 
          return new OkObjectResult(
             new UserEmailVerificationResponse(true));

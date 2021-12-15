@@ -24,27 +24,52 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Enum;
-using Crypter.Core.Models;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+using Crypter.CryptoLib.Crypto;
+using Crypter.CryptoLib.Enums;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.CryptoLib.Services
 {
-   public interface IUserService
+   public interface ISimpleHashService
    {
-      Task<Guid> InsertAsync(string username, string password, string email, CancellationToken cancellationToken);
-      Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task<IUser> ReadAsync(string username, CancellationToken cancellationToken);
-      Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
-      Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
-      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+      byte[] DigestSha256(byte[] data);
+      byte[] DigestSha512(byte[] data);
+      bool CompareDigests(byte[] expected, byte[] actual);
+   }
 
-      Task<User> AuthenticateAsync(string username, string password, CancellationToken cancellationToken);
-      Task UpdateLastLoginTime(Guid id, DateTime dateTime, CancellationToken cancellationToken);
+   public class SimpleHashService : ISimpleHashService
+   {
+      public byte[] DigestSha256(byte[] data)
+      {
+         return DigestBase(SHAFunction.SHA256, data);
+      }
 
-      Task<bool> IsUsernameAvailableAsync(string username, CancellationToken cancellationToken);
-      Task<bool> IsEmailAddressAvailableAsync(string email, CancellationToken cancellationToken);
+      public byte[] DigestSha512(byte[] data)
+      {
+         return DigestBase(SHAFunction.SHA512, data);
+      }
+
+      public bool CompareDigests(byte[] expected, byte[] actual)
+      {
+         if (expected.Length != actual.Length)
+         {
+            return false;
+         }
+
+         for (int i = 0; i < actual.Length; i++)
+         {
+            if (!actual[i].Equals(expected[i]))
+            {
+               return false;
+            }
+         }
+         return true;
+      }
+
+      private byte[] DigestBase(SHAFunction function, byte[] data)
+      {
+         var digestor = new SHA(function);
+         digestor.BlockUpdate(data);
+         return digestor.GetDigest();
+      }
    }
 }

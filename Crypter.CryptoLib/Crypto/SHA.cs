@@ -59,25 +59,5 @@ namespace Crypter.CryptoLib.Crypto
          Digestor.Reset();
          return hash;
       }
-
-      public bool CompareNewInputAgainstKnownDigest(byte[] newInput, byte[] knownDigest)
-      {
-         BlockUpdate(newInput);
-         var newDigest = GetDigest();
-
-         if (newDigest.Length != knownDigest.Length)
-         {
-            return false;
-         }
-
-         for (int i = 0; i < knownDigest.Length; i++)
-         {
-            if (!knownDigest[i].Equals(newDigest[i]))
-            {
-               return false;
-            }
-         }
-         return true;
-      }
    }
 }

@@ -30,6 +30,7 @@ using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
@@ -43,9 +44,9 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task<bool> UpsertAsync(Guid userId, bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission receiveFilesPermission, UserItemTransferPermission receiveMessagesPermission)
+      public async Task<bool> UpsertAsync(Guid userId, bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission receiveFilesPermission, UserItemTransferPermission receiveMessagesPermission, CancellationToken cancellationToken)
       {
-         var userPrivacySettings = await ReadAsync(userId);
+         var userPrivacySettings = await ReadAsync(userId, cancellationToken);
          if (userPrivacySettings == null)
          {
             var newPrivacySettings = new UserPrivacySetting(userId, allowKeyExchangeRequests, visibilityLevel, receiveFilesPermission, receiveMessagesPermission);
@@ -59,16 +60,16 @@ namespace Crypter.Core.Services.DataAccess
             userPrivacySettings.ReceiveMessages = receiveMessagesPermission;
          }
 
-         await Context.SaveChangesAsync();
+         await Context.SaveChangesAsync(cancellationToken);
          return true;
       }
 
-      public async Task<IUserPrivacySetting> ReadAsync(Guid userId)
+      public async Task<IUserPrivacySetting> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
-         return await Context.UserPrivacySetting.FindAsync(userId);
+         return await Context.UserPrivacySetting.FindAsync(new object[] { userId }, cancellationToken);
       }
 
-      public async Task<bool> IsUserViewableByPartyAsync(Guid userId, Guid otherPartyId)
+      public async Task<bool> IsUserViewableByPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken)
       {
          if (userId.Equals(otherPartyId))
          {
@@ -77,7 +78,7 @@ namespace Crypter.Core.Services.DataAccess
 
          var userVisibility = (await Context.UserPrivacySetting
             .Where(x => x.Owner == userId)
-            .FirstOrDefaultAsync())
+            .FirstOrDefaultAsync(cancellationToken))
             .Visibility;
 
          return userVisibility switch
@@ -90,11 +91,11 @@ namespace Crypter.Core.Services.DataAccess
          };
       }
 
-      public async Task<bool> DoesUserAcceptMessagesFromOtherPartyAsync(Guid userId, Guid otherPartyId)
+      public async Task<bool> DoesUserAcceptMessagesFromOtherPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken)
       {
          var messageTransferPermission = (await Context.UserPrivacySetting
             .Where(x => x.Owner == userId)
-            .FirstOrDefaultAsync())
+            .FirstOrDefaultAsync(cancellationToken))
             .ReceiveMessages;
 
          return messageTransferPermission switch
@@ -108,11 +109,11 @@ namespace Crypter.Core.Services.DataAccess
          };
       }
 
-      public async Task<bool> DoesUserAcceptFilesFromOtherPartyAsync(Guid userId, Guid otherPartyId)
+      public async Task<bool> DoesUserAcceptFilesFromOtherPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken)
       {
          var fileTransferPermission = (await Context.UserPrivacySetting
             .Where(x => x.Owner == userId)
-            .FirstOrDefaultAsync())
+            .FirstOrDefaultAsync(cancellationToken))
             .ReceiveFiles;
 
          return fileTransferPermission switch

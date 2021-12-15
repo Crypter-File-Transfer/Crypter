@@ -29,9 +29,11 @@ using Crypter.API.Services;
 using Crypter.Contracts.Requests;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
+using Crypter.CryptoLib.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
@@ -48,81 +50,83 @@ namespace Crypter.API.Controllers
           IUserService userService,
           IUserProfileService userProfileService,
           IEmailService emailService,
-          IApiValidationService apiValidationService
+          IApiValidationService apiValidationService,
+          ISimpleEncryptionService simpleEncryptionService,
+          ISimpleHashService simpleHashService
          )
       {
-         UploadService = new UploadService(configuration, messageService, fileService, emailService, apiValidationService);
-         DownloadService = new DownloadService(configuration, messageService, fileService, userService, userProfileService);
+         UploadService = new UploadService(configuration, messageService, fileService, emailService, apiValidationService, simpleEncryptionService, simpleHashService);
+         DownloadService = new DownloadService(configuration, messageService, fileService, userService, userProfileService, simpleEncryptionService, simpleHashService);
       }
 
       [HttpPost("message")]
-      public async Task<IActionResult> MessageTransferAsync([FromBody] MessageTransferRequest request)
+      public async Task<IActionResult> MessageTransferAsync([FromBody] MessageTransferRequest request, CancellationToken cancellationToken)
       {
          var senderId = ClaimsParser.ParseUserId(User);
-         return await UploadService.ReceiveMessageTransferAsync(request, senderId, Guid.Empty);
+         return await UploadService.ReceiveMessageTransferAsync(request, senderId, Guid.Empty, cancellationToken);
       }
 
       [HttpPost("message/{recipientId}")]
-      public async Task<IActionResult> UserMessageTransferAsync([FromBody] MessageTransferRequest request, Guid recipientId)
+      public async Task<IActionResult> UserMessageTransferAsync([FromBody] MessageTransferRequest request, Guid recipientId, CancellationToken cancellationToken)
       {
          var senderId = ClaimsParser.ParseUserId(User);
-         return await UploadService.ReceiveMessageTransferAsync(request, senderId, recipientId);
+         return await UploadService.ReceiveMessageTransferAsync(request, senderId, recipientId, cancellationToken);
       }
 
       [HttpPost("file")]
-      public async Task<IActionResult> FileTransferAsync([FromBody] FileTransferRequest request)
+      public async Task<IActionResult> FileTransferAsync([FromBody] FileTransferRequest request, CancellationToken cancellationToken)
       {
          var senderId = ClaimsParser.ParseUserId(User);
-         return await UploadService.ReceiveFileTransferAsync(request, senderId, Guid.Empty);
+         return await UploadService.ReceiveFileTransferAsync(request, senderId, Guid.Empty, cancellationToken);
       }
 
       [HttpPost("file/{recipientId}")]
-      public async Task<IActionResult> UserFileTransferAsync([FromBody] FileTransferRequest request, Guid recipientId)
+      public async Task<IActionResult> UserFileTransferAsync([FromBody] FileTransferRequest request, Guid recipientId, CancellationToken cancellationToken)
       {
          var senderId = ClaimsParser.ParseUserId(User);
-         return await UploadService.ReceiveFileTransferAsync(request, senderId, recipientId);
+         return await UploadService.ReceiveFileTransferAsync(request, senderId, recipientId, cancellationToken);
       }
 
       [HttpPost("message/preview")]
-      public async Task<IActionResult> GetMessagePreviewAsync([FromBody] GetTransferPreviewRequest request)
+      public async Task<IActionResult> GetMessagePreviewAsync([FromBody] GetTransferPreviewRequest request, CancellationToken cancellationToken)
       {
          var requestorId = ClaimsParser.ParseUserId(User);
-         return await DownloadService.GetMessagePreviewAsync(request, requestorId);
+         return await DownloadService.GetMessagePreviewAsync(request, requestorId, cancellationToken);
       }
 
       [HttpPost("file/preview")]
-      public async Task<IActionResult> GetFilePreviewAsync([FromBody] GetTransferPreviewRequest request)
+      public async Task<IActionResult> GetFilePreviewAsync([FromBody] GetTransferPreviewRequest request, CancellationToken cancellationToken)
       {
          var requestorId = ClaimsParser.ParseUserId(User);
-         return await DownloadService.GetFilePreviewAsync(request, requestorId);
+         return await DownloadService.GetFilePreviewAsync(request, requestorId, cancellationToken);
       }
 
       [HttpPost("message/ciphertext")]
-      public async Task<IActionResult> GetMessageCiphertextAsync([FromBody] GetTransferCiphertextRequest request)
+      public async Task<IActionResult> GetMessageCiphertextAsync([FromBody] GetTransferCiphertextRequest request, CancellationToken cancellationToken)
       {
          var requestorId = ClaimsParser.ParseUserId(User);
-         return await DownloadService.GetMessageCiphertextAsync(request, requestorId);
+         return await DownloadService.GetMessageCiphertextAsync(request, requestorId, cancellationToken);
       }
 
       [HttpPost("file/ciphertext")]
-      public async Task<IActionResult> GetFileCiphertext([FromBody] GetTransferCiphertextRequest request)
+      public async Task<IActionResult> GetFileCiphertext([FromBody] GetTransferCiphertextRequest request, CancellationToken cancellationToken)
       {
          var requestorId = ClaimsParser.ParseUserId(User);
-         return await DownloadService.GetFileCiphertextAsync(request, requestorId);
+         return await DownloadService.GetFileCiphertextAsync(request, requestorId, cancellationToken);
       }
 
       [HttpPost("message/signature")]
-      public async Task<IActionResult> GetMessageSignatureAsync([FromBody] GetTransferSignatureRequest request)
+      public async Task<IActionResult> GetMessageSignatureAsync([FromBody] GetTransferSignatureRequest request, CancellationToken cancellationToken)
       {
          var requestorId = ClaimsParser.ParseUserId(User);
-         return await DownloadService.GetMessageSignatureAsync(request, requestorId);
+         return await DownloadService.GetMessageSignatureAsync(request, requestorId, cancellationToken);
       }
 
       [HttpPost("file/signature")]
-      public async Task<IActionResult> GetFileSignatureAsync([FromBody] GetTransferSignatureRequest request)
+      public async Task<IActionResult> GetFileSignatureAsync([FromBody] GetTransferSignatureRequest request, CancellationToken cancellationToken)
       {
          var requestorId = ClaimsParser.ParseUserId(User);
-         return await DownloadService.GetFileSignatureAsync(request, requestorId);
+         return await DownloadService.GetFileSignatureAsync(request, requestorId, cancellationToken);
       }
    }
 }
