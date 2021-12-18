@@ -24,34 +24,28 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
--- Table: public.MessageTransfer
+BEGIN;
 
-CREATE TABLE IF NOT EXISTS public."MessageTransfer"
-(
-    "Id" uuid NOT NULL,
-    "Subject" text COLLATE pg_catalog."default",
-    "Sender" uuid NOT NULL,
-    "Recipient" uuid NOT NULL,
-    "Size" integer NOT NULL,
-    "ClientIV" text COLLATE pg_catalog."default",
-    "Signature" text COLLATE pg_catalog."default",
-    "X25519PublicKey" text COLLATE pg_catalog."default",
-    "Ed25519PublicKey" text COLLATE pg_catalog."default",
-    "ServerIV" bytea,
-    "ServerDigest" bytea,
-    "Created" timestamp without time zone NOT NULL,
-    "Expiration" timestamp without time zone NOT NULL,
-    CONSTRAINT "PK_MessageTransfer" PRIMARY KEY ("Id")
-)
+   -- Create FileTransfer Index
 
-TABLESPACE pg_default;
+   CREATE INDEX IF NOT EXISTS "Idx_FileTransfer_Sender" ON public."FileTransfer"("Sender");
+   CREATE INDEX IF NOT EXISTS "Idx_FileTransfer_Recipient" ON public."FileTransfer"("Recipient");
 
-CREATE INDEX "Idx_MessageTransfer_Sender" ON public."MessageTransfer"("Sender");
-CREATE INDEX "Idx_MessageTransfer_Recipient" ON public."MessageTransfer"("Recipient");
+   -- Create MessageTransfer Index
 
-ALTER TABLE IF EXISTS public."MessageTransfer"
-    OWNER to postgres;
+   CREATE INDEX IF NOT EXISTS "Idx_MessageTransfer_Sender" ON public."MessageTransfer"("Sender");
+   CREATE INDEX IF NOT EXISTS "Idx_MessageTransfer_Recipient" ON public."MessageTransfer"("Recipient");
 
-GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."MessageTransfer" TO cryptuser;
+   -- Create UserEd25519KeyPair Index
 
-GRANT ALL ON TABLE public."MessageTransfer" TO postgres;
+   CREATE INDEX IF NOT EXISTS "Idx_UserEd25519KeyPair_Owner" ON public."UserEd25519KeyPair"("Owner");
+
+   -- Create UserX25519KeyPair Index
+
+   CREATE INDEX IF NOT EXISTS "Idx_UserX25519KeyPair_Owner" ON public."UserX25519KeyPair"("Owner");
+
+   -- Update schema version
+
+   UPDATE public."Schema" SET "Version" = 3, "Updated" = CURRENT_TIMESTAMP;
+
+COMMIT;

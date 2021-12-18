@@ -47,6 +47,9 @@ CREATE TABLE IF NOT EXISTS public."FileTransfer"
 
 TABLESPACE pg_default;
 
+CREATE INDEX "Idx_FileTransfer_Sender" ON public."FileTransfer"("Sender");
+CREATE INDEX "Idx_FileTransfer_Recipient" ON public."FileTransfer"("Recipient");
+
 ALTER TABLE IF EXISTS public."FileTransfer"
     OWNER to postgres;
 
