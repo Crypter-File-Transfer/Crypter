@@ -24,19 +24,15 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Newtonsoft.Json;
-using System;
-
-namespace Crypter.Contracts.Responses
+namespace Crypter.API.Models
 {
-   public class UserAuthenticationRefreshResponse
+   public class TokenSettings
    {
-      public string Token { get; set; }
-
-      [JsonConstructor]
-      public UserAuthenticationRefreshResponse(string token)
-      {
-         Token = token;
-      }
+      public string Audience { get; set; }
+      public string Issuer { get; set; }
+      public string SecretKey { get; set; }
+      public int AuthenticationLifetimeMinutes { get; set; }
+      public int SessionLifetimeMinutes { get; set; }
+      public int RefreshLifetimeDays { get; set; }
    }
 }

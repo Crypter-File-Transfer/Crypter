@@ -55,10 +55,12 @@ namespace Crypter.Web
             .AddBlazorDownloadFile()
             .AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) })
             .AddScoped<IAuthenticationService, AuthenticationService>()
+            .AddScoped<Func<IAuthenticationService>>(cont => () => cont.GetService<IAuthenticationService>())
             .AddScoped<IHttpService, HttpService>()
             .AddScoped<ILocalStorageService, LocalStorageService>()
             .AddScoped<ITransferApiService, TransferApiService>()
             .AddScoped<IUserApiService, UserApiService>()
+            .AddScoped<IAuthenticationApiService, AuthenticationApiService>()
             .AddScoped<IMetricsApiService, MetricsApiService>()
             .AddScoped<IUserKeysService, UserKeysService>()
             .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>();

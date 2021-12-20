@@ -24,28 +24,21 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using System;
-using System.Linq;
-using System.Security.Claims;
+using Crypter.Contracts.Enum;
+using Newtonsoft.Json;
 
-namespace Crypter.API.Controllers.Methods
+namespace Crypter.Contracts.Responses
 {
-   public class ClaimsParser
+   public class RefreshResponse
    {
-      public static Guid ParseUserId(ClaimsPrincipal user)
+      public string AuthenticationToken { get; set; }
+      public string RefreshToken { get; set; }
+
+      [JsonConstructor]
+      public RefreshResponse(string authenticationToken = null, string refreshToken = null)
       {
-         var userClaim = user.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
-         if (userClaim is null)
-         {
-            return Guid.Empty;
-         }
-
-         if (!Guid.TryParse(userClaim.Value, out Guid userId))
-         {
-            return Guid.Empty;
-         }
-
-         return userId;
+         AuthenticationToken = authenticationToken;
+         RefreshToken = refreshToken;
       }
    }
 }

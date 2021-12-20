@@ -67,7 +67,7 @@ namespace Crypter.Web.Shared
 
          // User session and the auth token both exist. No need to reauthenticate.
          if (LocalStorage.HasItem(StoredObjectType.UserSession)
-            && LocalStorage.HasItem(StoredObjectType.AuthToken))
+            && LocalStorage.HasItem(StoredObjectType.AuthenticationToken))
          {
             return false;
          }

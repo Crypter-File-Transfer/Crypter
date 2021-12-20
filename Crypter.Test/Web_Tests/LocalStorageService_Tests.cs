@@ -1,4 +1,30 @@
-﻿using Crypter.Web.Models.LocalStorage;
+﻿/*
+ * Copyright (C) 2021 Crypter File Transfer
+ * 
+ * This file is part of the Crypter file transfer project.
+ * 
+ * Crypter is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * The Crypter source code is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * You can be released from the requirements of the aforementioned license
+ * by purchasing a commercial license. Buying such a license is mandatory
+ * as soon as you develop commercial activities involving the Crypter source
+ * code without disclosing the source code of your own applications.
+ * 
+ * Contact the current copyright holder to discuss commerical license options.
+ */
+
+using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services;
 using Microsoft.JSInterop;
 using Moq;
@@ -53,8 +79,8 @@ namespace Crypter.Test.Web_Tests
       [TestCase(LocalStorageService.LocalStorageLiteral, StorageLocation.LocalStorage)]
       public async Task Service_Initializes_Values_From_Browser_Storage(string storageLiteral, StorageLocation storageLocation)
       {
-         var storedUserSession = new UserSession(Guid.NewGuid(), "foo", "1234", "5678");
-         var storedAuthToken = "authToken";
+         var storedUserSession = new UserSession(Guid.NewGuid(), "foo", "refresh");
+         var authenticationToken = "jwt";
          var plaintextX25519PrivateKey = "plaintextX25519";
          var plaintextEd25519PrivateKey = "plaintextEd25519";
          var encryptedX25519PrivateKey = "encryptedX25519";
@@ -69,12 +95,12 @@ namespace Crypter.Test.Web_Tests
                It.Is<object[]>(x => x[0].ToString() == StoredObjectType.UserSession.ToString())))
             .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(storedUserSession));
 
-         // AuthToken
+         // AuthenticationToken
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == StoredObjectType.AuthToken.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(storedAuthToken));
+               It.Is<object[]>(x => x[0].ToString() == StoredObjectType.AuthenticationToken.ToString())))
+            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(authenticationToken));
 
          // PlaintextX25519PrivateKey
          jsRuntime
@@ -116,11 +142,10 @@ namespace Crypter.Test.Web_Tests
          var fetchedUserSession = await sut.GetItemAsync<UserSession>(StoredObjectType.UserSession);
          Assert.AreEqual(storedUserSession.UserId, fetchedUserSession.UserId);
          Assert.AreEqual(storedUserSession.Username, fetchedUserSession.Username);
-         Assert.AreEqual(storedUserSession.EncryptedAuthToken, fetchedUserSession.EncryptedAuthToken);
-         Assert.AreEqual(storedUserSession.AuthTokenIV, fetchedUserSession.AuthTokenIV);
+         Assert.AreEqual(storedUserSession.RefreshToken, fetchedUserSession.RefreshToken);
 
-         var fetchedAuthToken = await sut.GetItemAsync<string>(StoredObjectType.AuthToken);
-         Assert.AreEqual(storedAuthToken, fetchedAuthToken);
+         var fetchedAuthenticationToken = await sut.GetItemAsync<string>(StoredObjectType.AuthenticationToken);
+         Assert.AreEqual(authenticationToken, fetchedAuthenticationToken);
 
          var fetchedPlaintextX25519PrivateKey = await sut.GetItemAsync<string>(StoredObjectType.PlaintextX25519PrivateKey);
          Assert.AreEqual(plaintextX25519PrivateKey, fetchedPlaintextX25519PrivateKey);

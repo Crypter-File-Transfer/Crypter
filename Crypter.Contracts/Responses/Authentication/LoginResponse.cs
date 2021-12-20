@@ -25,21 +25,31 @@
  */
 
 using Newtonsoft.Json;
+using System;
 
-namespace Crypter.Contracts.Requests
+namespace Crypter.Contracts.Responses
 {
-   public class AuthenticateUserRequest
+   public class LoginResponse
    {
-      public string Username { get; set; }
-      public string Password { get; set; }
-      public bool ProvideRefreshToken { get; set; }
+      public Guid Id { get; set; }
+      public string AuthenticationToken { get; set; }
+      public string RefreshToken { get; set; }
+      public string EncryptedX25519PrivateKey { get; set; }
+      public string EncryptedEd25519PrivateKey { get; set; }
+      public string X25519IV { get; set; }
+      public string Ed25519IV { get; set; }
 
       [JsonConstructor]
-      public AuthenticateUserRequest(string username, string password, bool provideRefreshToken)
+      public LoginResponse(Guid id, string authenticationToken, string refreshToken = null, string encryptedX25519PrivateKey = null, string encryptedEd25519PrivateKey = null, string x25519IV = null, string ed25519IV = null)
       {
-         Username = username;
-         Password = password;
-         ProvideRefreshToken = provideRefreshToken;
+         Id = id;
+         AuthenticationToken = authenticationToken;
+         RefreshToken = refreshToken;
+         EncryptedX25519PrivateKey = encryptedX25519PrivateKey;
+         EncryptedEd25519PrivateKey = encryptedEd25519PrivateKey;
+         X25519IV = x25519IV;
+         Ed25519IV = ed25519IV;
       }
    }
 }
+
