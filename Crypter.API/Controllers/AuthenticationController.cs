@@ -151,7 +151,10 @@ namespace Crypter.API.Controllers
             ? _tokenService.NewSessionToken(requestingUserId, newTokenId)
             : _tokenService.NewRefreshToken(requestingUserId, newTokenId);
 
-         await _userTokenService.InsertAsync(newTokenId, requestingUserId, null, userToken.Type, newTokenExpiration, cancellationToken);
+         HttpContext.Request.Headers.TryGetValue("User-Agent", out var someUserAgent);
+         string userAgent = someUserAgent.ToString() ?? "Unknown device";
+
+         await _userTokenService.InsertAsync(newTokenId, requestingUserId, userAgent, userToken.Type, newTokenExpiration, cancellationToken);
          BackgroundJob.Schedule(() => _userTokenService.DeleteAsync(newTokenId, default), newTokenExpiration - DateTime.UtcNow);
 
          return new OkObjectResult(new RefreshResponse(newAuthToken, singleUseRefreshToken));
