@@ -24,37 +24,41 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Contracts.Enum;
+using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Crypter.Core
+namespace Crypter.Core.Services.DataAccess
 {
-   public class DataContext : DbContext
+   public class UserTokenService : IUserTokenService
    {
-      protected readonly IConfiguration Configuration;
+      private readonly DataContext Context;
 
-      public DataContext(IConfiguration configuration)
+      public UserTokenService(DataContext context)
       {
-         Configuration = configuration;
+         Context = context;
       }
 
-      protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+      public async Task InsertAsync(Guid tokenId, Guid userId, string description, TokenType type, DateTime expiration, CancellationToken cancellationToken)
       {
-         var connectionString = Configuration.GetConnectionString("DefaultConnection");
-         optionsBuilder.UseNpgsql(connectionString);
+         var token = new UserToken(tokenId, userId, description, type, DateTime.UtcNow, expiration);
+         Context.UserToken.Add(token);
+         await Context.SaveChangesAsync(cancellationToken);
       }
 
-      public DbSet<User> User { get; set; }
-      public DbSet<UserProfile> UserProfile { get; set; }
-      public DbSet<UserX25519KeyPair> UserX25519KeyPair { get; set; }
-      public DbSet<UserEd25519KeyPair> UserEd25519KeyPair { get; set; }
-      public DbSet<UserPrivacySetting> UserPrivacySetting { get; set; }
-      public DbSet<UserEmailVerification> UserEmailVerification { get; set; }
-      public DbSet<UserNotificationSetting> UserNotificationSetting { get; set; }
-      public DbSet<UserToken> UserToken { get; set; }
-      public DbSet<FileTransfer> FileTransfer { get; set; }
-      public DbSet<MessageTransfer> MessageTransfer { get; set; }
-      public DbSet<Schema> Schema { get; set; }
+      public async Task<IUserToken> ReadAsync(Guid tokenId, CancellationToken cancellationToken)
+      {
+         return await Context.UserToken.FindAsync(new object[] { tokenId }, cancellationToken);
+      }
+
+      public async Task DeleteAsync(Guid tokenId, CancellationToken cancellationToken)
+      {
+         await Context.Database
+            .ExecuteSqlRawAsync("DELETE FROM \"UserToken\" WHERE \"UserToken\".\"Id\" = {0}", new object[] { tokenId }, cancellationToken);
+      }
    }
 }

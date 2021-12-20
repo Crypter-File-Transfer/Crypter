@@ -24,44 +24,36 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Contracts.Enum;
 using Crypter.Core.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Models
 {
-   [Table("User")]
-   public class User : IUser
+   [Table("UserToken")]
+   public class UserToken : IUserToken
    {
       [Key]
       public Guid Id { get; set; }
-      public string Username { get; set; }
-      public string Email { get; set; }
-      public byte[] PasswordHash { get; set; }
-      public byte[] PasswordSalt { get; set; }
-      public bool EmailVerified { get; set; }
+      [ForeignKey("User")]
+      public Guid Owner { get; set; }
+      public string Description { get; set; }
+      public TokenType Type { get; set; }
       public DateTime Created { get; set; }
-      public DateTime LastLogin { get; set; }
+      public DateTime Expiration { get; set; }
 
-      public virtual UserProfile Profile { get; set; }
-      public virtual UserPrivacySetting PrivacySetting { get; set; }
-      public virtual UserNotificationSetting NotificationSetting { get; set; }
-      public virtual UserEd25519KeyPair Ed25519KeyPair { get; set; }
-      public virtual UserX25519KeyPair X25519KeyPair { get; set; }
-      public virtual List<UserToken> Tokens { get; set; }
+      public virtual User User { get; set; }
 
-      public User(Guid id, string username, string email, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
+      public UserToken(Guid id, Guid owner, string description, TokenType type, DateTime created, DateTime expiration)
       {
          Id = id;
-         Username = username;
-         Email = email;
-         PasswordHash = passwordHash;
-         PasswordSalt = passwordSalt;
-         EmailVerified = emailVerified;
+         Owner = owner;
+         Description = description;
+         Type = type;
          Created = created;
-         LastLogin = lastLogin;
+         Expiration = expiration;
       }
    }
 }
