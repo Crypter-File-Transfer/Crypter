@@ -53,6 +53,9 @@
     <None Update="SqlScripts\Crypter\Create\Create_UserProfile.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="SqlScripts\Crypter\Create\Create_UserToken.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="SqlScripts\Crypter\Create\Create_UserX25519KeyPair.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -83,7 +86,13 @@
     <None Update="SqlScripts\Crypter\Drop\Drop_UserProfile.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="SqlScripts\Crypter\Drop\Drop_UserToken.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="SqlScripts\Crypter\Drop\Drop_UserX25519KeyPair.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="SqlScripts\Crypter\Migrations\Migration3.sql">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="SqlScripts\Crypter\Migrations\Migration2.sql">

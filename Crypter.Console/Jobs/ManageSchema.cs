@@ -58,7 +58,8 @@ namespace Crypter.Console.Jobs
                await GetTableCreationScriptAsync("Create_UserPrivacySetting.sql"),
                await GetTableCreationScriptAsync("Create_UserProfile.sql"),
                await GetTableCreationScriptAsync("Create_UserX25519KeyPair.sql"),
-               await GetTableCreationScriptAsync("Create_Schema.sql")
+               await GetTableCreationScriptAsync("Create_Schema.sql"),
+               await GetTableCreationScriptAsync("Create_UserToken.sql")
             };
 
             scripts.ForEach(x => ExecuteSqlScriptNonQuery(connection, x));
@@ -83,6 +84,7 @@ namespace Crypter.Console.Jobs
          {
             List<string> scripts = new()
             {
+               await GetTableDropScriptAsync("Drop_UserToken.sql"),
                await GetTableDropScriptAsync("Drop_FileTransfer.sql"),
                await GetTableDropScriptAsync("Drop_MessageTransfer.sql"),
                await GetTableDropScriptAsync("Drop_UserEd25519KeyPair.sql"),
