@@ -34,7 +34,6 @@ using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Microsoft.Extensions.Configuration;
 using MimeKit;
 using Org.BouncyCastle.Crypto;
 using System;
@@ -62,24 +61,15 @@ namespace Crypter.API.Services
       private readonly IBaseTransferService<MessageTransfer> MessageTransferService;
       private readonly IBaseTransferService<FileTransfer> FileTransferService;
 
-      public EmailService(IConfiguration configuration, IUserService userService, IUserEmailVerificationService userEmailVerificationService, IUserNotificationSettingService userNotificationSettingService,
+      public EmailService(EmailSettings emailSettings, IUserService userService, IUserEmailVerificationService userEmailVerificationService, IUserNotificationSettingService userNotificationSettingService,
          IBaseTransferService<MessageTransfer> messageTransferService, IBaseTransferService<FileTransfer> fileTransferService)
       {
+         Settings = emailSettings;
          UserService = userService;
          UserEmailVerificationService = userEmailVerificationService;
          UserNotificationSettingService = userNotificationSettingService;
          MessageTransferService = messageTransferService;
          FileTransferService = fileTransferService;
-
-         Settings = new()
-         {
-            Enabled = configuration.GetValue<bool>("EmailSettings:Enabled"),
-            From = configuration.GetValue<string>("EmailSettings:From"),
-            Username = configuration.GetValue<string>("EmailSettings:Username"),
-            Password = configuration.GetValue<string>("EmailSettings:Password"),
-            Host = configuration.GetValue<string>("EmailSettings:Host"),
-            Port = configuration.GetValue<int>("EmailSettings:Port")
-         };
       }
 
       /// <summary>
@@ -151,7 +141,7 @@ namespace Crypter.API.Services
 
          var encodedVerificationCode = EmailVerificationEncoder.EncodeVerificationCodeUrlSafe(verificationCode);
          var encodedSignature = EmailVerificationEncoder.EncodeSignatureUrlSafe(signature);
-         var verificationLink = $"https://crypter.dev/verify?code={encodedVerificationCode}&signature={encodedSignature}";
+         var verificationLink = $"https://www.crypter.dev/verify?code={encodedVerificationCode}&signature={encodedSignature}";
 
          return await SendAsync("Verify your email address", verificationLink, emailAddress);
       }
@@ -189,7 +179,7 @@ namespace Crypter.API.Services
 
       public async Task<bool> SendTransferNotificationAsync(string emailAddress)
       {
-         return await SendAsync("Someone sent you a transfer", "Someone sent you something on Crypter!  Login to https://crypter.dev see what it is.", emailAddress);
+         return await SendAsync("Someone sent you a transfer", "Someone sent you something on Crypter!  Login to https://www.crypter.dev see what it is.", emailAddress);
       }
 
       public async Task HangfireSendTransferNotificationAsync(TransferItemType itemType, Guid itemId)

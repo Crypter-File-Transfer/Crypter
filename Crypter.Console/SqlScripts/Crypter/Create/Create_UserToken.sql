@@ -24,28 +24,30 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using System;
-using System.Linq;
-using System.Security.Claims;
+-- Table: public.UserToken
 
-namespace Crypter.API.Controllers.Methods
-{
-   public class ClaimsParser
-   {
-      public static Guid ParseUserId(ClaimsPrincipal user)
-      {
-         var userClaim = user.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
-         if (userClaim is null)
-         {
-            return Guid.Empty;
-         }
+CREATE TABLE IF NOT EXISTS public."UserToken"
+(
+    "Id" uuid NOT NULL,
+    "Owner" uuid NOT NULL,
+    "Description" text COLLATE pg_catalog."default",
+    "Type" integer NOT NULL,
+    "Created" timestamp without time zone NOT NULL,
+    "Expiration" timestamp without time zone NOT NULL,
+    CONSTRAINT "PK_UserToken" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_UserToken_User_Owner" FOREIGN KEY ("Owner")
+        REFERENCES public."User" ("Id") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+)
 
-         if (!Guid.TryParse(userClaim.Value, out Guid userId))
-         {
-            return Guid.Empty;
-         }
+TABLESPACE pg_default;
 
-         return userId;
-      }
-   }
-}
+CREATE INDEX "Idx_UserToken_Owner" ON public."UserToken"("Owner");
+
+ALTER TABLE IF EXISTS public."UserToken"
+    OWNER to postgres;
+
+GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."UserToken" TO cryptuser;
+
+GRANT ALL ON TABLE public."UserToken" TO postgres;

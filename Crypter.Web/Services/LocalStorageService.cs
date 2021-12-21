@@ -42,7 +42,7 @@ namespace Crypter.Web.Services
    public enum StoredObjectType
    {
       UserSession,
-      AuthToken,
+      AuthenticationToken,
       PlaintextX25519PrivateKey,
       PlaintextEd25519PrivateKey,
       EncryptedX25519PrivateKey,

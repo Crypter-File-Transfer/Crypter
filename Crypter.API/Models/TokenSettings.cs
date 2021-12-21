@@ -24,21 +24,15 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using System;
-
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.API.Models
 {
-   public class UserSession
+   public class TokenSettings
    {
-      public Guid UserId { get; set; }
-      public string Username { get; set; }
-      public string RefreshToken { get; set; }
-
-      public UserSession(Guid userId, string username, string refreshToken)
-      {
-         UserId = userId;
-         Username = username;
-         RefreshToken = refreshToken;
-      }
+      public string Audience { get; set; }
+      public string Issuer { get; set; }
+      public string SecretKey { get; set; }
+      public int AuthenticationLifetimeMinutes { get; set; }
+      public int SessionLifetimeMinutes { get; set; }
+      public int RefreshLifetimeDays { get; set; }
    }
 }

@@ -24,21 +24,18 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Contracts.Enum;
 using System;
 
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.Core.Interfaces
 {
-   public class UserSession
+   public interface IUserToken
    {
-      public Guid UserId { get; set; }
-      public string Username { get; set; }
-      public string RefreshToken { get; set; }
-
-      public UserSession(Guid userId, string username, string refreshToken)
-      {
-         UserId = userId;
-         Username = username;
-         RefreshToken = refreshToken;
-      }
+      Guid Id { get; set; }
+      Guid Owner { get; set; }
+      string Description { get; set; }
+      TokenType Type { get; set; }
+      DateTime Created { get; set; }
+      DateTime Expiration { get; set; }
    }
 }

@@ -24,21 +24,17 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Contracts.Enum;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.Core.Interfaces
 {
-   public class UserSession
+   public interface IUserTokenService
    {
-      public Guid UserId { get; set; }
-      public string Username { get; set; }
-      public string RefreshToken { get; set; }
-
-      public UserSession(Guid userId, string username, string refreshToken)
-      {
-         UserId = userId;
-         Username = username;
-         RefreshToken = refreshToken;
-      }
+      Task InsertAsync(Guid tokenId, Guid userId, string description, TokenType type, DateTime expiration, CancellationToken cancellationToken);
+      Task<IUserToken> ReadAsync(Guid tokenId, CancellationToken cancellationToken);
+      Task DeleteAsync(Guid tokenId, CancellationToken cancellationToken);
    }
 }

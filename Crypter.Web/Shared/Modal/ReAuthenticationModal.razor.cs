@@ -60,7 +60,7 @@ namespace Crypter.Web.Shared.Modal
             return false;
          }
 
-         return await AuthenticationService.ReauthenticateAsync(Password);
+         return await AuthenticationService.UnlockSession(Password);
       }
 
       public async Task SubmitUnlockAsync()

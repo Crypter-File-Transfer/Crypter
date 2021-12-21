@@ -24,15 +24,14 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.API.Models;
 using Crypter.API.Services;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
-using Microsoft.Extensions.Configuration;
 using Moq;
 using NUnit.Framework;
 using Org.BouncyCastle.Crypto;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,23 +40,12 @@ namespace Crypter.Test.API_Tests
    [TestFixture]
    public class EmailService_Tests
    {
-      IConfiguration ServiceConfiguration { get; set; }
+      private EmailSettings _emailSettings;
 
       [OneTimeSetUp]
       public void OneTimeSetup()
       {
-         var configurationSettings = new Dictionary<string, string> {
-            { "EmailSettings:Enabled", "false" },
-            { "EmailSettings:From", "no-reply" },
-            { "EmailSettings:Username", "no-reply" },
-            { "EmailSettings:Password", "secure" },
-            { "EmailSettings:Host", "localhost" },
-            { "EmailSettings:Port", "555" }
-         };
-
-         ServiceConfiguration = new ConfigurationBuilder()
-             .AddInMemoryCollection(configurationSettings)
-             .Build();
+         _emailSettings = new EmailSettings();
       }
 
       [SetUp]
@@ -82,7 +70,7 @@ namespace Crypter.Test.API_Tests
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
          var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
@@ -113,7 +101,7 @@ namespace Crypter.Test.API_Tests
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
          var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
@@ -144,7 +132,7 @@ namespace Crypter.Test.API_Tests
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
          var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
@@ -175,7 +163,7 @@ namespace Crypter.Test.API_Tests
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
          var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
@@ -208,7 +196,7 @@ namespace Crypter.Test.API_Tests
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
          var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
@@ -239,7 +227,7 @@ namespace Crypter.Test.API_Tests
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
          var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true
@@ -261,7 +249,7 @@ namespace Crypter.Test.API_Tests
          var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
          var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
 
-         var emailService = new Mock<EmailService>(ServiceConfiguration, mockUserService.Object, mockUserEmailVerificationService.Object,
+         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
          {
             CallBase = true

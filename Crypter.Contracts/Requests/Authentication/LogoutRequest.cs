@@ -24,20 +24,17 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using System;
+using Newtonsoft.Json;
 
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.Contracts.Requests
 {
-   public class UserSession
+   public class LogoutRequest
    {
-      public Guid UserId { get; set; }
-      public string Username { get; set; }
       public string RefreshToken { get; set; }
 
-      public UserSession(Guid userId, string username, string refreshToken)
+      [JsonConstructor]
+      public LogoutRequest(string refreshToken)
       {
-         UserId = userId;
-         Username = username;
          RefreshToken = refreshToken;
       }
    }

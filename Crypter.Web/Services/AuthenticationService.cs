@@ -40,7 +40,8 @@ namespace Crypter.Web.Services
    public interface IAuthenticationService
    {
       Task<bool> LoginAsync(string username, string password, bool trustDevice);
-      Task<bool> ReauthenticateAsync(string password);
+      Task<bool> UnlockSession(string password);
+      Task<bool> TryRefreshingTokenAsync();
       Task LogoutAsync();
    }
 
@@ -48,20 +49,26 @@ namespace Crypter.Web.Services
    {
       private readonly IUserApiService _userApiService;
       private readonly IUserKeysService _userKeysService;
+      private readonly IAuthenticationApiService _authenticationApiService;
       private readonly ILocalStorageService _localStorageService;
       private readonly ISimpleEncryptionService _simpleEncryptionService;
 
-      public AuthenticationService(IUserApiService userApiService, IUserKeysService userKeysService, ILocalStorageService localStorageService, ISimpleEncryptionService simpleEncryptionService)
+      public AuthenticationService(IUserApiService userApiService, IUserKeysService userKeysService, IAuthenticationApiService authenticationApiService, ILocalStorageService localStorageService, ISimpleEncryptionService simpleEncryptionService)
       {
          _userApiService = userApiService;
          _userKeysService = userKeysService;
+         _authenticationApiService = authenticationApiService;
          _localStorageService = localStorageService;
          _simpleEncryptionService = simpleEncryptionService;
       }
 
       public async Task<bool> LoginAsync(string username, string password, bool trustDevice)
       {
-         var (authSuccess, authResponse) = await SendAuthenticationRequestAsync(username, password, trustDevice);
+         var refreshTokenType = trustDevice
+            ? TokenType.Refresh
+            : TokenType.Session;
+
+         var (authSuccess, authResponse) = await SendLoginRequestAsync(username, password, refreshTokenType);
          if (!authSuccess)
          {
             return false;
@@ -78,60 +85,77 @@ namespace Crypter.Web.Services
          return true;
       }
 
-      public async Task<bool> ReauthenticateAsync(string password)
+      public async Task<bool> UnlockSession(string password)
       {
          var userSessionInfo = await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
          var userSymmetricKey = _userKeysService.GetUserSymmetricKey(userSessionInfo.Username, password);
+
+         // decrypt refrech token
+
+         if (!await TryRefreshingTokenAsync())
+         {
+            return false;
+         }
+
          var userEncryptedX25519 = await _localStorageService.GetItemAsync<EncryptedPrivateKey>(StoredObjectType.EncryptedX25519PrivateKey);
          var userEncryptedEd25519 = await _localStorageService.GetItemAsync<EncryptedPrivateKey>(StoredObjectType.EncryptedEd25519PrivateKey);
 
-         var (decryptTokenSuccess, token) = DecryptLocalAuthToken(userSymmetricKey, userSessionInfo);
          var (decryptX25519Success, x25519) = DecryptLocalPrivateKey(userSymmetricKey, userEncryptedX25519);
          var (decryptEd25519Success, ed25519) = DecryptLocalPrivateKey(userSymmetricKey, userEncryptedEd25519);
 
-         if (decryptTokenSuccess && decryptX25519Success && decryptEd25519Success)
+         if (decryptX25519Success && decryptEd25519Success)
          {
-            await _localStorageService.SetItemAsync(StoredObjectType.AuthToken, token, StorageLocation.InMemory);
             await _localStorageService.SetItemAsync(StoredObjectType.PlaintextX25519PrivateKey, x25519, StorageLocation.InMemory);
             await _localStorageService.SetItemAsync(StoredObjectType.PlaintextEd25519PrivateKey, ed25519, StorageLocation.InMemory);
-
-            // TODO - Test the token by hitting the API
-            // If the API rejects the token, perform a full-fledged login since we already have the users credentials
-
             return true;
          }
          return false;
       }
 
+      public async Task<bool> TryRefreshingTokenAsync()
+      {
+         var sessionInfo = await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
+         var (httpStatus, response) = await _authenticationApiService.RefreshAsync();
+         if (httpStatus != HttpStatusCode.OK)
+         {
+            return false;
+         }
+
+         sessionInfo.RefreshToken = response.RefreshToken;
+         var sessionLocation = _localStorageService.GetItemLocation(StoredObjectType.UserSession);
+         await _localStorageService.SetItemAsync(StoredObjectType.UserSession, sessionInfo, sessionLocation);
+         await _localStorageService.SetItemAsync(StoredObjectType.AuthenticationToken, response.AuthenticationToken, StorageLocation.InMemory);
+         return true;
+      }
+
       public async Task LogoutAsync()
       {
+         var userSessionInfo = await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
+         var logoutRequest = new LogoutRequest(userSessionInfo.RefreshToken);
+         await _authenticationApiService.LogoutAsync(logoutRequest);
          await _localStorageService.DisposeAsync();
       }
 
-      private async Task CacheSessionInfoAsync(UserAuthenticateResponse authResponse, string username, byte[] userSymmetricKey, StorageLocation storageLocation)
+      private async Task CacheSessionInfoAsync(LoginResponse authResponse, string username, byte[] userSymmetricKey, StorageLocation storageLocation)
       {
-         var (encryptedToken, tokenIV) = _simpleEncryptionService.Encrypt(userSymmetricKey, authResponse.Token);
-         var base64EncryptedToken = Convert.ToBase64String(encryptedToken);
-         var base64TokenIV = Convert.ToBase64String(tokenIV);
-
-         var sessionInfo = new UserSession(authResponse.Id, username, base64EncryptedToken, base64TokenIV);
+         var sessionInfo = new UserSession(authResponse.Id, username, authResponse.RefreshToken);
          await _localStorageService.SetItemAsync(StoredObjectType.UserSession, sessionInfo, storageLocation);
 
-         // The plaintext JWT should only be stored InMemory
-         await _localStorageService.SetItemAsync(StoredObjectType.AuthToken, authResponse.Token, StorageLocation.InMemory);
+         // Plaintext authentication token should be stored in-memory; not in browser storage
+         await _localStorageService.SetItemAsync(StoredObjectType.AuthenticationToken, authResponse.AuthenticationToken, StorageLocation.InMemory);
       }
 
-      private async Task<(bool success, UserAuthenticateResponse response)> SendAuthenticationRequestAsync(string username, string password, bool requestRefreshToken)
+      private async Task<(bool success, LoginResponse response)> SendLoginRequestAsync(string username, string password, TokenType refreshTokenType)
       {
          byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
-         var loginRequest = new AuthenticateUserRequest(username, digestedPasswordBase64, requestRefreshToken);
-         var (httpStatus, authResponse) = await _userApiService.AuthenticateUserAsync(loginRequest);
+         var loginRequest = new LoginRequest(username, digestedPasswordBase64, refreshTokenType);
+         var (httpStatus, authResponse) = await _authenticationApiService.LoginAsync(loginRequest);
          return (httpStatus == HttpStatusCode.OK, authResponse);
       }
 
-      private async Task HandleUserKeys(UserAuthenticateResponse authResponse, byte[] userSymmetricKey, StorageLocation storageLocation)
+      private async Task HandleUserKeys(LoginResponse authResponse, byte[] userSymmetricKey, StorageLocation storageLocation)
       {
          // Handle X25519
          if (string.IsNullOrEmpty(authResponse.EncryptedX25519PrivateKey))
@@ -200,22 +224,6 @@ namespace Crypter.Web.Services
          var base64IV = Convert.ToBase64String(iv);
          var storageModel = new EncryptedPrivateKey(base64EncryptedPrivateKey, base64IV);
          await _localStorageService.SetItemAsync(objectType, storageModel, storageLocation);
-      }
-
-      private (bool success, string token) DecryptLocalAuthToken(byte[] userSymmetricKey, UserSession sessionInfo)
-      {
-         var encryptedToken = Convert.FromBase64String(sessionInfo.EncryptedAuthToken);
-         var iv = Convert.FromBase64String(sessionInfo.AuthTokenIV);
-
-         try
-         {
-            var plaintextAuthToken = _simpleEncryptionService.DecryptToString(userSymmetricKey, iv, encryptedToken);
-            return (true, plaintextAuthToken);
-         }
-         catch (Exception)
-         {
-            return (false, null);
-         }
       }
 
       private (bool success, string privateKey) DecryptLocalPrivateKey(byte[] userSymmetricKey, EncryptedPrivateKey encryptionInfo)

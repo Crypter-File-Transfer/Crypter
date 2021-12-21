@@ -24,20 +24,20 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using System;
+using Crypter.Contracts.Enum;
+using Newtonsoft.Json;
 
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.Contracts.Responses
 {
-   public class UserSession
+   public class RefreshResponse
    {
-      public Guid UserId { get; set; }
-      public string Username { get; set; }
+      public string AuthenticationToken { get; set; }
       public string RefreshToken { get; set; }
 
-      public UserSession(Guid userId, string username, string refreshToken)
+      [JsonConstructor]
+      public RefreshResponse(string authenticationToken = null, string refreshToken = null)
       {
-         UserId = userId;
-         Username = username;
+         AuthenticationToken = authenticationToken;
          RefreshToken = refreshToken;
       }
    }
