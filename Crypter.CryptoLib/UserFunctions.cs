@@ -32,15 +32,16 @@ namespace Crypter.CryptoLib
    public static class UserFunctions
    {
       /// <summary>
-      /// Digest a user's login information.
+      /// Digest the user's credentials.
       /// </summary>
-      /// <param name="username"></param>
+      /// <param name="username">Username will be lowercased within the method.</param>
       /// <param name="password"></param>
       /// <returns>Array of 64 bytes.</returns>
       /// <remarks>
-      /// The result of this method is used as the user's password during authentication requests.
+      /// The result of this method gets used as the user's password during authentication requests.
+      /// The reason for doing this is to keep the user's real password a secret from even our own API.
       /// </remarks>
-      public static byte[] DigestUserCredentials(string username, string password)
+      public static byte[] DeriveAuthenticationPasswordFromUserCredentials(string username, string password)
       {
          var digestor = new Crypto.SHA(SHAFunction.SHA512);
          digestor.BlockUpdate(Encoding.UTF8.GetBytes(password));
@@ -49,12 +50,12 @@ namespace Crypter.CryptoLib
       }
 
       /// <summary>
-      /// Derive a symmetric encryption key from the user's login information
+      /// Use the user's credentials to create a symmetric key.
       /// </summary>
-      /// <param name="username"></param>
+      /// <param name="username">Username will be lowercased within the method.</param>
       /// <param name="password"></param>
       /// <returns>Array of 32 bytes.</returns>
-      public static byte[] DeriveSymmetricCryptoParamsFromUserDetails(string username, string password)
+      public static byte[] DeriveSymmetricKeyFromUserCredentials(string username, string password)
       {
          var keyDigestor = new Crypto.SHA(SHAFunction.SHA256);
          keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(username.ToLower()));

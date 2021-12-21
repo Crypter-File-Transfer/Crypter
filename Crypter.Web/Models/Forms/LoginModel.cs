@@ -1,4 +1,4 @@
-﻿@*
+﻿/*
  * Copyright (C) 2021 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
@@ -22,22 +22,14 @@
  * code without disclosing the source code of your own applications.
  * 
  * Contact the current copyright holder to discuss commerical license options.
- *@
+ */
 
-@page "/feedback"
-
-@inject IJSRuntime JsRuntime;
-
-<div class="container my-4">
-    <h1>Feedback</h1>
-    <p>The team would love to hear your feedback!  Send Jack an email or message him on Twitter.</p>
-    <p>Email: jackedwards@protonmail.com</p>
-    <p>Twitter: <a class="p-0 lh-lg" href="https://twitter.com/Jack_E_Edwards">Jack's Twitter profile</a></p>
-</div>
-
-@code {
-    protected override async Task OnInitializedAsync()
-    {
-        await JsRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - Feedback");
-    }
+namespace Crypter.Web.Models.Forms
+{
+   public class LoginModel
+   {
+      public string Username { get; set; }
+      public string Password { get; set; }
+      public bool RememberMe { get; set; }
+   }
 }

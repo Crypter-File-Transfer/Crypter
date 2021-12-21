@@ -52,13 +52,13 @@
                   @if (item.ItemType == TransferItemType.File)
                   {
                      <h6 class="card-subtitle my-2">
-                        Filename: <a href="@($"/decrypt/file/{item.Id}")">@item.Name</a>
+                        Filename: <a class="text-decoration-none" href="@($"/decrypt/file/{item.Id}")">@item.Name</a>
                      </h6>
                   }
                   else
                   {
                      <h6 class="card-subtitle my-2">
-                        Subject: <a href="@($"/decrypt/message/{item.Id}")">@item.Name</a>
+                        Subject: <a class="text-decoration-none" href="@($"/decrypt/message/{item.Id}")">@item.Name</a>
                      </h6>
                   }
                   <div class="row">
@@ -69,7 +69,7 @@
                         }
                         else
                         {
-                           <span>From: <a href="@($"/user/profile/{item.SenderUsername}")">@($"@{item.SenderUsername}")</a></span>
+                           <span>From: <a class="text-decoration-none" href="@($"/user/profile/{item.SenderUsername}")">@($"@{item.SenderUsername}")</a></span>
                         }
                      </div>
                   </div>

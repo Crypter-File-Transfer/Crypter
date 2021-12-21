@@ -31,50 +31,95 @@
 <div class="container my-4">
     <h1>About</h1>
     <p>
-        We are a small team of dedicated developers who just want to make end-to-end encryption and data transfer easy and approachable.
+       Crypter.dev is a free, open-source web application that makes end-to-end encryption easy and approachable.
+       No sign-up required.
+    </p>
+
+    <h2>How does it work?</h2>
+    <p>
+       While Crypter does offer real end-to-end encryption, be aware that Crypter does store your encrypted information for up to 24 hours.
+       This is how the application makes transfers possible between you and someone else.
+       In addition to Crypter deleting all encrypted information after 24 hours, encrypted information is also deleted as soon as someone downloads
+       the encrypted information with the correct decryption key.
+    </p>
+
+    <h2>Explain the cryptography</h2>
+    <p>
+       Crypter uses elliptical curve cryptography to encrypt and digitally sign every upload.
+    </p>
+
+    <h3>Encryption</h3>
+    <p>
+       The first step to the whole process is creating several sets of Curve25519 key-pairs. These sets of key-pairs are labelled the "sender" keys and "recipient" keys.
+       Within each key-pair is a "private" key and a "public" key. As their names suggest, the private key is designed to be kept private, while the public key is designed to be made public.
+       The sender's private key is disposed of as soon as the upload completes, while the recipient's private key is provided back to the sender to give to whomever they want.
     </p>
     <p>
-        No need to sign up for an account.
-        No need to provide any personally identifiable information.
+       After these keys are created, a form of key exchange occurs that mixes the sender's private key with the recipient's public key to derive a shared secret.
+       This same secret can be derived by combining the recipient's private key with the sender's public key. Crypter uses this shared secret as the actual encryption key.
     </p>
     <p>
-        And no need to manage your own cryptographic keys or secrets.
+       After encryption is completed, Crypter will digitally sign the sender's original data. More on this later.
     </p>
     <p>
-        Simply upload your data and share the decryption details that we provide with whoever you need to.
+       Finally, the Crypter will upload the encrypted data, the sender's public key, and the digital signature to the Crypter server. At this point
+       it is up to the sender to share the download link and the recipient's private key with whoever they want. The only way for anyone to download and decrypt
+       this content is by having the correct download link and private key.
+    </p>
+
+    <h3>Decryption</h3>
+    <p>
+       Assuming someone does have the correct download link and private key, Crypter will then download the encrypted content to the browser where it will be decrypted and verified.
+       In order to decrypt, the same form of key exchange that occurred during encryption must occur again. This time, the key exchange occurs with the recipient's private key and
+       the sender's public key that was uploaded to the Crypter server. This key exchange will derive the same shared secret that was used encrypt, but this time it will be used to decrypt.
     </p>
     <p>
-        Uploads are deleted immediately after download.  Uploads that never get downloaded are deleted after 24 hours.
+       After decryption is completed, Crypter will verify the decrypted information against the digital signature that was provided by the sender. If the decrypted information matches the
+       digital signature, then Crypter has proven the decrypted information is authentic and has not been tampered with.
     </p>
-    <h3>Privacy</h3>
+
+    <h2>How can I trust this is real?</h2>
     <p>
-        Privacy begins with anonymity.
-        That is not a stance many services take, but we take it very seriously.
+       Trust is a tricky thing. All I can do is reiterate that Crypter is 100% open-source. Everything from the web client to the database schema are hosted publicly on GitHub.
+       I encourage everyone to review and scutinize the code.
     </p>
+
+    <h2>Why did you make this?</h2>
     <p>
-        Crypter does not use cookies nor does it collect device information.
-        Users are not tracked whatsoever.
-    </p>
-    <p>
-        Visitors will always be able to transfer files without signing up for an account.
-    </p>
-    <h3>Security</h3>
-    <p>
-        Crypter uses modern cryptography to encrypt and decrypt right in the browser.
+       One day, I was trying to share a video clip with a friend. We were in the same room, but could not agree on how to actually get this video from my phone to her phone. We tried transferring
+       the file over bluetooth, but that failed. We thought about using Dropbox, but her storage was full. I had an Android phone so we I could not AirDrop it to her iPhone. The file was too large for email.
+       <a href="https://file.pizza/" target="_blank">FilePizza</a> used to work great, but stopped working some time ago.
     </p>
     <p>
-        The only person who possesses the key to decrypt something you have uploaded is <b>you</b>!
+       The only option we had left was for me to upload the file to Google Drive and share it with "Anyone with the link".
     </p>
     <p>
-        It is up to <b>you</b> to share the decryption key with your intended recipient.
-    </p>
-    <h3>Simplicity</h3>
-    <p>
-        Anything can be encrypted and sent to someone else just by using the Crypter homepage.
+      <i>Anyone with the link.</i>
     </p>
     <p>
-        Try it out!
+      <b>Anyone with the link?!</b>
     </p>
+    <p>
+       This drove me nuts. How are people okay with sharing their files with everyone who just happens to find the link? Not to mention all of the information that we <i>don't</i>
+       want to share is uploaded completely un-encrypted! If you want to discuss trust, let's have a talk about all the free information we've already given away to people and companies who make money off knowing
+       our most intimate details.
+    </p>
+    <p>
+       That is the story behind why I felt it was necessary to make a web application that makes end-to-end encryption as easy and approachable as possible.
+    </p>
+
+    <h2>How is this funded?</h2>
+    <p>
+       Mostly out of my own pocket. Check out the Patreon link in the site footer if you are interested in helping out.
+    </p>
+
+    <p>
+       I hope to one day offer a paid, end-to-end encrypted cloud storage service.
+    </p>
+
+    <br />
+    <p>Well, I think that's it for now. Have a nice day!</p>
+
 </div>
 
 @code {

@@ -32,16 +32,7 @@
 </button>
 <div class="collapse navbar-collapse justify-content-end" id="mainNavigation">
    <ul class="navbar-nav">
-      @if (!LocalStorageService.HasItem(StoredObjectType.UserSession))
-      {
-         <li class="nav-item m-1">
-            <a class="btn btn-secondary" href="/login">Login</a>
-         </li>
-         <li class="nav-item m-1">
-            <a class="btn btn-primary" href="/register">Sign Up</a>
-         </li>
-      }
-      else
+      @if (LocalStorageService.HasItem(StoredObjectType.UserSession))
       {
          <li class="nav-item mx-1">
             <a class="nav-link" href="#" @onclick:preventDefault @onclick="@OnLogoutClicked">Logout</a>
@@ -58,6 +49,15 @@
 
          <UploadFileTransferModal @ref="FileTransferModal" IsRecipientDefined=false ModalClosedCallback="@CollapseNavigationMenuAsync"/>
          <UploadMessageTransferModal @ref="MessageTransferModal" IsRecipientDefined=false ModalClosedCallback="@CollapseNavigationMenuAsync" />
+      }
+      else
+      {
+         <li class="nav-item m-1">
+            <a class="btn btn-secondary" href="/login">Login</a>
+         </li>
+         <li class="nav-item m-1">
+            <a class="btn btn-primary" href="/register">Sign Up</a>
+         </li>
       }
    </ul>
 </div>

@@ -32,12 +32,14 @@ namespace Crypter.Contracts.Requests
    {
       public string Username { get; set; }
       public string Password { get; set; }
+      public bool ProvideRefreshToken { get; set; }
 
       [JsonConstructor]
-      public AuthenticateUserRequest(string username, string password)
+      public AuthenticateUserRequest(string username, string password, bool provideRefreshToken)
       {
          Username = username;
          Password = password;
+         ProvideRefreshToken = provideRefreshToken;
       }
    }
 }
