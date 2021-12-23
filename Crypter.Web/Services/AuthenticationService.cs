@@ -90,8 +90,6 @@ namespace Crypter.Web.Services
          var userSessionInfo = await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
          var userSymmetricKey = _userKeysService.GetUserSymmetricKey(userSessionInfo.Username, password);
 
-         // decrypt refrech token
-
          if (!await TryRefreshingTokenAsync())
          {
             return false;
@@ -234,7 +232,6 @@ namespace Crypter.Web.Services
          try
          {
             var plaintextKey = _simpleEncryptionService.DecryptToString(userSymmetricKey, iv, encryptedKey);
-            System.Console.WriteLine(plaintextKey);
             return (true, plaintextKey);
          }
          catch (Exception)

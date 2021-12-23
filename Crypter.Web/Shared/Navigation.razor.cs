@@ -25,6 +25,7 @@
  */
 
 using Crypter.Web.Services;
+using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.JSInterop;
@@ -48,8 +49,8 @@ namespace Crypter.Web.Shared
       protected IAuthenticationService AuthenticationService { get; set; }
 
       protected bool UserIsAuthenticated { get; set; } = false;
-      protected Modal.UploadFileTransferModal FileTransferModal { get; set; }
-      protected Modal.UploadMessageTransferModal MessageTransferModal { get; set; }
+      protected UploadFileTransferModal FileTransferModal { get; set; }
+      protected UploadMessageTransferModal MessageTransferModal { get; set; }
 
       protected override async Task OnInitializedAsync()
       {
@@ -57,9 +58,9 @@ namespace Crypter.Web.Shared
          await base.OnInitializedAsync();
       }
 
-      protected void OnLogoutClicked()
+      protected async Task OnLogoutClicked()
       {
-         AuthenticationService.LogoutAsync();
+         await AuthenticationService.LogoutAsync();
          NavigationManager.NavigateTo("/");
       }
 
