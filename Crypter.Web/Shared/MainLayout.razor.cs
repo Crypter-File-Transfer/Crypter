@@ -25,6 +25,7 @@
  */
 
 using Crypter.Web.Services;
+using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -38,7 +39,7 @@ namespace Crypter.Web.Shared
       [Inject]
       protected ILocalStorageService LocalStorage { get; set; }
 
-      protected Modal.ReAuthenticationModal ReAuthenticationModal { get; set; }
+      protected ReAuthenticationModal ReAuthenticationModal { get; set; }
 
       protected override async Task OnInitializedAsync()
       {

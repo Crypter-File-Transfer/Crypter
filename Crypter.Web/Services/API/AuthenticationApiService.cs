@@ -36,7 +36,7 @@ namespace Crypter.Web.Services.API
    {
       Task<(HttpStatusCode HttpStatus, LoginResponse Response)> LoginAsync(LoginRequest loginRequest);
       Task<(HttpStatusCode HttpStatus, RefreshResponse Response)> RefreshAsync();
-      Task<(HttpStatusCode HttpStatus, object _)> LogoutAsync(LogoutRequest logoutRequest);
+      Task<HttpStatusCode> LogoutAsync(LogoutRequest logoutRequest);
    }
 
    public class AuthenticationApiService : IAuthenticationApiService
@@ -62,10 +62,10 @@ namespace Crypter.Web.Services.API
          return await HttpService.GetAsync<RefreshResponse>(url, true, true);
       }
 
-      public async Task<(HttpStatusCode, object)> LogoutAsync(LogoutRequest logoutRequest)
+      public async Task<HttpStatusCode> LogoutAsync(LogoutRequest logoutRequest)
       {
          var url = $"{BaseAuthenticationUrl}/logout";
-         return await HttpService.PostAsync<object>(url, logoutRequest, true);
+         return await HttpService.PostAsync(url, logoutRequest, true);
       }
    }
 }
