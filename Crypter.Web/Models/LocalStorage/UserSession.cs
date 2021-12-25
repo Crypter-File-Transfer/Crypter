@@ -32,15 +32,13 @@ namespace Crypter.Web.Models.LocalStorage
    {
       public Guid UserId { get; set; }
       public string Username { get; set; }
-      public string EncryptedAuthToken { get; set; }
-      public string AuthTokenIV { get; set; }
+      public string RefreshToken { get; set; }
 
-      public UserSession(Guid userId, string username, string encryptedAuthToken, string authTokenIV)
+      public UserSession(Guid userId, string username, string refreshToken)
       {
          UserId = userId;
          Username = username;
-         EncryptedAuthToken = encryptedAuthToken;
-         AuthTokenIV = authTokenIV;
+         RefreshToken = refreshToken;
       }
    }
 }

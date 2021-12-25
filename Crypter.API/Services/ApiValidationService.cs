@@ -29,14 +29,15 @@ using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.API.Services
 {
    public interface IApiValidationService
    {
-      Task<bool> IsEnoughSpaceForNewTransfer(long allocatedDiskSpace, int maxUploadSize);
-      Task<InsertUserResult> IsValidUserRegistrationRequest(RegisterUserRequest request);
+      Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken);
+      Task<InsertUserResult> IsValidUserRegistrationRequestAsync(RegisterUserRequest request, CancellationToken cancellationToken);
    }
 
    public class ApiValidationService : IApiValidationService
@@ -52,15 +53,15 @@ namespace Crypter.API.Services
          FileTransferService = fileTransferService;
       }
 
-      public async Task<bool> IsEnoughSpaceForNewTransfer(long allocatedDiskSpace, int maxUploadSize)
+      public async Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken)
       {
-         var sizeOfFileUploads = await MessageTransferService.GetAggregateSizeAsync();
-         var sizeOfMessageUploads = await FileTransferService.GetAggregateSizeAsync();
+         var sizeOfFileUploads = await MessageTransferService.GetAggregateSizeAsync(cancellationToken);
+         var sizeOfMessageUploads = await FileTransferService.GetAggregateSizeAsync(cancellationToken);
          var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
          return (totalSizeOfUploads + maxUploadSize) <= allocatedDiskSpace;
       }
 
-      public async Task<InsertUserResult> IsValidUserRegistrationRequest(RegisterUserRequest request)
+      public async Task<InsertUserResult> IsValidUserRegistrationRequestAsync(RegisterUserRequest request, CancellationToken cancellationToken)
       {
          if (!ValidationService.IsValidUsername(request.Username))
          {
@@ -78,13 +79,13 @@ namespace Crypter.API.Services
             return InsertUserResult.InvalidEmailAddress;
          }
 
-         if (!await UserService.IsUsernameAvailableAsync(request.Username))
+         if (!await UserService.IsUsernameAvailableAsync(request.Username, cancellationToken))
          {
             return InsertUserResult.UsernameTaken;
          }
 
          if (ValidationService.IsPossibleEmailAddress(request.Email)
-            && !await UserService.IsEmailAddressAvailableAsync(request.Email))
+            && !await UserService.IsEmailAddressAvailableAsync(request.Email, cancellationToken))
          {
             return InsertUserResult.EmailTaken;
          }

@@ -54,21 +54,21 @@ namespace Crypter.Console.Jobs
          Logger.LogInformation($"{DateTime.Now:HH:mm:ss} DeleteExpired is working.");
 
          var messageStorageService = new TransferItemStorageService(FileStorePath, TransferItemType.Message);
-         var expiredMessages = await MessageService.FindExpiredAsync();
+         var expiredMessages = await MessageService.FindExpiredAsync(default);
          foreach (MessageTransfer expiredItem in expiredMessages)
          {
             Logger.LogInformation($"Deleting message {expiredItem.Id}");
-            await MessageService.DeleteAsync(expiredItem.Id);
+            await MessageService.DeleteAsync(expiredItem.Id, default);
             messageStorageService.Delete(expiredItem.Id);
             Logger.LogInformation($"Delete complete");
          }
 
          var fileStorageService = new TransferItemStorageService(FileStorePath, TransferItemType.File);
-         var expiredFiles = await FileService.FindExpiredAsync();
+         var expiredFiles = await FileService.FindExpiredAsync(default);
          foreach (FileTransfer expiredItem in expiredFiles)
          {
             Logger.LogInformation($"Deleting file {expiredItem.Id}");
-            await FileService.DeleteAsync(expiredItem.Id);
+            await FileService.DeleteAsync(expiredItem.Id, default);
             fileStorageService.Delete(expiredItem.Id);
             Logger.LogInformation($"Delete complete");
          }

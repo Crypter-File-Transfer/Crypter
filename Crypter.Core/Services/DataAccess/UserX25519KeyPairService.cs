@@ -29,6 +29,7 @@ using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
@@ -42,24 +43,24 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task<IUserPublicKeyPair> GetUserPublicKeyPairAsync(Guid userId)
+      public async Task<IUserPublicKeyPair> GetUserPublicKeyPairAsync(Guid userId, CancellationToken cancellationToken)
       {
          return await Context.UserX25519KeyPair
              .Where(x => x.Owner == userId)
-             .FirstOrDefaultAsync();
+             .FirstOrDefaultAsync(cancellationToken);
       }
 
-      public async Task<string> GetUserPublicKeyAsync(Guid userId)
+      public async Task<string> GetUserPublicKeyAsync(Guid userId, CancellationToken cancellationToken)
       {
          var keyPair = await Context.UserX25519KeyPair
              .Where(x => x.Owner == userId)
-             .FirstOrDefaultAsync();
+             .FirstOrDefaultAsync(cancellationToken);
          return keyPair?.PublicKey;
       }
 
-      public async Task<bool> InsertUserPublicKeyPairAsync(Guid userId, string privateKey, string publicKey, string clientIV)
+      public async Task<bool> InsertUserPublicKeyPairAsync(Guid userId, string privateKey, string publicKey, string clientIV, CancellationToken cancellationToken)
       {
-         if (await GetUserPublicKeyPairAsync(userId) != default(UserX25519KeyPair))
+         if (await GetUserPublicKeyPairAsync(userId, cancellationToken) != default(UserX25519KeyPair))
          {
             return false;
          }
@@ -73,7 +74,7 @@ namespace Crypter.Core.Services.DataAccess
              DateTime.UtcNow);
 
          Context.UserX25519KeyPair.Add(key);
-         await Context.SaveChangesAsync();
+         await Context.SaveChangesAsync(cancellationToken);
          return true;
       }
    }

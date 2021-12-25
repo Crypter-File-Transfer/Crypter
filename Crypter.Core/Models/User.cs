@@ -26,6 +26,7 @@
 
 using Crypter.Core.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -49,6 +50,7 @@ namespace Crypter.Core.Models
       public virtual UserNotificationSetting NotificationSetting { get; set; }
       public virtual UserEd25519KeyPair Ed25519KeyPair { get; set; }
       public virtual UserX25519KeyPair X25519KeyPair { get; set; }
+      public virtual List<UserToken> Tokens { get; set; }
 
       public User(Guid id, string username, string email, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
       {

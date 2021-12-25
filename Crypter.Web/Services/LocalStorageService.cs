@@ -25,9 +25,9 @@
  */
 
 using Microsoft.JSInterop;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Services
@@ -42,7 +42,7 @@ namespace Crypter.Web.Services
    public enum StoredObjectType
    {
       UserSession,
-      AuthToken,
+      AuthenticationToken,
       PlaintextX25519PrivateKey,
       PlaintextEd25519PrivateKey,
       EncryptedX25519PrivateKey,
@@ -55,6 +55,7 @@ namespace Crypter.Web.Services
       Task InitializeAsync();
       Task<T> GetItemAsync<T>(StoredObjectType itemType);
       bool HasItem(StoredObjectType itemType);
+      StorageLocation GetItemLocation(StoredObjectType itemType);
       Task SetItemAsync<T>(StoredObjectType itemType, T value, StorageLocation location);
       Task RemoveItemAsync(StoredObjectType itemType);
       Task DisposeAsync();
@@ -62,21 +63,21 @@ namespace Crypter.Web.Services
 
    public class LocalStorageService : ILocalStorageService
    {
-      private const string SessionStorageLiteral = "sessionStorage";
-      private const string LocalStorageLiteral = "localStorage";
+      public const string SessionStorageLiteral = "sessionStorage";
+      public const string LocalStorageLiteral = "localStorage";
 
-      private readonly IJSRuntime JSRuntime;
+      private readonly IJSRuntime _jsRuntime;
 
-      private readonly Dictionary<string, object> InMemoryStorage;
-      private readonly Dictionary<string, StorageLocation> ObjectLocations;
+      private readonly Dictionary<string, object> _inMemoryStorage;
+      private readonly Dictionary<string, StorageLocation> _objectLocations;
 
       public bool IsInitialized { get; private set; } = false;
 
       public LocalStorageService(IJSRuntime jSRuntime)
       {
-         JSRuntime = jSRuntime;
-         InMemoryStorage = new Dictionary<string, object>();
-         ObjectLocations = new Dictionary<string, StorageLocation>();
+         _jsRuntime = jSRuntime;
+         _inMemoryStorage = new Dictionary<string, object>();
+         _objectLocations = new Dictionary<string, StorageLocation>();
       }
 
       public async Task InitializeAsync()
@@ -94,84 +95,92 @@ namespace Crypter.Web.Services
 
       private async Task InitializeItemFromLocalStorage(StoredObjectType itemType)
       {
-         var value = await JSRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.getItem", itemType.ToString());
+         var value = await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.getItem", new object[] { itemType.ToString() });
          if (!string.IsNullOrEmpty(value))
          {
-            ObjectLocations.Add(itemType.ToString(), StorageLocation.LocalStorage);
+            _objectLocations.Add(itemType.ToString(), StorageLocation.LocalStorage);
          }
       }
 
       private async Task InitializeItemFromSessionStorage(StoredObjectType itemType)
       {
-         var value = await JSRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.getItem", itemType.ToString());
+         var value = await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.getItem", new object[] { itemType.ToString() });
          if (!string.IsNullOrEmpty(value))
          {
-            ObjectLocations.Add(itemType.ToString(), StorageLocation.SessionStorage);
+            _objectLocations.Add(itemType.ToString(), StorageLocation.SessionStorage);
          }
       }
 
       public async Task<T> GetItemAsync<T>(StoredObjectType itemType)
       {
-         if (ObjectLocations.TryGetValue(itemType.ToString(), out var location))
+         if (_objectLocations.TryGetValue(itemType.ToString(), out var location))
          {
             string storedJson;
             switch (location)
             {
                case StorageLocation.InMemory:
-                  return (T)InMemoryStorage[itemType.ToString()];
+                  return (T)_inMemoryStorage[itemType.ToString()];
                case StorageLocation.SessionStorage:
-                  storedJson = await JSRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.getItem", itemType.ToString());
+                  storedJson = await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.getItem", new object[] { itemType.ToString() });
                   break;
                case StorageLocation.LocalStorage:
-                  storedJson = await JSRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.getItem", itemType.ToString());
+                  storedJson = await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.getItem", new object[] { itemType.ToString() });
                   break;
                default:
                   throw new NotImplementedException();
             }
-            return JsonSerializer.Deserialize<T>(storedJson);
+            return JsonConvert.DeserializeObject<T>(storedJson);
          }
          return default;
       }
 
       public bool HasItem(StoredObjectType itemType)
       {
-         return ObjectLocations.ContainsKey(itemType.ToString());
+         return _objectLocations.ContainsKey(itemType.ToString());
+      }
+
+      public StorageLocation GetItemLocation(StoredObjectType itemType)
+      {
+         return _objectLocations[itemType.ToString()];
       }
 
       public async Task SetItemAsync<T>(StoredObjectType itemType, T value, StorageLocation location)
       {
-         ObjectLocations.TryAdd(itemType.ToString(), location);
+         await RemoveItemAsync(itemType);
+
          switch (location)
          {
             case StorageLocation.InMemory:
-               InMemoryStorage.Add(itemType.ToString(), value);
+               _inMemoryStorage.Add(itemType.ToString(), value);
                break;
             case StorageLocation.SessionStorage:
-               await JSRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.setItem", itemType.ToString(), JsonSerializer.Serialize(value));
+               await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.setItem", new object[] { itemType.ToString(), JsonConvert.SerializeObject(value) });
                break;
             case StorageLocation.LocalStorage:
-               await JSRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.setItem", itemType.ToString(), JsonSerializer.Serialize(value));
+               await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.setItem", new object[] { itemType.ToString(), JsonConvert.SerializeObject(value) });
                break;
             default:
                throw new NotImplementedException();
          }
+
+         _objectLocations.Add(itemType.ToString(), location);
       }
 
       public async Task RemoveItemAsync(StoredObjectType itemType)
       {
-         if (ObjectLocations.TryGetValue(itemType.ToString(), out var location))
+         if (_objectLocations.TryGetValue(itemType.ToString(), out var location))
          {
-            ObjectLocations.Remove(itemType.ToString());
+            _objectLocations.Remove(itemType.ToString());
             switch (location)
             {
                case StorageLocation.InMemory:
-                  InMemoryStorage.Remove(itemType.ToString());
+                  _inMemoryStorage.Remove(itemType.ToString());
                   break;
                case StorageLocation.SessionStorage:
-                  await JSRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.removeItem", itemType.ToString());
+                  await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.removeItem", itemType.ToString());
                   break;
                case StorageLocation.LocalStorage:
-                  await JSRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.removeItem", itemType.ToString());
+                  await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.removeItem", itemType.ToString());
                   break;
                default:
                   throw new NotImplementedException();

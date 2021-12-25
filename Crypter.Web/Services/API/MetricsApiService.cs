@@ -50,7 +50,7 @@ namespace Crypter.Web.Services.API
       public async Task<(HttpStatusCode, DiskMetricsResponse)> GetDiskMetricsAsync()
       {
          var url = $"{BaseMetricsUrl}/disk";
-         return await HttpService.Get<DiskMetricsResponse>(url);
+         return await HttpService.GetAsync<DiskMetricsResponse>(url, false);
       }
    }
 }

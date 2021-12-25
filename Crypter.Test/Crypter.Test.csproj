@@ -17,6 +17,7 @@
     <ProjectReference Include="..\Crypter.API\Crypter.API.csproj" />
     <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
     <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
+    <ProjectReference Include="..\Crypter.Web\Crypter.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>

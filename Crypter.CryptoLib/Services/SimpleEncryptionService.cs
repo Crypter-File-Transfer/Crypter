@@ -25,9 +25,10 @@
  */
 
 using Crypter.CryptoLib.Crypto;
+using System;
 using System.Text;
 
-namespace Crypter.Web.Services
+namespace Crypter.CryptoLib.Services
 {
    public interface ISimpleEncryptionService
    {

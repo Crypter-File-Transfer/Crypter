@@ -52,6 +52,7 @@ namespace Crypter.Core
       public DbSet<UserPrivacySetting> UserPrivacySetting { get; set; }
       public DbSet<UserEmailVerification> UserEmailVerification { get; set; }
       public DbSet<UserNotificationSetting> UserNotificationSetting { get; set; }
+      public DbSet<UserToken> UserToken { get; set; }
       public DbSet<FileTransfer> FileTransfer { get; set; }
       public DbSet<MessageTransfer> MessageTransfer { get; set; }
       public DbSet<Schema> Schema { get; set; }

@@ -2,10 +2,10 @@
 <html class="h-100">
 
 <head>
-   <meta charset="utf-8" />
-   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-   <meta http-equiv="Content-Security-Policy"
-         content="base-uri 'self';
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta http-equiv="Content-Security-Policy"
+          content="base-uri 'self';
                block-all-mixed-content;
                default-src 'self';
                img-src data: https:;
@@ -21,14 +21,14 @@
                            ws://localhost:*
                            'self';
                upgrade-insecure-requests;">
-   <title>Crypter</title>
-   <base href="/" />
-   <link rel="stylesheet" href="Crypter.Web.styles.css" />
-   <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
-   <link rel="stylesheet" href="lib/bootstrap-local/bootstrap-icons.css">
-   <link rel="stylesheet" href="lib/fonts-local/google/Rubik.css">
-   <link rel="stylesheet" href="css/app.css" />
-   <link rel="stylesheet" href="css/main.css" />
+    <title>Crypter</title>
+    <base href="/" />
+    <link rel="stylesheet" href="Crypter.Web.styles.css" />
+    <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="lib/bootstrap-local/bootstrap-icons.css">
+    <link rel="stylesheet" href="lib/fonts-local/google/Rubik.css">
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/main.css" />
 
    <!--
    Copyright (C) 2021 Crypter File Transfer
@@ -58,16 +58,25 @@
 </head>
 
 <body class="grt h-100">
-   <div id="app" class="d-flex flex-column h-100">Loading...</div>
-   <div id="blazor-error-ui">
-      An unhandled error has occurred.
-      <a href="" class="reload">Reload</a>
-      <a class="dismiss">🗙</a>
-   </div>
-   <script src="js/scripts.js"></script>
-   <script src="lib/jquery/dist/jquery.min.js"></script>
-   <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-   <script src="_framework/blazor.webassembly.js"></script>
+    <div id="app" class="d-flex flex-column h-100">
+        <div class="position-absolute w-100 text-center" style="top: 30vh;">
+            <h1 class="title">Crypter.dev</h1>
+            <h2>Private, encrypted file transfer and messaging</h2>
+            <div class="spinner-border mt-2" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h2>Loading...</h2>
+        </div>
+    </div>
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="js/scripts.js"></script>
+    <script src="lib/jquery/dist/jquery.min.js"></script>
+    <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
 </body>
 
 </html>

@@ -24,30 +24,23 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Contracts.Enum;
 using Newtonsoft.Json;
-using System;
 
-namespace Crypter.Contracts.Responses
+namespace Crypter.Contracts.Requests
 {
-   public class UserAuthenticateResponse
+   public class LoginRequest
    {
-      public Guid Id { get; set; }
-      public string Token { get; set; }
-      public string EncryptedX25519PrivateKey { get; set; }
-      public string EncryptedEd25519PrivateKey { get; set; }
-      public string X25519IV { get; set; }
-      public string Ed25519IV { get; set; }
+      public string Username { get; set; }
+      public string Password { get; set; }
+      public TokenType RefreshTokenType { get; set; }
 
       [JsonConstructor]
-      public UserAuthenticateResponse(Guid id, string token, string encryptedX25519PrivateKey = null, string encryptedEd25519PrivateKey = null, string x25519IV = null, string ed25519IV = null)
+      public LoginRequest(string username, string password, TokenType refreshTokenType)
       {
-         Id = id;
-         Token = token;
-         EncryptedX25519PrivateKey = encryptedX25519PrivateKey;
-         EncryptedEd25519PrivateKey = encryptedEd25519PrivateKey;
-         X25519IV = x25519IV;
-         Ed25519IV = ed25519IV;
+         Username = username;
+         Password = password;
+         RefreshTokenType = refreshTokenType;
       }
    }
 }
-

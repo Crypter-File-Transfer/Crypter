@@ -28,6 +28,7 @@ using Crypter.Contracts.Enum;
 using Crypter.Core.Interfaces;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services
@@ -43,14 +44,14 @@ namespace Crypter.Core.Services
          ItemType = itemType;
       }
 
-      public async Task<bool> SaveAsync(Guid id, byte[] data)
+      public async Task<bool> SaveAsync(Guid id, byte[] data, CancellationToken cancellationToken)
       {
          var newDirectory = Path.Join(StoragePath, id.ToString().ToLower());
          Directory.CreateDirectory(newDirectory);
          var newFile = Path.Join(newDirectory, ItemType.ToString());
          try
          {
-            await File.WriteAllBytesAsync(newFile, data);
+            await File.WriteAllBytesAsync(newFile, data, cancellationToken);
          }
          catch (Exception)
          {
@@ -59,11 +60,11 @@ namespace Crypter.Core.Services
          return true;
       }
 
-      public async Task<byte[]> ReadAsync(Guid id)
+      public async Task<byte[]> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
          var itemDirectory = Path.Join(StoragePath, id.ToString().ToLower());
          var file = Path.Join(itemDirectory, ItemType.ToString());
-         return await File.ReadAllBytesAsync(file);
+         return await File.ReadAllBytesAsync(file, cancellationToken);
       }
 
       public bool Delete(Guid id)

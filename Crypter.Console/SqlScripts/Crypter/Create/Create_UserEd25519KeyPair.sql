@@ -43,6 +43,8 @@ CREATE TABLE IF NOT EXISTS public."UserEd25519KeyPair"
 
 TABLESPACE pg_default;
 
+CREATE INDEX "Idx_UserEd25519KeyPair_Owner" ON public."UserEd25519KeyPair"("Owner");
+
 ALTER TABLE IF EXISTS public."UserEd25519KeyPair"
     OWNER to postgres;
 

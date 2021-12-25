@@ -25,13 +25,14 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Interfaces
 {
    public interface IUserNotificationSettingService
    {
-      Task<IUserNotificationSetting> ReadAsync(Guid userId);
-      Task UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications);
+      Task<IUserNotificationSetting> ReadAsync(Guid userId, CancellationToken cancellationToken);
+      Task UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications, CancellationToken cancellationToken);
    }
 }

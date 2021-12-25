@@ -37,8 +37,59 @@ namespace Crypter.Web.Services
 {
    public interface IHttpService
    {
-      Task<(HttpStatusCode HttpStatus, T Payload)> Get<T>(string uri, bool withAuthorization = false);
-      Task<(HttpStatusCode HttpStatus, T Payload)> Post<T>(string uri, object value, bool withAuthorization = false);
+      /// <summary>
+      /// Send a GET request to the provided URL.
+      /// </summary>
+      /// <typeparam name="T"></typeparam>
+      /// <param name="uri"></param>
+      /// <param name="withAuthorization">If true, will send the request with the Authorization header.</param>
+      /// <param name="useRefreshToken">
+      /// False by default, will apply the standard authentication token to the Authorization header.
+      /// If true, will apply a refresh token to the Authorization header instead.
+      /// </param>
+      /// <returns></returns>
+      Task<HttpStatusCode> GetAsync(string uri, bool withAuthorization = false, bool useRefreshToken = false);
+
+      /// <summary>
+      /// Send a GET request to the provided URL.
+      /// </summary>
+      /// <typeparam name="T"></typeparam>
+      /// <param name="uri"></param>
+      /// <param name="withAuthorization">If true, will send the request with the Authorization header.</param>
+      /// <param name="useRefreshToken">
+      /// False by default, will apply the standard authentication token to the Authorization header.
+      /// If true, will apply a refresh token to the Authorization header instead.
+      /// </param>
+      /// <returns></returns>
+      Task<(HttpStatusCode HttpStatus, T Response)> GetAsync<T>(string uri, bool withAuthorization = false, bool useRefreshToken = false);
+
+      /// <summary>
+      /// Send a POST request to the provided URL with the provided data.
+      /// </summary>
+      /// <typeparam name="T"></typeparam>
+      /// <param name="uri"></param>
+      /// <param name="postData"></param>
+      /// <param name="withAuthorization">If true, will send the request with the Authorization header.</param>
+      /// <param name="useRefreshToken">
+      /// False by default, will apply the standard authentication token to the Authorization header.
+      /// If true, will apply a refresh token to the Authorization header instead.
+      /// </param>
+      /// <returns></returns>
+      Task<HttpStatusCode> PostAsync(string uri, object postData, bool withAuthorization = false, bool useRefreshToken = false);
+
+      /// <summary>
+      /// Send a POST request to the provided URL with the provided data.
+      /// </summary>
+      /// <typeparam name="T"></typeparam>
+      /// <param name="uri"></param>
+      /// <param name="postData"></param>
+      /// <param name="withAuthorization">If true, will send the request with the Authorization header.</param>
+      /// <param name="useRefreshToken">
+      /// False by default, will apply the standard authentication token to the Authorization header.
+      /// If true, will apply a refresh token to the Authorization header instead.
+      /// </param>
+      /// <returns></returns>
+      Task<(HttpStatusCode HttpStatus, T Response)> PostAsync<T>(string uri, object postData, bool withAuthorization = false, bool useRefreshToken = false);
    }
 
    public class HttpService : IHttpService
@@ -46,48 +97,132 @@ namespace Crypter.Web.Services
       private readonly HttpClient _httpClient;
       private readonly NavigationManager _navigationManager;
       private readonly ILocalStorageService _localStorageService;
+      private readonly Func<IAuthenticationService> _authenticationServiceFactory;
 
       public HttpService(
           HttpClient httpClient,
           NavigationManager navigationManager,
-          ILocalStorageService localStorage
+          ILocalStorageService localStorage,
+          Func<IAuthenticationService> authenticationServiceFactory
       )
       {
          _httpClient = httpClient;
          _navigationManager = navigationManager;
          _localStorageService = localStorage;
+         _authenticationServiceFactory = authenticationServiceFactory;
       }
 
-      public async Task<(HttpStatusCode HttpStatus, T Payload)> Get<T>(string uri, bool withAuthorization)
+      public async Task<(HttpStatusCode HttpStatus, T Response)> GetAsync<T>(string uri, bool withAuthorization = false, bool useRefreshToken = false)
       {
          var request = new HttpRequestMessage(HttpMethod.Get, uri);
-         return await SendRequest<T>(request, withAuthorization);
-      }
-
-      public async Task<(HttpStatusCode HttpStatus, T Payload)> Post<T>(string uri, object value, bool withAuthorization)
-      {
-         var request = new HttpRequestMessage(HttpMethod.Post, uri)
-         {
-            Content = JsonContent.Create(value)
-         };
-         return await SendRequest<T>(request, withAuthorization);
-      }
-
-      private async Task<(HttpStatusCode HttpStatus, T Payload)> SendRequest<T>(HttpRequestMessage request, bool withAuthorization)
-      {
 
          if (withAuthorization)
          {
-            if (!_localStorageService.HasItem(StoredObjectType.UserSession)
-               || !_localStorageService.HasItem(StoredObjectType.AuthToken))
+            if (!await AttachTokenAsync(request, useRefreshToken))
             {
-               return await HandleMissingAuthorization<T>();
+               return await HandleMissingTokenAsync<T>();
             }
-
-            var token = (await _localStorageService.GetItemAsync<string>(StoredObjectType.AuthToken));
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
          }
 
+         return await SendRequestAsync<T>(request, useRefreshToken);
+      }
+
+      public async Task<HttpStatusCode> GetAsync(string uri, bool withAuthorization = false, bool useRefreshToken = false)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Get, uri);
+
+         if (withAuthorization)
+         {
+            if (!await AttachTokenAsync(request, useRefreshToken))
+            {
+               return await HandleMissingTokenAsync();
+            }
+         }
+
+         return await SendRequestAsync(request, useRefreshToken);
+      }
+
+      public async Task<HttpStatusCode> PostAsync(string uri, object postData, bool withAuthorization = false, bool useRefreshToken = false)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Post, uri)
+         {
+            Content = JsonContent.Create(postData)
+         };
+
+         if (withAuthorization)
+         {
+            if (!await AttachTokenAsync(request, useRefreshToken))
+            {
+               return await HandleMissingTokenAsync();
+            }
+         }
+
+         return await SendRequestAsync(request, useRefreshToken);
+      }
+
+      public async Task<(HttpStatusCode HttpStatus, T Response)> PostAsync<T>(string uri, object postData, bool withAuthorization = false, bool useRefreshToken = false)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Post, uri)
+         {
+            Content = JsonContent.Create(postData)
+         };
+
+         if (withAuthorization)
+         {
+            if (!await AttachTokenAsync(request, useRefreshToken))
+            {
+               return await HandleMissingTokenAsync<T>();
+            }
+         }
+
+         return await SendRequestAsync<T>(request, useRefreshToken);
+      }
+
+      private async Task<bool> AttachTokenAsync(HttpRequestMessage request, bool attachRefreshToken = false)
+      {
+         var token = attachRefreshToken
+               ? (await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession)).RefreshToken
+               : await _localStorageService.GetItemAsync<string>(StoredObjectType.AuthenticationToken);
+
+         if (string.IsNullOrEmpty(token))
+         {
+            return false;
+         }
+
+         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+         return true;
+      }
+
+      private async Task<HttpStatusCode> SendRequestAsync(HttpRequestMessage request, bool isUsingRefreshToken)
+      {
+         HttpResponseMessage response;
+         try
+         {
+            response = await _httpClient.SendAsync(request);
+         }
+         catch (Exception)
+         {
+            return HttpStatusCode.ServiceUnavailable;
+         }
+
+         if (response.StatusCode == HttpStatusCode.Unauthorized)
+         {
+            if (!isUsingRefreshToken && await TryRefreshingTokenAsync())
+            {
+               await AttachTokenAsync(request);
+               return await SendRequestAsync(request, false);
+            }
+
+            return await HandleMissingTokenAsync();
+         }
+
+         response.Dispose();
+
+         return response.StatusCode;
+      }
+
+      private async Task<(HttpStatusCode HttpStatus, T Response)> SendRequestAsync<T>(HttpRequestMessage request, bool isUsingRefreshToken)
+      {
          HttpResponseMessage response;
          try
          {
@@ -100,20 +235,39 @@ namespace Crypter.Web.Services
 
          if (response.StatusCode == HttpStatusCode.Unauthorized)
          {
-            return await HandleMissingAuthorization<T>();
+            if (!isUsingRefreshToken && await TryRefreshingTokenAsync())
+            {
+               await AttachTokenAsync(request);
+               return await SendRequestAsync<T>(request, false);
+            }
+
+            return await HandleMissingTokenAsync<T>();
          }
 
          T content = await response.Content.ReadFromJsonAsync<T>();
+         
          response.Dispose();
 
          return (response.StatusCode, content);
       }
 
-      private async Task<(HttpStatusCode HttpStatus, T Payload)> HandleMissingAuthorization<T>()
+      private async Task<HttpStatusCode> HandleMissingTokenAsync()
+      {
+         await _localStorageService.DisposeAsync();
+         _navigationManager.NavigateTo("/");
+         return (HttpStatusCode.Unauthorized);
+      }
+
+      private async Task<(HttpStatusCode HttpStatus, T Response)> HandleMissingTokenAsync<T>()
       {
          await _localStorageService.DisposeAsync();
          _navigationManager.NavigateTo("/");
          return (HttpStatusCode.Unauthorized, default);
+      }
+
+      private async Task<bool> TryRefreshingTokenAsync()
+      {
+         return await _authenticationServiceFactory().TryRefreshingTokenAsync();
       }
    }
 }

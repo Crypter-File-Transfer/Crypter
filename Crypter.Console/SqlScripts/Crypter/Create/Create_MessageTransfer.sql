@@ -46,6 +46,9 @@ CREATE TABLE IF NOT EXISTS public."MessageTransfer"
 
 TABLESPACE pg_default;
 
+CREATE INDEX "Idx_MessageTransfer_Sender" ON public."MessageTransfer"("Sender");
+CREATE INDEX "Idx_MessageTransfer_Recipient" ON public."MessageTransfer"("Recipient");
+
 ALTER TABLE IF EXISTS public."MessageTransfer"
     OWNER to postgres;
 

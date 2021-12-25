@@ -30,6 +30,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
@@ -43,49 +44,49 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task InsertAsync(FileTransfer item)
+      public async Task InsertAsync(FileTransfer item, CancellationToken cancellationToken)
       {
          Context.FileTransfer.Add(item);
-         await Context.SaveChangesAsync();
+         await Context.SaveChangesAsync(cancellationToken);
       }
 
-      public async Task<FileTransfer> ReadAsync(Guid id)
+      public async Task<FileTransfer> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
          return await Context.FileTransfer
-             .FindAsync(id);
+             .FindAsync(new object[] { id }, cancellationToken);
       }
 
-      public async Task DeleteAsync(Guid id)
+      public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
       {
          await Context.Database
-             .ExecuteSqlRawAsync("DELETE FROM \"FileTransfer\" WHERE \"FileTransfer\".\"Id\" = {0}", id);
+             .ExecuteSqlRawAsync("DELETE FROM \"FileTransfer\" WHERE \"FileTransfer\".\"Id\" = {0}", new object[] { id }, cancellationToken);
       }
 
-      public async Task<IEnumerable<FileTransfer>> FindBySenderAsync(Guid senderId)
+      public async Task<IEnumerable<FileTransfer>> FindBySenderAsync(Guid senderId, CancellationToken cancellationToken)
       {
          return await Context.FileTransfer
              .Where(x => x.Sender == senderId)
-             .ToListAsync();
+             .ToListAsync(cancellationToken);
       }
 
-      public async Task<IEnumerable<FileTransfer>> FindByRecipientAsync(Guid recipientId)
+      public async Task<IEnumerable<FileTransfer>> FindByRecipientAsync(Guid recipientId, CancellationToken cancellationToken)
       {
          return await Context.FileTransfer
              .Where(x => x.Recipient == recipientId)
-             .ToListAsync();
+             .ToListAsync(cancellationToken);
       }
 
-      public async Task<IEnumerable<FileTransfer>> FindExpiredAsync()
+      public async Task<IEnumerable<FileTransfer>> FindExpiredAsync(CancellationToken cancellationToken)
       {
          return await Context.FileTransfer
              .Where(x => x.Expiration < DateTime.UtcNow)
-             .ToListAsync();
+             .ToListAsync(cancellationToken);
       }
 
-      public async Task<long> GetAggregateSizeAsync()
+      public async Task<long> GetAggregateSizeAsync(CancellationToken cancellationToken)
       {
          return await Context.FileTransfer
-             .SumAsync(x => x.Size);
+             .SumAsync(x => x.Size, cancellationToken);
       }
    }
 }

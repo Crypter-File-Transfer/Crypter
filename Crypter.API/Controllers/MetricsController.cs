@@ -29,6 +29,7 @@ using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
@@ -51,10 +52,10 @@ namespace Crypter.API.Controllers
       }
 
       [HttpGet("disk")]
-      public async Task<IActionResult> GetDiskMetrics()
+      public async Task<IActionResult> GetDiskMetrics(CancellationToken cancellationToken)
       {
-         var sizeOfFileUploads = await _fileService.GetAggregateSizeAsync();
-         var sizeOfMessageUploads = await _messageService.GetAggregateSizeAsync();
+         var sizeOfFileUploads = await _fileService.GetAggregateSizeAsync(cancellationToken);
+         var sizeOfMessageUploads = await _messageService.GetAggregateSizeAsync(cancellationToken);
          var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
          var isFull = totalSizeOfUploads + (10 * 1024 * 1024) >= AllocatedDiskSpace;
 

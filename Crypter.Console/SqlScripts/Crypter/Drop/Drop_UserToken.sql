@@ -24,19 +24,6 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Newtonsoft.Json;
-using System;
+-- Table: public.UserToken
 
-namespace Crypter.Contracts.Responses
-{
-   public class UserAuthenticationRefreshResponse
-   {
-      public string Token { get; set; }
-
-      [JsonConstructor]
-      public UserAuthenticationRefreshResponse(string token)
-      {
-         Token = token;
-      }
-   }
-}
+DROP TABLE IF EXISTS public."UserToken";

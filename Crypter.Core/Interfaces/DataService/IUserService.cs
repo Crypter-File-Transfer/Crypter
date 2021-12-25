@@ -27,23 +27,24 @@
 using Crypter.Contracts.Enum;
 using Crypter.Core.Models;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Interfaces
 {
    public interface IUserService
    {
-      Task<Guid> InsertAsync(string username, string password, string email = null);
-      Task<IUser> ReadAsync(Guid id);
-      Task<IUser> ReadAsync(string username);
-      Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword);
-      Task UpdateEmailAddressVerification(Guid id, bool isVerified);
-      Task DeleteAsync(Guid id);
+      Task<Guid> InsertAsync(string username, string password, string email, CancellationToken cancellationToken);
+      Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken);
+      Task<IUser> ReadAsync(string username, CancellationToken cancellationToken);
+      Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
+      Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
+      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 
-      Task<User> AuthenticateAsync(string username, string password);
-      Task UpdateLastLoginTime(Guid id, DateTime dateTime);
+      Task<User> AuthenticateAsync(string username, string password, CancellationToken cancellationToken);
+      Task UpdateLastLoginTime(Guid id, DateTime dateTime, CancellationToken cancellationToken);
 
-      Task<bool> IsUsernameAvailableAsync(string username);
-      Task<bool> IsEmailAddressAvailableAsync(string email);
+      Task<bool> IsUsernameAvailableAsync(string username, CancellationToken cancellationToken);
+      Task<bool> IsEmailAddressAvailableAsync(string email, CancellationToken cancellationToken);
    }
 }
