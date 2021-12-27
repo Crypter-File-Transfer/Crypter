@@ -43,10 +43,11 @@ BEGIN;
            ON DELETE CASCADE
    )
 
+   TABLESPACE pg_default;
+
    CREATE INDEX "Idx_UserToken_Owner" ON public."UserToken"("Owner");
 
-   ALTER TABLE IF EXISTS public."UserToken"
-    OWNER to postgres;
+   ALTER TABLE IF EXISTS public."UserToken" OWNER to postgres;
 
    GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."UserToken" TO cryptuser;
 
