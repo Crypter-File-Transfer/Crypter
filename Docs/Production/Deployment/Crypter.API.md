@@ -42,3 +42,10 @@ Steps:
 4. Check the status of the service `sudo systemctl status kestrel-crypter.api.service`
 
 The service will automatically start up after a reboot.
+
+## Notes
+
+Running the application is not the same thing as making the application publicly available.
+
+To make the API available to the internet, follow the steps in the [Crypter.Web.md](.\Crypter.Web.md) deployment guide.
+That guide will walk you through setting up Nginx, which will proxy incoming requests to the running API.
