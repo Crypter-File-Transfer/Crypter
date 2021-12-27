@@ -34,6 +34,15 @@ The Nginx configuration is checked in to source control at [..\Configurations\ng
 
 Steps:
 
-* Copy the `nginx_config` to `/etc/nginx/sites-available/crypter`
+1. Copy the `nginx_config` to `/etc/nginx/sites-available`
+2. Rename the `nginx_config` file to `crypter`
+3. Create a symlink to `/etc/nginx/sites-enabled`
+   * `sudo ln -s /etc/nginx/sites-available/crypter /etc/nginx/sites-enabled/crypter`
+4. Remove the `default` config from `sites-enabled`, if it exists. This is usually just a symlink to a file in `sites-available`
+   * `sudo rm /etc/nginx/sites-enabled/default`
+5. Test the configuration
+   * `sudo nginx -t`
 
-**Note:** `./crypter` in the above filepath is a file.  It is not a directory.
+## Notes
+
+This guide does not cover Let's Encrypt or Certbot, which are required to get host Crypter and does have an impact on the Nginx setup.
