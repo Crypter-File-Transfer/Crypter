@@ -204,7 +204,7 @@ namespace Crypter.API.Services
 
          // Remove server-side encryption
          var serverDecryptionKey = Convert.FromBase64String(request.ServerDecryptionKeyBase64);
-         var cipherTextServer = await MessageTransferItemStorageService.ReadAsync(request.Id, cancellationToken);
+         var cipherTextServer = await FileTransferItemStorageService.ReadAsync(request.Id, cancellationToken);
          var cipherTextClient = SimpleEncryptionService.Decrypt(serverDecryptionKey, possibleFile.ServerIV, cipherTextServer);
 
          // Compare digests AFTER removing server-side encryption
