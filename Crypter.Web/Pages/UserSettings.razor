@@ -63,7 +63,17 @@
          <div class="mb-3">
             <label for="emailFormControl" class="form-label">Email Address</label>
             <input @bind="EditedEmail" type="email" class="form-control" id="emailFormControl" placeholder="Email Not Set" readonly="@(!AreContactInfoControlsEnabled)" />
-            @if (!AreContactInfoControlsEnabled)
+            @if (AreContactInfoControlsEnabled)
+            {
+               @if (UpdateContactInfoFailed)
+               {
+                  @if (!string.IsNullOrEmpty(ContactInfoEmailError))
+                  {
+                     <span class="text-danger">@ContactInfoEmailError</span>
+                  }
+               }
+            }
+            else
             {
                @if (EmailVerified)
                {
@@ -78,10 +88,25 @@
          <div class="mb-3" hidden="@(!AreContactInfoControlsEnabled)">
             <label for="currentPasswordForContactInfoFormControl" class="form-label">Current Password</label>
             <input @bind="CurrentPasswordForContactInfo" type="password" class="form-control" id="currentPasswordForContactInfoFormControl" />
+            @if (UpdateContactInfoFailed)
+            {
+               @if (!string.IsNullOrEmpty(ContactInfoPasswordError))
+               {
+                  <span class="text-danger">@ContactInfoPasswordError</span>
+               }
+            }
          </div>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditContactInfoClicked" hidden="@IsEditing">Edit Contact Info</button>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelContactInfoClicked" hidden="@(!AreContactInfoControlsEnabled)">Cancel</button>
          <button type="button" class="btn btn-primary mx-auto" @onclick="OnSaveContactInfoClickedAsync" hidden="@(!AreContactInfoControlsEnabled)">Save Contact Info</button>
+         @if (UpdateContactInfoFailed)
+         {
+            @if (!string.IsNullOrEmpty(ContactInfoGenericError))
+            {
+               <br/>
+               <span class="text-danger">@ContactInfoGenericError</span>
+            }
+         }
       </form>
       <form>
          <h2>Notification Settings</h2>
