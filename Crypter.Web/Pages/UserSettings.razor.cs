@@ -73,6 +73,10 @@ namespace Crypter.Web.Pages
       protected string EditedEmail;
       protected string CurrentPasswordForContactInfo;
       protected bool EmailVerified;
+      protected string ContactInfoEmailError;
+      protected string ContactInfoPasswordError;
+      protected string ContactInfoGenericError;
+      protected bool UpdateContactInfoFailed;
 
       // Notification Settings
       protected bool EnableTransferNotifications;
@@ -161,23 +165,49 @@ namespace Crypter.Web.Pages
 
       protected async Task OnSaveContactInfoClickedAsync()
       {
+         ContactInfoEmailError = "";
+         ContactInfoPasswordError = "";
+         ContactInfoGenericError = "";
+
          if (string.IsNullOrEmpty(CurrentPasswordForContactInfo))
          {
-            // todo
-            Console.WriteLine("fail");
+            UpdateContactInfoFailed = true;
+            ContactInfoPasswordError = "Enter your current password";
             return;
          }
+
          byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(Username, CurrentPasswordForContactInfo);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var request = new UpdateContactInfoRequest(EditedEmail, digestedPasswordBase64);
          (var status, var result) = await UserApiService.UpdateUserContactInfoAsync(request);
 
-         if (status != HttpStatusCode.OK
-            || result.Result != UpdateContactInfoResult.Success)
+         if (status != HttpStatusCode.OK)
          {
-            // todo
-            Console.WriteLine("fail");
+            UpdateContactInfoFailed = true;
+            ContactInfoGenericError = "An error occurred";
+            return;
+         }
+
+         if (result.Result != UpdateContactInfoResult.Success)
+         {
+            UpdateContactInfoFailed = true;
+
+            switch (result.Result)
+            {
+               case UpdateContactInfoResult.EmailUnavailable:
+                  ContactInfoEmailError = "Email address unavailable";
+                  break;
+               case UpdateContactInfoResult.EmailInvalid:
+                  ContactInfoEmailError = "Invalid email address";
+                  break;
+               case UpdateContactInfoResult.PasswordValidationFailed:
+                  ContactInfoPasswordError = "Incorrect password";
+                  break;
+               default:
+                  ContactInfoGenericError = "An error occurred";
+                  break;
+            }
             return;
          }
 
