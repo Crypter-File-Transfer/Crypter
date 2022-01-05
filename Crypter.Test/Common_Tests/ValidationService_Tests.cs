@@ -164,12 +164,12 @@ namespace Crypter.Test.Common_Tests
       }
 
       [Test]
-      public void Whitespace_Is_A_Valid_Username()
+      public void Whitespace_Is_Not_A_Valid_Username()
       {
          string username = " ";
          var result = ValidationService.IsValidUsername(username);
 
-         Assert.IsTrue(result);
+         Assert.IsFalse(result);
       }
    }
 }

@@ -24,8 +24,10 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Web.Services;
+using Crypter.CryptoLib.Services;
 using Crypter.Web.Models;
+using Crypter.Web.Services;
+using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,8 +35,6 @@ using System;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
-using Crypter.Web.Services.API;
-using Crypter.CryptoLib.Services;
 
 namespace Crypter.Web
 {
