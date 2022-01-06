@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Common.Services;
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.Web.Models.Forms;
@@ -58,7 +59,7 @@ namespace Crypter.Web.Shared
       protected string UsernameValidationMessage;
       private readonly static string MissingUsername = "Please choose a username";
       private readonly static string UsernameTooLong = "Username exceeds 32-character limit";
-      private readonly static string UsernameContainsSpaces = "Username may not contain spaces";
+      private readonly static string UsernameInvalidCharacters = "Username contains invalid character(s)";
 
       protected string PasswordInvalidClass = "";
       protected string PasswordValidationMessage;
@@ -95,15 +96,15 @@ namespace Crypter.Web.Shared
             UsernameInvalidClass = IsInvalid;
             return false;
          }
-         else if (RegistrationInfo.Username.Length > 32)
+         else if (!ValidationService.UsernameMeetsLengthRequirements(RegistrationInfo.Username))
          {
             UsernameValidationMessage = UsernameTooLong;
             UsernameInvalidClass = IsInvalid;
             return false;
          }
-         else if (RegistrationInfo.Username.Contains(" "))
+         else if (!ValidationService.UsernameMeetsCharacterRequirements(RegistrationInfo.Username))
          {
-            UsernameValidationMessage = UsernameContainsSpaces;
+            UsernameValidationMessage = UsernameInvalidCharacters;
             UsernameInvalidClass = IsInvalid;
             return false;
          }
