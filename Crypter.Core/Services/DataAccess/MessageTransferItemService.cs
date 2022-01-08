@@ -35,7 +35,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
 {
-   public class MessageTransferItemService : IBaseTransferService<MessageTransfer>
+   public class MessageTransferItemService : IBaseTransferService<IMessageTransferItem>
    {
       private readonly DataContext Context;
 
@@ -44,13 +44,13 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task InsertAsync(MessageTransfer item, CancellationToken cancellationToken)
+      public async Task InsertAsync(IMessageTransferItem item, CancellationToken cancellationToken)
       {
-         Context.MessageTransfer.Add(item);
+         Context.MessageTransfer.Add((MessageTransfer)item);
          await Context.SaveChangesAsync(cancellationToken);
       }
 
-      public async Task<MessageTransfer> ReadAsync(Guid id, CancellationToken cancellationToken)
+      public async Task<IMessageTransferItem> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
          return await Context.MessageTransfer
              .FindAsync(new object[] { id }, cancellationToken);
@@ -62,21 +62,21 @@ namespace Crypter.Core.Services.DataAccess
              .ExecuteSqlRawAsync("DELETE FROM \"MessageTransfer\" WHERE \"MessageTransfer\".\"Id\" = {0}", new object[] { id }, cancellationToken);
       }
 
-      public async Task<IEnumerable<MessageTransfer>> FindBySenderAsync(Guid ownerId, CancellationToken cancellationToken)
+      public async Task<IEnumerable<IMessageTransferItem>> FindBySenderAsync(Guid ownerId, CancellationToken cancellationToken)
       {
          return await Context.MessageTransfer
              .Where(x => x.Sender == ownerId)
              .ToListAsync(cancellationToken);
       }
 
-      public async Task<IEnumerable<MessageTransfer>> FindByRecipientAsync(Guid recipientId, CancellationToken cancellationToken)
+      public async Task<IEnumerable<IMessageTransferItem>> FindByRecipientAsync(Guid recipientId, CancellationToken cancellationToken)
       {
          return await Context.MessageTransfer
              .Where(x => x.Recipient == recipientId)
              .ToListAsync(cancellationToken);
       }
 
-      public async Task<IEnumerable<MessageTransfer>> FindExpiredAsync(CancellationToken cancellationToken)
+      public async Task<IEnumerable<IMessageTransferItem>> FindExpiredAsync(CancellationToken cancellationToken)
       {
          return await Context.MessageTransfer
              .Where(x => x.Expiration < DateTime.UtcNow)

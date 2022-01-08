@@ -71,8 +71,8 @@ namespace CrypterAPI
          services.AddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
          services.AddScoped<IUserNotificationSettingService, UserNotificationSettingService>();
          services.AddScoped<IUserTokenService, UserTokenService>();
-         services.AddScoped<IBaseTransferService<MessageTransfer>, MessageTransferItemService>();
-         services.AddScoped<IBaseTransferService<FileTransfer>, FileTransferItemService>();
+         services.AddScoped<IBaseTransferService<IMessageTransferItem>, MessageTransferItemService>();
+         services.AddScoped<IBaseTransferService<IFileTransferItem>, FileTransferItemService>();
          services.AddScoped<ISchemaService, SchemaService>();
 
          var tokenSettings = Configuration.GetSection("TokenSettings").Get<TokenSettings>();

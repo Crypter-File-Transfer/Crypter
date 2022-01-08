@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
 
@@ -33,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
     <ProjectReference Include="..\Crypter.Contracts\Crypter.Contracts.csproj" />
     <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
   </ItemGroup>

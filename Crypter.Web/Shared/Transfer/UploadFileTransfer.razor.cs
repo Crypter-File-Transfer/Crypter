@@ -28,7 +28,9 @@ using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
+using Crypter.Web.Models;
 using Crypter.Web.Services;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using System;
 using System.Collections.Generic;
@@ -39,21 +41,26 @@ namespace Crypter.Web.Shared.Transfer
 {
    public partial class UploadFileTransferBase : UploadTransferBase
    {
-      // Constants
-      protected const int MaxFileSizeMB = 10;
-      protected const int MaxFileSize = MaxFileSizeMB * 1024 * 1024;
+      [Inject]
+      public AppSettings AppSettings { get; set; }
+
       protected const int MaxFileCount = 1;
       protected const int FileReadBlockSize = 1048576;
       protected const string ProgressTransition = "0.20s";
 
-      // State
+      protected int MaxFileSizeBytes;
       protected bool ShowProgressBar = false;
       protected double ProgressPercent = 0.0;
       protected string DropClass = "";
       protected List<string> ErrorMessages = new();
 
-      // User input
       protected IBrowserFile SelectedFile;
+
+      protected override void OnInitialized()
+      {
+         MaxFileSizeBytes = AppSettings.MaxUploadSizeMB * 1024 * 1024;
+         base.OnInitialized();
+      }
 
       protected void HandleDragEnter()
       {
@@ -78,9 +85,9 @@ namespace Crypter.Web.Shared.Transfer
             return;
          }
 
-         if (file.Size > MaxFileSize)
+         if (file.Size > MaxFileSizeBytes)
          {
-            ErrorMessages.Add($"The max file size is {MaxFileSizeMB} MB.");
+            ErrorMessages.Add($"The max file size is {AppSettings.MaxUploadSizeMB} MB.");
             return;
          }
 
@@ -163,7 +170,7 @@ namespace Crypter.Web.Shared.Transfer
          var symmetricEncryption = new AES();
          symmetricEncryption.Initialize(symmetricKey, symmetricIV, true);
 
-         using var fileStream = plaintext.OpenReadStream(MaxFileSize);
+         using var fileStream = plaintext.OpenReadStream(MaxFileSizeBytes);
          var fileSize = (int)plaintext.Size;
          int processedBytes = 0;
          int currentCiphertextSize = 0;
@@ -197,7 +204,7 @@ namespace Crypter.Web.Shared.Transfer
          var signer = new ECDSA();
          signer.InitializeSigner(ed25519PrivateDecoded);
 
-         using var fileStream = file.OpenReadStream(MaxFileSize);
+         using var fileStream = file.OpenReadStream(MaxFileSizeBytes);
          var fileSize = (int)file.Size;
          int processedBytes = 0;
          while (processedBytes + FileReadBlockSize < fileSize)

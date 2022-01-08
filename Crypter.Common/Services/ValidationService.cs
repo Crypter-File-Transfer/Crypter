@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using System.Text.RegularExpressions;
+
 namespace Crypter.Common.Services
 {
    public class ValidationService
@@ -63,7 +65,20 @@ namespace Crypter.Common.Services
 
       public static bool IsValidUsername(string username)
       {
-         return !string.IsNullOrEmpty(username);
+         return UsernameMeetsLengthRequirements(username)
+            && UsernameMeetsCharacterRequirements(username);
+      }
+
+      public static bool UsernameMeetsCharacterRequirements(string username)
+      {
+         var regex = new Regex(@"^[a-zA-Z0-9_\-]+$");
+         return regex.IsMatch(username);
+      }
+
+      public static bool UsernameMeetsLengthRequirements(string username)
+      {
+         return !string.IsNullOrEmpty(username)
+            && username.Length <= 32;
       }
    }
 }

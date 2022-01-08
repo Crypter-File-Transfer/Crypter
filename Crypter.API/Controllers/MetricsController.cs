@@ -38,12 +38,12 @@ namespace Crypter.API.Controllers
    public class MetricsController : ControllerBase
    {
       private readonly long AllocatedDiskSpace;
-      private readonly IBaseTransferService<MessageTransfer> _messageService;
-      private readonly IBaseTransferService<FileTransfer> _fileService;
+      private readonly IBaseTransferService<IMessageTransferItem> _messageService;
+      private readonly IBaseTransferService<IFileTransferItem> _fileService;
 
       public MetricsController(IConfiguration configuration,
-          IBaseTransferService<MessageTransfer> messageService,
-          IBaseTransferService<FileTransfer> fileService
+          IBaseTransferService<IMessageTransferItem> messageService,
+          IBaseTransferService<IFileTransferItem> fileService
           )
       {
          AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * 1024 * 1024 * 1024;

@@ -59,8 +59,8 @@ namespace Crypter.API.Controllers
       private readonly IUserPrivacySettingService _userPrivacySettingService;
       private readonly IUserEmailVerificationService _userEmailVerificationService;
       private readonly IUserNotificationSettingService _userNotificationSettingService;
-      private readonly IBaseTransferService<MessageTransfer> _messageTransferService;
-      private readonly IBaseTransferService<FileTransfer> _fileTransferService;
+      private readonly IBaseTransferService<IMessageTransferItem> _messageTransferService;
+      private readonly IBaseTransferService<IFileTransferItem> _fileTransferService;
       private readonly IEmailService _emailService;
       private readonly IApiValidationService _apiValidationService;
       private readonly ITokenService _tokenService;
@@ -74,8 +74,8 @@ namespace Crypter.API.Controllers
           IUserPrivacySettingService userPrivacySettingService,
           IUserEmailVerificationService userEmailVerificationService,
           IUserNotificationSettingService userNotificationSettingService,
-          IBaseTransferService<MessageTransfer> messageService,
-          IBaseTransferService<FileTransfer> fileService,
+          IBaseTransferService<IMessageTransferItem> messageService,
+          IBaseTransferService<IFileTransferItem> fileService,
           IEmailService emailService,
           IApiValidationService apiValidationService,
           ITokenService tokenService
