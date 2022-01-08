@@ -27,7 +27,6 @@
 using Crypter.Console.Jobs;
 using Crypter.Core;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Crypter.Core.Services.DataAccess;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,8 +47,8 @@ namespace Crypter.Console
             .AddLogging(configure => configure.AddConsole())
             .AddSingleton(configuration)
             .AddSingleton<DataContext>()
-            .AddSingleton<IBaseTransferService<MessageTransfer>, MessageTransferItemService>()
-            .AddSingleton<IBaseTransferService<FileTransfer>, FileTransferItemService>()
+            .AddSingleton<IBaseTransferService<IMessageTransferItem>, MessageTransferItemService>()
+            .AddSingleton<IBaseTransferService<IFileTransferItem>, FileTransferItemService>()
             .BuildServiceProvider();
 
          if (args == null || args.Length == 0 || HelpRequired(args[0]))
@@ -61,8 +60,8 @@ namespace Crypter.Console
          if (RequestDeleteExpired(args[0]))
          {
             var deleteJob = new DeleteExpired(configuration["EncryptedFileStore"],
-               serviceProvider.GetService<IBaseTransferService<MessageTransfer>>(),
-               serviceProvider.GetService<IBaseTransferService<FileTransfer>>(),
+               serviceProvider.GetService<IBaseTransferService<IMessageTransferItem>>(),
+               serviceProvider.GetService<IBaseTransferService<IFileTransferItem>>(),
                serviceProvider.GetService<ILogger<DeleteExpired>>());
 
             await deleteJob.RunAsync();

@@ -24,22 +24,11 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Crypter.Core.Interfaces
 {
-   public interface IBaseTransferService<T> where T : IBaseTransferItem
+   public interface IFileTransferItem : IBaseTransferItem
    {
-      Task InsertAsync(T item, CancellationToken cancellationToken);
-      Task<T> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
-
-      Task<IEnumerable<T>> FindBySenderAsync(Guid senderId, CancellationToken cancellationToken);
-      Task<IEnumerable<T>> FindByRecipientAsync(Guid recipientId, CancellationToken cancellationToken);
-      Task<IEnumerable<T>> FindExpiredAsync(CancellationToken cancellationToken);
-      Task<long> GetAggregateSizeAsync(CancellationToken cancellationToken);
+      string FileName { get; set; }
+      string ContentType { get; set; }
    }
 }

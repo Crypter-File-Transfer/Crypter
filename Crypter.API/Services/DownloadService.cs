@@ -28,7 +28,6 @@ using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.Contracts.Responses;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.CryptoLib.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -41,8 +40,8 @@ namespace Crypter.API.Services
 {
    public class DownloadService
    {
-      private readonly IBaseTransferService<MessageTransfer> MessageService;
-      private readonly IBaseTransferService<FileTransfer> FileService;
+      private readonly IBaseTransferService<IMessageTransferItem> MessageService;
+      private readonly IBaseTransferService<IFileTransferItem> FileService;
       private readonly IUserService UserService;
       private readonly IUserProfileService UserProfileService;
       private readonly ITransferItemStorageService MessageTransferItemStorageService;
@@ -53,8 +52,8 @@ namespace Crypter.API.Services
 
       public DownloadService(
          IConfiguration configuration,
-         IBaseTransferService<MessageTransfer> messageService,
-         IBaseTransferService<FileTransfer> fileService,
+         IBaseTransferService<IMessageTransferItem> messageService,
+         IBaseTransferService<IFileTransferItem> fileService,
          IUserService userService,
          IUserProfileService userProfileService,
          ISimpleEncryptionService simpleEncryptionService,

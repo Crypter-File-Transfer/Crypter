@@ -28,7 +28,6 @@ using Crypter.Common.Services;
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -43,10 +42,10 @@ namespace Crypter.API.Services
    public class ApiValidationService : IApiValidationService
    {
       private readonly IUserService UserService;
-      private readonly IBaseTransferService<MessageTransfer> MessageTransferService;
-      private readonly IBaseTransferService<FileTransfer> FileTransferService;
+      private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
+      private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
 
-      public ApiValidationService(IUserService userService, IBaseTransferService<MessageTransfer> messageTransferService, IBaseTransferService<FileTransfer> fileTransferService)
+      public ApiValidationService(IUserService userService, IBaseTransferService<IMessageTransferItem> messageTransferService, IBaseTransferService<IFileTransferItem> fileTransferService)
       {
          UserService = userService;
          MessageTransferService = messageTransferService;
