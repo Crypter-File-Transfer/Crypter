@@ -29,6 +29,9 @@ using System;
 
 namespace Crypter.Core.Models
 {
+   /// <summary>
+   /// This class does not represent an entity tracked in the database.
+   /// </summary>
    public class BaseTransfer : IBaseTransferItem
    {
       public Guid Id { get; set; }
@@ -44,7 +47,7 @@ namespace Crypter.Core.Models
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
 
-      public BaseTransfer(Guid id, Guid sender, Guid recipient, int size, string clientIV, string signature, string dhPublicKeyBase64, string dsaPublicKeyBase64, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
+      public BaseTransfer(Guid id, Guid sender, Guid recipient, int size, string clientIV, string signature, string x25519PublicKey, string ed25519PublicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
       {
          Id = id;
          Sender = sender;
@@ -52,8 +55,8 @@ namespace Crypter.Core.Models
          Size = size;
          ClientIV = clientIV;
          Signature = signature;
-         X25519PublicKey = dhPublicKeyBase64;
-         Ed25519PublicKey = dsaPublicKeyBase64;
+         X25519PublicKey = x25519PublicKey;
+         Ed25519PublicKey = ed25519PublicKey;
          ServerIV = serverIV;
          ServerDigest = serverDigest;
          Created = created;

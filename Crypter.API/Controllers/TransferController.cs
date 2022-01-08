@@ -27,7 +27,6 @@
 using Crypter.API.Services;
 using Crypter.Contracts.Requests;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Crypter.CryptoLib.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -45,8 +44,8 @@ namespace Crypter.API.Controllers
       private readonly ITokenService _tokenService;
 
       public TransferController(IConfiguration configuration,
-          IBaseTransferService<MessageTransfer> messageService,
-          IBaseTransferService<FileTransfer> fileService,
+          IBaseTransferService<IMessageTransferItem> messageService,
+          IBaseTransferService<IFileTransferItem> fileService,
           IUserService userService,
           IUserProfileService userProfileService,
           IEmailService emailService,

@@ -67,8 +67,8 @@ namespace Crypter.Test.API_Tests
             .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransferItem>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransferItem>>();
 
          var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
@@ -98,8 +98,8 @@ namespace Crypter.Test.API_Tests
             .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransferItem>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransferItem>>();
 
          var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
@@ -129,8 +129,8 @@ namespace Crypter.Test.API_Tests
             .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransferItem>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransferItem>>();
 
          var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
@@ -160,8 +160,8 @@ namespace Crypter.Test.API_Tests
             .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransferItem>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransferItem>>();
 
          var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
@@ -193,8 +193,8 @@ namespace Crypter.Test.API_Tests
             .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => userVerification);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransferItem>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransferItem>>();
 
          var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
@@ -224,8 +224,8 @@ namespace Crypter.Test.API_Tests
             .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransferItem>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransferItem>>();
 
          var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
@@ -246,8 +246,8 @@ namespace Crypter.Test.API_Tests
          var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
 
          var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<MessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<FileTransfer>>();
+         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransferItem>>();
+         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransferItem>>();
 
          var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
             mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)

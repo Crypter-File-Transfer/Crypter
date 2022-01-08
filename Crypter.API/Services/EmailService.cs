@@ -29,7 +29,6 @@ using Crypter.API.Models;
 using Crypter.Common.Services;
 using Crypter.Contracts.Enum;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using MailKit.Net.Smtp;
@@ -58,11 +57,11 @@ namespace Crypter.API.Services
       private readonly IUserService UserService;
       private readonly IUserEmailVerificationService UserEmailVerificationService;
       private readonly IUserNotificationSettingService UserNotificationSettingService;
-      private readonly IBaseTransferService<MessageTransfer> MessageTransferService;
-      private readonly IBaseTransferService<FileTransfer> FileTransferService;
+      private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
+      private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
 
       public EmailService(EmailSettings emailSettings, IUserService userService, IUserEmailVerificationService userEmailVerificationService, IUserNotificationSettingService userNotificationSettingService,
-         IBaseTransferService<MessageTransfer> messageTransferService, IBaseTransferService<FileTransfer> fileTransferService)
+         IBaseTransferService<IMessageTransferItem> messageTransferService, IBaseTransferService<IFileTransferItem> fileTransferService)
       {
          Settings = emailSettings;
          UserService = userService;

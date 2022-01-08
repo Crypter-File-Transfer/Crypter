@@ -45,8 +45,8 @@ namespace Crypter.API.Services
       private readonly long AllocatedDiskSpace;
       private readonly int MaxUploadSize;
 
-      private readonly IBaseTransferService<MessageTransfer> MessageTransferService;
-      private readonly IBaseTransferService<FileTransfer> FileTransferService;
+      private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
+      private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
       private readonly IEmailService EmailService;
       private readonly IApiValidationService ApiValidationService;
       private readonly ITransferItemStorageService MessageTransferItemStorageService;
@@ -57,8 +57,8 @@ namespace Crypter.API.Services
 
       public UploadService(
          IConfiguration configuration,
-         IBaseTransferService<MessageTransfer> messageTransferService,
-         IBaseTransferService<FileTransfer> fileTransferService,
+         IBaseTransferService<IMessageTransferItem> messageTransferService,
+         IBaseTransferService<IFileTransferItem> fileTransferService,
          IEmailService emailService,
          IApiValidationService apiValidationService,
          ISimpleEncryptionService simpleEncryptionService,
@@ -78,7 +78,7 @@ namespace Crypter.API.Services
          ItemDigestFunction = SimpleHashService.DigestSha256;
       }
 
-      private async Task<(UploadResult Result, BaseTransfer GenericTransferData, byte[] ServerEncryptedCipherText)> ReceiveTransferAsync(ITransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
+      private async Task<(UploadResult Result, IBaseTransferItem GenericTransferData, byte[] ServerEncryptedCipherText)> ReceiveTransferAsync(ITransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
       {
          var serverHasSpaceRemaining = await ApiValidationService.IsEnoughSpaceForNewTransferAsync(AllocatedDiskSpace, MaxUploadSize, cancellationToken);
          if (!serverHasSpaceRemaining)
