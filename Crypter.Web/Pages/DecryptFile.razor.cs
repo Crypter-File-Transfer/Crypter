@@ -28,7 +28,6 @@ using Crypter.Contracts.Requests;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using System;
 using System.Net;
 using System.Threading.Tasks;
@@ -37,9 +36,6 @@ namespace Crypter.Web.Pages
 {
    public partial class DecryptFileBase : ComponentBase
    {
-      [Inject]
-      IJSRuntime JSRuntime { get; set; }
-
       [Inject]
       ILocalStorageService LocalStorage { get; set; }
 
@@ -68,7 +64,6 @@ namespace Crypter.Web.Pages
       protected override async Task OnInitializedAsync()
       {
          Loading = true;
-         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - Decrypt");
          await PrepareFilePreviewAsync(); 
          await base.OnInitializedAsync();
          Loading = false;

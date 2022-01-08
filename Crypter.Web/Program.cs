@@ -25,61 +25,50 @@
  */
 
 using Crypter.CryptoLib.Services;
+using Crypter.Web;
 using Crypter.Web.Models;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
 using System.Reflection;
-using System.Threading.Tasks;
 
-namespace Crypter.Web
+var builder = WebAssemblyHostBuilder.CreateDefault(args);
+builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
+
+builder.Services.AddScoped(_ =>
 {
-   public class Program
-   {
-      public static async Task Main(string[] args)
-      {
-         var builder = WebAssemblyHostBuilder.CreateDefault(args);
-         builder.RootComponents.Add<App>("#app");
+   return LoadAppSettings("Crypter.Web.appsettings.json")
+            .Get<AppSettings>();
+});
 
-         builder.Services.AddScoped(_ =>
-         {
-            return LoadAppSettings("Crypter.Web.appsettings.json")
-                           .Get<AppSettings>();
-         });
+builder.Services
+         .AddBlazorDownloadFile()
+         .AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) })
+         .AddScoped<IAuthenticationService, AuthenticationService>()
+         .AddScoped<Func<IAuthenticationService>>(cont => () => cont.GetService<IAuthenticationService>())
+         .AddScoped<IHttpService, HttpService>()
+         .AddScoped<ILocalStorageService, LocalStorageService>()
+         .AddScoped<ITransferApiService, TransferApiService>()
+         .AddScoped<IUserApiService, UserApiService>()
+         .AddScoped<IAuthenticationApiService, AuthenticationApiService>()
+         .AddScoped<IMetricsApiService, MetricsApiService>()
+         .AddScoped<IUserKeysService, UserKeysService>()
+         .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>();
 
-         builder.Services
-            .AddBlazorDownloadFile()
-            .AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) })
-            .AddScoped<IAuthenticationService, AuthenticationService>()
-            .AddScoped<Func<IAuthenticationService>>(cont => () => cont.GetService<IAuthenticationService>())
-            .AddScoped<IHttpService, HttpService>()
-            .AddScoped<ILocalStorageService, LocalStorageService>()
-            .AddScoped<ITransferApiService, TransferApiService>()
-            .AddScoped<IUserApiService, UserApiService>()
-            .AddScoped<IAuthenticationApiService, AuthenticationApiService>()
-            .AddScoped<IMetricsApiService, MetricsApiService>()
-            .AddScoped<IUserKeysService, UserKeysService>()
-            .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>();
+await builder.Build().RunAsync();
 
-         var host = builder.Build();
+static IConfigurationRoot LoadAppSettings(string filename)
+{
+   var stream = Assembly.GetExecutingAssembly()
+                        .GetManifestResourceStream(filename);
 
-         var authenticationService = host.Services.GetRequiredService<IAuthenticationService>();
-
-         await host.RunAsync();
-      }
-
-      public static IConfigurationRoot LoadAppSettings(string filename)
-      {
-         var stream = Assembly.GetExecutingAssembly()
-                              .GetManifestResourceStream(filename);
-
-         return new ConfigurationBuilder()
-                 .AddJsonStream(stream)
-                 .Build();
-      }
-   }
+   return new ConfigurationBuilder()
+           .AddJsonStream(stream)
+           .Build();
 }

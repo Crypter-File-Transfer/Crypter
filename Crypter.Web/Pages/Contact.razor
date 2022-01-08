@@ -26,7 +26,7 @@
 
 @page "/contact"
 
-@inject IJSRuntime JsRuntime;
+<PageTitle>Crypter - Contact</PageTitle>
 
 <div class="container my-4">
    <h1>Contact</h1>
@@ -39,8 +39,5 @@
 </div>
 
 @code {
-   protected override async Task OnInitializedAsync()
-   {
-      await JsRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - Contact");
-   }
+
 }
