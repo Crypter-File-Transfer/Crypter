@@ -37,138 +37,133 @@ namespace Crypter.Test.Common_Tests
       {
       }
 
-      [Test]
-      public void Null_Is_Invalid_Password()
+      [TestCase(null)]
+      [TestCase("")]
+      [TestCase(" ")]
+      [TestCase("     ")]
+      public void Invalid_Passwords_Are_Invalid(string password)
       {
-         string password = null;
          var result = ValidationService.IsValidPassword(password);
-
          Assert.IsFalse(result);
       }
 
-      [Test]
-      public void Empty_String_Is_Invalid_Password()
+      [TestCase("a")]
+      [TestCase(" whitespace ")]
+      [TestCase("12345")]
+      [TestCase("!@#$%^&")]
+      public void Valid_Passwords_Are_Valid(string password)
       {
-         var password = "";
          var result = ValidationService.IsValidPassword(password);
-
-         Assert.IsFalse(result);
-      }
-
-      [Test]
-      public void Whitespace_Is_Invalid_Password()
-      {
-         var password = " ";
-         var result = ValidationService.IsValidPassword(password);
-
-         Assert.IsFalse(result);
-      }
-
-      [Test]
-      public void Text_Is_Valid_Password()
-      {
-         var password = "text";
-         var result = ValidationService.IsValidPassword(password);
-
          Assert.IsTrue(result);
       }
 
-      [Test]
-      public void Null_Is_Not_A_Possible_Email_Address()
+      [TestCase(null)]
+      [TestCase("")]
+      public void Blanks_Are_Not_Considered_Possible_Email_Addresses(string email)
       {
-         string email = null;
          var result = ValidationService.IsPossibleEmailAddress(email);
-
          Assert.IsFalse(result);
       }
 
-      [Test]
-      public void Empty_String_Is_Not_A_Possible_Email_Address()
+      [TestCase(" ")]
+      [TestCase(" hello ")]
+      [TestCase("hello@crypter.dev")]
+      public void NonBlanks_Are_Considered_Possible_Email_Addresses(string email)
       {
-         string email = "";
          var result = ValidationService.IsPossibleEmailAddress(email);
-
-         Assert.IsFalse(result);
-      }
-
-      [Test]
-      public void Whitespace_Is_A_Possible_Email_Address()
-      {
-         string email = " ";
-         var result = ValidationService.IsPossibleEmailAddress(email);
-
          Assert.IsTrue(result);
       }
 
-      [Test]
-      public void Null_Is_Invalid_Email_Address()
+      [TestCase(null)]
+      [TestCase("")]
+      [TestCase(" ")]
+      [TestCase("hello@crypter.dev.")]
+      public void Invalid_Email_Addresses_Are_Invalid(string email)
       {
-         string email = null;
          var result = ValidationService.IsValidEmailAddress(email);
-
          Assert.IsFalse(result);
       }
 
-      [Test]
-      public void Empty_String_Is_Invalid_Email_Address()
+      [TestCase("jack@crypter.dev")]
+      [TestCase("no-reply@crypter.dev")]
+      [TestCase("anyone@gmail.com")]
+      public void Valid_Email_Addresses_Are_Valid(string email)
       {
-         var email = "";
          var result = ValidationService.IsValidEmailAddress(email);
-
-         Assert.IsFalse(result);
-      }
-
-      [Test]
-      public void Whitespace_Is_Invalid_Email_Address()
-      {
-         var email = " ";
-         var result = ValidationService.IsValidEmailAddress(email);
-
-         Assert.IsFalse(result);
-      }
-
-      [Test]
-      public void Trailing_Period_Is_Invalid_Email_Address()
-      {
-         var email = "jack@crypter.dev.";
-         var result = ValidationService.IsValidEmailAddress(email);
-
-         Assert.IsFalse(result);
-      }
-
-      [Test]
-      public void Actual_Email_Address_Is_Valid_Email_Address()
-      {
-         var email = "jack@crypter.dev";
-         var result = ValidationService.IsValidEmailAddress(email);
-
          Assert.IsTrue(result);
       }
 
-      [Test]
-      public void Null_Is_Not_A_Valid_Username()
+      [TestCase(null)]
+      [TestCase("")]
+      [TestCase(" ")]
+      [TestCase("Inv@lid")]
+      [TestCase("ThisIsExactly33CharactersInLength")]
+      public void Invalid_Usernames_Are_Invalid(string username)
       {
-         string username = null;
          var result = ValidationService.IsValidUsername(username);
-
          Assert.IsFalse(result);
       }
 
-      [Test]
-      public void Empty_String_Is_Not_A_Valid_Username()
+      [TestCase("jack")]
+      [TestCase("JACK")]
+      [TestCase("1234567890")]
+      [TestCase("_-_-_-_")]
+      [TestCase("ThisIsExactly32CharactersInLengt")]
+      public void Valid_Usernames_Are_Valid(string username)
       {
-         string username = "";
          var result = ValidationService.IsValidUsername(username);
+         Assert.IsTrue(result);
+      }
 
+      [TestCase(" ")]
+      [TestCase("`")]
+      [TestCase("~")]
+      [TestCase("!")]
+      [TestCase("@")]
+      [TestCase("#")]
+      [TestCase("$")]
+      [TestCase("%")]
+      [TestCase("^")]
+      [TestCase("&")]
+      [TestCase("*")]
+      [TestCase("(")]
+      [TestCase(")")]
+      [TestCase("=")]
+      [TestCase("+")]
+      [TestCase("\\")]
+      [TestCase("|")]
+      [TestCase("[")]
+      [TestCase("]")]
+      [TestCase("{")]
+      [TestCase("}")]
+      [TestCase(";")]
+      [TestCase(":")]
+      [TestCase("'")]
+      [TestCase("\"")]
+      [TestCase(",")]
+      [TestCase("<")]
+      [TestCase(".")]
+      [TestCase(">")]
+      [TestCase("/")]
+      [TestCase("?")]
+      public void Usernames_May_Not_Contain_Invalid_Characters(string username)
+      {
+         var result = ValidationService.UsernameMeetsCharacterRequirements(username);
          Assert.IsFalse(result);
       }
 
-      [Test]
-      public void Whitespace_Is_Not_A_Valid_Username()
+      [TestCase("ThisIsExactly33CharactersInLength")]
+      public void Usernames_May_Not_Exceed_32_Characters(string username)
       {
-         string username = " ";
-         var result = ValidationService.IsValidUsername(username);
+         var result = ValidationService.UsernameMeetsLengthRequirements(username);
+         Assert.IsFalse(result);
+      }
 
+      [TestCase(null)]
+      [TestCase("")]
+      public void Usernames_May_Not_Be_Empty(string username)
+      {
+         var result = ValidationService.UsernameMeetsLengthRequirements(username);
          Assert.IsFalse(result);
       }
    }
