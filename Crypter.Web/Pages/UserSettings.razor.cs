@@ -110,8 +110,6 @@ namespace Crypter.Web.Pages
          ArePasswordControlsEnabled = false;
          ArePrivacyControlsEnabled = false;
 
-         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Search");
-
          if (!LocalStorage.HasItem(StoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/");

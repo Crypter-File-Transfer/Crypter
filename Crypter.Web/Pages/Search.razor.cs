@@ -56,8 +56,6 @@ namespace Crypter.Web.Pages
 
       protected override async Task OnInitializedAsync()
       {
-         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Search");
-
          if (!LocalStorage.HasItem(StoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/");

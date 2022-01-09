@@ -26,7 +26,7 @@
 
 @page "/acceptable-use-policy"
 
-@inject IJSRuntime JsRuntime;
+<PageTitle>Crypter - Acceptable Use Policy</PageTitle>
 
 <div class="container my-4">
     <h1>Acceptable Use Policy</h1>
@@ -54,8 +54,5 @@
 </div>
 
 @code {
-    protected override async Task OnInitializedAsync()
-    {
-        await JsRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - Acceptable Use Policy");
-    }
+
 }

@@ -29,7 +29,6 @@ using Crypter.Web.Models;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -39,9 +38,6 @@ namespace Crypter.Web.Pages
 {
    public partial class UserHomeBase : ComponentBase
    {
-      [Inject]
-      IJSRuntime JSRuntime { get; set; }
-
       [Inject]
       NavigationManager NavigationManager { get; set; }
 
@@ -62,7 +58,6 @@ namespace Crypter.Web.Pages
             return;
          }
 
-         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Home");
          await base.OnInitializedAsync();
 
          Sent = await GetUserSentItems();
