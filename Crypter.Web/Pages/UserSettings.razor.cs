@@ -30,7 +30,6 @@ using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using System;
 using System.Net;
 using System.Threading.Tasks;
@@ -39,9 +38,6 @@ namespace Crypter.Web.Pages
 {
    public partial class UserSettingsBase : ComponentBase
    {
-      [Inject]
-      IJSRuntime JSRuntime { get; set; }
-
       [Inject]
       NavigationManager NavigationManager { get; set; }
 
@@ -109,8 +105,6 @@ namespace Crypter.Web.Pages
          AreNotificationControlsEnabled = false;
          ArePasswordControlsEnabled = false;
          ArePrivacyControlsEnabled = false;
-
-         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Search");
 
          if (!LocalStorage.HasItem(StoredObjectType.UserSession))
          {
@@ -317,11 +311,6 @@ namespace Crypter.Web.Pages
          X25519PrivateKey = encryptedX25519PrivateKey;
          Ed25519PrivateKey = encryptedEd25519PrivateKey;
          ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
-      }
-
-      protected async Task CopyToClipboardAsync()
-      {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", ProfileUrl);
       }
    }
 }

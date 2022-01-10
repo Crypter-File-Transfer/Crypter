@@ -28,24 +28,14 @@
 
 @inherits UserSettingsBase
 
+<PageTitle>Crypter - User Search</PageTitle>
+
 <div class="container-sm my-4">
    @if (!Loading)
    {
       <h1>Settings</h1>
       <form id="publicDetailsForm">
          <h2>Public Details</h2>
-         <div class="mb-3">
-            <label for="publicUrl">Profile Link</label>
-            <div class="copiedTooltip">
-               <div class="input-group mb-3">
-                  <input @bind="ProfileUrl" class="form-control" type="url" id="publicUrl" disabled @onclick="CopyToClipboardAsync" />
-                  <div class="input-group-append">
-                     <button class="btn btn-secondary" type="button" @onclick="CopyToClipboardAsync">Copy</button>
-                  </div>
-               </div>
-               <span class="copiedToolTip toolTipText">Copied</span>
-            </div>
-         </div>
          <div class="mb-3">
             <label for="aliasFormControl" class="form-label">Alias</label>
             <input @bind="EditedAlias" type="text" class="form-control" id="aliasFormControl" placeholder="Alias Not Set" readonly="@(!AreProfileControlsEnabled)" />

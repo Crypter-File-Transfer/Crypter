@@ -32,20 +32,41 @@
 </button>
 <div class="collapse navbar-collapse justify-content-end" id="mainNavigation">
    <ul class="navbar-nav">
-      @if (LocalStorageService.HasItem(StoredObjectType.UserSession))
+      @if (ShowUserNavigation)
       {
          <li class="nav-item mx-1">
-            <a class="nav-link" href="#" @onclick:preventDefault @onclick="@OnLogoutClicked">Logout</a>
+            <form class="d-flex" @onsubmit:preventDefault @onsubmit="@OnSearchClicked">
+               <div class="input-group">
+                  <span class="input-group-text bi-search" id="search-addon"></span>
+                  <input type="text" class="form-control" placeholder="Find a user" aria-label="Search" @bind="SearchKeyword" aria-describedby="search-addon">
+               </div>
+            </form>
          </li>
-         <div>
-            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+
+         <li class="nav-item mx-1">
+            <a class="nav-link text-light" href="/user/transfers">My Transfers</a>
+         </li>
+
+         <li class="nav-item mx-1 dropdown">
+            <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                Encrypt
-            </button>
+            </a>
             <ul class="dropdown-menu dropdown-menu-end">
-               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptFileClicked">Encrypt a file</a></li>
-               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptMessageClicked">Encrypt a message</a></li>
+               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptFileClicked">File</a></li>
+               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptMessageClicked">Message</a></li>
             </ul>
-         </div>
+         </li>
+         <li class="nav-item mx-1 dropdown">
+            <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+               <i class="bi-person-circle me-2"></i>@Username
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+               <li><a class="dropdown-item" href="@ProfileUrl">Profile</a></li>
+               <li><a class="dropdown-item" href="/user/settings">Settings</a></li>
+               <li><hr class="dropdown-divider"></li>
+               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnLogoutClicked">Logout</a></li>
+            </ul>
+         </li>
 
          <UploadFileTransferModal @ref="FileTransferModal" IsRecipientDefined=false ModalClosedCallback="@CollapseNavigationMenuAsync"/>
          <UploadMessageTransferModal @ref="MessageTransferModal" IsRecipientDefined=false ModalClosedCallback="@CollapseNavigationMenuAsync" />

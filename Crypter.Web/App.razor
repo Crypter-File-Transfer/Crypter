@@ -29,11 +29,10 @@
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
     </Found>
     <NotFound>
+        <PageTitle>Not found</PageTitle>
         <LayoutView Layout="@typeof(MainLayout)">
             <div class="container">
-                <h1>404: Sorry, there's nothing at this address.</h1>
-                <p>Please make sure the URL is the proper format and try again.</p>
-                <p><a href="">Return to home</a></p>
+                <h1>Sorry, there's nothing at this address.</h1>
             </div>
         </LayoutView>
     </NotFound>

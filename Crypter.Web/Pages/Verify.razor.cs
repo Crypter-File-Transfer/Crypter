@@ -29,7 +29,6 @@ using Crypter.Web.Models;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.JSInterop;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -37,9 +36,6 @@ namespace Crypter.Web.Pages
 {
    public partial class VerifyBase : ComponentBase
    {
-      [Inject]
-      IJSRuntime JSRuntime { get; set; }
-
       [Inject]
       NavigationManager NavigationManager { get; set; }
 
@@ -53,7 +49,6 @@ namespace Crypter.Web.Pages
 
       protected override async Task OnInitializedAsync()
       {
-         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - Verify");
          ParseVerificationParamsFromUri();
          await VerifyEmailAddressAsync();
 

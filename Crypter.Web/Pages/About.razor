@@ -26,7 +26,7 @@
 
 @page "/about"
 
-@inject IJSRuntime JsRuntime;
+<PageTitle>Crypter - About</PageTitle>
 
 <div class="container my-4">
     <h1>About</h1>
@@ -91,21 +91,14 @@
        <a href="https://file.pizza/" target="_blank">FilePizza</a> used to work great, but stopped working some time ago.
     </p>
     <p>
-       The only option we had left was for me to upload the file to Google Drive and share it with "Anyone with the link".
-    </p>
-    <p>
-      <i>Anyone with the link.</i>
-    </p>
-    <p>
-      <b>Anyone with the link?!</b>
+       The only option left was for me to upload the file to Google Drive and share it with "Anyone with the link".
     </p>
     <p>
        This drove me nuts. How are people okay with sharing their files with everyone who just happens to find the link? Not to mention all of the information that we <i>don't</i>
-       want to share is uploaded completely un-encrypted! If you want to discuss trust, let's have a talk about all the free information we've already given away to people and companies who make money off knowing
-       our most intimate details.
+       want to share is uploaded un-encrypted!
     </p>
     <p>
-       That is the story behind why I felt it was necessary to make a web application that makes end-to-end encryption as easy and approachable as possible.
+       That is the story behind why I felt compelled to make a web application that makes end-to-end encryption as easy and approachable as possible.
     </p>
 
     <h2>How is this funded?</h2>
@@ -123,8 +116,5 @@
 </div>
 
 @code {
-    protected override async Task OnInitializedAsync()
-    {
-        await JsRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - About");
-    }
+
 }

@@ -35,7 +35,6 @@
          
          @if (LocalStorage.HasItem(StoredObjectType.UserSession))
          {
-            <NavigationUser />
             <ReAuthenticationModal @ref="ReAuthenticationModal" ModalClosedCallback="@OnReauthenticationModalClosed" />
          }
 

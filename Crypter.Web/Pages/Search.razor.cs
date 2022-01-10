@@ -29,15 +29,17 @@ using Crypter.Web.Models;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
+using System;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class SearchBase : ComponentBase
+   public partial class SearchBase : ComponentBase, IDisposable
    {
       [Inject]
       IJSRuntime JSRuntime { get; set; }
@@ -56,23 +58,18 @@ namespace Crypter.Web.Pages
 
       protected override async Task OnInitializedAsync()
       {
-         await JSRuntime.InvokeVoidAsync("Crypter.SetPageTitle", "Crypter - User Search");
-
          if (!LocalStorage.HasItem(StoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/");
             return;
          }
-
-         await base.OnInitializedAsync();
-         
+         NavigationManager.LocationChanged += HandleLocationChanged;
+         ParseSearchParamsFromUri();
          await PerformSearchAsync();
       }
 
       protected async Task PerformSearchAsync()
       {
-         ParseSearchParamsFromUri();
-
          if (string.IsNullOrEmpty(SearchParams.Query) || string.IsNullOrEmpty(SearchParams.Type))
          {
             return;
@@ -110,6 +107,8 @@ namespace Crypter.Web.Pages
             SearchParams.Page = int.Parse(pageNum.First());
             SearchParams.Index = (SearchParams.Page - 1) * SearchParams.Results;
          }
+
+         StateHasChanged();
       }
 
       protected async Task SetActivePageAsync()
@@ -117,9 +116,28 @@ namespace Crypter.Web.Pages
          await JSRuntime.InvokeVoidAsync("Crypter.SetActivePage", SearchParams.Page);
       }
 
-      protected void GoToPage(string pageurl)
+      protected void GoToPage(string pageUrl)
       {
-         NavigationManager.NavigateTo(pageurl, true);
+         NavigationManager.NavigateTo(pageUrl);
+      }
+
+      protected void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+      {
+         if (e.Location.Contains("/user/search"))
+         {
+            ParseSearchParamsFromUri();
+            InvokeAsync(async () =>
+            {
+               await PerformSearchAsync();
+               StateHasChanged();
+            });
+         }
+      }
+
+      public void Dispose()
+      {
+         NavigationManager.LocationChanged -= HandleLocationChanged;
+         GC.SuppressFinalize(this);
       }
    }
 }
