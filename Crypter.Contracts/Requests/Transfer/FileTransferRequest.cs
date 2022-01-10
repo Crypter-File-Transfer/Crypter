@@ -25,6 +25,7 @@
  */
 
 using Newtonsoft.Json;
+using System;
 
 namespace Crypter.Contracts.Requests
 {
@@ -38,9 +39,10 @@ namespace Crypter.Contracts.Requests
       public string ServerEncryptionKeyBase64 { get; set; }
       public string X25519PublicKeyBase64 { get; set; }
       public string Ed25519PublicKeyBase64 { get; set; }
+      public DateTime RequestedExpiration { get; set; }
 
-      [JsonConstructor]
-      public FileTransferRequest(string fileName, string contentType, string cipherTextBase64, string signatureBase64, string clientEncryptionIVBase64, string serverEncryptionKeyBase64, string x25519PublicKeyBase64, string ed25519PublicKeyBase64)
+        [JsonConstructor]
+      public FileTransferRequest(string fileName, string contentType, string cipherTextBase64, string signatureBase64, string clientEncryptionIVBase64, string serverEncryptionKeyBase64, string x25519PublicKeyBase64, string ed25519PublicKeyBase64, DateTime requestedExpiration)
       {
          FileName = fileName;
          ContentType = contentType;
@@ -50,6 +52,7 @@ namespace Crypter.Contracts.Requests
          ServerEncryptionKeyBase64 = serverEncryptionKeyBase64;
          X25519PublicKeyBase64 = x25519PublicKeyBase64;
          Ed25519PublicKeyBase64 = ed25519PublicKeyBase64;
-      }
+         RequestedExpiration = requestedExpiration;
+        }
    }
 }

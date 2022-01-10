@@ -41,17 +41,28 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="message-tab" data-bs-toggle="tab" data-bs-target="#message" type="button" role="tab" aria-controls="message" aria-selected="false">Encrypt a message</button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="message-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="message" aria-selected="false">
+                            <i class="bi bi-gear-fill"></i>
+                        </button>
+                    </li>
                 </ul>
             </div>
             <div class="card-body">
                 <div class="tab-content" id="myTabContent">
                     <div class="tab-pane fade show active" id="file" role="tabpanel" aria-labelledby="file-tab">
                         <h2 class="card-title mt-0">Upload a file</h2>
-                        <UploadFileTransfer />
+                        <UploadFileTransfer @bind-RequestedExpirationInHours="requestedExpirationInHours" />
                     </div>
                     <div class="tab-pane fade" id="message" role="tabpanel" aria-labelledby="message-tab">
                         <h2 class="card-title mt-0">Type a message</h2>
-                        <UploadMessageTransfer />
+                        <UploadMessageTransfer @bind-RequestedExpirationInHours="requestedExpirationInHours"/>
+                    </div>
+                    <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="message-tab">
+                        <h2 class="card-title mt-0">Upload settings</h2>
+                        <UploadSettingsTransfer 
+                            @bind-RequestedExpirationInHours="requestedExpirationInHours"
+                       />
                     </div>
                 </div>
             </div>
@@ -62,5 +73,5 @@
 
 @code
 {
-
+    private int requestedExpirationInHours { get; set; }
 }

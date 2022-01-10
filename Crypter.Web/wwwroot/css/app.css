@@ -52,3 +52,9 @@ a, .btn-link {
 .word-wrap {
     white-space: pre-line;
 }
+
+.upload-settings {
+    max-width: 600px;
+    margin: auto;
+    text-align: left;
+}

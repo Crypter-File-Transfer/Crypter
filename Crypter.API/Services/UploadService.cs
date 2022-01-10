@@ -119,9 +119,8 @@ namespace Crypter.API.Services
 
          Guid itemId = Guid.NewGuid();
          var itemCreated = DateTime.UtcNow;
-         var itemExpires = itemCreated.AddDays(1);
 
-         var returnItem = new BaseTransfer(itemId, senderId, recipientId, originalCiphertextBytes.Length, request.ClientEncryptionIVBase64, request.SignatureBase64, request.X25519PublicKeyBase64, request.Ed25519PublicKeyBase64, serverIV, serverDigest, itemCreated, itemExpires);
+         var returnItem = new BaseTransfer(itemId, senderId, recipientId, originalCiphertextBytes.Length, request.ClientEncryptionIVBase64, request.SignatureBase64, request.X25519PublicKeyBase64, request.Ed25519PublicKeyBase64, serverIV, serverDigest, itemCreated, request.RequestedExpiration);
          return (UploadResult.Success, returnItem, serverEncryptedCiphertext);
       }
 

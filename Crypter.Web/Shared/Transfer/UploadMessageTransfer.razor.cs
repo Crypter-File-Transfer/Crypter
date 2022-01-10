@@ -75,7 +75,8 @@ namespace Crypter.Web.Shared.Transfer
          var encodedClientIV = Convert.ToBase64String(iv);
 
          var withAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
-         var request = new MessageTransferRequest(MessageSubject, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey);
+         var requestedExpiration = RequestedExpirationService.ReturnRequestedExpirationFromRequestedExpirationInHours(RequestedExpirationInHours);
+         var request = new MessageTransferRequest(MessageSubject, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey, requestedExpiration);
          var (_, response) = await UploadService.UploadMessageTransferAsync(request, RecipientId, withAuth);
 
          switch (response.Result)

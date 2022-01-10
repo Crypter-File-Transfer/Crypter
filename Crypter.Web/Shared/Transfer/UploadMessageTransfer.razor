@@ -29,9 +29,11 @@
 <div class="message-upload" hidden="@EncryptionInProgress">
    <div class="row">
       <div class="col-12 p-0 my-3">
+          <label>Subject</label>
          <input type="text" class="form-control" @bind="MessageSubject" @bind:event="oninput" id="messageSubject" name="messageSubject" placeholder="Subject">
       </div>
       <div class="col-12 p-0">
+          <label>Message</label>
          <textarea class="form-control" @bind="MessageText" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
          <label><small class="align-text-bottom">@(MaxMessageLength - MessageText.Count()) remaining</small></label>
       </div>
@@ -51,7 +53,7 @@
          <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptClicked())">Encrypt</button>
       </div>
    </div>
-   <TransferSuccessModal @ref="ModalForAnonymousRecipient" UploadType="message" ItemId="@TransferId" RecipientX25519PrivateKey="@EncodedRecipientX25519PrivateKey" ModalClosedCallback="@UploadCompletedEvent" />
+   <TransferSuccessModal @ref="ModalForAnonymousRecipient" UploadType="file" ItemId="@TransferId" RecipientX25519PrivateKey="@EncodedRecipientX25519PrivateKey" ModalClosedCallback="@UploadCompletedEvent" RequestedExpirationInHours="RequestedExpirationInHours"/>   
    <BasicModal @ref="ModalForUserRecipient" Subject="Upload Successful" Message=@UploadSuccessForUserMessage PrimaryButtonText="Okay" ModalClosedCallback="@UploadCompletedEvent" />
 </div>
 

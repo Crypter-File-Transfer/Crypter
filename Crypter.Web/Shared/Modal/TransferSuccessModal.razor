@@ -33,8 +33,7 @@
             <h3 class="my-0">Upload Successful</h3>
          </div>
          <div class="modal-body justify-content-center">
-            <p>Your encrypted @UploadType will expire in 24 hours and will automatically be deleted once downloaded or expired.</p>
-            <p>Download Link: <a href=@($"/decrypt/{UploadType}/{ItemId}")>@GetDownloadLink()</a></p>
+            <p>Your encrypted @UploadType will expire in @RequestedExpirationInHours hours and will automatically be deleted once downloaded or expired.</p>  <p>Download Link: <a href=@($"/decrypt/{UploadType}/{ItemId}")>@GetDownloadLink()</a></p>
             <h4>Decryption Key</h4>
             <p><em>Share this key with the receiving party</em></p>
             <div class="copiedTooltip">
