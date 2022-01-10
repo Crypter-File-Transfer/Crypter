@@ -62,7 +62,7 @@ namespace Crypter.Web.Shared
       {
          if (LocalStorage.HasItem(StoredObjectType.UserSession))
          {
-            NavigationManager.NavigateTo("/user/home");
+            NavigationManager.NavigateTo("/user/transfers");
          }
          await base.OnInitializedAsync();
       }
@@ -77,7 +77,7 @@ namespace Crypter.Web.Shared
          var authSuccess = await AuthenticationService.LoginAsync(LoginModel.Username, LoginModel.Password, LoginModel.RememberMe);
          if (authSuccess)
          {
-            var returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/home";
+            var returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";
             NavigationManager.NavigateTo(returnUrl);
             return;
          }

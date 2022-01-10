@@ -42,6 +42,7 @@ namespace Crypter.Web.Services
       Task<bool> LoginAsync(string username, string password, bool trustDevice);
       Task<bool> UnlockSession(string password);
       Task<bool> TryRefreshingTokenAsync();
+      event EventHandler<UserSessionStateChangedEventArgs> UserSessionStateChanged;
       Task LogoutAsync();
    }
 
@@ -52,6 +53,8 @@ namespace Crypter.Web.Services
       private readonly IAuthenticationApiService _authenticationApiService;
       private readonly ILocalStorageService _localStorageService;
       private readonly ISimpleEncryptionService _simpleEncryptionService;
+
+      private EventHandler<UserSessionStateChangedEventArgs> _userSessionStateChanged;
 
       public AuthenticationService(IUserApiService userApiService, IUserKeysService userKeysService, IAuthenticationApiService authenticationApiService, ILocalStorageService localStorageService, ISimpleEncryptionService simpleEncryptionService)
       {
@@ -80,8 +83,9 @@ namespace Crypter.Web.Services
 
          var userSymmetricKey = _userKeysService.GetUserSymmetricKey(username, password);
 
-         await CacheSessionInfoAsync(authResponse, username, userSymmetricKey, userPreferredStorageLocation);
+         await CacheSessionInfoAsync(authResponse, username, userPreferredStorageLocation);
          await HandleUserKeys(authResponse, userSymmetricKey, userPreferredStorageLocation);
+         NotifyUserSessionStateChanged(true, authResponse.Id, username);
          return true;
       }
 
@@ -126,15 +130,28 @@ namespace Crypter.Web.Services
          return true;
       }
 
+      public event EventHandler<UserSessionStateChangedEventArgs> UserSessionStateChanged
+      {
+         add
+         {
+            _userSessionStateChanged = (EventHandler<UserSessionStateChangedEventArgs>)Delegate.Combine(_userSessionStateChanged, value);
+         }
+         remove
+         {
+            _userSessionStateChanged = (EventHandler<UserSessionStateChangedEventArgs>)Delegate.Remove(_userSessionStateChanged, value);
+         }
+      }
+
       public async Task LogoutAsync()
       {
          var userSessionInfo = await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
          var logoutRequest = new LogoutRequest(userSessionInfo.RefreshToken);
          await _authenticationApiService.LogoutAsync(logoutRequest);
+         NotifyUserSessionStateChanged(false);
          await _localStorageService.DisposeAsync();
       }
 
-      private async Task CacheSessionInfoAsync(LoginResponse authResponse, string username, byte[] userSymmetricKey, StorageLocation storageLocation)
+      private async Task CacheSessionInfoAsync(LoginResponse authResponse, string username, StorageLocation storageLocation)
       {
          var sessionInfo = new UserSession(authResponse.Id, username, authResponse.RefreshToken);
          await _localStorageService.SetItemAsync(StoredObjectType.UserSession, sessionInfo, storageLocation);
@@ -238,6 +255,25 @@ namespace Crypter.Web.Services
          {
             return (false, null);
          }
+      }
+
+      private void NotifyUserSessionStateChanged(bool loggedIn, Guid userId = default, string username = default)
+      {
+         _userSessionStateChanged?.Invoke(this, new UserSessionStateChangedEventArgs(loggedIn, userId, username));
+      }
+   }
+
+   public class UserSessionStateChangedEventArgs : EventArgs
+   {
+      public bool LoggedIn { get; set; }
+      public Guid UserId { get; set; }
+      public string Username { get; }
+
+      public UserSessionStateChangedEventArgs(bool loggedIn, Guid userId, string username)
+      {
+         LoggedIn = loggedIn;
+         UserId = userId;
+         Username = username;
       }
    }
 }

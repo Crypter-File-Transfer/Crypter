@@ -54,7 +54,7 @@ namespace Crypter.Web.Shared
 
          if (LocalStorage.HasItem(StoredObjectType.UserSession))
          {
-            NavigationManager.NavigateTo("/user/home");
+            NavigationManager.NavigateTo("/user/transfers");
          }
       }
 
