@@ -29,19 +29,19 @@
 <div class="col-md-6">
    <div class="card mb-4">
       <div class="card-body">
-         <h5 class="card-title">Sent files and messages</h5>
+         <h5 class="card-title">Sent</h5>
       </div>
       <ul class="list-group list-group-flush">
          @if (Items == null)
          {
             <li class="list-group-item">
-               Loading files...
+               Loading...
             </li>
          }
          else if (Items.Count() == 0)
          {
             <li class="list-group-item">
-               You do not have any uploads
+               You have not uploaded any items
             </li>
          }
          else

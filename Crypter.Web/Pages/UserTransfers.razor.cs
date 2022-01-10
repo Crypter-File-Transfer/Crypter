@@ -36,7 +36,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class UserHomeBase : ComponentBase
+   public partial class UserTransfersBase : ComponentBase
    {
       [Inject]
       NavigationManager NavigationManager { get; set; }

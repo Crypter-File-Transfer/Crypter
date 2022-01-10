@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
@@ -43,19 +44,34 @@ namespace Crypter.Web.Shared
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected ILocalStorageService LocalStorageService { get; set; }
+      ILocalStorageService LocalStorageService { get; set; }
 
       [Inject]
       protected IAuthenticationService AuthenticationService { get; set; }
 
-      protected bool UserIsAuthenticated { get; set; } = false;
       protected UploadFileTransferModal FileTransferModal { get; set; }
+
       protected UploadMessageTransferModal MessageTransferModal { get; set; }
+
+      protected bool ShowUserNavigation { get; set; } = false;
+
+      protected string Username { get; set; }
+
+      protected string ProfileUrl { get; set; }
+
+      protected string SearchKeyword { get; set; }
 
       protected override async Task OnInitializedAsync()
       {
+         var session = await LocalStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
+         ShowUserNavigation = session is not null;
+         if (session is not null)
+         {
+            Username = session.Username;
+            ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
+         }
          NavigationManager.LocationChanged += HandleLocationChanged;
-         await base.OnInitializedAsync();
+         AuthenticationService.UserSessionStateChanged += HandleUserSessionStateChanged;
       }
 
       protected async Task OnLogoutClicked()
@@ -72,6 +88,17 @@ namespace Crypter.Web.Shared
          });
       }
 
+      protected void HandleUserSessionStateChanged(object sender, UserSessionStateChangedEventArgs e)
+      {
+         ShowUserNavigation = e.LoggedIn;
+         if (e.LoggedIn)
+         {
+            Username = e.Username;
+            ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
+         }
+         StateHasChanged();
+      }
+
       protected async Task OnEncryptFileClicked()
       {
          await FileTransferModal.Open();
@@ -82,15 +109,20 @@ namespace Crypter.Web.Shared
          await MessageTransferModal.Open();
       }
 
-      public async Task CollapseNavigationMenuAsync()
+      protected async Task CollapseNavigationMenuAsync()
       {
          await JSRuntime.InvokeVoidAsync("Crypter.CollapseNavBar");
-         StateHasChanged();
+      }
+
+      protected void OnSearchClicked()
+      {
+         NavigationManager.NavigateTo($"/user/search?query={SearchKeyword}&type=username&page=1");
       }
 
       public void Dispose()
       {
          NavigationManager.LocationChanged -= HandleLocationChanged;
+         AuthenticationService.UserSessionStateChanged -= HandleUserSessionStateChanged;
          GC.SuppressFinalize(this);
       }
    }

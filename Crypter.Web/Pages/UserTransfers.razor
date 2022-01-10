@@ -24,13 +24,14 @@
  * Contact the current copyright holder to discuss commerical license options.
  *@
 
-@page "/user/home"
+@page "/user/transfers"
 
-@inherits UserHomeBase
+@inherits UserTransfersBase
 
-<PageTitle>Crypter - User Home</PageTitle>
+<PageTitle>Crypter - My Transfers</PageTitle>
 
 <div class="container my-4">
+   <h1>My Transfers</h1>
    <div class="row">
       <UserReceivedItemsComponent @bind-Items="Received"></UserReceivedItemsComponent>
       <UserSentItemsComponent @bind-Items="Sent"></UserSentItemsComponent>
