@@ -61,7 +61,7 @@ namespace Crypter.Web.Shared.Modal
       public EventCallback ModalClosedCallback { get; set; }
 
       [Parameter]
-      public int RequestedExpirationInHours { get; set; }
+      public int RequestedExpirationHours { get; set; }
 
       public string ModalDisplay = "none;";
       public string ModalClass = "";

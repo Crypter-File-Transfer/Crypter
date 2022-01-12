@@ -59,8 +59,7 @@ builder.Services
          .AddScoped<IAuthenticationApiService, AuthenticationApiService>()
          .AddScoped<IMetricsApiService, MetricsApiService>()
          .AddScoped<IUserKeysService, UserKeysService>()
-         .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>()
-         .AddScoped<IRequestedExpirationService, RequestedExpirationService>();
+         .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>();
 
 await builder.Build().RunAsync();
 

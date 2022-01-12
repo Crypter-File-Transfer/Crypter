@@ -33,7 +33,7 @@
             <h3 class="my-0">Upload a Message</h3>
          </div>
          <div class="modal-body justify-content-center">
-            <UploadMessageTransfer IsSenderDefined="@IsSenderDefined" SenderX25519PrivateKey="@SenderX25519PrivateKey" SenderEd25519PrivateKey="@SenderEd25519PrivateKey" IsRecipientDefined="@IsRecipientDefined" RecipientId="@RecipientId" RecipientX25519PublicKey="@RecipientX25519PublicKey" RecipientEd25519PublicKey="@RecipientEd25519PublicKey" UploadCompletedEvent="@CloseAsync" />
+            <UploadMessageTransfer IsSenderDefined="@IsSenderDefined" SenderX25519PrivateKey="@SenderX25519PrivateKey" SenderEd25519PrivateKey="@SenderEd25519PrivateKey" IsRecipientDefined="@IsRecipientDefined" RecipientId="@RecipientId" RecipientX25519PublicKey="@RecipientX25519PublicKey" RecipientEd25519PublicKey="@RecipientEd25519PublicKey" RequestedExpirationHours="24" UploadCompletedEvent="@CloseAsync" />
          </div>
          <div class="modal-footer">
             <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => CloseAsync()">Close</button>

@@ -96,16 +96,8 @@ namespace Crypter.Web.Shared.Transfer
       [Parameter]
       public EventCallback UploadCompletedEvent { get; set; }
 
-      [Inject]
-      protected IRequestedExpirationService RequestedExpirationService { get; set; }
-      
       [Parameter]
-      public int RequestedExpirationInHours { get; set; }
-        
-      [Parameter]
-      public EventCallback<int> RequestedExpirationInHoursChanged { get; set; }
-        
-      protected int requestedExpirationInHours = 24;
+      public int RequestedExpirationHours { get; set; }         
 
       protected Modal.TransferSuccessModal ModalForAnonymousRecipient { get; set; }
       protected Modal.BasicModal ModalForUserRecipient { get; set; }
@@ -161,7 +153,12 @@ namespace Crypter.Web.Shared.Transfer
          await Task.Delay(400);
       }
 
-      protected virtual void Cleanup()
+        protected DateTime GetRequestedExpirationDateTime()
+        {
+            return DateTime.UtcNow.AddHours(RequestedExpirationHours);
+        }
+
+        protected virtual void Cleanup()
       {
          if (!IsSenderDefined)
          {
@@ -176,24 +173,5 @@ namespace Crypter.Web.Shared.Transfer
             RecipientEd25519PublicKey = null;
          }
       }
-
-        protected Task OnRequestedExpirationChange(ChangeEventArgs e)
-        {
-            if (!string.IsNullOrEmpty((String)e.Value))
-            {
-                var value = Convert.ToInt32((String)e.Value);
-
-                if (value <= 0 || value > 24)
-                {
-                    requestedExpirationInHours = 24;
-                }
-                else
-                {
-                    requestedExpirationInHours = value;
-                }
-            }
-
-            return RequestedExpirationInHoursChanged.InvokeAsync(requestedExpirationInHours);
-        }
     }
 }
