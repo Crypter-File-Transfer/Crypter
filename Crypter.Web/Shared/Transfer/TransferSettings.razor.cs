@@ -25,8 +25,6 @@
  *@*/
 
 using Microsoft.AspNetCore.Components;
-using System;
-using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
 {
@@ -51,8 +49,6 @@ namespace Crypter.Web.Shared.Transfer
 
         [Parameter]
         public EventCallback<int> RequestedExpirationHoursChanged { get; set; }
-
-        protected int requestedExpirationInHours = 24;
 
         protected override void OnInitialized()
         {
