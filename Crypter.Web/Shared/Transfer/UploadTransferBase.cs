@@ -138,7 +138,7 @@ namespace Crypter.Web.Shared.Transfer
          (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(senderKeyPair, recipientX25519PublicDecoded);
          var digestor = new SHA(SHAFunction.SHA256);
          digestor.BlockUpdate(sendKey);
-         var serverEncryptionKey = CommonCrypto.DeriveSharedKeyFromECDHDerivedKeys(receiveKey, sendKey);
+         var serverEncryptionKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
 
          return (sendKey, serverEncryptionKey);
       }

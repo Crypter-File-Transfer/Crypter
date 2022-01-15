@@ -92,5 +92,42 @@ namespace Crypter.CryptoLib.Crypto
 
          return (receiveKey, sendKey);
       }
+
+      /// <summary>
+      /// Derive a single key from a pair of shared keys
+      /// </summary>
+      /// <param name="receiveKey"></param>
+      /// <param name="sendKey"></param>
+      /// <returns></returns>
+      /// <remarks>
+      /// The order of the provided keys does not matter.
+      /// </remarks>
+      public static byte[] DeriveKeyFromECDHDerivedKeys(byte[] receiveKey, byte[] sendKey)
+      {
+         byte[] firstKey = receiveKey;
+         byte[] secondKey = sendKey;
+
+         for (int i = 0; i < receiveKey.Length; i++)
+         {
+            if (receiveKey[i] < sendKey[i])
+            {
+               firstKey = receiveKey;
+               secondKey = sendKey;
+               break;
+            }
+
+            if (receiveKey[i] > sendKey[i])
+            {
+               firstKey = sendKey;
+               secondKey = receiveKey;
+               break;
+            }
+         }
+
+         var digestor = new SHA(SHAFunction.SHA256);
+         digestor.BlockUpdate(firstKey);
+         digestor.BlockUpdate(secondKey);
+         return digestor.GetDigest();
+      }
    }
 }
