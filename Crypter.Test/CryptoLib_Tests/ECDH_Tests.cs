@@ -135,5 +135,20 @@ namespace Crypter.Test.CryptoLib_Tests
          Assert.AreEqual(aliceReceive, bobSend);
          Assert.AreEqual(aliceSend, bobReceive);
       }
+
+      [Test]
+      public void Derive_Key_From_Receive_And_Send_Keys_Works_Both_Ways()
+      {
+         var alice = ECDH.GenerateKeys();
+         var bob = ECDH.GenerateKeys();
+
+         (var aliceReceive, var aliceSend) = ECDH.DeriveSharedKeys(alice, bob.Public);
+         (var bobReceive, var bobSend) = ECDH.DeriveSharedKeys(bob, alice.Public);
+
+         var aliceDerivedKey = ECDH.DeriveKeyFromECDHDerivedKeys(aliceReceive, aliceSend);
+         var bobDerivedKey = ECDH.DeriveKeyFromECDHDerivedKeys(bobReceive, bobSend);
+
+         Assert.AreEqual(aliceDerivedKey, bobDerivedKey);
+      }
    }
 }

@@ -42,11 +42,6 @@ namespace Crypter.CryptoLib
          return stringWriter.ToString();
       }
 
-      public static byte[] ConvertToBytes(this KeyParameter symmetricKey)
-      {
-         return symmetricKey.GetKey();
-      }
-
       public static AsymmetricCipherKeyPair ConvertRSAPrivateKeyFromPEM(string pemKey)
       {
          var stringReader = new StringReader(pemKey);

@@ -27,7 +27,6 @@
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
-using Crypter.Web.Models;
 using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
@@ -153,7 +152,7 @@ namespace Crypter.Web.Shared.Transfer
          (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(recipientKeyPair, senderX25519Public);
          var digestor = new SHA(SHAFunction.SHA256);
          digestor.BlockUpdate(sendKey);
-         var serverEncryptionKey = CommonCrypto.DeriveSharedKeyFromECDHDerivedKeys(receiveKey, sendKey);
+         var serverEncryptionKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
 
          return (receiveKey, serverEncryptionKey);
       }
