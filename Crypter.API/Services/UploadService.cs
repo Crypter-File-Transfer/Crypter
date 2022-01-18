@@ -120,6 +120,15 @@ namespace Crypter.API.Services
          Guid itemId = Guid.NewGuid();
          var itemCreated = DateTime.UtcNow;
 
+         var maxRequestedExpiration = itemCreated.AddHours(24);
+         var minRequestedExpiration = itemCreated.AddHours(1);               
+
+
+         if(request.RequestedExpiration > maxRequestedExpiration || request.RequestedExpiration < minRequestedExpiration)
+         {
+            throw new ArgumentException("Requested expiration is out of range", nameof(request.RequestedExpiration));
+         }
+
          var returnItem = new BaseTransfer(itemId, senderId, recipientId, originalCiphertextBytes.Length, request.ClientEncryptionIVBase64, request.SignatureBase64, request.X25519PublicKeyBase64, request.Ed25519PublicKeyBase64, serverIV, serverDigest, itemCreated, request.RequestedExpiration);
          return (UploadResult.Success, returnItem, serverEncryptedCiphertext);
       }
