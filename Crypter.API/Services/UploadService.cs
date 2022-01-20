@@ -106,6 +106,15 @@ namespace Crypter.API.Services
             return (UploadResult.InvalidCipherText, null, null);
          }
 
+         var itemCreated = DateTime.UtcNow;
+         var maxRequestedExpiration = itemCreated.AddHours(24);
+         var minRequestedExpiration = itemCreated.AddHours(1);
+
+         if (request.RequestedExpiration > maxRequestedExpiration || request.RequestedExpiration < minRequestedExpiration)
+         {
+             return (UploadResult.InvalidRequestedExpiration, null, null);
+         }
+
          // Digest the ciphertext BEFORE applying server-side encryption
          var serverDigest = ItemDigestFunction(originalCiphertextBytes);
 
@@ -118,17 +127,7 @@ namespace Crypter.API.Services
          var (serverEncryptedCiphertext, serverIV) = SimpleEncryptionService.Encrypt(hashedSymmetricEncryptionKey, originalCiphertextBytes);
 
          Guid itemId = Guid.NewGuid();
-         var itemCreated = DateTime.UtcNow;
-
-         var maxRequestedExpiration = itemCreated.AddHours(24);
-         var minRequestedExpiration = itemCreated.AddHours(1);               
-
-
-         if(request.RequestedExpiration > maxRequestedExpiration || request.RequestedExpiration < minRequestedExpiration)
-         {
-            throw new ArgumentException("Requested expiration is out of range", nameof(request.RequestedExpiration));
-         }
-
+        
          var returnItem = new BaseTransfer(itemId, senderId, recipientId, originalCiphertextBytes.Length, request.ClientEncryptionIVBase64, request.SignatureBase64, request.X25519PublicKeyBase64, request.Ed25519PublicKeyBase64, serverIV, serverDigest, itemCreated, request.RequestedExpiration);
          return (UploadResult.Success, returnItem, serverEncryptedCiphertext);
       }
