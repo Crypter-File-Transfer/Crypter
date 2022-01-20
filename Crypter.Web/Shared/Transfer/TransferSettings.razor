@@ -24,12 +24,14 @@
     * Contact the current copyright holder to discuss commerical license options.
  *@
 
-@page "/"
+@inherits TransferSettingsBase
 
-<PageTitle>Crypter</PageTitle>
 
-<div class="container text-center my-4">
-    <h1 class="title">Crypter.dev</h1>
-    <h2>Private, encrypted file transfer and messaging</h2>
-    <TabbedUploadTransferComponent/>
+<div class="row">
+    <div class="col-4 my-3">
+            <label>
+              Expiration in hours
+           </label>
+         <input type="number" @bind="RequestedExpirationHours" class="form-control" id="requestedExpirationInHour" name="requestedExpirationInHours" placeholder="Expiration in hours">
+    </div>
 </div>

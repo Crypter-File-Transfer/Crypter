@@ -75,7 +75,8 @@ namespace Crypter.Web.Shared.Transfer
          var encodedClientIV = Convert.ToBase64String(iv);
 
          var withAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
-         var request = new MessageTransferRequest(MessageSubject, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey);
+         var requestedExpiration = GetRequestedExpirationDateTime();
+         var request = new MessageTransferRequest(MessageSubject, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey, requestedExpiration);
          var (_, response) = await UploadService.UploadMessageTransferAsync(request, RecipientId, withAuth);
 
          switch (response.Result)
@@ -109,7 +110,7 @@ namespace Crypter.Web.Shared.Transfer
          Cleanup();
       }
 
-      protected static byte[] EncryptBytes(byte[] message, byte[] symmetricKey, byte[] symmetricIV)
+        protected static byte[] EncryptBytes(byte[] message, byte[] symmetricKey, byte[] symmetricIV)
       {
          var symmetricEncryption = new AES();
          symmetricEncryption.Initialize(symmetricKey, symmetricIV, true);

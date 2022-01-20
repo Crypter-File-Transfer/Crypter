@@ -37,6 +37,7 @@ namespace Crypter.Contracts.Enum
       InvalidSignature,
       InvalidX25519PublicKey,
       InvalidEd25519PublicKey,
+      InvalidRequestedExpiration,
       BlockedByUserPrivacy,
       OutOfSpace,
       Unknown

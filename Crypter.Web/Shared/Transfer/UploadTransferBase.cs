@@ -96,6 +96,9 @@ namespace Crypter.Web.Shared.Transfer
       [Parameter]
       public EventCallback UploadCompletedEvent { get; set; }
 
+      [Parameter]
+      public int RequestedExpirationHours { get; set; }         
+
       protected Modal.TransferSuccessModal ModalForAnonymousRecipient { get; set; }
       protected Modal.BasicModal ModalForUserRecipient { get; set; }
 
@@ -150,7 +153,12 @@ namespace Crypter.Web.Shared.Transfer
          await Task.Delay(400);
       }
 
-      protected virtual void Cleanup()
+        protected DateTime GetRequestedExpirationDateTime()
+        {
+            return DateTime.UtcNow.AddHours(RequestedExpirationHours);
+        }
+
+        protected virtual void Cleanup()
       {
          if (!IsSenderDefined)
          {
@@ -165,5 +173,5 @@ namespace Crypter.Web.Shared.Transfer
             RecipientEd25519PublicKey = null;
          }
       }
-   }
+    }
 }
