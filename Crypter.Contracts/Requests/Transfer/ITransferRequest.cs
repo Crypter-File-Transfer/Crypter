@@ -24,8 +24,6 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using System;
-
 namespace Crypter.Contracts.Requests
 {
    public interface ITransferRequest
@@ -36,6 +34,6 @@ namespace Crypter.Contracts.Requests
       string ServerEncryptionKeyBase64 { get; set; }
       string X25519PublicKeyBase64 { get; set; }
       string Ed25519PublicKeyBase64 { get; set; }
-      DateTime RequestedExpiration { get; set; }
-    }
+      int LifetimeHours { get; set; }
+   }
 }

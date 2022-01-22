@@ -153,11 +153,6 @@ namespace Crypter.Web.Shared.Transfer
          await Task.Delay(400);
       }
 
-      protected DateTime GetRequestedExpirationDateTime()
-      {
-         return DateTime.UtcNow.AddHours(RequestedExpirationHours);
-      }
-
       protected virtual void Cleanup()
       {
          if (!IsSenderDefined)
