@@ -49,13 +49,10 @@ namespace Crypter.Core.Services
       {
          if (string.IsNullOrEmpty(password))
          {
-            throw new ArgumentNullException("Password cannot be null or empty");
+            throw new ArgumentNullException(password);
          }
 
-         byte[] salt = new byte[SaltByteLength];
-         using var rng = new RNGCryptoServiceProvider();
-         rng.GetNonZeroBytes(salt);
-
+         var salt = RandomNumberGenerator.GetBytes(SaltByteLength);
          var hash = KeyDerivation.Pbkdf2(password, salt, KeyDerivationAlgorithm, Iterations, HashByteLength);
          return (salt, hash);
       }
@@ -64,7 +61,7 @@ namespace Crypter.Core.Services
       {
          if (string.IsNullOrEmpty(password))
          {
-            throw new ArgumentNullException("Password cannot be null or empty");
+            throw new ArgumentNullException(password);
          }
 
          if (existingHash.Length != HashByteLength)

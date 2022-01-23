@@ -170,7 +170,8 @@ namespace Crypter.API.Controllers
       public async Task<ActionResult> Logout([FromBody] LogoutRequest request, CancellationToken cancellationToken)
       {
          var (tokenIsValid, securityToken) = _tokenService.ValidateToken(request.RefreshToken);
-         if (!tokenIsValid)
+         if (!tokenIsValid
+            || securityToken is null)
          {
             return BadRequest();
          }

@@ -19,7 +19,7 @@ Steps:
 
 ## Copy the published output to the server
 
-Take the published output from `.\Crypter.API\bin\Release\net5.0\linux-x64` from your development machine.
+Take the published output from `.\Crypter.API\bin\Release\net6.0\linux-x64` from your development machine.
 
 Copy the output to `/var/www/Crypter.API` on the web server.
 

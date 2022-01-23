@@ -132,8 +132,8 @@ namespace Crypter.API.Controllers
          var sentMessages = new List<UserSentMessageDTO>();
          foreach (var item in sentMessagesSansRecipientInfo)
          {
-            IUser recipient = null;
-            IUserProfile recipientProfile = null;
+            IUser? recipient = null;
+            IUserProfile? recipientProfile = null;
             if (item.Recipient != Guid.Empty)
             {
                recipient = await _userService.ReadAsync(item.Recipient, cancellationToken);
@@ -159,8 +159,8 @@ namespace Crypter.API.Controllers
          var sentFiles = new List<UserSentFileDTO>();
          foreach (var item in sentFilesSansRecipientInfo)
          {
-            IUser recipient = null;
-            IUserProfile recipientProfile = null;
+            IUser? recipient = null;
+            IUserProfile? recipientProfile = null;
             if (item.Recipient != Guid.Empty)
             {
                recipient = await _userService.ReadAsync(item.Recipient, cancellationToken);
@@ -186,8 +186,8 @@ namespace Crypter.API.Controllers
          var receivedMessages = new List<UserReceivedMessageDTO>();
          foreach (var item in receivedMessagesSansSenderInfo)
          {
-            IUser sender = null;
-            IUserProfile senderProfile = null;
+            IUser? sender = null;
+            IUserProfile? senderProfile = null;
             if (item.Sender != Guid.Empty)
             {
                sender = await _userService.ReadAsync(item.Sender, cancellationToken);
@@ -213,8 +213,8 @@ namespace Crypter.API.Controllers
          var receivedFiles = new List<UserReceivedFileDTO>();
          foreach (var item in receivedFilesSansSenderInfo)
          {
-            IUser sender = null;
-            IUserProfile senderProfile = null;
+            IUser? sender = null;
+            IUserProfile? senderProfile = null;
             if (item.Sender != Guid.Empty)
             {
                sender = await _userService.ReadAsync(item.Sender, cancellationToken);

@@ -78,7 +78,7 @@ namespace Crypter.API.Services
          ItemDigestFunction = SimpleHashService.DigestSha256;
       }
 
-      private async Task<(UploadResult Result, IBaseTransferItem GenericTransferData, byte[] ServerEncryptedCipherText)> ReceiveTransferAsync(ITransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
+      private async Task<(UploadResult Result, IBaseTransferItem? GenericTransferData, byte[]? ServerEncryptedCipherText)> ReceiveTransferAsync(ITransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
       {
          var serverHasSpaceRemaining = await ApiValidationService.IsEnoughSpaceForNewTransferAsync(AllocatedDiskSpace, MaxUploadSize, cancellationToken);
          if (!serverHasSpaceRemaining)
@@ -134,7 +134,8 @@ namespace Crypter.API.Services
       {
          (var receiveResult, var genericTransferData, var ciphertextServerEncrypted) = await ReceiveTransferAsync(request, senderId, recipientId, cancellationToken);
 
-         if (receiveResult != UploadResult.Success)
+         if (receiveResult != UploadResult.Success
+            || genericTransferData is null)
          {
             return new BadRequestObjectResult(
                new TransferUploadResponse(receiveResult, default, default));
@@ -177,7 +178,8 @@ namespace Crypter.API.Services
       {
          (var receiveResult, var genericTransferData, var ciphertextServerEncrypted) = await ReceiveTransferAsync(request, senderId, recipientId, cancellationToken);
 
-         if (receiveResult != UploadResult.Success)
+         if (receiveResult != UploadResult.Success
+            || genericTransferData is null)
          {
             return new BadRequestObjectResult(
                new TransferUploadResponse(receiveResult, default, default));
