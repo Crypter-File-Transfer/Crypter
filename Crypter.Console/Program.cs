@@ -60,9 +60,9 @@ namespace Crypter.Console
          if (RequestDeleteExpired(args[0]))
          {
             var deleteJob = new DeleteExpired(configuration["EncryptedFileStore"],
-               serviceProvider.GetService<IBaseTransferService<IMessageTransferItem>>(),
-               serviceProvider.GetService<IBaseTransferService<IFileTransferItem>>(),
-               serviceProvider.GetService<ILogger<DeleteExpired>>());
+               serviceProvider.GetService<IBaseTransferService<IMessageTransferItem>>()!,
+               serviceProvider.GetService<IBaseTransferService<IFileTransferItem>>()!,
+               serviceProvider.GetService<ILogger<DeleteExpired>>()!);
 
             await deleteJob.RunAsync();
             return 0;
