@@ -87,8 +87,8 @@ namespace Crypter.API.Services
                new MessagePreviewResponse(null, 0, default, null, null, default, default, default, default));
          }
 
-         string senderUsername = null;
-         string senderAlias = null;
+         string? senderUsername = null;
+         string? senderAlias = null;
          if (possibleMessage.Sender != Guid.Empty)
          {
             var possibleUser = await UserService.ReadAsync(possibleMessage.Sender, cancellationToken);
@@ -124,8 +124,8 @@ namespace Crypter.API.Services
                new FilePreviewResponse(null, null, 0, default, null, null, default, default, default, default));
          }
 
-         string senderUsername = null;
-         string senderAlias = null;
+         string? senderUsername = null;
+         string? senderAlias = null;
          if (possibleFile.Sender != Guid.Empty)
          {
             var possibleUser = await UserService.ReadAsync(possibleFile.Sender, cancellationToken);

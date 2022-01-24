@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
+     <Nullable>enable</Nullable>
+     <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'crypterAPI' " />
   <ItemGroup>
@@ -11,12 +13,13 @@
     <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Hangfire" Version="1.7.27" />
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.7.27" />
-    <PackageReference Include="Hangfire.PostgreSql" Version="1.8.6" />
-    <PackageReference Include="MailKit" Version="2.15.0" />
-    <PackageReference Include="MimeKit" Version="2.15.1" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.14.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.12" />
+    <PackageReference Include="Hangfire" Version="1.7.28" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.7.28" />
+    <PackageReference Include="Hangfire.PostgreSql" Version="1.9.5" />
+    <PackageReference Include="MailKit" Version="3.1.0" />
+    <PackageReference Include="MimeKit" Version="3.1.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.15.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.1" />
   </ItemGroup>
 </Project>

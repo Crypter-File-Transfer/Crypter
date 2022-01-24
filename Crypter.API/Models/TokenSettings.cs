@@ -28,11 +28,11 @@ namespace Crypter.API.Models
 {
    public class TokenSettings
    {
-      public string Audience { get; set; }
-      public string Issuer { get; set; }
-      public string SecretKey { get; set; }
-      public int AuthenticationLifetimeMinutes { get; set; }
-      public int SessionLifetimeMinutes { get; set; }
-      public int RefreshLifetimeDays { get; set; }
+      public string Audience { get; set; } = string.Empty;
+      public string Issuer { get; set; } = string.Empty;
+      public string SecretKey { get; set; } = string.Empty;
+      public int AuthenticationLifetimeMinutes { get; set; } = 0;
+      public int SessionLifetimeMinutes { get; set; } = 0;
+      public int RefreshLifetimeDays { get; set; } = 0;
    }
 }
