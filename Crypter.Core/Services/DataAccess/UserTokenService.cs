@@ -46,13 +46,13 @@ namespace Crypter.Core.Services.DataAccess
       public async Task InsertAsync(Guid tokenId, Guid userId, string description, TokenType type, DateTime expiration, CancellationToken cancellationToken)
       {
          var token = new UserToken(tokenId, userId, description, type, DateTime.UtcNow, expiration);
-         Context.UserToken.Add(token);
+         Context.UserTokens.Add(token);
          await Context.SaveChangesAsync(cancellationToken);
       }
 
       public async Task<IUserToken> ReadAsync(Guid tokenId, CancellationToken cancellationToken)
       {
-         return await Context.UserToken.FindAsync(new object[] { tokenId }, cancellationToken);
+         return await Context.UserTokens.FindAsync(new object[] { tokenId }, cancellationToken);
       }
 
       public async Task DeleteAsync(Guid tokenId, CancellationToken cancellationToken)

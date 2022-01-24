@@ -45,14 +45,14 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<IUserPublicKeyPair> GetUserPublicKeyPairAsync(Guid userId, CancellationToken cancellationToken)
       {
-         return await Context.UserX25519KeyPair
+         return await Context.UserX25519KeyPairs
              .Where(x => x.Owner == userId)
              .FirstOrDefaultAsync(cancellationToken);
       }
 
       public async Task<string> GetUserPublicKeyAsync(Guid userId, CancellationToken cancellationToken)
       {
-         var keyPair = await Context.UserX25519KeyPair
+         var keyPair = await Context.UserX25519KeyPairs
              .Where(x => x.Owner == userId)
              .FirstOrDefaultAsync(cancellationToken);
          return keyPair?.PublicKey;
@@ -73,7 +73,7 @@ namespace Crypter.Core.Services.DataAccess
              clientIV,
              DateTime.UtcNow);
 
-         Context.UserX25519KeyPair.Add(key);
+         Context.UserX25519KeyPairs.Add(key);
          await Context.SaveChangesAsync(cancellationToken);
          return true;
       }

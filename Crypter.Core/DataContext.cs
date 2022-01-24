@@ -45,16 +45,16 @@ namespace Crypter.Core
          optionsBuilder.UseNpgsql(connectionString);
       }
 
-      public DbSet<User> User { get; set; }
-      public DbSet<UserProfile> UserProfile { get; set; }
-      public DbSet<UserX25519KeyPair> UserX25519KeyPair { get; set; }
-      public DbSet<UserEd25519KeyPair> UserEd25519KeyPair { get; set; }
-      public DbSet<UserPrivacySetting> UserPrivacySetting { get; set; }
-      public DbSet<UserEmailVerification> UserEmailVerification { get; set; }
-      public DbSet<UserNotificationSetting> UserNotificationSetting { get; set; }
-      public DbSet<UserToken> UserToken { get; set; }
-      public DbSet<FileTransfer> FileTransfer { get; set; }
-      public DbSet<MessageTransfer> MessageTransfer { get; set; }
+      public DbSet<User> Users { get; set; }
+      public DbSet<UserProfile> UserProfiles { get; set; }
+      public DbSet<UserX25519KeyPair> UserX25519KeyPairs { get; set; }
+      public DbSet<UserEd25519KeyPair> UserEd25519KeyPairs { get; set; }
+      public DbSet<UserPrivacySetting> UserPrivacySettings { get; set; }
+      public DbSet<UserEmailVerification> UserEmailVerifications { get; set; }
+      public DbSet<UserNotificationSetting> UserNotificationSettings { get; set; }
+      public DbSet<UserToken> UserTokens { get; set; }
+      public DbSet<FileTransfer> FileTransfers { get; set; }
+      public DbSet<MessageTransfer> MessageTransfers { get; set; }
       public DbSet<Schema> Schema { get; set; }
    }
 }

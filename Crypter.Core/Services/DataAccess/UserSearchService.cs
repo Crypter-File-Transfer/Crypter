@@ -49,13 +49,13 @@ namespace Crypter.Core.Services.DataAccess
       {
          var lowerUsername = query.ToLower();
 
-         int totalMatches = await Context.User
+         int totalMatches = await Context.Users
             .Where(x => x.Username.ToLower().StartsWith(lowerUsername))
             .Where(x => x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
                || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
             .CountAsync(cancellationToken);
 
-         var users = await Context.User
+         var users = await Context.Users
             .Where(x => x.Username.ToLower().StartsWith(lowerUsername))
             .Where(x => x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
                || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
@@ -77,13 +77,13 @@ namespace Crypter.Core.Services.DataAccess
       {
          var lowerAlias = query.ToLower();
 
-         int totalMatches = await Context.UserProfile
+         int totalMatches = await Context.UserProfiles
             .Where(x => x.Alias.ToLower().StartsWith(lowerAlias))
             .Where(x => x.User.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
                || (x.User.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))
             .CountAsync(cancellationToken);
 
-         var users = await Context.UserProfile
+         var users = await Context.UserProfiles
             .Where(x => x.Alias.ToLower().StartsWith(lowerAlias))
             .Where(x => x.User.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
                || (x.User.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && searchParty != Guid.Empty))

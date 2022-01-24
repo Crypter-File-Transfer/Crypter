@@ -17,6 +17,7 @@
     <PackageReference Include="Hangfire.AspNetCore" Version="1.7.28" />
     <PackageReference Include="Hangfire.PostgreSql" Version="1.9.5" />
     <PackageReference Include="MailKit" Version="3.1.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="10.0.1" />
     <PackageReference Include="MimeKit" Version="3.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.15.1" />

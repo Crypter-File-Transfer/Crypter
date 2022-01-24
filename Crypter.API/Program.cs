@@ -34,11 +34,13 @@ using Crypter.Core.Services.DataAccess;
 using Crypter.CryptoLib.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,13 +64,16 @@ builder.Services.AddScoped<IUserTokenService, UserTokenService>();
 builder.Services.AddScoped<IBaseTransferService<IMessageTransferItem>, MessageTransferItemService>();
 builder.Services.AddScoped<IBaseTransferService<IFileTransferItem>, FileTransferItemService>();
 builder.Services.AddScoped<ISchemaService, SchemaService>();
+builder.Services.AddMediatR(Assembly.GetAssembly(typeof(Crypter.Core.DataContext))!);
 
 var configuration = builder.Configuration;
 var tokenSettings = configuration.GetSection("TokenSettings").Get<TokenSettings>();
 builder.Services.AddSingleton((serviceProvider) => tokenSettings);
 builder.Services.AddSingleton((serviceProvider) => configuration.GetSection("EmailSettings").Get<EmailSettings>());
 
-builder.Services.AddHangfire(config => config.UsePostgreSqlStorage(configuration.GetConnectionString("HangfireConnection")));
+builder.Services.AddHangfire(config => config
+   .UsePostgreSqlStorage(configuration.GetConnectionString("HangfireConnection"))
+   .UseRecommendedSerializerSettings());
 builder.Services.AddHangfireServer(options => options.WorkerCount = configuration.GetValue<int>("HangfireSettings:Workers"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -41,9 +41,6 @@ namespace Crypter.Core.Interfaces
       Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
       Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 
-      Task<User> AuthenticateAsync(string username, string password, CancellationToken cancellationToken);
-      Task UpdateLastLoginTime(Guid id, DateTime dateTime, CancellationToken cancellationToken);
-
       Task<bool> IsUsernameAvailableAsync(string username, CancellationToken cancellationToken);
       Task<bool> IsEmailAddressAvailableAsync(string email, CancellationToken cancellationToken);
    }

@@ -57,7 +57,7 @@ namespace Crypter.Core.Services.DataAccess
              false,
              DateTime.UtcNow,
              DateTime.MinValue);
-         Context.User.Add(user);
+         Context.Users.Add(user);
 
          await Context.SaveChangesAsync(cancellationToken);
          return user.Id;
@@ -65,12 +65,12 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
-         return await Context.User.FindAsync(new object[] { id }, cancellationToken);
+         return await Context.Users.FindAsync(new object[] { id }, cancellationToken);
       }
 
       public async Task<IUser> ReadAsync(string username, CancellationToken cancellationToken)
       {
-         return await Context.User
+         return await Context.Users
             .Where(user => user.Username.ToLower() == username.ToLower())
             .FirstOrDefaultAsync(cancellationToken);
       }
@@ -103,46 +103,16 @@ namespace Crypter.Core.Services.DataAccess
              .ExecuteSqlRawAsync("DELETE FROM \"Users\" WHERE \"Users\".\"Id\" = {0}", new object[] { id }, cancellationToken);
       }
 
-      public async Task<User> AuthenticateAsync(string username, string password, CancellationToken cancellationToken)
-      {
-         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-         {
-            return null;
-         }
-
-         var user = await Context.User.SingleOrDefaultAsync(x => x.Username.ToLower() == username.ToLower(), cancellationToken);
-
-         if (user == null)
-         {
-            return null;
-         }
-
-         var passwordsMatch = PasswordHashService.VerifySecurePasswordHash(password, user.PasswordHash, user.PasswordSalt);
-         return passwordsMatch
-            ? user
-            : null;
-      }
-
-      public async Task UpdateLastLoginTime(Guid id, DateTime dateTime, CancellationToken cancellationToken)
-      {
-         var user = await ReadAsync(id, cancellationToken);
-         if (user != null)
-         {
-            user.LastLogin = dateTime;
-            await Context.SaveChangesAsync();
-         }
-      }
-
       public async Task<bool> IsUsernameAvailableAsync(string username, CancellationToken cancellationToken)
       {
          string lowerUsername = username.ToLower();
-         return !await Context.User.AnyAsync(x => x.Username.ToLower() == lowerUsername, cancellationToken);
+         return !await Context.Users.AnyAsync(x => x.Username.ToLower() == lowerUsername, cancellationToken);
       }
 
       public async Task<bool> IsEmailAddressAvailableAsync(string email, CancellationToken cancellationToken)
       {
          string lowerEmail = email.ToLower();
-         return !await Context.User.AnyAsync(x => x.Email.ToLower() == lowerEmail, cancellationToken);
+         return !await Context.Users.AnyAsync(x => x.Email.ToLower() == lowerEmail, cancellationToken);
       }
    }
 }

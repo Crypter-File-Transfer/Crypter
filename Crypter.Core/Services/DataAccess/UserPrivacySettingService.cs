@@ -50,7 +50,7 @@ namespace Crypter.Core.Services.DataAccess
          if (userPrivacySettings == null)
          {
             var newPrivacySettings = new UserPrivacySetting(userId, allowKeyExchangeRequests, visibilityLevel, receiveFilesPermission, receiveMessagesPermission);
-            Context.UserPrivacySetting.Add(newPrivacySettings);
+            Context.UserPrivacySettings.Add(newPrivacySettings);
          }
          else
          {
@@ -66,7 +66,7 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<IUserPrivacySetting> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
-         return await Context.UserPrivacySetting.FindAsync(new object[] { userId }, cancellationToken);
+         return await Context.UserPrivacySettings.FindAsync(new object[] { userId }, cancellationToken);
       }
 
       public async Task<bool> IsUserViewableByPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken)
@@ -76,7 +76,7 @@ namespace Crypter.Core.Services.DataAccess
             return true;
          }
 
-         var userVisibility = (await Context.UserPrivacySetting
+         var userVisibility = (await Context.UserPrivacySettings
             .Where(x => x.Owner == userId)
             .FirstOrDefaultAsync(cancellationToken))
             .Visibility;
@@ -93,7 +93,7 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<bool> DoesUserAcceptMessagesFromOtherPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken)
       {
-         var messageTransferPermission = (await Context.UserPrivacySetting
+         var messageTransferPermission = (await Context.UserPrivacySettings
             .Where(x => x.Owner == userId)
             .FirstOrDefaultAsync(cancellationToken))
             .ReceiveMessages;
@@ -111,7 +111,7 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<bool> DoesUserAcceptFilesFromOtherPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken)
       {
-         var fileTransferPermission = (await Context.UserPrivacySetting
+         var fileTransferPermission = (await Context.UserPrivacySettings
             .Where(x => x.Owner == userId)
             .FirstOrDefaultAsync(cancellationToken))
             .ReceiveFiles;
