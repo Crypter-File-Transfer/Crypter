@@ -28,9 +28,11 @@ using Crypter.API.Services;
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.Contracts.Responses;
+using Crypter.Core.Features.User.Commands;
+using Crypter.Core.Features.User.Queries;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Hangfire;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -43,23 +45,17 @@ namespace Crypter.API.Controllers
    [Route("api/authentication")]
    public class AuthenticationController : ControllerBase
    {
+      private readonly IMediator _mediator;
       private readonly ITokenService _tokenService;
-      private readonly IUserService _userService;
-      private readonly IUserPublicKeyPairService<UserX25519KeyPair> _userX25519KeyPairService;
-      private readonly IUserPublicKeyPairService<UserEd25519KeyPair> _userEd25519KeyPairService;
       private readonly IUserTokenService _userTokenService;
 
       public AuthenticationController(
+         IMediator mediator,
          ITokenService tokenService,
-         IUserService userService,
-         IUserPublicKeyPairService<UserX25519KeyPair> userX25519KeyPairService,
-         IUserPublicKeyPairService<UserEd25519KeyPair> userEd25519KeyPairService,
          IUserTokenService userTokenService)
       {
+         _mediator = mediator;
          _tokenService = tokenService;
-         _userService = userService;
-         _userX25519KeyPairService = userX25519KeyPairService;
-         _userEd25519KeyPairService = userEd25519KeyPairService;
          _userTokenService = userTokenService;
       }
 
@@ -81,32 +77,30 @@ namespace Crypter.API.Controllers
       [HttpPost("login")]
       public async Task<ActionResult<LoginResponse>> AuthenticateAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
       {
-         var user = await _userService.AuthenticateAsync(request.Username, request.Password, cancellationToken);
-         if (user == null)
+         LoginQueryResult loginResult = await _mediator.Send(new LoginQuery(request.Username, request.Password), cancellationToken);
+         if (!loginResult.Success)
          {
-            return new NotFoundObjectResult(
-               new LoginResponse(default, default, default));
+            return NotFound("Invalid username or password");
          }
 
-         var authToken = _tokenService.NewAuthenticationToken(user.Id);
+         string authToken = _tokenService.NewAuthenticationToken(loginResult.UserId);
 
-         var refreshTokenId = Guid.NewGuid();
-         (var refreshToken, var sessionTokenExpiration) = request.RefreshTokenType == TokenType.Session
-            ? _tokenService.NewSessionToken(user.Id, refreshTokenId)
-            : _tokenService.NewRefreshToken(user.Id, refreshTokenId);
+         Guid refreshTokenId = Guid.NewGuid();
+         (string refreshToken, DateTime sessionTokenExpiration) = request.RefreshTokenType == TokenType.Session
+            ? _tokenService.NewSessionToken(loginResult.UserId, refreshTokenId)
+            : _tokenService.NewRefreshToken(loginResult.UserId, refreshTokenId);
 
-         HttpContext.Request.Headers.TryGetValue("User-Agent", out var someUserAgent);
-         string userAgent = someUserAgent.ToString() ?? "Unknown device";
-         await _userTokenService.InsertAsync(refreshTokenId, user.Id, userAgent, request.RefreshTokenType, sessionTokenExpiration, cancellationToken);
-
-         var userX25519KeyPair = await _userX25519KeyPairService.GetUserPublicKeyPairAsync(user.Id, cancellationToken);
-         var userEd25519KeyPair = await _userEd25519KeyPairService.GetUserPublicKeyPairAsync(user.Id, cancellationToken);
-
-         BackgroundJob.Enqueue(() => _userService.UpdateLastLoginTime(user.Id, DateTime.UtcNow, default));
+         string userAgent = HttpContext.Request.Headers.TryGetValue("User-Agent", out var someUserAgent)
+            ? someUserAgent.ToString()
+            : "Unknown device";
+         
+         await _mediator.Send(new InsertRefreshTokenCommand(refreshTokenId, loginResult.UserId, userAgent, request.RefreshTokenType, sessionTokenExpiration), cancellationToken);
          BackgroundJob.Schedule(() => _userTokenService.DeleteAsync(refreshTokenId, default), sessionTokenExpiration - DateTime.UtcNow);
 
+         BackgroundJob.Enqueue(() => _mediator.Send(new UpdateLastLoginTimeCommand(loginResult.UserId, DateTime.UtcNow), CancellationToken.None));
+
          return new OkObjectResult(
-             new LoginResponse(user.Id, authToken, refreshToken, userX25519KeyPair?.PrivateKey, userEd25519KeyPair?.PrivateKey, userX25519KeyPair?.ClientIV, userEd25519KeyPair?.ClientIV)
+             new LoginResponse(loginResult.UserId, authToken, refreshToken, loginResult.EncryptedX25519PrivateKey, loginResult.EncryptedEd25519PrivateKey, loginResult.InitVectorX25519, loginResult.InitVectorEd25519)
          );
       }
 

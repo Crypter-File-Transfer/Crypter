@@ -24,44 +24,48 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Core.Interfaces;
+using Crypter.Contracts.Enum;
 using Crypter.Core.Models;
+using MediatR;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Core.Services.DataAccess
+namespace Crypter.Core.Features.User.Commands
 {
-   public class UserProfileService : IUserProfileService
+   public class InsertRefreshTokenCommand : IRequest<Unit>
    {
-      private readonly DataContext Context;
+      public Guid TokenId { get; private set; }
+      public Guid UserId { get; private set; }
+      public string UserAgent { get; private set; }
+      public TokenType TokenType { get; private set; }
+      public DateTime TokenExpiration { get; private set; }
 
-      public UserProfileService(DataContext context)
+      public InsertRefreshTokenCommand(Guid tokenId, Guid userId, string userAgent, TokenType tokenType, DateTime tokenExpiration)
       {
-         Context = context;
+         TokenId = tokenId;
+         UserId = userId;
+         UserAgent = userAgent;
+         TokenType = tokenType;
+         TokenExpiration = tokenExpiration;
+      }
+   }
+
+   public class InsertRefreshTokenCommandHandler : IRequestHandler<InsertRefreshTokenCommand, Unit>
+   {
+      private readonly DataContext _context;
+
+      public InsertRefreshTokenCommandHandler(DataContext context)
+      {
+         _context = context;
       }
 
-      public async Task<IUserProfile> ReadAsync(Guid id, CancellationToken cancellationToken)
+      public async Task<Unit> Handle(InsertRefreshTokenCommand request, CancellationToken cancellationToken)
       {
-         return await Context.UserProfiles.FindAsync(new object[] { id }, cancellationToken);
-      }
-
-      public async Task<bool> UpsertAsync(Guid id, string alias, string about, CancellationToken cancellationToken)
-      {
-         var userProfile = await ReadAsync(id, cancellationToken);
-         if (userProfile == null)
-         {
-            var newProfile = new UserProfile(id, alias, about, null);
-            Context.UserProfiles.Add(newProfile);
-         }
-         else
-         {
-            userProfile.Alias = alias;
-            userProfile.About = about;
-         }
-
-         await Context.SaveChangesAsync(cancellationToken);
-         return true;
+         UserToken token = new(request.TokenId, request.UserId, request.UserAgent, request.TokenType, DateTime.UtcNow, request.TokenExpiration);
+         _context.UserTokens.Add(token);
+         await _context.SaveChangesAsync(cancellationToken);
+         return Unit.Value;
       }
    }
 }

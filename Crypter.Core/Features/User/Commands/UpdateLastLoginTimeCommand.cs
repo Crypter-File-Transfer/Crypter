@@ -24,44 +24,47 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Core.Services.DataAccess
+namespace Crypter.Core.Features.User.Commands
 {
-   public class UserProfileService : IUserProfileService
+   public class UpdateLastLoginTimeCommand : IRequest<Unit>
    {
-      private readonly DataContext Context;
+      public Guid UserId { get; private set; }
+      public DateTime Time { get; private set; }
 
-      public UserProfileService(DataContext context)
+      public UpdateLastLoginTimeCommand(Guid userId, DateTime time)
       {
-         Context = context;
+         UserId = userId;
+         Time = time;
+      }
+   }
+
+   public class UpdateLastLoginTimeCommandHandler : IRequestHandler<UpdateLastLoginTimeCommand, Unit>
+   {
+      private readonly DataContext _context;
+
+      public UpdateLastLoginTimeCommandHandler(DataContext context)
+      {
+         _context = context;
       }
 
-      public async Task<IUserProfile> ReadAsync(Guid id, CancellationToken cancellationToken)
+      public async Task<Unit> Handle(UpdateLastLoginTimeCommand request, CancellationToken cancellationToken)
       {
-         return await Context.UserProfiles.FindAsync(new object[] { id }, cancellationToken);
-      }
+         Models.User? user = await _context.Users
+            .FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken);
 
-      public async Task<bool> UpsertAsync(Guid id, string alias, string about, CancellationToken cancellationToken)
-      {
-         var userProfile = await ReadAsync(id, cancellationToken);
-         if (userProfile == null)
+         if (user is not null)
          {
-            var newProfile = new UserProfile(id, alias, about, null);
-            Context.UserProfiles.Add(newProfile);
-         }
-         else
-         {
-            userProfile.Alias = alias;
-            userProfile.About = about;
+            user.LastLogin = request.Time;
+            await _context.SaveChangesAsync(cancellationToken);
          }
 
-         await Context.SaveChangesAsync(cancellationToken);
-         return true;
+         return Unit.Value;
       }
    }
 }

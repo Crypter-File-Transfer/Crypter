@@ -47,7 +47,7 @@ namespace Crypter.Core.Services.DataAccess
          if (userNotificationSettings == null)
          {
             var newUserNotificationSettings = new UserNotificationSetting(userId, enableTransferNotifications, emailNotifications);
-            Context.UserNotificationSetting.Add(newUserNotificationSettings);
+            Context.UserNotificationSettings.Add(newUserNotificationSettings);
          }
          else
          {
@@ -60,7 +60,7 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<IUserNotificationSetting> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
-         return await Context.UserNotificationSetting.FindAsync(new object[] { userId }, cancellationToken);
+         return await Context.UserNotificationSettings.FindAsync(new object[] { userId }, cancellationToken);
       }
    }
 }
