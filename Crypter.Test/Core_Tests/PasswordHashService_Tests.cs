@@ -32,16 +32,17 @@ namespace Crypter.Test.Core_Tests
    [TestFixture]
    public class PasswordHashService_Tests
    {
-      [SetUp]
-      public void Setup()
+      private PasswordHashService _sut;
+
+      [OneTimeSetUp]
+      public void SetupOnce()
       {
+         _sut = new PasswordHashService();
       }
 
       [Test]
       public void Service_Exists_In_Crypter_Core()
       {
-         // See remarks on the PasswordHashService class for why this test exists
-
          var assembly = typeof(PasswordHashService);
          Assert.AreEqual("Crypter.Core.Services.PasswordHashService", assembly.FullName);
       }
@@ -49,14 +50,14 @@ namespace Crypter.Test.Core_Tests
       [Test]
       public void Salt_Is_16_Bytes()
       {
-         (var salt, _) = PasswordHashService.MakeSecurePasswordHash("foo");
+         (var salt, _) = _sut.MakeSecurePasswordHash("foo");
          Assert.True(salt.Length == 16);
       }
 
       [Test]
       public void Hash_Is_64_Bytes()
       {
-         (_, var hash) = PasswordHashService.MakeSecurePasswordHash("foo");
+         (_, var hash) = _sut.MakeSecurePasswordHash("foo");
          Assert.True(hash.Length == 64);
       }
 
@@ -64,8 +65,8 @@ namespace Crypter.Test.Core_Tests
       public void Salts_Are_Unique()
       {
          var password = "foo";
-         (var salt1, _) = PasswordHashService.MakeSecurePasswordHash(password);
-         (var salt2, _) = PasswordHashService.MakeSecurePasswordHash(password);
+         (var salt1, _) = _sut.MakeSecurePasswordHash(password);
+         (var salt2, _) = _sut.MakeSecurePasswordHash(password);
          Assert.AreNotEqual(salt1, salt2);
       }
 
@@ -73,8 +74,8 @@ namespace Crypter.Test.Core_Tests
       public void Hashes_With_Unique_Salts_Are_Unique()
       {
          var password = "foo";
-         (_, var hash1) = PasswordHashService.MakeSecurePasswordHash(password);
-         (_, var hash2) = PasswordHashService.MakeSecurePasswordHash(password);
+         (_, var hash1) = _sut.MakeSecurePasswordHash(password);
+         (_, var hash2) = _sut.MakeSecurePasswordHash(password);
          Assert.AreNotEqual(hash1, hash2);
       }
 
@@ -82,16 +83,16 @@ namespace Crypter.Test.Core_Tests
       public void Hash_Verification_Can_Succeed()
       {
          var password = "foo";
-         (var salt, var hash) = PasswordHashService.MakeSecurePasswordHash(password);
-         var hashesMatch = PasswordHashService.VerifySecurePasswordHash(password, hash, salt);
+         (var salt, var hash) = _sut.MakeSecurePasswordHash(password);
+         var hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt);
          Assert.True(hashesMatch);
       }
 
       [Test]
       public void Hash_Verification_Fails_With_Bad_Password()
       {
-         (var salt, var hash) = PasswordHashService.MakeSecurePasswordHash("foo");
-         var hashesMatch = PasswordHashService.VerifySecurePasswordHash("not foo", hash, salt);
+         (var salt, var hash) = _sut.MakeSecurePasswordHash("foo");
+         var hashesMatch = _sut.VerifySecurePasswordHash("not foo", hash, salt);
          Assert.False(hashesMatch);
       }
 
@@ -99,14 +100,14 @@ namespace Crypter.Test.Core_Tests
       public void Hash_Verification_Fails_With_Bad_Salt()
       {
          var password = "foo";
-         (var salt, var hash) = PasswordHashService.MakeSecurePasswordHash(password);
+         (var salt, var hash) = _sut.MakeSecurePasswordHash(password);
 
          // Modify the first byte in the salt to make it "bad"
          salt[0] = salt[0] == 0x01
             ? salt[0] = 0x02
             : salt[0] = 0x01;
 
-         var hashesMatch = PasswordHashService.VerifySecurePasswordHash(password, hash, salt);
+         var hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt);
          Assert.False(hashesMatch);
       }
 
@@ -132,7 +133,7 @@ namespace Crypter.Test.Core_Tests
             0xa1, 0xc7, 0xd8, 0x9d, 0x65, 0xd7, 0x2a, 0x95
          };
 
-         var hashesMatch = PasswordHashService.VerifySecurePasswordHash(password, hash, salt);
+         var hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt);
          Assert.True(hashesMatch);
       }
    }

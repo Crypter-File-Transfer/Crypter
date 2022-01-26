@@ -24,34 +24,41 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Core.Interfaces;
+using Crypter.Common.Services;
+using Crypter.Core.Features.User.Common;
+using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Services
+namespace Crypter.Core.Features.User.Queries
 {
-   public interface IApiValidationService
+   public class EmailAvailabilityQuery : IRequest<bool>
    {
-      Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken);
+      public string Email { get; private set; }
+
+      public EmailAvailabilityQuery(string email)
+      {
+         Email = email;
+      }
    }
 
-   public class ApiValidationService : IApiValidationService
+   public class EmailAvailabilityQueryHandler : IRequestHandler<EmailAvailabilityQuery, bool>
    {
-      private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
-      private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
+      private readonly DataContext _context;
 
-      public ApiValidationService(IBaseTransferService<IMessageTransferItem> messageTransferService, IBaseTransferService<IFileTransferItem> fileTransferService)
+      public EmailAvailabilityQueryHandler(DataContext context)
       {
-         MessageTransferService = messageTransferService;
-         FileTransferService = fileTransferService;
+         _context = context;
       }
 
-      public async Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken)
+      public async Task<bool> Handle(EmailAvailabilityQuery request, CancellationToken cancellationToken)
       {
-         var sizeOfFileUploads = await MessageTransferService.GetAggregateSizeAsync(cancellationToken);
-         var sizeOfMessageUploads = await FileTransferService.GetAggregateSizeAsync(cancellationToken);
-         var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
-         return (totalSizeOfUploads + maxUploadSize) <= allocatedDiskSpace;
+         if (!ValidationService.IsValidEmailAddress(request.Email))
+         {
+            return false;
+         }
+
+         return await _context.Users.IsEmailAddressAvailableAsync(request.Email, cancellationToken);
       }
    }
 }

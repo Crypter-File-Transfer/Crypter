@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Core.Services;
+using Crypter.Core.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -86,10 +86,12 @@ namespace Crypter.Core.Features.User.Queries
    public class LoginQueryHandler : IRequestHandler<LoginQuery, LoginQueryResult>
    {
       private readonly DataContext _context;
+      private readonly IPasswordHashService _passwordHashService;
 
-      public LoginQueryHandler(DataContext context)
+      public LoginQueryHandler(DataContext context, IPasswordHashService passwordHashService)
       {
          _context = context;
+         _passwordHashService = passwordHashService;
       }
 
       public async Task<LoginQueryResult> Handle(LoginQuery request, CancellationToken cancellationToken)
@@ -105,7 +107,7 @@ namespace Crypter.Core.Features.User.Queries
             return new LoginQueryResult();
          }
 
-         bool passwordsMatch = PasswordHashService.VerifySecurePasswordHash(request.Password, user.PasswordHash, user.PasswordSalt);
+         bool passwordsMatch = _passwordHashService.VerifySecurePasswordHash(request.Password, user.PasswordHash, user.PasswordSalt);
          return passwordsMatch
             ? new LoginQueryResult(user.Id, user.X25519KeyPair?.PrivateKey, user.Ed25519KeyPair?.PrivateKey, user.X25519KeyPair?.ClientIV, user.Ed25519KeyPair?.ClientIV)
             : new LoginQueryResult();

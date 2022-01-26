@@ -31,11 +31,14 @@ using Crypter.Contracts.DTO;
 using Crypter.Contracts.Enum;
 using Crypter.Contracts.Requests;
 using Crypter.Contracts.Responses;
+using Crypter.Core.Features.User.Commands;
+using Crypter.Core.Features.User.Queries;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Hangfire;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -62,8 +65,8 @@ namespace Crypter.API.Controllers
       private readonly IBaseTransferService<IMessageTransferItem> _messageTransferService;
       private readonly IBaseTransferService<IFileTransferItem> _fileTransferService;
       private readonly IEmailService _emailService;
-      private readonly IApiValidationService _apiValidationService;
       private readonly ITokenService _tokenService;
+      private readonly IMediator _mediator;
 
       public UserController(
           IUserService userService,
@@ -77,8 +80,8 @@ namespace Crypter.API.Controllers
           IBaseTransferService<IMessageTransferItem> messageService,
           IBaseTransferService<IFileTransferItem> fileService,
           IEmailService emailService,
-          IApiValidationService apiValidationService,
-          ITokenService tokenService
+          ITokenService tokenService,
+          IMediator mediator
           )
       {
          _userService = userService;
@@ -92,31 +95,26 @@ namespace Crypter.API.Controllers
          _messageTransferService = messageService;
          _fileTransferService = fileService;
          _emailService = emailService;
-         _apiValidationService = apiValidationService;
          _tokenService = tokenService;
+         _mediator = mediator;
       }
 
       [HttpPost("register")]
-      public async Task<IActionResult> RegisterAsync([FromBody] RegisterUserRequest request, CancellationToken cancellationToken)
+      public async Task<ActionResult<UserRegisterResponse>> RegisterAsync([FromBody] RegisterUserRequest request, CancellationToken cancellationToken)
       {
-         var validationResult = await _apiValidationService.IsValidUserRegistrationRequestAsync(request, cancellationToken);
-         if (validationResult != InsertUserResult.Success)
+         var insertResult = await _mediator.Send(new InsertUserCommand(request.Username, request.Password, request.Email), cancellationToken);
+
+         if (insertResult.Result != InsertUserResult.Success)
          {
-            return new BadRequestObjectResult(
-               new UserRegisterResponse(validationResult));
+            return new BadRequestObjectResult(new UserRegisterResponse(insertResult.Result));
          }
 
-         var userId = await _userService.InsertAsync(request.Username, request.Password, request.Email, cancellationToken);
-
-         await _userProfileService.UpsertAsync(userId, null, null, default);
-         await _userPrivacySettingService.UpsertAsync(userId, false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None, default);
-
-         if (ValidationService.IsPossibleEmailAddress(request.Email))
+         if (insertResult.SendVerificationEmail)
          {
-            BackgroundJob.Enqueue(() => _emailService.HangfireSendEmailVerificationAsync(userId));
+            BackgroundJob.Enqueue(() => _emailService.HangfireSendEmailVerificationAsync(insertResult.UserId));
          }
-         return new OkObjectResult(
-            new UserRegisterResponse(InsertUserResult.Success));
+
+         return new OkObjectResult(new UserRegisterResponse(InsertUserResult.Success));
       }
 
       [Authorize]
@@ -288,7 +286,7 @@ namespace Crypter.API.Controllers
          var user = await _userService.ReadAsync(userId, cancellationToken);
          if (ValidationService.IsPossibleEmailAddress(request.Email)
             && user.Email?.ToLower() != request.Email.ToLower()
-            && !await _userService.IsEmailAddressAvailableAsync(request.Email, cancellationToken))
+            && !await _mediator.Send(new EmailAvailabilityQuery(request.Email), cancellationToken))
          {
             return new BadRequestObjectResult(
                new UpdateContactInfoResponse(UpdateContactInfoResult.EmailUnavailable));
