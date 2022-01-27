@@ -30,6 +30,7 @@ using Crypter.API.Startup;
 using Crypter.Core;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
+using Crypter.Core.Services;
 using Crypter.Core.Services.DataAccess;
 using Crypter.CryptoLib.Services;
 using Hangfire;
@@ -50,6 +51,7 @@ builder.Services.AddSingleton<ISimpleSignatureService, SimpleSignatureService>()
 builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IApiValidationService, ApiValidationService>();
+builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
 
 builder.Services.AddDbContext<DataContext>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -64,6 +66,7 @@ builder.Services.AddScoped<IUserTokenService, UserTokenService>();
 builder.Services.AddScoped<IBaseTransferService<IMessageTransferItem>, MessageTransferItemService>();
 builder.Services.AddScoped<IBaseTransferService<IFileTransferItem>, FileTransferItemService>();
 builder.Services.AddScoped<ISchemaService, SchemaService>();
+
 builder.Services.AddMediatR(Assembly.GetAssembly(typeof(Crypter.Core.DataContext))!);
 
 var configuration = builder.Configuration;

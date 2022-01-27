@@ -24,28 +24,21 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Core.Interfaces;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System;
 using System.Security.Cryptography;
 
 namespace Crypter.Core.Services
 {
-   /// <summary>
-   /// Contains methods to securely hash passwords prior to saving them in the database.
-   /// </summary>
-   /// <remarks>
-   /// Do not move this class outside of Crypter.Core!
-   /// Although you may think this class belongs in a more common library,
-   ///   nothing outside of Crypter.Core will ever need to perform these functions.
-   /// </remarks>
-   public class PasswordHashService
+   public class PasswordHashService : IPasswordHashService
    {
       private static readonly int Iterations = 100001;
       private static readonly KeyDerivationPrf KeyDerivationAlgorithm = KeyDerivationPrf.HMACSHA512;
       private static readonly int HashByteLength = 64; // 512 bits
       private static readonly int SaltByteLength = 16; // 128 bits
 
-      public static (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(string password)
+      public (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(string password)
       {
          if (string.IsNullOrEmpty(password))
          {
@@ -57,7 +50,7 @@ namespace Crypter.Core.Services
          return (salt, hash);
       }
 
-      public static bool VerifySecurePasswordHash(string password, byte[] existingHash, byte[] existingSalt)
+      public bool VerifySecurePasswordHash(string password, byte[] existingHash, byte[] existingSalt)
       {
          if (string.IsNullOrEmpty(password))
          {

@@ -24,34 +24,26 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Services
+namespace Crypter.Core.Features.User.Common
 {
-   public interface IApiValidationService
+   internal static class UserHelpers
    {
-      Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken);
-   }
-
-   public class ApiValidationService : IApiValidationService
-   {
-      private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
-      private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
-
-      public ApiValidationService(IBaseTransferService<IMessageTransferItem> messageTransferService, IBaseTransferService<IFileTransferItem> fileTransferService)
+      public static async Task<bool> IsUsernameAvailableAsync(this DbSet<Models.User> userContext, string username, CancellationToken cancellationToken)
       {
-         MessageTransferService = messageTransferService;
-         FileTransferService = fileTransferService;
+         string usernameLowercase = username.ToLower();
+         return !await userContext
+            .AnyAsync(x => x.Username.ToLower() == usernameLowercase, cancellationToken);
       }
 
-      public async Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken)
+      public static async Task<bool> IsEmailAddressAvailableAsync(this DbSet<Models.User> userContext, string email, CancellationToken cancellationToken)
       {
-         var sizeOfFileUploads = await MessageTransferService.GetAggregateSizeAsync(cancellationToken);
-         var sizeOfMessageUploads = await FileTransferService.GetAggregateSizeAsync(cancellationToken);
-         var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
-         return (totalSizeOfUploads + maxUploadSize) <= allocatedDiskSpace;
+         string emailLowercase = email.ToLower();
+         return !await userContext
+            .AnyAsync(x => x.Email.ToLower() == emailLowercase, cancellationToken);
       }
    }
 }

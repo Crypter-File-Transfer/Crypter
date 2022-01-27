@@ -24,19 +24,11 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Enum;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Crypter.Core.Interfaces
 {
-   public interface IUserService
+   public interface IPasswordHashService
    {
-      Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task<IUser> ReadAsync(string username, CancellationToken cancellationToken);
-      Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
-      Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
-      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+      (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(string password);
+      bool VerifySecurePasswordHash(string password, byte[] existingHash, byte[] existingSalt);
    }
 }

@@ -26,7 +26,6 @@
 
 using Crypter.Contracts.Enum;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -38,29 +37,12 @@ namespace Crypter.Core.Services.DataAccess
    public class UserService : IUserService
    {
       private readonly DataContext Context;
+      private readonly IPasswordHashService _passwordHashService;
 
-      public UserService(DataContext context)
+      public UserService(DataContext context, IPasswordHashService passwordHashService)
       {
          Context = context;
-      }
-
-      public async Task<Guid> InsertAsync(string username, string password, string email, CancellationToken cancellationToken)
-      {
-         (var passwordKey, var passwordHash) = PasswordHashService.MakeSecurePasswordHash(password);
-
-         var user = new User(
-             Guid.NewGuid(),
-             username,
-             email,
-             passwordHash,
-             passwordKey,
-             false,
-             DateTime.UtcNow,
-             DateTime.MinValue);
-         Context.Users.Add(user);
-
-         await Context.SaveChangesAsync(cancellationToken);
-         return user.Id;
+         _passwordHashService = passwordHashService;
       }
 
       public async Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken)
@@ -78,7 +60,7 @@ namespace Crypter.Core.Services.DataAccess
       public async Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken)
       {
          var user = await ReadAsync(id, cancellationToken);
-         var passwordsMatch = PasswordHashService.VerifySecurePasswordHash(currentPassword, user.PasswordHash, user.PasswordSalt);
+         var passwordsMatch = _passwordHashService.VerifySecurePasswordHash(currentPassword, user.PasswordHash, user.PasswordSalt);
          if (!passwordsMatch)
          {
             return UpdateContactInfoResult.PasswordValidationFailed;
@@ -101,18 +83,6 @@ namespace Crypter.Core.Services.DataAccess
       {
          await Context.Database
              .ExecuteSqlRawAsync("DELETE FROM \"Users\" WHERE \"Users\".\"Id\" = {0}", new object[] { id }, cancellationToken);
-      }
-
-      public async Task<bool> IsUsernameAvailableAsync(string username, CancellationToken cancellationToken)
-      {
-         string lowerUsername = username.ToLower();
-         return !await Context.Users.AnyAsync(x => x.Username.ToLower() == lowerUsername, cancellationToken);
-      }
-
-      public async Task<bool> IsEmailAddressAvailableAsync(string email, CancellationToken cancellationToken)
-      {
-         string lowerEmail = email.ToLower();
-         return !await Context.Users.AnyAsync(x => x.Email.ToLower() == lowerEmail, cancellationToken);
       }
    }
 }
