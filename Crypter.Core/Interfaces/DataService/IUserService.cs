@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Enum;
+using Crypter.Contracts.Features.User.UpdateContactInfo;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,7 +35,7 @@ namespace Crypter.Core.Interfaces
    {
       Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken);
       Task<IUser> ReadAsync(string username, CancellationToken cancellationToken);
-      Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
+      Task<(bool Success, UpdateContactInfoError Error)> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
       Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
       Task DeleteAsync(Guid id, CancellationToken cancellationToken);
    }

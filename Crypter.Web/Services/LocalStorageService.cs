@@ -25,9 +25,9 @@
  */
 
 using Microsoft.JSInterop;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Services
@@ -129,7 +129,7 @@ namespace Crypter.Web.Services
                default:
                   throw new NotImplementedException();
             }
-            return JsonConvert.DeserializeObject<T>(storedJson);
+            return JsonSerializer.Deserialize<T>(storedJson);
          }
          return default;
       }
@@ -154,10 +154,10 @@ namespace Crypter.Web.Services
                _inMemoryStorage.Add(itemType.ToString(), value);
                break;
             case StorageLocation.SessionStorage:
-               await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.setItem", new object[] { itemType.ToString(), JsonConvert.SerializeObject(value) });
+               await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.setItem", new object[] { itemType.ToString(), JsonSerializer.Serialize(value) });
                break;
             case StorageLocation.LocalStorage:
-               await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.setItem", new object[] { itemType.ToString(), JsonConvert.SerializeObject(value) });
+               await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.setItem", new object[] { itemType.ToString(), JsonSerializer.Serialize(value) });
                break;
             default:
                throw new NotImplementedException();

@@ -25,9 +25,14 @@
  */
 
 using Crypter.API.Services;
-using Crypter.Contracts.Requests;
+using Crypter.Contracts.Common;
+using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
+using Crypter.Contracts.Features.Transfer.DownloadPreview;
+using Crypter.Contracts.Features.Transfer.DownloadSignature;
+using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.Core.Interfaces;
 using Crypter.CryptoLib.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -61,70 +66,94 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("message")]
-      public async Task<IActionResult> MessageTransferAsync([FromBody] MessageTransferRequest request, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> MessageTransferAsync([FromBody] UploadMessageTransferRequest request, CancellationToken cancellationToken)
       {
          var senderId = _tokenService.ParseUserId(User);
          return await _uploadService.ReceiveMessageTransferAsync(request, senderId, Guid.Empty, cancellationToken);
       }
 
       [HttpPost("message/{recipientId}")]
-      public async Task<IActionResult> UserMessageTransferAsync([FromBody] MessageTransferRequest request, Guid recipientId, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> UserMessageTransferAsync([FromBody] UploadMessageTransferRequest request, Guid recipientId, CancellationToken cancellationToken)
       {
          var senderId = _tokenService.ParseUserId(User);
          return await _uploadService.ReceiveMessageTransferAsync(request, senderId, recipientId, cancellationToken);
       }
 
       [HttpPost("file")]
-      public async Task<IActionResult> FileTransferAsync([FromBody] FileTransferRequest request, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> FileTransferAsync([FromBody] UploadFileTransferRequest request, CancellationToken cancellationToken)
       {
          var senderId = _tokenService.ParseUserId(User);
          return await _uploadService.ReceiveFileTransferAsync(request, senderId, Guid.Empty, cancellationToken);
       }
 
       [HttpPost("file/{recipientId}")]
-      public async Task<IActionResult> UserFileTransferAsync([FromBody] FileTransferRequest request, Guid recipientId, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> UserFileTransferAsync([FromBody] UploadFileTransferRequest request, Guid recipientId, CancellationToken cancellationToken)
       {
          var senderId = _tokenService.ParseUserId(User);
          return await _uploadService.ReceiveFileTransferAsync(request, senderId, recipientId, cancellationToken);
       }
 
       [HttpPost("message/preview")]
-      public async Task<IActionResult> GetMessagePreviewAsync([FromBody] GetTransferPreviewRequest request, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetMessagePreviewAsync([FromBody] DownloadTransferPreviewRequest request, CancellationToken cancellationToken)
       {
          var requestorId = _tokenService.ParseUserId(User);
          return await _downloadService.GetMessagePreviewAsync(request, requestorId, cancellationToken);
       }
 
       [HttpPost("file/preview")]
-      public async Task<IActionResult> GetFilePreviewAsync([FromBody] GetTransferPreviewRequest request, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetFilePreviewAsync([FromBody] DownloadTransferPreviewRequest request, CancellationToken cancellationToken)
       {
          var requestorId = _tokenService.ParseUserId(User);
          return await _downloadService.GetFilePreviewAsync(request, requestorId, cancellationToken);
       }
 
       [HttpPost("message/ciphertext")]
-      public async Task<IActionResult> GetMessageCiphertextAsync([FromBody] GetTransferCiphertextRequest request, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferCiphertextResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetMessageCiphertextAsync([FromBody] DownloadTransferCiphertextRequest request, CancellationToken cancellationToken)
       {
          var requestorId = _tokenService.ParseUserId(User);
          return await _downloadService.GetMessageCiphertextAsync(request, requestorId, cancellationToken);
       }
 
       [HttpPost("file/ciphertext")]
-      public async Task<IActionResult> GetFileCiphertext([FromBody] GetTransferCiphertextRequest request, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferCiphertextResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetFileCiphertext([FromBody] DownloadTransferCiphertextRequest request, CancellationToken cancellationToken)
       {
          var requestorId = _tokenService.ParseUserId(User);
          return await _downloadService.GetFileCiphertextAsync(request, requestorId, cancellationToken);
       }
 
       [HttpPost("message/signature")]
-      public async Task<IActionResult> GetMessageSignatureAsync([FromBody] GetTransferSignatureRequest request, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferSignatureResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetMessageSignatureAsync([FromBody] DownloadTransferSignatureRequest request, CancellationToken cancellationToken)
       {
          var requestorId = _tokenService.ParseUserId(User);
          return await _downloadService.GetMessageSignatureAsync(request, requestorId, cancellationToken);
       }
 
       [HttpPost("file/signature")]
-      public async Task<IActionResult> GetFileSignatureAsync([FromBody] GetTransferSignatureRequest request, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferSignatureResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetFileSignatureAsync([FromBody] DownloadTransferSignatureRequest request, CancellationToken cancellationToken)
       {
          var requestorId = _tokenService.ParseUserId(User);
          return await _downloadService.GetFileSignatureAsync(request, requestorId, cancellationToken);

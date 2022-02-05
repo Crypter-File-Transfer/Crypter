@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Enum;
-using Crypter.Contracts.Requests;
-using Crypter.Contracts.Responses;
+using Crypter.Contracts.Common;
+using Crypter.Contracts.Common.Enum;
+using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
@@ -78,12 +78,12 @@ namespace Crypter.API.Services
          ItemDigestFunction = SimpleHashService.DigestSha256;
       }
 
-      private async Task<(UploadResult Result, IBaseTransferItem? GenericTransferData, byte[]? ServerEncryptedCipherText)> ReceiveTransferAsync(ITransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
+      private async Task<(bool Success, UploadTransferError ErrorCode, IBaseTransferItem? GenericTransferData, byte[]? ServerEncryptedCipherText)> ReceiveTransferAsync(IUploadTransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
       {
          var serverHasSpaceRemaining = await ApiValidationService.IsEnoughSpaceForNewTransferAsync(AllocatedDiskSpace, MaxUploadSize, cancellationToken);
          if (!serverHasSpaceRemaining)
          {
-            return (UploadResult.OutOfSpace, null, null);
+            return (false, UploadTransferError.OutOfSpace, null, null);
          }
 
          byte[] hashedSymmetricEncryptionKey;
@@ -93,7 +93,7 @@ namespace Crypter.API.Services
          }
          catch (Exception)
          {
-            return (UploadResult.InvalidServerEncryptionKey, null, null);
+            return (false, UploadTransferError.InvalidServerEncryptionKey, null, null);
          }
 
          byte[] originalCiphertextBytes;
@@ -103,12 +103,12 @@ namespace Crypter.API.Services
          }
          catch (Exception)
          {
-            return (UploadResult.InvalidCipherText, null, null);
+            return (false, UploadTransferError.InvalidCipherText, null, null);
          }
 
          if (request.LifetimeHours > 24 || request.LifetimeHours < 1)
          {
-            return (UploadResult.InvalidRequestedExpiration, null, null);
+            return (false, UploadTransferError.InvalidRequestedExpiration, null, null);
          }
 
          // Digest the ciphertext BEFORE applying server-side encryption
@@ -117,7 +117,7 @@ namespace Crypter.API.Services
          // Apply server-side encryption
          if (hashedSymmetricEncryptionKey.Length != 32)
          {
-            return (UploadResult.InvalidServerEncryptionKey, null, null);
+            return (false, UploadTransferError.InvalidServerEncryptionKey, null, null);
          }
 
          var (serverEncryptedCiphertext, serverIV) = SimpleEncryptionService.Encrypt(hashedSymmetricEncryptionKey, originalCiphertextBytes);
@@ -127,25 +127,22 @@ namespace Crypter.API.Services
          var expiration = created.AddHours(request.LifetimeHours);
 
          var returnItem = new BaseTransfer(itemId, senderId, recipientId, originalCiphertextBytes.Length, request.ClientEncryptionIVBase64, request.SignatureBase64, request.X25519PublicKeyBase64, request.Ed25519PublicKeyBase64, serverIV, serverDigest, created, expiration);
-         return (UploadResult.Success, returnItem, serverEncryptedCiphertext);
+         return (true, UploadTransferError.UnknownError, returnItem, serverEncryptedCiphertext);
       }
 
-      public async Task<IActionResult> ReceiveMessageTransferAsync(MessageTransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
+      public async Task<IActionResult> ReceiveMessageTransferAsync(UploadMessageTransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
       {
-         (var receiveResult, var genericTransferData, var ciphertextServerEncrypted) = await ReceiveTransferAsync(request, senderId, recipientId, cancellationToken);
+         (var success, var errorCode, var genericTransferData, var ciphertextServerEncrypted) = await ReceiveTransferAsync(request, senderId, recipientId, cancellationToken);
 
-         if (receiveResult != UploadResult.Success
-            || genericTransferData is null)
+         if (!success || genericTransferData is null)
          {
-            return new BadRequestObjectResult(
-               new TransferUploadResponse(receiveResult, default, default));
+            return new BadRequestObjectResult(new ErrorResponse(errorCode));
          }
 
          var saveResult = await MessageTransferItemStorageService.SaveAsync(genericTransferData.Id, ciphertextServerEncrypted, cancellationToken);
          if (!saveResult)
          {
-            return new BadRequestObjectResult(
-                new TransferUploadResponse(UploadResult.Unknown, default, default));
+            return new BadRequestObjectResult(new ErrorResponse(UploadTransferError.UnknownError));
          }
 
          var messageItem = new MessageTransfer(
@@ -171,25 +168,22 @@ namespace Crypter.API.Services
          }
 
          return new OkObjectResult(
-             new TransferUploadResponse(UploadResult.Success, genericTransferData.Id, genericTransferData.Expiration));
+             new UploadTransferResponse(genericTransferData.Id, genericTransferData.Expiration));
       }
 
-      public async Task<IActionResult> ReceiveFileTransferAsync(FileTransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
+      public async Task<IActionResult> ReceiveFileTransferAsync(UploadFileTransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
       {
-         (var receiveResult, var genericTransferData, var ciphertextServerEncrypted) = await ReceiveTransferAsync(request, senderId, recipientId, cancellationToken);
+         (var success, var errorCode, var genericTransferData, var ciphertextServerEncrypted) = await ReceiveTransferAsync(request, senderId, recipientId, cancellationToken);
 
-         if (receiveResult != UploadResult.Success
-            || genericTransferData is null)
+         if (!success || genericTransferData is null)
          {
-            return new BadRequestObjectResult(
-               new TransferUploadResponse(receiveResult, default, default));
+            return new BadRequestObjectResult(new ErrorResponse(errorCode));
          }
 
          var saveResult = await FileTransferItemStorageService.SaveAsync(genericTransferData.Id, ciphertextServerEncrypted, cancellationToken);
          if (!saveResult)
          {
-            return new BadRequestObjectResult(
-                new TransferUploadResponse(UploadResult.Unknown, default, default));
+            return new BadRequestObjectResult(new ErrorResponse(UploadTransferError.UnknownError));
          }
 
          var fileItem = new FileTransfer(
@@ -216,7 +210,7 @@ namespace Crypter.API.Services
          }
 
          return new OkObjectResult(
-             new TransferUploadResponse(UploadResult.Success, genericTransferData.Id, genericTransferData.Expiration));
+             new UploadTransferResponse(genericTransferData.Id, genericTransferData.Expiration));
       }
    }
 }

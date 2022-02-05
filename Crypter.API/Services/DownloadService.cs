@@ -24,9 +24,11 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Enum;
-using Crypter.Contracts.Requests;
-using Crypter.Contracts.Responses;
+using Crypter.Contracts.Common;
+using Crypter.Contracts.Common.Enum;
+using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
+using Crypter.Contracts.Features.Transfer.DownloadPreview;
+using Crypter.Contracts.Features.Transfer.DownloadSignature;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Services;
 using Crypter.CryptoLib.Services;
@@ -71,20 +73,18 @@ namespace Crypter.API.Services
          ItemDigestFunction = SimpleHashService.DigestSha256;
       }
 
-      public async Task<IActionResult> GetMessagePreviewAsync(GetTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetMessagePreviewAsync(DownloadTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
          var possibleMessage = await MessageService.ReadAsync(request.Id, cancellationToken);
          if (possibleMessage is null)
          {
-            return new NotFoundObjectResult(
-               new MessagePreviewResponse(null, 0, default, null, null, default, default, default, default));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferPreviewError.NotFound));
          }
 
          var messageBelongsToSomeoneElse = possibleMessage.Recipient != Guid.Empty && possibleMessage.Recipient != requestorId;
          if (messageBelongsToSomeoneElse)
          {
-            return new NotFoundObjectResult(
-               new MessagePreviewResponse(null, 0, default, null, null, default, default, default, default));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferPreviewError.NotFound));
          }
 
          string? senderUsername = null;
@@ -105,23 +105,21 @@ namespace Crypter.API.Services
          }
 
          return new OkObjectResult(
-            new MessagePreviewResponse(possibleMessage.Subject, possibleMessage.Size, possibleMessage.Sender, senderUsername, senderAlias, possibleMessage.Recipient, possibleMessage.X25519PublicKey, possibleMessage.Created, possibleMessage.Expiration));
+            new DownloadTransferMessagePreviewResponse(possibleMessage.Subject, possibleMessage.Size, possibleMessage.Sender, senderUsername, senderAlias, possibleMessage.Recipient, possibleMessage.X25519PublicKey, possibleMessage.Created, possibleMessage.Expiration));
       }
 
-      public async Task<IActionResult> GetFilePreviewAsync(GetTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetFilePreviewAsync(DownloadTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
          var possibleFile = await FileService.ReadAsync(request.Id, cancellationToken);
          if (possibleFile is null)
          {
-            return new NotFoundObjectResult(
-               new FilePreviewResponse(null, null, 0, default, null, null, default, default, default, default));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferPreviewError.NotFound));
          }
 
          var fileBelongsToSomeoneElse = possibleFile.Recipient != Guid.Empty && possibleFile.Recipient != requestorId;
          if (fileBelongsToSomeoneElse)
          {
-            return new NotFoundObjectResult(
-               new FilePreviewResponse(null, null, 0, default, null, null, default, default, default, default));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferPreviewError.NotFound));
          }
 
          string? senderUsername = null;
@@ -142,23 +140,21 @@ namespace Crypter.API.Services
          }
 
          return new OkObjectResult(
-            new FilePreviewResponse(possibleFile.FileName, possibleFile.ContentType, possibleFile.Size, possibleFile.Sender, senderUsername, senderAlias, possibleFile.Recipient, possibleFile.X25519PublicKey, possibleFile.Created, possibleFile.Expiration));
+            new DownloadTransferFilePreviewResponse(possibleFile.FileName, possibleFile.ContentType, possibleFile.Size, possibleFile.Sender, senderUsername, senderAlias, possibleFile.Recipient, possibleFile.X25519PublicKey, possibleFile.Created, possibleFile.Expiration));
       }
 
-      public async Task<IActionResult> GetMessageCiphertextAsync(GetTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetMessageCiphertextAsync(DownloadTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
          var possibleMessage = await MessageService.ReadAsync(request.Id, cancellationToken);
          if (possibleMessage is null)
          {
-            return new NotFoundObjectResult(
-               new GetTransferCiphertextResponse(DownloadCiphertextResult.NotFound, null, null));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferCiphertextError.NotFound));
          }
 
          var messageBelongsToSomeoneElse = possibleMessage.Recipient != Guid.Empty && possibleMessage.Recipient != requestorId;
          if (messageBelongsToSomeoneElse)
          {
-            return new NotFoundObjectResult(
-               new GetTransferCiphertextResponse(DownloadCiphertextResult.NotFound, null, null));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferCiphertextError.NotFound));
          }
 
          // Remove server-side encryption
@@ -171,8 +167,7 @@ namespace Crypter.API.Services
          var digestsMatch = SimpleHashService.CompareDigests(possibleMessage.ServerDigest, cipherTextClientDigest);
          if (!digestsMatch)
          {
-            return new BadRequestObjectResult(
-                new GetTransferCiphertextResponse(DownloadCiphertextResult.ServerDecryptionFailed, null, null));
+            return new BadRequestObjectResult(new ErrorResponse(DownloadTransferCiphertextError.ServerDecryptionFailed));
          }
 
          if (possibleMessage.Recipient == Guid.Empty)
@@ -182,23 +177,21 @@ namespace Crypter.API.Services
          }
 
          return new OkObjectResult(
-             new GetTransferCiphertextResponse(DownloadCiphertextResult.Success, Convert.ToBase64String(cipherTextClient), possibleMessage.ClientIV));
+             new DownloadTransferCiphertextResponse(Convert.ToBase64String(cipherTextClient), possibleMessage.ClientIV));
       }
 
-      public async Task<IActionResult> GetFileCiphertextAsync(GetTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetFileCiphertextAsync(DownloadTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
          var possibleFile = await FileService.ReadAsync(request.Id, cancellationToken);
          if (possibleFile is null)
          {
-            return new NotFoundObjectResult(
-               new GetTransferCiphertextResponse(DownloadCiphertextResult.NotFound, null, null));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferCiphertextError.NotFound));
          }
 
          var fileBelongsToSomeoneElse = possibleFile.Recipient != Guid.Empty && possibleFile.Recipient != requestorId;
          if (fileBelongsToSomeoneElse)
          {
-            return new NotFoundObjectResult(
-               new GetTransferCiphertextResponse(DownloadCiphertextResult.NotFound, null, null));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferCiphertextError.NotFound));
          }
 
          // Remove server-side encryption
@@ -211,8 +204,7 @@ namespace Crypter.API.Services
          var digestsMatch = SimpleHashService.CompareDigests(possibleFile.ServerDigest, cipherTextClientDigest);
          if (!digestsMatch)
          {
-            return new BadRequestObjectResult(
-                new GetTransferCiphertextResponse(DownloadCiphertextResult.ServerDecryptionFailed, null, null));
+            return new BadRequestObjectResult(new ErrorResponse(DownloadTransferCiphertextError.ServerDecryptionFailed));
          }
 
          if (possibleFile.Recipient == Guid.Empty)
@@ -222,47 +214,43 @@ namespace Crypter.API.Services
          }
 
          return new OkObjectResult(
-             new GetTransferCiphertextResponse(DownloadCiphertextResult.Success, Convert.ToBase64String(cipherTextClient), possibleFile.ClientIV));
+             new DownloadTransferCiphertextResponse(Convert.ToBase64String(cipherTextClient), possibleFile.ClientIV));
       }
 
-      public async Task<IActionResult> GetMessageSignatureAsync(GetTransferSignatureRequest request, Guid requestorId, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetMessageSignatureAsync(DownloadTransferSignatureRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
          var possibleMessage = await MessageService.ReadAsync(request.Id, cancellationToken);
          if (possibleMessage is null)
          {
-            return new NotFoundObjectResult(
-               new GetTransferSignatureResponse(DownloadSignatureResult.NotFound, null, null));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferSignatureError.NotFound));
          }
 
          var messageBelongsToSomeoneElse = possibleMessage.Recipient != Guid.Empty && possibleMessage.Recipient != requestorId;
          if (messageBelongsToSomeoneElse)
          {
-            return new NotFoundObjectResult(
-               new GetTransferSignatureResponse(DownloadSignatureResult.NotFound, null, null));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferSignatureError.NotFound));
          }
 
          return new OkObjectResult(
-            new GetTransferSignatureResponse(DownloadSignatureResult.Success, possibleMessage.Signature, possibleMessage.Ed25519PublicKey));
+            new DownloadTransferSignatureResponse(possibleMessage.Signature, possibleMessage.Ed25519PublicKey));
       }
 
-      public async Task<IActionResult> GetFileSignatureAsync(GetTransferSignatureRequest request, Guid requestorId, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetFileSignatureAsync(DownloadTransferSignatureRequest request, Guid requestorId, CancellationToken cancellationToken)
       {
          var possibleFile = await FileService.ReadAsync(request.Id, cancellationToken);
          if (possibleFile is null)
          {
-            return new NotFoundObjectResult(
-               new GetTransferSignatureResponse(DownloadSignatureResult.NotFound, null, null));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferSignatureError.NotFound));
          }
 
          var messageBelongsToSomeoneElse = possibleFile.Recipient != Guid.Empty && possibleFile.Recipient != requestorId;
          if (messageBelongsToSomeoneElse)
          {
-            return new NotFoundObjectResult(
-               new GetTransferSignatureResponse(DownloadSignatureResult.NotFound, null, null));
+            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferSignatureError.NotFound));
          }
 
          return new OkObjectResult(
-            new GetTransferSignatureResponse(DownloadSignatureResult.Success, possibleFile.Signature, possibleFile.Ed25519PublicKey));
+            new DownloadTransferSignatureResponse(possibleFile.Signature, possibleFile.Ed25519PublicKey));
       }
    }
 }

@@ -24,19 +24,21 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Requests;
-using Crypter.Contracts.Responses;
+using Crypter.Common.FunctionalTypes;
+using Crypter.Contracts.Common;
+using Crypter.Contracts.Features.Authentication.Login;
+using Crypter.Contracts.Features.Authentication.Logout;
+using Crypter.Contracts.Features.Authentication.Refresh;
 using Crypter.Web.Models;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Services.API
 {
    public interface IAuthenticationApiService
    {
-      Task<(HttpStatusCode HttpStatus, LoginResponse Response)> LoginAsync(LoginRequest loginRequest);
-      Task<(HttpStatusCode HttpStatus, RefreshResponse Response)> RefreshAsync();
-      Task<HttpStatusCode> LogoutAsync(LogoutRequest logoutRequest);
+      Task<Either<ErrorResponse, LoginResponse>> LoginAsync(LoginRequest loginRequest);
+      Task<Either<ErrorResponse, RefreshResponse>> RefreshAsync();
+      Task<Either<ErrorResponse, LogoutResponse>> LogoutAsync(LogoutRequest logoutRequest);
    }
 
    public class AuthenticationApiService : IAuthenticationApiService
@@ -50,22 +52,22 @@ namespace Crypter.Web.Services.API
          HttpService = httpService;
       }
 
-      public async Task<(HttpStatusCode, LoginResponse)> LoginAsync(LoginRequest loginRequest)
+      public async Task<Either<ErrorResponse, LoginResponse>> LoginAsync(LoginRequest loginRequest)
       {
          var url = $"{BaseAuthenticationUrl}/login";
          return await HttpService.PostAsync<LoginResponse>(url, loginRequest);
       }
 
-      public async Task<(HttpStatusCode, RefreshResponse)> RefreshAsync()
+      public async Task<Either<ErrorResponse, RefreshResponse>> RefreshAsync()
       {
          var url = $"{BaseAuthenticationUrl}/refresh";
          return await HttpService.GetAsync<RefreshResponse>(url, true, true);
       }
 
-      public async Task<HttpStatusCode> LogoutAsync(LogoutRequest logoutRequest)
+      public async Task<Either<ErrorResponse, LogoutResponse>> LogoutAsync(LogoutRequest logoutRequest)
       {
          var url = $"{BaseAuthenticationUrl}/logout";
-         return await HttpService.PostAsync(url, logoutRequest, true);
+         return await HttpService.PostAsync<LogoutResponse>(url, logoutRequest, true);
       }
    }
 }

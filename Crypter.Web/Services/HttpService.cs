@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Common.FunctionalTypes;
+using Crypter.Contracts.Common;
 using Crypter.Web.Models.LocalStorage;
 using Microsoft.AspNetCore.Components;
 using System;
@@ -48,20 +50,7 @@ namespace Crypter.Web.Services
       /// If true, will apply a refresh token to the Authorization header instead.
       /// </param>
       /// <returns></returns>
-      Task<HttpStatusCode> GetAsync(string uri, bool withAuthorization = false, bool useRefreshToken = false);
-
-      /// <summary>
-      /// Send a GET request to the provided URL.
-      /// </summary>
-      /// <typeparam name="T"></typeparam>
-      /// <param name="uri"></param>
-      /// <param name="withAuthorization">If true, will send the request with the Authorization header.</param>
-      /// <param name="useRefreshToken">
-      /// False by default, will apply the standard authentication token to the Authorization header.
-      /// If true, will apply a refresh token to the Authorization header instead.
-      /// </param>
-      /// <returns></returns>
-      Task<(HttpStatusCode HttpStatus, T Response)> GetAsync<T>(string uri, bool withAuthorization = false, bool useRefreshToken = false);
+      Task<Either<ErrorResponse, T>> GetAsync<T>(string uri, bool withAuthorization = false, bool useRefreshToken = false);
 
       /// <summary>
       /// Send a POST request to the provided URL with the provided data.
@@ -75,21 +64,7 @@ namespace Crypter.Web.Services
       /// If true, will apply a refresh token to the Authorization header instead.
       /// </param>
       /// <returns></returns>
-      Task<HttpStatusCode> PostAsync(string uri, object postData, bool withAuthorization = false, bool useRefreshToken = false);
-
-      /// <summary>
-      /// Send a POST request to the provided URL with the provided data.
-      /// </summary>
-      /// <typeparam name="T"></typeparam>
-      /// <param name="uri"></param>
-      /// <param name="postData"></param>
-      /// <param name="withAuthorization">If true, will send the request with the Authorization header.</param>
-      /// <param name="useRefreshToken">
-      /// False by default, will apply the standard authentication token to the Authorization header.
-      /// If true, will apply a refresh token to the Authorization header instead.
-      /// </param>
-      /// <returns></returns>
-      Task<(HttpStatusCode HttpStatus, T Response)> PostAsync<T>(string uri, object postData, bool withAuthorization = false, bool useRefreshToken = false);
+      Task<Either<ErrorResponse, T>> PostAsync<T>(string uri, object postData, bool withAuthorization = false, bool useRefreshToken = false);
    }
 
    public class HttpService : IHttpService
@@ -112,7 +87,7 @@ namespace Crypter.Web.Services
          _authenticationServiceFactory = authenticationServiceFactory;
       }
 
-      public async Task<(HttpStatusCode HttpStatus, T Response)> GetAsync<T>(string uri, bool withAuthorization = false, bool useRefreshToken = false)
+      public async Task<Either<ErrorResponse, T>> GetAsync<T>(string uri, bool withAuthorization = false, bool useRefreshToken = false)
       {
          var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
@@ -120,29 +95,15 @@ namespace Crypter.Web.Services
          {
             if (!await AttachTokenAsync(request, useRefreshToken))
             {
-               return await HandleMissingTokenAsync<T>();
+               await HandleMissingTokenAsync();
+               return new Either<ErrorResponse, T>();
             }
          }
 
          return await SendRequestAsync<T>(request, useRefreshToken);
       }
 
-      public async Task<HttpStatusCode> GetAsync(string uri, bool withAuthorization = false, bool useRefreshToken = false)
-      {
-         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-
-         if (withAuthorization)
-         {
-            if (!await AttachTokenAsync(request, useRefreshToken))
-            {
-               return await HandleMissingTokenAsync();
-            }
-         }
-
-         return await SendRequestAsync(request, useRefreshToken);
-      }
-
-      public async Task<HttpStatusCode> PostAsync(string uri, object postData, bool withAuthorization = false, bool useRefreshToken = false)
+      public async Task<Either<ErrorResponse, T>> PostAsync<T>(string uri, object postData, bool withAuthorization = false, bool useRefreshToken = false)
       {
          var request = new HttpRequestMessage(HttpMethod.Post, uri)
          {
@@ -153,25 +114,8 @@ namespace Crypter.Web.Services
          {
             if (!await AttachTokenAsync(request, useRefreshToken))
             {
-               return await HandleMissingTokenAsync();
-            }
-         }
-
-         return await SendRequestAsync(request, useRefreshToken);
-      }
-
-      public async Task<(HttpStatusCode HttpStatus, T Response)> PostAsync<T>(string uri, object postData, bool withAuthorization = false, bool useRefreshToken = false)
-      {
-         var request = new HttpRequestMessage(HttpMethod.Post, uri)
-         {
-            Content = JsonContent.Create(postData)
-         };
-
-         if (withAuthorization)
-         {
-            if (!await AttachTokenAsync(request, useRefreshToken))
-            {
-               return await HandleMissingTokenAsync<T>();
+               await HandleMissingTokenAsync();
+               return new Either<ErrorResponse, T>();
             }
          }
 
@@ -193,7 +137,7 @@ namespace Crypter.Web.Services
          return true;
       }
 
-      private async Task<HttpStatusCode> SendRequestAsync(HttpRequestMessage request, bool isUsingRefreshToken)
+      private async Task<Either<ErrorResponse, T>> SendRequestAsync<T>(HttpRequestMessage request, bool isUsingRefreshToken)
       {
          HttpResponseMessage response;
          try
@@ -202,7 +146,7 @@ namespace Crypter.Web.Services
          }
          catch (Exception)
          {
-            return HttpStatusCode.ServiceUnavailable;
+            return new Either<ErrorResponse, T>();
          }
 
          if (response.StatusCode == HttpStatusCode.Unauthorized)
@@ -210,59 +154,30 @@ namespace Crypter.Web.Services
             if (!isUsingRefreshToken && await TryRefreshingTokenAsync())
             {
                await AttachTokenAsync(request);
-               return await SendRequestAsync(request, false);
-            }
-
-            return await HandleMissingTokenAsync();
-         }
-
-         response.Dispose();
-
-         return response.StatusCode;
-      }
-
-      private async Task<(HttpStatusCode HttpStatus, T Response)> SendRequestAsync<T>(HttpRequestMessage request, bool isUsingRefreshToken)
-      {
-         HttpResponseMessage response;
-         try
-         {
-            response = await _httpClient.SendAsync(request);
-         }
-         catch (Exception)
-         {
-            return (HttpStatusCode.ServiceUnavailable, default);
-         }
-
-         if (response.StatusCode == HttpStatusCode.Unauthorized)
-         {
-            if (!isUsingRefreshToken && await TryRefreshingTokenAsync())
-            {
-               await AttachTokenAsync(request);
+               response.Dispose();
                return await SendRequestAsync<T>(request, false);
             }
+            await HandleMissingTokenAsync();
+            response.Dispose();
+            return new Either<ErrorResponse, T>();
+         }
 
-            return await HandleMissingTokenAsync<T>();
+         if (response.StatusCode != HttpStatusCode.OK)
+         {
+            ErrorResponse error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+            response.Dispose();
+            return new Either<ErrorResponse, T>(error);
          }
 
          T content = await response.Content.ReadFromJsonAsync<T>();
-         
          response.Dispose();
-
-         return (response.StatusCode, content);
+         return new Either<ErrorResponse, T>(content);
       }
 
-      private async Task<HttpStatusCode> HandleMissingTokenAsync()
+      private async Task HandleMissingTokenAsync()
       {
          await _localStorageService.DisposeAsync();
          _navigationManager.NavigateTo("/");
-         return (HttpStatusCode.Unauthorized);
-      }
-
-      private async Task<(HttpStatusCode HttpStatus, T Response)> HandleMissingTokenAsync<T>()
-      {
-         await _localStorageService.DisposeAsync();
-         _navigationManager.NavigateTo("/");
-         return (HttpStatusCode.Unauthorized, default);
       }
 
       private async Task<bool> TryRefreshingTokenAsync()

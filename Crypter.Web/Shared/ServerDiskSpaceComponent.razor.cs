@@ -26,7 +26,6 @@
 
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
@@ -41,18 +40,16 @@ namespace Crypter.Web.Shared
 
       protected override async Task OnInitializedAsync()
       {
-         var (httpStatus, response) = await MetricsService.GetDiskMetricsAsync();
-         if (httpStatus != HttpStatusCode.OK || response is null)
-         {
-            ServerHasDiskSpace = false;
-         }
-         else
-         {
-            ServerHasDiskSpace = !response.Full;
-            var allocatedServerSpace = double.Parse(response.Allocated);
-            var availableServerSpace = double.Parse(response.Available);
-            ServerSpacePercentageRemaining = 100.00 * (availableServerSpace / allocatedServerSpace);
-         }
+         var possibleMetrics = await MetricsService.GetDiskMetricsAsync();
+         ServerHasDiskSpace = possibleMetrics.Match(
+            left => false,
+            right =>
+            {
+               var allocatedServerSpace = double.Parse(right.Allocated);
+               var availableServerSpace = double.Parse(right.Available);
+               ServerSpacePercentageRemaining = 100.00 * (availableServerSpace / allocatedServerSpace);
+               return !right.Full;
+            });
       }
    }
 }

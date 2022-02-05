@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.DTO;
-using Crypter.Contracts.Enum;
+using Crypter.Contracts.Common.Enum;
+using Crypter.Contracts.Features.User.Search;
 using Crypter.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
