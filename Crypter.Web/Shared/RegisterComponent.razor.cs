@@ -160,13 +160,13 @@ namespace Crypter.Web.Shared
             left =>
             {
                RegistrationError = true;
-               RegistrationErrorText = (UserRegisterResult)left.ErrorCode switch
+               RegistrationErrorText = (UserRegisterError)left.ErrorCode switch
                {
-                  UserRegisterResult.InvalidUsername => "Invalid username",
-                  UserRegisterResult.InvalidPassword => "Invalid password",
-                  UserRegisterResult.InvalidEmailAddress => "Invalid email address",
-                  UserRegisterResult.UsernameTaken => "Username is already taken",
-                  UserRegisterResult.EmailTaken => "Email address is associated with an existing account",
+                  UserRegisterError.InvalidUsername => "Invalid username",
+                  UserRegisterError.InvalidPassword => "Invalid password",
+                  UserRegisterError.InvalidEmailAddress => "Invalid email address",
+                  UserRegisterError.UsernameTaken => "Username is already taken",
+                  UserRegisterError.EmailTaken => "Email address is associated with an existing account",
                   _ => "???"
                };
                return false;

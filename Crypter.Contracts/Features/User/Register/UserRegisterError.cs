@@ -26,13 +26,13 @@
 
 namespace Crypter.Contracts.Features.User.Register
 {
-    public enum UserRegisterResult
-    {
-        Success,
-        InvalidUsername,
-        InvalidPassword,
-        InvalidEmailAddress,
-        UsernameTaken,
-        EmailTaken
-    }
+   public enum UserRegisterError
+   {
+      UnknownError,
+      InvalidUsername,
+      InvalidPassword,
+      InvalidEmailAddress,
+      UsernameTaken,
+      EmailTaken
+   }
 }

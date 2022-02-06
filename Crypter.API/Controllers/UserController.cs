@@ -117,9 +117,9 @@ namespace Crypter.API.Controllers
       {
          var insertResult = await _mediator.Send(new InsertUserCommand(request.Username, request.Password, request.Email), cancellationToken);
 
-         if (insertResult.Result != UserRegisterResult.Success)
+         if (!insertResult.Success)
          {
-            return new BadRequestObjectResult(new ErrorResponse(insertResult.Result));
+            return new BadRequestObjectResult(new ErrorResponse(insertResult.ErrorCode));
          }
 
          if (insertResult.SendVerificationEmail)
@@ -341,7 +341,7 @@ namespace Crypter.API.Controllers
             && request.EmailNotifications
             && !user.EmailVerified)
          {
-            return new BadRequestObjectResult(new ErrorResponse(UpdateNotificationSettingsResult.EmailAddressNotVerified));
+            return new BadRequestObjectResult(new ErrorResponse(UpdateNotificationSettingsError.EmailAddressNotVerified));
          }
 
          await _userNotificationSettingService.UpsertAsync(userId, request.EnableTransferNotifications, request.EmailNotifications, cancellationToken);

@@ -26,7 +26,7 @@
 
 namespace Crypter.Contracts.Features.User.UpdateNotificationSettings
 {
-   public enum UpdateNotificationSettingsResult
+   public enum UpdateNotificationSettingsError
    {
       EmailAddressNotVerified,
       UnknownFailure
