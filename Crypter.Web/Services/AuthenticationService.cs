@@ -24,14 +24,16 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Enum;
-using Crypter.Contracts.Requests;
-using Crypter.Contracts.Responses;
+using Crypter.Common.FunctionalTypes;
+using Crypter.Contracts.Common;
+using Crypter.Contracts.Common.Enum;
+using Crypter.Contracts.Features.Authentication.Login;
+using Crypter.Contracts.Features.Authentication.Logout;
+using Crypter.Contracts.Features.User.UpdateKeys;
 using Crypter.CryptoLib.Services;
 using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services.API;
 using System;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -71,22 +73,23 @@ namespace Crypter.Web.Services
             ? TokenType.Refresh
             : TokenType.Session;
 
-         var (authSuccess, authResponse) = await SendLoginRequestAsync(username, password, refreshTokenType);
-         if (!authSuccess)
-         {
-            return false;
-         }
+         var maybeLogin = await SendLoginRequestAsync(username, password, refreshTokenType);
+         return await maybeLogin.MatchAsync(
+            left => Task.FromResult(false),
+            async right =>
+            {
+               var userPreferredStorageLocation = trustDevice
+                  ? StorageLocation.LocalStorage
+                  : StorageLocation.SessionStorage;
 
-         var userPreferredStorageLocation = trustDevice
-            ? StorageLocation.LocalStorage
-            : StorageLocation.SessionStorage;
+               var userSymmetricKey = _userKeysService.GetUserSymmetricKey(username, password);
 
-         var userSymmetricKey = _userKeysService.GetUserSymmetricKey(username, password);
-
-         await CacheSessionInfoAsync(authResponse, username, userPreferredStorageLocation);
-         await HandleUserKeys(authResponse, userSymmetricKey, userPreferredStorageLocation);
-         NotifyUserSessionStateChanged(true, authResponse.Id, username);
-         return true;
+               await CacheSessionInfoAsync(right, username, userPreferredStorageLocation);
+               await HandleUserKeys(right, userSymmetricKey, userPreferredStorageLocation);
+               NotifyUserSessionStateChanged(true, right.Id, username);
+               return true;
+            }
+         );
       }
 
       public async Task<bool> UnlockSession(string password)
@@ -117,17 +120,18 @@ namespace Crypter.Web.Services
       public async Task<bool> TryRefreshingTokenAsync()
       {
          var sessionInfo = await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
-         var (httpStatus, response) = await _authenticationApiService.RefreshAsync();
-         if (httpStatus != HttpStatusCode.OK)
-         {
-            return false;
-         }
-
-         sessionInfo.RefreshToken = response.RefreshToken;
-         var sessionLocation = _localStorageService.GetItemLocation(StoredObjectType.UserSession);
-         await _localStorageService.SetItemAsync(StoredObjectType.UserSession, sessionInfo, sessionLocation);
-         await _localStorageService.SetItemAsync(StoredObjectType.AuthenticationToken, response.AuthenticationToken, StorageLocation.InMemory);
-         return true;
+         var maybeRefresh = await _authenticationApiService.RefreshAsync();
+         return await maybeRefresh.MatchAsync(
+            left => Task.FromResult(false),
+            async right =>
+            {
+               sessionInfo.RefreshToken = right.RefreshToken;
+               var sessionLocation = _localStorageService.GetItemLocation(StoredObjectType.UserSession);
+               await _localStorageService.SetItemAsync(StoredObjectType.UserSession, sessionInfo, sessionLocation);
+               await _localStorageService.SetItemAsync(StoredObjectType.AuthenticationToken, right.AuthenticationToken, StorageLocation.InMemory);
+               return true;
+            }
+         );
       }
 
       public event EventHandler<UserSessionStateChangedEventArgs> UserSessionStateChanged
@@ -160,14 +164,13 @@ namespace Crypter.Web.Services
          await _localStorageService.SetItemAsync(StoredObjectType.AuthenticationToken, authResponse.AuthenticationToken, StorageLocation.InMemory);
       }
 
-      private async Task<(bool success, LoginResponse response)> SendLoginRequestAsync(string username, string password, TokenType refreshTokenType)
+      private async Task<Either<ErrorResponse, LoginResponse>> SendLoginRequestAsync(string username, string password, TokenType refreshTokenType)
       {
          byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var loginRequest = new LoginRequest(username, digestedPasswordBase64, refreshTokenType);
-         var (httpStatus, authResponse) = await _authenticationApiService.LoginAsync(loginRequest);
-         return (httpStatus == HttpStatusCode.OK, authResponse);
+         return await _authenticationApiService.LoginAsync(loginRequest);
       }
 
       private async Task HandleUserKeys(LoginResponse authResponse, byte[] userSymmetricKey, StorageLocation storageLocation)

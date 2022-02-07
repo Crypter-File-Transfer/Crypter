@@ -24,31 +24,42 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Requests;
-using Crypter.Contracts.Responses;
+using Crypter.Common.FunctionalTypes;
+using Crypter.Contracts.Common;
+using Crypter.Contracts.Features.User.GetPublicProfile;
+using Crypter.Contracts.Features.User.GetReceivedTransfers;
+using Crypter.Contracts.Features.User.GetSentTransfers;
+using Crypter.Contracts.Features.User.GetSettings;
+using Crypter.Contracts.Features.User.Register;
+using Crypter.Contracts.Features.User.Search;
+using Crypter.Contracts.Features.User.UpdateContactInfo;
+using Crypter.Contracts.Features.User.UpdateKeys;
+using Crypter.Contracts.Features.User.UpdateNotificationSettings;
+using Crypter.Contracts.Features.User.UpdatePrivacySettings;
+using Crypter.Contracts.Features.User.UpdateProfile;
+using Crypter.Contracts.Features.User.VerifyEmailAddress;
 using Crypter.Web.Models;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Services.API
 {
    public interface IUserApiService
    {
-      Task<(HttpStatusCode HttpStatus, UserRegisterResponse Response)> RegisterUserAsync(RegisterUserRequest registerRequest);
-      Task<(HttpStatusCode HttpStatus, UserPublicProfileResponse Response)> GetUserPublicProfileAsync(string username, bool withAuthentication);
-      Task<(HttpStatusCode HttpStatus, UserSettingsResponse Response)> GetUserSettingsAsync();
-      Task<(HttpStatusCode HttpStatus, UpdateProfileResponse Response)> UpdateUserProfileInfoAsync(UpdateProfileRequest request);
-      Task<(HttpStatusCode HttpStatus, UpdateContactInfoResponse Response)> UpdateUserContactInfoAsync(UpdateContactInfoRequest request);
-      Task<(HttpStatusCode HttpStatus, UpdatePrivacySettingResponse Response)> UpdateUserPrivacyAsync(UpdatePrivacySettingRequest request);
-      Task<(HttpStatusCode HttpStatus, UpdateNotificationSettingResponse Response)> UpdateUserNotificationAsync(UpdateNotificationSettingRequest request);
-      Task<(HttpStatusCode HttpStatus, UpdateKeysResponse Response)> InsertUserX25519KeysAsync(UpdateKeysRequest request);
-      Task<(HttpStatusCode HttpStatus, UpdateKeysResponse Response)> InsertUserEd25519KeysAsync(UpdateKeysRequest request);
-      Task<(HttpStatusCode HttpStatus, UserSentMessagesResponse Response)> GetUserSentMessagesAsync();
-      Task<(HttpStatusCode HttpStatus, UserSentFilesResponse Response)> GetUserSentFilesAsync();
-      Task<(HttpStatusCode HttpStatus, UserReceivedMessagesResponse Response)> GetUserReceivedMessagesAsync();
-      Task<(HttpStatusCode HttpStatus, UserReceivedFilesResponse Response)> GetUserReceivedFilesAsync();
-      Task<(HttpStatusCode HttpStatus, UserSearchResponse Response)> GetUserSearchResultsAsync(UserSearchParams searchInfo);
-      Task<(HttpStatusCode HttpStatus, UserEmailVerificationResponse Response)> VerifyUserEmailAddressAsync(VerifyUserEmailAddressRequest verificationInfo);
+      Task<Either<ErrorResponse, UserRegisterResponse>> RegisterUserAsync(UserRegisterRequest registerRequest);
+      Task<Either<ErrorResponse, GetUserPublicProfileResponse>> GetUserPublicProfileAsync(string username, bool withAuthentication);
+      Task<Either<ErrorResponse, UserSettingsResponse>> GetUserSettingsAsync();
+      Task<Either<ErrorResponse, UpdateProfileResponse>> UpdateUserProfileInfoAsync(UpdateProfileRequest request);
+      Task<Either<ErrorResponse, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(UpdateContactInfoRequest request);
+      Task<Either<ErrorResponse, UpdatePrivacySettingsResponse>> UpdateUserPrivacyAsync(UpdatePrivacySettingsRequest request);
+      Task<Either<ErrorResponse, UpdateNotificationSettingsResponse>> UpdateUserNotificationAsync(UpdateNotificationSettingsRequest request);
+      Task<Either<ErrorResponse, UpdateKeysResponse>> InsertUserX25519KeysAsync(UpdateKeysRequest request);
+      Task<Either<ErrorResponse, UpdateKeysResponse>> InsertUserEd25519KeysAsync(UpdateKeysRequest request);
+      Task<Either<ErrorResponse, UserSentMessagesResponse>> GetUserSentMessagesAsync();
+      Task<Either<ErrorResponse, UserSentFilesResponse>> GetUserSentFilesAsync();
+      Task<Either<ErrorResponse, UserReceivedMessagesResponse>> GetUserReceivedMessagesAsync();
+      Task<Either<ErrorResponse, UserReceivedFilesResponse>> GetUserReceivedFilesAsync();
+      Task<Either<ErrorResponse, UserSearchResponse>> GetUserSearchResultsAsync(UserSearchParams searchInfo);
+      Task<Either<ErrorResponse, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
    }
 
    public class UserApiService : IUserApiService
@@ -62,95 +73,95 @@ namespace Crypter.Web.Services.API
          HttpService = httpService;
       }
 
-      public async Task<(HttpStatusCode, UserRegisterResponse)> RegisterUserAsync(RegisterUserRequest registerRequest)
+      public async Task<Either<ErrorResponse, UserRegisterResponse>> RegisterUserAsync(UserRegisterRequest registerRequest)
       {
          var url = $"{BaseUserUrl}/register";
          return await HttpService.PostAsync<UserRegisterResponse>(url, registerRequest, false);
       }
 
-      public async Task<(HttpStatusCode, UserPublicProfileResponse)> GetUserPublicProfileAsync(string username, bool withAuthentication)
+      public async Task<Either<ErrorResponse, GetUserPublicProfileResponse>> GetUserPublicProfileAsync(string username, bool withAuthentication)
       {
          var url = $"{BaseUserUrl}/{username}";
-         return await HttpService.GetAsync<UserPublicProfileResponse>(url, withAuthentication);
+         return await HttpService.GetAsync<GetUserPublicProfileResponse>(url, withAuthentication);
       }
 
-      public async Task<(HttpStatusCode, UserSettingsResponse)> GetUserSettingsAsync()
+      public async Task<Either<ErrorResponse, UserSettingsResponse>> GetUserSettingsAsync()
       {
          var url = $"{BaseUserUrl}/settings";
          return await HttpService.GetAsync<UserSettingsResponse>(url, true);
       }
 
-      public async Task<(HttpStatusCode, UpdateProfileResponse)> UpdateUserProfileInfoAsync(UpdateProfileRequest request)
+      public async Task<Either<ErrorResponse, UpdateProfileResponse>> UpdateUserProfileInfoAsync(UpdateProfileRequest request)
       {
          var url = $"{BaseUserUrl}/settings/profile";
          return await HttpService.PostAsync<UpdateProfileResponse>(url, request, true);
       }
 
-      public async Task<(HttpStatusCode, UpdateContactInfoResponse)> UpdateUserContactInfoAsync(UpdateContactInfoRequest request)
+      public async Task<Either<ErrorResponse, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(UpdateContactInfoRequest request)
       {
          var url = $"{BaseUserUrl}/settings/contact";
          return await HttpService.PostAsync<UpdateContactInfoResponse>(url, request, true);
       }
 
-      public async Task<(HttpStatusCode, UpdatePrivacySettingResponse)> UpdateUserPrivacyAsync(UpdatePrivacySettingRequest request)
+      public async Task<Either<ErrorResponse, UpdatePrivacySettingsResponse>> UpdateUserPrivacyAsync(UpdatePrivacySettingsRequest request)
       {
          var url = $"{BaseUserUrl}/settings/privacy";
-         return await HttpService.PostAsync<UpdatePrivacySettingResponse>(url, request, true);
+         return await HttpService.PostAsync<UpdatePrivacySettingsResponse>(url, request, true);
       }
 
-      public async Task<(HttpStatusCode HttpStatus, UpdateNotificationSettingResponse Response)> UpdateUserNotificationAsync(UpdateNotificationSettingRequest request)
+      public async Task<Either<ErrorResponse, UpdateNotificationSettingsResponse>> UpdateUserNotificationAsync(UpdateNotificationSettingsRequest request)
       {
          var url = $"{BaseUserUrl}/settings/notification";
-         return await HttpService.PostAsync<UpdateNotificationSettingResponse>(url, request, true);
+         return await HttpService.PostAsync<UpdateNotificationSettingsResponse>(url, request, true);
       }
 
-      public async Task<(HttpStatusCode, UpdateKeysResponse)> InsertUserX25519KeysAsync(UpdateKeysRequest request)
+      public async Task<Either<ErrorResponse, UpdateKeysResponse>> InsertUserX25519KeysAsync(UpdateKeysRequest request)
       {
          var url = $"{BaseUserUrl}/settings/keys/x25519";
          return await HttpService.PostAsync<UpdateKeysResponse>(url, request, true);
       }
 
-      public async Task<(HttpStatusCode, UpdateKeysResponse)> InsertUserEd25519KeysAsync(UpdateKeysRequest request)
+      public async Task<Either<ErrorResponse, UpdateKeysResponse>> InsertUserEd25519KeysAsync(UpdateKeysRequest request)
       {
          var url = $"{BaseUserUrl}/settings/keys/ed25519";
          return await HttpService.PostAsync<UpdateKeysResponse>(url, request, true);
       }
 
-      public async Task<(HttpStatusCode, UserSentMessagesResponse)> GetUserSentMessagesAsync()
+      public async Task<Either<ErrorResponse, UserSentMessagesResponse>> GetUserSentMessagesAsync()
       {
          var url = $"{BaseUserUrl}/sent/messages";
          return await HttpService.GetAsync<UserSentMessagesResponse>(url, true);
       }
 
-      public async Task<(HttpStatusCode, UserSentFilesResponse)> GetUserSentFilesAsync()
+      public async Task<Either<ErrorResponse, UserSentFilesResponse>> GetUserSentFilesAsync()
       {
          var url = $"{BaseUserUrl}/sent/files";
          return await HttpService.GetAsync<UserSentFilesResponse>(url, true);
       }
 
-      public async Task<(HttpStatusCode, UserReceivedMessagesResponse)> GetUserReceivedMessagesAsync()
+      public async Task<Either<ErrorResponse, UserReceivedMessagesResponse>> GetUserReceivedMessagesAsync()
       {
          var url = $"{BaseUserUrl}/received/messages";
          return await HttpService.GetAsync<UserReceivedMessagesResponse>(url, true);
       }
 
-      public async Task<(HttpStatusCode, UserReceivedFilesResponse)> GetUserReceivedFilesAsync()
+      public async Task<Either<ErrorResponse, UserReceivedFilesResponse>> GetUserReceivedFilesAsync()
       {
          var url = $"{BaseUserUrl}/received/files";
          return await HttpService.GetAsync<UserReceivedFilesResponse>(url, true);
       }
 
-      public async Task<(HttpStatusCode, UserSearchResponse)> GetUserSearchResultsAsync(UserSearchParams searchInfo)
+      public async Task<Either<ErrorResponse, UserSearchResponse>> GetUserSearchResultsAsync(UserSearchParams searchInfo)
       {
          var url = $"{BaseUserUrl}/search/{searchInfo.Type}";
          var urlWithParams = url + "?value=" + searchInfo.Query + "&index=" + searchInfo.Index + "&count=" + searchInfo.Results;
          return await HttpService.GetAsync<UserSearchResponse>(urlWithParams, true);
       }
 
-      public async Task<(HttpStatusCode HttpStatus, UserEmailVerificationResponse Response)> VerifyUserEmailAddressAsync(VerifyUserEmailAddressRequest verificationInfo)
+      public async Task<Either<ErrorResponse, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo)
       {
          var url = $"{BaseUserUrl}/verify";
-         return await HttpService.PostAsync<UserEmailVerificationResponse>(url, verificationInfo, false);
+         return await HttpService.PostAsync<VerifyEmailAddressResponse>(url, verificationInfo, false);
       }
    }
 }

@@ -24,25 +24,28 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Requests;
-using Crypter.Contracts.Responses;
+using Crypter.Common.FunctionalTypes;
+using Crypter.Contracts.Common;
+using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
+using Crypter.Contracts.Features.Transfer.DownloadPreview;
+using Crypter.Contracts.Features.Transfer.DownloadSignature;
+using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.Web.Models;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Services.API
 {
    public interface ITransferApiService
    {
-      Task<(HttpStatusCode HttpStatus, TransferUploadResponse Response)> UploadMessageTransferAsync(MessageTransferRequest uploadRequest, Guid recipient, bool withAuthentication);
-      Task<(HttpStatusCode HttpStatus, TransferUploadResponse Response)> UploadFileTransferAsync(FileTransferRequest uploadRequest, Guid recipient, bool withAuthentication);
-      Task<(HttpStatusCode HttpStatus, MessagePreviewResponse Response)> DownloadMessagePreviewAsync(GetTransferPreviewRequest downloadRequest, bool withAuthentication);
-      Task<(HttpStatusCode HttpStatus, GetTransferSignatureResponse Response)> DownloadMessageSignatureAsync(GetTransferSignatureRequest downloadRequest, bool withAuthentication);
-      Task<(HttpStatusCode HttpStatus, GetTransferCiphertextResponse Response)> DownloadMessageCiphertextAsync(GetTransferCiphertextRequest downloadRequest, bool withAuthentication);
-      Task<(HttpStatusCode HttpStatus, FilePreviewResponse Response)> DownloadFilePreviewAsync(GetTransferPreviewRequest downloadRequest, bool withAuthentication);
-      Task<(HttpStatusCode HttpStatus, GetTransferSignatureResponse Response)> DownloadFileSignatureAsync(GetTransferSignatureRequest downloadRequest, bool withAuthentication);
-      Task<(HttpStatusCode HttpStatus, GetTransferCiphertextResponse Response)> DownloadFileCiphertextAsync(GetTransferCiphertextRequest downloadRequest, bool withAuthentication);
+      Task<Either<ErrorResponse, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, Guid recipient, bool withAuthentication);
+      Task<Either<ErrorResponse, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, Guid recipient, bool withAuthentication);
+      Task<Either<ErrorResponse, DownloadTransferMessagePreviewResponse>> DownloadMessagePreviewAsync(DownloadTransferPreviewRequest downloadRequest, bool withAuthentication);
+      Task<Either<ErrorResponse, DownloadTransferSignatureResponse>> DownloadMessageSignatureAsync(DownloadTransferSignatureRequest downloadRequest, bool withAuthentication);
+      Task<Either<ErrorResponse, DownloadTransferCiphertextResponse>> DownloadMessageCiphertextAsync(DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
+      Task<Either<ErrorResponse, DownloadTransferFilePreviewResponse>> DownloadFilePreviewAsync(DownloadTransferPreviewRequest downloadRequest, bool withAuthentication);
+      Task<Either<ErrorResponse, DownloadTransferSignatureResponse>> DownloadFileSignatureAsync(DownloadTransferSignatureRequest downloadRequest, bool withAuthentication);
+      Task<Either<ErrorResponse, DownloadTransferCiphertextResponse>> DownloadFileCiphertextAsync(DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
    }
 
    public class TransferApiService : ITransferApiService
@@ -56,56 +59,56 @@ namespace Crypter.Web.Services.API
          HttpService = httpService;
       }
 
-      public async Task<(HttpStatusCode, TransferUploadResponse)> UploadMessageTransferAsync(MessageTransferRequest uploadRequest, Guid recipient, bool withAuthentication)
+      public async Task<Either<ErrorResponse, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, Guid recipient, bool withAuthentication)
       {
          var url = recipient == Guid.Empty
             ? $"{BaseTransferUrl}/message"
             : $"{BaseTransferUrl}/message/{recipient}";
-         return await HttpService.PostAsync<TransferUploadResponse>(url, uploadRequest, withAuthentication);
+         return await HttpService.PostAsync<UploadTransferResponse>(url, uploadRequest, withAuthentication);
       }
 
-      public async Task<(HttpStatusCode, TransferUploadResponse)> UploadFileTransferAsync(FileTransferRequest uploadRequest, Guid recipient, bool withAuthentication)
+      public async Task<Either<ErrorResponse, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, Guid recipient, bool withAuthentication)
       {
          var url = recipient == Guid.Empty
             ? $"{BaseTransferUrl}/file"
             : $"{BaseTransferUrl}/file/{recipient}";
-         return await HttpService.PostAsync<TransferUploadResponse>(url, uploadRequest, withAuthentication);
+         return await HttpService.PostAsync<UploadTransferResponse>(url, uploadRequest, withAuthentication);
       }
 
-      public async Task<(HttpStatusCode, MessagePreviewResponse)> DownloadMessagePreviewAsync(GetTransferPreviewRequest downloadRequest, bool withAuthentication)
+      public async Task<Either<ErrorResponse, DownloadTransferMessagePreviewResponse>> DownloadMessagePreviewAsync(DownloadTransferPreviewRequest downloadRequest, bool withAuthentication)
       {
          var url = $"{BaseTransferUrl}/message/preview";
-         return await HttpService.PostAsync<MessagePreviewResponse>(url, downloadRequest, withAuthentication);
+         return await HttpService.PostAsync<DownloadTransferMessagePreviewResponse>(url, downloadRequest, withAuthentication);
       }
 
-      public async Task<(HttpStatusCode, GetTransferSignatureResponse)> DownloadMessageSignatureAsync(GetTransferSignatureRequest downloadRequest, bool withAuthentication)
+      public async Task<Either<ErrorResponse, DownloadTransferSignatureResponse>> DownloadMessageSignatureAsync(DownloadTransferSignatureRequest downloadRequest, bool withAuthentication)
       {
          var url = $"{BaseTransferUrl}/message/signature";
-         return await HttpService.PostAsync<GetTransferSignatureResponse>(url, downloadRequest, withAuthentication);
+         return await HttpService.PostAsync<DownloadTransferSignatureResponse>(url, downloadRequest, withAuthentication);
       }
 
-      public async Task<(HttpStatusCode, GetTransferCiphertextResponse)> DownloadMessageCiphertextAsync(GetTransferCiphertextRequest downloadRequest, bool withAuthentication)
+      public async Task<Either<ErrorResponse, DownloadTransferCiphertextResponse>> DownloadMessageCiphertextAsync(DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication)
       {
          var url = $"{BaseTransferUrl}/message/ciphertext";
-         return await HttpService.PostAsync<GetTransferCiphertextResponse>(url, downloadRequest, withAuthentication);
+         return await HttpService.PostAsync<DownloadTransferCiphertextResponse>(url, downloadRequest, withAuthentication);
       }
 
-      public async Task<(HttpStatusCode, FilePreviewResponse)> DownloadFilePreviewAsync(GetTransferPreviewRequest downloadRequest, bool withAuthentication)
+      public async Task<Either<ErrorResponse, DownloadTransferFilePreviewResponse>> DownloadFilePreviewAsync(DownloadTransferPreviewRequest downloadRequest, bool withAuthentication)
       {
          var url = $"{BaseTransferUrl}/file/preview";
-         return await HttpService.PostAsync<FilePreviewResponse>(url, downloadRequest, withAuthentication);
+         return await HttpService.PostAsync<DownloadTransferFilePreviewResponse>(url, downloadRequest, withAuthentication);
       }
 
-      public async Task<(HttpStatusCode, GetTransferSignatureResponse)> DownloadFileSignatureAsync(GetTransferSignatureRequest downloadRequest, bool withAuthentication)
+      public async Task<Either<ErrorResponse, DownloadTransferSignatureResponse>> DownloadFileSignatureAsync(DownloadTransferSignatureRequest downloadRequest, bool withAuthentication)
       {
          var url = $"{BaseTransferUrl}/file/signature";
-         return await HttpService.PostAsync<GetTransferSignatureResponse>(url, downloadRequest, withAuthentication);
+         return await HttpService.PostAsync<DownloadTransferSignatureResponse>(url, downloadRequest, withAuthentication);
       }
 
-      public async Task<(HttpStatusCode, GetTransferCiphertextResponse)> DownloadFileCiphertextAsync(GetTransferCiphertextRequest downloadRequest, bool withAuthentication)
+      public async Task<Either<ErrorResponse, DownloadTransferCiphertextResponse>> DownloadFileCiphertextAsync(DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication)
       {
          var url = $"{BaseTransferUrl}/file/ciphertext";
-         return await HttpService.PostAsync<GetTransferCiphertextResponse>(url, downloadRequest, withAuthentication);
+         return await HttpService.PostAsync<DownloadTransferCiphertextResponse>(url, downloadRequest, withAuthentication);
       }
    }
 }

@@ -25,15 +25,18 @@
  */
 
 using Crypter.API.Services;
-using Crypter.Contracts.Enum;
-using Crypter.Contracts.Requests;
-using Crypter.Contracts.Responses;
+using Crypter.Contracts.Common;
+using Crypter.Contracts.Common.Enum;
+using Crypter.Contracts.Features.Authentication.Login;
+using Crypter.Contracts.Features.Authentication.Logout;
+using Crypter.Contracts.Features.Authentication.Refresh;
 using Crypter.Core.Features.User.Commands;
 using Crypter.Core.Features.User.Queries;
 using Crypter.Core.Interfaces;
 using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading;
@@ -75,12 +78,15 @@ namespace Crypter.API.Controllers
       ///  * The initialization vectors used to encrypt/decrypt the user's private keys.
       /// </remarks>
       [HttpPost("login")]
-      public async Task<ActionResult<LoginResponse>> AuthenticateAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> AuthenticateAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
       {
          LoginQueryResult loginResult = await _mediator.Send(new LoginQuery(request.Username, request.Password), cancellationToken);
          if (!loginResult.Success)
          {
-            return NotFound("Invalid username or password");
+            return new NotFoundObjectResult(new ErrorResponse(LoginError.NotFound));
          }
 
          string authToken = _tokenService.NewAuthenticationToken(loginResult.UserId);
@@ -117,23 +123,32 @@ namespace Crypter.API.Controllers
       /// </remarks>
       [Authorize]
       [HttpGet("refresh")]
-      public async Task<ActionResult<RefreshResponse>> RefreshAuthenticationAsync(CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RefreshResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> RefreshAuthenticationAsync(CancellationToken cancellationToken)
       {
          if (!_tokenService.TryParseTokenId(User, out var tokenId))
          {
-            return new BadRequestObjectResult(new RefreshResponse());
+            return new BadRequestObjectResult(new ErrorResponse(RefreshError.BearerTokenMissingId));
          }
 
          var userToken = await _userTokenService.ReadAsync(tokenId, cancellationToken);
          if (userToken is null)
          {
-            return new BadRequestObjectResult(new RefreshResponse());
+            return new NotFoundObjectResult(new ErrorResponse(RefreshError.DatabaseTokenNotFound));
          }
 
          var requestingUserId = _tokenService.ParseUserId(User);
-         if (userToken.Owner != requestingUserId || userToken.Expiration < DateTime.UtcNow)
+         if (userToken.Owner != requestingUserId)
          {
-            return new BadRequestObjectResult(new RefreshResponse());
+            return new NotFoundObjectResult(new ErrorResponse(RefreshError.DatabaseTokenNotFound));
+         }
+
+         if (userToken.Expiration < DateTime.UtcNow)
+         {
+            return new BadRequestObjectResult(new ErrorResponse(RefreshError.DatabaseTokenExpired));
          }
 
          await _userTokenService.DeleteAsync(userToken.Id, default);
@@ -158,37 +173,42 @@ namespace Crypter.API.Controllers
       /// Clears the provided refresh token from the database, ensuring it cannot be used for subsequent requests.
       /// </summary>
       /// <param name="request"></param>
+      /// <param name="cancellationToken"></param>
       /// <returns></returns>
       [Authorize]
       [HttpPost("logout")]
-      public async Task<ActionResult> Logout([FromBody] LogoutRequest request, CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LogoutResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> Logout([FromBody] LogoutRequest request, CancellationToken cancellationToken)
       {
-         var (tokenIsValid, securityToken) = _tokenService.ValidateToken(request.RefreshToken);
+         var (tokenIsValid, claimsPrincipal) = _tokenService.ValidateToken(request.RefreshToken);
          if (!tokenIsValid
-            || securityToken is null)
+            || claimsPrincipal is null)
          {
-            return BadRequest();
+            return new BadRequestObjectResult(new ErrorResponse(LogoutError.RefreshTokenInvalid));
          }
 
-         if (!_tokenService.TryParseTokenId(securityToken, out var tokenId))
+         if (!_tokenService.TryParseTokenId(claimsPrincipal, out var tokenId))
          {
-            return BadRequest();
+            return new BadRequestObjectResult(new ErrorResponse(LogoutError.RefreshTokenInvalid));
          }
 
          var userToken = await _userTokenService.ReadAsync(tokenId, cancellationToken);
          if (userToken == null)
          {
-            return BadRequest();
+            return new NotFoundObjectResult(new ErrorResponse(LogoutError.DatabaseTokenNotFound));
          }
 
          var requestingUserId = _tokenService.ParseUserId(User);
          if (userToken.Owner != requestingUserId)
          {
-            return BadRequest();
+            return new NotFoundObjectResult(new ErrorResponse(LogoutError.DatabaseTokenNotFound));
          }
 
          await _userTokenService.DeleteAsync(userToken.Id, cancellationToken);
-         return Ok();
+         return new OkObjectResult(new LogoutResponse());
       }
    }
 }

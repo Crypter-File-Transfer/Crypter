@@ -27,7 +27,7 @@
 using Crypter.API.Controllers.Methods;
 using Crypter.API.Models;
 using Crypter.Common.Services;
-using Crypter.Contracts.Enum;
+using Crypter.Contracts.Common.Enum;
 using Crypter.Core.Interfaces;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;

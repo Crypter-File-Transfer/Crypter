@@ -24,14 +24,15 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Enum;
+using Crypter.Contracts.Common.Enum;
+using Crypter.Contracts.Features.User.GetReceivedTransfers;
+using Crypter.Contracts.Features.User.GetSentTransfers;
 using Crypter.Web.Models;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -66,16 +67,17 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserSentItem>> GetUserSentItems()
       {
-         var (messageRequestStatus, sentMessagesResponse) = await UserService.GetUserSentMessagesAsync();
-         var (fileRequestStatus, sentFilesresponse) = await UserService.GetUserSentFilesAsync();
+         var maybeSentMessages = await UserService.GetUserSentMessagesAsync();
+         var sentMessages = maybeSentMessages.Match(
+            left => new List<UserSentMessageDTO>(),
+            right => right.Messages);
 
-         if (messageRequestStatus != HttpStatusCode.OK
-            || fileRequestStatus != HttpStatusCode.OK)
-         {
-            return default;
-         }
+         var maybeSentFiles = await UserService.GetUserSentFilesAsync();
+         var sentFiles = maybeSentFiles.Match(
+            left => new List<UserSentFileDTO>(),
+            right => right.Files);
 
-         return sentMessagesResponse.Messages
+         return sentMessages
             .Select(x => new UserSentItem
             {
                Id = x.Id,
@@ -86,7 +88,7 @@ namespace Crypter.Web.Pages
                ItemType = TransferItemType.Message,
                ExpirationUTC = x.ExpirationUTC
             })
-            .Concat(sentFilesresponse.Files
+            .Concat(sentFiles
                .Select(x => new UserSentItem
                {
                   Id = x.Id,
@@ -102,16 +104,17 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
       {
-         var (messageRequestStatus, receivedMessagesResponse) = await UserService.GetUserReceivedMessagesAsync();
-         var (fileRequestStatus, receivedFilesresponse) = await UserService.GetUserReceivedFilesAsync();
+         var maybeReceivedMessages = await UserService.GetUserReceivedMessagesAsync();
+         var receivedMessages = maybeReceivedMessages.Match(
+            left => new List<UserReceivedMessageDTO>(),
+            right => right.Messages);
 
-         if (messageRequestStatus != HttpStatusCode.OK
-            || fileRequestStatus != HttpStatusCode.OK)
-         {
-            return default;
-         }
+         var maybeReceivedFiles = await UserService.GetUserReceivedFilesAsync();
+         var receivedFiles = maybeReceivedFiles.Match(
+            left => new List<UserReceivedFileDTO>(),
+            right => right.Files);
 
-         return receivedMessagesResponse.Messages
+         return receivedMessages
             .Select(x => new UserReceivedItem
             {
                Id = x.Id,
@@ -122,7 +125,7 @@ namespace Crypter.Web.Pages
                ItemType = TransferItemType.Message,
                ExpirationUTC = x.ExpirationUTC
             })
-            .Concat(receivedFilesresponse.Files
+            .Concat(receivedFiles
                .Select(x => new UserReceivedItem
                {
                   Id = x.Id,

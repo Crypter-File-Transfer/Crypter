@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Responses;
+using Crypter.Contracts.Features.User.Search;
 using Crypter.Web.Models;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
@@ -34,7 +34,6 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
 using System;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -76,16 +75,16 @@ namespace Crypter.Web.Pages
          }
 
          await JSRuntime.InvokeVoidAsync("Crypter.SetPageUrl", "/user/search?query=" + SearchParams.Query + "&type=" + SearchParams.Type + "&page=" + SearchParams.Page);
-         var (status, response) = await UserService.GetUserSearchResultsAsync(SearchParams);
-         if (status == HttpStatusCode.OK)
-         {
-            SearchResults = response;
-
-            if (SearchResults.Total > SearchParams.Results)
+         var maybeResults = await UserService.GetUserSearchResultsAsync(SearchParams);
+         await maybeResults.DoRightAsync(async right => 
             {
-               await SetActivePageAsync();
-            }
-         }
+               SearchResults = right;
+
+               if (SearchResults.Total > SearchParams.Results)
+               {
+                  await SetActivePageAsync();
+               }
+            });
       }
 
       protected void ParseSearchParamsFromUri()

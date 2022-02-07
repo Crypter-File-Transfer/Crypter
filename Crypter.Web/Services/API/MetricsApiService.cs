@@ -24,16 +24,17 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Responses;
+using Crypter.Common.FunctionalTypes;
+using Crypter.Contracts.Common;
+using Crypter.Contracts.Features.Metrics.Disk;
 using Crypter.Web.Models;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Services.API
 {
    public interface IMetricsApiService
    {
-      Task<(HttpStatusCode HttpStatus, DiskMetricsResponse Response)> GetDiskMetricsAsync();
+      Task<Either<ErrorResponse, DiskMetricsResponse>> GetDiskMetricsAsync();
    }
 
    public class MetricsApiService : IMetricsApiService
@@ -47,7 +48,7 @@ namespace Crypter.Web.Services.API
          HttpService = httpService;
       }
 
-      public async Task<(HttpStatusCode, DiskMetricsResponse)> GetDiskMetricsAsync()
+      public async Task<Either<ErrorResponse, DiskMetricsResponse>> GetDiskMetricsAsync()
       {
          var url = $"{BaseMetricsUrl}/disk";
          return await HttpService.GetAsync<DiskMetricsResponse>(url, false);

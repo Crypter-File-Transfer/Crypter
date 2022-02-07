@@ -25,8 +25,7 @@
  */
 
 using Crypter.Common.Services;
-using Crypter.Contracts.Enum;
-using Crypter.Contracts.Requests;
+using Crypter.Contracts.Features.User.Register;
 using Crypter.Web.Models.Forms;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
@@ -155,27 +154,28 @@ namespace Crypter.Web.Shared
          byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(RegistrationInfo.Username, RegistrationInfo.Password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
-         var requestBody = new RegisterUserRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.EmailAddress);
-         var (_, registerResponse) = await UserService.RegisterUserAsync(requestBody);
-
-         if (registerResponse.Result != InsertUserResult.Success)
-         {
-            RegistrationError = true;
-            RegistrationErrorText = registerResponse.Result switch
+         var requestBody = new UserRegisterRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.EmailAddress);
+         var maybeRegistration = await UserService.RegisterUserAsync(requestBody);
+         RegistrationSuccess = maybeRegistration.Match(
+            left =>
             {
-               InsertUserResult.InvalidUsername => "Invalid username",
-               InsertUserResult.InvalidPassword => "Invalid password",
-               InsertUserResult.InvalidEmailAddress => "Invalid email address",
-               InsertUserResult.UsernameTaken => "Username is already taken",
-               InsertUserResult.EmailTaken => "Email address is associated with an existing account",
-               _ => "???"
-            };
-         }
-         else
-         {
-            UserProvidedEmailDuringRegistration = !string.IsNullOrEmpty(RegistrationInfo.EmailAddress);
-            RegistrationSuccess = true;
-         }
+               RegistrationError = true;
+               RegistrationErrorText = (UserRegisterError)left.ErrorCode switch
+               {
+                  UserRegisterError.InvalidUsername => "Invalid username",
+                  UserRegisterError.InvalidPassword => "Invalid password",
+                  UserRegisterError.InvalidEmailAddress => "Invalid email address",
+                  UserRegisterError.UsernameTaken => "Username is already taken",
+                  UserRegisterError.EmailTaken => "Email address is associated with an existing account",
+                  _ => "???"
+               };
+               return false;
+            },
+            right =>
+            {
+               UserProvidedEmailDuringRegistration = !string.IsNullOrEmpty(RegistrationInfo.EmailAddress);
+               return true;
+            });
       }
    }
 }

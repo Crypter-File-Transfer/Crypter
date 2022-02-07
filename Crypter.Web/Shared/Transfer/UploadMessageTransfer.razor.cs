@@ -24,8 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Enum;
-using Crypter.Contracts.Requests;
+using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.Web.Services;
@@ -75,38 +74,42 @@ namespace Crypter.Web.Shared.Transfer
          var encodedClientIV = Convert.ToBase64String(iv);
 
          var withAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
-         var request = new MessageTransferRequest(MessageSubject, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey, RequestedExpirationHours);
-         var (_, response) = await UploadService.UploadMessageTransferAsync(request, RecipientId, withAuth);
-
-         switch (response.Result)
-         {
-            case UploadResult.BlockedByUserPrivacy:
+         var request = new UploadMessageTransferRequest(MessageSubject, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey, RequestedExpirationHours);
+         var maybeUpload = await UploadService.UploadMessageTransferAsync(request, RecipientId, withAuth);
+         maybeUpload.MatchVoid(
+            left =>
+            {
                Error = true;
-               ErrorMessage = "This user does not accept files.";
+               switch ((UploadTransferError)left.ErrorCode)
+               {
+                  case UploadTransferError.BlockedByUserPrivacy:
+                     ErrorMessage = "This user does not accept files.";
+                     break;
+                  case UploadTransferError.OutOfSpace:
+                     ErrorMessage = "The server is full. Try again later.";
+                     break;
+                  default:
+                     ErrorMessage = "An error occurred";
+                     break;
+               }
                EncryptionInProgress = false;
-               return;
-            case UploadResult.OutOfSpace:
-               Error = true;
-               ErrorMessage = "The server is full. Try again later.";
+            },
+            right =>
+            {
+               TransferId = right.Id;
+
+               if (RecipientId == default)
+               {
+                  ModalForAnonymousRecipient.Open();
+               }
+               else
+               {
+                  ModalForUserRecipient.Open();
+               }
+
                EncryptionInProgress = false;
-               return;
-            default:
-               break;
-         }
-
-         TransferId = response.Id;
-
-         if (RecipientId == default)
-         {
-            ModalForAnonymousRecipient.Open();
-         }
-         else
-         {
-            ModalForUserRecipient.Open();
-         }
-
-         EncryptionInProgress = false;
-         Cleanup();
+               Cleanup();
+            });
       }
 
         protected static byte[] EncryptBytes(byte[] message, byte[] symmetricKey, byte[] symmetricIV)

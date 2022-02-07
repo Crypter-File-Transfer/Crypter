@@ -28,7 +28,6 @@ using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -72,22 +71,28 @@ namespace Crypter.Web.Pages
       protected async Task PrepareUserProfileAsync()
       {
          var requestWithAuthentication = LocalStorage.HasItem(StoredObjectType.UserSession);
-         var (httpStatus, response) = await UserService.GetUserPublicProfileAsync(Username, requestWithAuthentication);
-         IsProfileAvailable = httpStatus == HttpStatusCode.OK
-            && !string.IsNullOrEmpty(response.PublicDHKey)
-            && !string.IsNullOrEmpty(response.PublicDSAKey);
+         var maybeProfile = await UserService.GetUserPublicProfileAsync(Username, requestWithAuthentication);
+         IsProfileAvailable = maybeProfile.Match(
+            left => false,
+            right =>
+            {
+               bool profileIsAvailable = !string.IsNullOrEmpty(right.PublicDHKey)
+                  && !string.IsNullOrEmpty(right.PublicDSAKey);
 
-         if (IsProfileAvailable)
-         {
-            UserId = response.Id;
-            Alias = response.Alias;
-            About = response.About;
-            ActualUsername = response.Username;
-            AllowsFiles = response.ReceivesFiles;
-            AllowsMessages = response.ReceivesMessages;
-            UserX25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(response.PublicDHKey));
-            UserEd25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(response.PublicDSAKey));
-         }
+               if (profileIsAvailable)
+               {
+                  UserId = right.Id;
+                  Alias = right.Alias;
+                  About = right.About;
+                  ActualUsername = right.Username;
+                  AllowsFiles = right.ReceivesFiles;
+                  AllowsMessages = right.ReceivesMessages;
+                  UserX25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(right.PublicDHKey));
+                  UserEd25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(right.PublicDSAKey));
+               }
+
+               return profileIsAvailable;
+            });
       }
    }
 }

@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.DTO;
+using Crypter.Contracts.Features.User.Search;
 using System;
 using System.Collections.Generic;
 using System.Threading;

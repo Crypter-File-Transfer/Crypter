@@ -25,7 +25,8 @@
  */
 
 using Crypter.Common.Services;
-using Crypter.Contracts.Enum;
+using Crypter.Contracts.Common.Enum;
+using Crypter.Contracts.Features.User.Register;
 using Crypter.Core.Features.User.Common;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
@@ -52,7 +53,8 @@ namespace Crypter.Core.Features.User.Commands
 
    public class InsertUserCommandResult
    {
-      public InsertUserResult Result { get; private set; }
+      public bool Success { get; set; }
+      public UserRegisterError ErrorCode { get; private set; }
       public Guid UserId { get; private set; }
       public bool SendVerificationEmail { get; private set; }
 
@@ -60,9 +62,10 @@ namespace Crypter.Core.Features.User.Commands
       /// Failure
       /// </summary>
       /// <param name="failureReason"></param>
-      public InsertUserCommandResult(InsertUserResult failureReason)
+      public InsertUserCommandResult(UserRegisterError failureReason)
       {
-         Result = failureReason;
+         Success = false;
+         ErrorCode = failureReason;
          UserId = Guid.Empty;
          SendVerificationEmail = false;
       }
@@ -74,7 +77,8 @@ namespace Crypter.Core.Features.User.Commands
       /// <param name="sendVerificationEmail"></param>
       public InsertUserCommandResult(Guid userId, bool sendVerificationEmail)
       {
-         Result = InsertUserResult.Success;
+         Success = true;
+         ErrorCode = UserRegisterError.UnknownError;
          UserId = userId;
          SendVerificationEmail = sendVerificationEmail;
       }
@@ -95,24 +99,24 @@ namespace Crypter.Core.Features.User.Commands
       {
          if (!ValidationService.IsValidUsername(request.Username))
          {
-            return new(InsertUserResult.InvalidUsername);
+            return new(UserRegisterError.InvalidUsername);
          }
 
          if (!ValidationService.IsValidPassword(request.PasswordBase64))
          {
-            return new(InsertUserResult.InvalidPassword);
+            return new(UserRegisterError.InvalidPassword);
          }
 
          if (ValidationService.IsPossibleEmailAddress(request.Email)
             && !ValidationService.IsValidEmailAddress(request.Email))
          {
-            return new(InsertUserResult.InvalidEmailAddress);
+            return new(UserRegisterError.InvalidEmailAddress);
          }
 
          bool isUsernameAvailable = await _context.Users.IsUsernameAvailableAsync(request.Username, cancellationToken);
          if (!isUsernameAvailable)
          {
-            return new(InsertUserResult.UsernameTaken);
+            return new(UserRegisterError.UsernameTaken);
          }
 
          bool sendVerificationEmail = false;
@@ -121,7 +125,7 @@ namespace Crypter.Core.Features.User.Commands
             bool isEmailAvailable = await _context.Users.IsEmailAddressAvailableAsync(request.Email, cancellationToken);
             if (!isEmailAvailable)
             {
-               return new(InsertUserResult.EmailTaken);
+               return new(UserRegisterError.EmailTaken);
             }
             sendVerificationEmail = true;
          }

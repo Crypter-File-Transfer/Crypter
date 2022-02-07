@@ -24,9 +24,8 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Responses;
+using Crypter.Contracts.Features.Metrics.Disk;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.Threading;

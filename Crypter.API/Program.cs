@@ -83,7 +83,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
    .AddJwtBearerConfiguration(tokenSettings);
 
 builder.Services.AddCors();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+   .ConfigureApiBehaviorOptions(options =>
+   {
+      options.SuppressMapClientErrors = true;
+   });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

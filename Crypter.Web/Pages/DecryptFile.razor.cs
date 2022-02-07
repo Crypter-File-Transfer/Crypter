@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Requests;
+using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Crypter.Web.Services;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -71,24 +70,26 @@ namespace Crypter.Web.Pages
 
       protected async Task PrepareFilePreviewAsync()
       {
-         var filePreviewRequest = new GetTransferPreviewRequest(TransferId);
+         var filePreviewRequest = new DownloadTransferPreviewRequest(TransferId);
          var withAuth = LocalStorage.HasItem(StoredObjectType.UserSession);
-         var (httpStatus, response) = await TransferService.DownloadFilePreviewAsync(filePreviewRequest, withAuth);
-
-         ItemFound = httpStatus != HttpStatusCode.NotFound;
-         if (ItemFound)
-         {
-            FileName = response.FileName;
-            ContentType = response.ContentType;
-            Created = response.CreationUTC.ToLocalTime().ToString();
-            Expiration = response.ExpirationUTC.ToLocalTime().ToString();
-            Size = response.Size;
-            SenderId = response.SenderId;
-            SenderUsername = response.SenderUsername;
-            SenderAlias = response.SenderAlias;
-            RecipientId = response.RecipientId;
-            X25519PublicKey = response.X25519PublicKey;
-         }
+         ItemFound = (await TransferService.DownloadFilePreviewAsync(filePreviewRequest, withAuth))
+            .Match(
+               left => false,
+               right =>
+               {
+                  FileName = right.FileName;
+                  ContentType = right.ContentType;
+                  Created = right.CreationUTC.ToLocalTime().ToString();
+                  Expiration = right.ExpirationUTC.ToLocalTime().ToString();
+                  Size = right.Size;
+                  SenderId = right.SenderId;
+                  SenderUsername = right.SenderUsername;
+                  SenderAlias = right.SenderAlias;
+                  RecipientId = right.RecipientId;
+                  X25519PublicKey = right.X25519PublicKey;
+                  return true;
+               }
+            );
       }
    }
 }

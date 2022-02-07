@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Requests;
+using Crypter.Contracts.Features.User.VerifyEmailAddress;
 using Crypter.Web.Models;
 using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
@@ -72,9 +72,13 @@ namespace Crypter.Web.Pages
 
       protected async Task VerifyEmailAddressAsync()
       {
-         (var _, var response) = await UserService.VerifyUserEmailAddressAsync(
-            new VerifyUserEmailAddressRequest(EmailVerificationParams.Code, EmailVerificationParams.Signature));
-         EmailVerificationSuccess = response.Success;
+         var maybeVerification = await UserService.VerifyUserEmailAddressAsync(
+            new VerifyEmailAddressRequest(EmailVerificationParams.Code, EmailVerificationParams.Signature));
+
+         EmailVerificationSuccess = maybeVerification.Match(
+            left => false,
+            right => true);
+
          EmailVerificationInProgress = false;
       }
    }
