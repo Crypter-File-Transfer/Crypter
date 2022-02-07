@@ -139,39 +139,34 @@ namespace Crypter.Web.Services
 
       private async Task<Either<ErrorResponse, T>> SendRequestAsync<T>(HttpRequestMessage request, bool isUsingRefreshToken)
       {
-         HttpResponseMessage response;
          try
          {
-            response = await _httpClient.SendAsync(request);
+            using HttpResponseMessage response = await _httpClient.SendAsync(request);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+               if (!isUsingRefreshToken && await TryRefreshingTokenAsync())
+               {
+                  await AttachTokenAsync(request);
+                  return await SendRequestAsync<T>(request, false);
+               }
+               await HandleMissingTokenAsync();
+               return new Either<ErrorResponse, T>();
+            }
+
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+               ErrorResponse error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+               return new Either<ErrorResponse, T>(error);
+            }
+
+            T content = await response.Content.ReadFromJsonAsync<T>();
+            return new Either<ErrorResponse, T>(content);
          }
          catch (Exception)
          {
             return new Either<ErrorResponse, T>();
          }
-
-         if (response.StatusCode == HttpStatusCode.Unauthorized)
-         {
-            if (!isUsingRefreshToken && await TryRefreshingTokenAsync())
-            {
-               await AttachTokenAsync(request);
-               response.Dispose();
-               return await SendRequestAsync<T>(request, false);
-            }
-            await HandleMissingTokenAsync();
-            response.Dispose();
-            return new Either<ErrorResponse, T>();
-         }
-
-         if (response.StatusCode != HttpStatusCode.OK)
-         {
-            ErrorResponse error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-            response.Dispose();
-            return new Either<ErrorResponse, T>(error);
-         }
-
-         T content = await response.Content.ReadFromJsonAsync<T>();
-         response.Dispose();
-         return new Either<ErrorResponse, T>(content);
       }
 
       private async Task HandleMissingTokenAsync()
