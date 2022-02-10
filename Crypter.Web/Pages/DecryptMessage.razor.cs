@@ -71,25 +71,23 @@ namespace Crypter.Web.Pages
       {
          var messagePreviewRequest = new DownloadTransferPreviewRequest(TransferId);
          var withAuth = LocalStorage.HasItem(StoredObjectType.UserSession);
-         ItemFound = (await TransferService.DownloadMessagePreviewAsync(messagePreviewRequest, withAuth))
-            .Match(
-               left => false,
-               right =>
-               {
-                  Subject = string.IsNullOrEmpty(right.Subject)
-                     ? "{ no subject }"
-                     : right.Subject;
-                  Created = right.CreationUTC.ToLocalTime().ToString();
-                  Expiration = right.ExpirationUTC.ToLocalTime().ToString();
-                  Size = right.Size;
-                  SenderId = right.SenderId;
-                  SenderUsername = right.SenderUsername;
-                  SenderAlias = right.SenderAlias;
-                  RecipientId = right.RecipientId;
-                  X25519PublicKey = right.X25519PublicKey;
-                  return true;
-               }
-            );
+         var response = await TransferService.DownloadMessagePreviewAsync(messagePreviewRequest, withAuth);
+         response.DoRight(x =>
+         {
+            Subject = string.IsNullOrEmpty(x.Subject)
+               ? "{ no subject }"
+               : x.Subject;
+            Created = x.CreationUTC.ToLocalTime().ToString();
+            Expiration = x.ExpirationUTC.ToLocalTime().ToString();
+            Size = x.Size;
+            SenderId = x.SenderId;
+            SenderUsername = x.SenderUsername;
+            SenderAlias = x.SenderAlias;
+            RecipientId = x.RecipientId;
+            X25519PublicKey = x.X25519PublicKey;
+         });
+
+         ItemFound = response.IsRight;
       }
    }
 }

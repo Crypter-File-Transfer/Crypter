@@ -24,14 +24,37 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Core.Models;
+using MediatR;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Core.Features.User.Queries
 {
-   public interface IUserTokenService
+   public class UserTokenQuery : IRequest<UserToken>
    {
-      Task DeleteAsync(Guid tokenId, CancellationToken cancellationToken);
+      public Guid TokenId { get; set; }
+
+      public UserTokenQuery(Guid tokenId)
+      {
+         TokenId = tokenId;
+      }
+   }
+
+   public class UserTokenQueryHandler : IRequestHandler<UserTokenQuery, UserToken>
+   {
+      private readonly DataContext _context;
+
+      public UserTokenQueryHandler(DataContext context)
+      {
+         _context = context;
+      }
+
+      public async Task<UserToken> Handle(UserTokenQuery request, CancellationToken cancellationToken)
+      {
+         return await _context.UserTokens
+            .FindAsync(new object[] { request.TokenId }, cancellationToken);
+      }
    }
 }

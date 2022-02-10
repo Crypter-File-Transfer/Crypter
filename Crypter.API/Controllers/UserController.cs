@@ -117,17 +117,17 @@ namespace Crypter.API.Controllers
       {
          var insertResult = await _mediator.Send(new InsertUserCommand(request.Username, request.Password, request.Email), cancellationToken);
 
-         if (!insertResult.Success)
+         insertResult.DoRight(x =>
          {
-            return new BadRequestObjectResult(new ErrorResponse(insertResult.ErrorCode));
-         }
+            if (x.SendVerificationEmail)
+            {
+               BackgroundJob.Enqueue(() => _emailService.HangfireSendEmailVerificationAsync(x.UserId));
+            }
+         });
 
-         if (insertResult.SendVerificationEmail)
-         {
-            BackgroundJob.Enqueue(() => _emailService.HangfireSendEmailVerificationAsync(insertResult.UserId));
-         }
-
-         return new OkObjectResult(new UserRegisterResponse());
+         return insertResult.Match<IActionResult>(
+            left => new BadRequestObjectResult(new ErrorResponse(left)),
+            right => new OkObjectResult(new UserRegisterResponse()));
       }
 
       [Authorize]

@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Common.FunctionalTypes;
+using Crypter.Contracts.Features.Authentication.Login;
 using Crypter.Core.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +35,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Features.User.Queries
 {
-   public class LoginQuery : IRequest<LoginQueryResult>
+   public class LoginQuery : IRequest<Either<LoginError, LoginQueryResult>>
    {
       public string Username { get; private set; }
       public string Password { get; private set; }
@@ -47,34 +49,14 @@ namespace Crypter.Core.Features.User.Queries
 
    public class LoginQueryResult
    {
-      public bool Success { get; private set; }
       public Guid UserId { get; private set; }
-      public string? EncryptedX25519PrivateKey { get; private set; }
-      public string? EncryptedEd25519PrivateKey { get; private set; }
-      public string? InitVectorX25519 { get; private set; }
-      public string? InitVectorEd25519 { get; private set; }
+      public string EncryptedX25519PrivateKey { get; private set; }
+      public string EncryptedEd25519PrivateKey { get; private set; }
+      public string InitVectorX25519 { get; private set; }
+      public string InitVectorEd25519 { get; private set; }
 
-      /// <summary>
-      /// Failure
-      /// </summary>
-      public LoginQueryResult()
+      public LoginQueryResult(Guid userId, string encryptedX25519PrivateKey, string encryptedEd25519PrivateKey, string initVectorX25519, string initVectorEd25519)
       {
-         Success = false;
-         UserId = Guid.Empty;
-      }
-
-      /// <summary>
-      /// Success
-      /// </summary>
-      /// <param name="success"></param>
-      /// <param name="userId"></param>
-      /// <param name="encryptedX25519PrivateKey"></param>
-      /// <param name="encryptedEd25519PrivateKey"></param>
-      /// <param name="initVectorX25519"></param>
-      /// <param name="initVectorEd25519"></param>
-      public LoginQueryResult(Guid userId, string? encryptedX25519PrivateKey, string? encryptedEd25519PrivateKey, string? initVectorX25519, string? initVectorEd25519)
-      {
-         Success = true;
          UserId = userId;
          EncryptedX25519PrivateKey = encryptedX25519PrivateKey;
          EncryptedEd25519PrivateKey = encryptedEd25519PrivateKey;
@@ -83,7 +65,7 @@ namespace Crypter.Core.Features.User.Queries
       }
    }
 
-   public class LoginQueryHandler : IRequestHandler<LoginQuery, LoginQueryResult>
+   public class LoginQueryHandler : IRequestHandler<LoginQuery, Either<LoginError, LoginQueryResult>>
    {
       private readonly DataContext _context;
       private readonly IPasswordHashService _passwordHashService;
@@ -94,23 +76,23 @@ namespace Crypter.Core.Features.User.Queries
          _passwordHashService = passwordHashService;
       }
 
-      public async Task<LoginQueryResult> Handle(LoginQuery request, CancellationToken cancellationToken)
+      public async Task<Either<LoginError, LoginQueryResult>> Handle(LoginQuery request, CancellationToken cancellationToken)
       {
          string lowerUsername = request.Username.ToLower();
-         Models.User? user = await _context.Users
+         Models.User user = await _context.Users
             .Include(x => x.X25519KeyPair)
             .Include(x => x.Ed25519KeyPair)
             .FirstOrDefaultAsync(x => x.Username.ToLower() == lowerUsername, cancellationToken);
 
          if (user is null)
          {
-            return new LoginQueryResult();
+            return LoginError.NotFound;
          }
 
          bool passwordsMatch = _passwordHashService.VerifySecurePasswordHash(request.Password, user.PasswordHash, user.PasswordSalt);
          return passwordsMatch
             ? new LoginQueryResult(user.Id, user.X25519KeyPair?.PrivateKey, user.Ed25519KeyPair?.PrivateKey, user.X25519KeyPair?.ClientIV, user.Ed25519KeyPair?.ClientIV)
-            : new LoginQueryResult();
+            : LoginError.NotFound;
       }
    }
 }

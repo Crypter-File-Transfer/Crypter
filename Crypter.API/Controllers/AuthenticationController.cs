@@ -32,7 +32,6 @@ using Crypter.Contracts.Features.Authentication.Logout;
 using Crypter.Contracts.Features.Authentication.Refresh;
 using Crypter.Core.Features.User.Commands;
 using Crypter.Core.Features.User.Queries;
-using Crypter.Core.Interfaces;
 using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -50,16 +49,13 @@ namespace Crypter.API.Controllers
    {
       private readonly IMediator _mediator;
       private readonly ITokenService _tokenService;
-      private readonly IUserTokenService _userTokenService;
 
       public AuthenticationController(
          IMediator mediator,
-         ITokenService tokenService,
-         IUserTokenService userTokenService)
+         ITokenService tokenService)
       {
          _mediator = mediator;
          _tokenService = tokenService;
-         _userTokenService = userTokenService;
       }
 
       /// <summary>
@@ -83,31 +79,43 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       public async Task<IActionResult> AuthenticateAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
       {
-         LoginQueryResult loginResult = await _mediator.Send(new LoginQuery(request.Username, request.Password), cancellationToken);
-         if (!loginResult.Success)
+         if (request.RefreshTokenType != TokenType.Session
+            && request.RefreshTokenType != TokenType.Refresh)
          {
-            return new NotFoundObjectResult(new ErrorResponse(LoginError.NotFound));
+            return BadRequest(new ErrorResponse(LoginError.InvalidTokenTypeRequested));
          }
 
-         string authToken = _tokenService.NewAuthenticationToken(loginResult.UserId);
+         var result = await _mediator.Send(new LoginQuery(request.Username, request.Password), cancellationToken);
 
-         Guid refreshTokenId = Guid.NewGuid();
-         (string refreshToken, DateTime sessionTokenExpiration) = request.RefreshTokenType == TokenType.Session
-            ? _tokenService.NewSessionToken(loginResult.UserId, refreshTokenId)
-            : _tokenService.NewRefreshToken(loginResult.UserId, refreshTokenId);
+         string authToken = result.Match(
+            left => null,
+            right => _tokenService.NewAuthenticationToken(right.UserId));
 
-         string userAgent = HttpContext.Request.Headers.TryGetValue("User-Agent", out var someUserAgent)
-            ? someUserAgent.ToString()
-            : "Unknown device";
-         
-         await _mediator.Send(new InsertRefreshTokenCommand(refreshTokenId, loginResult.UserId, userAgent, request.RefreshTokenType, sessionTokenExpiration), cancellationToken);
-         BackgroundJob.Schedule(() => _userTokenService.DeleteAsync(refreshTokenId, default), sessionTokenExpiration - DateTime.UtcNow);
+         (Guid refreshTokenId, string refreshToken, DateTime refreshTokenExpiration) = result.Match(
+            left => (Guid.Empty, null, default),
+            right =>
+            {
+               Guid id = Guid.NewGuid();
+               (string token, DateTime expiration) = request.RefreshTokenType == TokenType.Refresh
+                  ? _tokenService.NewRefreshToken(right.UserId, id)
+                  : _tokenService.NewSessionToken(right.UserId, id);
 
-         BackgroundJob.Enqueue(() => _mediator.Send(new UpdateLastLoginTimeCommand(loginResult.UserId, DateTime.UtcNow), CancellationToken.None));
+               return (id, token, expiration);
+            });
 
-         return new OkObjectResult(
-             new LoginResponse(loginResult.UserId, authToken, refreshToken, loginResult.EncryptedX25519PrivateKey, loginResult.EncryptedEd25519PrivateKey, loginResult.InitVectorX25519, loginResult.InitVectorEd25519)
-         );
+         await result.DoRightAsync(async x =>
+         {
+            HttpContext.Request.Headers.TryGetValue("User-Agent", out var someUserAgent);
+            string userAgent = someUserAgent.ToString() ?? "Unknown device";
+
+            await _mediator.Send(new InsertUserTokenCommand(refreshTokenId, x.UserId, userAgent, request.RefreshTokenType, refreshTokenExpiration), cancellationToken);
+            BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(refreshTokenId), CancellationToken.None), refreshTokenExpiration - DateTime.UtcNow);
+            BackgroundJob.Enqueue(() => _mediator.Send(new UpdateLastLoginTimeCommand(x.UserId, DateTime.UtcNow), CancellationToken.None));
+         });
+
+         return result.Match<IActionResult>(
+            left => new NotFoundObjectResult(new ErrorResponse(left)),
+            right => new OkObjectResult(new LoginResponse(right.UserId, authToken, refreshToken, right.EncryptedX25519PrivateKey, right.EncryptedEd25519PrivateKey, right.InitVectorX25519, right.InitVectorEd25519)));
       }
 
       /// <summary>
@@ -129,44 +137,44 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> RefreshAuthenticationAsync(CancellationToken cancellationToken)
       {
-         if (!_tokenService.TryParseTokenId(User, out var tokenId))
+         if (!_tokenService.TryParseTokenId(User, out Guid tokenId))
          {
             return new BadRequestObjectResult(new ErrorResponse(RefreshError.BearerTokenMissingId));
          }
 
-         var userToken = await _userTokenService.ReadAsync(tokenId, cancellationToken);
-         if (userToken is null)
+         var databaseToken = await _mediator.Send(new UserTokenQuery(tokenId), cancellationToken);
+         if (databaseToken is null)
          {
             return new NotFoundObjectResult(new ErrorResponse(RefreshError.DatabaseTokenNotFound));
          }
 
          var requestingUserId = _tokenService.ParseUserId(User);
-         if (userToken.Owner != requestingUserId)
+         if (databaseToken.Owner != requestingUserId)
          {
             return new NotFoundObjectResult(new ErrorResponse(RefreshError.DatabaseTokenNotFound));
          }
 
-         if (userToken.Expiration < DateTime.UtcNow)
+         if (databaseToken.Expiration < DateTime.UtcNow)
          {
             return new BadRequestObjectResult(new ErrorResponse(RefreshError.DatabaseTokenExpired));
          }
 
-         await _userTokenService.DeleteAsync(userToken.Id, default);
+         await _mediator.Send(new DeleteUserTokenCommand(databaseToken.Id), cancellationToken);
 
          var newAuthToken = _tokenService.NewAuthenticationToken(requestingUserId);
 
          var newTokenId = Guid.NewGuid();
-         var (singleUseRefreshToken, newTokenExpiration) = userToken.Type == TokenType.Session
-            ? _tokenService.NewSessionToken(requestingUserId, newTokenId)
-            : _tokenService.NewRefreshToken(requestingUserId, newTokenId);
+         (string newRefreshToken, DateTime newTokenExpiration) = databaseToken.Type == TokenType.Refresh
+            ? _tokenService.NewRefreshToken(requestingUserId, newTokenId)
+            : _tokenService.NewSessionToken(requestingUserId, newTokenId);
 
          HttpContext.Request.Headers.TryGetValue("User-Agent", out var someUserAgent);
          string userAgent = someUserAgent.ToString() ?? "Unknown device";
 
-         await _userTokenService.InsertAsync(newTokenId, requestingUserId, userAgent, userToken.Type, newTokenExpiration, cancellationToken);
-         BackgroundJob.Schedule(() => _userTokenService.DeleteAsync(newTokenId, default), newTokenExpiration - DateTime.UtcNow);
+         await _mediator.Send(new InsertUserTokenCommand(newTokenId, requestingUserId, userAgent, databaseToken.Type, newTokenExpiration), cancellationToken);
+         BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(newTokenId), CancellationToken.None), newTokenExpiration - DateTime.UtcNow);
 
-         return new OkObjectResult(new RefreshResponse(newAuthToken, singleUseRefreshToken));
+         return new OkObjectResult(new RefreshResponse(newAuthToken, newRefreshToken));
       }
 
       /// <summary>
@@ -195,7 +203,7 @@ namespace Crypter.API.Controllers
             return new BadRequestObjectResult(new ErrorResponse(LogoutError.RefreshTokenInvalid));
          }
 
-         var userToken = await _userTokenService.ReadAsync(tokenId, cancellationToken);
+         var userToken = await _mediator.Send(new UserTokenQuery(tokenId), cancellationToken);
          if (userToken == null)
          {
             return new NotFoundObjectResult(new ErrorResponse(LogoutError.DatabaseTokenNotFound));
@@ -207,7 +215,7 @@ namespace Crypter.API.Controllers
             return new NotFoundObjectResult(new ErrorResponse(LogoutError.DatabaseTokenNotFound));
          }
 
-         await _userTokenService.DeleteAsync(userToken.Id, cancellationToken);
+         await _mediator.Send(new DeleteUserTokenCommand(userToken.Id), cancellationToken);
          return new OkObjectResult(new LogoutResponse());
       }
    }

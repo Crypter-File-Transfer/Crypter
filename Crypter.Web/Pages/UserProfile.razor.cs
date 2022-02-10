@@ -71,28 +71,22 @@ namespace Crypter.Web.Pages
       protected async Task PrepareUserProfileAsync()
       {
          var requestWithAuthentication = LocalStorage.HasItem(StoredObjectType.UserSession);
-         var maybeProfile = await UserService.GetUserPublicProfileAsync(Username, requestWithAuthentication);
-         IsProfileAvailable = maybeProfile.Match(
+         var response = await UserService.GetUserPublicProfileAsync(Username, requestWithAuthentication);
+         response.DoRight(x =>
+         {
+            UserId = x.Id;
+            Alias = x.Alias;
+            About = x.About;
+            ActualUsername = x.Username;
+            AllowsFiles = x.ReceivesFiles;
+            AllowsMessages = x.ReceivesMessages;
+            UserX25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(x.PublicDHKey));
+            UserEd25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(x.PublicDSAKey));
+         });
+
+         IsProfileAvailable = response.Match(
             left => false,
-            right =>
-            {
-               bool profileIsAvailable = !string.IsNullOrEmpty(right.PublicDHKey)
-                  && !string.IsNullOrEmpty(right.PublicDSAKey);
-
-               if (profileIsAvailable)
-               {
-                  UserId = right.Id;
-                  Alias = right.Alias;
-                  About = right.About;
-                  ActualUsername = right.Username;
-                  AllowsFiles = right.ReceivesFiles;
-                  AllowsMessages = right.ReceivesMessages;
-                  UserX25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(right.PublicDHKey));
-                  UserEd25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(right.PublicDSAKey));
-               }
-
-               return profileIsAvailable;
-            });
+            right => !string.IsNullOrEmpty(right.PublicDHKey) && !string.IsNullOrEmpty(right.PublicDSAKey));
       }
    }
 }

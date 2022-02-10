@@ -151,21 +151,21 @@ namespace Crypter.Web.Services
                   return await SendRequestAsync<T>(request, false);
                }
                await HandleMissingTokenAsync();
-               return new Either<ErrorResponse, T>();
+               return new();
             }
 
             if (response.StatusCode != HttpStatusCode.OK)
             {
                ErrorResponse error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-               return new Either<ErrorResponse, T>(error);
+               return new(error);
             }
 
             T content = await response.Content.ReadFromJsonAsync<T>();
-            return new Either<ErrorResponse, T>(content);
+            return new(content);
          }
          catch (Exception)
          {
-            return new Either<ErrorResponse, T>();
+            return new();
          }
       }
 

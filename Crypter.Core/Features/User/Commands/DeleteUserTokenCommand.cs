@@ -24,14 +24,44 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using MediatR;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Core.Features.User.Commands
 {
-   public interface IUserTokenService
+   public class DeleteUserTokenCommand : IRequest<Unit>
    {
-      Task DeleteAsync(Guid tokenId, CancellationToken cancellationToken);
+      public Guid TokenId { get; private set; }
+
+      public DeleteUserTokenCommand(Guid tokenId)
+      {
+         TokenId = tokenId;
+      }
+   }
+
+   public class DeleteUserTokenCommandHandler : IRequestHandler<DeleteUserTokenCommand, Unit>
+   {
+      private readonly DataContext _context;
+
+      public DeleteUserTokenCommandHandler(DataContext context)
+      {
+         _context = context;
+      }
+
+      public async Task<Unit> Handle(DeleteUserTokenCommand request, CancellationToken cancellationToken)
+      {
+         var foundToken = await _context.UserTokens
+            .FindAsync(new object[] { request.TokenId }, cancellationToken);
+
+         if (foundToken is not null)
+         {
+            _context.UserTokens.Remove(foundToken);
+            await _context.SaveChangesAsync();
+         }
+
+         return Unit.Value;
+      }
    }
 }

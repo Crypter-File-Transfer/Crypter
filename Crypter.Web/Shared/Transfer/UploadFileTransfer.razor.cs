@@ -132,40 +132,40 @@ namespace Crypter.Web.Shared.Transfer
 
          var withAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
          var request = new UploadFileTransferRequest(SelectedFile.Name, fileType, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey, RequestedExpirationHours);
-         var maybeUpload = await UploadService.UploadFileTransferAsync(request, RecipientId, withAuth);
-         maybeUpload.MatchVoid(
-            left =>
+         var uploadResponse = await UploadService.UploadFileTransferAsync(request, RecipientId, withAuth);
+         uploadResponse.DoLeft(x =>
+         {
+            switch ((UploadTransferError)x.ErrorCode)
             {
-               switch ((UploadTransferError)left.ErrorCode)
-               {
-                  case UploadTransferError.BlockedByUserPrivacy:
-                     ErrorMessages.Add("This user does not accept files.");
-                     break;
-                  case UploadTransferError.OutOfSpace:
-                     ErrorMessages.Add("The server is full. Try again later.");
-                     break;
-                  default:
-                     ErrorMessages.Add("An error occurred");
-                     break;
-               }
-               EncryptionInProgress = false;
-            },
-            right =>
+               case UploadTransferError.BlockedByUserPrivacy:
+                  ErrorMessages.Add("This user does not accept files.");
+                  break;
+               case UploadTransferError.OutOfSpace:
+                  ErrorMessages.Add("The server is full. Try again later.");
+                  break;
+               default:
+                  ErrorMessages.Add("An error occurred");
+                  break;
+            }
+         });
+
+         uploadResponse.DoRight(x =>
+         {
+            TransferId = x.Id;
+
+            if (RecipientId == default)
             {
-               TransferId = right.Id;
+               ModalForAnonymousRecipient.Open();
+            }
+            else
+            {
+               ModalForUserRecipient.Open();
+            }
 
-               if (RecipientId == default)
-               {
-                  ModalForAnonymousRecipient.Open();
-               }
-               else
-               {
-                  ModalForUserRecipient.Open();
-               }
+            Cleanup();
+         });
 
-               EncryptionInProgress = false;
-               Cleanup();
-            });
+         EncryptionInProgress = false;
       }
 
       protected async Task<byte[]> EncryptBytesAsync(IBrowserFile plaintext, byte[] symmetricKey, byte[] symmetricIV)
