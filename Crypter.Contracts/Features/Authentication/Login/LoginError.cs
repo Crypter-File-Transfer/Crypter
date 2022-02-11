@@ -28,6 +28,7 @@ namespace Crypter.Contracts.Features.Authentication.Login
 {
    public enum LoginError
    {
-      NotFound
+      NotFound,
+      InvalidTokenTypeRequested
    }
 }

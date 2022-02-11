@@ -72,24 +72,22 @@ namespace Crypter.Web.Pages
       {
          var filePreviewRequest = new DownloadTransferPreviewRequest(TransferId);
          var withAuth = LocalStorage.HasItem(StoredObjectType.UserSession);
-         ItemFound = (await TransferService.DownloadFilePreviewAsync(filePreviewRequest, withAuth))
-            .Match(
-               left => false,
-               right =>
-               {
-                  FileName = right.FileName;
-                  ContentType = right.ContentType;
-                  Created = right.CreationUTC.ToLocalTime().ToString();
-                  Expiration = right.ExpirationUTC.ToLocalTime().ToString();
-                  Size = right.Size;
-                  SenderId = right.SenderId;
-                  SenderUsername = right.SenderUsername;
-                  SenderAlias = right.SenderAlias;
-                  RecipientId = right.RecipientId;
-                  X25519PublicKey = right.X25519PublicKey;
-                  return true;
-               }
-            );
+         var response = await TransferService.DownloadFilePreviewAsync(filePreviewRequest, withAuth);
+         response.DoRight(x =>
+         {
+            FileName = x.FileName;
+            ContentType = x.ContentType;
+            Created = x.CreationUTC.ToLocalTime().ToString();
+            Expiration = x.ExpirationUTC.ToLocalTime().ToString();
+            Size = x.Size;
+            SenderId = x.SenderId;
+            SenderUsername = x.SenderUsername;
+            SenderAlias = x.SenderAlias;
+            RecipientId = x.RecipientId;
+            X25519PublicKey = x.X25519PublicKey;
+         });
+
+         ItemFound = response.IsRight;
       }
    }
 }

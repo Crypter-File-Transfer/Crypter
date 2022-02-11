@@ -24,9 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Contracts.Common.Enum;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading;
@@ -43,18 +41,15 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task InsertAsync(Guid tokenId, Guid userId, string description, TokenType type, DateTime expiration, CancellationToken cancellationToken)
-      {
-         var token = new UserToken(tokenId, userId, description, type, DateTime.UtcNow, expiration);
-         Context.UserTokens.Add(token);
-         await Context.SaveChangesAsync(cancellationToken);
-      }
-
-      public async Task<IUserToken> ReadAsync(Guid tokenId, CancellationToken cancellationToken)
-      {
-         return await Context.UserTokens.FindAsync(new object[] { tokenId }, cancellationToken);
-      }
-
+      /// <summary>
+      /// Delete a token from the UserToken table
+      /// </summary>
+      /// <param name="tokenId"></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      /// <remarks>
+      /// Do not remove or modify until all scheduled Hangfire jobs have completed.
+      /// </remarks>
       public async Task DeleteAsync(Guid tokenId, CancellationToken cancellationToken)
       {
          await Context.Database

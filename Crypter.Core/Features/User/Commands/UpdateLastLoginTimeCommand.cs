@@ -55,7 +55,7 @@ namespace Crypter.Core.Features.User.Commands
 
       public async Task<Unit> Handle(UpdateLastLoginTimeCommand request, CancellationToken cancellationToken)
       {
-         Models.User? user = await _context.Users
+         Models.User user = await _context.Users
             .FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken);
 
          if (user is not null)

@@ -75,41 +75,34 @@ namespace Crypter.Web.Shared.Transfer
 
          var withAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
          var request = new UploadMessageTransferRequest(MessageSubject, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey, RequestedExpirationHours);
-         var maybeUpload = await UploadService.UploadMessageTransferAsync(request, RecipientId, withAuth);
-         maybeUpload.MatchVoid(
-            left =>
+         var uploadResponse = await UploadService.UploadMessageTransferAsync(request, RecipientId, withAuth);
+         uploadResponse.DoLeft(x =>
+         {
+            Error = true;
+            ErrorMessage = (UploadTransferError)x.ErrorCode switch
             {
-               Error = true;
-               switch ((UploadTransferError)left.ErrorCode)
-               {
-                  case UploadTransferError.BlockedByUserPrivacy:
-                     ErrorMessage = "This user does not accept files.";
-                     break;
-                  case UploadTransferError.OutOfSpace:
-                     ErrorMessage = "The server is full. Try again later.";
-                     break;
-                  default:
-                     ErrorMessage = "An error occurred";
-                     break;
-               }
-               EncryptionInProgress = false;
-            },
-            right =>
+               UploadTransferError.BlockedByUserPrivacy => "This user does not accept files.",
+               UploadTransferError.OutOfSpace => "The server is full. Try again later.",
+               _ => "An error occurred",
+            };
+         });
+
+         uploadResponse.DoRight(x =>
+         {
+            TransferId = x.Id;
+
+            if (RecipientId == default)
             {
-               TransferId = right.Id;
+               ModalForAnonymousRecipient.Open();
+            }
+            else
+            {
+               ModalForUserRecipient.Open();
+            }
+            Cleanup();
+         });
 
-               if (RecipientId == default)
-               {
-                  ModalForAnonymousRecipient.Open();
-               }
-               else
-               {
-                  ModalForUserRecipient.Open();
-               }
-
-               EncryptionInProgress = false;
-               Cleanup();
-            });
+         EncryptionInProgress = false;
       }
 
         protected static byte[] EncryptBytes(byte[] message, byte[] symmetricKey, byte[] symmetricIV)

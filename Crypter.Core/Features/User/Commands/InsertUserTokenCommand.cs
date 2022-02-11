@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Features.User.Commands
 {
-   public class InsertRefreshTokenCommand : IRequest<Unit>
+   public class InsertUserTokenCommand : IRequest<Unit>
    {
       public Guid TokenId { get; private set; }
       public Guid UserId { get; private set; }
@@ -41,7 +41,7 @@ namespace Crypter.Core.Features.User.Commands
       public TokenType TokenType { get; private set; }
       public DateTime TokenExpiration { get; private set; }
 
-      public InsertRefreshTokenCommand(Guid tokenId, Guid userId, string userAgent, TokenType tokenType, DateTime tokenExpiration)
+      public InsertUserTokenCommand(Guid tokenId, Guid userId, string userAgent, TokenType tokenType, DateTime tokenExpiration)
       {
          TokenId = tokenId;
          UserId = userId;
@@ -51,16 +51,16 @@ namespace Crypter.Core.Features.User.Commands
       }
    }
 
-   public class InsertRefreshTokenCommandHandler : IRequestHandler<InsertRefreshTokenCommand, Unit>
+   public class InsertUserTokenCommandHandler : IRequestHandler<InsertUserTokenCommand, Unit>
    {
       private readonly DataContext _context;
 
-      public InsertRefreshTokenCommandHandler(DataContext context)
+      public InsertUserTokenCommandHandler(DataContext context)
       {
          _context = context;
       }
 
-      public async Task<Unit> Handle(InsertRefreshTokenCommand request, CancellationToken cancellationToken)
+      public async Task<Unit> Handle(InsertUserTokenCommand request, CancellationToken cancellationToken)
       {
          UserToken token = new(request.TokenId, request.UserId, request.UserAgent, request.TokenType, DateTime.UtcNow, request.TokenExpiration);
          _context.UserTokens.Add(token);

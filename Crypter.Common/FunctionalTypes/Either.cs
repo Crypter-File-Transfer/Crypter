@@ -96,90 +96,6 @@ namespace Crypter.Common.FunctionalTypes
          };
       }
 
-      public async Task<T> MatchAsync<T>(Func<TLeft, Task<T>> leftFunction, Func<TRight, Task<T>> rightFunction, Func<Task<T>> bottomFunction = null)
-      {
-         if (leftFunction == null)
-         {
-            throw new ArgumentNullException(nameof(leftFunction));
-         }
-
-         if (rightFunction == null)
-         {
-            throw new ArgumentNullException(nameof(rightFunction));
-         }
-
-         async Task<T> handleBottomFunction()
-         {
-            return bottomFunction is null
-               ? await Task.FromResult<T>(default)
-               : await bottomFunction();
-         }
-
-         return _state switch
-         {
-            EitherState.Bottom => await handleBottomFunction(),
-            EitherState.Left => await leftFunction(_left),
-            EitherState.Right => await rightFunction(_right),
-            _ => throw new NotImplementedException()
-         };
-      }
-
-      public void MatchVoid(Action<TLeft> leftAction, Action<TRight> rightAction, Action bottomAction = null)
-      {
-         if (leftAction == null)
-         {
-            throw new ArgumentNullException(nameof(leftAction));
-         }
-
-         if (rightAction == null)
-         {
-            throw new ArgumentNullException(nameof(rightAction));
-         }
-
-         switch (_state)
-         {
-            case EitherState.Bottom:
-               bottomAction?.Invoke();
-               break;
-            case EitherState.Left:
-               leftAction(_left);
-               break;
-            case EitherState.Right:
-               rightAction(_right);
-               break;
-            default:
-               throw new NotImplementedException();
-         }
-      }
-
-      public async Task MatchVoidAsync(Func<TLeft, Task> leftFunction, Func<TRight, Task> rightFunction, Func<Task> bottomFunction = null)
-      {
-         if (leftFunction == null)
-         {
-            throw new ArgumentNullException(nameof(leftFunction));
-         }
-
-         if (rightFunction == null)
-         {
-            throw new ArgumentNullException(nameof(rightFunction));
-         }
-
-         switch (_state)
-         {
-            case EitherState.Bottom:
-               await bottomFunction?.Invoke();
-               break;
-            case EitherState.Left:
-               await leftFunction(_left);
-               break;
-            case EitherState.Right:
-               await rightFunction(_right);
-               break;
-            default:
-               throw new NotImplementedException();
-         }
-      }
-
       public void DoRight(Action<TRight> rightAction)
       {
          if (rightAction == null)
@@ -216,6 +132,19 @@ namespace Crypter.Common.FunctionalTypes
          if (IsLeft)
          {
             leftAction(_left);
+         }
+      }
+
+      public async Task DoLeftAsync(Func<TLeft, Task> leftTask)
+      {
+         if (leftTask == null)
+         {
+            throw new ArgumentNullException(nameof(leftTask));
+         }
+
+         if (IsLeft)
+         {
+            await leftTask(_left);
          }
       }
 

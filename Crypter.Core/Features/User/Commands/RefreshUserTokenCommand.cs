@@ -24,14 +24,19 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+using Crypter.Common.FunctionalTypes;
+using Crypter.Contracts.Features.Authentication.Refresh;
+using MediatR;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Core.Features.User.Commands
 {
-   public interface IUserTokenService
+   public class RefreshUserTokenCommand : IRequest<Either<RefreshError, RefreshUserTokenCommandResult>>
    {
-      Task DeleteAsync(Guid tokenId, CancellationToken cancellationToken);
+   }
+
+   public class RefreshUserTokenCommandResult
+   {
+      public string AuthenticationToken { get; private set; }
+      public string RefreshToken { get; private set; }
    }
 }

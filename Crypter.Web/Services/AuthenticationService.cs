@@ -73,23 +73,21 @@ namespace Crypter.Web.Services
             ? TokenType.Refresh
             : TokenType.Session;
 
-         var maybeLogin = await SendLoginRequestAsync(username, password, refreshTokenType);
-         return await maybeLogin.MatchAsync(
-            left => Task.FromResult(false),
-            async right =>
-            {
-               var userPreferredStorageLocation = trustDevice
+         var response = await SendLoginRequestAsync(username, password, refreshTokenType);
+         await response.DoRightAsync(async x =>
+         {
+            var userPreferredStorageLocation = trustDevice
                   ? StorageLocation.LocalStorage
                   : StorageLocation.SessionStorage;
 
-               var userSymmetricKey = _userKeysService.GetUserSymmetricKey(username, password);
+            var userSymmetricKey = _userKeysService.GetUserSymmetricKey(username, password);
 
-               await CacheSessionInfoAsync(right, username, userPreferredStorageLocation);
-               await HandleUserKeys(right, userSymmetricKey, userPreferredStorageLocation);
-               NotifyUserSessionStateChanged(true, right.Id, username);
-               return true;
-            }
-         );
+            await CacheSessionInfoAsync(x, username, userPreferredStorageLocation);
+            await HandleUserKeys(x, userSymmetricKey, userPreferredStorageLocation);
+            NotifyUserSessionStateChanged(true, x.Id, username);
+         });
+
+         return response.IsRight;
       }
 
       public async Task<bool> UnlockSession(string password)
@@ -120,18 +118,16 @@ namespace Crypter.Web.Services
       public async Task<bool> TryRefreshingTokenAsync()
       {
          var sessionInfo = await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
-         var maybeRefresh = await _authenticationApiService.RefreshAsync();
-         return await maybeRefresh.MatchAsync(
-            left => Task.FromResult(false),
-            async right =>
-            {
-               sessionInfo.RefreshToken = right.RefreshToken;
-               var sessionLocation = _localStorageService.GetItemLocation(StoredObjectType.UserSession);
-               await _localStorageService.SetItemAsync(StoredObjectType.UserSession, sessionInfo, sessionLocation);
-               await _localStorageService.SetItemAsync(StoredObjectType.AuthenticationToken, right.AuthenticationToken, StorageLocation.InMemory);
-               return true;
-            }
-         );
+         var response = await _authenticationApiService.RefreshAsync();
+         await response.DoRightAsync(async x =>
+         {
+            sessionInfo.RefreshToken = x.RefreshToken;
+            var sessionLocation = _localStorageService.GetItemLocation(StoredObjectType.UserSession);
+            await _localStorageService.SetItemAsync(StoredObjectType.UserSession, sessionInfo, sessionLocation);
+            await _localStorageService.SetItemAsync(StoredObjectType.AuthenticationToken, x.AuthenticationToken, StorageLocation.InMemory);
+         });
+
+         return response.IsRight;
       }
 
       public event EventHandler<UserSessionStateChangedEventArgs> UserSessionStateChanged

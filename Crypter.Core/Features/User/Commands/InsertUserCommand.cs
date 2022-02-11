@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
+using Crypter.Common.FunctionalTypes;
 using Crypter.Common.Services;
 using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.User.Register;
@@ -37,13 +38,13 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Features.User.Commands
 {
-   public class InsertUserCommand : IRequest<InsertUserCommandResult>
+   public class InsertUserCommand : IRequest<Either<UserRegisterError, InsertUserCommandResult>>
    {
       public string Username { get; private set; }
       public string PasswordBase64 { get; private set; }
-      public string? Email { get; private set; }
+      public string Email { get; private set; }
 
-      public InsertUserCommand(string username, string passwordBase64, string? email)
+      public InsertUserCommand(string username, string passwordBase64, string email)
       {
          Username = username;
          PasswordBase64 = passwordBase64;
@@ -53,38 +54,17 @@ namespace Crypter.Core.Features.User.Commands
 
    public class InsertUserCommandResult
    {
-      public bool Success { get; set; }
-      public UserRegisterError ErrorCode { get; private set; }
       public Guid UserId { get; private set; }
       public bool SendVerificationEmail { get; private set; }
 
-      /// <summary>
-      /// Failure
-      /// </summary>
-      /// <param name="failureReason"></param>
-      public InsertUserCommandResult(UserRegisterError failureReason)
-      {
-         Success = false;
-         ErrorCode = failureReason;
-         UserId = Guid.Empty;
-         SendVerificationEmail = false;
-      }
-
-      /// <summary>
-      /// Success
-      /// </summary>
-      /// <param name="userId"></param>
-      /// <param name="sendVerificationEmail"></param>
       public InsertUserCommandResult(Guid userId, bool sendVerificationEmail)
       {
-         Success = true;
-         ErrorCode = UserRegisterError.UnknownError;
          UserId = userId;
          SendVerificationEmail = sendVerificationEmail;
       }
    }
 
-   public class InsertUserCommandHandler : IRequestHandler<InsertUserCommand, InsertUserCommandResult>
+   public class InsertUserCommandHandler : IRequestHandler<InsertUserCommand, Either<UserRegisterError, InsertUserCommandResult>>
    {
       private readonly DataContext _context;
       private readonly IPasswordHashService _passwordHashService;
@@ -95,28 +75,28 @@ namespace Crypter.Core.Features.User.Commands
          _passwordHashService = passwordHashService;
       }
 
-      public async Task<InsertUserCommandResult> Handle(InsertUserCommand request, CancellationToken cancellationToken)
+      public async Task<Either<UserRegisterError, InsertUserCommandResult>> Handle(InsertUserCommand request, CancellationToken cancellationToken)
       {
          if (!ValidationService.IsValidUsername(request.Username))
          {
-            return new(UserRegisterError.InvalidUsername);
+            return UserRegisterError.InvalidUsername;
          }
 
          if (!ValidationService.IsValidPassword(request.PasswordBase64))
          {
-            return new(UserRegisterError.InvalidPassword);
+            return UserRegisterError.InvalidPassword;
          }
 
          if (ValidationService.IsPossibleEmailAddress(request.Email)
             && !ValidationService.IsValidEmailAddress(request.Email))
          {
-            return new(UserRegisterError.InvalidEmailAddress);
+            return UserRegisterError.InvalidEmailAddress;
          }
 
          bool isUsernameAvailable = await _context.Users.IsUsernameAvailableAsync(request.Username, cancellationToken);
          if (!isUsernameAvailable)
          {
-            return new(UserRegisterError.UsernameTaken);
+            return UserRegisterError.UsernameTaken;
          }
 
          bool sendVerificationEmail = false;
@@ -125,7 +105,7 @@ namespace Crypter.Core.Features.User.Commands
             bool isEmailAvailable = await _context.Users.IsEmailAddressAvailableAsync(request.Email, cancellationToken);
             if (!isEmailAvailable)
             {
-               return new(UserRegisterError.EmailTaken);
+               return UserRegisterError.EmailTaken;
             }
             sendVerificationEmail = true;
          }
