@@ -38,7 +38,7 @@ namespace Crypter.Core.Features.Metrics.Queries
 
    public class DiskMetricsQueryResult
    {
-      public long UsedBytes { get; set; }
+      public long UsedBytes { get; private set; }
 
       public DiskMetricsQueryResult(long usedBytes)
       {
@@ -57,10 +57,10 @@ namespace Crypter.Core.Features.Metrics.Queries
 
       public async Task<DiskMetricsQueryResult> Handle(DiskMetricsQuery request, CancellationToken cancellationToken)
       {
-         var messageSizes = _context.MessageTransfers
+         IQueryable<long> messageSizes = _context.MessageTransfers
             .Select(x => (long)x.Size);
 
-         var fileSizes = _context.FileTransfers
+         IQueryable<long> fileSizes = _context.FileTransfers
             .Select(x => (long)x.Size);
 
          long usedBytes = await fileSizes
