@@ -34,14 +34,22 @@ namespace Crypter.Core.Features.Metrics.Queries
 {
    public class DiskMetricsQuery : IRequest<DiskMetricsQueryResult>
    {
+      public long AllocatedBytes { get; private set; }
+
+      public DiskMetricsQuery(long allocatedBytes)
+      {
+         AllocatedBytes = allocatedBytes;
+      }
    }
 
    public class DiskMetricsQueryResult
    {
+      public long FreeBytes { get; private set; }
       public long UsedBytes { get; private set; }
 
-      public DiskMetricsQueryResult(long usedBytes)
+      public DiskMetricsQueryResult(long freeBytes, long usedBytes)
       {
+         FreeBytes = freeBytes;
          UsedBytes = usedBytes;
       }
    }
@@ -67,7 +75,9 @@ namespace Crypter.Core.Features.Metrics.Queries
             .Concat(messageSizes)
             .SumAsync(cancellationToken);
 
-         return new DiskMetricsQueryResult(usedBytes);
+         long freeBytes = request.AllocatedBytes - usedBytes;
+
+         return new DiskMetricsQueryResult(freeBytes, usedBytes);
       }
    }
 }

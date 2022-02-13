@@ -43,7 +43,7 @@ namespace Crypter.API.Services
    public class UploadService
    {
       private readonly long AllocatedDiskSpace;
-      private readonly int MaxUploadSize;
+      private readonly long MaxUploadSize;
 
       private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
       private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
@@ -65,8 +65,8 @@ namespace Crypter.API.Services
          ISimpleHashService simpleHashService
          )
       {
-         AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(1024, 3);
-         MaxUploadSize = int.Parse(configuration["MaxUploadSizeMB"]) * (int)Math.Pow(1024, 2);
+         AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(2, 30);
+         MaxUploadSize = long.Parse(configuration["MaxUploadSizeMB"]) * (long)Math.Pow(2, 20);
          MessageTransferService = messageTransferService;
          FileTransferService = fileTransferService;
          EmailService = emailService;

@@ -33,7 +33,7 @@ namespace Crypter.API.Services
 {
    public interface IApiValidationService
    {
-      Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken);
+      Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, long maxUploadSize, CancellationToken cancellationToken);
    }
 
    public class ApiValidationService : IApiValidationService
@@ -45,10 +45,10 @@ namespace Crypter.API.Services
          _mediator = mediator;
       }
 
-      public async Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken)
+      public async Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, long maxUploadSize, CancellationToken cancellationToken)
       {
-         var result = await _mediator.Send(new DiskMetricsQuery(), cancellationToken);
-         return (result.UsedBytes + maxUploadSize) <= allocatedDiskSpace;
+         var result = await _mediator.Send(new DiskMetricsQuery(allocatedDiskSpace), cancellationToken);
+         return result.FreeBytes > maxUploadSize;
       }
    }
 }

@@ -29,6 +29,7 @@ using Crypter.Core.Features.Metrics.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,17 +43,15 @@ namespace Crypter.API.Controllers
 
       public MetricsController(IConfiguration configuration, IMediator mediator)
       {
-         AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * 1024 * 1024 * 1024;
+         AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(2, 30);
          _mediator = mediator;
       }
 
       [HttpGet("disk")]
       public async Task<IActionResult> GetDiskMetrics(CancellationToken cancellationToken)
       {
-         var result = await _mediator.Send(new DiskMetricsQuery(), cancellationToken);
-         var isFull = result.UsedBytes + (10 * 1024 * 1024) >= AllocatedDiskSpace;
-
-         var responseBody = new DiskMetricsResponse(isFull, AllocatedDiskSpace, AllocatedDiskSpace - result.UsedBytes);
+         var result = await _mediator.Send(new DiskMetricsQuery(AllocatedDiskSpace), cancellationToken);
+         var responseBody = new DiskMetricsResponse(AllocatedDiskSpace, result.FreeBytes);
          return new OkObjectResult(responseBody);
       }
    }
