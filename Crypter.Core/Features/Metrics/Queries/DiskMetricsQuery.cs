@@ -24,21 +24,50 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using System;
-using System.Collections.Generic;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Core.Features.Metrics.Queries
 {
-   public interface IBaseTransferService<T> where T : IBaseTransferItem
+   public class DiskMetricsQuery : IRequest<DiskMetricsQueryResult>
    {
-      Task InsertAsync(T item, CancellationToken cancellationToken);
-      Task<T> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+   }
 
-      Task<IEnumerable<T>> FindBySenderAsync(Guid senderId, CancellationToken cancellationToken);
-      Task<IEnumerable<T>> FindByRecipientAsync(Guid recipientId, CancellationToken cancellationToken);
-      Task<IEnumerable<T>> FindExpiredAsync(CancellationToken cancellationToken);
+   public class DiskMetricsQueryResult
+   {
+      public long UsedBytes { get; set; }
+
+      public DiskMetricsQueryResult(long usedBytes)
+      {
+         UsedBytes = usedBytes;
+      }
+   }
+
+   public class DiskMetricsQueryHandler : IRequestHandler<DiskMetricsQuery, DiskMetricsQueryResult>
+   {
+      private readonly DataContext _context;
+
+      public DiskMetricsQueryHandler(DataContext context)
+      {
+         _context = context;
+      }
+
+      public async Task<DiskMetricsQueryResult> Handle(DiskMetricsQuery request, CancellationToken cancellationToken)
+      {
+         var messageSizes = _context.MessageTransfers
+            .Select(x => (long)x.Size);
+
+         var fileSizes = _context.FileTransfers
+            .Select(x => (long)x.Size);
+
+         long usedBytes = await fileSizes
+            .Concat(messageSizes)
+            .SumAsync(cancellationToken);
+
+         return new DiskMetricsQueryResult(usedBytes);
+      }
    }
 }

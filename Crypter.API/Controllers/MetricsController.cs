@@ -25,7 +25,8 @@
  */
 
 using Crypter.Contracts.Features.Metrics.Disk;
-using Crypter.Core.Interfaces;
+using Crypter.Core.Features.Metrics.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.Threading;
@@ -36,29 +37,22 @@ namespace Crypter.API.Controllers
    [Route("api/metrics")]
    public class MetricsController : ControllerBase
    {
+      private readonly IMediator _mediator;
       private readonly long AllocatedDiskSpace;
-      private readonly IBaseTransferService<IMessageTransferItem> _messageService;
-      private readonly IBaseTransferService<IFileTransferItem> _fileService;
 
-      public MetricsController(IConfiguration configuration,
-          IBaseTransferService<IMessageTransferItem> messageService,
-          IBaseTransferService<IFileTransferItem> fileService
-          )
+      public MetricsController(IConfiguration configuration, IMediator mediator)
       {
          AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * 1024 * 1024 * 1024;
-         _messageService = messageService;
-         _fileService = fileService;
+         _mediator = mediator;
       }
 
       [HttpGet("disk")]
       public async Task<IActionResult> GetDiskMetrics(CancellationToken cancellationToken)
       {
-         var sizeOfFileUploads = await _fileService.GetAggregateSizeAsync(cancellationToken);
-         var sizeOfMessageUploads = await _messageService.GetAggregateSizeAsync(cancellationToken);
-         var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
-         var isFull = totalSizeOfUploads + (10 * 1024 * 1024) >= AllocatedDiskSpace;
+         var result = await _mediator.Send(new DiskMetricsQuery(), cancellationToken);
+         var isFull = result.UsedBytes + (10 * 1024 * 1024) >= AllocatedDiskSpace;
 
-         var responseBody = new DiskMetricsResponse(isFull, AllocatedDiskSpace.ToString(), (AllocatedDiskSpace - totalSizeOfUploads).ToString());
+         var responseBody = new DiskMetricsResponse(isFull, AllocatedDiskSpace, AllocatedDiskSpace - result.UsedBytes);
          return new OkObjectResult(responseBody);
       }
    }
