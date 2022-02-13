@@ -69,7 +69,6 @@ namespace Crypter.API.Controllers
       private readonly IUserProfileService _userProfileService;
       private readonly IUserPublicKeyPairService<UserX25519KeyPair> _userX25519KeyPairService;
       private readonly IUserPublicKeyPairService<UserEd25519KeyPair> _userEd25519KeyPairService;
-      private readonly IUserSearchService _userSearchService;
       private readonly IUserPrivacySettingService _userPrivacySettingService;
       private readonly IUserEmailVerificationService _userEmailVerificationService;
       private readonly IUserNotificationSettingService _userNotificationSettingService;
@@ -84,7 +83,6 @@ namespace Crypter.API.Controllers
           IUserProfileService userProfileService,
           IUserPublicKeyPairService<UserX25519KeyPair> userX25519KeyPairService,
           IUserPublicKeyPairService<UserEd25519KeyPair> userEd25519KeyPairService,
-          IUserSearchService userSearchService,
           IUserPrivacySettingService userPrivacySettingService,
           IUserEmailVerificationService userEmailVerificationService,
           IUserNotificationSettingService userNotificationSettingService,
@@ -99,7 +97,6 @@ namespace Crypter.API.Controllers
          _userProfileService = userProfileService;
          _userX25519KeyPairService = userX25519KeyPairService;
          _userEd25519KeyPairService = userEd25519KeyPairService;
-         _userSearchService = userSearchService;
          _userPrivacySettingService = userPrivacySettingService;
          _userEmailVerificationService = userEmailVerificationService;
          _userNotificationSettingService = userNotificationSettingService;
@@ -414,14 +411,9 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       public async Task<IActionResult> SearchByUsernameAsync([FromQuery] string value, [FromQuery] int index, [FromQuery] int count, CancellationToken cancellationToken)
       {
-         var searchPartyId = _tokenService.ParseUserId(User);
-         var (total, users) = await _userSearchService.SearchByUsernameAsync(searchPartyId, value, index, count, cancellationToken);
-         var dtoUsers = users
-             .Select(x => new UserSearchResultDTO(x.Id, x.Username, x.Alias))
-             .ToList();
-
-         return new OkObjectResult(
-             new UserSearchResponse(total, dtoUsers));
+         var requestorId = _tokenService.ParseUserId(User);
+         var result = await _mediator.Send(new UserSearchQuery(requestorId, value, UserSearchKeywordField.Username, index, count), cancellationToken);
+         return new OkObjectResult(new UserSearchResponse(result.Total, result.Users));
       }
 
       [Authorize]
@@ -430,14 +422,9 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       public async Task<IActionResult> SearchByAliasAsync([FromQuery] string value, [FromQuery] int index, [FromQuery] int count, CancellationToken cancellationToken)
       {
-         var searchPartyId = _tokenService.ParseUserId(User);
-         var (total, users) = await _userSearchService.SearchByAliasAsync(searchPartyId, value, index, count, cancellationToken);
-         var dtoUsers = users
-             .Select(x => new UserSearchResultDTO(x.Id, x.Username, x.Alias))
-             .ToList();
-
-         return new OkObjectResult(
-             new UserSearchResponse(total, dtoUsers));
+         var requestorId = _tokenService.ParseUserId(User);
+         var result = await _mediator.Send(new UserSearchQuery(requestorId, value, UserSearchKeywordField.Alias, index, count), cancellationToken);
+         return new OkObjectResult(new UserSearchResponse(result.Total, result.Users));
       }
 
       [HttpGet("{username}")]

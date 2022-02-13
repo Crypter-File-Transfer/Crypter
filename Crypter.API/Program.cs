@@ -59,7 +59,6 @@ builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IUserPrivacySettingService, UserPrivacySettingService>();
 builder.Services.AddScoped<IUserPublicKeyPairService<UserX25519KeyPair>, UserX25519KeyPairService>();
 builder.Services.AddScoped<IUserPublicKeyPairService<UserEd25519KeyPair>, UserEd25519KeyPairService>();
-builder.Services.AddScoped<IUserSearchService, UserSearchService>();
 builder.Services.AddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
 builder.Services.AddScoped<IUserNotificationSettingService, UserNotificationSettingService>();
 builder.Services.AddScoped<IUserTokenService, UserTokenService>();
