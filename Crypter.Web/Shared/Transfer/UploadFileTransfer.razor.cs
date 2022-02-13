@@ -47,7 +47,7 @@ namespace Crypter.Web.Shared.Transfer
       protected const int FileReadBlockSize = 1048576;
       protected const string ProgressTransition = "0.20s";
 
-      protected int MaxFileSizeBytes;
+      protected long MaxFileSizeBytes;
       protected bool ShowProgressBar = false;
       protected double ProgressPercent = 0.0;
       protected string DropClass = "";
@@ -57,7 +57,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected override void OnInitialized()
       {
-         MaxFileSizeBytes = AppSettings.MaxUploadSizeMB * 1024 * 1024;
+         MaxFileSizeBytes = AppSettings.MaxUploadSizeMB * (long)Math.Pow(2, 20);
          base.OnInitialized();
       }
 

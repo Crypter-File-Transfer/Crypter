@@ -33,6 +33,6 @@ namespace Crypter.Web.Models
    public class AppSettings
    {
       public string ApiBaseUrl { get; set; }
-      public int MaxUploadSizeMB { get; set; }
+      public long MaxUploadSizeMB { get; set; }
    }
 }
