@@ -31,11 +31,11 @@ namespace Crypter.Contracts.Features.Metrics.Disk
    public class DiskMetricsResponse
    {
       public bool Full { get; set; }
-      public string Allocated { get; set; }
-      public string Available { get; set; }
+      public long Allocated { get; set; }
+      public long Available { get; set; }
 
       [JsonConstructor]
-      public DiskMetricsResponse(bool full, string allocated, string available)
+      public DiskMetricsResponse(bool full, long allocated, long available)
       {
          Full = full;
          Allocated = allocated;

@@ -24,7 +24,8 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.Core.Interfaces;
+using Crypter.Core.Features.Metrics.Queries;
+using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,21 +38,17 @@ namespace Crypter.API.Services
 
    public class ApiValidationService : IApiValidationService
    {
-      private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
-      private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
+      private readonly IMediator _mediator;
 
-      public ApiValidationService(IBaseTransferService<IMessageTransferItem> messageTransferService, IBaseTransferService<IFileTransferItem> fileTransferService)
+      public ApiValidationService(IMediator mediator)
       {
-         MessageTransferService = messageTransferService;
-         FileTransferService = fileTransferService;
+         _mediator = mediator;
       }
 
       public async Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken)
       {
-         var sizeOfFileUploads = await MessageTransferService.GetAggregateSizeAsync(cancellationToken);
-         var sizeOfMessageUploads = await FileTransferService.GetAggregateSizeAsync(cancellationToken);
-         var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
-         return (totalSizeOfUploads + maxUploadSize) <= allocatedDiskSpace;
+         var result = await _mediator.Send(new DiskMetricsQuery(), cancellationToken);
+         return (result.UsedBytes + maxUploadSize) <= allocatedDiskSpace;
       }
    }
 }

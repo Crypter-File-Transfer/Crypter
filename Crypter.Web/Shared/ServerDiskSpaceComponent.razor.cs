@@ -45,8 +45,8 @@ namespace Crypter.Web.Shared
             left => false,
             right =>
             {
-               var allocatedServerSpace = double.Parse(right.Allocated);
-               var availableServerSpace = double.Parse(right.Available);
+               var allocatedServerSpace = (double)right.Allocated;
+               var availableServerSpace = (double)right.Available;
                ServerSpacePercentageRemaining = 100.00 * (availableServerSpace / allocatedServerSpace);
                return !right.Full;
             });

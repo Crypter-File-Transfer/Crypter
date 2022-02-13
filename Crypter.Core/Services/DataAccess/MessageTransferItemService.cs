@@ -82,11 +82,5 @@ namespace Crypter.Core.Services.DataAccess
              .Where(x => x.Expiration < DateTime.UtcNow)
              .ToListAsync(cancellationToken);
       }
-
-      public async Task<long> GetAggregateSizeAsync(CancellationToken cancellationToken)
-      {
-         return await Context.MessageTransfers
-             .SumAsync(x => x.Size, cancellationToken);
-      }
    }
 }
