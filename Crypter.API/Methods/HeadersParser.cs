@@ -24,33 +24,16 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Microsoft.IdentityModel.Tokens;
-using System;
+using Microsoft.AspNetCore.Http;
 
-namespace Crypter.API.Controllers.Methods
+namespace Crypter.API.Methods
 {
-   public class EmailVerificationEncoder
+   public class HeadersParser
    {
-      public static string EncodeVerificationCodeUrlSafe(Guid verificationCode)
+      public static string GetUserAgent(IHeaderDictionary headers)
       {
-         return Base64UrlEncoder.Encode(
-            verificationCode.ToByteArray());
-      }
-
-      public static Guid DecodeVerificationCodeFromUrlSafe(string verificationCode)
-      {
-         return new Guid(
-            Base64UrlEncoder.DecodeBytes(verificationCode));
-      }
-
-      public static string EncodeSignatureUrlSafe(byte[] signature)
-      {
-         return Base64UrlEncoder.Encode(signature);
-      }
-
-      public static byte[] DecodeSignatureFromUrlSafe(string signature)
-      {
-         return Base64UrlEncoder.DecodeBytes(signature);
+         headers.TryGetValue("User-Agent", out var someUserAgent);
+         return someUserAgent.ToString() ?? "Unknown device";
       }
    }
 }

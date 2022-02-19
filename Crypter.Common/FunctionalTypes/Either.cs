@@ -68,7 +68,21 @@ namespace Crypter.Common.FunctionalTypes
       public bool IsBottom
       { get { return _state == EitherState.Bottom; } }
 
-      public T Match<T>(Func<TLeft, T> leftFunction, Func<TRight, T> rightFunction, Func<T> bottomFunction = null)
+      public TLeft LeftOrDefault(TLeft defaultValue = default)
+      {
+         return IsLeft
+            ? _left
+            : defaultValue;
+      }
+
+      public TRight RightOrDefault(TRight defaultValue = default)
+      {
+         return IsRight
+            ? _right
+            : defaultValue;
+      }
+
+      private void ValidateMatch<TL, TR>(Func<TLeft, TL> leftFunction, Func<TRight, TR> rightFunction)
       {
          if (leftFunction == null)
          {
@@ -79,22 +93,68 @@ namespace Crypter.Common.FunctionalTypes
          {
             throw new ArgumentNullException(nameof(rightFunction));
          }
+      }
 
-         T handleBottomFunction()
-         {
-            return bottomFunction is null
+      private T MatchBottom<T>(Func<T> bottomFunction = null)
+      {
+         return bottomFunction is null
                ? default
                : bottomFunction();
-         }
+      }
+
+      public T Match<T>(Func<TLeft, T> leftFunction, Func<TRight, T> rightFunction, Func<T> bottomFunction = null)
+      {
+         ValidateMatch(leftFunction, rightFunction);
 
          return _state switch
          {
-            EitherState.Bottom => handleBottomFunction(),
+            EitherState.Bottom => MatchBottom(bottomFunction),
             EitherState.Left => leftFunction(_left),
             EitherState.Right => rightFunction(_right),
             _ => throw new NotImplementedException()
          };
       }
+
+      /*
+      public async Task<T> MatchAsync<T>(Func<TLeft, Task<T>> leftFunction, Func<TRight, T> rightFunction, Func<T> bottomFunction = null)
+      {
+         ValidateMatch(leftFunction, rightFunction);
+
+         return _state switch
+         {
+            EitherState.Bottom => MatchBottom(bottomFunction),
+            EitherState.Left => await leftFunction(_left),
+            EitherState.Right => rightFunction(_right),
+            _ => throw new NotImplementedException()
+         };
+      }
+
+      public async Task<T> MatchAsync<T>(Func<TLeft, T> leftFunction, Func<TRight, Task<T>> rightFunction, Func<T> bottomFunction = null)
+      {
+         ValidateMatch(leftFunction, rightFunction);
+
+         return _state switch
+         {
+            EitherState.Bottom => MatchBottom(bottomFunction),
+            EitherState.Left => leftFunction(_left),
+            EitherState.Right => await rightFunction(_right),
+            _ => throw new NotImplementedException()
+         };
+      }
+
+      public async Task<T> MatchAsync<T>(Func<TLeft, Task<T>> leftFunction, Func <TRight, Task<T>> rightFunction, Func<T> bottomFunction = null)
+      {
+         ValidateMatch(leftFunction, rightFunction);
+
+         return _state switch
+         {
+            EitherState.Bottom => MatchBottom(bottomFunction),
+            EitherState.Left => await leftFunction(_left),
+            EitherState.Right => await rightFunction(_right),
+            _ => throw new NotImplementedException()
+         };
+      }
+      */
 
       public void DoRight(Action<TRight> rightAction)
       {

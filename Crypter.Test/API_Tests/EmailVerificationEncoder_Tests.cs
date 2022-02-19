@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.API.Controllers.Methods;
+using Crypter.API.Methods;
 using NUnit.Framework;
 using System;
 
