@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commerical license options.
  */
 
-using Crypter.API.Controllers.Methods;
+using Crypter.API.Methods;
 using Crypter.API.Models;
 using Crypter.Common.Services;
 using Crypter.Contracts.Common.Enum;
