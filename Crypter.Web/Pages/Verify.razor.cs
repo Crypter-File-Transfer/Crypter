@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Contracts.Features.User.VerifyEmailAddress;
 using Crypter.Web.Models;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Linq;
@@ -40,7 +40,7 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IUserApiService UserService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       protected EmailVerificationParams EmailVerificationParams = new();
 
@@ -72,7 +72,7 @@ namespace Crypter.Web.Pages
 
       protected async Task VerifyEmailAddressAsync()
       {
-         var maybeVerification = await UserService.VerifyUserEmailAddressAsync(
+         var maybeVerification = await CrypterApiService.VerifyUserEmailAddressAsync(
             new VerifyEmailAddressRequest(EmailVerificationParams.Code, EmailVerificationParams.Signature));
 
          EmailVerificationSuccess = maybeVerification.Match(

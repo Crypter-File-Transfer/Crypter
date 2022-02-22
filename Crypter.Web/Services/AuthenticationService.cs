@@ -24,15 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.FunctionalTypes;
-using Crypter.Contracts.Common;
+using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Monads;
 using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.Authentication.Login;
 using Crypter.Contracts.Features.Authentication.Logout;
 using Crypter.Contracts.Features.User.UpdateKeys;
 using Crypter.CryptoLib.Services;
 using Crypter.Web.Models.LocalStorage;
-using Crypter.Web.Services.API;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -50,84 +49,23 @@ namespace Crypter.Web.Services
 
    public class AuthenticationService : IAuthenticationService
    {
-      private readonly IUserApiService _userApiService;
+      private readonly ICrypterApiService _crypterApiService;
       private readonly IUserKeysService _userKeysService;
-      private readonly IAuthenticationApiService _authenticationApiService;
-      private readonly ILocalStorageService _localStorageService;
+      private readonly IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> _browserStorageService;
       private readonly ISimpleEncryptionService _simpleEncryptionService;
 
       private EventHandler<UserSessionStateChangedEventArgs> _userSessionStateChanged;
 
-      public AuthenticationService(IUserApiService userApiService, IUserKeysService userKeysService, IAuthenticationApiService authenticationApiService, ILocalStorageService localStorageService, ISimpleEncryptionService simpleEncryptionService)
+      public AuthenticationService(
+         ICrypterApiService crypterApiService,
+         IUserKeysService userKeysService,
+         IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> browserStorageService,
+         ISimpleEncryptionService simpleEncryptionService)
       {
-         _userApiService = userApiService;
+         _crypterApiService = crypterApiService;
          _userKeysService = userKeysService;
-         _authenticationApiService = authenticationApiService;
-         _localStorageService = localStorageService;
+         _browserStorageService = browserStorageService;
          _simpleEncryptionService = simpleEncryptionService;
-      }
-
-      public async Task<bool> LoginAsync(string username, string password, bool trustDevice)
-      {
-         var refreshTokenType = trustDevice
-            ? TokenType.Refresh
-            : TokenType.Session;
-
-         var response = await SendLoginRequestAsync(username, password, refreshTokenType);
-         await response.DoRightAsync(async x =>
-         {
-            var userPreferredStorageLocation = trustDevice
-                  ? StorageLocation.LocalStorage
-                  : StorageLocation.SessionStorage;
-
-            var userSymmetricKey = _userKeysService.GetUserSymmetricKey(username, password);
-
-            await CacheSessionInfoAsync(x, username, userPreferredStorageLocation);
-            await HandleUserKeys(x, userSymmetricKey, userPreferredStorageLocation);
-            NotifyUserSessionStateChanged(true, x.Id, username);
-         });
-
-         return response.IsRight;
-      }
-
-      public async Task<bool> UnlockSession(string password)
-      {
-         var userSessionInfo = await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
-         var userSymmetricKey = _userKeysService.GetUserSymmetricKey(userSessionInfo.Username, password);
-
-         if (!await TryRefreshingTokenAsync())
-         {
-            return false;
-         }
-
-         var userEncryptedX25519 = await _localStorageService.GetItemAsync<EncryptedPrivateKey>(StoredObjectType.EncryptedX25519PrivateKey);
-         var userEncryptedEd25519 = await _localStorageService.GetItemAsync<EncryptedPrivateKey>(StoredObjectType.EncryptedEd25519PrivateKey);
-
-         var (decryptX25519Success, x25519) = DecryptLocalPrivateKey(userSymmetricKey, userEncryptedX25519);
-         var (decryptEd25519Success, ed25519) = DecryptLocalPrivateKey(userSymmetricKey, userEncryptedEd25519);
-
-         if (decryptX25519Success && decryptEd25519Success)
-         {
-            await _localStorageService.SetItemAsync(StoredObjectType.PlaintextX25519PrivateKey, x25519, StorageLocation.InMemory);
-            await _localStorageService.SetItemAsync(StoredObjectType.PlaintextEd25519PrivateKey, ed25519, StorageLocation.InMemory);
-            return true;
-         }
-         return false;
-      }
-
-      public async Task<bool> TryRefreshingTokenAsync()
-      {
-         var sessionInfo = await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
-         var response = await _authenticationApiService.RefreshAsync();
-         await response.DoRightAsync(async x =>
-         {
-            sessionInfo.RefreshToken = x.RefreshToken;
-            var sessionLocation = _localStorageService.GetItemLocation(StoredObjectType.UserSession);
-            await _localStorageService.SetItemAsync(StoredObjectType.UserSession, sessionInfo, sessionLocation);
-            await _localStorageService.SetItemAsync(StoredObjectType.AuthenticationToken, x.AuthenticationToken, StorageLocation.InMemory);
-         });
-
-         return response.IsRight;
       }
 
       public event EventHandler<UserSessionStateChangedEventArgs> UserSessionStateChanged
@@ -142,34 +80,96 @@ namespace Crypter.Web.Services
          }
       }
 
+      public async Task<bool> LoginAsync(string username, string password, bool trustDevice)
+      {
+         var refreshTokenType = trustDevice
+            ? TokenType.Refresh
+            : TokenType.Session;
+
+         var response = await SendLoginRequestAsync(username, password, refreshTokenType);
+         await response.DoRightAsync(async x =>
+         {
+            var userPreferredStorageLocation = trustDevice
+                  ? BrowserStorageLocation.LocalStorage
+                  : BrowserStorageLocation.SessionStorage;
+
+            var userSymmetricKey = _userKeysService.GetUserSymmetricKey(username, password);
+
+            await CacheSessionInfoAsync(x, username, userPreferredStorageLocation);
+            await HandleUserKeys(x, userSymmetricKey, userPreferredStorageLocation);
+            NotifyUserSessionStateChanged(true, x.Id, username);
+         });
+
+         return response.IsRight;
+      }
+
+      public async Task<bool> UnlockSession(string password)
+      {
+         var userSessionInfo = await _browserStorageService.GetItemAsync<UserSession>(BrowserStoredObjectType.UserSession);
+         var userSymmetricKey = _userKeysService.GetUserSymmetricKey(userSessionInfo.Username, password);
+
+         if (!await TryRefreshingTokenAsync())
+         {
+            return false;
+         }
+
+         var userEncryptedX25519 = await _browserStorageService.GetItemAsync<EncryptedPrivateKey>(BrowserStoredObjectType.EncryptedX25519PrivateKey);
+         var userEncryptedEd25519 = await _browserStorageService.GetItemAsync<EncryptedPrivateKey>(BrowserStoredObjectType.EncryptedEd25519PrivateKey);
+
+         var (decryptX25519Success, x25519) = DecryptLocalPrivateKey(userSymmetricKey, userEncryptedX25519);
+         var (decryptEd25519Success, ed25519) = DecryptLocalPrivateKey(userSymmetricKey, userEncryptedEd25519);
+
+         if (decryptX25519Success && decryptEd25519Success)
+         {
+            await _browserStorageService.SetItemAsync(BrowserStoredObjectType.PlaintextX25519PrivateKey, x25519, BrowserStorageLocation.Memory);
+            await _browserStorageService.SetItemAsync(BrowserStoredObjectType.PlaintextEd25519PrivateKey, ed25519, BrowserStorageLocation.Memory);
+            return true;
+         }
+         return false;
+      }
+
+      public async Task<bool> TryRefreshingTokenAsync()
+      {
+         var response = await _crypterApiService.RefreshAsync();
+         await response.DoRightAsync(async x =>
+         {
+            await _browserStorageService.SetItemAsync(BrowserStoredObjectType.AuthenticationToken, x.AuthenticationToken, BrowserStorageLocation.Memory);
+            await _browserStorageService.ReplaceItemAsync(BrowserStoredObjectType.RefreshToken, x.RefreshToken);
+         });
+
+         return response.IsRight;
+      }
+
       public async Task LogoutAsync()
       {
-         var userSessionInfo = await _localStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
-         var logoutRequest = new LogoutRequest(userSessionInfo.RefreshToken);
-         await _authenticationApiService.LogoutAsync(logoutRequest);
+         string refreshToken = await _browserStorageService.GetItemAsync<string>(BrowserStoredObjectType.RefreshToken);
+         var logoutRequest = new LogoutRequest(refreshToken);
+         await _crypterApiService.LogoutAsync(logoutRequest);
          NotifyUserSessionStateChanged(false);
-         await _localStorageService.DisposeAsync();
+         await _browserStorageService.DisposeAsync();
       }
 
-      private async Task CacheSessionInfoAsync(LoginResponse authResponse, string username, StorageLocation storageLocation)
+      private async Task CacheSessionInfoAsync(LoginResponse authResponse, string username, BrowserStorageLocation storageLocation)
       {
-         var sessionInfo = new UserSession(authResponse.Id, username, authResponse.RefreshToken);
-         await _localStorageService.SetItemAsync(StoredObjectType.UserSession, sessionInfo, storageLocation);
+         // Store session information and refresh token in the same location
+         var sessionInfo = new UserSession(authResponse.Id, username);
+         await _browserStorageService.SetItemAsync(BrowserStoredObjectType.UserSession, sessionInfo, storageLocation);
+         await _browserStorageService.SetItemAsync(BrowserStoredObjectType.RefreshToken, authResponse.RefreshToken, storageLocation);
 
-         // Plaintext authentication token should be stored in-memory; not in browser storage
-         await _localStorageService.SetItemAsync(StoredObjectType.AuthenticationToken, authResponse.AuthenticationToken, StorageLocation.InMemory);
+         // Plaintext authentication token should only be stored in memory
+         await _browserStorageService.SetItemAsync(BrowserStoredObjectType.AuthenticationToken, authResponse.AuthenticationToken, BrowserStorageLocation.Memory);
       }
 
-      private async Task<Either<ErrorResponse, LoginResponse>> SendLoginRequestAsync(string username, string password, TokenType refreshTokenType)
+      private async Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(string username, string password, TokenType refreshTokenType)
       {
          byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var loginRequest = new LoginRequest(username, digestedPasswordBase64, refreshTokenType);
-         return await _authenticationApiService.LoginAsync(loginRequest);
+         return await _crypterApiService.LoginAsync(loginRequest);
       }
 
-      private async Task HandleUserKeys(LoginResponse authResponse, byte[] userSymmetricKey, StorageLocation storageLocation)
+      private async Task HandleUserKeys(LoginResponse authResponse, byte[] userSymmetricKey, BrowserStorageLocation storageLocation)
       {
          // Handle X25519
          if (string.IsNullOrEmpty(authResponse.EncryptedX25519PrivateKey))
@@ -178,8 +178,8 @@ namespace Crypter.Web.Services
             var (encryptedPrivateKey, iv) = _simpleEncryptionService.Encrypt(userSymmetricKey, privateKey);
             await UploadKeyPairAsync(encryptedPrivateKey, publicKey, iv, PublicKeyType.X25519);
 
-            await _localStorageService.SetItemAsync(StoredObjectType.PlaintextX25519PrivateKey, privateKey, StorageLocation.InMemory);
-            await CacheEncryptedPrivateKey(encryptedPrivateKey, iv, StoredObjectType.EncryptedX25519PrivateKey, storageLocation);
+            await _browserStorageService.SetItemAsync(BrowserStoredObjectType.PlaintextX25519PrivateKey, privateKey, BrowserStorageLocation.Memory);
+            await CacheEncryptedPrivateKey(encryptedPrivateKey, iv, BrowserStoredObjectType.EncryptedX25519PrivateKey, storageLocation);
          }
          else
          {
@@ -187,8 +187,8 @@ namespace Crypter.Web.Services
             var encryptedPrivateKey = Convert.FromBase64String(authResponse.EncryptedX25519PrivateKey);
             var plaintextPrivateKey = _simpleEncryptionService.DecryptToString(userSymmetricKey, iv, encryptedPrivateKey);
 
-            await _localStorageService.SetItemAsync(StoredObjectType.PlaintextX25519PrivateKey, plaintextPrivateKey, StorageLocation.InMemory);
-            await CacheEncryptedPrivateKey(encryptedPrivateKey, iv, StoredObjectType.EncryptedX25519PrivateKey, storageLocation);
+            await _browserStorageService.SetItemAsync(BrowserStoredObjectType.PlaintextX25519PrivateKey, plaintextPrivateKey, BrowserStorageLocation.Memory);
+            await CacheEncryptedPrivateKey(encryptedPrivateKey, iv, BrowserStoredObjectType.EncryptedX25519PrivateKey, storageLocation);
          }
 
          // Handle Ed25519
@@ -198,8 +198,8 @@ namespace Crypter.Web.Services
             var (encryptedPrivateKey, iv) = _simpleEncryptionService.Encrypt(userSymmetricKey, privateKey);
             await UploadKeyPairAsync(encryptedPrivateKey, publicKey, iv, PublicKeyType.Ed25519);
 
-            await _localStorageService.SetItemAsync(StoredObjectType.PlaintextEd25519PrivateKey, privateKey, StorageLocation.InMemory);
-            await CacheEncryptedPrivateKey(encryptedPrivateKey, iv, StoredObjectType.EncryptedEd25519PrivateKey, storageLocation);
+            await _browserStorageService.SetItemAsync(BrowserStoredObjectType.PlaintextEd25519PrivateKey, privateKey, BrowserStorageLocation.Memory);
+            await CacheEncryptedPrivateKey(encryptedPrivateKey, iv, BrowserStoredObjectType.EncryptedEd25519PrivateKey, storageLocation);
          }
          else
          {
@@ -207,8 +207,8 @@ namespace Crypter.Web.Services
             var encryptedPrivateKey = Convert.FromBase64String(authResponse.EncryptedEd25519PrivateKey);
             var plaintextPrivateKey = _simpleEncryptionService.DecryptToString(userSymmetricKey, iv, encryptedPrivateKey);
 
-            await _localStorageService.SetItemAsync(StoredObjectType.PlaintextEd25519PrivateKey, plaintextPrivateKey, StorageLocation.InMemory);
-            await CacheEncryptedPrivateKey(encryptedPrivateKey, iv, StoredObjectType.EncryptedEd25519PrivateKey, storageLocation);
+            await _browserStorageService.SetItemAsync(BrowserStoredObjectType.PlaintextEd25519PrivateKey, plaintextPrivateKey, BrowserStorageLocation.Memory);
+            await CacheEncryptedPrivateKey(encryptedPrivateKey, iv, BrowserStoredObjectType.EncryptedEd25519PrivateKey, storageLocation);
          }
       }
 
@@ -222,22 +222,22 @@ namespace Crypter.Web.Services
          switch (keyType)
          {
             case PublicKeyType.X25519:
-               await _userApiService.InsertUserX25519KeysAsync(request);
+               await _crypterApiService.InsertUserX25519KeysAsync(request);
                break;
             case PublicKeyType.Ed25519:
-               await _userApiService.InsertUserEd25519KeysAsync(request);
+               await _crypterApiService.InsertUserEd25519KeysAsync(request);
                break;
             default:
                throw new ArgumentException("Invalid key type");
          }
       }
 
-      private async Task CacheEncryptedPrivateKey(byte[] encryptedPrivateKey, byte[] iv, StoredObjectType objectType, StorageLocation storageLocation)
+      private async Task CacheEncryptedPrivateKey(byte[] encryptedPrivateKey, byte[] iv, BrowserStoredObjectType objectType, BrowserStorageLocation storageLocation)
       {
          var base64EncryptedPrivateKey = Convert.ToBase64String(encryptedPrivateKey);
          var base64IV = Convert.ToBase64String(iv);
          var storageModel = new EncryptedPrivateKey(base64EncryptedPrivateKey, base64IV);
-         await _localStorageService.SetItemAsync(objectType, storageModel, storageLocation);
+         await _browserStorageService.SetItemAsync(objectType, storageModel, storageLocation);
       }
 
       private (bool success, string privateKey) DecryptLocalPrivateKey(byte[] userSymmetricKey, EncryptedPrivateKey encryptionInfo)

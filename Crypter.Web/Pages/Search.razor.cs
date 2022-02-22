@@ -24,10 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Contracts.Features.User.Search;
-using Crypter.Web.Models;
 using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.WebUtilities;
@@ -47,17 +46,17 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      ILocalStorageService LocalStorage { get; set; }
+      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       [Inject]
-      IUserApiService UserService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
-      protected UserSearchParams SearchParams = new();
+      protected UserSearchParameters SearchParameters = new("");
       protected UserSearchResponse SearchResults;
 
       protected override async Task OnInitializedAsync()
       {
-         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
+         if (!BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/");
             return;
@@ -69,22 +68,23 @@ namespace Crypter.Web.Pages
 
       protected async Task PerformSearchAsync()
       {
-         if (string.IsNullOrEmpty(SearchParams.Query) || string.IsNullOrEmpty(SearchParams.Type))
+         if (string.IsNullOrEmpty(SearchParameters.Keyword))
          {
             return;
          }
 
-         await JSRuntime.InvokeVoidAsync("Crypter.SetPageUrl", "/user/search?query=" + SearchParams.Query + "&type=" + SearchParams.Type + "&page=" + SearchParams.Page);
-         var maybeResults = await UserService.GetUserSearchResultsAsync(SearchParams);
+         int page = 1 + (SearchParameters.Index / SearchParameters.Count);
+         await JSRuntime.InvokeVoidAsync("Crypter.SetPageUrl", "/user/search?query=" + SearchParameters.Keyword + "&page=" + page);
+         var maybeResults = await CrypterApiService.GetUserSearchResultsAsync(SearchParameters);
          await maybeResults.DoRightAsync(async right => 
-            {
-               SearchResults = right;
+         {
+            SearchResults = right;
 
-               if (SearchResults.Total > SearchParams.Results)
-               {
-                  await SetActivePageAsync();
-               }
-            });
+            if (SearchResults.Total > SearchParameters.Count)
+            {
+               await SetActivePageAsync(page);
+            }
+         });
       }
 
       protected void ParseSearchParamsFromUri()
@@ -93,26 +93,21 @@ namespace Crypter.Web.Pages
 
          if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("query", out var query))
          {
-            SearchParams.Query = query.First();
-         }
-
-         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var queryType))
-         {
-            SearchParams.Type = queryType.First();
+            SearchParameters.Keyword = query.First();
          }
 
          if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("page", out var pageNum))
          {
-            SearchParams.Page = int.Parse(pageNum.First());
-            SearchParams.Index = (SearchParams.Page - 1) * SearchParams.Results;
+            int page = int.Parse(pageNum.First());
+            SearchParameters.Index = (page - 1) * SearchParameters.Count;
          }
 
          StateHasChanged();
       }
 
-      protected async Task SetActivePageAsync()
+      protected async Task SetActivePageAsync(int page)
       {
-         await JSRuntime.InvokeVoidAsync("Crypter.SetActivePage", SearchParams.Page);
+         await JSRuntime.InvokeVoidAsync("Crypter.SetActivePage", page);
       }
 
       protected void GoToPage(string pageUrl)

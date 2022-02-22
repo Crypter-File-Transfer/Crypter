@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -36,10 +36,10 @@ namespace Crypter.Web.Pages
    public partial class DecryptFileBase : ComponentBase
    {
       [Inject]
-      ILocalStorageService LocalStorage { get; set; }
+      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       [Inject]
-      protected ITransferApiService TransferService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       [Parameter]
       public Guid TransferId { get; set; }
@@ -71,8 +71,8 @@ namespace Crypter.Web.Pages
       protected async Task PrepareFilePreviewAsync()
       {
          var filePreviewRequest = new DownloadTransferPreviewRequest(TransferId);
-         var withAuth = LocalStorage.HasItem(StoredObjectType.UserSession);
-         var response = await TransferService.DownloadFilePreviewAsync(filePreviewRequest, withAuth);
+         var withAuth = BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession);
+         var response = await CrypterApiService.DownloadFilePreviewAsync(filePreviewRequest, withAuth);
          response.DoRight(x =>
          {
             FileName = x.FileName;

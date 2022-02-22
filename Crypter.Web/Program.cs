@@ -24,51 +24,44 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Implementations;
+using Crypter.ClientServices.Interfaces;
 using Crypter.CryptoLib.Services;
 using Crypter.Web;
 using Crypter.Web.Models;
 using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Net.Http;
-using System.Reflection;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(_ =>
+builder.Services.AddSingleton<ClientAppSettings>(sp =>
 {
-   return LoadAppSettings("Crypter.Web.appsettings.json")
-            .Get<AppSettings>();
+   var config = sp.GetService<IConfiguration>();
+   return config.Get<ClientAppSettings>();
+});
+
+builder.Services.AddSingleton<IClientApiSettings>(sp =>
+{
+   var config = sp.GetService<IConfiguration>();
+   return config.GetSection("ApiSettings").Get<ClientApiSettings>();
 });
 
 builder.Services
          .AddBlazorDownloadFile()
          .AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) })
          .AddScoped<IAuthenticationService, AuthenticationService>()
-         .AddScoped<Func<IAuthenticationService>>(cont => () => cont.GetService<IAuthenticationService>())
          .AddScoped<IHttpService, HttpService>()
-         .AddScoped<ILocalStorageService, LocalStorageService>()
-         .AddScoped<ITransferApiService, TransferApiService>()
-         .AddScoped<IUserApiService, UserApiService>()
-         .AddScoped<IAuthenticationApiService, AuthenticationApiService>()
-         .AddScoped<IMetricsApiService, MetricsApiService>()
+         .AddScoped<ITokenRepository, TokenRepository>()
+         .AddScoped<IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation>, BrowserStorageService>()
+         .AddScoped<ICrypterApiService, CrypterApiService>()
          .AddScoped<IUserKeysService, UserKeysService>()
          .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>();
 
 await builder.Build().RunAsync();
-
-static IConfigurationRoot LoadAppSettings(string filename)
-{
-   var stream = Assembly.GetExecutingAssembly()
-                        .GetManifestResourceStream(filename);
-
-   return new ConfigurationBuilder()
-           .AddJsonStream(stream)
-           .Build();
-}

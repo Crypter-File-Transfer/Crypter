@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System;
@@ -34,7 +35,7 @@ namespace Crypter.Web.Shared.Modal
    public partial class UploadFileTransferModalBase : ComponentBase
    {
       [Inject]
-      protected ILocalStorageService LocalStorage { get; set; }
+      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       [Parameter]
       public bool IsRecipientDefined { get; set; }
@@ -73,11 +74,11 @@ namespace Crypter.Web.Shared.Modal
 
       public async Task Open()
       {
-         if (LocalStorage.HasItem(StoredObjectType.UserSession))
+         if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             IsSenderDefined = true;
-            SenderX25519PrivateKey = await LocalStorage.GetItemAsync<string>(StoredObjectType.PlaintextX25519PrivateKey);
-            SenderEd25519PrivateKey = await LocalStorage.GetItemAsync<string>(StoredObjectType.PlaintextEd25519PrivateKey);
+            SenderX25519PrivateKey = await BrowserStorageService.GetItemAsync<string>(BrowserStoredObjectType.PlaintextX25519PrivateKey);
+            SenderEd25519PrivateKey = await BrowserStorageService.GetItemAsync<string>(BrowserStoredObjectType.PlaintextEd25519PrivateKey);
          }
 
          ModalDisplay = "block;";

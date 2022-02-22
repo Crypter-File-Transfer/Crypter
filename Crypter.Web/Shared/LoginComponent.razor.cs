@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Web.Helpers;
 using Crypter.Web.Models.Forms;
 using Crypter.Web.Services;
@@ -41,7 +42,7 @@ namespace Crypter.Web.Shared
       protected IAuthenticationService AuthenticationService { get; set; }
 
       [Inject]
-      protected ILocalStorageService LocalStorage { get; set; }
+      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       protected LoginModel LoginModel = new();
 
@@ -60,7 +61,7 @@ namespace Crypter.Web.Shared
 
       protected override async Task OnInitializedAsync()
       {
-         if (LocalStorage.HasItem(StoredObjectType.UserSession))
+         if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/user/transfers");
          }

@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Text;
@@ -36,10 +36,10 @@ namespace Crypter.Web.Pages
    public partial class UserProfileBase : ComponentBase
    {
       [Inject]
-      IUserApiService UserService { get; set; }
+      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       [Inject]
-      ILocalStorageService LocalStorage { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       [Parameter]
       public string Username { get; set; }
@@ -70,8 +70,8 @@ namespace Crypter.Web.Pages
 
       protected async Task PrepareUserProfileAsync()
       {
-         var requestWithAuthentication = LocalStorage.HasItem(StoredObjectType.UserSession);
-         var response = await UserService.GetUserPublicProfileAsync(Username, requestWithAuthentication);
+         var requestWithAuthentication = BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession);
+         var response = await CrypterApiService.GetUserPublicProfileAsync(Username, requestWithAuthentication);
          response.DoRight(x =>
          {
             UserId = x.Id;

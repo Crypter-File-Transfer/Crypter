@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.FunctionalTypes;
+using Crypter.Common.Monads;
 using Crypter.Common.Services;
 using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.User.Register;

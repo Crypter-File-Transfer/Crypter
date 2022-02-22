@@ -73,13 +73,13 @@ namespace Crypter.Web.Shared.Transfer
          var encodedSignature = Convert.ToBase64String(signature);
          var encodedClientIV = Convert.ToBase64String(iv);
 
-         var withAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
+         var withAuth = BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession);
          var request = new UploadMessageTransferRequest(MessageSubject, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey, RequestedExpirationHours);
-         var uploadResponse = await UploadService.UploadMessageTransferAsync(request, RecipientId, withAuth);
+         var uploadResponse = await CrypterApiService.UploadMessageTransferAsync(request, RecipientId, withAuth);
          uploadResponse.DoLeft(x =>
          {
             Error = true;
-            ErrorMessage = (UploadTransferError)x.ErrorCode switch
+            ErrorMessage = x switch
             {
                UploadTransferError.BlockedByUserPrivacy => "This user does not accept files.",
                UploadTransferError.OutOfSpace => "The server is full. Try again later.",

@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
 using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using Org.BouncyCastle.Crypto;
 using System;
@@ -41,10 +41,10 @@ namespace Crypter.Web.Shared.Transfer
    public abstract class DownloadTransferBase : ComponentBase
    {
       [Inject]
-      protected ILocalStorageService LocalStorageService { get; set; }
+      protected IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       [Inject]
-      protected ITransferApiService TransferService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       [Parameter]
       public Guid TransferId { get; set; }
@@ -110,12 +110,12 @@ namespace Crypter.Web.Shared.Transfer
 
       protected override async Task OnParametersSetAsync()
       {
-         if (!LocalStorageService.HasItem(StoredObjectType.UserSession))
+         if (!BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             IsUserRecipient = false;
             return;
          }
-         var session = await LocalStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
+         var session = await BrowserStorageService.GetItemAsync<UserSession>(BrowserStoredObjectType.UserSession);
          IsUserRecipient = RecipientId.Equals(session.UserId);
       }
 
@@ -125,7 +125,7 @@ namespace Crypter.Web.Shared.Transfer
       {
          if (IsUserRecipient)
          {
-            return (true, await LocalStorageService.GetItemAsync<string>(StoredObjectType.PlaintextX25519PrivateKey));
+            return (true, await BrowserStorageService.GetItemAsync<string>(BrowserStoredObjectType.PlaintextX25519PrivateKey));
          }
 
          try

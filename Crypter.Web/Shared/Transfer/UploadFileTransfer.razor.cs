@@ -41,7 +41,7 @@ namespace Crypter.Web.Shared.Transfer
    public partial class UploadFileTransferBase : UploadTransferBase
    {
       [Inject]
-      public AppSettings AppSettings { get; set; }
+      public ClientAppSettings AppSettings { get; set; }
 
       protected const int MaxFileCount = 1;
       protected const int FileReadBlockSize = 1048576;
@@ -130,12 +130,12 @@ namespace Crypter.Web.Shared.Transfer
             : SelectedFile.ContentType;
          var encodedClientIV = Convert.ToBase64String(iv);
 
-         var withAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
+         var withAuth = BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession);
          var request = new UploadFileTransferRequest(SelectedFile.Name, fileType, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey, RequestedExpirationHours);
-         var uploadResponse = await UploadService.UploadFileTransferAsync(request, RecipientId, withAuth);
+         var uploadResponse = await CrypterApiService.UploadFileTransferAsync(request, RecipientId, withAuth);
          uploadResponse.DoLeft(x =>
          {
-            switch ((UploadTransferError)x.ErrorCode)
+            switch (x)
             {
                case UploadTransferError.BlockedByUserPrivacy:
                   ErrorMessages.Add("This user does not accept files.");

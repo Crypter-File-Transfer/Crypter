@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.User.GetReceivedTransfers;
 using Crypter.Contracts.Features.User.GetSentTransfers;
 using Crypter.Web.Models;
 using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,17 +43,17 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      ILocalStorageService LocalStorage { get; set; }
+      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       [Inject]
-      IUserApiService UserService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       protected IEnumerable<UserSentItem> Sent;
       protected IEnumerable<UserReceivedItem> Received;
 
       protected override async Task OnInitializedAsync()
       {
-         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
+         if (!BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/");
             return;
@@ -67,12 +67,12 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserSentItem>> GetUserSentItems()
       {
-         var maybeSentMessages = await UserService.GetUserSentMessagesAsync();
+         var maybeSentMessages = await CrypterApiService.GetUserSentMessagesAsync();
          var sentMessages = maybeSentMessages.Match(
             left => new List<UserSentMessageDTO>(),
             right => right.Messages);
 
-         var maybeSentFiles = await UserService.GetUserSentFilesAsync();
+         var maybeSentFiles = await CrypterApiService.GetUserSentFilesAsync();
          var sentFiles = maybeSentFiles.Match(
             left => new List<UserSentFileDTO>(),
             right => right.Files);
@@ -104,12 +104,12 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
       {
-         var maybeReceivedMessages = await UserService.GetUserReceivedMessagesAsync();
+         var maybeReceivedMessages = await CrypterApiService.GetUserReceivedMessagesAsync();
          var receivedMessages = maybeReceivedMessages.Match(
             left => new List<UserReceivedMessageDTO>(),
             right => right.Messages);
 
-         var maybeReceivedFiles = await UserService.GetUserReceivedFilesAsync();
+         var maybeReceivedFiles = await CrypterApiService.GetUserReceivedFilesAsync();
          var receivedFiles = maybeReceivedFiles.Match(
             left => new List<UserReceivedFileDTO>(),
             right => right.Files);

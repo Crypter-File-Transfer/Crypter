@@ -24,19 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.ClientServices.Interfaces
 {
-   public class UserSession
+   public interface IClientApiSettings
    {
-      public Guid UserId { get; set; }
-      public string Username { get; set; }
-
-      public UserSession(Guid userId, string username)
-      {
-         UserId = userId;
-         Username = username;
-      }
+      public string ApiBaseUrl { get; }
    }
 }

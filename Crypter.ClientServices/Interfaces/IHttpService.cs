@@ -24,19 +24,24 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+using Crypter.Common.Monads;
+using Crypter.Contracts.Common;
+using System.Net;
+using System.Threading.Tasks;
 
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.ClientServices.Interfaces
 {
-   public class UserSession
+   public interface IHttpService
    {
-      public Guid UserId { get; set; }
-      public string Username { get; set; }
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri, string bearerToken = null)
+         where TResponse : class;
 
-      public UserSession(Guid userId, string username)
-      {
-         UserId = userId;
-         Username = username;
-      }
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostAsync<TRequest, TResponse>(string uri, TRequest body = default, string bearerToken = null)
+         where TRequest : class
+         where TResponse : class;
+
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, TRequest body = default, string bearerToken = null)
+         where TRequest : class
+         where TResponse : class;
    }
 }

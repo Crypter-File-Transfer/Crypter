@@ -51,7 +51,7 @@ namespace Crypter.Test.Web_Tests
          .Setup(x => x.InvokeAsync<string>(It.IsAny<string>(), new object[] { It.IsAny<string>() }))
          .ReturnsAsync((string command, string itemType) => default);
 
-         var sut = new LocalStorageService(jsRuntime.Object);
+         var sut = new BrowserStorageService(jsRuntime.Object);
 
          Assert.IsFalse(sut.IsInitialized);
          await sut.InitializeAsync();
@@ -66,21 +66,22 @@ namespace Crypter.Test.Web_Tests
             .Setup(x => x.InvokeAsync<string>(It.IsAny<string>(), new object[] { It.IsAny<string>() }))
             .ReturnsAsync((string command, string itemType) => default);
 
-         var sut = new LocalStorageService(jsRuntime.Object);
+         var sut = new BrowserStorageService(jsRuntime.Object);
          await sut.InitializeAsync();
 
-         foreach (StoredObjectType item in Enum.GetValues(typeof(StoredObjectType)))
+         foreach (BrowserStoredObjectType item in Enum.GetValues(typeof(BrowserStoredObjectType)))
          {
             Assert.IsFalse(sut.HasItem(item));
          }
       }
 
-      [TestCase(LocalStorageService.SessionStorageLiteral, StorageLocation.SessionStorage)]
-      [TestCase(LocalStorageService.LocalStorageLiteral, StorageLocation.LocalStorage)]
-      public async Task Service_Initializes_Values_From_Browser_Storage(string storageLiteral, StorageLocation storageLocation)
+      [TestCase(BrowserStorageService.SessionStorageLiteral, BrowserStorageLocation.SessionStorage)]
+      [TestCase(BrowserStorageService.LocalStorageLiteral, BrowserStorageLocation.LocalStorage)]
+      public async Task Service_Initializes_Values_From_Browser_Storage(string storageLiteral, BrowserStorageLocation storageLocation)
       {
-         var storedUserSession = new UserSession(Guid.NewGuid(), "foo", "refresh");
-         var authenticationToken = "jwt";
+         var storedUserSession = new UserSession(Guid.NewGuid(), "foo");
+         var authenticationToken = "authentication";
+         var refreshToken = "refresh";
          var plaintextX25519PrivateKey = "plaintextX25519";
          var plaintextEd25519PrivateKey = "plaintextEd25519";
          var encryptedX25519PrivateKey = "encryptedX25519";
@@ -92,71 +93,80 @@ namespace Crypter.Test.Web_Tests
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == StoredObjectType.UserSession.ToString())))
+               It.Is<object[]>(x => x[0].ToString() == BrowserStoredObjectType.UserSession.ToString())))
             .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(storedUserSession));
 
          // AuthenticationToken
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == StoredObjectType.AuthenticationToken.ToString())))
+               It.Is<object[]>(x => x[0].ToString() == BrowserStoredObjectType.AuthenticationToken.ToString())))
             .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(authenticationToken));
+
+         // RefreshToken
+         jsRuntime
+            .Setup(x => x.InvokeAsync<string>(
+               It.Is<string>(x => x == $"{storageLiteral}.getItem"),
+               It.Is<object[]>(x => x[0].ToString() == BrowserStoredObjectType.RefreshToken.ToString())))
+            .ReturnsAsync((string commands, object[] args) => JsonConvert.SerializeObject(refreshToken));
 
          // PlaintextX25519PrivateKey
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == StoredObjectType.PlaintextX25519PrivateKey.ToString())))
+               It.Is<object[]>(x => x[0].ToString() == BrowserStoredObjectType.PlaintextX25519PrivateKey.ToString())))
             .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(plaintextX25519PrivateKey));
 
          // PlaintextEd25519PrivateKey
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == StoredObjectType.PlaintextEd25519PrivateKey.ToString())))
+               It.Is<object[]>(x => x[0].ToString() == BrowserStoredObjectType.PlaintextEd25519PrivateKey.ToString())))
             .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(plaintextEd25519PrivateKey));
 
          // EncryptedX25519PrivateKey
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == StoredObjectType.EncryptedX25519PrivateKey.ToString())))
+               It.Is<object[]>(x => x[0].ToString() == BrowserStoredObjectType.EncryptedX25519PrivateKey.ToString())))
             .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(encryptedX25519PrivateKey));
 
          // EncryptedEd25519PrivateKey
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == StoredObjectType.EncryptedEd25519PrivateKey.ToString())))
+               It.Is<object[]>(x => x[0].ToString() == BrowserStoredObjectType.EncryptedEd25519PrivateKey.ToString())))
             .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(encryptedEd25519PrivateKey));
 
-         var sut = new LocalStorageService(jsRuntime.Object);
+         var sut = new BrowserStorageService(jsRuntime.Object);
          await sut.InitializeAsync();
 
-         foreach (StoredObjectType item in Enum.GetValues(typeof(StoredObjectType)))
+         foreach (BrowserStoredObjectType item in Enum.GetValues(typeof(BrowserStoredObjectType)))
          {
             Assert.IsTrue(sut.HasItem(item));
             Assert.AreEqual(storageLocation, sut.GetItemLocation(item));
          }
 
-         var fetchedUserSession = await sut.GetItemAsync<UserSession>(StoredObjectType.UserSession);
+         var fetchedUserSession = await sut.GetItemAsync<UserSession>(BrowserStoredObjectType.UserSession);
          Assert.AreEqual(storedUserSession.UserId, fetchedUserSession.UserId);
          Assert.AreEqual(storedUserSession.Username, fetchedUserSession.Username);
-         Assert.AreEqual(storedUserSession.RefreshToken, fetchedUserSession.RefreshToken);
 
-         var fetchedAuthenticationToken = await sut.GetItemAsync<string>(StoredObjectType.AuthenticationToken);
+         var fetchedAuthenticationToken = await sut.GetItemAsync<string>(BrowserStoredObjectType.AuthenticationToken);
          Assert.AreEqual(authenticationToken, fetchedAuthenticationToken);
 
-         var fetchedPlaintextX25519PrivateKey = await sut.GetItemAsync<string>(StoredObjectType.PlaintextX25519PrivateKey);
+         var fetchedRefreshToken = await sut.GetItemAsync<string>(BrowserStoredObjectType.RefreshToken);
+         Assert.AreEqual(refreshToken, fetchedRefreshToken);
+
+         var fetchedPlaintextX25519PrivateKey = await sut.GetItemAsync<string>(BrowserStoredObjectType.PlaintextX25519PrivateKey);
          Assert.AreEqual(plaintextX25519PrivateKey, fetchedPlaintextX25519PrivateKey);
 
-         var fetchedPlaintextEd25519PrivateKey = await sut.GetItemAsync<string>(StoredObjectType.PlaintextEd25519PrivateKey);
+         var fetchedPlaintextEd25519PrivateKey = await sut.GetItemAsync<string>(BrowserStoredObjectType.PlaintextEd25519PrivateKey);
          Assert.AreEqual(plaintextEd25519PrivateKey, fetchedPlaintextEd25519PrivateKey);
 
-         var fetchedEncryptedX25519PrivateKey = await sut.GetItemAsync<string>(StoredObjectType.EncryptedX25519PrivateKey);
+         var fetchedEncryptedX25519PrivateKey = await sut.GetItemAsync<string>(BrowserStoredObjectType.EncryptedX25519PrivateKey);
          Assert.AreEqual(encryptedX25519PrivateKey, fetchedEncryptedX25519PrivateKey);
 
-         var fetchedEncryptedEd25519PrivateKey = await sut.GetItemAsync<string>(StoredObjectType.EncryptedEd25519PrivateKey);
+         var fetchedEncryptedEd25519PrivateKey = await sut.GetItemAsync<string>(BrowserStoredObjectType.EncryptedEd25519PrivateKey);
          Assert.AreEqual(encryptedEd25519PrivateKey, fetchedEncryptedEd25519PrivateKey);
       }
    }

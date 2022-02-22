@@ -406,28 +406,17 @@ namespace Crypter.API.Controllers
       }
 
       [Authorize]
-      [HttpGet("search/username")]
+      [HttpGet("search")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSearchResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> SearchByUsernameAsync([FromQuery] string value, [FromQuery] int index, [FromQuery] int count, CancellationToken cancellationToken)
+      public async Task<IActionResult> SearchUsersAsync([FromQuery] string value, [FromQuery] int index, [FromQuery] int count, CancellationToken cancellationToken)
       {
          var requestorId = _tokenService.ParseUserId(User);
-         var result = await _mediator.Send(new UserSearchQuery(requestorId, value, UserSearchKeywordField.Username, index, count), cancellationToken);
+         var result = await _mediator.Send(new UserSearchQuery(requestorId, value, index, count), cancellationToken);
          return new OkObjectResult(new UserSearchResponse(result.Total, result.Users));
       }
 
-      [Authorize]
-      [HttpGet("search/alias")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSearchResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> SearchByAliasAsync([FromQuery] string value, [FromQuery] int index, [FromQuery] int count, CancellationToken cancellationToken)
-      {
-         var requestorId = _tokenService.ParseUserId(User);
-         var result = await _mediator.Send(new UserSearchQuery(requestorId, value, UserSearchKeywordField.Alias, index, count), cancellationToken);
-         return new OkObjectResult(new UserSearchResponse(result.Total, result.Users));
-      }
-
-      [HttpGet("{username}")]
+      [HttpGet("profile/{username}")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetUserPublicProfileResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]

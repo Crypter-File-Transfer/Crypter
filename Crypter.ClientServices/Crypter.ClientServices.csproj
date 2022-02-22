@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
+    <ProjectReference Include="..\Crypter.Contracts\Crypter.Contracts.csproj" />
+    <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
+  </ItemGroup>
+
+</Project>

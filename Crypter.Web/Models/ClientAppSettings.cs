@@ -24,15 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Implementations;
+
 namespace Crypter.Web.Models
 {
    /// <summary>
    /// Caution!  Do not add secrets here!
    /// These settings are available to the client.
    /// </summary>
-   public class AppSettings
+   public class ClientAppSettings
    {
-      public string ApiBaseUrl { get; set; }
       public long MaxUploadSizeMB { get; set; }
+      public ClientApiSettings ApiSettings { get; set; }
    }
 }
