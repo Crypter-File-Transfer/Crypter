@@ -26,6 +26,7 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
+using Crypter.Contracts.Common;
 using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.Authentication.Login;
 using Crypter.Contracts.Features.Authentication.Logout;
@@ -54,6 +55,17 @@ using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Implementations
 {
+   internal static class ApiExtensions
+   {
+      public static Either<TErrorCode, TResponse> ExtractErrorCode<TErrorCode, TResponse>(this Either<ErrorResponse, TResponse> response)
+         where TErrorCode : Enum
+      {
+         return response.Match<Either<TErrorCode, TResponse>>(
+            left => (TErrorCode)(object)left.ErrorCode,
+            right => right);
+      }
+   }
+
    public class CrypterApiService : ICrypterApiService
    {
       private readonly IHttpService _httpService;
@@ -111,31 +123,28 @@ namespace Crypter.ClientServices.Implementations
       {
          string url = $"{_baseAuthenticationUrl}/login";
          var (_, response) = await _httpService.PostAsync<LoginRequest, LoginResponse>(url, loginRequest);
-         return response.Match<Either<LoginError, LoginResponse>>(
-            left => (LoginError)left.ErrorCode,
-            right => right);
+
+         return response.ExtractErrorCode<LoginError, LoginResponse>();
       }
 
       public async Task<Either<RefreshError, RefreshResponse>> RefreshAsync()
       {
          string refreshToken = await GetRefreshTokenAsync();
+
          string url = $"{_baseAuthenticationUrl}/refresh";
          var (_, response) = await _httpService.GetAsync<RefreshResponse>(url, refreshToken);
 
-         return response.Match<Either<RefreshError, RefreshResponse>>(
-            left => (RefreshError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<RefreshError, RefreshResponse>();
       }
 
       public async Task<Either<LogoutError, LogoutResponse>> LogoutAsync(LogoutRequest logoutRequest)
       {
          string refreshToken = await GetRefreshTokenAsync();
+
          string url = $"{_baseAuthenticationUrl}/logout";
          var (_, response) = await _httpService.PostAsync<LogoutRequest, LogoutResponse>(url, logoutRequest, refreshToken);
 
-         return response.Match<Either<LogoutError, LogoutResponse>>(
-            left => (LogoutError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<LogoutError, LogoutResponse>();
       }
 
       public async Task<Either<DummyError, DiskMetricsResponse>> GetDiskMetricsAsync()
@@ -143,9 +152,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseMetricsUrl}/disk";
          var (_, response) = await _httpService.GetAsync<DiskMetricsResponse>(url);
 
-         return response.Match<Either<DummyError, DiskMetricsResponse>>(
-            left => (DummyError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DummyError, DiskMetricsResponse>();
       }
 
       public async Task<Either<UserRegisterError, UserRegisterResponse>> RegisterUserAsync(UserRegisterRequest registerRequest)
@@ -153,9 +160,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/register";
          var (_, response) = await _httpService.PostAsync<UserRegisterRequest, UserRegisterResponse>(url, registerRequest);
 
-         return response.Match<Either<UserRegisterError, UserRegisterResponse>>(
-            left => (UserRegisterError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<UserRegisterError, UserRegisterResponse>();
       }
 
       public async Task<Either<GetUserPublicProfileError, GetUserPublicProfileResponse>> GetUserPublicProfileAsync(string username, bool withAuthentication)
@@ -165,9 +170,7 @@ namespace Crypter.ClientServices.Implementations
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<GetUserPublicProfileResponse>(url, token))
             : await _httpService.GetAsync<GetUserPublicProfileResponse>(url);
 
-         return response.Match<Either<GetUserPublicProfileError, GetUserPublicProfileResponse>>(
-            left => (GetUserPublicProfileError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<GetUserPublicProfileError, GetUserPublicProfileResponse>();
       }
 
       public async Task<Either<DummyError, UserSettingsResponse>> GetUserSettingsAsync()
@@ -175,9 +178,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/settings";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<UserSettingsResponse>(url, token));
 
-         return response.Match<Either<DummyError, UserSettingsResponse>>(
-            left => (DummyError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DummyError, UserSettingsResponse>();
       }
 
       public async Task<Either<UpdateProfileError, UpdateProfileResponse>> UpdateUserProfileInfoAsync(UpdateProfileRequest request)
@@ -185,9 +186,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/settings/profile";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UpdateProfileRequest, UpdateProfileResponse>(url, request, token));
 
-         return response.Match<Either<UpdateProfileError, UpdateProfileResponse>>(
-            left => (UpdateProfileError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<UpdateProfileError, UpdateProfileResponse>();
       }
 
       public async Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(UpdateContactInfoRequest request)
@@ -195,9 +194,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/settings/contact";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UpdateContactInfoRequest, UpdateContactInfoResponse>(url, request, token));
 
-         return response.Match<Either<UpdateContactInfoError, UpdateContactInfoResponse>>(
-            left => (UpdateContactInfoError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<UpdateContactInfoError, UpdateContactInfoResponse>();
       }
 
       public async Task<Either<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>> UpdateUserPrivacyAsync(UpdatePrivacySettingsRequest request)
@@ -205,9 +202,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/settings/privacy";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UpdatePrivacySettingsRequest, UpdatePrivacySettingsResponse>(url, request, token));
 
-         return response.Match<Either<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>>(
-            left => (UpdatePrivacySettingsError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>();
       }
 
       public async Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpdateUserNotificationAsync(UpdateNotificationSettingsRequest request)
@@ -215,9 +210,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/settings/notification";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UpdateNotificationSettingsRequest, UpdateNotificationSettingsResponse>(url, request, token));
 
-         return response.Match<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>>(
-            left => (UpdateNotificationSettingsError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>();
       }
 
       public async Task<Either<UpdateKeysError, UpdateKeysResponse>> InsertUserX25519KeysAsync(UpdateKeysRequest request)
@@ -225,9 +218,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/settings/keys/x25519";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UpdateKeysRequest, UpdateKeysResponse>(url, request, token));
 
-         return response.Match<Either<UpdateKeysError, UpdateKeysResponse>>(
-            left => (UpdateKeysError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<UpdateKeysError, UpdateKeysResponse>();
       }
 
       public async Task<Either<UpdateKeysError, UpdateKeysResponse>> InsertUserEd25519KeysAsync(UpdateKeysRequest request)
@@ -235,9 +226,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/settings/keys/ed25519";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UpdateKeysRequest, UpdateKeysResponse>(url, request, token));
 
-         return response.Match<Either<UpdateKeysError, UpdateKeysResponse>>(
-            left => (UpdateKeysError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<UpdateKeysError, UpdateKeysResponse>();
       }
 
       public async Task<Either<DummyError, UserSentMessagesResponse>> GetUserSentMessagesAsync()
@@ -245,9 +234,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/sent/messages";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<UserSentMessagesResponse>(url, token));
 
-         return response.Match<Either<DummyError, UserSentMessagesResponse>>(
-            left => (DummyError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DummyError, UserSentMessagesResponse>();
       }
 
       public async Task<Either<DummyError, UserSentFilesResponse>> GetUserSentFilesAsync()
@@ -255,9 +242,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/sent/files";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<UserSentFilesResponse>(url, token));
 
-         return response.Match<Either<DummyError, UserSentFilesResponse>>(
-            left => (DummyError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DummyError, UserSentFilesResponse>();
       }
 
       public async Task<Either<DummyError, UserReceivedMessagesResponse>> GetUserReceivedMessagesAsync()
@@ -265,9 +250,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/received/messages";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<UserReceivedMessagesResponse>(url, token));
 
-         return response.Match<Either<DummyError, UserReceivedMessagesResponse>>(
-            left => (DummyError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DummyError, UserReceivedMessagesResponse>();
       }
 
       public async Task<Either<DummyError, UserReceivedFilesResponse>> GetUserReceivedFilesAsync()
@@ -275,9 +258,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/received/files";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<UserReceivedFilesResponse>(url, token));
 
-         return response.Match<Either<DummyError, UserReceivedFilesResponse>>(
-            left => (DummyError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DummyError, UserReceivedFilesResponse>();
       }
 
       public async Task<Either<DummyError, UserSearchResponse>> GetUserSearchResultsAsync(UserSearchParameters searchInfo)
@@ -289,9 +270,7 @@ namespace Crypter.ClientServices.Implementations
          string url = urlBuilder.ToString();
 
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<UserSearchResponse>(url, token));
-         return response.Match<Either<DummyError, UserSearchResponse>>(
-            left => (DummyError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DummyError, UserSearchResponse>();
       }
 
       public async Task<Either<VerifyEmailAddressError, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo)
@@ -299,9 +278,7 @@ namespace Crypter.ClientServices.Implementations
          string url = $"{_baseUserUrl}/verify";
          var (_, response) = await _httpService.PostAsync<VerifyEmailAddressRequest, VerifyEmailAddressResponse>(url, verificationInfo);
 
-         return response.Match<Either<VerifyEmailAddressError, VerifyEmailAddressResponse>>(
-            left => (VerifyEmailAddressError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<VerifyEmailAddressError, VerifyEmailAddressResponse>();
       }
 
       public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, Guid recipient, bool withAuthentication)
@@ -314,9 +291,7 @@ namespace Crypter.ClientServices.Implementations
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UploadMessageTransferRequest, UploadTransferResponse>(url, uploadRequest, token))
             : await _httpService.PostAsync<UploadMessageTransferRequest, UploadTransferResponse>(url, uploadRequest);
 
-         return response.Match<Either<UploadTransferError, UploadTransferResponse>>(
-            left => (UploadTransferError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
       }
 
       public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, Guid recipient, bool withAuthentication)
@@ -329,9 +304,7 @@ namespace Crypter.ClientServices.Implementations
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UploadFileTransferRequest, UploadTransferResponse>(url, uploadRequest, token))
             : await _httpService.PostAsync<UploadFileTransferRequest, UploadTransferResponse>(url, uploadRequest);
 
-         return response.Match<Either<UploadTransferError, UploadTransferResponse>>(
-            left => (UploadTransferError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
       }
 
       public async Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadMessagePreviewAsync(DownloadTransferPreviewRequest downloadRequest, bool withAuthentication)
@@ -341,9 +314,7 @@ namespace Crypter.ClientServices.Implementations
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<DownloadTransferPreviewRequest, DownloadTransferMessagePreviewResponse>(url, downloadRequest, token))
             : await _httpService.PostAsync<DownloadTransferPreviewRequest, DownloadTransferMessagePreviewResponse>(url, downloadRequest);
 
-         return response.Match<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>>(
-            left => (DownloadTransferPreviewError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>();
       }
 
       public async Task<Either<DownloadTransferSignatureError, DownloadTransferSignatureResponse>> DownloadMessageSignatureAsync(DownloadTransferSignatureRequest downloadRequest, bool withAuthentication)
@@ -353,9 +324,7 @@ namespace Crypter.ClientServices.Implementations
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<DownloadTransferSignatureRequest, DownloadTransferSignatureResponse>(url, downloadRequest, token))
             : await _httpService.PostAsync<DownloadTransferSignatureRequest, DownloadTransferSignatureResponse>(url, downloadRequest);
 
-         return response.Match<Either<DownloadTransferSignatureError, DownloadTransferSignatureResponse>>(
-            left => (DownloadTransferSignatureError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DownloadTransferSignatureError, DownloadTransferSignatureResponse>();
       }
 
       public async Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadMessageCiphertextAsync(DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication)
@@ -365,9 +334,7 @@ namespace Crypter.ClientServices.Implementations
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<DownloadTransferCiphertextRequest, DownloadTransferCiphertextResponse>(url, downloadRequest, token))
             : await _httpService.PostAsync<DownloadTransferCiphertextRequest, DownloadTransferCiphertextResponse>(url, downloadRequest);
 
-         return response.Match<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>>(
-            left => (DownloadTransferCiphertextError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>();
       }
 
       public async Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadFilePreviewAsync(DownloadTransferPreviewRequest downloadRequest, bool withAuthentication)
@@ -377,9 +344,7 @@ namespace Crypter.ClientServices.Implementations
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<DownloadTransferPreviewRequest, DownloadTransferFilePreviewResponse>(url, downloadRequest, token))
             : await _httpService.PostAsync<DownloadTransferPreviewRequest, DownloadTransferFilePreviewResponse>(url, downloadRequest);
 
-         return response.Match<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>>(
-            left => (DownloadTransferPreviewError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>();
       }
 
       public async Task<Either<DownloadTransferSignatureError, DownloadTransferSignatureResponse>> DownloadFileSignatureAsync(DownloadTransferSignatureRequest downloadRequest, bool withAuthentication)
@@ -389,9 +354,7 @@ namespace Crypter.ClientServices.Implementations
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<DownloadTransferSignatureRequest, DownloadTransferSignatureResponse>(url, downloadRequest, token))
             : await _httpService.PostAsync<DownloadTransferSignatureRequest, DownloadTransferSignatureResponse>(url, downloadRequest);
 
-         return response.Match<Either<DownloadTransferSignatureError, DownloadTransferSignatureResponse>>(
-            left => (DownloadTransferSignatureError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DownloadTransferSignatureError, DownloadTransferSignatureResponse>();
       }
 
       public async Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadFileCiphertextAsync(DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication)
@@ -401,9 +364,7 @@ namespace Crypter.ClientServices.Implementations
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<DownloadTransferCiphertextRequest, DownloadTransferCiphertextResponse>(url, downloadRequest, token))
             : await _httpService.PostAsync<DownloadTransferCiphertextRequest, DownloadTransferCiphertextResponse>(url, downloadRequest);
 
-         return response.Match<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>>(
-            left => (DownloadTransferCiphertextError)left.ErrorCode,
-            right => right);
+         return response.ExtractErrorCode<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>();
       }
    }
 }
