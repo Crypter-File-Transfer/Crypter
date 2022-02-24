@@ -40,15 +40,13 @@ namespace Crypter.Core.Features.User.Queries
    {
       public Guid RequestorId { get; private set; }
       public string Keyword { get; private set; }
-      public UserSearchKeywordField KeywordField { get; private set; }
       public int StartingIndex { get; private set; }
       public int Count { get; private set; }
 
-      public UserSearchQuery(Guid requestorId, string keyword, UserSearchKeywordField keywordField, int startingIndex, int count)
+      public UserSearchQuery(Guid requestorId, string keyword, int startingIndex, int count)
       {
          RequestorId = requestorId;
          Keyword = keyword;
-         KeywordField = keywordField;
          StartingIndex = startingIndex;
          Count = count;
       }
@@ -85,12 +83,9 @@ namespace Crypter.Core.Features.User.Queries
       {
          string lowerKeyword = request.Keyword.ToLower();
 
-         IQueryable<Models.User> baseQuery = request.KeywordField switch
-         {
-            UserSearchKeywordField.Username => _context.Users.Where(x => x.Username.ToLower().StartsWith(lowerKeyword)),
-            UserSearchKeywordField.Alias => _context.Users.Where(x => x.Profile.Alias.ToLower().StartsWith(lowerKeyword)),
-            _ => throw new NotImplementedException(),
-         };
+         IQueryable<Models.User> baseQuery = _context.Users
+            .Where(x => x.Username.ToLower().StartsWith(lowerKeyword)
+               || x.Profile.Alias.ToLower().StartsWith(lowerKeyword));
 
          IQueryable<Models.User> baseQueryWithPrivacy = baseQuery
             .Where(x => x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone

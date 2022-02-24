@@ -25,18 +25,22 @@
  */
 
 using System;
+using System.Threading.Tasks;
 
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.ClientServices.Interfaces
 {
-   public class UserSession
+   public interface IDeviceStorageService<TItem, TLocation>
+      where TItem : Enum
+      where TLocation : Enum
    {
-      public Guid UserId { get; set; }
-      public string Username { get; set; }
-
-      public UserSession(Guid userId, string username)
-      {
-         UserId = userId;
-         Username = username;
-      }
+      bool IsInitialized { get; }
+      Task InitializeAsync();
+      Task<TValue> GetItemAsync<TValue>(TItem itemType);
+      bool HasItem(TItem itemType);
+      TLocation GetItemLocation(TItem itemType);
+      Task SetItemAsync<TValue>(TItem itemType, TValue value, TLocation location);
+      Task ReplaceItemAsync<TValue>(TItem itemType, TValue value);
+      Task RemoveItemAsync(TItem itemType);
+      Task DisposeAsync();
    }
 }

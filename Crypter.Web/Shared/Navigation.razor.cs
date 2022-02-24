@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
@@ -44,7 +45,7 @@ namespace Crypter.Web.Shared
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      ILocalStorageService LocalStorageService { get; set; }
+      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       [Inject]
       protected IAuthenticationService AuthenticationService { get; set; }
@@ -63,7 +64,7 @@ namespace Crypter.Web.Shared
 
       protected override async Task OnInitializedAsync()
       {
-         var session = await LocalStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
+         var session = await BrowserStorageService.GetItemAsync<UserSession>(BrowserStoredObjectType.UserSession);
          ShowUserNavigation = session is not null;
          if (session is not null)
          {

@@ -24,19 +24,22 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+using System.Threading.Tasks;
 
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.ClientServices.Interfaces
 {
-   public class UserSession
+   /// <summary>
+   /// This interface is intended to be used by other services that
+   /// need access to the locally stored authentication and refresh tokens.
+   /// 
+   /// A class that implements this interface will likely need to implement
+   /// some other methods that save or store these tokens on the device.
+   /// </summary>
+   public interface ITokenRepository
    {
-      public Guid UserId { get; set; }
-      public string Username { get; set; }
-
-      public UserSession(Guid userId, string username)
-      {
-         UserId = userId;
-         Username = username;
-      }
+      Task StoreAuthenticationTokenAsync(string token);
+      Task<string> GetAuthenticationTokenAsync();
+      Task StoreRefreshTokenAsync(string token);
+      Task<string> GetRefreshTokenAsync();
    }
 }

@@ -80,9 +80,9 @@ namespace Crypter.Web.Shared.Transfer
 
          // Get the signature before downloading the ciphertext
          // Remember, the API will DELETE the ciphertext and it's database records as soon as the ciphertext is downloaded
-         var requestWithAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
+         var requestWithAuth = BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession);
          var signatureRequest = new DownloadTransferSignatureRequest(TransferId);
-         var signatureResponse = await TransferService.DownloadMessageSignatureAsync(signatureRequest, requestWithAuth);
+         var signatureResponse = await CrypterApiService.DownloadMessageSignatureAsync(signatureRequest, requestWithAuth);
          await signatureResponse.DoRightAsync(async x =>
          {
             var signature = Convert.FromBase64String(x.SignatureBase64);
@@ -92,10 +92,10 @@ namespace Crypter.Web.Shared.Transfer
             await SetNewDecryptionStatus("Downloading encrypted message");
             var encodedServerDecryptionKey = Convert.ToBase64String(serverKey);
             var ciphertextRequest = new DownloadTransferCiphertextRequest(TransferId, encodedServerDecryptionKey);
-            var ciphertextResponse = await TransferService.DownloadMessageCiphertextAsync(ciphertextRequest, requestWithAuth);
+            var ciphertextResponse = await CrypterApiService.DownloadMessageCiphertextAsync(ciphertextRequest, requestWithAuth);
             ciphertextResponse.DoLeft(y =>
             {
-               switch ((DownloadTransferCiphertextError)y.ErrorCode)
+               switch (y)
                {
                   case DownloadTransferCiphertextError.NotFound:
                      ErrorMessage = "Message not found";

@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Contracts.Features.User.UpdateNotificationSettings;
@@ -31,7 +32,6 @@ using Crypter.Contracts.Features.User.UpdatePrivacySettings;
 using Crypter.Contracts.Features.User.UpdateProfile;
 using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -44,10 +44,10 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      ILocalStorageService LocalStorage { get; set; }
+      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       [Inject]
-      IUserApiService UserApiService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       protected bool Loading;
       protected bool IsEditing;
@@ -108,7 +108,7 @@ namespace Crypter.Web.Pages
          ArePasswordControlsEnabled = false;
          ArePrivacyControlsEnabled = false;
 
-         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
+         if (!BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/");
             return;
@@ -137,7 +137,7 @@ namespace Crypter.Web.Pages
       protected async Task OnSaveProfileInfoClickedAsync()
       {
          var request = new UpdateProfileRequest(EditedAlias, EditedAbout);
-         await UserApiService.UpdateUserProfileInfoAsync(request);
+         await CrypterApiService.UpdateUserProfileInfoAsync(request);
 
          Alias = EditedAlias;
          About = EditedAbout;
@@ -176,11 +176,11 @@ namespace Crypter.Web.Pages
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var request = new UpdateContactInfoRequest(EditedEmail, digestedPasswordBase64);
-         var maybeUpdate = await UserApiService.UpdateUserContactInfoAsync(request);
+         var maybeUpdate = await CrypterApiService.UpdateUserContactInfoAsync(request);
          UpdateContactInfoFailed = maybeUpdate.Match(
             left =>
             {
-               switch ((UpdateContactInfoError)left.ErrorCode)
+               switch (left)
                {
                   case UpdateContactInfoError.UserNotFound:
                   case UpdateContactInfoError.ErrorResettingNotificationPreferences:
@@ -253,7 +253,7 @@ namespace Crypter.Web.Pages
       protected async Task OnSavePrivacyClickedAsync()
       {
          var request = new UpdatePrivacySettingsRequest(EditedAllowKeyExchangeRequests, (UserVisibilityLevel)EditedVisibility, (UserItemTransferPermission)EditedMessageTransferPermission, (UserItemTransferPermission)EditedFileTransferPermission);
-         await UserApiService.UpdateUserPrivacyAsync(request);
+         await CrypterApiService.UpdateUserPrivacyAsync(request);
 
          AllowKeyExchangeRequests = EditedAllowKeyExchangeRequests;
          Visibility = EditedVisibility;
@@ -279,7 +279,7 @@ namespace Crypter.Web.Pages
       protected async Task OnSaveNotificationPreferencesClickedAsync()
       {
          var request = new UpdateNotificationSettingsRequest(EditedEnableTransferNotifications, EditedEnableTransferNotifications);
-         await UserApiService.UpdateUserNotificationAsync(request);
+         await CrypterApiService.UpdateUserNotificationAsync(request);
 
          EnableTransferNotifications = EditedEnableTransferNotifications;
          AreNotificationControlsEnabled = false;
@@ -288,7 +288,7 @@ namespace Crypter.Web.Pages
 
       protected async Task GetUserInfoAsync()
       {
-         var maybeSettings = await UserApiService.GetUserSettingsAsync();
+         var maybeSettings = await CrypterApiService.GetUserSettingsAsync();
          await maybeSettings.DoRightAsync(async right =>
          {
             Username = right.Username;
@@ -303,8 +303,8 @@ namespace Crypter.Web.Pages
 
             EnableTransferNotifications = EditedEnableTransferNotifications = right.EnableTransferNotifications;
 
-            var encryptedX25519PrivateKey = (await LocalStorage.GetItemAsync<EncryptedPrivateKey>(StoredObjectType.EncryptedX25519PrivateKey)).Key;
-            var encryptedEd25519PrivateKey = (await LocalStorage.GetItemAsync<EncryptedPrivateKey>(StoredObjectType.EncryptedEd25519PrivateKey)).Key;
+            var encryptedX25519PrivateKey = (await BrowserStorageService.GetItemAsync<EncryptedPrivateKey>(BrowserStoredObjectType.EncryptedX25519PrivateKey)).Key;
+            var encryptedEd25519PrivateKey = (await BrowserStorageService.GetItemAsync<EncryptedPrivateKey>(BrowserStoredObjectType.EncryptedEd25519PrivateKey)).Key;
 
             X25519PrivateKey = encryptedX25519PrivateKey;
             Ed25519PrivateKey = encryptedEd25519PrivateKey;

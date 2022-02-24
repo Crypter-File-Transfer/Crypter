@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
@@ -32,36 +33,25 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Services
 {
-   public enum StorageLocation
+   public enum BrowserStorageLocation
    {
-      InMemory,
+      Memory,
       SessionStorage,
       LocalStorage
    }
 
-   public enum StoredObjectType
+   public enum BrowserStoredObjectType
    {
       UserSession,
       AuthenticationToken,
+      RefreshToken,
       PlaintextX25519PrivateKey,
       PlaintextEd25519PrivateKey,
       EncryptedX25519PrivateKey,
       EncryptedEd25519PrivateKey
    }
 
-   public interface ILocalStorageService
-   {
-      bool IsInitialized { get; }
-      Task InitializeAsync();
-      Task<T> GetItemAsync<T>(StoredObjectType itemType);
-      bool HasItem(StoredObjectType itemType);
-      StorageLocation GetItemLocation(StoredObjectType itemType);
-      Task SetItemAsync<T>(StoredObjectType itemType, T value, StorageLocation location);
-      Task RemoveItemAsync(StoredObjectType itemType);
-      Task DisposeAsync();
-   }
-
-   public class LocalStorageService : ILocalStorageService
+   public class BrowserStorageService : IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation>
    {
       public const string SessionStorageLiteral = "sessionStorage";
       public const string LocalStorageLiteral = "localStorage";
@@ -69,22 +59,22 @@ namespace Crypter.Web.Services
       private readonly IJSRuntime _jsRuntime;
 
       private readonly Dictionary<string, object> _inMemoryStorage;
-      private readonly Dictionary<string, StorageLocation> _objectLocations;
+      private readonly Dictionary<string, BrowserStorageLocation> _objectLocations;
 
       public bool IsInitialized { get; private set; } = false;
 
-      public LocalStorageService(IJSRuntime jSRuntime)
+      public BrowserStorageService(IJSRuntime jSRuntime)
       {
          _jsRuntime = jSRuntime;
          _inMemoryStorage = new Dictionary<string, object>();
-         _objectLocations = new Dictionary<string, StorageLocation>();
+         _objectLocations = new Dictionary<string, BrowserStorageLocation>();
       }
 
       public async Task InitializeAsync()
       {
          if (!IsInitialized)
          {
-            foreach (StoredObjectType item in Enum.GetValues(typeof(StoredObjectType)))
+            foreach (BrowserStoredObjectType item in Enum.GetValues(typeof(BrowserStoredObjectType)))
             {
                await InitializeItemFromLocalStorage(item);
                await InitializeItemFromSessionStorage(item);
@@ -93,37 +83,37 @@ namespace Crypter.Web.Services
          }
       }
 
-      private async Task InitializeItemFromLocalStorage(StoredObjectType itemType)
+      private async Task InitializeItemFromLocalStorage(BrowserStoredObjectType itemType)
       {
          var value = await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.getItem", new object[] { itemType.ToString() });
          if (!string.IsNullOrEmpty(value))
          {
-            _objectLocations.Add(itemType.ToString(), StorageLocation.LocalStorage);
+            _objectLocations.Add(itemType.ToString(), BrowserStorageLocation.LocalStorage);
          }
       }
 
-      private async Task InitializeItemFromSessionStorage(StoredObjectType itemType)
+      private async Task InitializeItemFromSessionStorage(BrowserStoredObjectType itemType)
       {
          var value = await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.getItem", new object[] { itemType.ToString() });
          if (!string.IsNullOrEmpty(value))
          {
-            _objectLocations.Add(itemType.ToString(), StorageLocation.SessionStorage);
+            _objectLocations.Add(itemType.ToString(), BrowserStorageLocation.SessionStorage);
          }
       }
 
-      public async Task<T> GetItemAsync<T>(StoredObjectType itemType)
+      public async Task<T> GetItemAsync<T>(BrowserStoredObjectType itemType)
       {
          if (_objectLocations.TryGetValue(itemType.ToString(), out var location))
          {
             string storedJson;
             switch (location)
             {
-               case StorageLocation.InMemory:
+               case BrowserStorageLocation.Memory:
                   return (T)_inMemoryStorage[itemType.ToString()];
-               case StorageLocation.SessionStorage:
+               case BrowserStorageLocation.SessionStorage:
                   storedJson = await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.getItem", new object[] { itemType.ToString() });
                   break;
-               case StorageLocation.LocalStorage:
+               case BrowserStorageLocation.LocalStorage:
                   storedJson = await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.getItem", new object[] { itemType.ToString() });
                   break;
                default:
@@ -134,29 +124,29 @@ namespace Crypter.Web.Services
          return default;
       }
 
-      public bool HasItem(StoredObjectType itemType)
+      public bool HasItem(BrowserStoredObjectType itemType)
       {
          return _objectLocations.ContainsKey(itemType.ToString());
       }
 
-      public StorageLocation GetItemLocation(StoredObjectType itemType)
+      public BrowserStorageLocation GetItemLocation(BrowserStoredObjectType itemType)
       {
          return _objectLocations[itemType.ToString()];
       }
 
-      public async Task SetItemAsync<T>(StoredObjectType itemType, T value, StorageLocation location)
+      public async Task SetItemAsync<T>(BrowserStoredObjectType itemType, T value, BrowserStorageLocation location)
       {
          await RemoveItemAsync(itemType);
 
          switch (location)
          {
-            case StorageLocation.InMemory:
+            case BrowserStorageLocation.Memory:
                _inMemoryStorage.Add(itemType.ToString(), value);
                break;
-            case StorageLocation.SessionStorage:
+            case BrowserStorageLocation.SessionStorage:
                await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.setItem", new object[] { itemType.ToString(), JsonSerializer.Serialize(value) });
                break;
-            case StorageLocation.LocalStorage:
+            case BrowserStorageLocation.LocalStorage:
                await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.setItem", new object[] { itemType.ToString(), JsonSerializer.Serialize(value) });
                break;
             default:
@@ -166,20 +156,26 @@ namespace Crypter.Web.Services
          _objectLocations.Add(itemType.ToString(), location);
       }
 
-      public async Task RemoveItemAsync(StoredObjectType itemType)
+      public async Task ReplaceItemAsync<T>(BrowserStoredObjectType itemType, T value)
+      {
+         var currentLocation = GetItemLocation(itemType);
+         await SetItemAsync(itemType, value, currentLocation);
+      }
+
+      public async Task RemoveItemAsync(BrowserStoredObjectType itemType)
       {
          if (_objectLocations.TryGetValue(itemType.ToString(), out var location))
          {
             _objectLocations.Remove(itemType.ToString());
             switch (location)
             {
-               case StorageLocation.InMemory:
+               case BrowserStorageLocation.Memory:
                   _inMemoryStorage.Remove(itemType.ToString());
                   break;
-               case StorageLocation.SessionStorage:
+               case BrowserStorageLocation.SessionStorage:
                   await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.removeItem", itemType.ToString());
                   break;
-               case StorageLocation.LocalStorage:
+               case BrowserStorageLocation.LocalStorage:
                   await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.removeItem", itemType.ToString());
                   break;
                default:
@@ -190,7 +186,7 @@ namespace Crypter.Web.Services
 
       public async Task DisposeAsync()
       {
-         foreach (StoredObjectType item in Enum.GetValues(typeof(StoredObjectType)))
+         foreach (BrowserStoredObjectType item in Enum.GetValues(typeof(BrowserStoredObjectType)))
          {
             await RemoveItemAsync(item);
          }

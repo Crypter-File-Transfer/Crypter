@@ -28,12 +28,12 @@
 @inherits MainLayoutBase
 
 <div class="page h-100">
-   @if (LocalStorage.IsInitialized)
+   @if (BrowserStorageService.IsInitialized)
    {
       <NavigationBar />
       <main role="main" class="pb-3">
          
-         @if (LocalStorage.HasItem(StoredObjectType.UserSession))
+         @if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             <ReAuthenticationModal @ref="ReAuthenticationModal" ModalClosedCallback="@OnReauthenticationModalClosed" />
          }

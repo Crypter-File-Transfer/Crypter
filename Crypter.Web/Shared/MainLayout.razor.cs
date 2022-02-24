@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
@@ -37,13 +38,13 @@ namespace Crypter.Web.Shared
       private NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected ILocalStorageService LocalStorage { get; set; }
+      protected IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       protected ReAuthenticationModal ReAuthenticationModal { get; set; }
 
       protected override async Task OnInitializedAsync()
       {
-         await LocalStorage.InitializeAsync();
+         await BrowserStorageService.InitializeAsync();
          StateHasChanged();
 
          if (UserNeedsReauthentication())
@@ -52,7 +53,7 @@ namespace Crypter.Web.Shared
             return;
          }
 
-         if (LocalStorage.HasItem(StoredObjectType.UserSession))
+         if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/user/transfers");
          }
@@ -61,14 +62,15 @@ namespace Crypter.Web.Shared
       protected bool UserNeedsReauthentication()
       {
          // User session does not exist. There is nobody to reauthenticate.
-         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
+         if (!BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             return false;
          }
 
          // User session and the auth token both exist. No need to reauthenticate.
-         if (LocalStorage.HasItem(StoredObjectType.UserSession)
-            && LocalStorage.HasItem(StoredObjectType.AuthenticationToken))
+         if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession)
+            && BrowserStorageService.HasItem(BrowserStoredObjectType.AuthenticationToken)
+            && BrowserStorageService.HasItem(BrowserStoredObjectType.RefreshToken))
          {
             return false;
          }

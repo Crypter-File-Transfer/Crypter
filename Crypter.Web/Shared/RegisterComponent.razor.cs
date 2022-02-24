@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Services;
 using Crypter.Contracts.Features.User.Register;
 using Crypter.Web.Models.Forms;
 using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -41,10 +41,10 @@ namespace Crypter.Web.Shared
       protected NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected ILocalStorageService LocalStorageService { get; set; }
+      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       [Inject]
-      protected IUserApiService UserService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       protected UserRegistrationModel RegistrationInfo = new();
 
@@ -73,7 +73,7 @@ namespace Crypter.Web.Shared
 
       protected override async Task OnInitializedAsync()
       {
-         if (LocalStorageService.HasItem(StoredObjectType.UserSession))
+         if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/user");
          }
@@ -155,12 +155,12 @@ namespace Crypter.Web.Shared
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var requestBody = new UserRegisterRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.EmailAddress);
-         var maybeRegistration = await UserService.RegisterUserAsync(requestBody);
+         var maybeRegistration = await CrypterApiService.RegisterUserAsync(requestBody);
          RegistrationSuccess = maybeRegistration.Match(
             left =>
             {
                RegistrationError = true;
-               RegistrationErrorText = (UserRegisterError)left.ErrorCode switch
+               RegistrationErrorText = left switch
                {
                   UserRegisterError.InvalidUsername => "Invalid username",
                   UserRegisterError.InvalidPassword => "Invalid password",

@@ -24,19 +24,21 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.Contracts.Features.User.Search
 {
-   public class UserSession
+   public class UserSearchParameters
    {
-      public Guid UserId { get; set; }
-      public string Username { get; set; }
+      public string Keyword { get; set; }
 
-      public UserSession(Guid userId, string username)
+      public int Index { get; set; }
+
+      public int Count { get; set; }
+
+      public UserSearchParameters(string keyword, int index = 0, int count = 20)
       {
-         UserId = userId;
-         Username = username;
+         Keyword = keyword;
+         Index = index;
+         Count = count;
       }
    }
 }

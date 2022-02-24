@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.Web.Models;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -35,10 +35,10 @@ namespace Crypter.Web.Shared
    public partial class ServerDiskSpaceComponentBase : ComponentBase
    {
       [Inject]
-      protected AppSettings AppSettings { get; set; }
+      protected ClientAppSettings AppSettings { get; set; }
 
       [Inject]
-      protected IMetricsApiService MetricsService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       protected bool ServerHasDiskSpace = true;
 
@@ -46,7 +46,7 @@ namespace Crypter.Web.Shared
 
       protected override async Task OnInitializedAsync()
       {
-         var response = await MetricsService.GetDiskMetricsAsync();
+         var response = await CrypterApiService.GetDiskMetricsAsync();
 
          ServerSpacePercentageRemaining = response.Match(
             left => 0.0,

@@ -27,7 +27,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.FunctionalTypes
+namespace Crypter.Common.Monads
 {
    public enum EitherState
    {

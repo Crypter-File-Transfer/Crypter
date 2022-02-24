@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
 using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using Org.BouncyCastle.Crypto;
 using System;
@@ -40,10 +40,10 @@ namespace Crypter.Web.Shared.Transfer
    public abstract class UploadTransferBase : ComponentBase
    {
       [Inject]
-      protected ILocalStorageService LocalStorageService { get; set; }
+      protected IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
       [Inject]
-      protected ITransferApiService UploadService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       [Parameter]
       public bool IsSenderDefined { get; set; }
