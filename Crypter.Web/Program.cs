@@ -34,7 +34,6 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Net.Http;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -54,14 +53,14 @@ builder.Services.AddSingleton<IClientApiSettings>(sp =>
 });
 
 builder.Services
-         .AddBlazorDownloadFile()
-         .AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) })
-         .AddScoped<IAuthenticationService, AuthenticationService>()
-         .AddScoped<IHttpService, HttpService>()
-         .AddScoped<ITokenRepository, TokenRepository>()
-         .AddScoped<IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation>, BrowserStorageService>()
-         .AddScoped<ICrypterApiService, CrypterApiService>()
-         .AddScoped<IUserKeysService, UserKeysService>()
-         .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>();
+   .AddBlazorDownloadFile()
+   .AddScoped(sp => new HttpClient())
+   .AddScoped<IAuthenticationService, AuthenticationService>()
+   .AddScoped<IHttpService, HttpService>()
+   .AddScoped<ITokenRepository, TokenRepository>()
+   .AddScoped<IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation>, BrowserStorageService>()
+   .AddScoped<ICrypterApiService, CrypterApiService>()
+   .AddScoped<IUserKeysService, UserKeysService>()
+   .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>();
 
 await builder.Build().RunAsync();
