@@ -115,7 +115,6 @@ namespace Crypter.Common.Monads
          };
       }
 
-      /*
       public async Task<T> MatchAsync<T>(Func<TLeft, Task<T>> leftFunction, Func<TRight, T> rightFunction, Func<T> bottomFunction = null)
       {
          ValidateMatch(leftFunction, rightFunction);
@@ -154,7 +153,6 @@ namespace Crypter.Common.Monads
             _ => throw new NotImplementedException()
          };
       }
-      */
 
       public void DoRight(Action<TRight> rightAction)
       {

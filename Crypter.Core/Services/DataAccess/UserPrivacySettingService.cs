@@ -27,9 +27,7 @@
 using Crypter.Contracts.Common.Enum;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
-using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,11 +35,11 @@ namespace Crypter.Core.Services.DataAccess
 {
    public class UserPrivacySettingService : IUserPrivacySettingService
    {
-      private readonly DataContext Context;
+      private readonly DataContext _context;
 
       public UserPrivacySettingService(DataContext context)
       {
-         Context = context;
+         _context = context;
       }
 
       public async Task<bool> UpsertAsync(Guid userId, bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission receiveFilesPermission, UserItemTransferPermission receiveMessagesPermission, CancellationToken cancellationToken)
@@ -50,7 +48,7 @@ namespace Crypter.Core.Services.DataAccess
          if (userPrivacySettings == null)
          {
             var newPrivacySettings = new UserPrivacySetting(userId, allowKeyExchangeRequests, visibilityLevel, receiveFilesPermission, receiveMessagesPermission);
-            Context.UserPrivacySettings.Add(newPrivacySettings);
+            _context.UserPrivacySettings.Add(newPrivacySettings);
          }
          else
          {
@@ -60,71 +58,13 @@ namespace Crypter.Core.Services.DataAccess
             userPrivacySettings.ReceiveMessages = receiveMessagesPermission;
          }
 
-         await Context.SaveChangesAsync(cancellationToken);
+         await _context.SaveChangesAsync(cancellationToken);
          return true;
       }
 
       public async Task<IUserPrivacySetting> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
-         return await Context.UserPrivacySettings.FindAsync(new object[] { userId }, cancellationToken);
-      }
-
-      public async Task<bool> IsUserViewableByPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken)
-      {
-         if (userId.Equals(otherPartyId))
-         {
-            return true;
-         }
-
-         var userVisibility = (await Context.UserPrivacySettings
-            .Where(x => x.Owner == userId)
-            .FirstOrDefaultAsync(cancellationToken))
-            .Visibility;
-
-         return userVisibility switch
-         {
-            UserVisibilityLevel.None => false,
-            UserVisibilityLevel.Contacts => false,
-            UserVisibilityLevel.Authenticated => otherPartyId != Guid.Empty,
-            UserVisibilityLevel.Everyone => true,
-            _ => false,
-         };
-      }
-
-      public async Task<bool> DoesUserAcceptMessagesFromOtherPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken)
-      {
-         var messageTransferPermission = (await Context.UserPrivacySettings
-            .Where(x => x.Owner == userId)
-            .FirstOrDefaultAsync(cancellationToken))
-            .ReceiveMessages;
-
-         return messageTransferPermission switch
-         {
-            UserItemTransferPermission.None => false,
-            UserItemTransferPermission.ExchangedKeys => false,
-            UserItemTransferPermission.Contacts => false,
-            UserItemTransferPermission.Authenticated => otherPartyId != Guid.Empty,
-            UserItemTransferPermission.Everyone => true,
-            _ => false,
-         };
-      }
-
-      public async Task<bool> DoesUserAcceptFilesFromOtherPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken)
-      {
-         var fileTransferPermission = (await Context.UserPrivacySettings
-            .Where(x => x.Owner == userId)
-            .FirstOrDefaultAsync(cancellationToken))
-            .ReceiveFiles;
-
-         return fileTransferPermission switch
-         {
-            UserItemTransferPermission.None => false,
-            UserItemTransferPermission.ExchangedKeys => false,
-            UserItemTransferPermission.Contacts => false,
-            UserItemTransferPermission.Authenticated => otherPartyId != Guid.Empty,
-            UserItemTransferPermission.Everyone => true,
-            _ => false,
-         };
+         return await _context.UserPrivacySettings.FindAsync(new object[] { userId }, cancellationToken);
       }
    }
 }

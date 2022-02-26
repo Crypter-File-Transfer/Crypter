@@ -46,17 +46,20 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected IUserContactsService UserContactsService { get; set; }
+
+      [Inject]
+      private ISessionService SessionService { get; set; }
 
       protected UserSearchParameters SearchParameters = new("");
       protected UserSearchResponse SearchResults;
 
       protected override async Task OnInitializedAsync()
       {
-         if (!BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
+         if (!SessionService.IsLoggedIn)
          {
             NavigationManager.NavigateTo("/");
             return;
@@ -126,6 +129,19 @@ namespace Crypter.Web.Pages
                StateHasChanged();
             });
          }
+      }
+
+      protected async Task AddContactAsync(Guid user)
+      {
+         await UserContactsService.AddContactAsync(user);
+         StateHasChanged();
+      }
+
+      protected static string GetDisplayName(string username, string alias)
+      {
+         return string.IsNullOrEmpty(alias)
+            ? username
+            : $"{alias} ({username})";
       }
 
       public void Dispose()

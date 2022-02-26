@@ -24,8 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.Web.Models.LocalStorage;
 using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
@@ -45,10 +43,7 @@ namespace Crypter.Web.Shared
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
-
-      [Inject]
-      protected IAuthenticationService AuthenticationService { get; set; }
+      protected ISessionService SessionService { get; set; }
 
       protected UploadFileTransferModal FileTransferModal { get; set; }
 
@@ -64,7 +59,7 @@ namespace Crypter.Web.Shared
 
       protected override async Task OnInitializedAsync()
       {
-         var session = await BrowserStorageService.GetItemAsync<UserSession>(BrowserStoredObjectType.UserSession);
+         var session = await SessionService.GetCurrentUserSessionAsync();
          ShowUserNavigation = session is not null;
          if (session is not null)
          {
@@ -72,12 +67,12 @@ namespace Crypter.Web.Shared
             ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
          }
          NavigationManager.LocationChanged += HandleLocationChanged;
-         AuthenticationService.UserSessionStateChanged += HandleUserSessionStateChanged;
+         SessionService.UserSessionStateChanged += HandleUserSessionStateChanged;
       }
 
       protected async Task OnLogoutClicked()
       {
-         await AuthenticationService.LogoutAsync();
+         await SessionService.LogoutAsync();
          NavigationManager.NavigateTo("/");
       }
 
@@ -123,7 +118,7 @@ namespace Crypter.Web.Shared
       public void Dispose()
       {
          NavigationManager.LocationChanged -= HandleLocationChanged;
-         AuthenticationService.UserSessionStateChanged -= HandleUserSessionStateChanged;
+         SessionService.UserSessionStateChanged -= HandleUserSessionStateChanged;
          GC.SuppressFinalize(this);
       }
    }

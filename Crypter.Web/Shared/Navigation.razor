@@ -30,33 +30,42 @@
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" aria-label="Toggle navigation">
    <span class="navbar-toggler-icon"></span>
 </button>
+
 <div class="collapse navbar-collapse justify-content-end" id="mainNavigation">
-   <ul class="navbar-nav">
+   <ul class="navbar-nav mt-2 mt-lg-0">
       @if (ShowUserNavigation)
       {
-         <li class="nav-item mx-1">
+         <li class="nav-item mx-1 my-1 my-lg-0">
             <form class="d-flex" @onsubmit:preventDefault @onsubmit="@OnSearchClicked">
                <div class="input-group">
                   <span class="input-group-text bi-search" id="search-addon"></span>
-                  <input type="text" class="form-control" placeholder="Find a user" aria-label="Search" @bind="SearchKeyword" aria-describedby="search-addon">
+                  <input style="width: 20em; max-width: 20em;" type="text" class="form-control" placeholder="Find a user" aria-label="Search" @bind="SearchKeyword" aria-describedby="search-addon">
                </div>
             </form>
          </li>
 
-         <li class="nav-item mx-1">
-            <a class="nav-link text-light" href="/user/transfers">My Transfers</a>
+         <li class="nav-item mx-1 my-1 my-lg-0">
+            <a class="nav-link text-light" href="/user/contacts">
+               <i class="bi-people me-2"></i>Contacts
+            </a>
          </li>
 
-         <li class="nav-item mx-1 dropdown">
+         <li class="nav-item mx-1 my-1 my-lg-0">
+            <a class="nav-link text-light" href="/user/transfers">
+               <i class="bi-inboxes me-2"></i>Transfers
+            </a>
+         </li>
+
+         <li class="nav-item mx-1 my-1 my-lg-0 dropdown">
             <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-               Encrypt
+               <i class="bi-cloud-upload me-2"></i>Encrypt
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
                <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptFileClicked">File</a></li>
                <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptMessageClicked">Message</a></li>
             </ul>
          </li>
-         <li class="nav-item mx-1 dropdown">
+         <li class="nav-item mx-1 my-1 my-lg-0 dropdown">
             <a class="nav-link dropdown-toggle text-light" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                <i class="bi-person-circle me-2"></i>@Username
             </a>
@@ -73,10 +82,10 @@
       }
       else
       {
-         <li class="nav-item m-1">
+         <li class="nav-item mx-1 my-1 my-lg-0">
             <a class="btn btn-secondary" href="/login">Login</a>
          </li>
-         <li class="nav-item m-1">
+         <li class="nav-item mx-1 my-1 my-lg-0">
             <a class="btn btn-primary" href="/register">Sign Up</a>
          </li>
       }

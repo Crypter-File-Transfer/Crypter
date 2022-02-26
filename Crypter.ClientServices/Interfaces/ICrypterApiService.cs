@@ -34,11 +34,14 @@ using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
 using Crypter.Contracts.Features.Transfer.Upload;
+using Crypter.Contracts.Features.User.AddContact;
+using Crypter.Contracts.Features.User.GetContacts;
 using Crypter.Contracts.Features.User.GetPublicProfile;
 using Crypter.Contracts.Features.User.GetReceivedTransfers;
 using Crypter.Contracts.Features.User.GetSentTransfers;
 using Crypter.Contracts.Features.User.GetSettings;
 using Crypter.Contracts.Features.User.Register;
+using Crypter.Contracts.Features.User.RemoveUserContact;
 using Crypter.Contracts.Features.User.Search;
 using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Contracts.Features.User.UpdateKeys;
@@ -63,7 +66,7 @@ namespace Crypter.ClientServices.Interfaces
 
       // User
       Task<Either<UserRegisterError, UserRegisterResponse>> RegisterUserAsync(UserRegisterRequest registerRequest);
-      Task<Either<GetUserPublicProfileError, GetUserPublicProfileResponse>> GetUserPublicProfileAsync(string username, bool withAuthentication);
+      Task<Either<GetUserProfileError, GetUserProfileResponse>> GetUserPublicProfileAsync(string username, bool withAuthentication);
       Task<Either<DummyError, UserSettingsResponse>> GetUserSettingsAsync();
       Task<Either<UpdateProfileError, UpdateProfileResponse>> UpdateUserProfileInfoAsync(UpdateProfileRequest request);
       Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(UpdateContactInfoRequest request);
@@ -77,6 +80,9 @@ namespace Crypter.ClientServices.Interfaces
       Task<Either<DummyError, UserReceivedFilesResponse>> GetUserReceivedFilesAsync();
       Task<Either<DummyError, UserSearchResponse>> GetUserSearchResultsAsync(UserSearchParameters searchInfo);
       Task<Either<VerifyEmailAddressError, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
+      Task<Either<DummyError, GetUserContactsResponse>> GetUserContactsAsync();
+      Task<Either<AddUserContactError, AddUserContactResponse>> AddUserContactAsync(AddUserContactRequest request);
+      Task<Either<DummyError, RemoveUserContactResponse>> RemoveUserContactAsync(RemoveUserContactRequest request);
 
       // Transfer
       Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, Guid recipient, bool withAuthentication);

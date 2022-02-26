@@ -33,7 +33,7 @@ namespace Crypter.Web.Shared.Modal
    public class ReAuthenticationModalBase : ComponentBase
    {
       [Inject]
-      private IAuthenticationService AuthenticationService { get; set; }
+      private ISessionService SessionService { get; set; }
 
       [Parameter]
       public EventCallback<bool> ModalClosedCallback { get; set; }
@@ -60,7 +60,7 @@ namespace Crypter.Web.Shared.Modal
             return false;
          }
 
-         return await AuthenticationService.UnlockSession(Password);
+         return await SessionService.UnlockSession(Password);
       }
 
       public async Task SubmitUnlockAsync()
@@ -81,7 +81,7 @@ namespace Crypter.Web.Shared.Modal
 
       public async Task OnLogoutClicked()
       {
-         await AuthenticationService.LogoutAsync();
+         await SessionService.LogoutAsync();
          ModalDisplay = "none";
          ModalClass = "";
          ShowBackdrop = false;

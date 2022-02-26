@@ -39,7 +39,7 @@ namespace Crypter.Web.Shared
       protected NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected IAuthenticationService AuthenticationService { get; set; }
+      protected ISessionService SessionService { get; set; }
 
       [Inject]
       IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
@@ -75,7 +75,7 @@ namespace Crypter.Web.Shared
             return;
          }
 
-         var authSuccess = await AuthenticationService.LoginAsync(LoginModel.Username, LoginModel.Password, LoginModel.RememberMe);
+         var authSuccess = await SessionService.LoginAsync(LoginModel.Username, LoginModel.Password, LoginModel.RememberMe);
          if (authSuccess)
          {
             var returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";

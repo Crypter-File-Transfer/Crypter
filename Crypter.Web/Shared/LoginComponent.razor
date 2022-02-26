@@ -51,5 +51,5 @@
       <input @bind="LoginModel.RememberMe" class="form-check-input" type="checkbox" id="rememberMe" />
    </div>
 
-   <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="OnLoginClickedAsync">Login</button>
+   <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="async () => await OnLoginClickedAsync()">Login</button>
 </form>

@@ -24,20 +24,42 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Features.User.UpdateContactInfo;
-using Crypter.Core.Models;
+using Crypter.ClientServices.Interfaces;
+using Crypter.Contracts.Features.User.GetContacts;
+using Microsoft.AspNetCore.Components;
 using System;
-using System.Threading;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Web.Pages
 {
-   public interface IUserService
+   public partial class UserContactsBase : ComponentBase
    {
-      Task<User> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task<User> ReadAsync(string username, CancellationToken cancellationToken);
-      Task<(bool Success, UpdateContactInfoError Error)> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
-      Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
-      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+      [Inject]
+      IUserContactsService UserContactsService { get; set; }
+
+      protected IReadOnlyCollection<UserContactDTO> Contacts { get; set; }
+
+      protected override async Task OnAfterRenderAsync(bool firstRender)
+      {
+         if (firstRender)
+         {
+            Contacts = await UserContactsService.GetContactsAsync();
+            StateHasChanged();
+         }
+      }
+
+      protected static string GetDisplayName(string username, string alias)
+      {
+         return string.IsNullOrEmpty(alias)
+            ? username
+            : $"{alias} ({username})";
+      }
+
+      protected async Task RemoveContactAsync(Guid userId)
+      {
+         await UserContactsService.RemoveContactAsync(userId);
+         Contacts = await UserContactsService.GetContactsAsync();
+      }
    }
 }

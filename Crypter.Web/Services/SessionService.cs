@@ -38,34 +38,41 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Services
 {
-   public interface IAuthenticationService
+   public interface ISessionService
    {
+      bool IsLoggedIn { get; }
       Task<bool> LoginAsync(string username, string password, bool trustDevice);
       Task<bool> UnlockSession(string password);
       Task<bool> TryRefreshingTokenAsync();
+      Task<UserSession> GetCurrentUserSessionAsync();
       event EventHandler<UserSessionStateChangedEventArgs> UserSessionStateChanged;
       Task LogoutAsync();
    }
 
-   public class AuthenticationService : IAuthenticationService
+   public class SessionService : ISessionService
    {
       private readonly ICrypterApiService _crypterApiService;
       private readonly IUserKeysService _userKeysService;
       private readonly IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> _browserStorageService;
       private readonly ISimpleEncryptionService _simpleEncryptionService;
+      private readonly IUserContactsService _userContactsService;
 
       private EventHandler<UserSessionStateChangedEventArgs> _userSessionStateChanged;
 
-      public AuthenticationService(
+      public bool IsLoggedIn { get; private set; } = false;
+
+      public SessionService(
          ICrypterApiService crypterApiService,
          IUserKeysService userKeysService,
          IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> browserStorageService,
-         ISimpleEncryptionService simpleEncryptionService)
+         ISimpleEncryptionService simpleEncryptionService,
+         IUserContactsService userContactsService)
       {
          _crypterApiService = crypterApiService;
          _userKeysService = userKeysService;
          _browserStorageService = browserStorageService;
          _simpleEncryptionService = simpleEncryptionService;
+         _userContactsService = userContactsService;
       }
 
       public event EventHandler<UserSessionStateChangedEventArgs> UserSessionStateChanged
@@ -97,10 +104,12 @@ namespace Crypter.Web.Services
 
             await CacheSessionInfoAsync(x, username, userPreferredStorageLocation);
             await HandleUserKeys(x, userSymmetricKey, userPreferredStorageLocation);
+            await _userContactsService.InitializeAsync();
             NotifyUserSessionStateChanged(true, x.Id, username);
          });
 
-         return response.IsRight;
+         IsLoggedIn = response.IsRight;
+         return IsLoggedIn;
       }
 
       public async Task<bool> UnlockSession(string password)
@@ -119,13 +128,14 @@ namespace Crypter.Web.Services
          var (decryptX25519Success, x25519) = DecryptLocalPrivateKey(userSymmetricKey, userEncryptedX25519);
          var (decryptEd25519Success, ed25519) = DecryptLocalPrivateKey(userSymmetricKey, userEncryptedEd25519);
 
-         if (decryptX25519Success && decryptEd25519Success)
+         IsLoggedIn = decryptX25519Success && decryptEd25519Success;
+         if (IsLoggedIn)
          {
             await _browserStorageService.SetItemAsync(BrowserStoredObjectType.PlaintextX25519PrivateKey, x25519, BrowserStorageLocation.Memory);
             await _browserStorageService.SetItemAsync(BrowserStoredObjectType.PlaintextEd25519PrivateKey, ed25519, BrowserStorageLocation.Memory);
-            return true;
+            await _userContactsService.InitializeAsync();
          }
-         return false;
+         return IsLoggedIn;
       }
 
       public async Task<bool> TryRefreshingTokenAsync()
@@ -140,11 +150,18 @@ namespace Crypter.Web.Services
          return response.IsRight;
       }
 
+      public async Task<UserSession> GetCurrentUserSessionAsync()
+      {
+         return await _browserStorageService.GetItemAsync<UserSession>(BrowserStoredObjectType.UserSession);
+      }
+
       public async Task LogoutAsync()
       {
          string refreshToken = await _browserStorageService.GetItemAsync<string>(BrowserStoredObjectType.RefreshToken);
          var logoutRequest = new LogoutRequest(refreshToken);
+         _userContactsService.Dispose();
          await _crypterApiService.LogoutAsync(logoutRequest);
+         IsLoggedIn = false;
          NotifyUserSessionStateChanged(false);
          await _browserStorageService.DisposeAsync();
       }
