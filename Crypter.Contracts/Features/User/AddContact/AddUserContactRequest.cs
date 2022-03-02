@@ -27,34 +27,16 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.User.GetPublicProfile
+namespace Crypter.Contracts.Features.User.AddContact
 {
-   public class GetUserPublicProfileResponse
+   public class AddUserContactRequest
    {
-      public Guid Id { get; set; }
-      public string Username { get; set; }
-      public string Alias { get; set; }
-      public string About { get; set; }
-      public bool AllowKeyExchangeRequests { get; set; }
-      public bool Visible { get; set; }
-      public bool ReceivesMessages { get; set; }
-      public bool ReceivesFiles { get; set; }
-      public string PublicDHKey { get; set; }
-      public string PublicDSAKey { get; set; }
+      public Guid Contact { get; set; }
 
       [JsonConstructor]
-      public GetUserPublicProfileResponse(Guid id, string username, string alias, string about, bool allowKeyExchangeRequests, bool visible, bool receivesMessages, bool receivesFiles, string publicDHKey, string publicDSAKey)
+      public AddUserContactRequest(Guid contact)
       {
-         Id = id;
-         Username = username;
-         Alias = alias;
-         About = about;
-         AllowKeyExchangeRequests = allowKeyExchangeRequests;
-         Visible = visible;
-         ReceivesMessages = receivesMessages;
-         ReceivesFiles = receivesFiles;
-         PublicDHKey = publicDHKey;
-         PublicDSAKey = publicDSAKey;
+         Contact = contact;
       }
    }
 }

@@ -24,10 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.User.GetPublicProfile
+using Crypter.Core.Interfaces;
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Crypter.Core.Models
 {
-   public enum GetUserPublicProfileError
+   [Table("UserContact")]
+   public class UserContact : IUserContact
    {
-      NotFound
+      [Key]
+      public Guid Id { get; set; }
+
+      [Column("Owner")]
+      [ForeignKey("Owner")]
+      public Guid OwnerId { get; set; }
+
+      [Column("Contact")]
+      [ForeignKey("Contact")]
+      public Guid ContactId { get; set; }
+
+      public virtual User Owner { get; set; }
+      public virtual User Contact { get; set; }
+
+      public UserContact(Guid id, Guid ownerId, Guid contactId)
+      {
+         Id = id;
+         OwnerId = ownerId;
+         ContactId = contactId;
+      }
    }
 }

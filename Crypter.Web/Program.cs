@@ -55,12 +55,13 @@ builder.Services.AddSingleton<IClientApiSettings>(sp =>
 builder.Services
    .AddBlazorDownloadFile()
    .AddScoped(sp => new HttpClient())
-   .AddScoped<IAuthenticationService, AuthenticationService>()
+   .AddScoped<ISessionService, SessionService>()
    .AddScoped<IHttpService, HttpService>()
    .AddScoped<ITokenRepository, TokenRepository>()
    .AddScoped<IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation>, BrowserStorageService>()
    .AddScoped<ICrypterApiService, CrypterApiService>()
    .AddScoped<IUserKeysService, UserKeysService>()
-   .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>();
+   .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>()
+   .AddScoped<IUserContactsService, UserContactsService>();
 
 await builder.Build().RunAsync();

@@ -53,8 +53,16 @@ namespace Crypter.Core
       public DbSet<UserEmailVerification> UserEmailVerifications { get; set; }
       public DbSet<UserNotificationSetting> UserNotificationSettings { get; set; }
       public DbSet<UserToken> UserTokens { get; set; }
+      public DbSet<UserContact> UserContacts { get; set; }
       public DbSet<FileTransfer> FileTransfers { get; set; }
       public DbSet<MessageTransfer> MessageTransfers { get; set; }
       public DbSet<Schema> Schema { get; set; }
+
+      protected override void OnModelCreating(ModelBuilder builder)
+      {
+         builder.Entity<User>()
+            .HasMany(x => x.Contacts)
+            .WithOne(x => x.Owner);
+      }
    }
 }

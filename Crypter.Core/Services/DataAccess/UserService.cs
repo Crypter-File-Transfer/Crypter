@@ -26,6 +26,7 @@
 
 using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Core.Interfaces;
+using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -45,12 +46,12 @@ namespace Crypter.Core.Services.DataAccess
          _passwordHashService = passwordHashService;
       }
 
-      public async Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken)
+      public async Task<User> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
          return await Context.Users.FindAsync(new object[] { id }, cancellationToken);
       }
 
-      public async Task<IUser> ReadAsync(string username, CancellationToken cancellationToken)
+      public async Task<User> ReadAsync(string username, CancellationToken cancellationToken)
       {
          return await Context.Users
             .Where(user => user.Username.ToLower() == username.ToLower())

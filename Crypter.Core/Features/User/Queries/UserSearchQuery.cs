@@ -26,6 +26,7 @@
 
 using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.User.Search;
+using Crypter.Core.Extensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -85,11 +86,11 @@ namespace Crypter.Core.Features.User.Queries
 
          IQueryable<Models.User> baseQuery = _context.Users
             .Where(x => x.Username.ToLower().StartsWith(lowerKeyword)
-               || x.Profile.Alias.ToLower().StartsWith(lowerKeyword));
+               || x.Profile.Alias.ToLower().StartsWith(lowerKeyword))
+            .Where(LinqExtensions.UserProfileIsComplete());
 
          IQueryable<Models.User> baseQueryWithPrivacy = baseQuery
-            .Where(x => x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
-               || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && request.RequestorId != Guid.Empty));
+            .Where(LinqExtensions.UserPrivacyAllowsVisitor(request.RequestorId));
 
          int totalMatches = await baseQueryWithPrivacy
             .CountAsync(cancellationToken);

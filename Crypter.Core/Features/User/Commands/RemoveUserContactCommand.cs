@@ -24,20 +24,48 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Core.Models;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Core.Features.User.Commands
 {
-   public interface IUserService
+   public class RemoveUserContactCommand : IRequest<Unit>
    {
-      Task<User> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task<User> ReadAsync(string username, CancellationToken cancellationToken);
-      Task<(bool Success, UpdateContactInfoError Error)> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
-      Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
-      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+      public Guid User { get; private set; }
+      public Guid Contact { get; private set; }
+
+      public RemoveUserContactCommand(Guid user, Guid contact)
+      {
+         User = user;
+         Contact = contact;
+      }
+   }
+
+   public class RemoveUserContactCommandHandler : IRequestHandler<RemoveUserContactCommand, Unit>
+   {
+      private readonly DataContext _context;
+
+      public RemoveUserContactCommandHandler(DataContext context)
+      {
+         _context = context;
+      }
+
+      public async Task<Unit> Handle(RemoveUserContactCommand request, CancellationToken cancellationToken)
+      {
+         UserContact contact = await _context.UserContacts
+            .FirstOrDefaultAsync(x => x.OwnerId == request.User && x.ContactId == request.Contact, cancellationToken);
+
+         if (contact != default)
+         {
+            _context.Remove(contact);
+            await _context.SaveChangesAsync(cancellationToken);
+         }
+
+         return Unit.Value;
+      }
    }
 }

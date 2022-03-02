@@ -24,19 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+using Crypter.Contracts.Features.User.GetContacts;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Contracts.Features.User.AddContact
 {
-   public interface IUser
+   public class AddUserContactResponse
    {
-      public Guid Id { get; set; }
-      public string Username { get; set; }
-      public string Email { get; set; }
-      public byte[] PasswordHash { get; set; }
-      public byte[] PasswordSalt { get; set; }
-      public bool EmailVerified { get; set; }
-      public DateTime Created { get; set; }
-      public DateTime LastLogin { get; set; }
+      public UserContactDTO Contact { get; private set; }
+
+      public AddUserContactResponse(UserContactDTO contact)
+      {
+         Contact = contact;
+      }
    }
 }

@@ -35,9 +35,5 @@ namespace Crypter.Core.Interfaces
    {
       Task<bool> UpsertAsync(Guid userId, bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission receiveFilesPermission, UserItemTransferPermission receiveMessagesPermission, CancellationToken cancellationToken);
       Task<IUserPrivacySetting> ReadAsync(Guid userId, CancellationToken cancellationToken);
-
-      Task<bool> IsUserViewableByPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken);
-      Task<bool> DoesUserAcceptMessagesFromOtherPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken);
-      Task<bool> DoesUserAcceptFilesFromOtherPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken);
    }
 }

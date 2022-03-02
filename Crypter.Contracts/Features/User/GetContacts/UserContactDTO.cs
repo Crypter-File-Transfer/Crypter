@@ -24,20 +24,21 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Features.User.UpdateContactInfo;
-using Crypter.Core.Models;
 using System;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Contracts.Features.User.GetContacts
 {
-   public interface IUserService
+   public class UserContactDTO
    {
-      Task<User> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task<User> ReadAsync(string username, CancellationToken cancellationToken);
-      Task<(bool Success, UpdateContactInfoError Error)> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
-      Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
-      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+      public Guid Id { get; private set; }
+      public string Username { get; private set; }
+      public string Alias { get; private set; }
+
+      public UserContactDTO(Guid id, string username, string alias)
+      {
+         Id = id;
+         Username = username;
+         Alias = alias;
+      }
    }
 }

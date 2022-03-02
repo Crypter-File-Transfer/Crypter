@@ -24,20 +24,30 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Features.User.UpdateContactInfo;
+using Crypter.Contracts.Common.Enum;
 using Crypter.Core.Models;
 using System;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Linq;
+using System.Linq.Expressions;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Core.Extensions
 {
-   public interface IUserService
+   public class LinqExtensions
    {
-      Task<User> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task<User> ReadAsync(string username, CancellationToken cancellationToken);
-      Task<(bool Success, UpdateContactInfoError Error)> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
-      Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
-      Task DeleteAsync(Guid id, CancellationToken cancellationToken);
+      public static Expression<Func<User, bool>> UserPrivacyAllowsVisitor(Guid visitorId)
+      {
+         return (x) => x.Id == visitorId
+            || x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
+            || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && visitorId != Guid.Empty)
+            || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts && x.Contacts.Any(y => y.ContactId == visitorId));
+      }
+
+      public static Expression<Func<User, bool>> UserProfileIsComplete()
+      {
+         return (x) => x.Profile != null
+            && x.X25519KeyPair != null
+            && x.Ed25519KeyPair != null
+            && x.PrivacySetting != null;
+      }
    }
 }

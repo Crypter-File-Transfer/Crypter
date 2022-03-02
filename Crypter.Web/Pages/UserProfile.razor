@@ -47,12 +47,12 @@
                   <div class="col-12">
                      @if (AllowsFiles)
                      {
-                        <button class="btn btn-secondary mr-3" @onclick="() => FileModal.Open()">Send a file</button>
+                        <button class="btn btn-secondary mr-3" @onclick="async () => await FileModal.Open()">Send a file</button>
                         <UploadFileTransferModal @ref="FileModal" IsRecipientDefined=true RecipientId="@UserId" RecipientX25519PublicKey="@UserX25519PublicKey" RecipientEd25519PublicKey="@UserEd25519PublicKey" />
                      }
                      @if (AllowsMessages)
                      {
-                        <button class="btn btn-secondary" @onclick="() => MessageModal.Open()">Send a message</button>
+                        <button class="btn btn-secondary" @onclick="async () => await MessageModal.Open()">Send a message</button>
                         <UploadMessageTransferModal @ref="MessageModal" IsRecipientDefined=true RecipientId="@UserId" RecipientX25519PublicKey="@UserX25519PublicKey" RecipientEd25519PublicKey="@UserEd25519PublicKey" />
                      }
                   </div>

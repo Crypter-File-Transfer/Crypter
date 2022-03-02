@@ -56,16 +56,23 @@
                <div class="col-md-6">
                   <div class="card my-1">
                      <div class="card-body">
-                        <a class="text-decoration-none" href="/user/profile/@result.Username">
-                           @if (string.IsNullOrEmpty(result.Alias))
-                           {
-                              <h5 class="card-title">@result.Username</h5>
-                           }
-                           else
-                           {
-                              <h5 class="card-title">@result.Alias (@result.Username)</h5>
-                           }
-                        </a>
+                        <div class="d-flex bd-highlight mb-3">
+                           <div class="me-auto p-2 bd-highlight">
+                              <a class="text-decoration-none" href="/user/profile/@result.Username">
+                                 <h5 class="card-title">@GetDisplayName(result.Username, result.Alias)</h5>
+                              </a>
+                           </div>
+                           <div class="p-2 bd-highlight">
+                              @if (UserContactsService.IsContact(result.Id))
+                              {
+                                 <button type="button" disable class="btn btn-outline-success">Added</button>
+                              }
+                              else
+                              {
+                                 <button type="button" class="btn btn-outline-dark" @onclick="async () => await AddContactAsync(result.Id)">Add Contact</button>
+                              }
+                           </div>
+                        </div>
                      </div>
                   </div>
                </div>

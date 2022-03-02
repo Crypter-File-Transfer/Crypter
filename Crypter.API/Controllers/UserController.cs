@@ -29,11 +29,14 @@ using Crypter.API.Services;
 using Crypter.Common.Services;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Common.Enum;
+using Crypter.Contracts.Features.User.AddContact;
+using Crypter.Contracts.Features.User.GetContacts;
 using Crypter.Contracts.Features.User.GetPublicProfile;
 using Crypter.Contracts.Features.User.GetReceivedTransfers;
 using Crypter.Contracts.Features.User.GetSentTransfers;
 using Crypter.Contracts.Features.User.GetSettings;
 using Crypter.Contracts.Features.User.Register;
+using Crypter.Contracts.Features.User.RemoveUserContact;
 using Crypter.Contracts.Features.User.Search;
 using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Contracts.Features.User.UpdateKeys;
@@ -142,7 +145,7 @@ namespace Crypter.API.Controllers
          var sentMessages = new List<UserSentMessageDTO>();
          foreach (var item in sentMessagesSansRecipientInfo)
          {
-            IUser? recipient = null;
+            User? recipient = null;
             IUserProfile? recipientProfile = null;
             if (item.Recipient != Guid.Empty)
             {
@@ -170,7 +173,7 @@ namespace Crypter.API.Controllers
          var sentFiles = new List<UserSentFileDTO>();
          foreach (var item in sentFilesSansRecipientInfo)
          {
-            IUser? recipient = null;
+            User? recipient = null;
             IUserProfile? recipientProfile = null;
             if (item.Recipient != Guid.Empty)
             {
@@ -198,7 +201,7 @@ namespace Crypter.API.Controllers
          var receivedMessages = new List<UserReceivedMessageDTO>();
          foreach (var item in receivedMessagesSansSenderInfo)
          {
-            IUser? sender = null;
+            User? sender = null;
             IUserProfile? senderProfile = null;
             if (item.Sender != Guid.Empty)
             {
@@ -226,7 +229,7 @@ namespace Crypter.API.Controllers
          var receivedFiles = new List<UserReceivedFileDTO>();
          foreach (var item in receivedFilesSansSenderInfo)
          {
-            IUser? sender = null;
+            User? sender = null;
             IUserProfile? senderProfile = null;
             if (item.Sender != Guid.Empty)
             {
@@ -417,48 +420,26 @@ namespace Crypter.API.Controllers
       }
 
       [HttpGet("profile/{username}")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetUserPublicProfileResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetUserProfileResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetPublicUserProfileAsync(string username, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetUserProfileAsync(string username, CancellationToken cancellationToken)
       {
-         var visitorId = _tokenService.ParseUserId(User);
-
-         var user = await _userService.ReadAsync(username, cancellationToken);
-         if (user is null)
+         static IActionResult MakeErrorResponse(GetUserProfileError error)
          {
-            return new NotFoundObjectResult(new ErrorResponse(GetUserPublicProfileError.NotFound));
+            var errorResponse = new ErrorResponse(error);
+            return error switch
+            {
+               GetUserProfileError.NotFound => new NotFoundObjectResult(errorResponse),
+               _ => throw new NotImplementedException()
+            };
          }
 
-         var userProfile = await _userProfileService.ReadAsync(user.Id, cancellationToken);
-         if (userProfile is null)
-         {
-            return new NotFoundObjectResult(new ErrorResponse(GetUserPublicProfileError.NotFound));
-         }
-
-         var userPrivacy = await _userPrivacySettingService.ReadAsync(user.Id, cancellationToken);
-         if (userPrivacy is null)
-         {
-            return new NotFoundObjectResult(new ErrorResponse(GetUserPublicProfileError.NotFound));
-         }
-
-         var userAllowsRequestorToViewProfile = await _userPrivacySettingService.IsUserViewableByPartyAsync(user.Id, visitorId, cancellationToken);
-         if (userAllowsRequestorToViewProfile)
-         {
-            var userPublicDHKey = await _userX25519KeyPairService.GetUserPublicKeyAsync(user.Id, cancellationToken);
-            var userPublicDSAKey = await _userEd25519KeyPairService.GetUserPublicKeyAsync(user.Id, cancellationToken);
-
-            var visitorCanSendMessages = await _userPrivacySettingService.DoesUserAcceptMessagesFromOtherPartyAsync(user.Id, visitorId, cancellationToken);
-            var visitorCanSendFiles = await _userPrivacySettingService.DoesUserAcceptFilesFromOtherPartyAsync(user.Id, visitorId, cancellationToken);
-
-            return new OkObjectResult(
-               new GetUserPublicProfileResponse(user.Id, user.Username, userProfile.Alias, userProfile.About, userPrivacy.AllowKeyExchangeRequests,
-               true, visitorCanSendMessages, visitorCanSendFiles, userPublicDHKey, userPublicDSAKey));
-         }
-         else
-         {
-            return new NotFoundObjectResult(new ErrorResponse(GetUserPublicProfileError.NotFound));
-         }
+         var requestorId = _tokenService.ParseUserId(User);
+         var getProfileResult = await _mediator.Send(new UserProfileQuery(requestorId, username), cancellationToken);
+         return getProfileResult.Match(
+            left => MakeErrorResponse(left),
+            right => new OkObjectResult(right));
       }
 
       [HttpPost("verify")]
@@ -492,6 +473,58 @@ namespace Crypter.API.Controllers
          await _userEmailVerificationService.DeleteAsync(emailVerificationEntity.Owner, default);
 
          return new OkObjectResult(new VerifyEmailAddressResponse());
+      }
+
+      [Authorize]
+      [HttpGet("contacts")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetUserContactsResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> GetUserContactsAsync(CancellationToken cancellationToken)
+      {
+         var userId = _tokenService.ParseUserId(User);
+         var contacts = await _mediator.Send(new UserContactsQuery(userId), cancellationToken);
+         return new OkObjectResult(new GetUserContactsResponse(contacts));
+      }
+
+      [Authorize]
+      [HttpPost("contacts")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AddUserContactResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> AddUserContactAsync([FromBody] AddUserContactRequest request, CancellationToken cancellationToken)
+      {
+         static IActionResult MakeErrorResponse(AddUserContactError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+            return error switch
+            {
+               AddUserContactError.NotFound => new NotFoundObjectResult(errorResponse),
+               _ => throw new NotImplementedException()
+            };
+         }
+
+         var userId = _tokenService.ParseUserId(User);
+         var result = await _mediator.Send(new UpsertUserContactCommand(userId, request.Contact), cancellationToken);
+         return await result.MatchAsync(
+            left => MakeErrorResponse(result.LeftOrDefault()),
+            async right =>
+            {
+               var userContactDTO = await _mediator.Send(new UserContactQuery(userId, right.UserContact), cancellationToken);
+               return userContactDTO.Match(
+                  some => new OkObjectResult(new AddUserContactResponse(some)),
+                  () => MakeErrorResponse(AddUserContactError.NotFound));
+            });
+      }
+
+      [Authorize]
+      [HttpDelete("contacts")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RemoveUserContactResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> RemoveUserContactAsync([FromBody] RemoveUserContactRequest request, CancellationToken cancellationToken)
+      {
+         var userId = _tokenService.ParseUserId(User);
+         await _mediator.Send(new RemoveUserContactCommand(userId, request.Contact), cancellationToken);
+         return new OkObjectResult(new RemoveUserContactResponse());
       }
    }
 }

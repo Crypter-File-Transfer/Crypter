@@ -36,11 +36,14 @@ using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
 using Crypter.Contracts.Features.Transfer.Upload;
+using Crypter.Contracts.Features.User.AddContact;
+using Crypter.Contracts.Features.User.GetContacts;
 using Crypter.Contracts.Features.User.GetPublicProfile;
 using Crypter.Contracts.Features.User.GetReceivedTransfers;
 using Crypter.Contracts.Features.User.GetSentTransfers;
 using Crypter.Contracts.Features.User.GetSettings;
 using Crypter.Contracts.Features.User.Register;
+using Crypter.Contracts.Features.User.RemoveUserContact;
 using Crypter.Contracts.Features.User.Search;
 using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Contracts.Features.User.UpdateKeys;
@@ -163,14 +166,14 @@ namespace Crypter.ClientServices.Implementations
          return response.ExtractErrorCode<UserRegisterError, UserRegisterResponse>();
       }
 
-      public async Task<Either<GetUserPublicProfileError, GetUserPublicProfileResponse>> GetUserPublicProfileAsync(string username, bool withAuthentication)
+      public async Task<Either<GetUserProfileError, GetUserProfileResponse>> GetUserPublicProfileAsync(string username, bool withAuthentication)
       {
          string url = $"{_baseUserUrl}/profile/{username}";
          var (_, response) = withAuthentication
-            ? await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<GetUserPublicProfileResponse>(url, token))
-            : await _httpService.GetAsync<GetUserPublicProfileResponse>(url);
+            ? await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<GetUserProfileResponse>(url, token))
+            : await _httpService.GetAsync<GetUserProfileResponse>(url);
 
-         return response.ExtractErrorCode<GetUserPublicProfileError, GetUserPublicProfileResponse>();
+         return response.ExtractErrorCode<GetUserProfileError, GetUserProfileResponse>();
       }
 
       public async Task<Either<DummyError, UserSettingsResponse>> GetUserSettingsAsync()
@@ -279,6 +282,30 @@ namespace Crypter.ClientServices.Implementations
          var (_, response) = await _httpService.PostAsync<VerifyEmailAddressRequest, VerifyEmailAddressResponse>(url, verificationInfo);
 
          return response.ExtractErrorCode<VerifyEmailAddressError, VerifyEmailAddressResponse>();
+      }
+
+      public async Task<Either<DummyError, GetUserContactsResponse>> GetUserContactsAsync()
+      {
+         string url = $"{_baseUserUrl}/contacts";
+         var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<GetUserContactsResponse>(url, token));
+
+         return response.ExtractErrorCode<DummyError, GetUserContactsResponse>();
+      }
+
+      public async Task<Either<AddUserContactError, AddUserContactResponse>> AddUserContactAsync(AddUserContactRequest request)
+      {
+         string url = $"{_baseUserUrl}/contacts";
+         var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<AddUserContactRequest, AddUserContactResponse>(url, request, token));
+
+         return response.ExtractErrorCode<AddUserContactError, AddUserContactResponse>();
+      }
+
+      public async Task<Either<DummyError, RemoveUserContactResponse>> RemoveUserContactAsync(RemoveUserContactRequest request)
+      {
+         string url = $"{_baseUserUrl}/contacts";
+         var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.DeleteAsync<RemoveUserContactRequest, RemoveUserContactResponse>(url, request, token));
+
+         return response.ExtractErrorCode<DummyError, RemoveUserContactResponse>();
       }
 
       public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, Guid recipient, bool withAuthentication)
