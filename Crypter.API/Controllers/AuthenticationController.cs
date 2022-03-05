@@ -26,9 +26,9 @@
 
 using Crypter.API.Methods;
 using Crypter.API.Services;
+using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
-using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.Authentication.Login;
 using Crypter.Contracts.Features.Authentication.Logout;
 using Crypter.Contracts.Features.Authentication.Refresh;

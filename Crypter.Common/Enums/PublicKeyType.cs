@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Common.Enum
+namespace Crypter.Common.Enums
 {
-   public enum TransferItemType
+   public enum PublicKeyType
    {
-      Message,
-      File
+      X25519,
+      Ed25519
    }
 }

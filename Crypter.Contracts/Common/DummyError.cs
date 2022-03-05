@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Common.Enum
+namespace Crypter.Contracts.Common
 {
    public enum DummyError
    {

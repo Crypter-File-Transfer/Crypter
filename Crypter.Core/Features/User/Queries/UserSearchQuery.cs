@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.User.Search;
 using Crypter.Core.Extensions;
 using MediatR;

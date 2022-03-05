@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Common.Enum;
+using Crypter.Common.Enums;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

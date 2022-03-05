@@ -25,7 +25,7 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Contracts.Common.Enum;
+using Crypter.Common.Enums;
 using Crypter.Contracts.Features.User.GetReceivedTransfers;
 using Crypter.Contracts.Features.User.GetSentTransfers;
 using Crypter.Web.Models;

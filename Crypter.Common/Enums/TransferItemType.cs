@@ -24,13 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Common.Enum
+namespace Crypter.Common.Enums
 {
-   public enum UserVisibilityLevel
+   public enum TransferItemType
    {
-      None,
-      Contacts,
-      Authenticated,
-      Everyone
+      Message,
+      File
    }
 }

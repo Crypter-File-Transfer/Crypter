@@ -25,7 +25,7 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Contracts.Common.Enum;
+using Crypter.Common.Enums;
 using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Contracts.Features.User.UpdateNotificationSettings;
 using Crypter.Contracts.Features.User.UpdatePrivacySettings;

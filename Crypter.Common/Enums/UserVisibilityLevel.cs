@@ -24,12 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Common.Enum
+namespace Crypter.Common.Enums
 {
-   public enum TokenType
+   public enum UserVisibilityLevel
    {
-      Authentication,
-      Session,
-      Refresh
+      None,
+      Contacts,
+      Authenticated,
+      Everyone
    }
 }
