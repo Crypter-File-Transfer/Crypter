@@ -30,6 +30,6 @@ namespace Crypter.Common.Enums
    {
       Authentication,
       Session,
-      Refresh
+      Device
    }
 }
