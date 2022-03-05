@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Enums;
 using Crypter.Contracts.Common;
-using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;

@@ -26,9 +26,9 @@
 
 using Crypter.API.Methods;
 using Crypter.API.Services;
+using Crypter.Common.Enums;
 using Crypter.Common.Services;
 using Crypter.Contracts.Common;
-using Crypter.Contracts.Common.Enum;
 using Crypter.Contracts.Features.User.AddContact;
 using Crypter.Contracts.Features.User.GetContacts;
 using Crypter.Contracts.Features.User.GetPublicProfile;

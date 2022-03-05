@@ -24,14 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Common.Enum
+namespace Crypter.Common.Enums
 {
-   public enum UserItemTransferPermission
+   public enum TokenType
    {
-      None,
-      ExchangedKeys,
-      Contacts,
-      Authenticated,
-      Everyone
+      Authentication,
+      Session,
+      Refresh
    }
 }

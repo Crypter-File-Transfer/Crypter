@@ -26,8 +26,8 @@
 
 using Crypter.API.Methods;
 using Crypter.API.Models;
+using Crypter.Common.Enums;
 using Crypter.Common.Services;
-using Crypter.Contracts.Common.Enum;
 using Crypter.Core.Interfaces;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
