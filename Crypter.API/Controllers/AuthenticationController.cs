@@ -93,36 +93,46 @@ namespace Crypter.API.Controllers
             };
          }
 
+         async Task<Either<LoginError, (string Token, DateTime Expiration)>> MakeRefreshTokenAsync(Guid userId, TokenType tokenType, string userAgent)
+         {
+            var refreshTokenId = Guid.NewGuid();
+            Either<LoginError, (string Token, DateTime Expiration)> makeTokenResult = tokenType switch
+            {
+               TokenType.Session => _tokenService.NewSessionToken(userId, refreshTokenId),
+               TokenType.Refresh => _tokenService.NewRefreshToken(userId, refreshTokenId),
+               _ => LoginError.InvalidTokenTypeRequested
+            };
+
+            await makeTokenResult.DoRightAsync(async x =>
+            {
+               await _mediator.Send(new InsertUserTokenCommand(refreshTokenId, userId, userAgent, tokenType, x.Expiration), cancellationToken);
+               BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(refreshTokenId), CancellationToken.None), x.Expiration - DateTime.UtcNow);
+            });
+
+            return makeTokenResult;
+         }
+
          var loginResult = await _mediator.Send(new LoginQuery(request.Username, request.Password), cancellationToken);
-         if (loginResult.IsLeft)
+         loginResult.DoRight(x =>
          {
-            return MakeErrorResponse(loginResult.LeftOrDefault());
-         }
-         var loginData = loginResult.RightOrDefault();
+            BackgroundJob.Enqueue(() => _mediator.Send(new UpdateLastLoginTimeCommand(x.UserId, DateTime.UtcNow), CancellationToken.None));
+         });
 
-         var refreshTokenId = Guid.NewGuid();
-         Either<LoginError, (string Token, DateTime Expiration)> makeRefreshTokenResult = request.RefreshTokenType switch
-         {
-            TokenType.Session => _tokenService.NewSessionToken(loginData.UserId, refreshTokenId),
-            TokenType.Refresh => _tokenService.NewRefreshToken(loginData.UserId, refreshTokenId),
-            _ => LoginError.InvalidTokenTypeRequested
-         };
-         if (makeRefreshTokenResult.IsLeft)
-         {
-            return MakeErrorResponse(makeRefreshTokenResult.LeftOrDefault());
-         }
-         var (refreshToken, refreshTokenExpiration) = makeRefreshTokenResult.RightOrDefault();
-
-         string userAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-
-         await _mediator.Send(new InsertUserTokenCommand(refreshTokenId, loginData.UserId, userAgent, request.RefreshTokenType, refreshTokenExpiration), cancellationToken);
-         BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(refreshTokenId), CancellationToken.None), refreshTokenExpiration - DateTime.UtcNow);
-         BackgroundJob.Enqueue(() => _mediator.Send(new UpdateLastLoginTimeCommand(loginData.UserId, DateTime.UtcNow), CancellationToken.None));
-
-         string authToken = _tokenService.NewAuthenticationToken(loginData.UserId);
-         var loginResponse = new LoginResponse(loginData.UserId, authToken, refreshToken, loginData.EncryptedX25519PrivateKey, loginData.EncryptedEd25519PrivateKey, loginData.InitVectorX25519, loginData.InitVectorEd25519);
-
-         return new OkObjectResult(loginResponse);
+         return await loginResult.MatchAsync(
+            loginError => MakeErrorResponse(loginError),
+            async loginData =>
+            {
+               string userAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
+               var makeRefreshTokenResult = await MakeRefreshTokenAsync(loginData.UserId, request.RefreshTokenType, userAgent);
+               return makeRefreshTokenResult.Match(
+                  refreshTokenError => MakeErrorResponse(refreshTokenError),
+                  refreshTokenData =>
+                  {
+                     string authToken = _tokenService.NewAuthenticationToken(loginData.UserId);
+                     var response = new LoginResponse(loginData.UserId, authToken, refreshTokenData.Token);
+                     return new OkObjectResult(response);
+                  });
+            });
       }
 
       /// <summary>
