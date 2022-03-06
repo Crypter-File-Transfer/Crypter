@@ -90,7 +90,7 @@ namespace Crypter.Web.Services
       public async Task<bool> LoginAsync(string username, string password, bool trustDevice)
       {
          var refreshTokenType = trustDevice
-            ? TokenType.Refresh
+            ? TokenType.Device
             : TokenType.Session;
 
          var response = await SendLoginRequestAsync(username, password, refreshTokenType);

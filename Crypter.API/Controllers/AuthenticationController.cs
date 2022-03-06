@@ -99,7 +99,7 @@ namespace Crypter.API.Controllers
             Either<LoginError, (string Token, DateTime Expiration)> makeTokenResult = tokenType switch
             {
                TokenType.Session => _tokenService.NewSessionToken(userId, refreshTokenId),
-               TokenType.Refresh => _tokenService.NewRefreshToken(userId, refreshTokenId),
+               TokenType.Device => _tokenService.NewRefreshToken(userId, refreshTokenId),
                _ => LoginError.InvalidTokenTypeRequested
             };
 
@@ -192,7 +192,7 @@ namespace Crypter.API.Controllers
          var newAuthToken = _tokenService.NewAuthenticationToken(requestingUserId);
 
          var newTokenId = Guid.NewGuid();
-         (string newRefreshToken, DateTime newTokenExpiration) = databaseToken.Type == TokenType.Refresh
+         (string newRefreshToken, DateTime newTokenExpiration) = databaseToken.Type == TokenType.Device
             ? _tokenService.NewRefreshToken(requestingUserId, newTokenId)
             : _tokenService.NewSessionToken(requestingUserId, newTokenId);
 
