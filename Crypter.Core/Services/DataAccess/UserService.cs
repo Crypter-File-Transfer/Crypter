@@ -77,7 +77,7 @@ namespace Crypter.Core.Services.DataAccess
       {
          var user = await ReadAsync(id, cancellationToken);
          user.EmailVerified = isVerified;
-         await Context.SaveChangesAsync();
+         await Context.SaveChangesAsync(cancellationToken);
       }
 
       public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
