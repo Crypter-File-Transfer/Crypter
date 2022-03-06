@@ -37,6 +37,7 @@ using MimeKit;
 using Org.BouncyCastle.Crypto;
 using System;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.API.Services
@@ -155,8 +156,8 @@ namespace Crypter.API.Services
       /// <returns></returns>
       public async Task HangfireSendEmailVerificationAsync(Guid userId)
       {
-         var userEntity = await UserService.ReadAsync(userId, default);
-         var userEmailVerificationEntity = await UserEmailVerificationService.ReadAsync(userId, default);
+         var userEntity = await UserService.ReadAsync(userId, CancellationToken.None);
+         var userEmailVerificationEntity = await UserEmailVerificationService.ReadAsync(userId, CancellationToken.None);
 
          if (userEntity == null                                         // User does not exist
             || !ValidationService.IsValidEmailAddress(userEntity.Email) // User does not have a valid email address
@@ -172,7 +173,7 @@ namespace Crypter.API.Services
          var success = await SendEmailVerificationAsync(userEntity.Email, verificationCode, keys.Private);
          if (success)
          {
-            await UserEmailVerificationService.InsertAsync(userId, verificationCode, Encoding.UTF8.GetBytes(keys.Public.ConvertToPEM()), default);
+            await UserEmailVerificationService.InsertAsync(userId, verificationCode, Encoding.UTF8.GetBytes(keys.Public.ConvertToPEM()), CancellationToken.None);
          }
       }
 
@@ -188,7 +189,7 @@ namespace Crypter.API.Services
          switch (itemType)
          {
             case TransferItemType.Message:
-               var message = await MessageTransferService.ReadAsync(itemId, default);
+               var message = await MessageTransferService.ReadAsync(itemId, CancellationToken.None);
                if (message is null)
                {
                   return;
@@ -197,7 +198,7 @@ namespace Crypter.API.Services
                recipientId = message.Recipient;
                break;
             case TransferItemType.File:
-               var file = await FileTransferService.ReadAsync(itemId, default);
+               var file = await FileTransferService.ReadAsync(itemId, CancellationToken.None);
                if (file is null)
                {
                   return;
@@ -209,7 +210,7 @@ namespace Crypter.API.Services
                return;
          }
 
-         var user = await UserService.ReadAsync(recipientId, default);
+         var user = await UserService.ReadAsync(recipientId, CancellationToken.None);
          if (user is null
             || !user.EmailVerified
             || !ValidationService.IsValidEmailAddress(user.Email))
@@ -217,7 +218,7 @@ namespace Crypter.API.Services
             return;
          }
 
-         var userNotification = await UserNotificationSettingService.ReadAsync(recipientId, default);
+         var userNotification = await UserNotificationSettingService.ReadAsync(recipientId, CancellationToken.None);
          if (userNotification is null
             || !userNotification.EnableTransferNotifications
             || !userNotification.EmailNotifications)
