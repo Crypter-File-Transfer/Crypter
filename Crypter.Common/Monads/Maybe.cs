@@ -28,18 +28,36 @@ using System;
 
 namespace Crypter.Common.Monads
 {
-   public class Maybe<TValue> where TValue : class
+   internal enum MaybeState
    {
+      None,
+      Some
+   }
+
+   public struct Maybe<TValue>
+   {
+      private readonly MaybeState _state;
       private readonly TValue _value;
+
+      public Maybe()
+      {
+         _state = MaybeState.None;
+         _value = default;
+      }
 
       public Maybe(TValue value)
       {
-         _value = value ?? throw new ArgumentNullException(nameof(value));
+         _value = value;
+         _state = value is null
+            ? MaybeState.None
+            : MaybeState.Some;
       }
 
-      private Maybe()
-      {
-      }
+      public bool IsNone
+      { get { return _state == MaybeState.None; } }
+
+      public bool IsSome
+      { get { return _state == MaybeState.Some; } }
 
       public void IfSome(Action<TValue> someAction)
       {
@@ -48,7 +66,7 @@ namespace Crypter.Common.Monads
             throw new ArgumentNullException(nameof(someAction));
          }
 
-         if (_value != default)
+         if (IsSome)
          {
             someAction(_value);
          }
@@ -61,29 +79,31 @@ namespace Crypter.Common.Monads
             throw new ArgumentNullException(nameof(noneAction));
          }
 
-         if (_value == default)
+         if (IsNone)
          {
             noneAction();
          }
       }
 
-      public TOut Match<TOut>(Func<TValue, TOut> someFunction, Func<TOut> noneFunction)
+      public TOut Match<TOut>(Func<TOut> noneFunction, Func<TValue, TOut> someFunction)
       {
+         if (noneFunction == null)
+         {
+            throw new ArgumentNullException(nameof(noneFunction));
+         }
+
          if (someFunction == null)
          {
             throw new ArgumentNullException(nameof(someFunction));
          }
 
-         if (noneFunction == null)
-         {
-            throw new ArgumentNullException(nameof(noneFunction));
-         }
-         
-         return _value == default
-            ? noneFunction()
-            : someFunction(_value);
+         return IsSome
+            ? someFunction(_value)
+            : noneFunction();
       }
 
-      public static Maybe<TValue> None() => new Maybe<TValue>();
+      public static Maybe<TValue> None() => new();
+
+      public static implicit operator Maybe<TValue>(TValue value) => new(value);
    }
 }
