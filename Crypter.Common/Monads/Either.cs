@@ -36,7 +36,7 @@ namespace Crypter.Common.Monads
       Right
    }
 
-   public class Either<TLeft, TRight>
+   public struct Either<TLeft, TRight>
    {
       private readonly TLeft _left;
       private readonly TRight _right;
@@ -45,18 +45,22 @@ namespace Crypter.Common.Monads
       public Either()
       {
          _state = EitherState.Bottom;
+         _left = default;
+         _right = default;
       }
 
       public Either(TLeft left)
       {
-         _left = left;
          _state = EitherState.Left;
+         _left = left;
+         _right = default;
       }
 
       public Either(TRight right)
       {
-         _right = right;
          _state = EitherState.Right;
+         _right = right;
+         _left = default;
       }
 
       public bool IsLeft
@@ -82,7 +86,7 @@ namespace Crypter.Common.Monads
             : defaultValue;
       }
 
-      private void ValidateMatch<TL, TR>(Func<TLeft, TL> leftFunction, Func<TRight, TR> rightFunction)
+      private static void ValidateMatch<TL, TR>(Func<TLeft, TL> leftFunction, Func<TRight, TR> rightFunction)
       {
          if (leftFunction == null)
          {
@@ -95,7 +99,7 @@ namespace Crypter.Common.Monads
          }
       }
 
-      private T MatchBottom<T>(Func<T> bottomFunction = null)
+      private static T MatchBottom<T>(Func<T> bottomFunction = null)
       {
          return bottomFunction is null
                ? default
@@ -206,8 +210,8 @@ namespace Crypter.Common.Monads
          }
       }
 
-      public static implicit operator Either<TLeft, TRight>(TLeft left) => new Either<TLeft, TRight>(left);
+      public static implicit operator Either<TLeft, TRight>(TLeft left) => new(left);
 
-      public static implicit operator Either<TLeft, TRight>(TRight right) => new Either<TLeft, TRight>(right);
+      public static implicit operator Either<TLeft, TRight>(TRight right) => new(right);
    }
 }

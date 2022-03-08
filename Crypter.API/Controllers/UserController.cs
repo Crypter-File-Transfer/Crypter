@@ -511,8 +511,8 @@ namespace Crypter.API.Controllers
             {
                var userContactDTO = await _mediator.Send(new UserContactQuery(userId, right.UserContact), cancellationToken);
                return userContactDTO.Match(
-                  some => new OkObjectResult(new AddUserContactResponse(some)),
-                  () => MakeErrorResponse(AddUserContactError.NotFound));
+                  () => MakeErrorResponse(AddUserContactError.NotFound),
+                  some => new OkObjectResult(new AddUserContactResponse(some)));
             });
       }
 
