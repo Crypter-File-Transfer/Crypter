@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
+
 namespace Crypter.ClientServices.Interfaces
 {
    public interface IUserKeysService
@@ -46,6 +48,6 @@ namespace Crypter.ClientServices.Interfaces
       /// <param name="username"></param>
       /// <param name="password"></param>
       /// <returns>Array of 32 bytes.</returns>
-      byte[] GetUserSymmetricKey(string username, string password);
+      byte[] GetUserSymmetricKey(Username username, Password password);
    }
 }

@@ -72,14 +72,14 @@ namespace Crypter.Core.Features.User.Queries
 
          if (userContact == default)
          {
-            return Maybe<UserContactDTO>.None();
+            return null;
          }
 
          var contactDTO = _userPrivacyService.UserIsVisibleToVisitor(userContact.Contact, request.UserId)
             ? new UserContactDTO(userContact.ContactId, userContact.Contact.Username, userContact.Contact.Profile.Alias)
             : new UserContactDTO(userContact.ContactId, "{ Private }", null);
 
-         return new Maybe<UserContactDTO>(contactDTO);
+         return contactDTO;
       }
    }
 }

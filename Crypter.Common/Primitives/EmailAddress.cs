@@ -24,61 +24,61 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.RegularExpressions;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives.Enums;
+using Crypter.Common.Primitives.ValidationHandlers;
+using System;
+using ValueOf;
 
-namespace Crypter.Common.Services
+namespace Crypter.Common.Primitives
 {
-   public class ValidationService
+   public class EmailAddress : ValueOf<string, EmailAddress>
    {
-      public static bool IsValidPassword(string password)
+      /// <summary>
+      /// Don't use this.
+      /// </summary>
+      public EmailAddress()
       {
-         return !string.IsNullOrWhiteSpace(password);
       }
 
-      public static bool IsPossibleEmailAddress(string email)
+      protected override void Validate()
       {
-         return !string.IsNullOrEmpty(email);
+         StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
       }
 
-      public static bool IsValidEmailAddress(string email)
+      protected override bool TryValidate()
       {
-         if (email is null)
+         return CheckValidation(Value)
+            .IsNone;
+      }
+
+      public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+      {
+         if (value == null)
          {
-            return false;
+            return StringPrimitiveValidationFailure.IsNull;
          }
 
-         if (email.Trim().EndsWith("."))
+         if (string.IsNullOrWhiteSpace(value))
          {
-            return false;
+            return StringPrimitiveValidationFailure.IsEmpty;
+         }
+
+         if (value.Trim().EndsWith('.'))
+         {
+            return StringPrimitiveValidationFailure.Invalid;
          }
 
          try
          {
-            var addr = new System.Net.Mail.MailAddress(email);
-            return addr.Address == email;
+            var addr = new System.Net.Mail.MailAddress(value);
          }
          catch
          {
-            return false;
+            return StringPrimitiveValidationFailure.Invalid;
          }
-      }
 
-      public static bool IsValidUsername(string username)
-      {
-         return UsernameMeetsLengthRequirements(username)
-            && UsernameMeetsCharacterRequirements(username);
-      }
-
-      public static bool UsernameMeetsCharacterRequirements(string username)
-      {
-         var regex = new Regex(@"^[a-zA-Z0-9_\-]+$");
-         return regex.IsMatch(username);
-      }
-
-      public static bool UsernameMeetsLengthRequirements(string username)
-      {
-         return !string.IsNullOrEmpty(username)
-            && username.Length <= 32;
+         return Maybe<StringPrimitiveValidationFailure>.None();
       }
    }
 }

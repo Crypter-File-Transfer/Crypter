@@ -26,6 +26,8 @@
 
 using Crypter.API.Models;
 using Crypter.API.Services;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using Moq;
@@ -77,46 +79,17 @@ namespace Crypter.Test.API_Tests
          };
          await emailService.Object.HangfireSendEmailVerificationAsync(new Guid());
 
-         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-         mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
-      }
-
-      [Test]
-      public async Task HangfireEmailVerification_UserEmailIsNull_EmailNotSent()
-      {
-         var user = new User(Guid.NewGuid(), default, null, default, default, false, default, default);
-
-         var mockUserService = new Mock<IUserService>();
-         mockUserService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
-
-         var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
-         mockUserEmailVerificationService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
-
-         var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransferItem>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransferItem>>();
-
-         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
-            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
-         {
-            CallBase = true
-         };
-         await emailService.Object.HangfireSendEmailVerificationAsync(user.Id);
-
-         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<EmailAddress>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
+         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()), Times.Never);
          mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
       }
 
       [Test]
       public async Task HangfireEmailVerification_UserEmailIsEmpty_EmailNotSent()
       {
-         var user = new User(Guid.NewGuid(), default, "", default, default, false, default, default);
+         var username = Username.From("jack");
+         var noEmailAddress = Maybe<EmailAddress>.None();
+         var user = new User(Guid.NewGuid(), username, noEmailAddress, default, default, false, default, default);
 
          var mockUserService = new Mock<IUserService>();
          mockUserService
@@ -139,15 +112,17 @@ namespace Crypter.Test.API_Tests
          };
          await emailService.Object.HangfireSendEmailVerificationAsync(user.Id);
 
-         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<EmailAddress>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
+         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()), Times.Never);
          mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
       }
 
       [Test]
       public async Task HangfireEmailVerification_UserEmailAlreadyVerified_EmailNotSent()
       {
-         var user = new User(Guid.NewGuid(), default, "jack@crypter.dev", default, default, true, default, default);
+         var username = Username.From("jack");
+         var emailAddress = EmailAddress.From("jack@crypter.dev");
+         var user = new User(Guid.NewGuid(), username, emailAddress, default, default, true, default, default);
 
          var mockUserService = new Mock<IUserService>();
          mockUserService
@@ -170,15 +145,17 @@ namespace Crypter.Test.API_Tests
          };
          await emailService.Object.HangfireSendEmailVerificationAsync(user.Id);
 
-         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<EmailAddress>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
+         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()), Times.Never);
          mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
       }
 
       [Test]
       public async Task HangfireEmailVerification_UserEmailVerificationAlreadyPending_EmailNotSent()
       {
-         var user = new User(Guid.NewGuid(), default, "jack@crypter.dev", default, default, false, default, default);
+         var username = Username.From("jack");
+         var emailAddress = EmailAddress.From("jack@crypter.dev");
+         var user = new User(Guid.NewGuid(), username, emailAddress, default, default, false, default, default);
 
          var mockUserService = new Mock<IUserService>();
          mockUserService
@@ -203,15 +180,17 @@ namespace Crypter.Test.API_Tests
          };
          await emailService.Object.HangfireSendEmailVerificationAsync(user.Id);
 
-         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<EmailAddress>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
+         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()), Times.Never);
          mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
       }
 
       [Test]
       public async Task HangfireEmailVerification_NewUserNeedsEmailVerification_EmailWillSend()
       {
-         var user = new User(Guid.NewGuid(), default, "jack@crypter.dev", default, default, false, default, default);
+         var username = Username.From("jack");
+         var emailAddress = EmailAddress.From("jack@crypter.dev");
+         var user = new User(Guid.NewGuid(), username, emailAddress, default, default, false, default, default);
 
          var mockUserService = new Mock<IUserService>();
          mockUserService
@@ -234,8 +213,8 @@ namespace Crypter.Test.API_Tests
          };
          await emailService.Object.HangfireSendEmailVerificationAsync(user.Id);
 
-         emailService.Verify(x => x.SendEmailVerificationAsync(user.Email, It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Once);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), user.Email), Times.Once);
+         emailService.Verify(x => x.SendEmailVerificationAsync(EmailAddress.From(user.Email), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Once);
+         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), EmailAddress.From(user.Email)), Times.Once);
          mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
       }
 
@@ -254,7 +233,8 @@ namespace Crypter.Test.API_Tests
          {
             CallBase = true
          };
-         var result = await emailService.Object.SendAsync("foo", "bar", "jack@crypter.dev");
+         var emailAddress = EmailAddress.From("jack@crypter.dev");
+         var result = await emailService.Object.SendAsync("foo", "bar", emailAddress);
          Assert.False(result);
       }
    }

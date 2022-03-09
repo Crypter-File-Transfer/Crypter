@@ -25,7 +25,9 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Common.Services;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
+using Crypter.Common.Primitives.Enums;
 using Crypter.Contracts.Features.User.Register;
 using Crypter.Web.Models.Forms;
 using Crypter.Web.Services;
@@ -46,136 +48,183 @@ namespace Crypter.Web.Shared
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
 
-      protected UserRegistrationModel RegistrationInfo = new();
+      protected const string _invalidClassName = "is-invalid";
 
-      protected bool RegistrationError = false;
-      protected string RegistrationErrorText = "";
-      protected bool RegistrationSuccess = false;
+      protected UserRegistrationForm RegistrationModel;
 
-      protected string IsInvalid = "is-invalid";
+      protected bool RegistrationAttemptFailed;
+      protected bool RegistrationAttemptSucceeded;
+      protected string RegistrationAttemptErrorMessage;
 
-      protected string UsernameInvalidClass = "";
-      protected string UsernameValidationMessage;
-      private readonly static string MissingUsername = "Please choose a username";
-      private readonly static string UsernameTooLong = "Username exceeds 32-character limit";
-      private readonly static string UsernameInvalidCharacters = "Username contains invalid character(s)";
+      protected string UsernameInvalidClassPlaceholder;
+      protected string UsernameValidationErrorMessage;
 
-      protected string PasswordInvalidClass = "";
-      protected string PasswordValidationMessage;
-      private readonly static string MissingPassword = "Please enter a password";
+      protected string PasswordInvalidClassPlaceholder;
+      protected string PasswordValidationErrorMessage;
 
-      protected string PasswordConfirmInvalidClass = "";
-      protected string PasswordConfirmValidationMessage;
-      private readonly static string MissingPasswordConfirm = "Please confirm your password";
-      private readonly static string PasswordConfirmDoesNotMatch = "Passwords do not match";
+      protected string PasswordConfirmInvalidClassPlaceholder;
+      protected string PasswordCondirmValidationErrorMessage;
 
-      protected bool UserProvidedEmailDuringRegistration = false;
+      protected string EmailAddressInvalidClassPlaceholder;
+      protected string EmailAddressValidationErrorMessage;
 
-      protected override async Task OnInitializedAsync()
+      protected bool UserProvidedEmailAddress;
+
+      protected override void OnInitialized()
       {
          if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/user");
+            return;
          }
-         await base.OnInitializedAsync();
+
+         RegistrationModel = new();
       }
 
-      private bool ValidateForm()
+      private Either<Nothing, Username> ValidateUsername()
       {
-         return ValidateUsername()
-            && ValidatePassword()
-            && ValidatePasswordConfirmation();
+         var validationResult = Username.CheckValidation(RegistrationModel.Username);
+
+         validationResult.IfNone(() =>
+         {
+            UsernameInvalidClassPlaceholder = "";
+            UsernameValidationErrorMessage = "";
+         });
+
+         validationResult.IfSome(error =>
+         {
+            UsernameInvalidClassPlaceholder = _invalidClassName;
+            UsernameValidationErrorMessage = error switch
+            {
+               StringPrimitiveValidationFailure.IsNull
+                  or StringPrimitiveValidationFailure.IsEmpty => "Please choose a username",
+               StringPrimitiveValidationFailure.TooLong => "Username exceeds 32-character limit",
+               StringPrimitiveValidationFailure.InvalidCharacters => "Username contains invalid character(s)",
+               _ => "Invalid username"
+            };
+         });
+
+         return validationResult.Match<Either<Nothing, Username>>(
+            () => Username.From(RegistrationModel.Username),
+            _ => new Nothing());
       }
 
-      private bool ValidateUsername()
+      private Either<Nothing, Password> ValidatePassword()
       {
-         if (string.IsNullOrEmpty(RegistrationInfo.Username))
-         {
-            UsernameValidationMessage = MissingUsername;
-            UsernameInvalidClass = IsInvalid;
-            return false;
-         }
-         else if (!ValidationService.UsernameMeetsLengthRequirements(RegistrationInfo.Username))
-         {
-            UsernameValidationMessage = UsernameTooLong;
-            UsernameInvalidClass = IsInvalid;
-            return false;
-         }
-         else if (!ValidationService.UsernameMeetsCharacterRequirements(RegistrationInfo.Username))
-         {
-            UsernameValidationMessage = UsernameInvalidCharacters;
-            UsernameInvalidClass = IsInvalid;
-            return false;
-         }
+         var validationResult = Password.CheckValidation(RegistrationModel.Password);
 
-         UsernameInvalidClass = "";
-         return true;
-      }
-
-      private bool ValidatePassword()
-      {
-         if (string.IsNullOrEmpty(RegistrationInfo.Password))
+         validationResult.IfNone(() =>
          {
-            PasswordValidationMessage = MissingPassword;
-            PasswordInvalidClass = IsInvalid;
-            return false;
-         }
+            PasswordInvalidClassPlaceholder = "";
+            PasswordValidationErrorMessage = "";
+         });
 
-         PasswordInvalidClass = "";
-         return true;
+         validationResult.IfSome(error =>
+         {
+            PasswordInvalidClassPlaceholder = _invalidClassName;
+            PasswordValidationErrorMessage = error switch
+            {
+               StringPrimitiveValidationFailure.IsNull
+                  or StringPrimitiveValidationFailure.IsEmpty => "Please enter a password",
+               _ => "Invalid password"
+            };
+         });
+
+         return validationResult.Match<Either<Nothing, Password>>(
+            () => Password.From(RegistrationModel.Password),
+            _ => new Nothing());
       }
 
       private bool ValidatePasswordConfirmation()
       {
-         if (string.IsNullOrEmpty(RegistrationInfo.PasswordConfirm))
+         bool passwordConfirmMissing = string.IsNullOrEmpty(RegistrationModel.PasswordConfirm);
+         if (passwordConfirmMissing)
          {
-            PasswordConfirmValidationMessage = MissingPasswordConfirm;
-            PasswordConfirmInvalidClass = IsInvalid;
-            return false;
-         }
-         else if (!RegistrationInfo.Password.Equals(RegistrationInfo.PasswordConfirm))
-         {
-            PasswordConfirmValidationMessage = PasswordConfirmDoesNotMatch;
-            PasswordConfirmInvalidClass = IsInvalid;
+            PasswordConfirmInvalidClassPlaceholder = _invalidClassName;
+            PasswordCondirmValidationErrorMessage = "Please confirm your password";
             return false;
          }
 
-         PasswordConfirmInvalidClass = "";
+         bool passwordsMatch = RegistrationModel.Password == RegistrationModel.PasswordConfirm;
+         if (!passwordsMatch)
+         {
+            PasswordConfirmInvalidClassPlaceholder = _invalidClassName;
+            PasswordCondirmValidationErrorMessage = "Passwords do not match";
+            return false;
+         }
+
+         PasswordConfirmInvalidClassPlaceholder = "";
+         PasswordCondirmValidationErrorMessage = "";
          return true;
       }
 
-      protected async Task OnRegisterClickedAsync()
+      private Either<Nothing, Maybe<EmailAddress>> ValidateEmailAddress()
       {
-         if (!ValidateForm())
+         bool isEmailAddressEmpty = string.IsNullOrEmpty(RegistrationModel.EmailAddress);
+         if (isEmailAddressEmpty)
+         {
+            return Maybe<EmailAddress>.None();
+         }
+
+         var validationResult = EmailAddress.CheckValidation(RegistrationModel.EmailAddress);
+
+         validationResult.IfNone(() =>
+         {
+            EmailAddressInvalidClassPlaceholder = "";
+            EmailAddressValidationErrorMessage = "";
+         });
+
+         validationResult.IfSome(error =>
+         {
+            EmailAddressInvalidClassPlaceholder = _invalidClassName;
+            EmailAddressValidationErrorMessage = "Invalid email address";
+         });
+
+         return validationResult.Match<Either<Nothing, Maybe<EmailAddress>>>(
+            () => new Maybe<EmailAddress>(EmailAddress.From(RegistrationModel.EmailAddress)),
+            _ => new Nothing());
+      }
+
+      protected async Task SubmitRegistrationAsync()
+      {
+         var maybeUsername = ValidateUsername();
+         var maybePassword = ValidatePassword();
+         bool passwordsMatch = ValidatePasswordConfirmation();
+         var maybeEmailAddress = ValidateEmailAddress();
+
+         if (maybeUsername.IsLeft || maybePassword.IsLeft || !passwordsMatch || maybeEmailAddress.IsLeft)
          {
             return;
          }
 
-         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(RegistrationInfo.Username, RegistrationInfo.Password);
-         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
+         var username = maybeUsername.RightOrDefault();
+         var password = maybePassword.RightOrDefault();
+         var emailAddress = maybeEmailAddress.RightOrDefault();
 
-         var requestBody = new UserRegisterRequest(RegistrationInfo.Username, digestedPasswordBase64, RegistrationInfo.EmailAddress);
-         var maybeRegistration = await CrypterApiService.RegisterUserAsync(requestBody);
-         RegistrationSuccess = maybeRegistration.Match(
-            left =>
-            {
-               RegistrationError = true;
-               RegistrationErrorText = left switch
-               {
-                  UserRegisterError.InvalidUsername => "Invalid username",
-                  UserRegisterError.InvalidPassword => "Invalid password",
-                  UserRegisterError.InvalidEmailAddress => "Invalid email address",
-                  UserRegisterError.UsernameTaken => "Username is already taken",
-                  UserRegisterError.EmailTaken => "Email address is associated with an existing account",
-                  _ => "???"
-               };
-               return false;
-            },
-            right =>
-            {
-               UserProvidedEmailDuringRegistration = !string.IsNullOrEmpty(RegistrationInfo.EmailAddress);
-               return true;
-            });
+         byte[] authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
+         string authPasswordEncoded = Convert.ToBase64String(authPasswordBytes);
+         var authenticationPassword = AuthenticationPassword.From(authPasswordEncoded);
+
+         var requestBody = new UserRegisterRequest(username, authenticationPassword, emailAddress);
+         var registrationAttempt = await CrypterApiService.RegisterUserAsync(requestBody);
+
+         registrationAttempt.DoLeft(HandleRegistrationFailure);
+         registrationAttempt.DoRight(_ => UserProvidedEmailAddress = emailAddress.IsSome);
+         RegistrationAttemptSucceeded = registrationAttempt.IsRight;
+      }
+
+      private void HandleRegistrationFailure(UserRegisterError error)
+      {
+         RegistrationAttemptFailed = true;
+         RegistrationAttemptErrorMessage = error switch
+         {
+            UserRegisterError.InvalidUsername => "Invalid username",
+            UserRegisterError.InvalidPassword => "Invalid password",
+            UserRegisterError.InvalidEmailAddress => "Invalid email address",
+            UserRegisterError.UsernameTaken => "Username is already taken",
+            UserRegisterError.EmailTaken => "Email address is associated with an existing account",
+            _ => "???"
+         };
       }
    }
 }

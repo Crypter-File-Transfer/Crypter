@@ -26,33 +26,28 @@
 
 @inherits ReAuthenticationModalBase
 
-<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+<div class="modal @ModalClassPlaceholder" tabindex="-1" role="dialog" style="display:@ModalDisplayClass">
    <div class="modal-dialog" role="document">
       <div class="modal-content">
          <div class="modal-header">
             <h3>Session Locked</h3>
          </div>
-         <form>
+         <form @onsubmit:preventDefault @onsubmit="SubmitUnlockAsync">
             <div class="modal-body justify-content-center">
+               <p>Welcome back, @Username</p>
                <p class="word-wrap">Please provide your Crypter password to resume your session.</p>
                <div class="mb-3">
                   <input type="password" class="form-control" id="password" @bind="Password" placeholder="Password">
-                  @if (LoginFailed)
-                  {
-                     <span class="text-danger">Incorrect password</span>
-                  }
+                  <span hidden="@(!ReauthenticationAttemptFailed)" class="text-danger">Incorrect password</span>
                </div>
             </div>
             <div class="modal-footer">
                <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="OnLogoutClicked">Logout</button>
-               <button type="submit" class="btn btn-primary" data-dismiss="modal" @onclick:preventDefault @onclick="SubmitUnlockAsync">Unlock</button>
+               <button type="submit" class="btn btn-primary" data-dismiss="modal">Unlock</button>
             </div>
          </form>
       </div>
    </div>
 </div>
 
-@if (ShowBackdrop)
-{
-   <div class="modal-backdrop fade show"></div>
-}
+<div hidden="@(!ShowBackDrop)" class="modal-backdrop fade show"></div>

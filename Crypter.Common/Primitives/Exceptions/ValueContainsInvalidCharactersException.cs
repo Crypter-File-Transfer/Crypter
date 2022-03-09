@@ -24,34 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.Common.Primitives;
-
-namespace Crypter.ClientServices.Implementations
+namespace Crypter.Common.Primitives.Exceptions
 {
-   public class UserKeysService : IUserKeysService
+   public class ValueContainsInvalidCharactersException : ValueInvalidException
    {
-      public (string privateKey, string publicKey) NewX25519KeyPair()
-      {
-         var keyPair = CryptoLib.Crypto.ECDH.GenerateKeys();
-         var privateKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Private);
-         var publicKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Public);
-
-         return (privateKey, publicKey);
-      }
-
-      public (string privateKey, string publicKey) NewEd25519KeyPair()
-      {
-         var keyPair = CryptoLib.Crypto.ECDSA.GenerateKeys();
-         var privateKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Private);
-         var publicKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Public);
-
-         return (privateKey, publicKey);
-      }
-
-      public byte[] GetUserSymmetricKey(Username username, Password password)
-      {
-         return CryptoLib.UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, password);
-      }
    }
 }

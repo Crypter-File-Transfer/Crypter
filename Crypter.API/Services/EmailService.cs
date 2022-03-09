@@ -27,7 +27,7 @@
 using Crypter.API.Methods;
 using Crypter.API.Models;
 using Crypter.Common.Enums;
-using Crypter.Common.Services;
+using Crypter.Common.Primitives;
 using Crypter.Core.Interfaces;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
@@ -44,10 +44,10 @@ namespace Crypter.API.Services
 {
    public interface IEmailService
    {
-      Task<bool> SendAsync(string subject, string message, string recipient);
-      Task<bool> SendEmailVerificationAsync(string emailAddress, Guid verificationCode, AsymmetricKeyParameter ecdsaPrivateKey);
+      Task<bool> SendAsync(string subject, string message, EmailAddress recipient);
+      Task<bool> SendEmailVerificationAsync(EmailAddress emailAddress, Guid verificationCode, AsymmetricKeyParameter ecdsaPrivateKey);
       Task HangfireSendEmailVerificationAsync(Guid userId);
-      Task<bool> SendTransferNotificationAsync(string emailAddress);
+      Task<bool> SendTransferNotificationAsync(EmailAddress emailAddress);
       Task HangfireSendTransferNotificationAsync(TransferItemType itemType, Guid itemId);
    }
 
@@ -80,7 +80,7 @@ namespace Crypter.API.Services
       /// <param name="recipient"></param>
       /// <remarks>This method is 'virtual' to enable some unit tests.</remarks>
       /// <returns></returns>
-      public virtual async Task<bool> SendAsync(string subject, string message, string recipient)
+      public virtual async Task<bool> SendAsync(string subject, string message, EmailAddress recipient)
       {
          if (!Settings.Enabled)
          {
@@ -88,14 +88,9 @@ namespace Crypter.API.Services
             return false;
          }
 
-         if (!ValidationService.IsValidEmailAddress(recipient))
-         {
-            return false;
-         }
-
          var mailMessage = new MimeMessage();
          mailMessage.From.Add(MailboxAddress.Parse(Settings.From));
-         mailMessage.To.Add(MailboxAddress.Parse(recipient));
+         mailMessage.To.Add(MailboxAddress.Parse(recipient.Value));
          mailMessage.Subject = subject;
          mailMessage.Body = new TextPart("plain")
          {
@@ -130,7 +125,7 @@ namespace Crypter.API.Services
       /// <param name="ecdsaPrivateKey"></param>
       /// <remarks>This method is 'virtual' to enable some unit tests.</remarks>
       /// <returns></returns>
-      public virtual async Task<bool> SendEmailVerificationAsync(string emailAddress, Guid verificationCode, AsymmetricKeyParameter ecdsaPrivateKey)
+      public virtual async Task<bool> SendEmailVerificationAsync(EmailAddress emailAddress, Guid verificationCode, AsymmetricKeyParameter ecdsaPrivateKey)
       {
          var codeBytes = verificationCode.ToByteArray();
 
@@ -160,9 +155,13 @@ namespace Crypter.API.Services
          var userEmailVerificationEntity = await UserEmailVerificationService.ReadAsync(userId, CancellationToken.None);
 
          if (userEntity == null                                         // User does not exist
-            || !ValidationService.IsValidEmailAddress(userEntity.Email) // User does not have a valid email address
             || userEntity.EmailVerified                                 // User's email address is already verified
             || userEmailVerificationEntity != null)                     // User already has a UserEmailVerification entity
+         {
+            return;
+         }
+
+         if (!EmailAddress.TryFrom(userEntity.Email, out var emailAddress))
          {
             return;
          }
@@ -170,14 +169,15 @@ namespace Crypter.API.Services
          var verificationCode = Guid.NewGuid();
          var keys = ECDSA.GenerateKeys();
 
-         var success = await SendEmailVerificationAsync(userEntity.Email, verificationCode, keys.Private);
+         var success = await SendEmailVerificationAsync(emailAddress, verificationCode, keys.Private);
          if (success)
          {
-            await UserEmailVerificationService.InsertAsync(userId, verificationCode, Encoding.UTF8.GetBytes(keys.Public.ConvertToPEM()), CancellationToken.None);
+            byte[] verificationKey = Encoding.UTF8.GetBytes(keys.Public.ConvertToPEM());
+            await UserEmailVerificationService.InsertAsync(userId, verificationCode, verificationKey, CancellationToken.None);
          }
       }
 
-      public async Task<bool> SendTransferNotificationAsync(string emailAddress)
+      public async Task<bool> SendTransferNotificationAsync(EmailAddress emailAddress)
       {
          return await SendAsync("Someone sent you a transfer", "Someone sent you something on Crypter!  Login to https://www.crypter.dev see what it is.", emailAddress);
       }
@@ -211,9 +211,12 @@ namespace Crypter.API.Services
          }
 
          var user = await UserService.ReadAsync(recipientId, CancellationToken.None);
-         if (user is null
-            || !user.EmailVerified
-            || !ValidationService.IsValidEmailAddress(user.Email))
+         if (user is null || !user.EmailVerified)
+         {
+            return;
+         }
+
+         if (!EmailAddress.TryFrom(user.Email, out var emailAddress))
          {
             return;
          }
@@ -226,7 +229,7 @@ namespace Crypter.API.Services
             return;
          }
 
-         await SendTransferNotificationAsync(user.Email);
+         await SendTransferNotificationAsync(emailAddress);
       }
    }
 }

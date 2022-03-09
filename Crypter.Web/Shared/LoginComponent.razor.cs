@@ -25,6 +25,9 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
+using Crypter.Common.Primitives.Enums;
 using Crypter.Web.Helpers;
 using Crypter.Web.Models.Forms;
 using Crypter.Web.Services;
@@ -44,79 +47,110 @@ namespace Crypter.Web.Shared
       [Inject]
       IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
 
-      protected LoginModel LoginModel = new();
+      private const string _invalidClassName = "is-invalid";
 
-      protected bool LoginError = false;
-      protected string LoginErrorText = "";
+      protected LoginForm LoginModel;
 
-      protected string IsInvalid = "is-invalid";
+      protected bool LoginAttemptFailed;
+      protected string LoginAttemptErrorMessage;
 
-      protected string UsernameInvalidClass = "";
-      protected string UsernameValidationMessage;
-      private readonly static string MissingUsername = "Please enter your username";
+      protected string UsernameInvalidClassPlaceholder;
+      protected string UsernameValidationErrorMessage;
 
-      protected string PasswordInvalidClass = "";
-      protected string PasswordValidationMessage;
-      private readonly static string MissingPassword = "Please enter your password";
+      protected string PasswordInvalidClassPlaceholder;
+      protected string PasswordValidationErrorMessage;
 
-      protected override async Task OnInitializedAsync()
+      protected override void OnInitialized()
       {
          if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
          {
             NavigationManager.NavigateTo("/user/transfers");
+            return;
          }
-         await base.OnInitializedAsync();
+
+         LoginModel = new();
       }
 
-      protected async Task OnLoginClickedAsync()
+      protected async Task SubmitLoginAsync()
       {
-         if (!ValidateForm())
+         var maybeUsername = ValidateUsername();
+         var maybePassword = ValidatePassword();
+
+         if (maybeUsername.IsLeft || maybePassword.IsLeft)
          {
             return;
          }
 
-         var authSuccess = await SessionService.LoginAsync(LoginModel.Username, LoginModel.Password, LoginModel.RememberMe);
-         if (authSuccess)
+         var username = maybeUsername.RightOrDefault();
+         var password = maybePassword.RightOrDefault();
+
+         var authSuccess = await SessionService.LoginAsync(username, password, LoginModel.RememberMe);
+         if (!authSuccess)
          {
-            var returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";
-            NavigationManager.NavigateTo(returnUrl);
+            HandleLoginFailure();
             return;
          }
 
-         LoginError = true;
-         LoginErrorText = "Incorrect username or password";
+         var returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";
+         NavigationManager.NavigateTo(returnUrl);
       }
 
-      private bool ValidateForm()
+      private Either<Nothing, Username> ValidateUsername()
       {
-         return ValidateUsername()
-            && ValidatePassword();
-      }
+         var validationResult = Username.CheckValidation(LoginModel.Username);
 
-      private bool ValidateUsername()
-      {
-         if (string.IsNullOrEmpty(LoginModel.Username))
+         validationResult.IfNone(() =>
          {
-            UsernameValidationMessage = MissingUsername;
-            UsernameInvalidClass = IsInvalid;
-            return false;
-         }
+            UsernameInvalidClassPlaceholder = "";
+            UsernameValidationErrorMessage = "";
+         });
 
-         UsernameInvalidClass = "";
-         return true;
+         validationResult.IfSome(error =>
+         {
+            UsernameInvalidClassPlaceholder = _invalidClassName;
+            UsernameValidationErrorMessage = error switch
+            {
+               StringPrimitiveValidationFailure.IsNull
+                  or StringPrimitiveValidationFailure.IsEmpty => "Please enter your username",
+               _ => "Invalid username"
+            };
+         });
+
+         return validationResult.Match<Either<Nothing, Username>>(
+            () => Username.From(LoginModel.Username),
+            _ => new Nothing());
       }
 
-      private bool ValidatePassword()
+      private Either<Nothing, Password> ValidatePassword()
       {
-         if (string.IsNullOrEmpty(LoginModel.Password))
-         {
-            PasswordValidationMessage = MissingPassword;
-            PasswordInvalidClass = IsInvalid;
-            return false;
-         }
+         var validationResult = Password.CheckValidation(LoginModel.Password);
 
-         PasswordInvalidClass = "";
-         return true;
+         validationResult.IfNone(() =>
+         {
+            PasswordInvalidClassPlaceholder = "";
+            PasswordValidationErrorMessage = "";
+         });
+
+         validationResult.IfSome(error =>
+         {
+            PasswordInvalidClassPlaceholder = _invalidClassName;
+            PasswordValidationErrorMessage = error switch
+            {
+               StringPrimitiveValidationFailure.IsNull
+                  or StringPrimitiveValidationFailure.IsEmpty => "Please enter your password",
+               _ => "Invalid password"
+            };
+         });
+
+         return validationResult.Match<Either<Nothing, Password>>(
+            () => Password.From(LoginModel.Password),
+            _ => new Nothing());
+      }
+
+      private void HandleLoginFailure()
+      {
+         LoginAttemptFailed = true;
+         LoginAttemptErrorMessage = "Incorrect username or password";
       }
    }
 }

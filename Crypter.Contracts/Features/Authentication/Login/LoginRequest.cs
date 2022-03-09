@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Enums;
+using Crypter.Common.Primitives;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Authentication.Login
@@ -40,6 +41,13 @@ namespace Crypter.Contracts.Features.Authentication.Login
       {
          Username = username;
          Password = password;
+         RefreshTokenType = refreshTokenType;
+      }
+
+      public LoginRequest(Username username, AuthenticationPassword password, TokenType refreshTokenType)
+      {
+         Username = username.Value;
+         Password = password.Value;
          RefreshTokenType = refreshTokenType;
       }
    }

@@ -26,7 +26,7 @@
 
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Services;
+using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.User.Register;
 using Crypter.Core.Features.User.Common;
 using Crypter.Core.Interfaces;
@@ -40,15 +40,40 @@ namespace Crypter.Core.Features.User.Commands
 {
    public class InsertUserCommand : IRequest<Either<UserRegisterError, InsertUserCommandResult>>
    {
-      public string Username { get; private set; }
-      public string PasswordBase64 { get; private set; }
-      public string Email { get; private set; }
+      public Username Username { get; init; }
+      public AuthenticationPassword Password { get; init; }
+      public Maybe<EmailAddress> EmailAddress { get; init; }
 
-      public InsertUserCommand(string username, string passwordBase64, string email)
+      public InsertUserCommand(Username username, AuthenticationPassword password, Maybe<EmailAddress> emailAddress)
       {
          Username = username;
-         PasswordBase64 = passwordBase64;
-         Email = email;
+         Password = password;
+         EmailAddress = emailAddress;
+      }
+
+      public static Either<UserRegisterError, InsertUserCommand> ValidateFrom(string username, string password, string emailAddress)
+      {
+         if (!Username.TryFrom(username, out var validUsername))
+         {
+            return UserRegisterError.InvalidUsername;
+         }
+
+         if (!AuthenticationPassword.TryFrom(password, out var validAuthenticationPassword))
+         {
+            return UserRegisterError.InvalidPassword;
+         }
+
+         bool isPossibleEmailAddress = !string.IsNullOrEmpty(emailAddress);
+         Maybe<EmailAddress> validatedEmailAddress = Crypter.Common.Primitives.EmailAddress.TryFrom(emailAddress, out var validEmailAddressOrNull)
+            ? validEmailAddressOrNull
+            : Maybe<EmailAddress>.None();
+
+         if (isPossibleEmailAddress && validatedEmailAddress.IsNone)
+         {
+            return UserRegisterError.InvalidEmailAddress;
+         }
+
+         return new InsertUserCommand(validUsername, validAuthenticationPassword, validatedEmailAddress);
       }
    }
 
@@ -77,42 +102,26 @@ namespace Crypter.Core.Features.User.Commands
 
       public async Task<Either<UserRegisterError, InsertUserCommandResult>> Handle(InsertUserCommand request, CancellationToken cancellationToken)
       {
-         if (!ValidationService.IsValidUsername(request.Username))
-         {
-            return UserRegisterError.InvalidUsername;
-         }
-
-         if (!ValidationService.IsValidPassword(request.PasswordBase64))
-         {
-            return UserRegisterError.InvalidPassword;
-         }
-
-         if (ValidationService.IsPossibleEmailAddress(request.Email)
-            && !ValidationService.IsValidEmailAddress(request.Email))
-         {
-            return UserRegisterError.InvalidEmailAddress;
-         }
-
          bool isUsernameAvailable = await _context.Users.IsUsernameAvailableAsync(request.Username, cancellationToken);
          if (!isUsernameAvailable)
          {
             return UserRegisterError.UsernameTaken;
          }
 
-         bool sendVerificationEmail = false;
-         if (ValidationService.IsPossibleEmailAddress(request.Email))
+         if (request.EmailAddress.IsSome)
          {
-            bool isEmailAvailable = await _context.Users.IsEmailAddressAvailableAsync(request.Email, cancellationToken);
-            if (!isEmailAvailable)
+            bool isEmailAddressAvailable = await _context.Users.IsEmailAddressAvailableAsync(request.EmailAddress.SomeOrDefault(), cancellationToken);
+            if (!isEmailAddressAvailable)
             {
                return UserRegisterError.EmailTaken;
             }
-            sendVerificationEmail = true;
          }
 
-         (byte[] passwordSalt, byte[] passwordHash) = _passwordHashService.MakeSecurePasswordHash(request.PasswordBase64);
+         bool sendVerificationEmail = request.EmailAddress.IsSome;
 
-         Models.User user = new(Guid.NewGuid(), request.Username, request.Email, passwordHash, passwordSalt, false, DateTime.UtcNow, DateTime.MinValue);
+         (byte[] passwordSalt, byte[] passwordHash) = _passwordHashService.MakeSecurePasswordHash(request.Password);
+
+         Models.User user = new(Guid.NewGuid(), request.Username, request.EmailAddress, passwordHash, passwordSalt, false, DateTime.UtcNow, DateTime.MinValue);
          user.Profile = new UserProfile(user.Id, null, null, null);
          user.PrivacySetting = new UserPrivacySetting(user.Id, true, UserVisibilityLevel.Everyone, UserItemTransferPermission.Everyone, UserItemTransferPermission.Everyone);
          user.NotificationSetting = new UserNotificationSetting(user.Id, false, false);

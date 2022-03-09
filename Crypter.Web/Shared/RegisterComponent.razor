@@ -26,59 +26,55 @@
 
 @inherits RegisterComponentBase
 
-@if (RegistrationSuccess)
+@if (RegistrationAttemptSucceeded)
 {
    <div class="alert alert-success" role="alert">
       <h4 class="alert-heading">Registration Successful!</h4>
       <p>Your account was created successfully.</p>
       <hr>
-      @if (UserProvidedEmailDuringRegistration)
-            {
-               <p>Thank you for providing an email address.</p>
-               <p>A verification email has been sent to your inbox. Verifying your email address will allow you to enable notifications and perform password resets.</p>
-            }
+      @if (UserProvidedEmailAddress)
+      {
+         <p>A verification email has been sent to your inbox. Please check your spam folder.</p>
+      }
       <p>You may now login.</p>
    </div>
 }
 else
 {
-   @if (RegistrationError)
-   {
-      <div class="alert alert-danger" role="alert">
-         @RegistrationErrorText
-      </div>
-   }
+   <div hidden="@(!RegistrationAttemptFailed)" class="alert alert-danger" role="alert">
+      @RegistrationAttemptErrorMessage
+   </div>
 
-   <form>
+   <form @onsubmit:preventDefault @onsubmit="SubmitRegistrationAsync">
       <div class="mb-3">
          <label for="usernameFormControl" class="form-label">Username</label>
          <div class="input-group has-validation">
-            <input @bind="RegistrationInfo.Username" type="text" class="form-control @UsernameInvalidClass" id="usernameFormControl" />
-            <div class="invalid-feedback">@UsernameValidationMessage</div>
+            <input @bind="RegistrationModel.Username" type="text" class="form-control @UsernameInvalidClassPlaceholder" id="usernameFormControl" />
+            <div class="invalid-feedback">@UsernameValidationErrorMessage</div>
          </div>
       </div>
 
       <div class="mb-3">
          <label for="passwordFormControl" class="form-label">Password</label>
          <div class="input-group has-validation">
-            <input @bind="RegistrationInfo.Password" type="password" class="form-control @PasswordInvalidClass" id="passwordFormControl" />
-            <div class="invalid-feedback">@PasswordValidationMessage</div>
+            <input @bind="RegistrationModel.Password" type="password" class="form-control @PasswordInvalidClassPlaceholder" id="passwordFormControl" />
+            <div class="invalid-feedback">@PasswordValidationErrorMessage</div>
          </div>
       </div>
 
       <div class="mb-3">
          <label for="passwordConfirmFormControl" class="form-label">Confirm Your Password</label>
          <div class="input-group has-validation">
-            <input @bind="RegistrationInfo.PasswordConfirm" type="password" class="form-control @PasswordConfirmInvalidClass" id="passwordConfirmFormControl" />
-            <div class="invalid-feedback">@PasswordConfirmValidationMessage</div>
+            <input @bind="RegistrationModel.PasswordConfirm" type="password" class="form-control @PasswordConfirmInvalidClassPlaceholder" id="passwordConfirmFormControl" />
+            <div class="invalid-feedback">@PasswordCondirmValidationErrorMessage</div>
          </div>
       </div>
 
       <div class="mb-3">
          <label for="emailAddressFormControl" class="form-label">Email Address</label>
-         <input @bind="RegistrationInfo.EmailAddress" type="email" class="form-control" id="emailAddressFormControl" placeholder="Optional" />
+         <input @bind="RegistrationModel.EmailAddress" type="email" class="form-control" id="emailAddressFormControl" placeholder="Optional" />
       </div>
 
-      <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="OnRegisterClickedAsync">Register</button>
+      <button type="submit" class="btn btn-primary">Register</button>
    </form>
 }

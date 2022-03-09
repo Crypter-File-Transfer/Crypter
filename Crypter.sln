@@ -18,7 +18,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Console", "Crypter.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Common", "Crypter.Common\Crypter.Common.csproj", "{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypter.ClientServices", "Crypter.ClientServices\Crypter.ClientServices.csproj", "{D5A29A8E-462D-4FA3-A6BE-CCFA7703BDDE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.ClientServices", "Crypter.ClientServices\Crypter.ClientServices.csproj", "{D5A29A8E-462D-4FA3-A6BE-CCFA7703BDDE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

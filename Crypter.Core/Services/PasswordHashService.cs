@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.Core.Interfaces;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System;
@@ -38,25 +39,15 @@ namespace Crypter.Core.Services
       private static readonly int HashByteLength = 64; // 512 bits
       private static readonly int SaltByteLength = 16; // 128 bits
 
-      public (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(string password)
+      public (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(AuthenticationPassword password)
       {
-         if (string.IsNullOrEmpty(password))
-         {
-            throw new ArgumentNullException(password);
-         }
-
          var salt = RandomNumberGenerator.GetBytes(SaltByteLength);
-         var hash = KeyDerivation.Pbkdf2(password, salt, KeyDerivationAlgorithm, Iterations, HashByteLength);
+         var hash = KeyDerivation.Pbkdf2(password.Value, salt, KeyDerivationAlgorithm, Iterations, HashByteLength);
          return (salt, hash);
       }
 
-      public bool VerifySecurePasswordHash(string password, byte[] existingHash, byte[] existingSalt)
+      public bool VerifySecurePasswordHash(AuthenticationPassword password, byte[] existingHash, byte[] existingSalt)
       {
-         if (string.IsNullOrEmpty(password))
-         {
-            throw new ArgumentNullException(password);
-         }
-
          if (existingHash.Length != HashByteLength)
          {
             throw new ArgumentException("Invalid length of password hash (64 bytes expected).");
@@ -67,7 +58,7 @@ namespace Crypter.Core.Services
             throw new ArgumentException("Invalid length of password salt (16 bytes expected).");
          }
 
-         var computedHash = KeyDerivation.Pbkdf2(password, existingSalt, KeyDerivationAlgorithm, Iterations, HashByteLength);
+         var computedHash = KeyDerivation.Pbkdf2(password.Value, existingSalt, KeyDerivationAlgorithm, Iterations, HashByteLength);
 
          for (int i = 0; i < computedHash.Length; i++)
          {

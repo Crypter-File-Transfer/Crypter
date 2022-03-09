@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
@@ -38,54 +39,65 @@ namespace Crypter.Web.Shared.Modal
       [Parameter]
       public EventCallback<bool> ModalClosedCallback { get; set; }
 
-      protected string Password { get; set; } = null;
-      protected bool LoginFailed { get; set; } = false;
+      protected string Username;
 
-      protected string ModalDisplay = "none;";
-      protected string ModalClass = "";
-      protected bool ShowBackdrop = false;
+      protected string Password;
+      protected bool ReauthenticationAttemptFailed;
+
+      protected string ModalDisplayClass;
+      protected string ModalClassPlaceholder;
+      protected bool ShowBackDrop;
+
+      protected override void OnInitialized()
+      {
+         ModalDisplayClass = "none";
+      }
 
       public void Open()
       {
-         ModalDisplay = "block;";
-         ModalClass = "Show";
-         ShowBackdrop = true;
-         StateHasChanged();
+         InvokeAsync(async () =>
+         {
+            var userSession = await SessionService.GetCurrentUserSessionAsync();
+            Username = userSession.Username;
+         });
+
+         ModalDisplayClass = "block;";
+         ModalClassPlaceholder = "Show";
+         ShowBackDrop = true;
+      }
+
+      public async Task CloseAsync()
+      {
+         ModalDisplayClass = "none";
+         ModalClassPlaceholder = "";
+         ShowBackDrop = false;
+         await ModalClosedCallback.InvokeAsync();
       }
 
       public async Task<bool> PerformReauthentication()
       {
-         if (string.IsNullOrEmpty(Password))
+         if (!Common.Primitives.Password.TryFrom(Password, out var password))
          {
             return false;
          }
 
-         return await SessionService.UnlockSession(Password);
+         return await SessionService.UnlockSession(password);
       }
 
       public async Task SubmitUnlockAsync()
       {
-         LoginFailed = false;
-
          if (await PerformReauthentication())
          {
-            ModalDisplay = "none";
-            ModalClass = "";
-            ShowBackdrop = false;
-            await ModalClosedCallback.InvokeAsync();
-            return;
+            await CloseAsync();
          }
 
-         LoginFailed = true;
+         ReauthenticationAttemptFailed = true;
       }
 
       public async Task OnLogoutClicked()
       {
          await SessionService.LogoutAsync();
-         ModalDisplay = "none";
-         ModalClass = "";
-         ShowBackdrop = false;
-         await ModalClosedCallback.InvokeAsync();
+         await CloseAsync();
       }
    }
 }

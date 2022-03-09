@@ -89,7 +89,12 @@ namespace Crypter.Web.Shared
          ShowUserNavigation = e.LoggedIn;
          if (e.LoggedIn)
          {
-            Username = e.Username;
+            InvokeAsync(async () =>
+            {
+               var userSession = await SessionService.GetCurrentUserSessionAsync();
+               Username = userSession.Username;
+            });
+            
             ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
          }
          StateHasChanged();

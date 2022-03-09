@@ -27,7 +27,8 @@
 using Crypter.API.Methods;
 using Crypter.API.Services;
 using Crypter.Common.Enums;
-using Crypter.Common.Services;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.User.AddContact;
 using Crypter.Contracts.Features.User.GetContacts;
@@ -115,9 +116,21 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> RegisterAsync([FromBody] UserRegisterRequest request, CancellationToken cancellationToken)
       {
-         var insertResult = await _mediator.Send(new InsertUserCommand(request.Username, request.Password, request.Email), cancellationToken);
+         static IActionResult MakeErrorResponse(UserRegisterError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+            return error switch
+            {
+               _ => new BadRequestObjectResult(errorResponse),
+            };
+         }
 
-         insertResult.DoRight(x =>
+         var commandValidation = InsertUserCommand.ValidateFrom(request.Username, request.Password, request.Email);
+         var commandResult = await commandValidation.MatchAsync(
+            left => left,
+            async right => await _mediator.Send(right, cancellationToken));
+
+         commandResult.DoRight(x =>
          {
             if (x.SendVerificationEmail)
             {
@@ -125,8 +138,8 @@ namespace Crypter.API.Controllers
             }
          });
 
-         return insertResult.Match<IActionResult>(
-            left => new BadRequestObjectResult(new ErrorResponse(left)),
+         return commandResult.Match<IActionResult>(
+            left => MakeErrorResponse(left),
             right => new OkObjectResult(new UserRegisterResponse()));
       }
 
@@ -274,8 +287,8 @@ namespace Crypter.API.Controllers
       [Authorize]
       [HttpPost("settings/profile")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateProfileResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       public async Task<IActionResult> UpdateUserProfileAsync([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
       {
          var userId = _tokenService.ParseUserId(User);
@@ -289,37 +302,56 @@ namespace Crypter.API.Controllers
       [Authorize]
       [HttpPost("settings/contact")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateContactInfoResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request, CancellationToken cancellationToken)
       {
+         static IActionResult MakeErrorResponse(UpdateContactInfoError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+            return error switch
+            {
+               _ => new BadRequestObjectResult(errorResponse)
+            };
+         }
+
          var userId = _tokenService.ParseUserId(User);
 
-         if (ValidationService.IsPossibleEmailAddress(request.Email)
-            && !ValidationService.IsValidEmailAddress(request.Email))
+         if (!AuthenticationPassword.TryFrom(request.CurrentPassword, out var password))
          {
-            return new BadRequestObjectResult(new ErrorResponse(UpdateContactInfoError.EmailInvalid));
+            return MakeErrorResponse(UpdateContactInfoError.PasswordValidationFailed);
+         }
+
+         bool isEmailAddressProvided = !string.IsNullOrEmpty(request.Email);
+         bool isValidEmailAddress = EmailAddress.TryFrom(request.Email, out var emailAddress);
+         if (isEmailAddressProvided && !isValidEmailAddress)
+         {
+            return MakeErrorResponse(UpdateContactInfoError.EmailInvalid);
          }
 
          var user = await _userService.ReadAsync(userId, cancellationToken);
-         if (ValidationService.IsPossibleEmailAddress(request.Email)
-            && user.Email?.ToLower() != request.Email.ToLower()
-            && !await _mediator.Send(new EmailAvailabilityQuery(request.Email), cancellationToken))
+         bool emailAddressChanged = user.Email?.ToLower() != emailAddress.Value.ToLower();
+
+         if (isEmailAddressProvided && emailAddressChanged)
          {
-            return new BadRequestObjectResult(new ErrorResponse(UpdateContactInfoError.EmailUnavailable));
+            bool isNewEmailAddressAvailable = await _mediator.Send(new EmailAvailabilityQuery(emailAddress), cancellationToken);
+            if (!isNewEmailAddressAvailable)
+            {
+               return MakeErrorResponse(UpdateContactInfoError.EmailUnavailable);
+            }
          }
 
-         var (UpdateSuccess, UpdateError) = await _userService.UpdateContactInfoAsync(userId, request.Email, request.CurrentPassword, cancellationToken);
+         var (UpdateSuccess, UpdateError) = await _userService.UpdateContactInfoAsync(userId, emailAddress, password, cancellationToken);
 
          if (!UpdateSuccess)
          {
-            return new BadRequestObjectResult(new ErrorResponse(UpdateError));
+            return MakeErrorResponse(UpdateError);
          }
 
          await _userNotificationSettingService.UpsertAsync(userId, false, false, default);
          await _userEmailVerificationService.DeleteAsync(userId, default);
 
-         if (ValidationService.IsValidEmailAddress(request.Email))
+         if (isValidEmailAddress)
          {
             BackgroundJob.Enqueue(() => _emailService.HangfireSendEmailVerificationAsync(userId));
          }

@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
@@ -58,7 +59,7 @@ namespace Crypter.Core.Services.DataAccess
             .FirstOrDefaultAsync(cancellationToken);
       }
 
-      public async Task<(bool Success, UpdateContactInfoError Error)> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken)
+      public async Task<(bool Success, UpdateContactInfoError Error)> UpdateContactInfoAsync(Guid id, EmailAddress emailAddress, AuthenticationPassword currentPassword, CancellationToken cancellationToken)
       {
          var user = await ReadAsync(id, cancellationToken);
          var passwordsMatch = _passwordHashService.VerifySecurePasswordHash(currentPassword, user.PasswordHash, user.PasswordSalt);
@@ -67,7 +68,7 @@ namespace Crypter.Core.Services.DataAccess
             return (false, UpdateContactInfoError.PasswordValidationFailed);
          }
 
-         user.Email = email;
+         user.Email = emailAddress.Value;
          user.EmailVerified = false;
          await Context.SaveChangesAsync(cancellationToken);
          return (true, UpdateContactInfoError.UnknownError);

@@ -102,6 +102,18 @@ namespace Crypter.Common.Monads
             : noneFunction();
       }
 
+      /// <summary>
+      /// Unsafe!
+      /// </summary>
+      /// <param name="defaultValue"></param>
+      /// <returns></returns>
+      public TValue SomeOrDefault(TValue defaultValue = default)
+      {
+         return IsSome
+            ? _value
+            : defaultValue;
+      }
+
       public static Maybe<TValue> None() => new();
 
       public static implicit operator Maybe<TValue>(TValue value) => new(value);
