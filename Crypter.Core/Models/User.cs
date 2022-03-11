@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -52,11 +54,36 @@ namespace Crypter.Core.Models
       public virtual List<UserToken> Tokens { get; set; }
       public virtual List<UserContact> Contacts { get; set; }
 
+      /// <summary>
+      /// Don't use this
+      /// </summary>
+      /// <param name="id"></param>
+      /// <param name="username"></param>
+      /// <param name="email"></param>
+      /// <param name="passwordHash"></param>
+      /// <param name="passwordSalt"></param>
+      /// <param name="emailVerified"></param>
+      /// <param name="created"></param>
+      /// <param name="lastLogin"></param>
       public User(Guid id, string username, string email, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
       {
          Id = id;
          Username = username;
          Email = email;
+         PasswordHash = passwordHash;
+         PasswordSalt = passwordSalt;
+         EmailVerified = emailVerified;
+         Created = created;
+         LastLogin = lastLogin;
+      }
+
+      public User(Guid id, Username username, Maybe<EmailAddress> email, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
+      {
+         Id = id;
+         Username = username.Value;
+         Email = email.Match(
+            () => null,
+            some => some.Value);
          PasswordHash = passwordHash;
          PasswordSalt = passwordSalt;
          EmailVerified = emailVerified;

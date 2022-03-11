@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.User.Register
@@ -40,6 +42,15 @@ namespace Crypter.Contracts.Features.User.Register
          Username = username;
          Password = password;
          Email = email;
+      }
+
+      public UserRegisterRequest(Username username, AuthenticationPassword password, Maybe<EmailAddress> emailAddress)
+      {
+         Username = username.Value;
+         Password = password.Value;
+         Email = emailAddress.Match(
+            () => null,
+            some => some.Value);
       }
    }
 }

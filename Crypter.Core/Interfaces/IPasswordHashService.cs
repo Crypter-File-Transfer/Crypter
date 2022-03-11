@@ -24,11 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
+
 namespace Crypter.Core.Interfaces
 {
    public interface IPasswordHashService
    {
-      (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(string password);
-      bool VerifySecurePasswordHash(string password, byte[] existingHash, byte[] existingSalt);
+      (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(AuthenticationPassword password);
+      bool VerifySecurePasswordHash(AuthenticationPassword password, byte[] existingHash, byte[] existingSalt);
    }
 }

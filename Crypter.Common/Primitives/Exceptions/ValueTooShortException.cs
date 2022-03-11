@@ -24,13 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Web.Models.Forms
+namespace Crypter.Common.Primitives.Exceptions
 {
-   public class UserRegistrationModel
+   public class ValueTooShortException : ValueInvalidException
    {
-      public string Username { get; set; }
-      public string Password { get; set; }
-      public string PasswordConfirm { get; set; }
-      public string EmailAddress { get; set; }
    }
 }

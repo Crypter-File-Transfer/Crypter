@@ -24,7 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Services;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using Crypter.Core.Features.User.Common;
 using MediatR;
 using System.Threading;
@@ -34,11 +35,21 @@ namespace Crypter.Core.Features.User.Queries
 {
    public class EmailAvailabilityQuery : IRequest<bool>
    {
-      public string Email { get; private set; }
+      public EmailAddress Email { get; private set; }
 
-      public EmailAvailabilityQuery(string email)
+      public EmailAvailabilityQuery(EmailAddress email)
       {
          Email = email;
+      }
+
+      public static Either<Nothing, EmailAvailabilityQuery> ValidateFrom(string emailAddress)
+      {
+         if (!EmailAddress.TryFrom(emailAddress, out var validEmailAddress))
+         {
+            return new Nothing();
+         }
+
+         return new EmailAvailabilityQuery(validEmailAddress);
       }
    }
 
@@ -53,11 +64,6 @@ namespace Crypter.Core.Features.User.Queries
 
       public async Task<bool> Handle(EmailAvailabilityQuery request, CancellationToken cancellationToken)
       {
-         if (!ValidationService.IsValidEmailAddress(request.Email))
-         {
-            return false;
-         }
-
          return await _context.Users.IsEmailAddressAvailableAsync(request.Email, cancellationToken);
       }
    }

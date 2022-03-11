@@ -27,6 +27,7 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication.Login;
 using Crypter.Contracts.Features.Authentication.Logout;
 using Crypter.Contracts.Features.User.UpdateKeys;
@@ -41,8 +42,8 @@ namespace Crypter.Web.Services
    public interface ISessionService
    {
       bool IsLoggedIn { get; }
-      Task<bool> LoginAsync(string username, string password, bool trustDevice);
-      Task<bool> UnlockSession(string password);
+      Task<bool> LoginAsync(Username username, Password password, bool trustDevice);
+      Task<bool> UnlockSession(Password password);
       Task<bool> TryRefreshingTokenAsync();
       Task<UserSession> GetCurrentUserSessionAsync();
       event EventHandler<UserSessionStateChangedEventArgs> UserSessionStateChanged;
@@ -87,7 +88,7 @@ namespace Crypter.Web.Services
          }
       }
 
-      public async Task<bool> LoginAsync(string username, string password, bool trustDevice)
+      public async Task<bool> LoginAsync(Username username, Password password, bool trustDevice)
       {
          var refreshTokenType = trustDevice
             ? TokenType.Device
@@ -105,17 +106,18 @@ namespace Crypter.Web.Services
             await CacheSessionInfoAsync(x, username, userPreferredStorageLocation);
             await HandleUserKeys(x, userSymmetricKey, userPreferredStorageLocation);
             await _userContactsService.InitializeAsync();
-            NotifyUserSessionStateChanged(true, x.Id, username);
+            NotifyUserSessionStateChanged(true);
          });
 
          IsLoggedIn = response.IsRight;
          return IsLoggedIn;
       }
 
-      public async Task<bool> UnlockSession(string password)
+      public async Task<bool> UnlockSession(Password password)
       {
          var userSessionInfo = await _browserStorageService.GetItemAsync<UserSession>(BrowserStoredObjectType.UserSession);
-         var userSymmetricKey = _userKeysService.GetUserSymmetricKey(userSessionInfo.Username, password);
+         var username = Username.From(userSessionInfo.Username);
+         var userSymmetricKey = _userKeysService.GetUserSymmetricKey(username, password);
 
          if (!await TryRefreshingTokenAsync())
          {
@@ -166,10 +168,10 @@ namespace Crypter.Web.Services
          await _browserStorageService.DisposeAsync();
       }
 
-      private async Task CacheSessionInfoAsync(LoginResponse authResponse, string username, BrowserStorageLocation storageLocation)
+      private async Task CacheSessionInfoAsync(LoginResponse authResponse, Username username, BrowserStorageLocation storageLocation)
       {
          // Store session information and refresh token in the same location
-         var sessionInfo = new UserSession(authResponse.Id, username);
+         var sessionInfo = new UserSession(authResponse.Id, username.Value);
          await _browserStorageService.SetItemAsync(BrowserStoredObjectType.UserSession, sessionInfo, storageLocation);
          await _browserStorageService.SetItemAsync(BrowserStoredObjectType.RefreshToken, authResponse.RefreshToken, storageLocation);
 
@@ -177,12 +179,12 @@ namespace Crypter.Web.Services
          await _browserStorageService.SetItemAsync(BrowserStoredObjectType.AuthenticationToken, authResponse.AuthenticationToken, BrowserStorageLocation.Memory);
       }
 
-      private async Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(string username, string password, TokenType refreshTokenType)
+      private async Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, Password password, TokenType refreshTokenType)
       {
-         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
-         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
+         byte[] authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
+         var authPassword = AuthenticationPassword.From(Convert.ToBase64String(authPasswordBytes));
 
-         var loginRequest = new LoginRequest(username, digestedPasswordBase64, refreshTokenType);
+         var loginRequest = new LoginRequest(username, authPassword, refreshTokenType);
          return await _crypterApiService.LoginAsync(loginRequest);
       }
 
@@ -273,23 +275,19 @@ namespace Crypter.Web.Services
          }
       }
 
-      private void NotifyUserSessionStateChanged(bool loggedIn, Guid userId = default, string username = default)
+      private void NotifyUserSessionStateChanged(bool loggedIn)
       {
-         _userSessionStateChanged?.Invoke(this, new UserSessionStateChangedEventArgs(loggedIn, userId, username));
+         _userSessionStateChanged?.Invoke(this, new UserSessionStateChangedEventArgs(loggedIn));
       }
    }
 
    public class UserSessionStateChangedEventArgs : EventArgs
    {
       public bool LoggedIn { get; set; }
-      public Guid UserId { get; set; }
-      public string Username { get; }
 
-      public UserSessionStateChangedEventArgs(bool loggedIn, Guid userId, string username)
+      public UserSessionStateChangedEventArgs(bool loggedIn)
       {
          LoggedIn = loggedIn;
-         UserId = userId;
-         Username = username;
       }
    }
 }

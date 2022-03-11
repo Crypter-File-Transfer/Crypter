@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,16 +33,16 @@ namespace Crypter.Core.Features.User.Common
 {
    internal static class UserHelpers
    {
-      public static async Task<bool> IsUsernameAvailableAsync(this DbSet<Models.User> userContext, string username, CancellationToken cancellationToken)
+      public static async Task<bool> IsUsernameAvailableAsync(this DbSet<Models.User> userContext, Username username, CancellationToken cancellationToken)
       {
-         string usernameLowercase = username.ToLower();
+         string usernameLowercase = username.Value.ToLower();
          return !await userContext
             .AnyAsync(x => x.Username.ToLower() == usernameLowercase, cancellationToken);
       }
 
-      public static async Task<bool> IsEmailAddressAvailableAsync(this DbSet<Models.User> userContext, string email, CancellationToken cancellationToken)
+      public static async Task<bool> IsEmailAddressAvailableAsync(this DbSet<Models.User> userContext, EmailAddress email, CancellationToken cancellationToken)
       {
-         string emailLowercase = email.ToLower();
+         string emailLowercase = email.Value.ToLower();
          return !await userContext
             .AnyAsync(x => x.Email.ToLower() == emailLowercase, cancellationToken);
       }

@@ -26,6 +26,7 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Enums;
+using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Contracts.Features.User.UpdateNotificationSettings;
 using Crypter.Contracts.Features.User.UpdatePrivacySettings;
@@ -57,7 +58,7 @@ namespace Crypter.Web.Pages
       protected bool ArePasswordControlsEnabled;
       protected bool ArePrivacyControlsEnabled;
 
-      protected string Username;
+      protected Username Username;
       protected string ProfileUrl;
 
       // Profile
@@ -165,14 +166,14 @@ namespace Crypter.Web.Pages
          ContactInfoPasswordError = "";
          ContactInfoGenericError = "";
 
-         if (string.IsNullOrEmpty(CurrentPasswordForContactInfo))
+         if (!Password.TryFrom(CurrentPasswordForContactInfo, out var password))
          {
             UpdateContactInfoFailed = true;
             ContactInfoPasswordError = "Enter your current password";
             return;
          }
 
-         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(Username, CurrentPasswordForContactInfo);
+         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(Username, password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var request = new UpdateContactInfoRequest(EditedEmail, digestedPasswordBase64);
@@ -291,7 +292,7 @@ namespace Crypter.Web.Pages
          var maybeSettings = await CrypterApiService.GetUserSettingsAsync();
          await maybeSettings.DoRightAsync(async right =>
          {
-            Username = right.Username;
+            Username = Username.From(right.Username);
             EmailVerified = right.EmailVerified;
             EditedEmail = Email = right.Email;
             EditedAlias = Alias = right.Alias;
@@ -308,7 +309,7 @@ namespace Crypter.Web.Pages
 
             X25519PrivateKey = encryptedX25519PrivateKey;
             Ed25519PrivateKey = encryptedEd25519PrivateKey;
-            ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
+            ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username.Value}";
          });
       }
    }

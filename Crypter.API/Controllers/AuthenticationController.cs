@@ -93,7 +93,7 @@ namespace Crypter.API.Controllers
             };
          }
 
-         async Task<Either<LoginError, (string Token, DateTime Expiration)>> MakeRefreshTokenAsync(Guid userId, TokenType tokenType, string userAgent)
+         async Task<Either<LoginError, string>> MakeRefreshTokenAsync(Guid userId, TokenType tokenType, string userAgent)
          {
             var refreshTokenId = Guid.NewGuid();
             Either<LoginError, (string Token, DateTime Expiration)> makeTokenResult = tokenType switch
@@ -109,30 +109,42 @@ namespace Crypter.API.Controllers
                BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(refreshTokenId), CancellationToken.None), x.Expiration - DateTime.UtcNow);
             });
 
-            return makeTokenResult;
+            return makeTokenResult.Match<Either<LoginError, string>>(
+               left => left,
+               right => right.Token);
          }
 
-         var loginResult = await _mediator.Send(new LoginQuery(request.Username, request.Password), cancellationToken);
-         loginResult.DoRight(x =>
+         var loginQueryValidation = LoginQuery.ValidateFrom(request.Username, request.Password);
+         var loginQueryResult = await loginQueryValidation.MatchAsync(
+            left => left,
+            async right => await _mediator.Send(right, cancellationToken));
+
+         loginQueryResult.DoRight(x =>
          {
             BackgroundJob.Enqueue(() => _mediator.Send(new UpdateLastLoginTimeCommand(x.UserId, DateTime.UtcNow), CancellationToken.None));
          });
 
-         return await loginResult.MatchAsync(
-            loginError => MakeErrorResponse(loginError),
-            async loginData =>
+         var refreshTokenResult = await loginQueryResult.MatchAsync(
+            left => left,
+            async right =>
             {
                string userAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-               var makeRefreshTokenResult = await MakeRefreshTokenAsync(loginData.UserId, request.RefreshTokenType, userAgent);
-               return makeRefreshTokenResult.Match(
-                  refreshTokenError => MakeErrorResponse(refreshTokenError),
-                  refreshTokenData =>
-                  {
-                     string authToken = _tokenService.NewAuthenticationToken(loginData.UserId);
-                     var response = new LoginResponse(loginData.UserId, authToken, refreshTokenData.Token);
-                     return new OkObjectResult(response);
-                  });
+               return await MakeRefreshTokenAsync(right.UserId, request.RefreshTokenType, userAgent);
             });
+
+         var response = loginQueryResult.Match(
+            loginError => loginError,
+            loginData => refreshTokenResult.Match<Either<LoginError, LoginResponse>>(
+               refreshTokenError => refreshTokenError,
+               refreshToken =>
+               {
+                  string authToken = _tokenService.NewAuthenticationToken(loginData.UserId);
+                  return new LoginResponse(loginData.UserId, authToken, refreshToken);
+               }));
+
+         return response.Match(
+            left => MakeErrorResponse(left),
+            right => new OkObjectResult(right));
       }
 
       /// <summary>

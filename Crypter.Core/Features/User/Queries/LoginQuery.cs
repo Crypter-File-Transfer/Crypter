@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication.Login;
 using Crypter.Core.Interfaces;
 using MediatR;
@@ -37,13 +38,28 @@ namespace Crypter.Core.Features.User.Queries
 {
    public class LoginQuery : IRequest<Either<LoginError, LoginQueryResult>>
    {
-      public string Username { get; private set; }
-      public string Password { get; private set; }
+      public Username Username { get; private set; }
+      public AuthenticationPassword Password { get; private set; }
 
-      public LoginQuery(string username, string password)
+      public LoginQuery(Username username, AuthenticationPassword password)
       {
          Username = username;
          Password = password;
+      }
+
+      public static Either<LoginError, LoginQuery> ValidateFrom(string username, string password)
+      {
+         if (!Username.TryFrom(username, out var validUsername))
+         {
+            return LoginError.NotFound;
+         }
+
+         if (!AuthenticationPassword.TryFrom(password, out var validAuthenticationPassword))
+         {
+            return LoginError.NotFound;
+         }
+
+         return new LoginQuery(validUsername, validAuthenticationPassword);
       }
    }
 
@@ -78,7 +94,7 @@ namespace Crypter.Core.Features.User.Queries
 
       public async Task<Either<LoginError, LoginQueryResult>> Handle(LoginQuery request, CancellationToken cancellationToken)
       {
-         string lowerUsername = request.Username.ToLower();
+         string lowerUsername = request.Username.Value.ToLower();
          Models.User user = await _context.Users
             .Include(x => x.X25519KeyPair)
             .Include(x => x.Ed25519KeyPair)
