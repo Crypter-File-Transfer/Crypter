@@ -68,11 +68,8 @@ namespace Crypter.Test.Web_Tests
          var storedUserSession = new UserSession("foo", true);
          var authenticationToken = "authentication";
          var refreshToken = "refresh";
-         var encryptedX25519PrivateKey = "encryptedX25519";
-         var encryptedEd25519PrivateKey = "encryptedEd25519";
-         var plaintextX25519PrivateKey = "plaintextX25519";
-         var plaintextEd25519PrivateKey = "plaintextEd25519";
-
+         var x25519PrivateKey = "plaintextX25519";
+         var ed25519PrivateKey = "plaintextEd25519";
          var jsRuntime = new Mock<IJSRuntime>();
 
          // UserSession
@@ -96,33 +93,19 @@ namespace Crypter.Test.Web_Tests
                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.RefreshToken.ToString())))
             .ReturnsAsync((string commands, object[] args) => JsonConvert.SerializeObject(refreshToken));
 
-         // EncryptedX25519PrivateKey
+         // Ed25519PrivateKey
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.EncryptedX25519PrivateKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(encryptedX25519PrivateKey));
+               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.Ed25519PrivateKey.ToString())))
+            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(ed25519PrivateKey));
 
-         // EncryptedEd25519PrivateKey
+         // X25519PrivateKey
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.EncryptedEd25519PrivateKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(encryptedEd25519PrivateKey));
-
-         // PlaintextX25519PrivateKey
-         jsRuntime
-            .Setup(x => x.InvokeAsync<string>(
-               It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.PlaintextX25519PrivateKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(plaintextX25519PrivateKey));
-
-         // PlaintextEd25519PrivateKey
-         jsRuntime
-            .Setup(x => x.InvokeAsync<string>(
-               It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.PlaintextEd25519PrivateKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(plaintextEd25519PrivateKey));
+               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.X25519PrivateKey.ToString())))
+            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(x25519PrivateKey));
 
          var sut = new BrowserRepository(jsRuntime.Object);
          await sut.InitializeAsync();
@@ -142,17 +125,11 @@ namespace Crypter.Test.Web_Tests
          var fetchedRefreshToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.RefreshToken);
          Assert.AreEqual(refreshToken, fetchedRefreshToken.SomeOrDefault());
 
-         var fetchedEncryptedX25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.EncryptedX25519PrivateKey);
-         Assert.AreEqual(encryptedX25519PrivateKey, fetchedEncryptedX25519PrivateKey.SomeOrDefault());
+         var fetchedPlaintextEd25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.Ed25519PrivateKey);
+         Assert.AreEqual(ed25519PrivateKey, fetchedPlaintextEd25519PrivateKey.SomeOrDefault());
 
-         var fetchedEncryptedEd25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.EncryptedEd25519PrivateKey);
-         Assert.AreEqual(encryptedEd25519PrivateKey, fetchedEncryptedEd25519PrivateKey.SomeOrDefault());
-
-         var fetchedPlaintextX25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.PlaintextX25519PrivateKey);
-         Assert.AreEqual(plaintextX25519PrivateKey, fetchedPlaintextX25519PrivateKey.SomeOrDefault());
-
-         var fetchedPlaintextEd25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.PlaintextEd25519PrivateKey);
-         Assert.AreEqual(plaintextEd25519PrivateKey, fetchedPlaintextEd25519PrivateKey.SomeOrDefault());
+         var fetchedPlaintextX25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.X25519PrivateKey);
+         Assert.AreEqual(x25519PrivateKey, fetchedPlaintextX25519PrivateKey.SomeOrDefault());
       }
    }
 }

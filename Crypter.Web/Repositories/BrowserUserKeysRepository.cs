@@ -52,7 +52,7 @@ namespace Crypter.Web.Repositories
 
       public async Task<Maybe<PEMString>> GetEd25519PrivateKeyAsync()
       {
-         var storageKey = await _browserRepository.GetItemAsync<string>(DeviceStorageObjectType.PlaintextEd25519PrivateKey);
+         var storageKey = await _browserRepository.GetItemAsync<string>(DeviceStorageObjectType.Ed25519PrivateKey);
          return storageKey.Bind(x =>
          {
             return PEMString.TryFrom(x, out var key)
@@ -63,7 +63,7 @@ namespace Crypter.Web.Repositories
 
       public async Task<Maybe<PEMString>> GetX25519PrivateKeyAsync()
       {
-         var storageKey = await _browserRepository.GetItemAsync<string>(DeviceStorageObjectType.PlaintextX25519PrivateKey);
+         var storageKey = await _browserRepository.GetItemAsync<string>(DeviceStorageObjectType.X25519PrivateKey);
          return storageKey.Bind(x =>
          {
             return PEMString.TryFrom(x, out var key)
@@ -74,12 +74,12 @@ namespace Crypter.Web.Repositories
 
       public async Task StoreEd25519PrivateKeyAsync(PEMString privateKey, bool trustDevice)
       {
-         await _browserRepository.SetItemAsync(DeviceStorageObjectType.PlaintextEd25519PrivateKey, privateKey, _trustDeviceStorageMap[trustDevice]);
+         await _browserRepository.SetItemAsync(DeviceStorageObjectType.Ed25519PrivateKey, privateKey, _trustDeviceStorageMap[trustDevice]);
       }
 
       public async Task StoreX25519PrivateKeyAsync(PEMString privateKey, bool trustDevice)
       {
-         await _browserRepository.SetItemAsync(DeviceStorageObjectType.PlaintextX25519PrivateKey, privateKey, _trustDeviceStorageMap[trustDevice]);
+         await _browserRepository.SetItemAsync(DeviceStorageObjectType.X25519PrivateKey, privateKey, _trustDeviceStorageMap[trustDevice]);
       }
    }
 }
