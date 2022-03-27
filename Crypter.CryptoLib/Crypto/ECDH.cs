@@ -43,7 +43,7 @@ namespace Crypter.CryptoLib.Crypto
    {
       public static AsymmetricCipherKeyPair GenerateKeys()
       {
-         SecureRandom random = new SecureRandom();
+         SecureRandom random = new();
          IAsymmetricCipherKeyPairGenerator kpGen = new X25519KeyPairGenerator();
          kpGen.Init(new X25519KeyGenerationParameters(random));
          return kpGen.GenerateKeyPair();
@@ -61,7 +61,7 @@ namespace Crypter.CryptoLib.Crypto
       /// </remarks>
       public static byte[] DeriveSharedKey(AsymmetricKeyParameter privateKey, AsymmetricKeyParameter publicKey)
       {
-         X25519Agreement agreement = new X25519Agreement();
+         X25519Agreement agreement = new();
          agreement.Init(privateKey);
          byte[] sharedSecret = new byte[agreement.AgreementSize];
          agreement.CalculateAgreement(publicKey, sharedSecret, 0);

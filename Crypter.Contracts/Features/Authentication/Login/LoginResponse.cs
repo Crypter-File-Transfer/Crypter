@@ -34,21 +34,13 @@ namespace Crypter.Contracts.Features.Authentication.Login
       public Guid Id { get; set; }
       public string AuthenticationToken { get; set; }
       public string RefreshToken { get; set; }
-      public string EncryptedX25519PrivateKey { get; set; }
-      public string EncryptedEd25519PrivateKey { get; set; }
-      public string X25519IV { get; set; }
-      public string Ed25519IV { get; set; }
 
       [JsonConstructor]
-      public LoginResponse(Guid id, string authenticationToken, string refreshToken = null, string encryptedX25519PrivateKey = null, string encryptedEd25519PrivateKey = null, string x25519IV = null, string ed25519IV = null)
+      public LoginResponse(Guid id, string authenticationToken, string refreshToken)
       {
          Id = id;
          AuthenticationToken = authenticationToken;
          RefreshToken = refreshToken;
-         EncryptedX25519PrivateKey = encryptedX25519PrivateKey;
-         EncryptedEd25519PrivateKey = encryptedEd25519PrivateKey;
-         X25519IV = x25519IV;
-         Ed25519IV = ed25519IV;
       }
    }
 }

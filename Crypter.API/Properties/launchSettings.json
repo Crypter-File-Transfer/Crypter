@@ -3,20 +3,20 @@
   "iisSettings": {
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:50370/",
-      "sslPort": 44324
-    }
+   "iisExpress": {
+      "applicationUrl": "http://localhost:38294",
+      "sslPort": 44357
+   }
   },
   "profiles": {
-    "IIS Express": {
+   "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+         "ASPNETCORE_ENVIRONMENT": "Development"
       }
-    },
+   },
     "Crypter.API": {
       "commandName": "Project",
       "launchBrowser": true,
@@ -24,8 +24,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:5001;http://localhost:5000",
-      "dotnetRunMessages": true
+      "applicationUrl": "https://localhost:5001;http://localhost:5000"
     }
   }
 }

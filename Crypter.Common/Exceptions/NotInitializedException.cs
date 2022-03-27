@@ -24,17 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Web.Models.LocalStorage
-{
-   public class EncryptedPrivateKey
-   {
-      public string Key { get; set; }
-      public string IV { get; set; }
+using System;
 
-      public EncryptedPrivateKey(string key, string iv)
-      {
-         Key = key;
-         IV = iv;
-      }
+namespace Crypter.Common.Exceptions
+{
+   public class NotInitializedException : ApplicationException
+   {
    }
 }

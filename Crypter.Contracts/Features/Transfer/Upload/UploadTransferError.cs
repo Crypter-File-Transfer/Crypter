@@ -39,6 +39,7 @@ namespace Crypter.Contracts.Features.Transfer.Upload
       InvalidEd25519PublicKey,
       InvalidRequestedExpiration,
       BlockedByUserPrivacy,
-      OutOfSpace
+      OutOfSpace,
+      UserNotFound
    }
 }

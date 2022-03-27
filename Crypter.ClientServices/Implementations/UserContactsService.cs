@@ -90,7 +90,7 @@ namespace Crypter.ClientServices.Implementations
          response.DoRight(x => _contacts.Remove(userId));
       }
 
-      public void Dispose()
+      public void Recycle()
       {
          _contacts = null;
       }

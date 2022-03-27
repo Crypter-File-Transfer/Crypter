@@ -25,7 +25,6 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Text;
@@ -36,10 +35,10 @@ namespace Crypter.Web.Pages
    public partial class UserProfileBase : ComponentBase
    {
       [Inject]
-      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
+      private ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      private IUserSessionService UserSessionService { get; set; }
 
       [Parameter]
       public string Username { get; set; }
@@ -49,39 +48,33 @@ namespace Crypter.Web.Pages
 
       protected bool Loading;
       protected bool IsProfileAvailable;
-      protected Guid UserId;
       protected string Alias;
       protected string About;
-      protected string ActualUsername;
+      protected string ProperUsername;
       protected bool AllowsFiles;
       protected bool AllowsMessages;
-      protected string UserX25519PublicKey;
       protected string UserEd25519PublicKey;
+      protected string UserX25519PublicKey;
 
       protected override async Task OnInitializedAsync()
       {
          Loading = true;
-         await base.OnInitializedAsync();
-
          await PrepareUserProfileAsync();
-
          Loading = false;
       }
 
       protected async Task PrepareUserProfileAsync()
       {
-         var requestWithAuthentication = BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession);
-         var response = await CrypterApiService.GetUserPublicProfileAsync(Username, requestWithAuthentication);
+         var response = await CrypterApiService.GetUserPublicProfileAsync(Username, UserSessionService.LoggedIn);
          response.DoRight(x =>
          {
-            UserId = x.Id;
             Alias = x.Alias;
             About = x.About;
-            ActualUsername = x.Username;
+            ProperUsername = x.Username;
             AllowsFiles = x.ReceivesFiles;
             AllowsMessages = x.ReceivesMessages;
-            UserX25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(x.PublicDHKey));
             UserEd25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(x.PublicDSAKey));
+            UserX25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(x.PublicDHKey));
          });
 
          IsProfileAvailable = response.Match(

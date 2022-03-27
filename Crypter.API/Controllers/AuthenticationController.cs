@@ -66,15 +66,6 @@ namespace Crypter.API.Controllers
       /// <param name="request"></param>
       /// <param name="cancellationToken"></param>
       /// <returns></returns>
-      /// <remarks>
-      /// The primary responsibility of this action is to verify the provided user credentials against information stored in the database.
-      /// If the user credentials are valid, respond with various things the client needs to be useful, including (but not limited to):
-      ///  * An authentication token, good for a short amount of time. Authentication tokens are good for multiple requests as long as they have not expired.
-      ///  * A refresh token, good for one request only. The two types of refresh tokens are "session" and "refresh" tokens. Session tokens expire
-      ///    relatively quickly. Refresh tokens are good for significantly longer periods of time. The client may ask for either. The client should not ask for both.
-      ///  * The user's encrypted, private keys. The client will need to decrypt these.
-      ///  * The initialization vectors used to encrypt/decrypt the user's private keys.
-      /// </remarks>
       [HttpPost("login")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
@@ -109,38 +100,27 @@ namespace Crypter.API.Controllers
                BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(refreshTokenId), CancellationToken.None), x.Expiration - DateTime.UtcNow);
             });
 
-            return makeTokenResult.Match<Either<LoginError, string>>(
-               left => left,
-               right => right.Token);
+            return makeTokenResult.Map(x => x.Token);
          }
 
          var loginQueryValidation = LoginQuery.ValidateFrom(request.Username, request.Password);
-         var loginQueryResult = await loginQueryValidation.MatchAsync(
-            left => left,
-            async right => await _mediator.Send(right, cancellationToken));
+         var loginQueryResult = await loginQueryValidation.BindAsync(async x => await _mediator.Send(x, cancellationToken));
 
          loginQueryResult.DoRight(x =>
          {
             BackgroundJob.Enqueue(() => _mediator.Send(new UpdateLastLoginTimeCommand(x.UserId, DateTime.UtcNow), CancellationToken.None));
          });
 
-         var refreshTokenResult = await loginQueryResult.MatchAsync(
-            left => left,
-            async right =>
+         var response = await loginQueryResult.BindAsync(async loginData =>
+         {
+            string userAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
+            var refreshTokenResult = await MakeRefreshTokenAsync(loginData.UserId, request.RefreshTokenType, userAgent);
+            return refreshTokenResult.Map(refreshToken =>
             {
-               string userAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-               return await MakeRefreshTokenAsync(right.UserId, request.RefreshTokenType, userAgent);
+               string authToken = _tokenService.NewAuthenticationToken(loginData.UserId);
+               return new LoginResponse(loginData.UserId, authToken, refreshToken);
             });
-
-         var response = loginQueryResult.Match(
-            loginError => loginError,
-            loginData => refreshTokenResult.Match<Either<LoginError, LoginResponse>>(
-               refreshTokenError => refreshTokenError,
-               refreshToken =>
-               {
-                  string authToken = _tokenService.NewAuthenticationToken(loginData.UserId);
-                  return new LoginResponse(loginData.UserId, authToken, refreshToken);
-               }));
+         });
 
          return response.Match(
             left => MakeErrorResponse(left),
@@ -213,7 +193,7 @@ namespace Crypter.API.Controllers
          await _mediator.Send(new InsertUserTokenCommand(newTokenId, requestingUserId, userAgent, databaseToken.Type, newTokenExpiration), cancellationToken);
          BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(newTokenId), CancellationToken.None), newTokenExpiration - DateTime.UtcNow);
 
-         return new OkObjectResult(new RefreshResponse(newAuthToken, newRefreshToken));
+         return new OkObjectResult(new RefreshResponse(newAuthToken, newRefreshToken, databaseToken.Type));
       }
 
       /// <summary>

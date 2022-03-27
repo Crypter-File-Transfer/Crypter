@@ -30,7 +30,6 @@ using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;
 using Crypter.Web.Helpers;
 using Crypter.Web.Models.Forms;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -42,10 +41,7 @@ namespace Crypter.Web.Shared
       protected NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected ISessionService SessionService { get; set; }
-
-      [Inject]
-      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
+      protected IUserSessionService UserSessionService { get; set; }
 
       private const string _invalidClassName = "is-invalid";
 
@@ -62,7 +58,7 @@ namespace Crypter.Web.Shared
 
       protected override void OnInitialized()
       {
-         if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
+         if (UserSessionService.LoggedIn)
          {
             NavigationManager.NavigateTo("/user/transfers");
             return;
@@ -84,7 +80,7 @@ namespace Crypter.Web.Shared
          var username = maybeUsername.RightOrDefault();
          var password = maybePassword.RightOrDefault();
 
-         var authSuccess = await SessionService.LoginAsync(username, password, LoginModel.RememberMe);
+         var authSuccess = await UserSessionService.LoginAsync(username, password, LoginModel.RememberMe);
          if (!authSuccess)
          {
             HandleLoginFailure();

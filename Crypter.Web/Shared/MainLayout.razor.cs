@@ -24,10 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Interfaces;
-using Crypter.Web.Services;
-using Crypter.Web.Shared.Modal;
+using Crypter.ClientServices.Interfaces.Events;
 using Microsoft.AspNetCore.Components;
+using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
@@ -38,50 +39,46 @@ namespace Crypter.Web.Shared
       private NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
+      private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
 
-      protected ReAuthenticationModal ReAuthenticationModal { get; set; }
+      [Inject]
+      private IUserSessionService UserSessionService { get; set; }
+
+      [Inject]
+      private IUserContactsService UserContactsService { get; set; }
+
+      [Inject]
+      private IUserKeysService UserKeysService { get; set; }
+
+      protected bool ServicesInitialized { get; set; }
+
+      protected bool UserNeedsReauthentication { get; set; }
 
       protected override async Task OnInitializedAsync()
       {
-         await BrowserStorageService.InitializeAsync();
+         await BrowserRepository.InitializeAsync();
+         await UserSessionService.InitializeAsync();
+         await UserKeysService.InitializeAsync();
+
+         await UserSessionService.Session.IfSomeAsync(async x => await UserContactsService.InitializeAsync());
+
+         UserSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
+         UserSessionService.UserLoggedOutEventHandler += OnUserLoggedOut;
+
+         ServicesInitialized = true;
          StateHasChanged();
-
-         if (UserNeedsReauthentication())
-         {
-            ReAuthenticationModal.Open();
-            return;
-         }
-
-         if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
-         {
-            NavigationManager.NavigateTo("/user/transfers");
-         }
       }
 
-      protected bool UserNeedsReauthentication()
+      private void OnUserLoggedIn(object sender, UserLoggedInEventArgs eventArgs)
       {
-         // User session does not exist. There is nobody to reauthenticate.
-         if (!BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
-         {
-            return false;
-         }
-
-         // User session and the auth token both exist. No need to reauthenticate.
-         if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession)
-            && BrowserStorageService.HasItem(BrowserStoredObjectType.AuthenticationToken)
-            && BrowserStorageService.HasItem(BrowserStoredObjectType.RefreshToken))
-         {
-            return false;
-         }
-
-         // Reauthenticate!
-         return true;
+         InvokeAsync(() => UserKeysService.PrepareUserKeysOnUserLoginAsync(eventArgs.Username, eventArgs.Password, eventArgs.RememberUser));
+         InvokeAsync(UserContactsService.InitializeAsync);
       }
 
-      public void OnReauthenticationModalClosed()
+      private void OnUserLoggedOut(object sender, EventArgs _)
       {
-         StateHasChanged();
+         UserKeysService.Recycle();
+         UserContactsService.Recycle();
       }
    }
 }

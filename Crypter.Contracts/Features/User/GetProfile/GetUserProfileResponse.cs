@@ -31,7 +31,6 @@ namespace Crypter.Contracts.Features.User.GetPublicProfile
 {
    public class GetUserProfileResponse
    {
-      public Guid Id { get; set; }
       public string Username { get; set; }
       public string Alias { get; set; }
       public string About { get; set; }
@@ -42,9 +41,8 @@ namespace Crypter.Contracts.Features.User.GetPublicProfile
       public string PublicDSAKey { get; set; }
 
       [JsonConstructor]
-      public GetUserProfileResponse(Guid id, string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, string publicDHKey, string publicDSAKey)
+      public GetUserProfileResponse(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, string publicDHKey, string publicDSAKey)
       {
-         Id = id;
          Username = username;
          Alias = alias;
          About = about;

@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.DeviceStorage.Models;
+using Crypter.ClientServices.Implementations.Extensions;
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
@@ -37,6 +39,7 @@ using Crypter.Contracts.Features.Transfer.DownloadSignature;
 using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.Contracts.Features.User.AddContact;
 using Crypter.Contracts.Features.User.GetContacts;
+using Crypter.Contracts.Features.User.GetPrivateKey;
 using Crypter.Contracts.Features.User.GetPublicProfile;
 using Crypter.Contracts.Features.User.GetReceivedTransfers;
 using Crypter.Contracts.Features.User.GetSentTransfers;
@@ -53,21 +56,11 @@ using Crypter.Contracts.Features.User.VerifyEmailAddress;
 using System;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Implementations
 {
-   internal static class ApiExtensions
-   {
-      public static Either<TErrorCode, TResponse> ExtractErrorCode<TErrorCode, TResponse>(this Either<ErrorResponse, TResponse> response)
-         where TErrorCode : Enum
-      {
-         return response.Match<Either<TErrorCode, TResponse>>(
-            left => (TErrorCode)(object)left.ErrorCode,
-            right => right);
-      }
-   }
-
    public class CrypterApiService : ICrypterApiService
    {
       private readonly IHttpService _httpService;
@@ -77,6 +70,8 @@ namespace Crypter.ClientServices.Implementations
       private readonly string _baseMetricsUrl;
       private readonly string _baseUserUrl;
       private readonly string _baseTransferUrl;
+
+      private readonly SemaphoreSlim _refreshSemaphore = new(1);
 
       public CrypterApiService(IHttpService httpService, ITokenRepository tokenRepository, IClientApiSettings clientApiSettings)
       {
@@ -88,37 +83,50 @@ namespace Crypter.ClientServices.Implementations
          _baseTransferUrl = $"{clientApiSettings.ApiBaseUrl}/transfer";
       }
 
-      private async Task<string> GetAuthenticationTokenAsync()
+      private async Task<Maybe<TokenObject>> GetAuthenticationTokenAsync()
          => await _tokenRepository.GetAuthenticationTokenAsync();
 
-      private async Task<string> GetRefreshTokenAsync()
+      private async Task<Maybe<TokenObject>> GetRefreshTokenAsync()
          => await _tokenRepository.GetRefreshTokenAsync();
 
       private async Task<(HttpStatusCode httpStatus, TResponse response)> UseAuthenticationMiddleware<TResponse>(Func<string, Task<(HttpStatusCode httpStatus, TResponse response)>> request)
       {
          async Task<(HttpStatusCode httpStatus, TResponse response)> MakeRequestAsync()
          {
-            string authenticationToken = await GetAuthenticationTokenAsync();
-            return await request(authenticationToken);
+            var maybeAuthenticationToken = await GetAuthenticationTokenAsync();
+            return await maybeAuthenticationToken.MatchAsync(
+               () => (HttpStatusCode.Unauthorized, default),
+               async tokenObject => await request(tokenObject.Token));
          }
 
+         _refreshSemaphore.Wait();
+         _refreshSemaphore.Release();
          var initialAttempt = await MakeRequestAsync();
          if (initialAttempt.httpStatus == HttpStatusCode.Unauthorized)
          {
-            var refreshResponse = await RefreshAsync();
-            await refreshResponse.DoRightAsync(async x =>
+            await _refreshSemaphore.WaitAsync().ConfigureAwait(false);
+            try
             {
-               await _tokenRepository.StoreAuthenticationTokenAsync(x.AuthenticationToken);
-               await _tokenRepository.StoreRefreshTokenAsync(x.RefreshToken);
-            });
+               var maybeResponse = await RefreshAsync();
+               await maybeResponse.DoRightAsync(async response =>
+               {
+                  await _tokenRepository.StoreAuthenticationTokenAsync(response.AuthenticationToken);
+                  await _tokenRepository.StoreRefreshTokenAsync(response.RefreshToken, response.RefreshTokenType);
+               });
 
-            if (refreshResponse.IsRight)
+               return await maybeResponse.MatchAsync(
+                  _ => initialAttempt,
+                  async _ => await MakeRequestAsync());
+            }
+            finally
             {
-               return await MakeRequestAsync();
+               _refreshSemaphore.Release();
             }
          }
-
-         return initialAttempt;
+         else
+         {
+            return initialAttempt;
+         }
       }
 
       public async Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest)
@@ -131,22 +139,28 @@ namespace Crypter.ClientServices.Implementations
 
       public async Task<Either<RefreshError, RefreshResponse>> RefreshAsync()
       {
-         string refreshToken = await GetRefreshTokenAsync();
-
-         string url = $"{_baseAuthenticationUrl}/refresh";
-         var (_, response) = await _httpService.GetAsync<RefreshResponse>(url, refreshToken);
-
-         return response.ExtractErrorCode<RefreshError, RefreshResponse>();
+         var maybeRefreshToken = await GetRefreshTokenAsync();
+         return await maybeRefreshToken.MatchAsync(
+            () => new(),
+            async refreshToken =>
+            {
+               string url = $"{_baseAuthenticationUrl}/refresh";
+               var (_, response) = await _httpService.GetAsync<RefreshResponse>(url, refreshToken.Token);
+               return response.ExtractErrorCode<RefreshError, RefreshResponse>();
+            });
       }
 
       public async Task<Either<LogoutError, LogoutResponse>> LogoutAsync(LogoutRequest logoutRequest)
       {
-         string refreshToken = await GetRefreshTokenAsync();
-
-         string url = $"{_baseAuthenticationUrl}/logout";
-         var (_, response) = await _httpService.PostAsync<LogoutRequest, LogoutResponse>(url, logoutRequest, refreshToken);
-
-         return response.ExtractErrorCode<LogoutError, LogoutResponse>();
+         var maybeRefreshToken = await GetRefreshTokenAsync();
+         return await maybeRefreshToken.MatchAsync(
+            () => new(),
+            async refreshToken =>
+            {
+               string url = $"{_baseAuthenticationUrl}/logout";
+               var (_, response) = await _httpService.PostAsync<LogoutRequest, LogoutResponse>(url, logoutRequest, refreshToken.Token);
+               return response.ExtractErrorCode<LogoutError, LogoutResponse>();
+            });
       }
 
       public async Task<Either<DummyError, DiskMetricsResponse>> GetDiskMetricsAsync()
@@ -215,12 +229,28 @@ namespace Crypter.ClientServices.Implementations
          return response.ExtractErrorCode<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>();
       }
 
+      public async Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetUserX25519PrivateKeyAsync()
+      {
+         string url = $"{_baseUserUrl}/settings/keys/x25519/private";
+         var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<GetPrivateKeyResponse>(url, token));
+
+         return response.ExtractErrorCode<GetPrivateKeyError, GetPrivateKeyResponse>();
+      }
+
       public async Task<Either<UpdateKeysError, UpdateKeysResponse>> InsertUserX25519KeysAsync(UpdateKeysRequest request)
       {
          string url = $"{_baseUserUrl}/settings/keys/x25519";
          var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UpdateKeysRequest, UpdateKeysResponse>(url, request, token));
 
          return response.ExtractErrorCode<UpdateKeysError, UpdateKeysResponse>();
+      }
+
+      public async Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetUserEd25519PrivateKeyAsync()
+      {
+         string url = $"{_baseUserUrl}/settings/keys/ed25519/private";
+         var (_, response) = await UseAuthenticationMiddleware(async (token) => await _httpService.GetAsync<GetPrivateKeyResponse>(url, token));
+
+         return response.ExtractErrorCode<GetPrivateKeyError, GetPrivateKeyResponse>();
       }
 
       public async Task<Either<UpdateKeysError, UpdateKeysResponse>> InsertUserEd25519KeysAsync(UpdateKeysRequest request)
@@ -307,11 +337,11 @@ namespace Crypter.ClientServices.Implementations
          return response.ExtractErrorCode<DummyError, RemoveUserContactResponse>();
       }
 
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, Guid recipient, bool withAuthentication)
+      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, Maybe<string> recipient, bool withAuthentication)
       {
-         string url = recipient == Guid.Empty
-            ? $"{_baseTransferUrl}/message"
-            : $"{_baseTransferUrl}/message/{recipient}";
+         string url = recipient.Match(
+            () => $"{_baseTransferUrl}/message",
+            x => $"{_baseTransferUrl}/message/{x}");
 
          var (_, response) = withAuthentication
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UploadMessageTransferRequest, UploadTransferResponse>(url, uploadRequest, token))
@@ -320,11 +350,11 @@ namespace Crypter.ClientServices.Implementations
          return response.ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
       }
 
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, Guid recipient, bool withAuthentication)
+      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, Maybe<string> recipient, bool withAuthentication)
       {
-         string url = recipient == Guid.Empty
-            ? $"{_baseTransferUrl}/file"
-            : $"{_baseTransferUrl}/file/{recipient}";
+         string url = recipient.Match(
+            () => $"{_baseTransferUrl}/file",
+            x => $"{_baseTransferUrl}/file/{x}");
 
          var (_, response) = withAuthentication
             ? await UseAuthenticationMiddleware(async (token) => await _httpService.PostAsync<UploadFileTransferRequest, UploadTransferResponse>(url, uploadRequest, token))

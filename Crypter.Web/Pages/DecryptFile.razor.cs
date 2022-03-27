@@ -26,7 +26,6 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Contracts.Features.Transfer.DownloadPreview;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -36,7 +35,7 @@ namespace Crypter.Web.Pages
    public partial class DecryptFileBase : ComponentBase
    {
       [Inject]
-      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
+      protected IUserSessionService UserSessionService { get; set; }
 
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
@@ -53,12 +52,11 @@ namespace Crypter.Web.Pages
       protected string Created;
       protected string Expiration;
 
-      protected Guid SenderId;
       protected string SenderUsername;
       protected string SenderAlias;
       protected string X25519PublicKey;
 
-      protected Guid RecipientId;
+      protected string RecipientUsername;
 
       protected override async Task OnInitializedAsync()
       {
@@ -71,8 +69,7 @@ namespace Crypter.Web.Pages
       protected async Task PrepareFilePreviewAsync()
       {
          var filePreviewRequest = new DownloadTransferPreviewRequest(TransferId);
-         var withAuth = BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession);
-         var response = await CrypterApiService.DownloadFilePreviewAsync(filePreviewRequest, withAuth);
+         var response = await CrypterApiService.DownloadFilePreviewAsync(filePreviewRequest, UserSessionService.LoggedIn);
          response.DoRight(x =>
          {
             FileName = x.FileName;
@@ -80,10 +77,9 @@ namespace Crypter.Web.Pages
             Created = x.CreationUTC.ToLocalTime().ToString();
             Expiration = x.ExpirationUTC.ToLocalTime().ToString();
             Size = x.Size;
-            SenderId = x.SenderId;
-            SenderUsername = x.SenderUsername;
+            SenderUsername = x.Sender;
             SenderAlias = x.SenderAlias;
-            RecipientId = x.RecipientId;
+            RecipientUsername = x.Recipient;
             X25519PublicKey = x.X25519PublicKey;
          });
 

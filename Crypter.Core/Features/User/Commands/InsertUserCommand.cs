@@ -66,7 +66,7 @@ namespace Crypter.Core.Features.User.Commands
          bool isPossibleEmailAddress = !string.IsNullOrEmpty(emailAddress);
          Maybe<EmailAddress> validatedEmailAddress = Crypter.Common.Primitives.EmailAddress.TryFrom(emailAddress, out var validEmailAddressOrNull)
             ? validEmailAddressOrNull
-            : Maybe<EmailAddress>.None();
+            : Maybe<EmailAddress>.None;
 
          if (isPossibleEmailAddress && validatedEmailAddress.IsNone)
          {

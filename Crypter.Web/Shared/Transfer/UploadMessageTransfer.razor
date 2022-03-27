@@ -53,7 +53,7 @@
          <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptClicked())">Encrypt</button>
       </div>
    </div>
-   <TransferSuccessModal @ref="ModalForAnonymousRecipient" UploadType="message" ItemId="@TransferId" RecipientX25519PrivateKey="@EncodedRecipientX25519PrivateKey" ModalClosedCallback="@UploadCompletedEvent" RequestedExpirationHours="RequestedExpirationHours"/>   
+   <TransferSuccessModal @ref="ModalForAnonymousRecipient" UploadType="message" ItemId="@TransferId" RecipientX25519PrivateKey="@EncodedRecipientX25519PrivateKey" ModalClosedCallback="@UploadCompletedEvent" RequestedExpirationHours="@RequestedExpirationHours"/>   
    <BasicModal @ref="ModalForUserRecipient" Subject="Upload Successful" Message=@UploadSuccessForUserMessage PrimaryButtonText="Okay" ModalClosedCallback="@UploadCompletedEvent" />
 </div>
 

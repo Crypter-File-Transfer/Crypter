@@ -35,7 +35,6 @@ using Crypter.CryptoLib.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -60,7 +59,7 @@ namespace Crypter.API.Controllers
           ITokenService tokenService
          )
       {
-         _uploadService = new UploadService(configuration, messageService, fileService, emailService, apiValidationService, simpleEncryptionService, simpleHashService);
+         _uploadService = new UploadService(configuration, messageService, fileService, emailService, apiValidationService, simpleEncryptionService, userService, simpleHashService);
          _downloadService = new DownloadService(configuration, messageService, fileService, userService, userProfileService, simpleEncryptionService, simpleHashService);
          _tokenService = tokenService;
       }
@@ -71,16 +70,16 @@ namespace Crypter.API.Controllers
       public async Task<IActionResult> MessageTransferAsync([FromBody] UploadMessageTransferRequest request, CancellationToken cancellationToken)
       {
          var senderId = _tokenService.ParseUserId(User);
-         return await _uploadService.ReceiveMessageTransferAsync(request, senderId, Guid.Empty, cancellationToken);
+         return await _uploadService.ReceiveMessageTransferAsync(request, senderId, string.Empty, cancellationToken);
       }
 
-      [HttpPost("message/{recipientId}")]
+      [HttpPost("message/{recipient}")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UserMessageTransferAsync([FromBody] UploadMessageTransferRequest request, Guid recipientId, CancellationToken cancellationToken)
+      public async Task<IActionResult> UserMessageTransferAsync([FromBody] UploadMessageTransferRequest request, string recipient, CancellationToken cancellationToken)
       {
          var senderId = _tokenService.ParseUserId(User);
-         return await _uploadService.ReceiveMessageTransferAsync(request, senderId, recipientId, cancellationToken);
+         return await _uploadService.ReceiveMessageTransferAsync(request, senderId, recipient, cancellationToken);
       }
 
       [HttpPost("file")]
@@ -89,16 +88,16 @@ namespace Crypter.API.Controllers
       public async Task<IActionResult> FileTransferAsync([FromBody] UploadFileTransferRequest request, CancellationToken cancellationToken)
       {
          var senderId = _tokenService.ParseUserId(User);
-         return await _uploadService.ReceiveFileTransferAsync(request, senderId, Guid.Empty, cancellationToken);
+         return await _uploadService.ReceiveFileTransferAsync(request, senderId, string.Empty, cancellationToken);
       }
 
-      [HttpPost("file/{recipientId}")]
+      [HttpPost("file/{recipient}")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UserFileTransferAsync([FromBody] UploadFileTransferRequest request, Guid recipientId, CancellationToken cancellationToken)
+      public async Task<IActionResult> UserFileTransferAsync([FromBody] UploadFileTransferRequest request, string recipient, CancellationToken cancellationToken)
       {
          var senderId = _tokenService.ParseUserId(User);
-         return await _uploadService.ReceiveFileTransferAsync(request, senderId, recipientId, cancellationToken);
+         return await _uploadService.ReceiveFileTransferAsync(request, senderId, recipient, cancellationToken);
       }
 
       [HttpPost("message/preview")]

@@ -58,7 +58,7 @@ namespace Crypter.Core.Features.User.Commands
          if (foundToken is not null)
          {
             _context.UserTokens.Remove(foundToken);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
          }
 
          return Unit.Value;

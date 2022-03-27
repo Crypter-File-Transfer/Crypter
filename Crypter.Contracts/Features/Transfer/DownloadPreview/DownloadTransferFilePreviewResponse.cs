@@ -34,24 +34,22 @@ namespace Crypter.Contracts.Features.Transfer.DownloadPreview
       public string FileName { get; set; }
       public string ContentType { get; set; }
       public int Size { get; set; }
-      public Guid SenderId { get; set; }
-      public string SenderUsername { get; set; }
+      public string Sender { get; set; }
       public string SenderAlias { get; set; }
-      public Guid RecipientId { get; set; }
+      public string Recipient { get; set; }
       public string X25519PublicKey { get; set; }
       public DateTime CreationUTC { get; set; }
       public DateTime ExpirationUTC { get; set; }
 
       [JsonConstructor]
-      public DownloadTransferFilePreviewResponse(string fileName, string contentType, int size, Guid senderId, string senderUsername, string senderAlias, Guid recipientId, string x25519PublicKey, DateTime creationUTC, DateTime expirationUTC)
+      public DownloadTransferFilePreviewResponse(string fileName, string contentType, int size, string sender, string senderAlias, string recipient, string x25519PublicKey, DateTime creationUTC, DateTime expirationUTC)
       {
          FileName = fileName;
          ContentType = contentType;
          Size = size;
-         SenderId = senderId;
-         SenderUsername = senderUsername;
+         Sender = sender;
          SenderAlias = senderAlias;
-         RecipientId = recipientId;
+         Recipient = recipient;
          X25519PublicKey = x25519PublicKey;
          CreationUTC = creationUTC;
          ExpirationUTC = expirationUTC;
