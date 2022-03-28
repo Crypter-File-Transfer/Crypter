@@ -24,34 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using System.Threading.Tasks;
 
-namespace Crypter.Web.Services
+namespace Crypter.ClientServices.Interfaces
 {
-   public class TokenRepository : ITokenRepository
+   /// <summary>
+   /// Simple abstraction over IDeviceRepository
+   /// </summary>
+   public interface IUserKeysRepository
    {
-      private readonly IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> _browserStorageService;
-
-      public TokenRepository(IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> browserStorageService)
-      {
-         _browserStorageService = browserStorageService;
-      }
-
-      public async Task StoreAuthenticationTokenAsync(string token)
-      {
-         await _browserStorageService.SetItemAsync(BrowserStoredObjectType.AuthenticationToken, token, BrowserStorageLocation.Memory);
-      }
-
-      public async Task<string> GetAuthenticationTokenAsync()
-         => await _browserStorageService.GetItemAsync<string>(BrowserStoredObjectType.AuthenticationToken);
-
-      public async Task StoreRefreshTokenAsync(string token)
-      {
-         await _browserStorageService.ReplaceItemAsync(BrowserStoredObjectType.RefreshToken, token);
-      }
-
-      public async Task<string> GetRefreshTokenAsync()
-            => await _browserStorageService.GetItemAsync<string>(BrowserStoredObjectType.RefreshToken);
-      }
+      public Task<Maybe<PEMString>> GetEd25519PrivateKeyAsync();
+      public Task<Maybe<PEMString>> GetX25519PrivateKeyAsync();
+      public Task StoreEd25519PrivateKeyAsync(PEMString privateKey, bool trustDevice);
+      public Task StoreX25519PrivateKeyAsync(PEMString privateKey, bool trustDevice);
+   }
 }

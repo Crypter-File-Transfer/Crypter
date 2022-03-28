@@ -24,24 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@using Crypter.Web.Services
 @inherits MainLayoutBase
 
 <div class="page h-100">
-   @if (BrowserStorageService.IsInitialized)
+   @if (ServicesInitialized)
    {
       <NavigationBar />
       <main role="main" class="pb-3">
-         
-         @if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
-         {
-            <ReAuthenticationModal @ref="ReAuthenticationModal" ModalClosedCallback="@OnReauthenticationModalClosed" />
-         }
-
-         @if (!UserNeedsReauthentication())
-         {
-            @Body
-         }
+         @Body
       </main>
       <Footer></Footer>
    }

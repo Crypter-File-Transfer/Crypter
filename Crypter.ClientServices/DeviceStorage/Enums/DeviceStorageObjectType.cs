@@ -24,11 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Enums
+namespace Crypter.ClientServices.DeviceStorage.Enums
 {
-   public enum PublicKeyType
+   public enum DeviceStorageObjectType
    {
-      X25519,
-      Ed25519
+      UserSession,
+      AuthenticationToken,
+      RefreshToken,
+      Ed25519PrivateKey,
+      X25519PrivateKey
    }
 }

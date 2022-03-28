@@ -25,9 +25,9 @@
  */
 
 using Blazor.DownloadFileFast.Interfaces;
+using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Text;
@@ -68,8 +68,8 @@ namespace Crypter.Web.Shared.Transfer
          ErrorMessage = "";
 
          await SetNewDecryptionStatus("Decoding keys");
-         (var decodeSuccess, var recipientX25519PrivateKeyPEM) = await DecodeX25519RecipientKey();
-         if (!decodeSuccess)
+         var maybeRecipientX25519PrivateKey = DecodeX25519RecipientKey();
+         if (maybeRecipientX25519PrivateKey.IsNone)
          {
             return;
          }
@@ -78,8 +78,8 @@ namespace Crypter.Web.Shared.Transfer
          byte[] serverKey;
          try
          {
-            var senderX25519PublicKeyPEM = Encoding.UTF8.GetString(Convert.FromBase64String(SenderX25519PublicKey));
-            (receiveKey, serverKey) = DeriveSymmetricKeys(recipientX25519PrivateKeyPEM, senderX25519PublicKeyPEM);
+            var senderX25519PublicKey = PEMString.From(Encoding.UTF8.GetString(Convert.FromBase64String(SenderX25519PublicKey)));
+            (receiveKey, serverKey) = DeriveSymmetricKeys(maybeRecipientX25519PrivateKey.SomeOrDefault(), senderX25519PublicKey);
          }
          catch (Exception)
          {
@@ -90,19 +90,18 @@ namespace Crypter.Web.Shared.Transfer
 
          // Get the signature before downloading the ciphertext
          // Remember, the API will DELETE the ciphertext and it's database records as soon as the ciphertext is downloaded
-         var requestWithAuth = BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession);
          var signatureRequest = new DownloadTransferSignatureRequest(TransferId);
-         var signatureResponse = await CrypterApiService.DownloadFileSignatureAsync(signatureRequest, requestWithAuth);
+         var signatureResponse = await CrypterApiService.DownloadFileSignatureAsync(signatureRequest, UserSessionService.LoggedIn);
          await signatureResponse.DoRightAsync(async x =>
          {
             var signature = Convert.FromBase64String(x.SignatureBase64);
-            var ed25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(x.Ed25519PublicKeyBase64));
+            var ed25519PublicKey = PEMString.From(Encoding.UTF8.GetString(Convert.FromBase64String(x.Ed25519PublicKeyBase64)));
 
             // Request the ciphertext from the server
             await SetNewDecryptionStatus("Downloading encrypted file");
             var encodedServerDecryptionKey = Convert.ToBase64String(serverKey);
             var ciphertextRequest = new DownloadTransferCiphertextRequest(TransferId, encodedServerDecryptionKey);
-            var ciphertextResponse = await CrypterApiService.DownloadFileCiphertextAsync(ciphertextRequest, requestWithAuth);
+            var ciphertextResponse = await CrypterApiService.DownloadFileCiphertextAsync(ciphertextRequest, UserSessionService.LoggedIn);
 
             ciphertextResponse.DoLeft(y =>
             {

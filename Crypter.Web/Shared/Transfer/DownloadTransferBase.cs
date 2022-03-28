@@ -25,11 +25,11 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
-using Crypter.Web.Models.LocalStorage;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Org.BouncyCastle.Crypto;
 using System;
@@ -41,16 +41,16 @@ namespace Crypter.Web.Shared.Transfer
    public abstract class DownloadTransferBase : ComponentBase
    {
       [Inject]
-      protected IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected IUserSessionService UserSessionService { get; set; }
+
+      [Inject]
+      protected IUserKeysService UserKeysService { get; set; }
 
       [Parameter]
       public Guid TransferId { get; set; }
-
-      [Parameter]
-      public Guid SenderId { get; set; }
 
       [Parameter]
       public string SenderUsername { get; set; }
@@ -62,7 +62,7 @@ namespace Crypter.Web.Shared.Transfer
       public string SenderX25519PublicKey { get; set; }
 
       [Parameter]
-      public Guid RecipientId { get; set; }
+      public string RecipientUsername { get; set; }
 
       [Parameter]
       public string Created { get; set; }
@@ -77,9 +77,6 @@ namespace Crypter.Web.Shared.Transfer
       public EventCallback<Guid> TransferIdChanged { get; set; }
 
       [Parameter]
-      public EventCallback<Guid> SenderIdChanged { get; set; }
-
-      [Parameter]
       public EventCallback<string> SenderUsernameChanged { get; set; }
 
       [Parameter]
@@ -89,7 +86,7 @@ namespace Crypter.Web.Shared.Transfer
       public EventCallback<string> SenderX25519PublicKeyChanged { get; set; }
 
       [Parameter]
-      public EventCallback<Guid> RecipientIdChanged { get; set; }
+      public EventCallback<string> RecipientUsernameChanged { get; set; }
 
       [Parameter]
       public EventCallback<string> CreatedChanged { get; set; }
@@ -108,47 +105,48 @@ namespace Crypter.Web.Shared.Transfer
       protected string ErrorMessage = "";
       protected bool IsUserRecipient = false;
 
-      protected override async Task OnParametersSetAsync()
+      protected override void OnParametersSet()
       {
-         if (!BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
+         if (!UserSessionService.LoggedIn)
          {
             IsUserRecipient = false;
             return;
          }
-         var session = await BrowserStorageService.GetItemAsync<UserSession>(BrowserStoredObjectType.UserSession);
-         IsUserRecipient = RecipientId.Equals(session.UserId);
+
+         IsUserRecipient = UserSessionService.Session.Match(
+            () => false,
+            session => session.Username == RecipientUsername);
       }
 
       protected abstract Task OnDecryptClicked();
 
-      protected async Task<(bool Success, string RecipientX25519PrivateKey)> DecodeX25519RecipientKey()
+      protected Maybe<PEMString> DecodeX25519RecipientKey()
       {
          if (IsUserRecipient)
          {
-            return (true, await BrowserStorageService.GetItemAsync<string>(BrowserStoredObjectType.PlaintextX25519PrivateKey));
+            return UserKeysService.X25519PrivateKey;
          }
 
          try
          {
             byte[] bytes = Convert.FromBase64String(EncodedX25519PrivateKey);
-            var pem = Encoding.UTF8.GetString(bytes);
-            return (true, pem);
+            return PEMString.From(Encoding.UTF8.GetString(bytes));
          }
          catch (FormatException)
          {
             DecryptionInProgress = false;
             ErrorMessage = "Invalid key format";
-            return (false, null);
+            return Maybe<PEMString>.None;
          }
       }
 
-      protected static (byte[] ReceiveKey, byte[] ServerKey) DeriveSymmetricKeys(string recipientX25519PrivatePEM, string senderX25519PublicPEM)
+      protected static (byte[] ReceiveKey, byte[] ServerKey) DeriveSymmetricKeys(PEMString recipientX25519PrivateKey, PEMString senderX25519PublicKey)
       {
-         var recipientX25519Private = KeyConversion.ConvertX25519PrivateKeyFromPEM(recipientX25519PrivatePEM);
+         var recipientX25519Private = KeyConversion.ConvertX25519PrivateKeyFromPEM(recipientX25519PrivateKey);
          var recipientX25519Public = recipientX25519Private.GeneratePublicKey();
          var recipientKeyPair = new AsymmetricCipherKeyPair(recipientX25519Public, recipientX25519Private);
 
-         var senderX25519Public = KeyConversion.ConvertX25519PublicKeyFromPEM(senderX25519PublicPEM);
+         var senderX25519Public = KeyConversion.ConvertX25519PublicKeyFromPEM(senderX25519PublicKey);
          (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(recipientKeyPair, senderX25519Public);
          var digestor = new SHA(SHAFunction.SHA256);
          digestor.BlockUpdate(sendKey);
@@ -164,7 +162,7 @@ namespace Crypter.Web.Shared.Transfer
          return symmetricEncryption.ProcessFinal(ciphertext);
       }
 
-      protected static bool VerifySignature(byte[] plaintext, byte[] signature, string ed25519PublicKey)
+      protected static bool VerifySignature(byte[] plaintext, byte[] signature, PEMString ed25519PublicKey)
       {
          var ed25519PublicDecoded = KeyConversion.ConvertEd25519PublicKeyFromPEM(ed25519PublicKey);
 

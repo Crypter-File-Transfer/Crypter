@@ -34,7 +34,7 @@
             <li class="list-group-item"><span class="fw-bold">File name: </span>@FileName</li>
             <li class="list-group-item">
                <span class="fw-bold">Sender: </span>
-               @if (SenderId == Guid.Empty)
+               @if (string.IsNullOrEmpty(SenderUsername))
                {
                   <span>Unknown</span>
                }

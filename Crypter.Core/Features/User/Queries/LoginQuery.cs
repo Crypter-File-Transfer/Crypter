@@ -66,18 +66,10 @@ namespace Crypter.Core.Features.User.Queries
    public class LoginQueryResult
    {
       public Guid UserId { get; private set; }
-      public string EncryptedX25519PrivateKey { get; private set; }
-      public string EncryptedEd25519PrivateKey { get; private set; }
-      public string InitVectorX25519 { get; private set; }
-      public string InitVectorEd25519 { get; private set; }
 
-      public LoginQueryResult(Guid userId, string encryptedX25519PrivateKey, string encryptedEd25519PrivateKey, string initVectorX25519, string initVectorEd25519)
+      public LoginQueryResult(Guid userId)
       {
          UserId = userId;
-         EncryptedX25519PrivateKey = encryptedX25519PrivateKey;
-         EncryptedEd25519PrivateKey = encryptedEd25519PrivateKey;
-         InitVectorX25519 = initVectorX25519;
-         InitVectorEd25519 = initVectorEd25519;
       }
    }
 
@@ -96,8 +88,6 @@ namespace Crypter.Core.Features.User.Queries
       {
          string lowerUsername = request.Username.Value.ToLower();
          Models.User user = await _context.Users
-            .Include(x => x.X25519KeyPair)
-            .Include(x => x.Ed25519KeyPair)
             .FirstOrDefaultAsync(x => x.Username.ToLower() == lowerUsername, cancellationToken);
 
          if (user is null)
@@ -107,7 +97,7 @@ namespace Crypter.Core.Features.User.Queries
 
          bool passwordsMatch = _passwordHashService.VerifySecurePasswordHash(request.Password, user.PasswordHash, user.PasswordSalt);
          return passwordsMatch
-            ? new LoginQueryResult(user.Id, user.X25519KeyPair?.PrivateKey, user.Ed25519KeyPair?.PrivateKey, user.X25519KeyPair?.ClientIV, user.Ed25519KeyPair?.ClientIV)
+            ? new LoginQueryResult(user.Id)
             : LoginError.NotFound;
       }
    }

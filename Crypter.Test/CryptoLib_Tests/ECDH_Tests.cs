@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using NUnit.Framework;
@@ -79,8 +80,8 @@ namespace Crypter.Test.CryptoLib_Tests
          var alicePemFile = Path.Combine(directory, "CryptoLib_Tests", "Assets", "Alice_ECDH_Key.pem");
          var bobPemFile = Path.Combine(directory, "CryptoLib_Tests", "Assets", "Bob_ECDH_Key.pem");
 
-         var alicePemKey = File.ReadAllText(alicePemFile);
-         var bobPemKey = File.ReadAllText(bobPemFile);
+         var alicePemKey = PEMString.From(File.ReadAllText(alicePemFile));
+         var bobPemKey = PEMString.From(File.ReadAllText(bobPemFile));
 
          var alicePrivate = KeyConversion.ConvertX25519PrivateKeyFromPEM(alicePemKey);
          var bobPrivate = KeyConversion.ConvertX25519PrivateKeyFromPEM(bobPemKey);

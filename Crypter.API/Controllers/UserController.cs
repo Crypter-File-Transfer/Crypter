@@ -32,6 +32,7 @@ using Crypter.Common.Primitives;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.User.AddContact;
 using Crypter.Contracts.Features.User.GetContacts;
+using Crypter.Contracts.Features.User.GetPrivateKey;
 using Crypter.Contracts.Features.User.GetPublicProfile;
 using Crypter.Contracts.Features.User.GetReceivedTransfers;
 using Crypter.Contracts.Features.User.GetSentTransfers;
@@ -401,6 +402,28 @@ namespace Crypter.API.Controllers
       }
 
       [Authorize]
+      [HttpGet("settings/keys/x25519/private")]
+      public async Task<IActionResult> GetDiffieHellmanPrivateKeyAsync(CancellationToken cancellationToken)
+      {
+         static IActionResult MakeErrorResponse(GetPrivateKeyError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+            return error switch
+            {
+               GetPrivateKeyError.NotFound => new NotFoundObjectResult(errorResponse),
+               _ => throw new NotImplementedException()
+            };
+         }
+
+         var userId = _tokenService.ParseUserId(User);
+
+         var queryResult = await _mediator.Send(new UserX25519PrivateKeyQuery(userId), cancellationToken);
+         return queryResult.Match(
+            () => MakeErrorResponse(GetPrivateKeyError.NotFound),
+            some => new OkObjectResult(new GetPrivateKeyResponse(some.EncryptedPrivateKey, some.IV)));
+      }
+
+      [Authorize]
       [HttpPost("settings/keys/x25519")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateKeysResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
@@ -418,6 +441,28 @@ namespace Crypter.API.Controllers
          {
             return new BadRequestObjectResult(new ErrorResponse(UpdateKeysError.UnknownError));
          }
+      }
+
+      [Authorize]
+      [HttpGet("settings/keys/ed25519/private")]
+      public async Task<IActionResult> GetDigitalSignaturePrivateKeyAsync(CancellationToken cancellationToken)
+      {
+         static IActionResult MakeErrorResponse(GetPrivateKeyError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+            return error switch
+            {
+               GetPrivateKeyError.NotFound => new NotFoundObjectResult(errorResponse),
+               _ => throw new NotImplementedException()
+            };
+         }
+
+         var userId = _tokenService.ParseUserId(User);
+
+         var queryResult = await _mediator.Send(new UserEd25519PrivateKeyQuery(userId), cancellationToken);
+         return queryResult.Match(
+            () => MakeErrorResponse(GetPrivateKeyError.NotFound),
+            some => new OkObjectResult(new GetPrivateKeyResponse(some.EncryptedPrivateKey, some.IV)));
       }
 
       [Authorize]
@@ -490,7 +535,7 @@ namespace Crypter.API.Controllers
 
          var signature = EmailVerificationEncoder.DecodeSignatureFromUrlSafe(request.Signature);
 
-         var verificationKeyPem = Encoding.UTF8.GetString(emailVerificationEntity.VerificationKey);
+         var verificationKeyPem = PEMString.From(Encoding.UTF8.GetString(emailVerificationEntity.VerificationKey));
          var verificationKey = KeyConversion.ConvertEd25519PublicKeyFromPEM(verificationKeyPem);
 
          var verifier = new ECDSA();

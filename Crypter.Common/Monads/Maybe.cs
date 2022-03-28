@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 
 namespace Crypter.Common.Monads
 {
@@ -61,7 +62,7 @@ namespace Crypter.Common.Monads
 
       public void IfSome(Action<TValue> someAction)
       {
-         if (someAction == null)
+         if (someAction is null)
          {
             throw new ArgumentNullException(nameof(someAction));
          }
@@ -72,9 +73,22 @@ namespace Crypter.Common.Monads
          }
       }
 
+      public async Task IfSomeAsync(Func<TValue, Task> someTask)
+      {
+         if (someTask is null)
+         {
+            throw new ArgumentNullException(nameof(someTask));
+         }
+
+         if (IsSome)
+         {
+            await someTask(_value);
+         }
+      }
+
       public void IfNone(Action noneAction)
       {
-         if (noneAction == null)
+         if (noneAction is null)
          {
             throw new ArgumentNullException(nameof(noneAction));
          }
@@ -85,14 +99,14 @@ namespace Crypter.Common.Monads
          }
       }
 
-      public TOut Match<TOut>(Func<TOut> noneFunction, Func<TValue, TOut> someFunction)
+      public TResult Match<TResult>(Func<TResult> noneFunction, Func<TValue, TResult> someFunction)
       {
-         if (noneFunction == null)
+         if (noneFunction is null)
          {
             throw new ArgumentNullException(nameof(noneFunction));
          }
 
-         if (someFunction == null)
+         if (someFunction is null)
          {
             throw new ArgumentNullException(nameof(someFunction));
          }
@@ -100,6 +114,88 @@ namespace Crypter.Common.Monads
          return IsSome
             ? someFunction(_value)
             : noneFunction();
+      }
+
+      public async Task<TResult> MatchAsync<TResult>(Func<TResult> noneFunction, Func<TValue, Task<TResult>> someTask)
+      {
+         if (noneFunction is null)
+         {
+            throw new ArgumentNullException(nameof(noneFunction));
+         }
+
+         if (someTask is null)
+         {
+            throw new ArgumentNullException(nameof(someTask));
+         }
+
+         return IsSome
+            ? await someTask(_value)
+            : noneFunction();
+      }
+
+      public async Task<TResult> MatchAsync<TResult>(Func<Task<TResult>> noneTask, Func<TValue, TResult> someFunction)
+      {
+         if (noneTask is null)
+         {
+            throw new ArgumentNullException(nameof(noneTask));
+         }
+
+         if (someFunction is null)
+         {
+            throw new ArgumentNullException(nameof(someFunction));
+         }
+
+         return IsSome
+            ? someFunction(_value)
+            : await noneTask();
+      }
+
+      public Maybe<TResult> Map<TResult>(Func<TValue, TResult> mapFunction)
+      {
+         if (mapFunction is null)
+         {
+            throw new ArgumentNullException(nameof(mapFunction));
+         }
+
+         return IsSome
+            ? mapFunction(_value)
+            : Maybe<TResult>.None;
+      }
+
+      public async Task<Maybe<TResult>> MapAsync<TResult>(Func<TValue, Task<TResult>> mapTask)
+      {
+         if (mapTask is null)
+         {
+            throw new ArgumentNullException(nameof(mapTask));
+         }
+
+         return IsSome
+            ? await mapTask(_value)
+            : Maybe<TResult>.None;
+      }
+
+      public Maybe<TResult> Bind<TResult>(Func<TValue, Maybe<TResult>> bindFunction)
+      {
+         if (bindFunction is null)
+         {
+            throw new ArgumentNullException(nameof(bindFunction));
+         }
+
+         return IsSome
+            ? bindFunction(_value)
+            : Maybe<TResult>.None;
+      }
+
+      public async Task<Maybe<TResult>> BindAsync<TResult>(Func<TValue, Task<Maybe<TResult>>> bindTask)
+      {
+         if (bindTask is null)
+         {
+            throw new ArgumentNullException(nameof(bindTask));
+         }
+
+         return IsSome
+            ? await bindTask(_value)
+            : Maybe<TResult>.None;
       }
 
       /// <summary>
@@ -114,7 +210,7 @@ namespace Crypter.Common.Monads
             : defaultValue;
       }
 
-      public static Maybe<TValue> None() => new();
+      public static Maybe<TValue> None => new();
 
       public static implicit operator Maybe<TValue>(TValue value) => new(value);
    }

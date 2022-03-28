@@ -31,8 +31,6 @@ using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Contracts.Features.User.UpdateNotificationSettings;
 using Crypter.Contracts.Features.User.UpdatePrivacySettings;
 using Crypter.Contracts.Features.User.UpdateProfile;
-using Crypter.Web.Models.LocalStorage;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -42,13 +40,16 @@ namespace Crypter.Web.Pages
    public partial class UserSettingsBase : ComponentBase
    {
       [Inject]
-      NavigationManager NavigationManager { get; set; }
+      private NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
+      private IUserSessionService UserSessionService { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      private ICrypterApiService CrypterApiService { get; set; }
+
+      [Inject]
+      private IUserKeysService UserKeysService { get; set; }
 
       protected bool Loading;
       protected bool IsEditing;
@@ -58,7 +59,7 @@ namespace Crypter.Web.Pages
       protected bool ArePasswordControlsEnabled;
       protected bool ArePrivacyControlsEnabled;
 
-      protected Username Username;
+      protected string Username;
       protected string ProfileUrl;
 
       // Profile
@@ -109,13 +110,25 @@ namespace Crypter.Web.Pages
          ArePasswordControlsEnabled = false;
          ArePrivacyControlsEnabled = false;
 
-         if (!BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
+         if (!UserSessionService.LoggedIn)
          {
             NavigationManager.NavigateTo("/");
             return;
          }
 
-         await base.OnInitializedAsync();
+         Username = UserSessionService.Session.Match(
+            () => null,
+            some => some.Username);
+
+         ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
+
+         Ed25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
+            () => "",
+            some => some.Value);
+
+         X25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
+            () => "",
+            some => some.Value);
 
          await GetUserInfoAsync();
          Loading = false;
@@ -173,7 +186,9 @@ namespace Crypter.Web.Pages
             return;
          }
 
-         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(Username, password);
+         Username username = Common.Primitives.Username.From(Username);
+
+         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var request = new UpdateContactInfoRequest(EditedEmail, digestedPasswordBase64);
@@ -290,9 +305,8 @@ namespace Crypter.Web.Pages
       protected async Task GetUserInfoAsync()
       {
          var maybeSettings = await CrypterApiService.GetUserSettingsAsync();
-         await maybeSettings.DoRightAsync(async right =>
+         maybeSettings.DoRight(right =>
          {
-            Username = Username.From(right.Username);
             EmailVerified = right.EmailVerified;
             EditedEmail = Email = right.Email;
             EditedAlias = Alias = right.Alias;
@@ -301,15 +315,7 @@ namespace Crypter.Web.Pages
             EditedAllowKeyExchangeRequests = AllowKeyExchangeRequests = right.AllowKeyExchangeRequests;
             EditedMessageTransferPermission = MessageTransferPermission = (int)right.MessageTransferPermission;
             EditedFileTransferPermission = FileTransferPermission = (int)right.FileTransferPermission;
-
             EnableTransferNotifications = EditedEnableTransferNotifications = right.EnableTransferNotifications;
-
-            var encryptedX25519PrivateKey = (await BrowserStorageService.GetItemAsync<EncryptedPrivateKey>(BrowserStoredObjectType.EncryptedX25519PrivateKey)).Key;
-            var encryptedEd25519PrivateKey = (await BrowserStorageService.GetItemAsync<EncryptedPrivateKey>(BrowserStoredObjectType.EncryptedEd25519PrivateKey)).Key;
-
-            X25519PrivateKey = encryptedX25519PrivateKey;
-            Ed25519PrivateKey = encryptedEd25519PrivateKey;
-            ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username.Value}";
          });
       }
    }

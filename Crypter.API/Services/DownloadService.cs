@@ -81,10 +81,20 @@ namespace Crypter.API.Services
             return new NotFoundObjectResult(new ErrorResponse(DownloadTransferPreviewError.NotFound));
          }
 
-         var messageBelongsToSomeoneElse = possibleMessage.Recipient != Guid.Empty && possibleMessage.Recipient != requestorId;
-         if (messageBelongsToSomeoneElse)
+         string? recipientUsername = null;
+         if (possibleMessage.Recipient != Guid.Empty)
          {
-            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferPreviewError.NotFound));
+            bool messageBelongsToSomeoneElse = possibleMessage.Recipient != requestorId;
+            if (messageBelongsToSomeoneElse)
+            {
+               return new NotFoundObjectResult(new ErrorResponse(DownloadTransferPreviewError.NotFound));
+            }
+
+            var possibleUser = await UserService.ReadAsync(requestorId, cancellationToken);
+            if (possibleUser != null)
+            {
+               recipientUsername = possibleUser.Username;
+            }
          }
 
          string? senderUsername = null;
@@ -105,7 +115,7 @@ namespace Crypter.API.Services
          }
 
          return new OkObjectResult(
-            new DownloadTransferMessagePreviewResponse(possibleMessage.Subject, possibleMessage.Size, possibleMessage.Sender, senderUsername, senderAlias, possibleMessage.Recipient, possibleMessage.X25519PublicKey, possibleMessage.Created, possibleMessage.Expiration));
+            new DownloadTransferMessagePreviewResponse(possibleMessage.Subject, possibleMessage.Size, senderUsername, senderAlias, recipientUsername, possibleMessage.X25519PublicKey, possibleMessage.Created, possibleMessage.Expiration));
       }
 
       public async Task<IActionResult> GetFilePreviewAsync(DownloadTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken)
@@ -116,10 +126,20 @@ namespace Crypter.API.Services
             return new NotFoundObjectResult(new ErrorResponse(DownloadTransferPreviewError.NotFound));
          }
 
-         var fileBelongsToSomeoneElse = possibleFile.Recipient != Guid.Empty && possibleFile.Recipient != requestorId;
-         if (fileBelongsToSomeoneElse)
+         string? recipientUsername = null;
+         if (possibleFile.Recipient != Guid.Empty)
          {
-            return new NotFoundObjectResult(new ErrorResponse(DownloadTransferPreviewError.NotFound));
+            bool messageBelongsToSomeoneElse = possibleFile.Recipient != requestorId;
+            if (messageBelongsToSomeoneElse)
+            {
+               return new NotFoundObjectResult(new ErrorResponse(DownloadTransferPreviewError.NotFound));
+            }
+
+            var possibleUser = await UserService.ReadAsync(requestorId, cancellationToken);
+            if (possibleUser != null)
+            {
+               recipientUsername = possibleUser.Username;
+            }
          }
 
          string? senderUsername = null;
@@ -140,7 +160,7 @@ namespace Crypter.API.Services
          }
 
          return new OkObjectResult(
-            new DownloadTransferFilePreviewResponse(possibleFile.FileName, possibleFile.ContentType, possibleFile.Size, possibleFile.Sender, senderUsername, senderAlias, possibleFile.Recipient, possibleFile.X25519PublicKey, possibleFile.Created, possibleFile.Expiration));
+            new DownloadTransferFilePreviewResponse(possibleFile.FileName, possibleFile.ContentType, possibleFile.Size, senderUsername, senderAlias, recipientUsername, possibleFile.X25519PublicKey, possibleFile.Created, possibleFile.Expiration));
       }
 
       public async Task<IActionResult> GetMessageCiphertextAsync(DownloadTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken)

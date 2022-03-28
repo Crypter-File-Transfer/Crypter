@@ -24,12 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Implementations;
 using Crypter.ClientServices.Interfaces;
 using Crypter.CryptoLib.Services;
 using Crypter.Web;
 using Crypter.Web.Models;
-using Crypter.Web.Services;
+using Crypter.Web.Repositories;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -55,10 +56,12 @@ builder.Services.AddSingleton<IClientApiSettings>(sp =>
 builder.Services
    .AddBlazorDownloadFile()
    .AddScoped(sp => new HttpClient())
-   .AddScoped<ISessionService, SessionService>()
    .AddScoped<IHttpService, HttpService>()
-   .AddScoped<ITokenRepository, TokenRepository>()
-   .AddScoped<IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation>, BrowserStorageService>()
+   .AddScoped<IDeviceRepository<BrowserStorageLocation>, BrowserRepository>()
+   .AddScoped<ITokenRepository, BrowserTokenRepository>()
+   .AddScoped<IUserKeysRepository, BrowserUserKeysRepository>()
+   .AddScoped<IUserSessionRepository, BrowserUserSessionRepository>()
+   .AddScoped<IUserSessionService, UserSessionService<BrowserStorageLocation>>()
    .AddScoped<ICrypterApiService, CrypterApiService>()
    .AddScoped<IUserKeysService, UserKeysService>()
    .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>()

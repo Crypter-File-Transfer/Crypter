@@ -88,25 +88,25 @@ namespace Crypter.Common.Monads
 
       private static void ValidateMatch<TL, TR>(Func<TLeft, TL> leftFunction, Func<TRight, TR> rightFunction)
       {
-         if (leftFunction == null)
+         if (leftFunction is null)
          {
             throw new ArgumentNullException(nameof(leftFunction));
          }
 
-         if (rightFunction == null)
+         if (rightFunction is null)
          {
             throw new ArgumentNullException(nameof(rightFunction));
          }
       }
 
-      private static T MatchBottom<T>(Func<T> bottomFunction = null)
+      private static TResult MatchBottom<TResult>(Func<TResult> bottomFunction = null)
       {
          return bottomFunction is null
                ? default
                : bottomFunction();
       }
 
-      public T Match<T>(Func<TLeft, T> leftFunction, Func<TRight, T> rightFunction, Func<T> bottomFunction = null)
+      public TResult Match<TResult>(Func<TLeft, TResult> leftFunction, Func<TRight, TResult> rightFunction, Func<TResult> bottomFunction = null)
       {
          ValidateMatch(leftFunction, rightFunction);
 
@@ -119,48 +119,96 @@ namespace Crypter.Common.Monads
          };
       }
 
-      public async Task<T> MatchAsync<T>(Func<TLeft, Task<T>> leftFunction, Func<TRight, T> rightFunction, Func<T> bottomFunction = null)
+      public async Task<TResult> MatchAsync<TResult>(Func<TLeft, Task<TResult>> leftTask, Func<TRight, TResult> rightFunction, Func<TResult> bottomFunction = null)
       {
-         ValidateMatch(leftFunction, rightFunction);
+         ValidateMatch(leftTask, rightFunction);
 
          return _state switch
          {
             EitherState.Bottom => MatchBottom(bottomFunction),
-            EitherState.Left => await leftFunction(_left),
+            EitherState.Left => await leftTask(_left),
             EitherState.Right => rightFunction(_right),
             _ => throw new NotImplementedException()
          };
       }
 
-      public async Task<T> MatchAsync<T>(Func<TLeft, T> leftFunction, Func<TRight, Task<T>> rightFunction, Func<T> bottomFunction = null)
+      public async Task<TResult> MatchAsync<TResult>(Func<TLeft, TResult> leftFunction, Func<TRight, Task<TResult>> rightTask, Func<TResult> bottomFunction = null)
       {
-         ValidateMatch(leftFunction, rightFunction);
+         ValidateMatch(leftFunction, rightTask);
 
          return _state switch
          {
             EitherState.Bottom => MatchBottom(bottomFunction),
             EitherState.Left => leftFunction(_left),
-            EitherState.Right => await rightFunction(_right),
+            EitherState.Right => await rightTask(_right),
             _ => throw new NotImplementedException()
          };
       }
 
-      public async Task<T> MatchAsync<T>(Func<TLeft, Task<T>> leftFunction, Func <TRight, Task<T>> rightFunction, Func<T> bottomFunction = null)
+      public async Task<TResult> MatchAsync<TResult>(Func<TLeft, Task<TResult>> leftTask, Func <TRight, Task<TResult>> rightTask, Func<TResult> bottomFunction = null)
       {
-         ValidateMatch(leftFunction, rightFunction);
+         ValidateMatch(leftTask, rightTask);
 
          return _state switch
          {
             EitherState.Bottom => MatchBottom(bottomFunction),
-            EitherState.Left => await leftFunction(_left),
-            EitherState.Right => await rightFunction(_right),
+            EitherState.Left => await leftTask(_left),
+            EitherState.Right => await rightTask(_right),
             _ => throw new NotImplementedException()
          };
+      }
+
+      public Either<TLeft, TResult> Map<TResult>(Func<TRight, TResult> mapFunction)
+      {
+         if (mapFunction is null)
+         {
+            throw new ArgumentNullException(nameof(mapFunction));
+         }
+
+         return IsRight
+            ? mapFunction(_right)
+            : new Either<TLeft, TResult>(_left);
+      }
+
+      public async Task<Either<TLeft, TResult>> MapAsync<TResult>(Func<TRight, Task<TResult>> mapTask)
+      {
+         if (mapTask is null)
+         {
+            throw new ArgumentNullException(nameof(mapTask));
+         }
+
+         return IsRight
+            ? await mapTask(_right)
+            : new Either<TLeft, TResult>(_left);
+      }
+
+      public Either<TLeft, TResult> Bind<TResult>(Func<TRight, Either<TLeft, TResult>> bindFunction)
+      {
+         if (bindFunction is null)
+         {
+            throw new ArgumentNullException(nameof(bindFunction));
+         }
+
+         return IsRight
+            ? bindFunction(_right)
+            : new Either<TLeft, TResult>(_left);
+      }
+
+      public async Task<Either<TLeft, TResult>> BindAsync<TResult>(Func<TRight, Task<Either<TLeft, TResult>>> bindTask)
+      {
+         if (bindTask is null)
+         {
+            throw new ArgumentNullException(nameof(bindTask));
+         }
+
+         return IsRight
+            ? await bindTask(_right)
+            : new Either<TLeft, TResult>(_left);
       }
 
       public void DoRight(Action<TRight> rightAction)
       {
-         if (rightAction == null)
+         if (rightAction is null)
          {
             throw new ArgumentNullException(nameof(rightAction));
          }
@@ -173,7 +221,7 @@ namespace Crypter.Common.Monads
 
       public async Task DoRightAsync(Func<TRight, Task> rightTask)
       {
-         if (rightTask == null)
+         if (rightTask is null)
          {
             throw new ArgumentNullException(nameof(rightTask));
          }
@@ -186,7 +234,7 @@ namespace Crypter.Common.Monads
 
       public void DoLeft(Action<TLeft> leftAction)
       {
-         if (leftAction == null)
+         if (leftAction is null)
          {
             throw new ArgumentNullException(nameof(leftAction));
          }
@@ -199,7 +247,7 @@ namespace Crypter.Common.Monads
 
       public async Task DoLeftAsync(Func<TLeft, Task> leftTask)
       {
-         if (leftTask == null)
+         if (leftTask is null)
          {
             throw new ArgumentNullException(nameof(leftTask));
          }

@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using NUnit.Framework;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -49,11 +50,11 @@ namespace Crypter.Test.CryptoLib_Tests
             0x96, 0x50, 0x46, 0x3c, 0x40, 0xe4, 0xba, 0x60
          };
 
-         var knownPem = @"-----BEGIN PRIVATE KEY-----
+         var knownPem = PEMString.From(@"-----BEGIN PRIVATE KEY-----
 MFECAQEwBQYDK2VuBCIEIMgIsnIoed7vL0TR4K7XLj/XLKMi3e+Sb5ZQRjxA5Lpg
 gSEAj5qsk+931xpwHXrN40pnxXSEz08Hxuhw2wABl+GG9yA=
 -----END PRIVATE KEY-----
-".ReplaceLineEndings();
+".ReplaceLineEndings());
 
          var privateKey = new X25519PrivateKeyParameters(knownPrivateKey);
          var pem = privateKey.ConvertToPEM();
@@ -72,10 +73,10 @@ gSEAj5qsk+931xpwHXrN40pnxXSEz08Hxuhw2wABl+GG9yA=
             0xdb, 0x00, 0x01, 0x97, 0xe1, 0x86, 0xf7, 0x20
          };
 
-         var knownPem = @"-----BEGIN PUBLIC KEY-----
+         var knownPem = PEMString.From(@"-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VuAyEAj5qskz931xpwHXrN40pnxXSEz08Hxuhw2wABl+GG9yA=
 -----END PUBLIC KEY-----
-".ReplaceLineEndings();
+".ReplaceLineEndings());
 
          var publicKey = new X25519PublicKeyParameters(knownPublicKey);
          var pem = publicKey.ConvertToPEM();
@@ -94,11 +95,11 @@ MCowBQYDK2VuAyEAj5qskz931xpwHXrN40pnxXSEz08Hxuhw2wABl+GG9yA=
             0x96, 0x50, 0x46, 0x3c, 0x40, 0xe4, 0xba, 0x60
          };
 
-         var knownPem = @"-----BEGIN PRIVATE KEY-----
+         var knownPem = PEMString.From(@"-----BEGIN PRIVATE KEY-----
 MFECAQEwBQYDK2VuBCIEIMgIsnIoed7vL0TR4K7XLj/XLKMi3e+Sb5ZQRjxA5Lpg
 gSEAj5qsk+931xpwHXrN40pnxXSEz08Hxuhw2wABl+GG9yA=
 -----END PRIVATE KEY-----
-".ReplaceLineEndings();
+".ReplaceLineEndings());
 
          var privateKey = KeyConversion.ConvertX25519PrivateKeyFromPEM(knownPem);
 
@@ -116,10 +117,10 @@ gSEAj5qsk+931xpwHXrN40pnxXSEz08Hxuhw2wABl+GG9yA=
             0xdb, 0x00, 0x01, 0x97, 0xe1, 0x86, 0xf7, 0x20
          };
 
-         var knownPem = @"-----BEGIN PUBLIC KEY-----
+         var knownPem = PEMString.From(@"-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VuAyEAj5qskz931xpwHXrN40pnxXSEz08Hxuhw2wABl+GG9yA=
 -----END PUBLIC KEY-----
-".ReplaceLineEndings();
+".ReplaceLineEndings());
 
          var publicKey = KeyConversion.ConvertX25519PublicKeyFromPEM(knownPem);
 
@@ -137,11 +138,11 @@ MCowBQYDK2VuAyEAj5qskz931xpwHXrN40pnxXSEz08Hxuhw2wABl+GG9yA=
             0xcc, 0xb0, 0xa7, 0x08, 0x66, 0x2d, 0x51, 0xde
          };
 
-         var knownPem = @"-----BEGIN PRIVATE KEY-----
+         var knownPem = PEMString.From(@"-----BEGIN PRIVATE KEY-----
 MFECAQEwBQYDK2VwBCIEILySeF6It1PLli+Es6LIWRxWzE6t4pH4g8ywpwhmLVHe
 gSEAyTUnqI1OY2JSoXWosTJYszV6J6AXSCAVu+24eWgh89M=
 -----END PRIVATE KEY-----
-".ReplaceLineEndings();
+".ReplaceLineEndings());
 
          var privateKey = new Ed25519PrivateKeyParameters(knownPrivateKey);
          var pem = privateKey.ConvertToPEM();
@@ -160,10 +161,10 @@ gSEAyTUnqI1OY2JSoXWosTJYszV6J6AXSCAVu+24eWgh89M=
             0xbb, 0xed, 0xb8, 0x79, 0x68, 0x21, 0xf3, 0xd3
          };
 
-         var knownPem = @"-----BEGIN PUBLIC KEY-----
+         var knownPem = PEMString.From(@"-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAyTUnqI1OY2JSoXWosTJYszV6J6AXSCAVu+24eWgh89M=
 -----END PUBLIC KEY-----
-".ReplaceLineEndings();
+".ReplaceLineEndings());
 
          var publicKey = new Ed25519PublicKeyParameters(knownPublicKey);
          var pem = publicKey.ConvertToPEM();
@@ -182,11 +183,11 @@ MCowBQYDK2VwAyEAyTUnqI1OY2JSoXWosTJYszV6J6AXSCAVu+24eWgh89M=
             0xcc, 0xb0, 0xa7, 0x08, 0x66, 0x2d, 0x51, 0xde
          };
 
-         var knownPem = @"-----BEGIN PRIVATE KEY-----
+         var knownPem = PEMString.From(@"-----BEGIN PRIVATE KEY-----
 MFECAQEwBQYDK2VwBCIEILySeF6It1PLli+Es6LIWRxWzE6t4pH4g8ywpwhmLVHe
 gSEAyTUnqI1OY2JSoXWosTJYszV6J6AXSCAVu+24eWgh89M=
 -----END PRIVATE KEY-----
-".ReplaceLineEndings();
+".ReplaceLineEndings());
 
          var privateKey = KeyConversion.ConvertEd25519PrivateKeyFromPEM(knownPem);
 
@@ -204,10 +205,10 @@ gSEAyTUnqI1OY2JSoXWosTJYszV6J6AXSCAVu+24eWgh89M=
             0xbb, 0xed, 0xb8, 0x79, 0x68, 0x21, 0xf3, 0xd3
          };
 
-         var knownPem = @"-----BEGIN PUBLIC KEY-----
+         var knownPem = PEMString.From(@"-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAyTUnqI1OY2JSoXWosTJYszV6J6AXSCAVu+24eWgh89M=
 -----END PUBLIC KEY-----
-".ReplaceLineEndings();
+".ReplaceLineEndings());
 
          var publicKey = KeyConversion.ConvertEd25519PublicKeyFromPEM(knownPem);
 

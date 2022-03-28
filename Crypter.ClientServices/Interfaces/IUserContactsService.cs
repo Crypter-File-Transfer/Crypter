@@ -40,6 +40,6 @@ namespace Crypter.ClientServices.Interfaces
       bool IsContact(Guid userId);
       Task<Either<AddUserContactError, UserContactDTO>> AddContactAsync(Guid userId);
       Task RemoveContactAsync(Guid userId);
-      void Dispose();
+      void Recycle();
    }
 }

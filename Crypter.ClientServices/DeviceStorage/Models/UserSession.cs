@@ -24,19 +24,27 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+using Crypter.Common.Primitives;
+using System.Text.Json.Serialization;
 
-namespace Crypter.Web.Models.LocalStorage
+namespace Crypter.ClientServices.DeviceStorage.Models
 {
    public class UserSession
    {
-      public Guid UserId { get; set; }
       public string Username { get; set; }
+      public bool RememberUser { get; set; }
 
-      public UserSession(Guid userId, string username)
+      [JsonConstructor]
+      public UserSession(string username, bool rememberUser)
       {
-         UserId = userId;
          Username = username;
+         RememberUser = rememberUser;
+      }
+
+      public UserSession(Username username, bool rememberUser)
+      {
+         Username = username.Value;
+         RememberUser = rememberUser;
       }
    }
 }

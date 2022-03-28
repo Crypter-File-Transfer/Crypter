@@ -26,7 +26,6 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Contracts.Features.User.Search;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.WebUtilities;
@@ -52,14 +51,14 @@ namespace Crypter.Web.Pages
       protected IUserContactsService UserContactsService { get; set; }
 
       [Inject]
-      private ISessionService SessionService { get; set; }
+      private IUserSessionService UserSessionService { get; set; }
 
       protected UserSearchParameters SearchParameters = new("");
       protected UserSearchResponse SearchResults;
 
       protected override async Task OnInitializedAsync()
       {
-         if (!SessionService.IsLoggedIn)
+         if (!UserSessionService.LoggedIn)
          {
             NavigationManager.NavigateTo("/");
             return;

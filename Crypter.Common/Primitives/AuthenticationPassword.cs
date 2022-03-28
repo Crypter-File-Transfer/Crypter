@@ -64,7 +64,7 @@ namespace Crypter.Common.Primitives
             return StringPrimitiveValidationFailure.IsEmpty;
          }
 
-         return Maybe<StringPrimitiveValidationFailure>.None();
+         return Maybe<StringPrimitiveValidationFailure>.None;
       }
    }
 }

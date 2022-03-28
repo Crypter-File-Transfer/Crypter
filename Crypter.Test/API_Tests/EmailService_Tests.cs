@@ -88,7 +88,7 @@ namespace Crypter.Test.API_Tests
       public async Task HangfireEmailVerification_UserEmailIsEmpty_EmailNotSent()
       {
          var username = Username.From("jack");
-         var noEmailAddress = Maybe<EmailAddress>.None();
+         var noEmailAddress = Maybe<EmailAddress>.None;
          var user = new User(Guid.NewGuid(), username, noEmailAddress, default, default, false, default, default);
 
          var mockUserService = new Mock<IUserService>();

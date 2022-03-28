@@ -26,6 +26,13 @@ Also take a look at some of the articles that have come in handy while working o
 
 A RESTful API written using ASP.NET.
 
+#### Crypter.ClientServices
+
+A class library containing various interfaces and most of their implementations.
+
+The "Repository" interfaces must be implemented per-environment, since these implementations must decide where and how to store data on the client device.
+These decisions and locations are device-specific.  For example, storing data in a browser is likely to be different than storing data on a mobile phone.
+
 ### Crypter.Common
 
 A class library containing code that may be used in both client and server applications.

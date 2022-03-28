@@ -24,22 +24,21 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.DeviceStorage.Models;
+using Crypter.Common.Enums;
+using Crypter.Common.Monads;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Interfaces
 {
    /// <summary>
-   /// This interface is intended to be used by other services that
-   /// need access to the locally stored authentication and refresh tokens.
-   /// 
-   /// A class that implements this interface will likely need to implement
-   /// some other methods that save or store these tokens on the device.
+   /// Simple abstraction over IDeviceRepository
    /// </summary>
    public interface ITokenRepository
    {
       Task StoreAuthenticationTokenAsync(string token);
-      Task<string> GetAuthenticationTokenAsync();
-      Task StoreRefreshTokenAsync(string token);
-      Task<string> GetRefreshTokenAsync();
+      Task<Maybe<TokenObject>> GetAuthenticationTokenAsync();
+      Task StoreRefreshTokenAsync(string token, TokenType tokenType);
+      Task<Maybe<TokenObject>> GetRefreshTokenAsync();
    }
 }

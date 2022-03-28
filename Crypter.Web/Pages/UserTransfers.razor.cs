@@ -29,7 +29,6 @@ using Crypter.Common.Enums;
 using Crypter.Contracts.Features.User.GetReceivedTransfers;
 using Crypter.Contracts.Features.User.GetSentTransfers;
 using Crypter.Web.Models;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,10 +39,10 @@ namespace Crypter.Web.Pages
    public partial class UserTransfersBase : ComponentBase
    {
       [Inject]
-      NavigationManager NavigationManager { get; set; }
+      private NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
+      private IUserSessionService UserSessionService { get; set; }
 
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
@@ -53,13 +52,11 @@ namespace Crypter.Web.Pages
 
       protected override async Task OnInitializedAsync()
       {
-         if (!BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
+         if (!UserSessionService.LoggedIn)
          {
             NavigationManager.NavigateTo("/");
             return;
          }
-
-         await base.OnInitializedAsync();
 
          Sent = await GetUserSentItems();
          Received = await GetUserReceivedItems();

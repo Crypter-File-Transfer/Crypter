@@ -24,23 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-using System.Threading.Tasks;
+using Crypter.Common.Enums;
 
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.ClientServices.DeviceStorage.Models
 {
-   public interface IDeviceStorageService<TItem, TLocation>
-      where TItem : Enum
-      where TLocation : Enum
+   public class TokenObject
    {
-      bool IsInitialized { get; }
-      Task InitializeAsync();
-      Task<TValue> GetItemAsync<TValue>(TItem itemType);
-      bool HasItem(TItem itemType);
-      TLocation GetItemLocation(TItem itemType);
-      Task SetItemAsync<TValue>(TItem itemType, TValue value, TLocation location);
-      Task ReplaceItemAsync<TValue>(TItem itemType, TValue value);
-      Task RemoveItemAsync(TItem itemType);
-      Task DisposeAsync();
+      public TokenType TokenType { get; set; }
+      public string Token { get; set; }
+
+      public TokenObject(TokenType tokenType, string token)
+      {
+         TokenType = tokenType;
+         Token = token;
+      }
    }
 }

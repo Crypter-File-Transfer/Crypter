@@ -30,7 +30,6 @@ using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;
 using Crypter.Contracts.Features.User.Register;
 using Crypter.Web.Models.Forms;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -39,12 +38,6 @@ namespace Crypter.Web.Shared
 {
    public partial class RegisterComponentBase : ComponentBase
    {
-      [Inject]
-      protected NavigationManager NavigationManager { get; set; }
-
-      [Inject]
-      IDeviceStorageService<BrowserStoredObjectType, BrowserStorageLocation> BrowserStorageService { get; set; }
-
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
 
@@ -72,12 +65,6 @@ namespace Crypter.Web.Shared
 
       protected override void OnInitialized()
       {
-         if (BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession))
-         {
-            NavigationManager.NavigateTo("/user");
-            return;
-         }
-
          RegistrationModel = new();
       }
 
@@ -163,7 +150,7 @@ namespace Crypter.Web.Shared
          bool isEmailAddressEmpty = string.IsNullOrEmpty(RegistrationModel.EmailAddress);
          if (isEmailAddressEmpty)
          {
-            return Maybe<EmailAddress>.None();
+            return Maybe<EmailAddress>.None;
          }
 
          var validationResult = EmailAddress.CheckValidation(RegistrationModel.EmailAddress);

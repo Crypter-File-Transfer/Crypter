@@ -172,7 +172,7 @@ namespace Crypter.API.Services
          var success = await SendEmailVerificationAsync(emailAddress, verificationCode, keys.Private);
          if (success)
          {
-            byte[] verificationKey = Encoding.UTF8.GetBytes(keys.Public.ConvertToPEM());
+            byte[] verificationKey = Encoding.UTF8.GetBytes(keys.Public.ConvertToPEM().Value);
             await UserEmailVerificationService.InsertAsync(userId, verificationCode, verificationKey, CancellationToken.None);
          }
       }

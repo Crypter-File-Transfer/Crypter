@@ -41,19 +41,27 @@
                {
                   <h2>@Alias</h2>
                }
-               <h3>@($@"{ActualUsername}")</h3>
+               <h3>@ProperUsername</h3>
                <p>@About</p>
                <div class="row">
                   <div class="col-12">
                      @if (AllowsFiles)
                      {
-                        <button class="btn btn-secondary mr-3" @onclick="async () => await FileModal.Open()">Send a file</button>
-                        <UploadFileTransferModal @ref="FileModal" IsRecipientDefined=true RecipientId="@UserId" RecipientX25519PublicKey="@UserX25519PublicKey" RecipientEd25519PublicKey="@UserEd25519PublicKey" />
+                        <button class="btn btn-secondary mr-3" @onclick="() => FileModal.Open()">Send a file</button>
+                        <UploadFileTransferModal @ref="FileModal"
+                           IsRecipientDefined=true
+                           Recipient="@ProperUsername"
+                           RecipientX25519PublicKey="@UserX25519PublicKey"
+                           RecipientEd25519PublicKey="@UserEd25519PublicKey" />
                      }
                      @if (AllowsMessages)
                      {
-                        <button class="btn btn-secondary" @onclick="async () => await MessageModal.Open()">Send a message</button>
-                        <UploadMessageTransferModal @ref="MessageModal" IsRecipientDefined=true RecipientId="@UserId" RecipientX25519PublicKey="@UserX25519PublicKey" RecipientEd25519PublicKey="@UserEd25519PublicKey" />
+                        <button class="btn btn-secondary" @onclick="() => MessageModal.Open()">Send a message</button>
+                        <UploadMessageTransferModal @ref="MessageModal"
+                           IsRecipientDefined=true
+                           Recipient="@ProperUsername"
+                           RecipientX25519PublicKey="@UserX25519PublicKey"
+                           RecipientEd25519PublicKey="@UserEd25519PublicKey" />
                      }
                   </div>
                </div>

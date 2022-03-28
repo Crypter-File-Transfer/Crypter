@@ -36,6 +36,7 @@ using Crypter.Contracts.Features.Transfer.DownloadSignature;
 using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.Contracts.Features.User.AddContact;
 using Crypter.Contracts.Features.User.GetContacts;
+using Crypter.Contracts.Features.User.GetPrivateKey;
 using Crypter.Contracts.Features.User.GetPublicProfile;
 using Crypter.Contracts.Features.User.GetReceivedTransfers;
 using Crypter.Contracts.Features.User.GetSentTransfers;
@@ -72,7 +73,9 @@ namespace Crypter.ClientServices.Interfaces
       Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(UpdateContactInfoRequest request);
       Task<Either<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>> UpdateUserPrivacyAsync(UpdatePrivacySettingsRequest request);
       Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpdateUserNotificationAsync(UpdateNotificationSettingsRequest request);
+      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetUserX25519PrivateKeyAsync();
       Task<Either<UpdateKeysError, UpdateKeysResponse>> InsertUserX25519KeysAsync(UpdateKeysRequest request);
+      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetUserEd25519PrivateKeyAsync();
       Task<Either<UpdateKeysError, UpdateKeysResponse>> InsertUserEd25519KeysAsync(UpdateKeysRequest request);
       Task<Either<DummyError, UserSentMessagesResponse>> GetUserSentMessagesAsync();
       Task<Either<DummyError, UserSentFilesResponse>> GetUserSentFilesAsync();
@@ -85,8 +88,8 @@ namespace Crypter.ClientServices.Interfaces
       Task<Either<DummyError, RemoveUserContactResponse>> RemoveUserContactAsync(RemoveUserContactRequest request);
 
       // Transfer
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, Guid recipient, bool withAuthentication);
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, Guid recipient, bool withAuthentication);
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, Maybe<string> recipient, bool withAuthentication);
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, Maybe<string> recipient, bool withAuthentication);
       Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadMessagePreviewAsync(DownloadTransferPreviewRequest downloadRequest, bool withAuthentication);
       Task<Either<DownloadTransferSignatureError, DownloadTransferSignatureResponse>> DownloadMessageSignatureAsync(DownloadTransferSignatureRequest downloadRequest, bool withAuthentication);
       Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadMessageCiphertextAsync(DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);

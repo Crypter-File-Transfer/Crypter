@@ -88,9 +88,9 @@ namespace Crypter.Core.Features.User.Queries
          var visitorCanSendMessages = _userPrivacyService.UserAcceptsMessageTransfersFromVisitor(user, request.RequestorId);
          var visitorCanSendFiles = _userPrivacyService.UserAcceptsFileTransfersFromVisitor(user, request.RequestorId);
 
-         return new GetUserProfileResponse(user.Id, user.Username, user.Profile.Alias, user.Profile.About,
+         return new GetUserProfileResponse(user.Username, user.Profile.Alias, user.Profile.About,
             user.PrivacySetting.AllowKeyExchangeRequests, visitorCanSendMessages, visitorCanSendFiles,
-            user.Ed25519KeyPair.PublicKey, user.X25519KeyPair.PublicKey);
+            user.X25519KeyPair.PublicKey, user.Ed25519KeyPair.PublicKey);
       }
    }
 }

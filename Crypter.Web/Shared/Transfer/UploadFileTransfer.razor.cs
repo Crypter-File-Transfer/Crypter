@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.Web.Models;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using System;
@@ -106,7 +106,12 @@ namespace Crypter.Web.Shared.Transfer
 
          await SetNewEncryptionStatus("Generating keys");
          GenerateMissingAsymmetricKeys();
-         (var sendKey, var serverKey) = DeriveSymmetricKeys(SenderX25519PrivateKey, RecipientX25519PublicKey);
+
+         PEMString senderX25519PrivateKey = PEMString.From(SenderX25519PrivateKey);
+         PEMString senderEd25519PrivateKey = PEMString.From(SenderEd25519PrivateKey);
+         PEMString recipientX25519PublicKey = PEMString.From(RecipientX25519PublicKey);
+
+         (var sendKey, var serverKey) = DeriveSymmetricKeys(senderX25519PrivateKey, recipientX25519PublicKey);
          var iv = AES.GenerateIV();
 
          await SetNewEncryptionStatus("Encrypting your file");
@@ -114,15 +119,15 @@ namespace Crypter.Web.Shared.Transfer
          await HideEncryptionProgress();
 
          await SetNewEncryptionStatus("Signing your file");
-         var signature = await SignBytesAsync(SelectedFile, SenderEd25519PrivateKey);
+         var signature = await SignBytesAsync(SelectedFile, senderEd25519PrivateKey);
          await HideEncryptionProgress();
 
          await SetNewEncryptionStatus("Uploading");
          var encodedCipherText = Convert.ToBase64String(ciphertext);
          var encodedECDHSenderKey = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(KeyConversion.ConvertX25519PrivateKeyFromPEM(SenderX25519PrivateKey).GeneratePublicKey().ConvertToPEM()));
+            Encoding.UTF8.GetBytes(KeyConversion.ConvertX25519PrivateKeyFromPEM(senderX25519PrivateKey).GeneratePublicKey().ConvertToPEM().Value));
          var encodedECDSASenderKey = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(KeyConversion.ConvertEd25519PrivateKeyFromPEM(SenderEd25519PrivateKey).GeneratePublicKey().ConvertToPEM()));
+            Encoding.UTF8.GetBytes(KeyConversion.ConvertEd25519PrivateKeyFromPEM(senderEd25519PrivateKey).GeneratePublicKey().ConvertToPEM().Value));
          var encodedServerEncryptionKey = Convert.ToBase64String(serverKey);
          var encodedSignature = Convert.ToBase64String(signature);
          var fileType = string.IsNullOrEmpty(SelectedFile.ContentType)
@@ -130,9 +135,8 @@ namespace Crypter.Web.Shared.Transfer
             : SelectedFile.ContentType;
          var encodedClientIV = Convert.ToBase64String(iv);
 
-         var withAuth = BrowserStorageService.HasItem(BrowserStoredObjectType.UserSession);
          var request = new UploadFileTransferRequest(SelectedFile.Name, fileType, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey, RequestedExpirationHours);
-         var uploadResponse = await CrypterApiService.UploadFileTransferAsync(request, RecipientId, withAuth);
+         var uploadResponse = await CrypterApiService.UploadFileTransferAsync(request, Recipient, UserSessionService.LoggedIn);
          uploadResponse.DoLeft(x =>
          {
             switch (x)
@@ -153,7 +157,7 @@ namespace Crypter.Web.Shared.Transfer
          {
             TransferId = x.Id;
 
-            if (RecipientId == default)
+            if (string.IsNullOrEmpty(Recipient))
             {
                ModalForAnonymousRecipient.Open();
             }
@@ -201,7 +205,7 @@ namespace Crypter.Web.Shared.Transfer
          return ciphertext.ToArray();
       }
 
-      protected async Task<byte[]> SignBytesAsync(IBrowserFile file, string ed25519PrivateKey)
+      protected async Task<byte[]> SignBytesAsync(IBrowserFile file, PEMString ed25519PrivateKey)
       {
          await SetProgressBar(0.0);
          var ed25519PrivateDecoded = KeyConversion.ConvertEd25519PrivateKeyFromPEM(ed25519PrivateKey);

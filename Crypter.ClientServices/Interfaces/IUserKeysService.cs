@@ -24,30 +24,22 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Interfaces
 {
    public interface IUserKeysService
    {
-      /// <summary>
-      /// Generate a new X25519 key pair.
-      /// </summary>
-      /// <returns>Private and public keys in PEM format</returns>
-      (string privateKey, string publicKey) NewX25519KeyPair();
+      Maybe<PEMString> X25519PrivateKey { get; }
+      Maybe<PEMString> Ed25519PrivateKey { get; }
 
-      /// <summary>
-      /// Generate a new Ed25519 key pair.
-      /// </summary>
-      /// <returns>Private and public keys in PEM format</returns>
-      (string privateKey, string publicKey) NewEd25519KeyPair();
+      Task InitializeAsync();
+      Task<bool> PrepareUserKeysOnUserLoginAsync(Username username, Password password, bool rememberUser);
+      (PEMString PrivateKey, PEMString PublicKey) NewX25519KeyPair();
+      (PEMString PrivateKey, PEMString PublicKey) NewEd25519KeyPair();
 
-      /// <summary>
-      /// Get the user's secret, symmetric key.
-      /// </summary>
-      /// <param name="username"></param>
-      /// <param name="password"></param>
-      /// <returns>Array of 32 bytes.</returns>
-      byte[] GetUserSymmetricKey(Username username, Password password);
+      void Recycle();
    }
 }

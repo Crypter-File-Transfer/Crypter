@@ -53,6 +53,7 @@ namespace Crypter.API.Services
       private readonly ITransferItemStorageService FileTransferItemStorageService;
       private readonly ISimpleEncryptionService SimpleEncryptionService;
       private readonly ISimpleHashService SimpleHashService;
+      private readonly IUserService UserService;
       private readonly Func<byte[], byte[]> ItemDigestFunction;
 
       public UploadService(
@@ -62,6 +63,7 @@ namespace Crypter.API.Services
          IEmailService emailService,
          IApiValidationService apiValidationService,
          ISimpleEncryptionService simpleEncryptionService,
+         IUserService userService,
          ISimpleHashService simpleHashService
          )
       {
@@ -74,6 +76,7 @@ namespace Crypter.API.Services
          MessageTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.Message);
          FileTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.File);
          SimpleEncryptionService = simpleEncryptionService;
+         UserService = userService;
          SimpleHashService = simpleHashService;
          ItemDigestFunction = SimpleHashService.DigestSha256;
       }
@@ -130,8 +133,24 @@ namespace Crypter.API.Services
          return (true, UploadTransferError.UnknownError, returnItem, serverEncryptedCiphertext);
       }
 
-      public async Task<IActionResult> ReceiveMessageTransferAsync(UploadMessageTransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
+      public async Task<IActionResult> ReceiveMessageTransferAsync(UploadMessageTransferRequest request, Guid senderId, string recipient, CancellationToken cancellationToken)
       {
+         Guid recipientId = Guid.Empty;
+
+         if (!string.IsNullOrEmpty(recipient))
+         {
+            var maybeUser = await UserService.ReadAsync(recipient, cancellationToken);
+            if (maybeUser is null)
+            {
+               return new BadRequestObjectResult(new ErrorResponse(UploadTransferError.UserNotFound));
+            }
+
+            if (maybeUser is not null)
+            {
+               recipientId = maybeUser.Id;
+            }
+         }
+
          (var success, var errorCode, var genericTransferData, var ciphertextServerEncrypted) = await ReceiveTransferAsync(request, senderId, recipientId, cancellationToken);
 
          if (!success || genericTransferData is null)
@@ -171,8 +190,25 @@ namespace Crypter.API.Services
              new UploadTransferResponse(genericTransferData.Id, genericTransferData.Expiration));
       }
 
-      public async Task<IActionResult> ReceiveFileTransferAsync(UploadFileTransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
+      public async Task<IActionResult> ReceiveFileTransferAsync(UploadFileTransferRequest request, Guid senderId, string recipient, CancellationToken cancellationToken)
       {
+         Guid recipientId = Guid.Empty;
+
+         if (!string.IsNullOrEmpty(recipient))
+         {
+            var maybeUser = await UserService.ReadAsync(recipient, cancellationToken);
+
+            if (maybeUser is null)
+            {
+               return new BadRequestObjectResult(new ErrorResponse(UploadTransferError.UserNotFound));
+            }
+
+            if (maybeUser is not null)
+            {
+               recipientId = maybeUser.Id;
+            }
+         }
+
          (var success, var errorCode, var genericTransferData, var ciphertextServerEncrypted) = await ReceiveTransferAsync(request, senderId, recipientId, cancellationToken);
 
          if (!success || genericTransferData is null)
