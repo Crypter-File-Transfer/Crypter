@@ -74,12 +74,12 @@ namespace Crypter.Web.Repositories
 
       public async Task StoreEd25519PrivateKeyAsync(PEMString privateKey, bool trustDevice)
       {
-         await _browserRepository.SetItemAsync(DeviceStorageObjectType.Ed25519PrivateKey, privateKey, _trustDeviceStorageMap[trustDevice]);
+         await _browserRepository.SetItemAsync(DeviceStorageObjectType.Ed25519PrivateKey, privateKey.Value, _trustDeviceStorageMap[trustDevice]);
       }
 
       public async Task StoreX25519PrivateKeyAsync(PEMString privateKey, bool trustDevice)
       {
-         await _browserRepository.SetItemAsync(DeviceStorageObjectType.X25519PrivateKey, privateKey, _trustDeviceStorageMap[trustDevice]);
+         await _browserRepository.SetItemAsync(DeviceStorageObjectType.X25519PrivateKey, privateKey.Value, _trustDeviceStorageMap[trustDevice]);
       }
    }
 }

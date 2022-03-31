@@ -61,8 +61,7 @@ namespace Crypter.Web.Pages
       protected override async Task OnInitializedAsync()
       {
          Loading = true;
-         await PrepareFilePreviewAsync(); 
-         await base.OnInitializedAsync();
+         await PrepareFilePreviewAsync();
          Loading = false;
       }
 
