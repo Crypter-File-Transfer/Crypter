@@ -38,8 +38,8 @@ namespace Crypter.Core.Features.User.Queries
 {
    public class LoginQuery : IRequest<Either<LoginError, LoginQueryResult>>
    {
-      public Username Username { get; private set; }
-      public AuthenticationPassword Password { get; private set; }
+      public Username Username { get; init; }
+      public AuthenticationPassword Password { get; init; }
 
       public LoginQuery(Username username, AuthenticationPassword password)
       {
@@ -65,11 +65,13 @@ namespace Crypter.Core.Features.User.Queries
 
    public class LoginQueryResult
    {
-      public Guid UserId { get; private set; }
+      public Guid UserId { get; init; }
+      public string Username { get; init; }
 
-      public LoginQueryResult(Guid userId)
+      public LoginQueryResult(Guid userId, string username)
       {
          UserId = userId;
+         Username = username;
       }
    }
 
@@ -97,7 +99,7 @@ namespace Crypter.Core.Features.User.Queries
 
          bool passwordsMatch = _passwordHashService.VerifySecurePasswordHash(request.Password, user.PasswordHash, user.PasswordSalt);
          return passwordsMatch
-            ? new LoginQueryResult(user.Id)
+            ? new LoginQueryResult(user.Id, user.Username)
             : LoginError.NotFound;
       }
    }

@@ -31,14 +31,14 @@ namespace Crypter.Contracts.Features.Authentication.Login
 {
    public class LoginResponse
    {
-      public Guid Id { get; set; }
+      public string Username { get; set; }
       public string AuthenticationToken { get; set; }
       public string RefreshToken { get; set; }
 
       [JsonConstructor]
-      public LoginResponse(Guid id, string authenticationToken, string refreshToken)
+      public LoginResponse(string username, string authenticationToken, string refreshToken)
       {
-         Id = id;
+         Username = username;
          AuthenticationToken = authenticationToken;
          RefreshToken = refreshToken;
       }

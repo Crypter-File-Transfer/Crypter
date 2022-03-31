@@ -102,7 +102,7 @@ namespace Crypter.ClientServices.Implementations
                   ? BrowserStorageLocation.LocalStorage
                   : BrowserStorageLocation.SessionStorage;
 
-            var sessionInfo = new UserSession(username.Value, rememberUser);
+            var sessionInfo = new UserSession(response.Username, rememberUser);
             Session = sessionInfo;
             await _userSessionRepository.StoreUserSessionAsync(sessionInfo, rememberUser);
 
