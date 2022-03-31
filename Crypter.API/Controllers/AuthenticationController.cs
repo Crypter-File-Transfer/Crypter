@@ -118,7 +118,7 @@ namespace Crypter.API.Controllers
             return refreshTokenResult.Map(refreshToken =>
             {
                string authToken = _tokenService.NewAuthenticationToken(loginData.UserId);
-               return new LoginResponse(loginData.UserId, authToken, refreshToken);
+               return new LoginResponse(loginData.Username, authToken, refreshToken);
             });
          });
 
