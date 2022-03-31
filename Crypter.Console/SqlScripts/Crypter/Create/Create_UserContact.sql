@@ -24,28 +24,39 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-BEGIN;
+-- Table: public.UserContact
 
-   -- Alter UserX25519KeyPair
+CREATE TABLE IF NOT EXISTS public."UserContact"
+(
+    "Id" uuid NOT NULL,
+    "Owner" uuid NOT NULL,
+    "Contact" uuid NOT NULL,
+    CONSTRAINT "PK_UserContact" PRIMARY KEY ("Id"),
+    CONSTRAINT "FK_UserContact_User_Contact" FOREIGN KEY ("Contact")
+        REFERENCES public."User" ("Id") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE,
+    CONSTRAINT "FK_UserContact_User_Owner" FOREIGN KEY ("Owner")
+        REFERENCES public."User" ("Id") MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE CASCADE
+)
 
-   ALTER TABLE IF EXISTS public."UserX25519KeyPair"
-      ADD COLUMN "ClientIV" text COLLATE pg_catalog."default";
+TABLESPACE pg_default;
 
-   -- Alter UserEd25519KeyPair
+CREATE INDEX IF NOT EXISTS "IX_UserContact_Owner"
+    ON public."UserContact" USING btree
+    ("Owner" ASC NULLS LAST)
+    TABLESPACE pg_default;
 
-   ALTER TABLE IF EXISTS public."UserEd25519KeyPair"
-      ADD COLUMN "ClientIV" text COLLATE pg_catalog."default";
+CREATE INDEX IF NOT EXISTS "IX_UserContact_Contact"
+    ON public."UserContact" USING btree
+    ("Contact" ASC NULLS LAST)
+    TABLESPACE pg_default;
 
-   -- Delete rows from UserX25519KeyPair
+ALTER TABLE IF EXISTS public."UserContact"
+    OWNER to postgres;
 
-   DELETE FROM public."UserX25519KeyPair";
+GRANT DELETE, INSERT, SELECT, UPDATE ON TABLE public."UserContact" TO cryptuser;
 
-   -- Delete rows from UserX25519KeyPair
-
-   DELETE FROM public."UserEd25519KeyPair";
-
-   -- Update schema version
-
-   UPDATE public."Schema" SET "Version" = 2, "Updated" = CURRENT_TIMESTAMP;
-
-COMMIT;
+GRANT ALL ON TABLE public."UserContact" TO postgres;
