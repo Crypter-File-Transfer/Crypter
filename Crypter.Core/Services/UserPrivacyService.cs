@@ -64,12 +64,12 @@ namespace Crypter.Core.Services
 
       public bool UserAcceptsFileTransfersFromVisitor(User user, Guid visitorId)
       {
-         return UserAcceptsTransferFromVisitor(user, visitorId, user.PrivacySetting.ReceiveMessages);
+         return UserAcceptsTransferFromVisitor(user, visitorId, user.PrivacySetting.ReceiveFiles);
       }
 
       public bool UserAcceptsMessageTransfersFromVisitor(User user, Guid visitorId)
       {
-         return UserAcceptsTransferFromVisitor(user, visitorId, user.PrivacySetting.ReceiveFiles);
+         return UserAcceptsTransferFromVisitor(user, visitorId, user.PrivacySetting.ReceiveMessages);
       }
 
       private static bool UserAcceptsTransferFromVisitor(User user, Guid visitorId, UserItemTransferPermission transferPermission)
