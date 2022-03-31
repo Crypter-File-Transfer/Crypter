@@ -24,28 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-BEGIN;
+-- Table: public.UserContact
 
-   -- Alter UserX25519KeyPair
-
-   ALTER TABLE IF EXISTS public."UserX25519KeyPair"
-      ADD COLUMN "ClientIV" text COLLATE pg_catalog."default";
-
-   -- Alter UserEd25519KeyPair
-
-   ALTER TABLE IF EXISTS public."UserEd25519KeyPair"
-      ADD COLUMN "ClientIV" text COLLATE pg_catalog."default";
-
-   -- Delete rows from UserX25519KeyPair
-
-   DELETE FROM public."UserX25519KeyPair";
-
-   -- Delete rows from UserX25519KeyPair
-
-   DELETE FROM public."UserEd25519KeyPair";
-
-   -- Update schema version
-
-   UPDATE public."Schema" SET "Version" = 2, "Updated" = CURRENT_TIMESTAMP;
-
-COMMIT;
+DROP TABLE IF EXISTS public."UserContact";
