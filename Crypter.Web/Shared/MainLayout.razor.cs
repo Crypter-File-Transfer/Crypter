@@ -58,9 +58,12 @@ namespace Crypter.Web.Shared
       {
          await BrowserRepository.InitializeAsync();
          await UserSessionService.InitializeAsync();
-         await UserKeysService.InitializeAsync();
 
-         await UserSessionService.Session.IfSomeAsync(async x => await UserContactsService.InitializeAsync());
+         await UserSessionService.Session.IfSomeAsync(async x =>
+         {
+            await UserKeysService.InitializeAsync();
+            await UserContactsService.InitializeAsync();
+         });
 
          UserSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
          UserSessionService.UserLoggedOutEventHandler += OnUserLoggedOut;
@@ -71,8 +74,11 @@ namespace Crypter.Web.Shared
 
       private void OnUserLoggedIn(object sender, UserLoggedInEventArgs eventArgs)
       {
-         InvokeAsync(() => UserKeysService.PrepareUserKeysOnUserLoginAsync(eventArgs.Username, eventArgs.Password, eventArgs.RememberUser));
-         InvokeAsync(UserContactsService.InitializeAsync);
+         InvokeAsync(async () =>
+         {
+            await UserKeysService.PrepareUserKeysOnUserLoginAsync(eventArgs.Username, eventArgs.Password, eventArgs.RememberUser);
+            await UserContactsService.InitializeAsync();
+         });
       }
 
       private void OnUserLoggedOut(object sender, EventArgs _)

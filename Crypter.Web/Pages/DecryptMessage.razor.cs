@@ -61,7 +61,6 @@ namespace Crypter.Web.Pages
       {
          Loading = true;
          await PrepareMessagePreviewAsync();
-         await base.OnInitializedAsync();
          Loading = false;
       }
 
