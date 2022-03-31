@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,18 +21,18 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 namespace Crypter.API.Models
 {
    public class EmailSettings
    {
-      public bool Enabled { get; set; }
-      public string From { get; set; }
-      public string Username { get; set; }
-      public string Password { get; set; }
-      public string Host { get; set; }
-      public int Port { get; set; }
+      public bool Enabled { get; set; } = false;
+      public string From { get; set; } = string.Empty;
+      public string Username { get; set; } = string.Empty;
+      public string Password { get; set; } = string.Empty;
+      public string Host { get; set; } = string.Empty;
+      public int Port { get; set; } = 0;
    }
 }

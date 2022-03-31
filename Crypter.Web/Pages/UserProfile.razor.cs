@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,14 +21,12 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Web.Services;
-using Crypter.Web.Services.API;
+using Crypter.ClientServices.Interfaces;
 using Microsoft.AspNetCore.Components;
 using System;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -37,10 +35,10 @@ namespace Crypter.Web.Pages
    public partial class UserProfileBase : ComponentBase
    {
       [Inject]
-      IUserApiService UserService { get; set; }
+      private ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
-      ILocalStorageService LocalStorage { get; set; }
+      private IUserSessionService UserSessionService { get; set; }
 
       [Parameter]
       public string Username { get; set; }
@@ -50,44 +48,38 @@ namespace Crypter.Web.Pages
 
       protected bool Loading;
       protected bool IsProfileAvailable;
-      protected Guid UserId;
       protected string Alias;
       protected string About;
-      protected string ActualUsername;
+      protected string ProperUsername;
       protected bool AllowsFiles;
       protected bool AllowsMessages;
-      protected string UserX25519PublicKey;
       protected string UserEd25519PublicKey;
+      protected string UserX25519PublicKey;
 
       protected override async Task OnInitializedAsync()
       {
          Loading = true;
-         await base.OnInitializedAsync();
-
          await PrepareUserProfileAsync();
-
          Loading = false;
       }
 
       protected async Task PrepareUserProfileAsync()
       {
-         var requestWithAuthentication = LocalStorage.HasItem(StoredObjectType.UserSession);
-         var (httpStatus, response) = await UserService.GetUserPublicProfileAsync(Username, requestWithAuthentication);
-         IsProfileAvailable = httpStatus == HttpStatusCode.OK
-            && !string.IsNullOrEmpty(response.PublicDHKey)
-            && !string.IsNullOrEmpty(response.PublicDSAKey);
-
-         if (IsProfileAvailable)
+         var response = await CrypterApiService.GetUserPublicProfileAsync(Username, UserSessionService.LoggedIn);
+         response.DoRight(x =>
          {
-            UserId = response.Id;
-            Alias = response.Alias;
-            About = response.About;
-            ActualUsername = response.Username;
-            AllowsFiles = response.ReceivesFiles;
-            AllowsMessages = response.ReceivesMessages;
-            UserX25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(response.PublicDHKey));
-            UserEd25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(response.PublicDSAKey));
-         }
+            Alias = x.Alias;
+            About = x.About;
+            ProperUsername = x.Username;
+            AllowsFiles = x.ReceivesFiles;
+            AllowsMessages = x.ReceivesMessages;
+            UserEd25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(x.PublicDSAKey));
+            UserX25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(x.PublicDHKey));
+         });
+
+         IsProfileAvailable = response.Match(
+            left => false,
+            right => !string.IsNullOrEmpty(right.PublicDHKey) && !string.IsNullOrEmpty(right.PublicDSAKey));
       }
    }
 }

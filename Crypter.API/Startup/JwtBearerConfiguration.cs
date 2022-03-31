@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,18 +21,14 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 using Crypter.API.Models;
-using Crypter.API.Services;
-using Crypter.Core.Interfaces;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Crypter.API.Startup
 {
@@ -42,16 +38,6 @@ namespace Crypter.API.Startup
       {
          return builder.AddJwtBearer(options =>
          {
-            options.Events = new JwtBearerEvents
-            {
-               OnTokenValidated = async context =>
-               {
-                  if (!await UserStillExistsAsync(context))
-                  {
-                     context.Fail("User does not exist");
-                  }
-               }
-            };
             options.TokenValidationParameters = GetTokenValidationParameters(tokenSettings);
          });
       }
@@ -71,15 +57,6 @@ namespace Crypter.API.Startup
             RequireExpirationTime = true,
             ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 }
          };
-      }
-
-      private static async Task<bool> UserStillExistsAsync(TokenValidatedContext context)
-      {
-         var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
-         var tokenService = context.HttpContext.RequestServices.GetRequiredService<ITokenService>();
-         var userIdFromJWT = tokenService.ParseUserId(context.Principal);
-         var user = await userService.ReadAsync(userIdFromJWT, default);
-         return user is not null;
       }
    }
 }

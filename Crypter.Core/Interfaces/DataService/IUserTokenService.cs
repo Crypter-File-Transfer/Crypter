@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,10 +21,9 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Enum;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,8 +32,6 @@ namespace Crypter.Core.Interfaces
 {
    public interface IUserTokenService
    {
-      Task InsertAsync(Guid tokenId, Guid userId, string description, TokenType type, DateTime expiration, CancellationToken cancellationToken);
-      Task<IUserToken> ReadAsync(Guid tokenId, CancellationToken cancellationToken);
       Task DeleteAsync(Guid tokenId, CancellationToken cancellationToken);
    }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,10 +21,11 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Enum;
+using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
@@ -38,111 +39,52 @@ namespace Crypter.Core.Services.DataAccess
    public class UserService : IUserService
    {
       private readonly DataContext Context;
+      private readonly IPasswordHashService _passwordHashService;
 
-      public UserService(DataContext context)
+      public UserService(DataContext context, IPasswordHashService passwordHashService)
       {
          Context = context;
+         _passwordHashService = passwordHashService;
       }
 
-      public async Task<Guid> InsertAsync(string username, string password, string email, CancellationToken cancellationToken)
+      public async Task<User> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
-         (var passwordKey, var passwordHash) = PasswordHashService.MakeSecurePasswordHash(password);
-
-         var user = new User(
-             Guid.NewGuid(),
-             username,
-             email,
-             passwordHash,
-             passwordKey,
-             false,
-             DateTime.UtcNow,
-             DateTime.MinValue);
-         Context.User.Add(user);
-
-         await Context.SaveChangesAsync(cancellationToken);
-         return user.Id;
+         return await Context.Users.FindAsync(new object[] { id }, cancellationToken);
       }
 
-      public async Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken)
+      public async Task<User> ReadAsync(string username, CancellationToken cancellationToken)
       {
-         return await Context.User.FindAsync(new object[] { id }, cancellationToken);
-      }
-
-      public async Task<IUser> ReadAsync(string username, CancellationToken cancellationToken)
-      {
-         return await Context.User
+         return await Context.Users
             .Where(user => user.Username.ToLower() == username.ToLower())
             .FirstOrDefaultAsync(cancellationToken);
       }
 
-      public async Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken)
+      public async Task<(bool Success, UpdateContactInfoError Error)> UpdateContactInfoAsync(Guid id, EmailAddress emailAddress, AuthenticationPassword currentPassword, CancellationToken cancellationToken)
       {
          var user = await ReadAsync(id, cancellationToken);
-         var passwordsMatch = PasswordHashService.VerifySecurePasswordHash(currentPassword, user.PasswordHash, user.PasswordSalt);
+         var passwordsMatch = _passwordHashService.VerifySecurePasswordHash(currentPassword, user.PasswordHash, user.PasswordSalt);
          if (!passwordsMatch)
          {
-            return UpdateContactInfoResult.PasswordValidationFailed;
+            return (false, UpdateContactInfoError.PasswordValidationFailed);
          }
 
-         user.Email = email;
+         user.Email = emailAddress.Value;
          user.EmailVerified = false;
          await Context.SaveChangesAsync(cancellationToken);
-         return UpdateContactInfoResult.Success;
+         return (true, UpdateContactInfoError.UnknownError);
       }
 
       public async Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken)
       {
          var user = await ReadAsync(id, cancellationToken);
          user.EmailVerified = isVerified;
-         await Context.SaveChangesAsync();
+         await Context.SaveChangesAsync(cancellationToken);
       }
 
       public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
       {
          await Context.Database
              .ExecuteSqlRawAsync("DELETE FROM \"Users\" WHERE \"Users\".\"Id\" = {0}", new object[] { id }, cancellationToken);
-      }
-
-      public async Task<User> AuthenticateAsync(string username, string password, CancellationToken cancellationToken)
-      {
-         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-         {
-            return null;
-         }
-
-         var user = await Context.User.SingleOrDefaultAsync(x => x.Username.ToLower() == username.ToLower(), cancellationToken);
-
-         if (user == null)
-         {
-            return null;
-         }
-
-         var passwordsMatch = PasswordHashService.VerifySecurePasswordHash(password, user.PasswordHash, user.PasswordSalt);
-         return passwordsMatch
-            ? user
-            : null;
-      }
-
-      public async Task UpdateLastLoginTime(Guid id, DateTime dateTime, CancellationToken cancellationToken)
-      {
-         var user = await ReadAsync(id, cancellationToken);
-         if (user != null)
-         {
-            user.LastLogin = dateTime;
-            await Context.SaveChangesAsync();
-         }
-      }
-
-      public async Task<bool> IsUsernameAvailableAsync(string username, CancellationToken cancellationToken)
-      {
-         string lowerUsername = username.ToLower();
-         return !await Context.User.AnyAsync(x => x.Username.ToLower() == lowerUsername, cancellationToken);
-      }
-
-      public async Task<bool> IsEmailAddressAvailableAsync(string email, CancellationToken cancellationToken)
-      {
-         string lowerEmail = email.ToLower();
-         return !await Context.User.AnyAsync(x => x.Email.ToLower() == lowerEmail, cancellationToken);
       }
    }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 using System;
@@ -40,6 +40,5 @@ namespace Crypter.Core.Interfaces
       Task<IEnumerable<T>> FindBySenderAsync(Guid senderId, CancellationToken cancellationToken);
       Task<IEnumerable<T>> FindByRecipientAsync(Guid recipientId, CancellationToken cancellationToken);
       Task<IEnumerable<T>> FindExpiredAsync(CancellationToken cancellationToken);
-      Task<long> GetAggregateSizeAsync(CancellationToken cancellationToken);
    }
 }

@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  *@
 
 @page "/user/profile/{Username}"
@@ -41,19 +41,27 @@
                {
                   <h2>@Alias</h2>
                }
-               <h3>@($@"{ActualUsername}")</h3>
+               <h3>@ProperUsername</h3>
                <p>@About</p>
                <div class="row">
                   <div class="col-12">
                      @if (AllowsFiles)
                      {
                         <button class="btn btn-secondary mr-3" @onclick="() => FileModal.Open()">Send a file</button>
-                        <UploadFileTransferModal @ref="FileModal" IsRecipientDefined=true RecipientId="@UserId" RecipientX25519PublicKey="@UserX25519PublicKey" RecipientEd25519PublicKey="@UserEd25519PublicKey" />
+                        <UploadFileTransferModal @ref="FileModal"
+                           IsRecipientDefined=true
+                           Recipient="@ProperUsername"
+                           RecipientX25519PublicKey="@UserX25519PublicKey"
+                           RecipientEd25519PublicKey="@UserEd25519PublicKey" />
                      }
                      @if (AllowsMessages)
                      {
                         <button class="btn btn-secondary" @onclick="() => MessageModal.Open()">Send a message</button>
-                        <UploadMessageTransferModal @ref="MessageModal" IsRecipientDefined=true RecipientId="@UserId" RecipientX25519PublicKey="@UserX25519PublicKey" RecipientEd25519PublicKey="@UserEd25519PublicKey" />
+                        <UploadMessageTransferModal @ref="MessageModal"
+                           IsRecipientDefined=true
+                           Recipient="@ProperUsername"
+                           RecipientX25519PublicKey="@UserX25519PublicKey"
+                           RecipientEd25519PublicKey="@UserEd25519PublicKey" />
                      }
                   </div>
                </div>

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,10 +21,10 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Enum;
+using Crypter.Common.Enums;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,9 +35,5 @@ namespace Crypter.Core.Interfaces
    {
       Task<bool> UpsertAsync(Guid userId, bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission receiveFilesPermission, UserItemTransferPermission receiveMessagesPermission, CancellationToken cancellationToken);
       Task<IUserPrivacySetting> ReadAsync(Guid userId, CancellationToken cancellationToken);
-
-      Task<bool> IsUserViewableByPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken);
-      Task<bool> DoesUserAcceptMessagesFromOtherPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken);
-      Task<bool> DoesUserAcceptFilesFromOtherPartyAsync(Guid userId, Guid otherPartyId, CancellationToken cancellationToken);
    }
 }

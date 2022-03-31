@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  *@
 
 @page "/user/search"
@@ -32,24 +32,16 @@
 
 <div class="container my-4">
    <h1>Find a user</h1>
-   <EditForm Model="@SearchParams" OnValidSubmit="@PerformSearchAsync">
-      <DataAnnotationsValidator />
+   <form>
       <div class="row">
-         <div class="col-md-3">
-            <InputSelect @bind-Value="SearchParams.Type" class="form-select">
-               <option selected value="username">Search by Username</option>
-               <option value="alias">Search by Alias</option>
-            </InputSelect>
-         </div>
          <div class="col-md-9">
             <div class="input-group mb-3">
-               <InputText @bind-Value="SearchParams.Query" class="form-control" />
+               <input type="text" @bind="SearchParameters.Keyword" class="form-control" />
                <button class="btn btn-primary" type="submit" id="button-addon2">Search</button>
             </div>
-            <ValidationMessage For="@(() => SearchParams.Query)" />
          </div>
       </div>
-   </EditForm>
+   </form>
    <div class="row">
       @if (SearchResults != null)
       {
@@ -64,29 +56,36 @@
                <div class="col-md-6">
                   <div class="card my-1">
                      <div class="card-body">
-                        <a class="text-decoration-none" href="/user/profile/@result.Username">
-                           @if (string.IsNullOrEmpty(result.Alias))
-                           {
-                              <h5 class="card-title">@result.Username</h5>
-                           }
-                           else
-                           {
-                              <h5 class="card-title">@result.Alias (@result.Username)</h5>
-                           }
-                        </a>
+                        <div class="d-flex bd-highlight mb-3">
+                           <div class="me-auto p-2 bd-highlight">
+                              <a class="text-decoration-none" href="/user/profile/@result.Username">
+                                 <h5 class="card-title">@GetDisplayName(result.Username, result.Alias)</h5>
+                              </a>
+                           </div>
+                           <div class="p-2 bd-highlight">
+                              @if (UserContactsService.IsContact(result.Id))
+                              {
+                                 <button type="button" disable class="btn btn-outline-success">Added</button>
+                              }
+                              else
+                              {
+                                 <button type="button" class="btn btn-outline-dark" @onclick="async () => await AddContactAsync(result.Id)">Add Contact</button>
+                              }
+                           </div>
+                        </div>
                      </div>
                   </div>
                </div>
             }
-            if (SearchResults.Total > SearchParams.Results)
+            if (SearchResults.Total > SearchParameters.Count)
             {
-               decimal numberPages = (SearchResults.Total / SearchParams.Results);
+               decimal numberPages = (SearchResults.Total / SearchParameters.Count);
 
                <nav aria-label="User Search Results">
                   <ul class="pagination">
                      @for (int i = 0; i <= Math.Ceiling(numberPages); i++)
                      {
-                        string pageUrl = "/user/search?query=" + SearchParams.Query + "&type=" + SearchParams.Type + "&page=" + (i + 1);
+                        string pageUrl = "/user/search?query=" + SearchParameters.Keyword + "&page=" + (i + 1);
                         <li class="page-item page"><a class="page-link" @onclick="() => GoToPage(pageUrl)">@(i + 1)</a></li>
                      }
                   </ul>

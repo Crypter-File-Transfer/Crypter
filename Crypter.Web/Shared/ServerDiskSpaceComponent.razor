@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  *@
 
 @inherits ServerDiskSpaceComponentBase
@@ -33,13 +33,13 @@
          @if (!ServerHasDiskSpace)
          {
             <div class="alert alert-danger mb-0" role="alert">
-               <h3>Server is currently out of disk space. More space will become available as uploads are downloaded or expired.</h3>
+               <h3>Server is out of disk space. More space will become available as uploads are downloaded or expired.</h3>
             </div>
          }
          else if (ServerSpacePercentageRemaining < 20)
          {
             <div class="alert alert-warning mb-0" role="alert">
-               <h3>Server is currently low on disk space. Please be mindful when transferring large amounts of data.</h3>
+               <h3>Server is low on disk space. Please be mindful when transferring large files.</h3>
             </div>
          }
       </div>

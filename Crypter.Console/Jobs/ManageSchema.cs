@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 using Npgsql;
@@ -40,6 +40,10 @@ namespace Crypter.Console.Jobs
          ConnectionString = connectionString;
       }
 
+      /// <summary>
+      /// Create every table in the Crypter database.
+      /// </summary>
+      /// <returns></returns>
       public async Task CreateSchemaAsync()
       {
          await using var connection = new NpgsqlConnection(ConnectionString);
@@ -59,7 +63,8 @@ namespace Crypter.Console.Jobs
                await GetTableCreationScriptAsync("Create_UserProfile.sql"),
                await GetTableCreationScriptAsync("Create_UserX25519KeyPair.sql"),
                await GetTableCreationScriptAsync("Create_Schema.sql"),
-               await GetTableCreationScriptAsync("Create_UserToken.sql")
+               await GetTableCreationScriptAsync("Create_UserToken.sql"),
+               await GetTableCreationScriptAsync("Create_UserContact.sql")
             };
 
             scripts.ForEach(x => ExecuteSqlScriptNonQuery(connection, x));
@@ -75,6 +80,10 @@ namespace Crypter.Console.Jobs
          }
       }
 
+      /// <summary>
+      /// Drop every table in the Crypter database.
+      /// </summary>
+      /// <returns></returns>
       public async Task DeleteSchemaAsync()
       {
          await using var connection = new NpgsqlConnection(ConnectionString);
@@ -84,6 +93,7 @@ namespace Crypter.Console.Jobs
          {
             List<string> scripts = new()
             {
+               await GetTableDropScriptAsync("Drop_UserContact.sql"),
                await GetTableDropScriptAsync("Drop_UserToken.sql"),
                await GetTableDropScriptAsync("Drop_FileTransfer.sql"),
                await GetTableDropScriptAsync("Drop_MessageTransfer.sql"),
@@ -111,7 +121,7 @@ namespace Crypter.Console.Jobs
       }
       
       /// <summary>
-      /// Perform a migration of the Crypter database.
+      /// Perform a migration of the existing Crypter database.
       /// </summary>
       /// <returns></returns>
       public async Task PerformMigration(string filename)

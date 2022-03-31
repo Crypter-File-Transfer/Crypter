@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,15 +21,13 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Requests;
-using Crypter.Web.Services;
-using Crypter.Web.Services.API;
+using Crypter.ClientServices.Interfaces;
+using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Microsoft.AspNetCore.Components;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -37,10 +35,10 @@ namespace Crypter.Web.Pages
    public partial class DecryptMessageBase : ComponentBase
    {
       [Inject]
-      ILocalStorageService LocalStorage { get; set; }
+      protected IUserSessionService UserSessionService { get; set; }
 
       [Inject]
-      protected ITransferApiService TransferService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       [Parameter]
       public Guid TransferId { get; set; }
@@ -53,12 +51,11 @@ namespace Crypter.Web.Pages
       protected string Created;
       protected string Expiration;
       
-      protected Guid SenderId;
       protected string SenderUsername;
       protected string SenderAlias;
       protected string X25519PublicKey;
 
-      protected Guid RecipientId;
+      protected string RecipientUsername;
 
       protected override async Task OnInitializedAsync()
       {
@@ -70,25 +67,23 @@ namespace Crypter.Web.Pages
 
       protected async Task PrepareMessagePreviewAsync()
       {
-         var messagePreviewRequest = new GetTransferPreviewRequest(TransferId);
-         var withAuth = LocalStorage.HasItem(StoredObjectType.UserSession);
-         var (httpStatus, response) = await TransferService.DownloadMessagePreviewAsync(messagePreviewRequest, withAuth);
-
-         ItemFound = httpStatus != HttpStatusCode.NotFound;
-         if (ItemFound)
+         var messagePreviewRequest = new DownloadTransferPreviewRequest(TransferId);
+         var response = await CrypterApiService.DownloadMessagePreviewAsync(messagePreviewRequest, UserSessionService.LoggedIn);
+         response.DoRight(x =>
          {
-            Subject = string.IsNullOrEmpty(response.Subject)
+            Subject = string.IsNullOrEmpty(x.Subject)
                ? "{ no subject }"
-               : response.Subject;
-            Created = response.CreationUTC.ToLocalTime().ToString();
-            Expiration = response.ExpirationUTC.ToLocalTime().ToString();
-            Size = response.Size;
-            SenderId = response.SenderId;
-            SenderUsername = response.SenderUsername;
-            SenderAlias = response.SenderAlias;
-            RecipientId = response.RecipientId;
-            X25519PublicKey = response.X25519PublicKey;
-         }
+               : x.Subject;
+            Created = x.CreationUTC.ToLocalTime().ToString();
+            Expiration = x.ExpirationUTC.ToLocalTime().ToString();
+            Size = x.Size;
+            SenderUsername = x.Sender;
+            SenderAlias = x.SenderAlias;
+            RecipientUsername = x.Recipient;
+            X25519PublicKey = x.X25519PublicKey;
+         });
+
+         ItemFound = response.IsRight;
       }
    }
 }

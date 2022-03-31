@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,9 +21,10 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.CryptoLib.Enums;
 using System.Text;
 
@@ -41,11 +42,11 @@ namespace Crypter.CryptoLib
       /// The result of this method gets used as the user's password during authentication requests.
       /// The reason for doing this is to keep the user's real password a secret from even our own API.
       /// </remarks>
-      public static byte[] DeriveAuthenticationPasswordFromUserCredentials(string username, string password)
+      public static byte[] DeriveAuthenticationPasswordFromUserCredentials(Username username, Password password)
       {
          var digestor = new Crypto.SHA(SHAFunction.SHA512);
-         digestor.BlockUpdate(Encoding.UTF8.GetBytes(password));
-         digestor.BlockUpdate(Encoding.UTF8.GetBytes(username.ToLower()));
+         digestor.BlockUpdate(Encoding.UTF8.GetBytes(password.Value));
+         digestor.BlockUpdate(Encoding.UTF8.GetBytes(username.Value.ToLower()));
          return digestor.GetDigest();
       }
 
@@ -55,11 +56,11 @@ namespace Crypter.CryptoLib
       /// <param name="username">Username will be lowercased within the method.</param>
       /// <param name="password"></param>
       /// <returns>Array of 32 bytes.</returns>
-      public static byte[] DeriveSymmetricKeyFromUserCredentials(string username, string password)
+      public static byte[] DeriveSymmetricKeyFromUserCredentials(Username username, Password password)
       {
          var keyDigestor = new Crypto.SHA(SHAFunction.SHA256);
-         keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(username.ToLower()));
-         keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(password));
+         keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(username.Value.ToLower()));
+         keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(password.Value));
          return keyDigestor.GetDigest();
       }
    }

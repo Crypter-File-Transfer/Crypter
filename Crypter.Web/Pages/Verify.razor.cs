@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,12 +21,12 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Requests;
+using Crypter.ClientServices.Interfaces;
+using Crypter.Contracts.Features.User.VerifyEmailAddress;
 using Crypter.Web.Models;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Linq;
@@ -40,7 +40,7 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      IUserApiService UserService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       protected EmailVerificationParams EmailVerificationParams = new();
 
@@ -72,9 +72,13 @@ namespace Crypter.Web.Pages
 
       protected async Task VerifyEmailAddressAsync()
       {
-         (var _, var response) = await UserService.VerifyUserEmailAddressAsync(
-            new VerifyUserEmailAddressRequest(EmailVerificationParams.Code, EmailVerificationParams.Signature));
-         EmailVerificationSuccess = response.Success;
+         var maybeVerification = await CrypterApiService.VerifyUserEmailAddressAsync(
+            new VerifyEmailAddressRequest(EmailVerificationParams.Code, EmailVerificationParams.Signature));
+
+         EmailVerificationSuccess = maybeVerification.Match(
+            left => false,
+            right => true);
+
          EmailVerificationInProgress = false;
       }
    }

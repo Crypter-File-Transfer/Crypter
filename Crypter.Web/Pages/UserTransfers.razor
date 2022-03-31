@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,17 +21,17 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  *@
 
 @page "/user/transfers"
 
 @inherits UserTransfersBase
 
-<PageTitle>Crypter - My Transfers</PageTitle>
+<PageTitle>Crypter - Transfers</PageTitle>
 
 <div class="container my-4">
-   <h1>My Transfers</h1>
+   <h1>Transfers</h1>
    <div class="row">
       <UserReceivedItemsComponent @bind-Items="Received"></UserReceivedItemsComponent>
       <UserSentItemsComponent @bind-Items="Sent"></UserSentItemsComponent>
@@ -42,8 +42,7 @@
             <div class="card-body">
                <h5 class="card-title">A message from the developers</h5>
                <p>
-                  Are you a new user? Check out the <a class="text-decoration-none" href="./user/settings">Settings</a> page where you can adjust your privacy settings.
-                  Your profile will remain hidden from the world until these settings are changed.
+                  Are you a new user? Check out the <a class="text-decoration-none" href="./user/settings">Settings</a> page to finish setting up your account.
                </p>
                <p>
                   Have feedback? Add an issue in GitHub or get in touch with me directly. My contact info is on the <a class="text-decoration-none" href="./contact">Contact</a> page.

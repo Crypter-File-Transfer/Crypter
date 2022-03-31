@@ -1,27 +1,27 @@
 ﻿@*
- * Copyright (C) 2021 Crypter File Transfer
- * 
- * This file is part of the Crypter file transfer project.
- * 
- * Crypter is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * The Crypter source code is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
- * You can be released from the requirements of the aforementioned license
- * by purchasing a commercial license. Buying such a license is mandatory
- * as soon as you develop commercial activities involving the Crypter source
- * code without disclosing the source code of your own applications.
- * 
- * Contact the current copyright holder to discuss commerical license options.
+    * Copyright (C) 2022 Crypter File Transfer
+    * 
+    * This file is part of the Crypter file transfer project.
+    * 
+    * Crypter is free software: you can redistribute it and/or modify
+    * it under the terms of the GNU Affero General Public License as published by
+    * the Free Software Foundation, either version 3 of the License, or
+    * (at your option) any later version.
+    * 
+    * The Crypter source code is distributed in the hope that it will be useful,
+    * but WITHOUT ANY WARRANTY; without even the implied warranty of
+    * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    * GNU Affero General Public License for more details.
+    * 
+    * You should have received a copy of the GNU Affero General Public License
+    * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    * 
+    * You can be released from the requirements of the aforementioned license
+    * by purchasing a commercial license. Buying such a license is mandatory
+    * as soon as you develop commercial activities involving the Crypter source
+    * code without disclosing the source code of your own applications.
+    * 
+    * Contact the current copyright holder to discuss commercial license options.
  *@
 
 @page "/"
@@ -31,36 +31,5 @@
 <div class="container text-center my-4">
     <h1 class="title">Crypter.dev</h1>
     <h2>Private, encrypted file transfer and messaging</h2>
-    <div class="container" id="encrypt">
-        <div class="card">
-            <div class="card-header">
-                <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file" type="button" role="tab" aria-controls="file" aria-selected="true">Encrypt a file</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="message-tab" data-bs-toggle="tab" data-bs-target="#message" type="button" role="tab" aria-controls="message" aria-selected="false">Encrypt a message</button>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-body">
-                <div class="tab-content" id="myTabContent">
-                    <div class="tab-pane fade show active" id="file" role="tabpanel" aria-labelledby="file-tab">
-                        <h2 class="card-title mt-0">Upload a file</h2>
-                        <UploadFileTransfer />
-                    </div>
-                    <div class="tab-pane fade" id="message" role="tabpanel" aria-labelledby="message-tab">
-                        <h2 class="card-title mt-0">Type a message</h2>
-                        <UploadMessageTransfer />
-                    </div>
-                </div>
-            </div>
-        </div>
-        <ServerDiskSpaceComponent></ServerDiskSpaceComponent>
-    </div>
+    <TabbedUploadTransferComponent/>
 </div>
-
-@code
-{
-
-}

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,18 +21,18 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 namespace Crypter.API.Models
 {
    public class TokenSettings
    {
-      public string Audience { get; set; }
-      public string Issuer { get; set; }
-      public string SecretKey { get; set; }
-      public int AuthenticationLifetimeMinutes { get; set; }
-      public int SessionLifetimeMinutes { get; set; }
-      public int RefreshLifetimeDays { get; set; }
+      public string Audience { get; set; } = string.Empty;
+      public string Issuer { get; set; } = string.Empty;
+      public string SecretKey { get; set; } = string.Empty;
+      public int AuthenticationLifetimeMinutes { get; set; } = 0;
+      public int SessionLifetimeMinutes { get; set; } = 0;
+      public int RefreshLifetimeDays { get; set; } = 0;
    }
 }

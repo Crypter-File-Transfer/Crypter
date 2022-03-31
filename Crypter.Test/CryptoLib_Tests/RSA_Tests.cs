@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,9 +21,10 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
@@ -48,8 +49,8 @@ namespace Crypter.Test.CryptoLib_Tests
       [Test]
       public void KeyGen_Produces_Unique_Keys()
       {
-         string privateKey1 = RSA.GenerateKeys(RsaKeySize._512).Private.ConvertToPEM();
-         string privateKey2 = RSA.GenerateKeys(RsaKeySize._512).Private.ConvertToPEM();
+         var privateKey1 = RSA.GenerateKeys(RsaKeySize._512).Private.ConvertToPEM();
+         var privateKey2 = RSA.GenerateKeys(RsaKeySize._512).Private.ConvertToPEM();
 
          Assert.AreNotEqual(privateKey1, privateKey2);
       }
@@ -57,7 +58,7 @@ namespace Crypter.Test.CryptoLib_Tests
       [Test]
       public void Encryption_Is_Predictable()
       {
-         var knownPrivateKey = @"-----BEGIN RSA PRIVATE KEY-----
+         var knownPrivateKey = PEMString.From(@"-----BEGIN RSA PRIVATE KEY-----
 MIIBOgIBAAJBAJCiNjSRqZgk+cAzf67t/wSFnFTTRQ5zlN4kbdOOceNEaEcEFgp+
 SaEoWKOOsdQNUya+zQ3TeAytIjOT9lSErTkCAwEAAQJAAu3B9r0MsofB0Jj1CNwJ
 ZLRMQYcjWBhSPKWqCAATrCQuky7IbnT/W1R5kInHNhIiRV+t7kmTeZMB76aCVlF8
@@ -65,7 +66,7 @@ vQIhANCjmyt3t+fpKcrUg8gLt8KsASOvIKFoE5qgL+KD/d8VAiEAsXciMeKy/6Tl
 rG4Gq2AAv8mqEkB93ic/XGYmPOd//pUCIQCYR/HHxjfK4xoH2xjceAEF67lhLD+q
 z2YPo/+PWzt/CQIgc4JolnHJMo6BE7+1xZxCQJMhiKnDg3KmUh0G7IN+ExUCIF5l
 2zoR2BRJjNEpn4SSIuv1D87yFG8wlcgxeTCl1/yk
------END RSA PRIVATE KEY-----";
+-----END RSA PRIVATE KEY-----");
 
          var knownPlaintext = new byte[]
          {
@@ -93,7 +94,7 @@ z2YPo/+PWzt/CQIgc4JolnHJMo6BE7+1xZxCQJMhiKnDg3KmUh0G7IN+ExUCIF5l
       [Test]
       public void Decryption_Is_Predictable()
       {
-         var knownPrivateKey = @"-----BEGIN RSA PRIVATE KEY-----
+         var knownPrivateKey = PEMString.From(@"-----BEGIN RSA PRIVATE KEY-----
 MIIBOgIBAAJBAJCiNjSRqZgk+cAzf67t/wSFnFTTRQ5zlN4kbdOOceNEaEcEFgp+
 SaEoWKOOsdQNUya+zQ3TeAytIjOT9lSErTkCAwEAAQJAAu3B9r0MsofB0Jj1CNwJ
 ZLRMQYcjWBhSPKWqCAATrCQuky7IbnT/W1R5kInHNhIiRV+t7kmTeZMB76aCVlF8
@@ -101,7 +102,7 @@ vQIhANCjmyt3t+fpKcrUg8gLt8KsASOvIKFoE5qgL+KD/d8VAiEAsXciMeKy/6Tl
 rG4Gq2AAv8mqEkB93ic/XGYmPOd//pUCIQCYR/HHxjfK4xoH2xjceAEF67lhLD+q
 z2YPo/+PWzt/CQIgc4JolnHJMo6BE7+1xZxCQJMhiKnDg3KmUh0G7IN+ExUCIF5l
 2zoR2BRJjNEpn4SSIuv1D87yFG8wlcgxeTCl1/yk
------END RSA PRIVATE KEY-----";
+-----END RSA PRIVATE KEY-----");
 
          var knownPlaintext = new byte[]
          {

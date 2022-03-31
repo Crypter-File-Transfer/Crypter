@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 using Crypter.Console.Jobs;
@@ -60,9 +60,9 @@ namespace Crypter.Console
          if (RequestDeleteExpired(args[0]))
          {
             var deleteJob = new DeleteExpired(configuration["EncryptedFileStore"],
-               serviceProvider.GetService<IBaseTransferService<IMessageTransferItem>>(),
-               serviceProvider.GetService<IBaseTransferService<IFileTransferItem>>(),
-               serviceProvider.GetService<ILogger<DeleteExpired>>());
+               serviceProvider.GetService<IBaseTransferService<IMessageTransferItem>>()!,
+               serviceProvider.GetService<IBaseTransferService<IFileTransferItem>>()!,
+               serviceProvider.GetService<ILogger<DeleteExpired>>()!);
 
             await deleteJob.RunAsync();
             return 0;

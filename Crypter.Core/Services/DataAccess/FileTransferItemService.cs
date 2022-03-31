@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 using Crypter.Core.Interfaces;
@@ -46,13 +46,13 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task InsertAsync(IFileTransferItem item, CancellationToken cancellationToken)
       {
-         Context.FileTransfer.Add((FileTransfer)item);
+         Context.FileTransfers.Add((FileTransfer)item);
          await Context.SaveChangesAsync(cancellationToken);
       }
 
       public async Task<IFileTransferItem> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
-         return await Context.FileTransfer
+         return await Context.FileTransfers
              .FindAsync(new object[] { id }, cancellationToken);
       }
 
@@ -64,29 +64,23 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<IEnumerable<IFileTransferItem>> FindBySenderAsync(Guid senderId, CancellationToken cancellationToken)
       {
-         return await Context.FileTransfer
+         return await Context.FileTransfers
              .Where(x => x.Sender == senderId)
              .ToListAsync(cancellationToken);
       }
 
       public async Task<IEnumerable<IFileTransferItem>> FindByRecipientAsync(Guid recipientId, CancellationToken cancellationToken)
       {
-         return await Context.FileTransfer
+         return await Context.FileTransfers
              .Where(x => x.Recipient == recipientId)
              .ToListAsync(cancellationToken);
       }
 
       public async Task<IEnumerable<IFileTransferItem>> FindExpiredAsync(CancellationToken cancellationToken)
       {
-         return await Context.FileTransfer
+         return await Context.FileTransfers
              .Where(x => x.Expiration < DateTime.UtcNow)
              .ToListAsync(cancellationToken);
-      }
-
-      public async Task<long> GetAggregateSizeAsync(CancellationToken cancellationToken)
-      {
-         return await Context.FileTransfer
-             .SumAsync(x => x.Size, cancellationToken);
       }
    }
 }

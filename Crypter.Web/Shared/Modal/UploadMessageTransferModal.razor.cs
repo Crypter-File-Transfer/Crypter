@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,12 +21,11 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Web.Services;
+using Crypter.ClientServices.Interfaces;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Modal
@@ -34,13 +33,13 @@ namespace Crypter.Web.Shared.Modal
    public partial class UploadMessageTransferModalBase : ComponentBase
    {
       [Inject]
-      protected ILocalStorageService LocalStorage { get; set; }
+      protected IUserKeysService UserKeysService { get; set; }
 
       [Parameter]
       public bool IsRecipientDefined { get; set; }
 
       [Parameter]
-      public Guid RecipientId { get; set; }
+      public string Recipient { get; set; }
 
       [Parameter]
       public string RecipientX25519PublicKey { get; set; }
@@ -52,7 +51,7 @@ namespace Crypter.Web.Shared.Modal
       public EventCallback<bool> IsRecipientDefinedChanged { get; set; }
 
       [Parameter]
-      public EventCallback<Guid> RecipientIdChanged { get; set; }
+      public EventCallback<string> RecipientChanged { get; set; }
 
       [Parameter]
       public EventCallback<string> RecipientX25519PublicKeyChanged { get; set; }
@@ -71,14 +70,16 @@ namespace Crypter.Web.Shared.Modal
       protected string ModalClass = "";
       protected bool ShowBackdrop = false;
 
-      public async Task Open()
+      public void Open()
       {
-         if (LocalStorage.HasItem(StoredObjectType.UserSession))
-         {
-            IsSenderDefined = true;
-            SenderX25519PrivateKey = await LocalStorage.GetItemAsync<string>(StoredObjectType.PlaintextX25519PrivateKey);
-            SenderEd25519PrivateKey = await LocalStorage.GetItemAsync<string>(StoredObjectType.PlaintextEd25519PrivateKey);
-         }
+         IsSenderDefined = UserKeysService.Ed25519PrivateKey.IsSome && UserKeysService.X25519PrivateKey.IsSome;
+         SenderEd25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
+            () => default,
+            key => key.Value);
+
+         SenderX25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
+            () => default,
+            key => key.Value);
 
          ModalDisplay = "block;";
          ModalClass = "Show";

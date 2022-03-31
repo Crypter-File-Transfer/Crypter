@@ -18,6 +18,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Console", "Crypter.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Common", "Crypter.Common\Crypter.Common.csproj", "{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.ClientServices", "Crypter.ClientServices\Crypter.ClientServices.csproj", "{D5A29A8E-462D-4FA3-A6BE-CCFA7703BDDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,10 @@ Global
 		{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5A29A8E-462D-4FA3-A6BE-CCFA7703BDDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5A29A8E-462D-4FA3-A6BE-CCFA7703BDDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5A29A8E-462D-4FA3-A6BE-CCFA7703BDDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5A29A8E-462D-4FA3-A6BE-CCFA7703BDDE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

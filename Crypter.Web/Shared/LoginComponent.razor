@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,35 +21,32 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  *@
 
 @inherits LoginComponentBase
 
-<form @onsubmit="OnLoginClickedAsync">
+<form @onsubmit:preventDefault @onsubmit="SubmitLoginAsync">
    <div class="mb-3">
       <label for="usernameFormControl" class="form-label">Username</label>
-      <input @bind="LoginModel.Username" class="form-control @UsernameInvalidClass" id="usernameFormControl" />
-      <div class="invalid-feedback">@UsernameValidationMessage</div>
+      <input @bind="LoginModel.Username" class="form-control @UsernameInvalidClassPlaceholder" id="usernameFormControl" />
+      <div class="invalid-feedback">@UsernameValidationErrorMessage</div>
    </div>
 
    <div class="mb-3">
       <label for="passwordFormControl" class="form-label">Password</label>
-      <input type="password" @bind="LoginModel.Password" class="form-control @PasswordInvalidClass" id="passwordFormControl" />
-      <div class="invalid-feedback">@PasswordValidationMessage</div>
+      <input type="password" @bind="LoginModel.Password" class="form-control @PasswordInvalidClassPlaceholder" id="passwordFormControl" />
+      <div class="invalid-feedback">@PasswordValidationErrorMessage</div>
    </div>
 
-   @if (LoginError)
-   {
-      <div class="alert alert-danger" role="alert">
-         @LoginErrorText
-      </div>
-   }
+   <div hidden="@(!LoginAttemptFailed)" class="alert alert-danger" role="alert">
+      @LoginAttemptErrorMessage
+   </div>
 
    <div class="form-check form-switch">
       <label class="form-check-label" for="rememberMe">Remember me on this device</label>
       <input @bind="LoginModel.RememberMe" class="form-check-input" type="checkbox" id="rememberMe" />
    </div>
 
-   <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="OnLoginClickedAsync">Login</button>
+   <button type="submit" class="btn btn-primary">Login</button>
 </form>

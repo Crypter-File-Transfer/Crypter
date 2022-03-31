@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,12 +21,15 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
+using Crypter.Common.Primitives.Enums;
 using Crypter.Web.Helpers;
 using Crypter.Web.Models.Forms;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -38,84 +41,112 @@ namespace Crypter.Web.Shared
       protected NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected IAuthenticationService AuthenticationService { get; set; }
+      protected IUserSessionService UserSessionService { get; set; }
 
-      [Inject]
-      protected ILocalStorageService LocalStorage { get; set; }
+      private const string _invalidClassName = "is-invalid";
 
-      protected LoginModel LoginModel = new();
+      protected LoginForm LoginModel;
 
-      protected bool LoginError = false;
-      protected string LoginErrorText = "";
+      protected bool LoginAttemptFailed;
+      protected string LoginAttemptErrorMessage;
 
-      protected string IsInvalid = "is-invalid";
+      protected string UsernameInvalidClassPlaceholder;
+      protected string UsernameValidationErrorMessage;
 
-      protected string UsernameInvalidClass = "";
-      protected string UsernameValidationMessage;
-      private readonly static string MissingUsername = "Please enter your username";
+      protected string PasswordInvalidClassPlaceholder;
+      protected string PasswordValidationErrorMessage;
 
-      protected string PasswordInvalidClass = "";
-      protected string PasswordValidationMessage;
-      private readonly static string MissingPassword = "Please enter your password";
-
-      protected override async Task OnInitializedAsync()
+      protected override void OnInitialized()
       {
-         if (LocalStorage.HasItem(StoredObjectType.UserSession))
+         if (UserSessionService.LoggedIn)
          {
             NavigationManager.NavigateTo("/user/transfers");
+            return;
          }
-         await base.OnInitializedAsync();
+
+         LoginModel = new();
       }
 
-      protected async Task OnLoginClickedAsync()
+      protected async Task SubmitLoginAsync()
       {
-         if (!ValidateForm())
+         var maybeUsername = ValidateUsername();
+         var maybePassword = ValidatePassword();
+
+         if (maybeUsername.IsLeft || maybePassword.IsLeft)
          {
             return;
          }
 
-         var authSuccess = await AuthenticationService.LoginAsync(LoginModel.Username, LoginModel.Password, LoginModel.RememberMe);
-         if (authSuccess)
+         var username = maybeUsername.RightOrDefault();
+         var password = maybePassword.RightOrDefault();
+
+         var authSuccess = await UserSessionService.LoginAsync(username, password, LoginModel.RememberMe);
+         if (!authSuccess)
          {
-            var returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";
-            NavigationManager.NavigateTo(returnUrl);
+            HandleLoginFailure();
             return;
          }
 
-         LoginError = true;
-         LoginErrorText = "Incorrect username or password";
+         var returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";
+         NavigationManager.NavigateTo(returnUrl);
       }
 
-      private bool ValidateForm()
+      private Either<Nothing, Username> ValidateUsername()
       {
-         return ValidateUsername()
-            && ValidatePassword();
-      }
+         var validationResult = Username.CheckValidation(LoginModel.Username);
 
-      private bool ValidateUsername()
-      {
-         if (string.IsNullOrEmpty(LoginModel.Username))
+         validationResult.IfNone(() =>
          {
-            UsernameValidationMessage = MissingUsername;
-            UsernameInvalidClass = IsInvalid;
-            return false;
-         }
+            UsernameInvalidClassPlaceholder = "";
+            UsernameValidationErrorMessage = "";
+         });
 
-         UsernameInvalidClass = "";
-         return true;
+         validationResult.IfSome(error =>
+         {
+            UsernameInvalidClassPlaceholder = _invalidClassName;
+            UsernameValidationErrorMessage = error switch
+            {
+               StringPrimitiveValidationFailure.IsNull
+                  or StringPrimitiveValidationFailure.IsEmpty => "Please enter your username",
+               _ => "Invalid username"
+            };
+         });
+
+         return validationResult.Match<Either<Nothing, Username>>(
+            () => Username.From(LoginModel.Username),
+            _ => new Nothing());
       }
 
-      private bool ValidatePassword()
+      private Either<Nothing, Password> ValidatePassword()
       {
-         if (string.IsNullOrEmpty(LoginModel.Password))
-         {
-            PasswordValidationMessage = MissingPassword;
-            PasswordInvalidClass = IsInvalid;
-            return false;
-         }
+         var validationResult = Password.CheckValidation(LoginModel.Password);
 
-         PasswordInvalidClass = "";
-         return true;
+         validationResult.IfNone(() =>
+         {
+            PasswordInvalidClassPlaceholder = "";
+            PasswordValidationErrorMessage = "";
+         });
+
+         validationResult.IfSome(error =>
+         {
+            PasswordInvalidClassPlaceholder = _invalidClassName;
+            PasswordValidationErrorMessage = error switch
+            {
+               StringPrimitiveValidationFailure.IsNull
+                  or StringPrimitiveValidationFailure.IsEmpty => "Please enter your password",
+               _ => "Invalid password"
+            };
+         });
+
+         return validationResult.Match<Either<Nothing, Password>>(
+            () => Password.From(LoginModel.Password),
+            _ => new Nothing());
+      }
+
+      private void HandleLoginFailure()
+      {
+         LoginAttemptFailed = true;
+         LoginAttemptErrorMessage = "Incorrect username or password";
       }
    }
 }

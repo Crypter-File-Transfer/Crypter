@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  *@
 
 @inherits TranferSuccessModalBase
@@ -33,7 +33,7 @@
             <h3 class="my-0">Upload Successful</h3>
          </div>
          <div class="modal-body justify-content-center">
-            <p>Your encrypted @UploadType will expire in 24 hours and will automatically be deleted once downloaded or expired.</p>
+            <p>Your encrypted @UploadType will expire in @RequestedExpirationHours hours and will automatically be deleted once downloaded or expired.</p>
             <p>Download Link: <a href=@($"/decrypt/{UploadType}/{ItemId}")>@GetDownloadLink()</a></p>
             <h4>Decryption Key</h4>
             <p><em>Share this key with the receiving party</em></p>

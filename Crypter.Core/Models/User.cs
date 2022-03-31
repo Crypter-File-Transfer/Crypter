@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,10 +21,11 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Interfaces;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -33,7 +34,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Crypter.Core.Models
 {
    [Table("User")]
-   public class User : IUser
+   public class User
    {
       [Key]
       public Guid Id { get; set; }
@@ -51,12 +52,38 @@ namespace Crypter.Core.Models
       public virtual UserEd25519KeyPair Ed25519KeyPair { get; set; }
       public virtual UserX25519KeyPair X25519KeyPair { get; set; }
       public virtual List<UserToken> Tokens { get; set; }
+      public virtual List<UserContact> Contacts { get; set; }
 
+      /// <summary>
+      /// Don't use this
+      /// </summary>
+      /// <param name="id"></param>
+      /// <param name="username"></param>
+      /// <param name="email"></param>
+      /// <param name="passwordHash"></param>
+      /// <param name="passwordSalt"></param>
+      /// <param name="emailVerified"></param>
+      /// <param name="created"></param>
+      /// <param name="lastLogin"></param>
       public User(Guid id, string username, string email, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
       {
          Id = id;
          Username = username;
          Email = email;
+         PasswordHash = passwordHash;
+         PasswordSalt = passwordSalt;
+         EmailVerified = emailVerified;
+         Created = created;
+         LastLogin = lastLogin;
+      }
+
+      public User(Guid id, Username username, Maybe<EmailAddress> email, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
+      {
+         Id = id;
+         Username = username.Value;
+         Email = email.Match(
+            () => null,
+            some => some.Value);
          PasswordHash = passwordHash;
          PasswordSalt = passwordSalt;
          EmailVerified = emailVerified;

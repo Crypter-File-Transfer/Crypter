@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,11 +21,11 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Web.Models.LocalStorage;
-using Crypter.Web.Services;
+using Crypter.ClientServices.DeviceStorage.Enums;
+using Crypter.ClientServices.Interfaces;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
@@ -38,45 +38,58 @@ namespace Crypter.Web.Shared
    public partial class NavigationBase : ComponentBase, IDisposable
    {
       [Inject]
-      IJSRuntime JSRuntime { get; set; }
+      protected IJSRuntime JSRuntime { get; set; }
 
       [Inject]
-      NavigationManager NavigationManager { get; set; }
+      protected NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      ILocalStorageService LocalStorageService { get; set; }
+      protected IUserSessionService UserSessionService { get; set; }
 
       [Inject]
-      protected IAuthenticationService AuthenticationService { get; set; }
+      protected IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
+
+      [Inject]
+      protected IUserKeysService UserKeysService { get; set; }
+
+      [Inject]
+      protected IUserContactsService UserContactsService { get; set; }
 
       protected UploadFileTransferModal FileTransferModal { get; set; }
 
       protected UploadMessageTransferModal MessageTransferModal { get; set; }
 
-      protected bool ShowUserNavigation { get; set; } = false;
+      protected bool ShowUserNavigation;
 
-      protected string Username { get; set; }
+      protected string Username;
 
-      protected string ProfileUrl { get; set; }
+      protected string ProfileUrl;
 
-      protected string SearchKeyword { get; set; }
+      protected string SearchKeyword;
 
-      protected override async Task OnInitializedAsync()
+      protected override void OnInitialized()
       {
-         var session = await LocalStorageService.GetItemAsync<UserSession>(StoredObjectType.UserSession);
-         ShowUserNavigation = session is not null;
-         if (session is not null)
-         {
-            Username = session.Username;
-            ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
-         }
+         HandleUserSessionStateChanged();
+
          NavigationManager.LocationChanged += HandleLocationChanged;
-         AuthenticationService.UserSessionStateChanged += HandleUserSessionStateChanged;
+         UserSessionService.UserLoggedInEventHandler += UserSessionStateChangedEventHandler;
+         UserSessionService.UserLoggedOutEventHandler += UserSessionStateChangedEventHandler;
+      }
+
+      protected void HandleUserSessionStateChanged()
+      {
+         ShowUserNavigation = UserSessionService.LoggedIn;
+         Username = UserSessionService.Session.Match(
+            () => null,
+            session => session.Username);
+         ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
+         StateHasChanged();
       }
 
       protected async Task OnLogoutClicked()
       {
-         await AuthenticationService.LogoutAsync();
+         await UserSessionService.LogoutAsync();
+         await BrowserRepository.RecycleAsync();
          NavigationManager.NavigateTo("/");
       }
 
@@ -88,25 +101,19 @@ namespace Crypter.Web.Shared
          });
       }
 
-      protected void HandleUserSessionStateChanged(object sender, UserSessionStateChangedEventArgs e)
+      protected void UserSessionStateChangedEventHandler(object sender, EventArgs _)
       {
-         ShowUserNavigation = e.LoggedIn;
-         if (e.LoggedIn)
-         {
-            Username = e.Username;
-            ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
-         }
-         StateHasChanged();
+         HandleUserSessionStateChanged();
       }
 
-      protected async Task OnEncryptFileClicked()
+      protected void OnEncryptFileClicked()
       {
-         await FileTransferModal.Open();
+         FileTransferModal.Open();
       }
 
-      protected async Task OnEncryptMessageClicked()
+      protected void OnEncryptMessageClicked()
       {
-         await MessageTransferModal.Open();
+         MessageTransferModal.Open();
       }
 
       protected async Task CollapseNavigationMenuAsync()
@@ -122,7 +129,8 @@ namespace Crypter.Web.Shared
       public void Dispose()
       {
          NavigationManager.LocationChanged -= HandleLocationChanged;
-         AuthenticationService.UserSessionStateChanged -= HandleUserSessionStateChanged;
+         UserSessionService.UserLoggedInEventHandler -= UserSessionStateChangedEventHandler;
+         UserSessionService.UserLoggedOutEventHandler -= UserSessionStateChangedEventHandler;
          GC.SuppressFinalize(this);
       }
    }

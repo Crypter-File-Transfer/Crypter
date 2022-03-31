@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,13 +21,11 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Services;
-using Crypter.Contracts.Enum;
-using Crypter.Contracts.Requests;
-using Crypter.Core.Interfaces;
+using Crypter.Core.Features.Metrics.Queries;
+using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -35,61 +33,22 @@ namespace Crypter.API.Services
 {
    public interface IApiValidationService
    {
-      Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken);
-      Task<InsertUserResult> IsValidUserRegistrationRequestAsync(RegisterUserRequest request, CancellationToken cancellationToken);
+      Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, long maxUploadSize, CancellationToken cancellationToken);
    }
 
    public class ApiValidationService : IApiValidationService
    {
-      private readonly IUserService UserService;
-      private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
-      private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
+      private readonly IMediator _mediator;
 
-      public ApiValidationService(IUserService userService, IBaseTransferService<IMessageTransferItem> messageTransferService, IBaseTransferService<IFileTransferItem> fileTransferService)
+      public ApiValidationService(IMediator mediator)
       {
-         UserService = userService;
-         MessageTransferService = messageTransferService;
-         FileTransferService = fileTransferService;
+         _mediator = mediator;
       }
 
-      public async Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, int maxUploadSize, CancellationToken cancellationToken)
+      public async Task<bool> IsEnoughSpaceForNewTransferAsync(long allocatedDiskSpace, long maxUploadSize, CancellationToken cancellationToken)
       {
-         var sizeOfFileUploads = await MessageTransferService.GetAggregateSizeAsync(cancellationToken);
-         var sizeOfMessageUploads = await FileTransferService.GetAggregateSizeAsync(cancellationToken);
-         var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
-         return (totalSizeOfUploads + maxUploadSize) <= allocatedDiskSpace;
-      }
-
-      public async Task<InsertUserResult> IsValidUserRegistrationRequestAsync(RegisterUserRequest request, CancellationToken cancellationToken)
-      {
-         if (!ValidationService.IsValidUsername(request.Username))
-         {
-            return InsertUserResult.InvalidUsername;
-         }
-
-         if (!ValidationService.IsValidPassword(request.Password))
-         {
-            return InsertUserResult.InvalidPassword;
-         }
-
-         if (ValidationService.IsPossibleEmailAddress(request.Email)
-            && !ValidationService.IsValidEmailAddress(request.Email))
-         {
-            return InsertUserResult.InvalidEmailAddress;
-         }
-
-         if (!await UserService.IsUsernameAvailableAsync(request.Username, cancellationToken))
-         {
-            return InsertUserResult.UsernameTaken;
-         }
-
-         if (ValidationService.IsPossibleEmailAddress(request.Email)
-            && !await UserService.IsEmailAddressAvailableAsync(request.Email, cancellationToken))
-         {
-            return InsertUserResult.EmailTaken;
-         }
-
-         return InsertUserResult.Success;
+         var result = await _mediator.Send(new DiskMetricsQuery(allocatedDiskSpace), cancellationToken);
+         return result.FreeBytes > maxUploadSize;
       }
    }
 }

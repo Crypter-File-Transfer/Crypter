@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 using Crypter.Core.Interfaces;
@@ -45,14 +45,14 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<IUserPublicKeyPair> GetUserPublicKeyPairAsync(Guid userId, CancellationToken cancellationToken)
       {
-         return await Context.UserEd25519KeyPair
+         return await Context.UserEd25519KeyPairs
              .Where(x => x.Owner == userId)
              .FirstOrDefaultAsync(cancellationToken);
       }
 
       public async Task<string> GetUserPublicKeyAsync(Guid userId, CancellationToken cancellationToken)
       {
-         var keyPair = await Context.UserEd25519KeyPair
+         var keyPair = await Context.UserEd25519KeyPairs
              .Where(x => x.Owner == userId)
              .FirstOrDefaultAsync(cancellationToken);
          return keyPair?.PublicKey;
@@ -73,7 +73,7 @@ namespace Crypter.Core.Services.DataAccess
              clientIV,
              DateTime.UtcNow);
 
-         Context.UserEd25519KeyPair.Add(key);
+         Context.UserEd25519KeyPairs.Add(key);
          await Context.SaveChangesAsync(cancellationToken);
          return true;
       }

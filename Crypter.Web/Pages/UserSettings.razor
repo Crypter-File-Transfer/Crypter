@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  *@
 
 @page "/user/settings"
@@ -46,7 +46,7 @@
          </div>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditProfileInfoClicked" hidden="@IsEditing">Edit Profile</button>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelProfileInfoClicked" hidden="@(!AreProfileControlsEnabled)">Cancel</button>
-         <button type="button" class="btn btn-primary mx-auto" @onclick="OnSaveProfileInfoClickedAsync" hidden="@(!AreProfileControlsEnabled)">Save Profile</button>
+         <button type="button" class="btn btn-primary mx-auto" @onclick="async () => await OnSaveProfileInfoClickedAsync()" hidden="@(!AreProfileControlsEnabled)">Save Profile</button>
       </form>
       <form>
          <h2>Contact Information</h2>
@@ -88,7 +88,7 @@
          </div>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditContactInfoClicked" hidden="@IsEditing">Edit Contact Info</button>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelContactInfoClicked" hidden="@(!AreContactInfoControlsEnabled)">Cancel</button>
-         <button type="button" class="btn btn-primary mx-auto" @onclick="OnSaveContactInfoClickedAsync" hidden="@(!AreContactInfoControlsEnabled)">Save Contact Info</button>
+         <button type="button" class="btn btn-primary mx-auto" @onclick="async () => await OnSaveContactInfoClickedAsync()" hidden="@(!AreContactInfoControlsEnabled)">Save Contact Info</button>
          @if (UpdateContactInfoFailed)
          {
             @if (!string.IsNullOrEmpty(ContactInfoGenericError))
@@ -136,7 +136,7 @@
                </div>
                <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditPasswordClicked" hidden="@IsEditing">Edit Password</button>
                <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelPasswordClicked" hidden="@(!ArePasswordControlsEnabled)">Cancel</button>
-               <button type="button" class="btn btn-primary mx-auto" @onclick="OnSavePasswordClickedAsync" hidden="@(!ArePasswordControlsEnabled)">Save Password</button>
+               <button type="button" class="btn btn-primary mx-auto" @onclick="async () => OnSavePasswordClickedAsync()" hidden="@(!ArePasswordControlsEnabled)">Save Password</button>
             </form>
          -->
       <form>
@@ -209,7 +209,7 @@
          </div>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditPrivacyClicked" hidden="@IsEditing">Edit Privacy</button>
          <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelPrivacyClicked" hidden="@(!ArePrivacyControlsEnabled)">Cancel</button>
-         <button type="button" class="btn btn-primary mx-auto" @onclick="OnSavePrivacyClickedAsync" hidden="@(!ArePrivacyControlsEnabled)">Save Privacy</button>
+         <button type="button" class="btn btn-primary mx-auto" @onclick="async () => await OnSavePrivacyClickedAsync()" hidden="@(!ArePrivacyControlsEnabled)">Save Privacy</button>
       </form>
       <h2>Keys</h2>
       <div class="mb-3">

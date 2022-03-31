@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 using Crypter.API.Models;
@@ -40,7 +40,7 @@ namespace Crypter.API.Services
       string NewAuthenticationToken(Guid userId);
       (string token, DateTime expiration) NewSessionToken(Guid userId, Guid tokenId);
       (string token, DateTime expiration) NewRefreshToken(Guid userId, Guid tokenId);
-      (bool success, ClaimsPrincipal claimsPrincipal) ValidateToken(string token);
+      (bool success, ClaimsPrincipal? claimsPrincipal) ValidateToken(string token);
       Guid ParseUserId(ClaimsPrincipal claimsPrincipal);
       bool TryParseTokenId(ClaimsPrincipal claimsPrincipal, out Guid tokenId);
    }
@@ -72,7 +72,7 @@ namespace Crypter.API.Services
          return (NewToken(userId, expiration, tokenId), expiration);
       }
 
-      public (bool success, ClaimsPrincipal claimsPrincipal) ValidateToken(string token)
+      public (bool success, ClaimsPrincipal? claimsPrincipal) ValidateToken(string token)
       {
          var validationParameters = JwtBearerConfiguration.GetTokenValidationParameters(_tokenSettings);
 
@@ -108,6 +108,11 @@ namespace Crypter.API.Services
          tokenId = Guid.Empty;
          
          var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
+         if (idClaim is null)
+         {
+            return false;
+         }
+
          if (Guid.TryParse(idClaim.Value, out Guid foundTokenId))
          {
             tokenId = foundTokenId;

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,12 +21,12 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Enum;
-using Crypter.Contracts.Requests;
-using Crypter.Web.Services;
+using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
+using Crypter.Contracts.Features.Transfer.DownloadSignature;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Text;
@@ -58,8 +58,8 @@ namespace Crypter.Web.Shared.Transfer
          ErrorMessage = "";
 
          await SetNewDecryptionStatus("Decoding keys");
-         (var decodeSuccess, var recipientX25519PrivateKeyPEM) = await DecodeX25519RecipientKey();
-         if (!decodeSuccess)
+         var maybeRecipientX25519PrivateKey = DecodeX25519RecipientKey();
+         if (maybeRecipientX25519PrivateKey.IsNone)
          {
             return;
          }
@@ -68,8 +68,8 @@ namespace Crypter.Web.Shared.Transfer
          byte[] serverKey;
          try
          {
-            var senderX25519PublicKeyPEM = Encoding.UTF8.GetString(Convert.FromBase64String(SenderX25519PublicKey));
-            (receiveKey, serverKey) = DeriveSymmetricKeys(recipientX25519PrivateKeyPEM, senderX25519PublicKeyPEM);
+            var senderX25519PublicKeyPEM = PEMString.From(Encoding.UTF8.GetString(Convert.FromBase64String(SenderX25519PublicKey)));
+            (receiveKey, serverKey) = DeriveSymmetricKeys(maybeRecipientX25519PrivateKey.SomeOrDefault(), senderX25519PublicKeyPEM);
          }
          catch (Exception)
          {
@@ -80,55 +80,59 @@ namespace Crypter.Web.Shared.Transfer
 
          // Get the signature before downloading the ciphertext
          // Remember, the API will DELETE the ciphertext and it's database records as soon as the ciphertext is downloaded
-         var requestWithAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
-         var signatureRequest = new GetTransferSignatureRequest(TransferId);
-         var (_, signatureResponse) = await TransferService.DownloadMessageSignatureAsync(signatureRequest, requestWithAuth);
-         byte[] signature = Convert.FromBase64String(signatureResponse.SignatureBase64);
-         string ed25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(signatureResponse.Ed25519PublicKeyBase64));
-
-         // Request the ciphertext from the server
-         await SetNewDecryptionStatus("Downloading encrypted message");
-         var encodedServerDecryptionKey = Convert.ToBase64String(serverKey);
-         var ciphertextRequest = new GetTransferCiphertextRequest(TransferId, encodedServerDecryptionKey);
-         var (_, ciphertextResponse) = await TransferService.DownloadMessageCiphertextAsync(ciphertextRequest, requestWithAuth);
-
-         // Error handler
-         switch (ciphertextResponse.Result)
+         var signatureRequest = new DownloadTransferSignatureRequest(TransferId);
+         var signatureResponse = await CrypterApiService.DownloadMessageSignatureAsync(signatureRequest, UserSessionService.LoggedIn);
+         await signatureResponse.DoRightAsync(async x =>
          {
-            case DownloadCiphertextResult.Success:
-               break;
-            case DownloadCiphertextResult.NotFound:
-               ErrorMessage = "Message not found";
-               DecryptionInProgress = false;
-               return;
-            case DownloadCiphertextResult.ServerDecryptionFailed:
-               ErrorMessage = "Failed to remove server-side encryption";
-               DecryptionInProgress = false;
-               return;
-            default:
-               ErrorMessage = "";
-               DecryptionInProgress = false;
-               return;
-         }
+            var signature = Convert.FromBase64String(x.SignatureBase64);
+            var ed25519PublicKey = PEMString.From(Encoding.UTF8.GetString(Convert.FromBase64String(x.Ed25519PublicKeyBase64)));
 
-         // Decrypt the ciphertext using the symmetric key from the signature
-         await SetNewDecryptionStatus("Decrypting message");
-         var ciphertextBytes = Convert.FromBase64String(ciphertextResponse.CipherTextBase64);
-         var clientEncryptionIV = Convert.FromBase64String(ciphertextResponse.ClientEncryptionIVBase64);
-         var plaintextBytes = DecryptBytes(ciphertextBytes, receiveKey, clientEncryptionIV);
+            // Request the ciphertext from the server
+            await SetNewDecryptionStatus("Downloading encrypted message");
+            var encodedServerDecryptionKey = Convert.ToBase64String(serverKey);
+            var ciphertextRequest = new DownloadTransferCiphertextRequest(TransferId, encodedServerDecryptionKey);
+            var ciphertextResponse = await CrypterApiService.DownloadMessageCiphertextAsync(ciphertextRequest, UserSessionService.LoggedIn);
+            ciphertextResponse.DoLeft(y =>
+            {
+               switch (y)
+               {
+                  case DownloadTransferCiphertextError.NotFound:
+                     ErrorMessage = "Message not found";
+                     DecryptionInProgress = false;
+                     break;
+                  case DownloadTransferCiphertextError.ServerDecryptionFailed:
+                     ErrorMessage = "Failed to remove server-side encryption";
+                     DecryptionInProgress = false;
+                     break;
+                  default:
+                     ErrorMessage = "";
+                     DecryptionInProgress = false;
+                     break;
+               }
+            });
 
-         await SetNewDecryptionStatus("Verifying decrypted message");
-         if (VerifySignature(plaintextBytes, signature, ed25519PublicKey))
-         {
-            DecryptedMessage = Encoding.UTF8.GetString(plaintextBytes);
-            DecryptionCompleted = true;
-         }
-         else
-         {
-            ErrorMessage = "Failed to verify decrypted file";
-         }
+            await ciphertextResponse.DoRightAsync(async y =>
+            {
+               // Decrypt the ciphertext using the symmetric key from the signature
+               await SetNewDecryptionStatus("Decrypting message");
+               var ciphertextBytes = Convert.FromBase64String(y.CipherTextBase64);
+               var clientEncryptionIV = Convert.FromBase64String(y.ClientEncryptionIVBase64);
+               var plaintextBytes = DecryptBytes(ciphertextBytes, receiveKey, clientEncryptionIV);
 
-         DecryptionInProgress = false;
+               await SetNewDecryptionStatus("Verifying decrypted message");
+               if (VerifySignature(plaintextBytes, signature, ed25519PublicKey))
+               {
+                  DecryptedMessage = Encoding.UTF8.GetString(plaintextBytes);
+                  DecryptionCompleted = true;
+               }
+               else
+               {
+                  ErrorMessage = "Failed to verify decrypted file";
+               }
+
+               DecryptionInProgress = false;
+            });
+         });
       }
    }
 }

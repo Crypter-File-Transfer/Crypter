@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,9 +21,10 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using NUnit.Framework;
 
@@ -40,8 +41,8 @@ namespace Crypter.Test.CryptoLib_Tests
       [Test]
       public void User_Credentials_Are_Digested()
       {
-         var username = "crypter";
-         var password = "P@ssw0rd?";
+         var username = Username.From("crypter");
+         var password = Password.From("P@ssw0rd?");
 
          var knownDigest = new byte[]
          {
@@ -62,9 +63,9 @@ namespace Crypter.Test.CryptoLib_Tests
       [Test]
       public void User_Credentials_Are_Digested_Username_Is_Case_Insensitive()
       {
-         var usernameLowercase = "username";
-         var usernameUppercase = "USERNAME";
-         var password = "P@ssw0rd?";
+         var usernameLowercase = Username.From("username");
+         var usernameUppercase = Username.From("USERNAME");
+         var password = Password.From("P@ssw0rd?");
 
          var lowercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(usernameLowercase, password);
          var uppercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(usernameUppercase, password);
@@ -74,9 +75,9 @@ namespace Crypter.Test.CryptoLib_Tests
       [Test]
       public void User_Credentials_Are_Digested_Password_Is_Case_Sensitive()
       {
-         var username = "Frodo";
-         var passwordLowercase = "password";
-         var passwordUppercase = "PASSWORD";
+         var username = Username.From("Frodo");
+         var passwordLowercase = Password.From("password");
+         var passwordUppercase = Password.From("PASSWORD");
 
          var lowercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, passwordLowercase);
          var uppercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, passwordUppercase);
@@ -86,8 +87,8 @@ namespace Crypter.Test.CryptoLib_Tests
       [Test]
       public void Symmetric_Key_Can_Be_Derived_From_User_Login_Information()
       {
-         var username = "Samwise";
-         var password = "Gamgee";
+         var username = Username.From("Samwise");
+         var password = Password.From("Gamgee");
 
          var knownKey = new byte[]
          {
@@ -104,9 +105,9 @@ namespace Crypter.Test.CryptoLib_Tests
       [Test]
       public void Symmetric_Key_Derivation_Outputs_Same_Key_Regardless_Of_Username_Capitalization()
       {
-         var usernameLowercase = "gimli";
-         var usernameUppercase = "GIMLI";
-         var password = "TheDwarf";
+         var usernameLowercase = Username.From("gimli");
+         var usernameUppercase = Username.From("GIMLI");
+         var password = Password.From("TheDwarf");
 
          var lowercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(usernameLowercase, password);
          var uppercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(usernameUppercase, password);
@@ -116,9 +117,9 @@ namespace Crypter.Test.CryptoLib_Tests
       [Test]
       public void Symmetric_Key_Derivation_Different_Key_When_Password_Capitalization_Changes()
       {
-         var username = "Aragon";
-         var lowercasePassword = "son_of_arathorn";
-         var uppercasePassword = "SON_OF_ARATHORN";
+         var username = Username.From("Aragon");
+         var lowercasePassword = Password.From("son_of_arathorn");
+         var uppercasePassword = Password.From("SON_OF_ARATHORN");
 
          var lowercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, lowercasePassword);
          var uppercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, uppercasePassword);

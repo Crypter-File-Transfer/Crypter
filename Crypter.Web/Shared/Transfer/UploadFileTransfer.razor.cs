@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,15 +21,14 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Enum;
-using Crypter.Contracts.Requests;
+using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.Web.Models;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using System;
@@ -42,13 +41,13 @@ namespace Crypter.Web.Shared.Transfer
    public partial class UploadFileTransferBase : UploadTransferBase
    {
       [Inject]
-      public AppSettings AppSettings { get; set; }
+      public ClientAppSettings AppSettings { get; set; }
 
       protected const int MaxFileCount = 1;
       protected const int FileReadBlockSize = 1048576;
       protected const string ProgressTransition = "0.20s";
 
-      protected int MaxFileSizeBytes;
+      protected long MaxFileSizeBytes;
       protected bool ShowProgressBar = false;
       protected double ProgressPercent = 0.0;
       protected string DropClass = "";
@@ -58,7 +57,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected override void OnInitialized()
       {
-         MaxFileSizeBytes = AppSettings.MaxUploadSizeMB * 1024 * 1024;
+         MaxFileSizeBytes = AppSettings.MaxUploadSizeMB * (long)Math.Pow(2, 20);
          base.OnInitialized();
       }
 
@@ -107,7 +106,12 @@ namespace Crypter.Web.Shared.Transfer
 
          await SetNewEncryptionStatus("Generating keys");
          GenerateMissingAsymmetricKeys();
-         (var sendKey, var serverKey) = DeriveSymmetricKeys(SenderX25519PrivateKey, RecipientX25519PublicKey);
+
+         PEMString senderX25519PrivateKey = PEMString.From(SenderX25519PrivateKey);
+         PEMString senderEd25519PrivateKey = PEMString.From(SenderEd25519PrivateKey);
+         PEMString recipientX25519PublicKey = PEMString.From(RecipientX25519PublicKey);
+
+         (var sendKey, var serverKey) = DeriveSymmetricKeys(senderX25519PrivateKey, recipientX25519PublicKey);
          var iv = AES.GenerateIV();
 
          await SetNewEncryptionStatus("Encrypting your file");
@@ -115,15 +119,15 @@ namespace Crypter.Web.Shared.Transfer
          await HideEncryptionProgress();
 
          await SetNewEncryptionStatus("Signing your file");
-         var signature = await SignBytesAsync(SelectedFile, SenderEd25519PrivateKey);
+         var signature = await SignBytesAsync(SelectedFile, senderEd25519PrivateKey);
          await HideEncryptionProgress();
 
          await SetNewEncryptionStatus("Uploading");
          var encodedCipherText = Convert.ToBase64String(ciphertext);
          var encodedECDHSenderKey = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(KeyConversion.ConvertX25519PrivateKeyFromPEM(SenderX25519PrivateKey).GeneratePublicKey().ConvertToPEM()));
+            Encoding.UTF8.GetBytes(KeyConversion.ConvertX25519PrivateKeyFromPEM(senderX25519PrivateKey).GeneratePublicKey().ConvertToPEM().Value));
          var encodedECDSASenderKey = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(KeyConversion.ConvertEd25519PrivateKeyFromPEM(SenderEd25519PrivateKey).GeneratePublicKey().ConvertToPEM()));
+            Encoding.UTF8.GetBytes(KeyConversion.ConvertEd25519PrivateKeyFromPEM(senderEd25519PrivateKey).GeneratePublicKey().ConvertToPEM().Value));
          var encodedServerEncryptionKey = Convert.ToBase64String(serverKey);
          var encodedSignature = Convert.ToBase64String(signature);
          var fileType = string.IsNullOrEmpty(SelectedFile.ContentType)
@@ -131,37 +135,41 @@ namespace Crypter.Web.Shared.Transfer
             : SelectedFile.ContentType;
          var encodedClientIV = Convert.ToBase64String(iv);
 
-         var withAuth = LocalStorageService.HasItem(StoredObjectType.UserSession);
-         var request = new FileTransferRequest(SelectedFile.Name, fileType, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey);
-         var (_, response) = await UploadService.UploadFileTransferAsync(request, RecipientId, withAuth);
-
-         switch (response.Result)
+         var request = new UploadFileTransferRequest(SelectedFile.Name, fileType, encodedCipherText, encodedSignature, encodedClientIV, encodedServerEncryptionKey, encodedECDHSenderKey, encodedECDSASenderKey, RequestedExpirationHours);
+         var uploadResponse = await CrypterApiService.UploadFileTransferAsync(request, Recipient, UserSessionService.LoggedIn);
+         uploadResponse.DoLeft(x =>
          {
-            case UploadResult.BlockedByUserPrivacy:
-               ErrorMessages.Add("This user does not accept files.");
-               EncryptionInProgress = false;
-               return;
-            case UploadResult.OutOfSpace:
-               ErrorMessages.Add("The server is full. Try again later.");
-               EncryptionInProgress = false;
-               return;
-            default:
-               break;
-         }
+            switch (x)
+            {
+               case UploadTransferError.BlockedByUserPrivacy:
+                  ErrorMessages.Add("This user does not accept files.");
+                  break;
+               case UploadTransferError.OutOfSpace:
+                  ErrorMessages.Add("The server is full. Try again later.");
+                  break;
+               default:
+                  ErrorMessages.Add("An error occurred");
+                  break;
+            }
+         });
 
-         TransferId = response.Id;
+         uploadResponse.DoRight(x =>
+         {
+            TransferId = x.Id;
 
-         if (RecipientId == default)
-         {
-            ModalForAnonymousRecipient.Open();
-         }
-         else
-         {
-            ModalForUserRecipient.Open();
-         }
+            if (string.IsNullOrEmpty(Recipient))
+            {
+               ModalForAnonymousRecipient.Open();
+            }
+            else
+            {
+               ModalForUserRecipient.Open();
+            }
+
+            Cleanup();
+         });
 
          EncryptionInProgress = false;
-         Cleanup();
       }
 
       protected async Task<byte[]> EncryptBytesAsync(IBrowserFile plaintext, byte[] symmetricKey, byte[] symmetricIV)
@@ -197,7 +205,7 @@ namespace Crypter.Web.Shared.Transfer
          return ciphertext.ToArray();
       }
 
-      protected async Task<byte[]> SignBytesAsync(IBrowserFile file, string ed25519PrivateKey)
+      protected async Task<byte[]> SignBytesAsync(IBrowserFile file, PEMString ed25519PrivateKey)
       {
          await SetProgressBar(0.0);
          var ed25519PrivateDecoded = KeyConversion.ConvertEd25519PrivateKeyFromPEM(ed25519PrivateKey);

@@ -1,11 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="System.Text.Json" Version="6.0.1" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
   </ItemGroup>
 </Project>

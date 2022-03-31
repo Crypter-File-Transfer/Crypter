@@ -1,5 +1,5 @@
 @*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  *@
 
 @inherits UploadFileTransferBase
@@ -59,8 +59,8 @@
             <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptClicked())">Encrypt</button>
          </div>
       </div>
-      <TransferSuccessModal @ref="ModalForAnonymousRecipient" UploadType="file" ItemId="@TransferId" RecipientX25519PrivateKey="@EncodedRecipientX25519PrivateKey" ModalClosedCallback="@UploadCompletedEvent" />
-      <BasicModal @ref="ModalForUserRecipient" Subject="Upload Successful" Message=@UploadSuccessForUserMessage PrimaryButtonText="Okay" ModalClosedCallback="@UploadCompletedEvent" />
+        <TransferSuccessModal @ref="ModalForAnonymousRecipient" UploadType="file" ItemId="@TransferId" RecipientX25519PrivateKey="@EncodedRecipientX25519PrivateKey" ModalClosedCallback="@UploadCompletedEvent" RequestedExpirationHours="@RequestedExpirationHours"/>   
+        <BasicModal @ref="ModalForUserRecipient" Subject="Upload Successful" Message=@UploadSuccessForUserMessage PrimaryButtonText="Okay" ModalClosedCallback="@UploadCompletedEvent" />
    </div>
 </div>
 

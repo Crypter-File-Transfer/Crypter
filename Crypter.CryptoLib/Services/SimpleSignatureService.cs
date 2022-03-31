@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,24 +21,25 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.CryptoLib.Crypto;
 
 namespace Crypter.CryptoLib.Services
 {
    public interface ISimpleSignatureService
    {
-      public byte[] Sign(string ed25519PrivateKeyPEM, byte[] data);
-      public bool Verify(string ed25519PublicKeyPEM, byte[] data, byte[] signature);
+      public byte[] Sign(PEMString ed25519PrivateKey, byte[] data);
+      public bool Verify(PEMString ed25519PublicKey, byte[] data, byte[] signature);
    }
 
    public class SimpleSignatureService : ISimpleSignatureService
    {
-      public byte[] Sign(string ed25519PrivateKeyPEM, byte[] data)
+      public byte[] Sign(PEMString ed25519PrivateKey, byte[] data)
       {
-         var privateKey = KeyConversion.ConvertEd25519PrivateKeyFromPEM(ed25519PrivateKeyPEM);
+         var privateKey = KeyConversion.ConvertEd25519PrivateKeyFromPEM(ed25519PrivateKey);
 
          var signer = new ECDSA();
          signer.InitializeSigner(privateKey);
@@ -46,9 +47,9 @@ namespace Crypter.CryptoLib.Services
          return signer.GenerateSignature();
       }
 
-      public bool Verify(string ed25519PublicKeyPEM, byte[] data, byte[] signature)
+      public bool Verify(PEMString ed25519PublicKey, byte[] data, byte[] signature)
       {
-         var publicKey = KeyConversion.ConvertEd25519PublicKeyFromPEM(ed25519PublicKeyPEM);
+         var publicKey = KeyConversion.ConvertEd25519PublicKeyFromPEM(ed25519PublicKey);
 
          var verifier = new ECDSA();
          verifier.InitializeVerifier(publicKey);

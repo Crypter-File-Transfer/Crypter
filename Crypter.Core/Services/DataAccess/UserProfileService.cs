@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 using Crypter.Core.Interfaces;
@@ -43,7 +43,7 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<IUserProfile> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
-         return await Context.UserProfile.FindAsync(new object[] { id }, cancellationToken);
+         return await Context.UserProfiles.FindAsync(new object[] { id }, cancellationToken);
       }
 
       public async Task<bool> UpsertAsync(Guid id, string alias, string about, CancellationToken cancellationToken)
@@ -52,7 +52,7 @@ namespace Crypter.Core.Services.DataAccess
          if (userProfile == null)
          {
             var newProfile = new UserProfile(id, alias, about, null);
-            Context.UserProfile.Add(newProfile);
+            Context.UserProfiles.Add(newProfile);
          }
          else
          {

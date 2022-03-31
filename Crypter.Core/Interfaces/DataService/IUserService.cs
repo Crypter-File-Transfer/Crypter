@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,10 +21,11 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Enum;
+using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.User.UpdateContactInfo;
 using Crypter.Core.Models;
 using System;
 using System.Threading;
@@ -34,17 +35,10 @@ namespace Crypter.Core.Interfaces
 {
    public interface IUserService
    {
-      Task<Guid> InsertAsync(string username, string password, string email, CancellationToken cancellationToken);
-      Task<IUser> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task<IUser> ReadAsync(string username, CancellationToken cancellationToken);
-      Task<UpdateContactInfoResult> UpdateContactInfoAsync(Guid id, string email, string currentPassword, CancellationToken cancellationToken);
+      Task<User> ReadAsync(Guid id, CancellationToken cancellationToken);
+      Task<User> ReadAsync(string username, CancellationToken cancellationToken);
+      Task<(bool Success, UpdateContactInfoError Error)> UpdateContactInfoAsync(Guid id, EmailAddress emailAddress, AuthenticationPassword currentPassword, CancellationToken cancellationToken);
       Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
       Task DeleteAsync(Guid id, CancellationToken cancellationToken);
-
-      Task<User> AuthenticateAsync(string username, string password, CancellationToken cancellationToken);
-      Task UpdateLastLoginTime(Guid id, DateTime dateTime, CancellationToken cancellationToken);
-
-      Task<bool> IsUsernameAvailableAsync(string username, CancellationToken cancellationToken);
-      Task<bool> IsEmailAddressAvailableAsync(string email, CancellationToken cancellationToken);
    }
 }

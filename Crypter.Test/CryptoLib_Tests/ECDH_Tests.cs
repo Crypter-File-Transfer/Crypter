@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,9 +21,10 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using NUnit.Framework;
@@ -79,8 +80,8 @@ namespace Crypter.Test.CryptoLib_Tests
          var alicePemFile = Path.Combine(directory, "CryptoLib_Tests", "Assets", "Alice_ECDH_Key.pem");
          var bobPemFile = Path.Combine(directory, "CryptoLib_Tests", "Assets", "Bob_ECDH_Key.pem");
 
-         var alicePemKey = File.ReadAllText(alicePemFile);
-         var bobPemKey = File.ReadAllText(bobPemFile);
+         var alicePemKey = PEMString.From(File.ReadAllText(alicePemFile));
+         var bobPemKey = PEMString.From(File.ReadAllText(bobPemFile));
 
          var alicePrivate = KeyConversion.ConvertX25519PrivateKeyFromPEM(alicePemKey);
          var bobPrivate = KeyConversion.ConvertX25519PrivateKeyFromPEM(bobPemKey);
@@ -134,6 +135,21 @@ namespace Crypter.Test.CryptoLib_Tests
          (var bobReceive, var bobSend) = ECDH.DeriveSharedKeys(bob, alice.Public);
          Assert.AreEqual(aliceReceive, bobSend);
          Assert.AreEqual(aliceSend, bobReceive);
+      }
+
+      [Test]
+      public void Derive_Key_From_Receive_And_Send_Keys_Works_Both_Ways()
+      {
+         var alice = ECDH.GenerateKeys();
+         var bob = ECDH.GenerateKeys();
+
+         (var aliceReceive, var aliceSend) = ECDH.DeriveSharedKeys(alice, bob.Public);
+         (var bobReceive, var bobSend) = ECDH.DeriveSharedKeys(bob, alice.Public);
+
+         var aliceDerivedKey = ECDH.DeriveKeyFromECDHDerivedKeys(aliceReceive, aliceSend);
+         var bobDerivedKey = ECDH.DeriveKeyFromECDHDerivedKeys(bobReceive, bobSend);
+
+         Assert.AreEqual(aliceDerivedKey, bobDerivedKey);
       }
    }
 }

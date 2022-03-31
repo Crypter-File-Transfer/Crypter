@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 using Crypter.Core.Models;
@@ -45,16 +45,24 @@ namespace Crypter.Core
          optionsBuilder.UseNpgsql(connectionString);
       }
 
-      public DbSet<User> User { get; set; }
-      public DbSet<UserProfile> UserProfile { get; set; }
-      public DbSet<UserX25519KeyPair> UserX25519KeyPair { get; set; }
-      public DbSet<UserEd25519KeyPair> UserEd25519KeyPair { get; set; }
-      public DbSet<UserPrivacySetting> UserPrivacySetting { get; set; }
-      public DbSet<UserEmailVerification> UserEmailVerification { get; set; }
-      public DbSet<UserNotificationSetting> UserNotificationSetting { get; set; }
-      public DbSet<UserToken> UserToken { get; set; }
-      public DbSet<FileTransfer> FileTransfer { get; set; }
-      public DbSet<MessageTransfer> MessageTransfer { get; set; }
+      public DbSet<User> Users { get; set; }
+      public DbSet<UserProfile> UserProfiles { get; set; }
+      public DbSet<UserX25519KeyPair> UserX25519KeyPairs { get; set; }
+      public DbSet<UserEd25519KeyPair> UserEd25519KeyPairs { get; set; }
+      public DbSet<UserPrivacySetting> UserPrivacySettings { get; set; }
+      public DbSet<UserEmailVerification> UserEmailVerifications { get; set; }
+      public DbSet<UserNotificationSetting> UserNotificationSettings { get; set; }
+      public DbSet<UserToken> UserTokens { get; set; }
+      public DbSet<UserContact> UserContacts { get; set; }
+      public DbSet<FileTransfer> FileTransfers { get; set; }
+      public DbSet<MessageTransfer> MessageTransfers { get; set; }
       public DbSet<Schema> Schema { get; set; }
+
+      protected override void OnModelCreating(ModelBuilder builder)
+      {
+         builder.Entity<User>()
+            .HasMany(x => x.Contacts)
+            .WithOne(x => x.Owner);
+      }
    }
 }

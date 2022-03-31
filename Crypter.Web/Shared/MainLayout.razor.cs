@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,12 +21,14 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Web.Services;
-using Crypter.Web.Shared.Modal;
+using Crypter.ClientServices.DeviceStorage.Enums;
+using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Events;
 using Microsoft.AspNetCore.Components;
+using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
@@ -37,49 +39,46 @@ namespace Crypter.Web.Shared
       private NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected ILocalStorageService LocalStorage { get; set; }
+      private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
 
-      protected ReAuthenticationModal ReAuthenticationModal { get; set; }
+      [Inject]
+      private IUserSessionService UserSessionService { get; set; }
+
+      [Inject]
+      private IUserContactsService UserContactsService { get; set; }
+
+      [Inject]
+      private IUserKeysService UserKeysService { get; set; }
+
+      protected bool ServicesInitialized { get; set; }
+
+      protected bool UserNeedsReauthentication { get; set; }
 
       protected override async Task OnInitializedAsync()
       {
-         await LocalStorage.InitializeAsync();
+         await BrowserRepository.InitializeAsync();
+         await UserSessionService.InitializeAsync();
+         await UserKeysService.InitializeAsync();
+
+         await UserSessionService.Session.IfSomeAsync(async x => await UserContactsService.InitializeAsync());
+
+         UserSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
+         UserSessionService.UserLoggedOutEventHandler += OnUserLoggedOut;
+
+         ServicesInitialized = true;
          StateHasChanged();
-
-         if (UserNeedsReauthentication())
-         {
-            ReAuthenticationModal.Open();
-            return;
-         }
-
-         if (LocalStorage.HasItem(StoredObjectType.UserSession))
-         {
-            NavigationManager.NavigateTo("/user/transfers");
-         }
       }
 
-      protected bool UserNeedsReauthentication()
+      private void OnUserLoggedIn(object sender, UserLoggedInEventArgs eventArgs)
       {
-         // User session does not exist. There is nobody to reauthenticate.
-         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
-         {
-            return false;
-         }
-
-         // User session and the auth token both exist. No need to reauthenticate.
-         if (LocalStorage.HasItem(StoredObjectType.UserSession)
-            && LocalStorage.HasItem(StoredObjectType.AuthenticationToken))
-         {
-            return false;
-         }
-
-         // Reauthenticate!
-         return true;
+         InvokeAsync(() => UserKeysService.PrepareUserKeysOnUserLoginAsync(eventArgs.Username, eventArgs.Password, eventArgs.RememberUser));
+         InvokeAsync(UserContactsService.InitializeAsync);
       }
 
-      public void OnReauthenticationModalClosed()
+      private void OnUserLoggedOut(object sender, EventArgs _)
       {
-         StateHasChanged();
+         UserKeysService.Recycle();
+         UserContactsService.Recycle();
       }
    }
 }

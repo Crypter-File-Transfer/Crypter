@@ -51,9 +51,9 @@ public enum FailureReason
 }
 ```
 
-## 2. Use `async` methods
+## 2. Use `async` Methods
 
-### Database
+### Database queries
 
 Always use asynchronous methods when querying the database.
 
@@ -62,12 +62,16 @@ Always use asynchronous methods when querying the database.
 
 ### File IO
 
-And when performing file IO.
+When performing file IO.
 ```
 var fileBytes = await File.ReadAllBytesAsync(file);
-///
+
 await File.WriteAllBytesAsync(newFile, data);
 ```
+
+### Network calls
+
+`var response = await _httpClient.SendAsync(request);`
 
 ## 3. Naming Conventions
 

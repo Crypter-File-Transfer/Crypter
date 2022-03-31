@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <Nullable>warnings</Nullable>
+    <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
@@ -11,30 +11,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="appsettings.json" />
-    <Content Remove="compilerconfig.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="compilerconfig.json" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="BlazorDownloadFileFast" Version="0.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="6.0.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="System.Net.Http.Json" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Crypter.ClientServices\Crypter.ClientServices.csproj" />
     <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
     <ProjectReference Include="..\Crypter.Contracts\Crypter.Contracts.csproj" />
     <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />

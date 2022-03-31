@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,7 +21,7 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
 using Crypter.CryptoLib.Enums;
@@ -43,7 +43,7 @@ namespace Crypter.CryptoLib.Crypto
    {
       public static AsymmetricCipherKeyPair GenerateKeys()
       {
-         SecureRandom random = new SecureRandom();
+         SecureRandom random = new();
          IAsymmetricCipherKeyPairGenerator kpGen = new X25519KeyPairGenerator();
          kpGen.Init(new X25519KeyGenerationParameters(random));
          return kpGen.GenerateKeyPair();
@@ -61,7 +61,7 @@ namespace Crypter.CryptoLib.Crypto
       /// </remarks>
       public static byte[] DeriveSharedKey(AsymmetricKeyParameter privateKey, AsymmetricKeyParameter publicKey)
       {
-         X25519Agreement agreement = new X25519Agreement();
+         X25519Agreement agreement = new();
          agreement.Init(privateKey);
          byte[] sharedSecret = new byte[agreement.AgreementSize];
          agreement.CalculateAgreement(publicKey, sharedSecret, 0);
@@ -91,6 +91,43 @@ namespace Crypter.CryptoLib.Crypto
          var sendKey = sendDigestor.GetDigest();
 
          return (receiveKey, sendKey);
+      }
+
+      /// <summary>
+      /// Derive a single key from a pair of shared keys
+      /// </summary>
+      /// <param name="receiveKey"></param>
+      /// <param name="sendKey"></param>
+      /// <returns></returns>
+      /// <remarks>
+      /// The order of the provided keys does not matter.
+      /// </remarks>
+      public static byte[] DeriveKeyFromECDHDerivedKeys(byte[] receiveKey, byte[] sendKey)
+      {
+         byte[] firstKey = receiveKey;
+         byte[] secondKey = sendKey;
+
+         for (int i = 0; i < receiveKey.Length; i++)
+         {
+            if (receiveKey[i] < sendKey[i])
+            {
+               firstKey = receiveKey;
+               secondKey = sendKey;
+               break;
+            }
+
+            if (receiveKey[i] > sendKey[i])
+            {
+               firstKey = sendKey;
+               secondKey = receiveKey;
+               break;
+            }
+         }
+
+         var digestor = new SHA(SHAFunction.SHA256);
+         digestor.BlockUpdate(firstKey);
+         digestor.BlockUpdate(secondKey);
+         return digestor.GetDigest();
       }
    }
 }

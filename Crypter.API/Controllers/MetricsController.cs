@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,14 +21,15 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Responses;
-using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
+using Crypter.Contracts.Features.Metrics.Disk;
+using Crypter.Core.Features.Metrics.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,29 +38,20 @@ namespace Crypter.API.Controllers
    [Route("api/metrics")]
    public class MetricsController : ControllerBase
    {
+      private readonly IMediator _mediator;
       private readonly long AllocatedDiskSpace;
-      private readonly IBaseTransferService<IMessageTransferItem> _messageService;
-      private readonly IBaseTransferService<IFileTransferItem> _fileService;
 
-      public MetricsController(IConfiguration configuration,
-          IBaseTransferService<IMessageTransferItem> messageService,
-          IBaseTransferService<IFileTransferItem> fileService
-          )
+      public MetricsController(IConfiguration configuration, IMediator mediator)
       {
-         AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * 1024 * 1024 * 1024;
-         _messageService = messageService;
-         _fileService = fileService;
+         AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(2, 30);
+         _mediator = mediator;
       }
 
       [HttpGet("disk")]
       public async Task<IActionResult> GetDiskMetrics(CancellationToken cancellationToken)
       {
-         var sizeOfFileUploads = await _fileService.GetAggregateSizeAsync(cancellationToken);
-         var sizeOfMessageUploads = await _messageService.GetAggregateSizeAsync(cancellationToken);
-         var totalSizeOfUploads = sizeOfFileUploads + sizeOfMessageUploads;
-         var isFull = totalSizeOfUploads + (10 * 1024 * 1024) >= AllocatedDiskSpace;
-
-         var responseBody = new DiskMetricsResponse(isFull, AllocatedDiskSpace.ToString(), (AllocatedDiskSpace - totalSizeOfUploads).ToString());
+         var result = await _mediator.Send(new DiskMetricsQuery(AllocatedDiskSpace), cancellationToken);
+         var responseBody = new DiskMetricsResponse(AllocatedDiskSpace, result.FreeBytes);
          return new OkObjectResult(responseBody);
       }
    }

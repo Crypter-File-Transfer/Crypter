@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,9 +21,10 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using NUnit.Framework;
@@ -66,10 +67,10 @@ namespace Crypter.Test.CryptoLib_Tests
       [Test]
       public void Signing_Is_Predictable()
       {
-         var knownPrivateKeyPEM = @"-----BEGIN PRIVATE KEY-----
+         var knownPrivateKeyPEM = PEMString.From(@"-----BEGIN PRIVATE KEY-----
 MFECAQEwBQYDK2VwBCIEIMFjaUZrHJYPJH4O2bPTsnFwqXsGTVRooB2jw78TnGjH
 gSEARRpYb3MlC/w8giB4NsNrKvPsnfuVsXBlHFywuEfJQQo=
------END PRIVATE KEY-----";
+-----END PRIVATE KEY-----");
 
          var knownPrivateKey = KeyConversion.ConvertEd25519PrivateKeyFromPEM(knownPrivateKeyPEM);
 
@@ -102,10 +103,10 @@ gSEARRpYb3MlC/w8giB4NsNrKvPsnfuVsXBlHFywuEfJQQo=
       [Test]
       public void Verification_Can_Succeed()
       {
-         var knownPrivateKeyPEM = @"-----BEGIN PRIVATE KEY-----
+         var knownPrivateKeyPEM = PEMString.From(@"-----BEGIN PRIVATE KEY-----
 MFECAQEwBQYDK2VwBCIEIMFjaUZrHJYPJH4O2bPTsnFwqXsGTVRooB2jw78TnGjH
 gSEARRpYb3MlC/w8giB4NsNrKvPsnfuVsXBlHFywuEfJQQo=
------END PRIVATE KEY-----";
+-----END PRIVATE KEY-----");
 
          var knownPrivateKey = KeyConversion.ConvertEd25519PrivateKeyFromPEM(knownPrivateKeyPEM);
          var knownPublicKey = knownPrivateKey.GeneratePublicKey();
@@ -139,10 +140,10 @@ gSEARRpYb3MlC/w8giB4NsNrKvPsnfuVsXBlHFywuEfJQQo=
       [Test]
       public void Verification_Can_Fail()
       {
-         var knownPrivateKeyPEM = @"-----BEGIN PRIVATE KEY-----
+         var knownPrivateKeyPEM = PEMString.From(@"-----BEGIN PRIVATE KEY-----
 MFECAQEwBQYDK2VwBCIEIMFjaUZrHJYPJH4O2bPTsnFwqXsGTVRooB2jw78TnGjH
 gSEARRpYb3MlC/w8giB4NsNrKvPsnfuVsXBlHFywuEfJQQo=
------END PRIVATE KEY-----";
+-----END PRIVATE KEY-----");
 
          var knownPrivateKey = KeyConversion.ConvertEd25519PrivateKeyFromPEM(knownPrivateKeyPEM);
          var knownPublicKey = knownPrivateKey.GeneratePublicKey();

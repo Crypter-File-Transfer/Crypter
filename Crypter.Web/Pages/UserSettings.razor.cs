@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,17 +21,18 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Enum;
-using Crypter.Contracts.Requests;
-using Crypter.Web.Models.LocalStorage;
-using Crypter.Web.Services;
-using Crypter.Web.Services.API;
+using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Enums;
+using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.User.UpdateContactInfo;
+using Crypter.Contracts.Features.User.UpdateNotificationSettings;
+using Crypter.Contracts.Features.User.UpdatePrivacySettings;
+using Crypter.Contracts.Features.User.UpdateProfile;
 using Microsoft.AspNetCore.Components;
 using System;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -39,13 +40,16 @@ namespace Crypter.Web.Pages
    public partial class UserSettingsBase : ComponentBase
    {
       [Inject]
-      NavigationManager NavigationManager { get; set; }
+      private NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      ILocalStorageService LocalStorage { get; set; }
+      private IUserSessionService UserSessionService { get; set; }
 
       [Inject]
-      IUserApiService UserApiService { get; set; }
+      private ICrypterApiService CrypterApiService { get; set; }
+
+      [Inject]
+      private IUserKeysService UserKeysService { get; set; }
 
       protected bool Loading;
       protected bool IsEditing;
@@ -106,13 +110,25 @@ namespace Crypter.Web.Pages
          ArePasswordControlsEnabled = false;
          ArePrivacyControlsEnabled = false;
 
-         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
+         if (!UserSessionService.LoggedIn)
          {
             NavigationManager.NavigateTo("/");
             return;
          }
 
-         await base.OnInitializedAsync();
+         Username = UserSessionService.Session.Match(
+            () => null,
+            some => some.Username);
+
+         ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
+
+         Ed25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
+            () => "",
+            some => some.Value);
+
+         X25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
+            () => "",
+            some => some.Value);
 
          await GetUserInfoAsync();
          Loading = false;
@@ -135,7 +151,7 @@ namespace Crypter.Web.Pages
       protected async Task OnSaveProfileInfoClickedAsync()
       {
          var request = new UpdateProfileRequest(EditedAlias, EditedAbout);
-         (var _, var _) = await UserApiService.UpdateUserProfileInfoAsync(request);
+         await CrypterApiService.UpdateUserProfileInfoAsync(request);
 
          Alias = EditedAlias;
          About = EditedAbout;
@@ -163,54 +179,55 @@ namespace Crypter.Web.Pages
          ContactInfoPasswordError = "";
          ContactInfoGenericError = "";
 
-         if (string.IsNullOrEmpty(CurrentPasswordForContactInfo))
+         if (!Password.TryFrom(CurrentPasswordForContactInfo, out var password))
          {
             UpdateContactInfoFailed = true;
             ContactInfoPasswordError = "Enter your current password";
             return;
          }
 
-         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(Username, CurrentPasswordForContactInfo);
+         Username username = Common.Primitives.Username.From(Username);
+
+         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var request = new UpdateContactInfoRequest(EditedEmail, digestedPasswordBase64);
-         (var status, var result) = await UserApiService.UpdateUserContactInfoAsync(request);
-
-         if (status != HttpStatusCode.OK)
-         {
-            UpdateContactInfoFailed = true;
-            ContactInfoGenericError = "An error occurred";
-            return;
-         }
-
-         if (result.Result != UpdateContactInfoResult.Success)
-         {
-            UpdateContactInfoFailed = true;
-
-            switch (result.Result)
+         var maybeUpdate = await CrypterApiService.UpdateUserContactInfoAsync(request);
+         UpdateContactInfoFailed = maybeUpdate.Match(
+            left =>
             {
-               case UpdateContactInfoResult.EmailUnavailable:
-                  ContactInfoEmailError = "Email address unavailable";
-                  break;
-               case UpdateContactInfoResult.EmailInvalid:
-                  ContactInfoEmailError = "Invalid email address";
-                  break;
-               case UpdateContactInfoResult.PasswordValidationFailed:
-                  ContactInfoPasswordError = "Incorrect password";
-                  break;
-               default:
-                  ContactInfoGenericError = "An error occurred";
-                  break;
-            }
-            return;
-         }
-
-         Email = EditedEmail;
-         CurrentPasswordForContactInfo = "";
-         EditedEnableTransferNotifications = false;
-         EmailVerified = false;
-         AreContactInfoControlsEnabled = false;
-         IsEditing = false;
+               switch (left)
+               {
+                  case UpdateContactInfoError.UserNotFound:
+                  case UpdateContactInfoError.ErrorResettingNotificationPreferences:
+                     ContactInfoGenericError = "This shouldn't happen";
+                     break;
+                  case UpdateContactInfoError.EmailUnavailable:
+                     ContactInfoEmailError = "Email address unavailable";
+                     break;
+                  case UpdateContactInfoError.EmailInvalid:
+                     ContactInfoEmailError = "Invalid email address";
+                     break;
+                  case UpdateContactInfoError.PasswordValidationFailed:
+                     ContactInfoPasswordError = "Incorrect password";
+                     break;
+                  case UpdateContactInfoError.UnknownError:
+                  default:
+                     ContactInfoGenericError = "An error occurred";
+                     break;
+               }
+               return true;
+            },
+            right =>
+            {
+               Email = EditedEmail;
+               CurrentPasswordForContactInfo = "";
+               EditedEnableTransferNotifications = false;
+               EmailVerified = false;
+               AreContactInfoControlsEnabled = false;
+               IsEditing = false;
+               return false;
+            });
       }
 
       protected void OnEditPasswordClicked()
@@ -251,8 +268,8 @@ namespace Crypter.Web.Pages
 
       protected async Task OnSavePrivacyClickedAsync()
       {
-         var request = new UpdatePrivacySettingRequest(EditedAllowKeyExchangeRequests, (UserVisibilityLevel)EditedVisibility, (UserItemTransferPermission)EditedMessageTransferPermission, (UserItemTransferPermission)EditedFileTransferPermission);
-         var (_, _) = await UserApiService.UpdateUserPrivacyAsync(request);
+         var request = new UpdatePrivacySettingsRequest(EditedAllowKeyExchangeRequests, (UserVisibilityLevel)EditedVisibility, (UserItemTransferPermission)EditedMessageTransferPermission, (UserItemTransferPermission)EditedFileTransferPermission);
+         await CrypterApiService.UpdateUserPrivacyAsync(request);
 
          AllowKeyExchangeRequests = EditedAllowKeyExchangeRequests;
          Visibility = EditedVisibility;
@@ -277,8 +294,8 @@ namespace Crypter.Web.Pages
 
       protected async Task OnSaveNotificationPreferencesClickedAsync()
       {
-         var request = new UpdateNotificationSettingRequest(EditedEnableTransferNotifications, EditedEnableTransferNotifications);
-         var (_, _) = await UserApiService.UpdateUserNotificationAsync(request);
+         var request = new UpdateNotificationSettingsRequest(EditedEnableTransferNotifications, EditedEnableTransferNotifications);
+         await CrypterApiService.UpdateUserNotificationAsync(request);
 
          EnableTransferNotifications = EditedEnableTransferNotifications;
          AreNotificationControlsEnabled = false;
@@ -287,30 +304,19 @@ namespace Crypter.Web.Pages
 
       protected async Task GetUserInfoAsync()
       {
-         var (status, userAccountInfo) = await UserApiService.GetUserSettingsAsync();
-         if (status != HttpStatusCode.OK)
+         var maybeSettings = await CrypterApiService.GetUserSettingsAsync();
+         maybeSettings.DoRight(right =>
          {
-            return;
-         }
-
-         Username = userAccountInfo.Username;
-         EmailVerified = userAccountInfo.EmailVerified;
-         EditedEmail = Email = userAccountInfo.Email;
-         EditedAlias = Alias = userAccountInfo.Alias;
-         EditedAbout = About = userAccountInfo.About;
-         EditedVisibility = Visibility = (int)userAccountInfo.Visibility;
-         EditedAllowKeyExchangeRequests = AllowKeyExchangeRequests = userAccountInfo.AllowKeyExchangeRequests;
-         EditedMessageTransferPermission = MessageTransferPermission = (int)userAccountInfo.MessageTransferPermission;
-         EditedFileTransferPermission = FileTransferPermission = (int)userAccountInfo.FileTransferPermission;
-
-         EnableTransferNotifications = EditedEnableTransferNotifications = userAccountInfo.EnableTransferNotifications;
-
-         var encryptedX25519PrivateKey = (await LocalStorage.GetItemAsync<EncryptedPrivateKey>(StoredObjectType.EncryptedX25519PrivateKey)).Key;
-         var encryptedEd25519PrivateKey = (await LocalStorage.GetItemAsync<EncryptedPrivateKey>(StoredObjectType.EncryptedEd25519PrivateKey)).Key;
-
-         X25519PrivateKey = encryptedX25519PrivateKey;
-         Ed25519PrivateKey = encryptedEd25519PrivateKey;
-         ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
+            EmailVerified = right.EmailVerified;
+            EditedEmail = Email = right.Email;
+            EditedAlias = Alias = right.Alias;
+            EditedAbout = About = right.About;
+            EditedVisibility = Visibility = (int)right.Visibility;
+            EditedAllowKeyExchangeRequests = AllowKeyExchangeRequests = right.AllowKeyExchangeRequests;
+            EditedMessageTransferPermission = MessageTransferPermission = (int)right.MessageTransferPermission;
+            EditedFileTransferPermission = FileTransferPermission = (int)right.FileTransferPermission;
+            EnableTransferNotifications = EditedEnableTransferNotifications = right.EnableTransferNotifications;
+         });
       }
    }
 }

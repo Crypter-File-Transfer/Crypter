@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,14 +21,14 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
-using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using Org.BouncyCastle.Crypto;
 using System;
@@ -40,10 +40,10 @@ namespace Crypter.Web.Shared.Transfer
    public abstract class UploadTransferBase : ComponentBase
    {
       [Inject]
-      protected ILocalStorageService LocalStorageService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
-      protected ITransferApiService UploadService { get; set; }
+      protected IUserSessionService UserSessionService { get; set; }
 
       [Parameter]
       public bool IsSenderDefined { get; set; }
@@ -58,7 +58,7 @@ namespace Crypter.Web.Shared.Transfer
       public bool IsRecipientDefined { get; set; }
 
       [Parameter]
-      public Guid RecipientId { get; set; }
+      public string Recipient { get; set; }
 
       [Parameter]
       public string RecipientX25519PrivateKey { get; set; }
@@ -82,10 +82,10 @@ namespace Crypter.Web.Shared.Transfer
       public EventCallback<bool> IsRecipientDefinedChanged { get; set; }
 
       [Parameter]
-      public EventCallback<Guid> RecipientIdChanged { get; set; }
+      public EventCallback<string> RecipientChanged { get; set; }
 
       [Parameter]
-      public EventCallback<Guid> RecipientX25519PrivateKeyChanged { get; set; }
+      public EventCallback<string> RecipientX25519PrivateKeyChanged { get; set; }
 
       [Parameter]
       public EventCallback<string> RecipientX25519PublicKeyChanged { get; set; }
@@ -95,6 +95,9 @@ namespace Crypter.Web.Shared.Transfer
 
       [Parameter]
       public EventCallback UploadCompletedEvent { get; set; }
+
+      [Parameter]
+      public int RequestedExpirationHours { get; set; }
 
       protected Modal.TransferSuccessModal ModalForAnonymousRecipient { get; set; }
       protected Modal.BasicModal ModalForUserRecipient { get; set; }
@@ -115,21 +118,21 @@ namespace Crypter.Web.Shared.Transfer
       {
          if (!IsSenderDefined)
          {
-            SenderX25519PrivateKey = ECDH.GenerateKeys().Private.ConvertToPEM();
-            SenderEd25519PrivateKey = ECDSA.GenerateKeys().Private.ConvertToPEM();
+            SenderX25519PrivateKey = ECDH.GenerateKeys().Private.ConvertToPEM().Value;
+            SenderEd25519PrivateKey = ECDSA.GenerateKeys().Private.ConvertToPEM().Value;
          }
 
          if (!IsRecipientDefined)
          {
             var recipientX25519Keys = ECDH.GenerateKeys();
-            RecipientX25519PrivateKey = recipientX25519Keys.Private.ConvertToPEM();
-            RecipientX25519PublicKey = recipientX25519Keys.Public.ConvertToPEM();
-            RecipientEd25519PublicKey = ECDSA.GenerateKeys().Public.ConvertToPEM();
+            RecipientX25519PrivateKey = recipientX25519Keys.Private.ConvertToPEM().Value;
+            RecipientX25519PublicKey = recipientX25519Keys.Public.ConvertToPEM().Value;
+            RecipientEd25519PublicKey = ECDSA.GenerateKeys().Public.ConvertToPEM().Value;
             EncodedRecipientX25519PrivateKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(RecipientX25519PrivateKey));
          }
       }
 
-      protected static (byte[] SendKey, byte[] ServerKey) DeriveSymmetricKeys(string senderX25519PrivateKey, string recipientX25519PublicKey)
+      protected static (byte[] SendKey, byte[] ServerKey) DeriveSymmetricKeys(PEMString senderX25519PrivateKey, PEMString recipientX25519PublicKey)
       {
          var senderX25519PrivateDecoded = KeyConversion.ConvertX25519PrivateKeyFromPEM(senderX25519PrivateKey);
          var senderX25519PublicDecoded = senderX25519PrivateDecoded.GeneratePublicKey();
@@ -138,7 +141,7 @@ namespace Crypter.Web.Shared.Transfer
          (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(senderKeyPair, recipientX25519PublicDecoded);
          var digestor = new SHA(SHAFunction.SHA256);
          digestor.BlockUpdate(sendKey);
-         var serverEncryptionKey = CommonCrypto.DeriveSharedKeyFromECDHDerivedKeys(receiveKey, sendKey);
+         var serverEncryptionKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
 
          return (sendKey, serverEncryptionKey);
       }

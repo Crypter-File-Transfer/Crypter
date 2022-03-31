@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2021 Crypter File Transfer
+ * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -21,17 +21,17 @@
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
  * 
- * Contact the current copyright holder to discuss commerical license options.
+ * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Enum;
+using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Enums;
+using Crypter.Contracts.Features.User.GetReceivedTransfers;
+using Crypter.Contracts.Features.User.GetSentTransfers;
 using Crypter.Web.Models;
-using Crypter.Web.Services;
-using Crypter.Web.Services.API;
 using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -39,26 +39,24 @@ namespace Crypter.Web.Pages
    public partial class UserTransfersBase : ComponentBase
    {
       [Inject]
-      NavigationManager NavigationManager { get; set; }
+      private NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      ILocalStorageService LocalStorage { get; set; }
+      private IUserSessionService UserSessionService { get; set; }
 
       [Inject]
-      IUserApiService UserService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       protected IEnumerable<UserSentItem> Sent;
       protected IEnumerable<UserReceivedItem> Received;
 
       protected override async Task OnInitializedAsync()
       {
-         if (!LocalStorage.HasItem(StoredObjectType.UserSession))
+         if (!UserSessionService.LoggedIn)
          {
             NavigationManager.NavigateTo("/");
             return;
          }
-
-         await base.OnInitializedAsync();
 
          Sent = await GetUserSentItems();
          Received = await GetUserReceivedItems();
@@ -66,16 +64,17 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserSentItem>> GetUserSentItems()
       {
-         var (messageRequestStatus, sentMessagesResponse) = await UserService.GetUserSentMessagesAsync();
-         var (fileRequestStatus, sentFilesresponse) = await UserService.GetUserSentFilesAsync();
+         var maybeSentMessages = await CrypterApiService.GetUserSentMessagesAsync();
+         var sentMessages = maybeSentMessages.Match(
+            left => new List<UserSentMessageDTO>(),
+            right => right.Messages);
 
-         if (messageRequestStatus != HttpStatusCode.OK
-            || fileRequestStatus != HttpStatusCode.OK)
-         {
-            return default;
-         }
+         var maybeSentFiles = await CrypterApiService.GetUserSentFilesAsync();
+         var sentFiles = maybeSentFiles.Match(
+            left => new List<UserSentFileDTO>(),
+            right => right.Files);
 
-         return sentMessagesResponse.Messages
+         return sentMessages
             .Select(x => new UserSentItem
             {
                Id = x.Id,
@@ -86,7 +85,7 @@ namespace Crypter.Web.Pages
                ItemType = TransferItemType.Message,
                ExpirationUTC = x.ExpirationUTC
             })
-            .Concat(sentFilesresponse.Files
+            .Concat(sentFiles
                .Select(x => new UserSentItem
                {
                   Id = x.Id,
@@ -102,16 +101,17 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
       {
-         var (messageRequestStatus, receivedMessagesResponse) = await UserService.GetUserReceivedMessagesAsync();
-         var (fileRequestStatus, receivedFilesresponse) = await UserService.GetUserReceivedFilesAsync();
+         var maybeReceivedMessages = await CrypterApiService.GetUserReceivedMessagesAsync();
+         var receivedMessages = maybeReceivedMessages.Match(
+            left => new List<UserReceivedMessageDTO>(),
+            right => right.Messages);
 
-         if (messageRequestStatus != HttpStatusCode.OK
-            || fileRequestStatus != HttpStatusCode.OK)
-         {
-            return default;
-         }
+         var maybeReceivedFiles = await CrypterApiService.GetUserReceivedFilesAsync();
+         var receivedFiles = maybeReceivedFiles.Match(
+            left => new List<UserReceivedFileDTO>(),
+            right => right.Files);
 
-         return receivedMessagesResponse.Messages
+         return receivedMessages
             .Select(x => new UserReceivedItem
             {
                Id = x.Id,
@@ -122,7 +122,7 @@ namespace Crypter.Web.Pages
                ItemType = TransferItemType.Message,
                ExpirationUTC = x.ExpirationUTC
             })
-            .Concat(receivedFilesresponse.Files
+            .Concat(receivedFiles
                .Select(x => new UserReceivedItem
                {
                   Id = x.Id,
