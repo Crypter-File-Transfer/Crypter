@@ -6,23 +6,23 @@
 
 *As opposed using using factories or object initializers.*
 
-This helps make sure we never have object instances with missing properties.
-For example, we may add a new property to a class down the road. 
-Chances are we would forget to go back and update all the existing object initializers.
+Constructors exist to make sure we never create an invalid instance of an object.
 
-On the other hand, with constructors, we can be explicit as to which properties are required and which are not.
+Multiple constructors and constructors with optional parameters are fine, as long as they give us back valid objects.
 
-Any line of code that fails to adhere to the constructor will cause a build failure until every reference is updated to adhere to the constructor.
+We should not be writing code to check whether a given object is valid. Rather, invalid objects should not exist in the first place.
 
 ```
 public class Student()
 {
     public string FirstName { get; set; }
+    public string MiddleName { get; set; }
     public string LastName { get; set; }
 
-    public Student(string firstName, string LastName)
+    public Student(string firstName, string lastName, string middleName = "")
     {
         FirstName = firstName;
+        MiddleName = middleName
         LastName = lastName;
     }
 }
@@ -30,7 +30,7 @@ public class Student()
 
 ### Label a method `async` if it runs asynchronously
 
-This makes it obvious to everyone the method runs asynchronously, which helps make sure we actually `await` the method.
+This makes it obvious the method can run asynchronously and should be awaited.
 
 `public async Task<foo> GetFooAsync(Guid id)`
 
@@ -50,6 +50,25 @@ public enum FailureReason
     SomeOtherConditionNotMet
 }
 ```
+
+### Use Monads and Value objects
+
+#### Monads
+
+Become acquainted with the couple of monads that exist under [Crypter.Common/Monads](<./../../Crypter.Common/Monads>):
+
+* Either
+* Maybe
+
+These Monads offer a lot in terms of flexibility and making it clear what types of data a method expects or may return.
+It is a lot easier to understand that a method returning `Maybe<Foo>` may return an instance of `Foo`, or it may not.
+
+#### Primitives
+
+And have a look at the "Primitive" objects that exist under [Crypter.Common/Primitives](<./../../Crypter.Common/Primitives>).
+
+Thanks to the built-in validation of these classes, we can trust that every instance of one of these classes is already valid.
+We do not need to check the validity of something every time it gets passed around.
 
 ## 2. Use `async` Methods
 
