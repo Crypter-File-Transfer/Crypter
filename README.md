@@ -6,7 +6,7 @@ Crypter is open-source software that is free for non-commercial use under the AG
 
 You and/or your organization may be released from the terms of the AGLPv3 by purchasing a commercial license from the copyright holder.
 
-Please reach out to jackedwards@protonmail.com or submit an issue if you believe these licensing terms are a cause for concern.
+Please reach out to <jackedwards@protonmail.com> or submit an issue if you believe these licensing terms are a cause for concern.
 
 ## Getting Started
 
@@ -20,13 +20,16 @@ Also take a look at some of the articles that have come in handy while working o
 
 * [Learning Material](<./Docs/Learning Material.md>)
 
+If you have any questions, please add an issue or send an email to <jackedwards@protonmail.com>.
+I would love to hear from you.
+
 ## Projects
 
 ### Crypter.API
 
 A RESTful API written using ASP.NET.
 
-#### Crypter.ClientServices
+### Crypter.ClientServices
 
 A class library containing various interfaces and most of their implementations.
 
@@ -35,7 +38,7 @@ These decisions and locations are device-specific.  For example, storing data in
 
 ### Crypter.Common
 
-A class library containing code that may be used in both client and server applications.
+A small class library containing domain models and data types that may be used in any project.
 
 ### Crypter.Console
 
@@ -50,6 +53,7 @@ For example, if Crypter.Web needs to POST some data to Crypter.API, there should
 ### Crypter.Core
 
 A class library containing code to interact with the PostgreSQL database.
+Most of the back-end business logic should be located here.
 
 ### Crypter.CryptoLib
 

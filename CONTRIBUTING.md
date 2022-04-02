@@ -5,6 +5,9 @@ Thank you for showing an interest in contributing to this project. Extra thanks 
 The purpose of this contribution guide is to help others get started with contributing to the project.
 The intent is not to create a bunch of procedures or any level of bureaucracy that everyone must follow.
 
+Please feel free to contribute in whatever way you wish.
+If you have questions, send me an email at <jackedwards@protonmail.com>.
+
 ## Issue Tracking
 
 Most of the tasks that need to be completed are introduced as *Issues*. These issues can be bug reports, feature requests, requests for documentation, or tasks that just need to be performed.
@@ -24,7 +27,7 @@ General guidelines for everyone to follow:
 
 There are two different procedures for submitting pull requests.
 The first procedure is for members of the `Crypter-File-Transfer` team in Github.
-The second procedure is for non-members.
+The second procedure is for contributors who are not team members.
 
 All pull requests are treated equally.
 
@@ -37,7 +40,7 @@ All pull requests are treated equally.
 5. Submit a pull request to merge back into `dev`.
 6. Verify your branch is deleted from Github after your pull request is accepted and merged.
 
-### For non-members
+### For contributors who are not team members
 
 1. Fork the repository, thus creating your own version of the code.
 2. Create a new branch, based on `dev`.
