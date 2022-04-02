@@ -12,13 +12,8 @@ I recommend using Visual Studio 2022 for Crypter development.
 The only workload you need to install is `ASP.NET and web development`.
 
 Make sure these individual components are also installed:
-* `.NET 5.0 Runtime`
-* `.NET 6.0 Runtime` (for future use)
+* `.NET 6.0 Runtime` 
 * `.NET WebAssembly build tools`
-
-Visual Studio 2019 should still work fine for regular development, but do not publish Crypter.Web using the project's currently saved publish profile.
-This publish profile contains options which were added in Visual Studio 2022.
-
 
 ## Docker
 
@@ -45,7 +40,7 @@ You will not be able to create a database schema without executing this script.
 3. Set `Crypter.API` as the startup project in Visual Studio.
 4. Either run the startup project by clicking the green arrow in Visual Studio, or by pressing F5.
 
-This will run the API on `https://localhost:44324`.
+This will run the API on `https://localhost:44357`.
 Make sure you navigate to this address in your browser before trying to use the API.
 You will need to acknowledge the API's self-signed certificate.
 
@@ -61,5 +56,5 @@ This will run the web app on `https://localhost:5001`.
 
 1. Review and configure the `.\Crypter.Console\appsettings.json` file.
 2. Build the project.
-3. Open `.\Crypter.Console\bin\Debug\net5.0` in a terminal.
+3. Open `.\Crypter.Console\bin\Debug\net6.0` in a terminal.
 4. Invoke `.\Crypter.Console.exe`. This will run the program and output a help menu.

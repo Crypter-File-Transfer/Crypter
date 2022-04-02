@@ -10,9 +10,18 @@ Restart the Nginx web server after updating the Nginx configuration.
 
 #### Commands
 
-* /etc/init.d/nginx start
-* /etc/init.d/nginx stop
-* /etc/init.d/nginx restart
+Check the status
+* systemctl status nginx
+
+Lifecycle
+* systemctl start nginx
+* systemctl stop nginx
+* systemctl reload nginx
+* systemctl restart nginx
+
+Enable or disable
+* systemctl enable nginx
+* systemctl disable nginx
 
 ## Kestrel
 

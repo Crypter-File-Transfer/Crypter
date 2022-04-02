@@ -5,7 +5,9 @@ This guide is subject to change as we improve our deployment processes.
 Although we may want to document various deployment methods as time goes on, the purpose of this guide is document the current deployment process. This guide should not reflect some hypothetical deployment in a hypothetical scenario.
 
 ## Update 'appsettings.json'
-Mke changes to the `appsettings.json` file **before** publishing the project!
+
+The `appsettings.json` file for Crypter.Web exists under `wwwroot`.
+This file is sent to the browser with every request.
 
 ## Publish the project
 
@@ -22,7 +24,7 @@ Steps:
 
 ## Copy the published output to the server
 
-Take the published output from `.\Crypter.Web\bin\Release\net5.0\publish` from your development machine.
+Take the published output from `.\Crypter.Web\bin\Release\net6.0\publish` from your development machine.
 
 Copy the output to `/var/www/Crypter.Web` on the web server.
 

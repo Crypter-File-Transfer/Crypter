@@ -29,9 +29,9 @@ using Crypter.ClientServices.DeviceStorage.Models;
 using Crypter.Web.Repositories;
 using Microsoft.JSInterop;
 using Moq;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Web_Tests
@@ -77,35 +77,35 @@ namespace Crypter.Test.Web_Tests
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.UserSession.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(storedUserSession));
+            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(storedUserSession));
 
          // AuthenticationToken
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.AuthenticationToken.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(authenticationToken));
+            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(authenticationToken));
 
          // RefreshToken
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.RefreshToken.ToString())))
-            .ReturnsAsync((string commands, object[] args) => JsonConvert.SerializeObject(refreshToken));
+            .ReturnsAsync((string commands, object[] args) => JsonSerializer.Serialize(refreshToken));
 
          // Ed25519PrivateKey
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.Ed25519PrivateKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(ed25519PrivateKey));
+            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(ed25519PrivateKey));
 
          // X25519PrivateKey
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.X25519PrivateKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonConvert.SerializeObject(x25519PrivateKey));
+            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(x25519PrivateKey));
 
          var sut = new BrowserRepository(jsRuntime.Object);
          await sut.InitializeAsync();
