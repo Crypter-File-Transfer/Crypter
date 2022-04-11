@@ -27,7 +27,6 @@
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives.Enums;
 using Crypter.Common.Primitives.ValidationHandlers;
-using System;
 using ValueOf;
 
 namespace Crypter.Common.Primitives
@@ -35,7 +34,7 @@ namespace Crypter.Common.Primitives
    public class AuthenticationPassword : ValueOf<string, AuthenticationPassword>
    {
       /// <summary>
-      /// Don't use this.
+      /// Do not use this.
       /// </summary>
       public AuthenticationPassword()
       {

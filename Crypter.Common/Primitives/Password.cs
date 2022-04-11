@@ -27,7 +27,6 @@
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives.Enums;
 using Crypter.Common.Primitives.ValidationHandlers;
-using System;
 using ValueOf;
 
 namespace Crypter.Common.Primitives
@@ -35,7 +34,7 @@ namespace Crypter.Common.Primitives
    public class Password : ValueOf<string, Password>
    {
       /// <summary>
-      /// Don't use this.
+      /// Do not use this.
       /// </summary>
       public Password()
       {
@@ -54,7 +53,7 @@ namespace Crypter.Common.Primitives
 
       public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
       {
-         if (value == null)
+         if (value is null)
          {
             return StringPrimitiveValidationFailure.IsNull;
          }
