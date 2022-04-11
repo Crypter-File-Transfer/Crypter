@@ -24,11 +24,50 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives.Enums;
+using Crypter.Common.Primitives.ValidationHandlers;
+using System;
 using ValueOf;
 
 namespace Crypter.Common.Primitives
 {
    public class Base64String : ValueOf<string, Base64String>
    {
+      /// <summary>
+      /// Do not use this.
+      /// </summary>
+      public Base64String()
+      {
+      }
+
+      protected override void Validate()
+      {
+         StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
+      }
+
+      protected override bool TryValidate()
+      {
+         return CheckValidation(Value)
+            .IsNone;
+      }
+
+      public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+      {
+         if (value is null)
+         {
+            return StringPrimitiveValidationFailure.IsNull;
+         }
+
+         if (string.IsNullOrWhiteSpace(value))
+         {
+            return StringPrimitiveValidationFailure.IsEmpty;
+         }
+
+         Span<byte> buffer = new(new byte[value.Length]);
+         return Convert.TryFromBase64String(value, buffer, out int _)
+            ? Maybe<StringPrimitiveValidationFailure>.None
+            : StringPrimitiveValidationFailure.Invalid;
+      }
    }
 }
