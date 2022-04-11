@@ -184,9 +184,9 @@ namespace Crypter.Web.Shared
             return;
          }
 
-         var username = maybeUsername.RightOrDefault();
-         var password = maybePassword.RightOrDefault();
-         var emailAddress = maybeEmailAddress.RightOrDefault();
+         var username = maybeUsername.RightUnsafe;
+         var password = maybePassword.RightUnsafe;
+         var emailAddress = maybeEmailAddress.RightUnsafe;
 
          byte[] authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
          string authPasswordEncoded = Convert.ToBase64String(authPasswordBytes);

@@ -91,8 +91,8 @@ namespace Crypter.Test.Web_Tests
          var sut = new BrowserTokenRepository(_browserStorageMock.Object);
 
          var fetchedToken = await sut.GetAuthenticationTokenAsync();
-         Assert.AreEqual(TokenType.Authentication, fetchedToken.SomeOrDefault().TokenType);
-         Assert.AreEqual("foo", fetchedToken.SomeOrDefault().Token);
+         Assert.AreEqual(TokenType.Authentication, fetchedToken.ValueUnsafe.TokenType);
+         Assert.AreEqual("foo", fetchedToken.ValueUnsafe.Token);
 
          _browserStorageMock.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.AuthenticationToken), Times.Once);
       }
@@ -123,15 +123,13 @@ namespace Crypter.Test.Web_Tests
          var sut = new BrowserTokenRepository(_browserStorageMock.Object);
 
          var fetchedToken = await sut.GetRefreshTokenAsync();
-         Assert.AreEqual(tokenType, fetchedToken.SomeOrDefault().TokenType);
-         Assert.AreEqual("foo", fetchedToken.SomeOrDefault().Token);
+         Assert.AreEqual(tokenType, fetchedToken.ValueUnsafe.TokenType);
+         Assert.AreEqual("foo", fetchedToken.ValueUnsafe.Token);
 
          _browserStorageMock.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken), Times.Once);
       }
 
-      [TestCase(TokenType.Session)]
-      [TestCase(TokenType.Device)]
-      public async Task Repository_Gets_None_Refresh_Token(TokenType tokenType)
+      public async Task Repository_Gets_None_Refresh_Token()
       {
          _browserStorageMock
             .Setup(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken))

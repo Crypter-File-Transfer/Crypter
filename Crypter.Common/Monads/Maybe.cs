@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Exceptions;
 using System;
 using System.Threading.Tasks;
 
@@ -59,6 +60,16 @@ namespace Crypter.Common.Monads
 
       public bool IsSome
       { get { return _state == MaybeState.Some; } }
+
+      public TValue ValueUnsafe
+      {
+         get
+         {
+            return IsSome
+               ? _value
+               : throw new WrongMonadStateException();
+         }
+      }
 
       public void IfSome(Action<TValue> someAction)
       {
@@ -198,16 +209,11 @@ namespace Crypter.Common.Monads
             : Maybe<TResult>.None;
       }
 
-      /// <summary>
-      /// Unsafe!
-      /// </summary>
-      /// <param name="defaultValue"></param>
-      /// <returns></returns>
-      public TValue SomeOrDefault(TValue defaultValue = default)
+      public Either<TLeft, TValue> ToEither<TLeft>(TLeft leftValue)
       {
          return IsSome
             ? _value
-            : defaultValue;
+            : leftValue;
       }
 
       public static Maybe<TValue> None => new();

@@ -69,7 +69,7 @@ namespace Crypter.Web.Shared.Transfer
          try
          {
             var senderX25519PublicKeyPEM = PEMString.From(Encoding.UTF8.GetString(Convert.FromBase64String(SenderX25519PublicKey)));
-            (receiveKey, serverKey) = DeriveSymmetricKeys(maybeRecipientX25519PrivateKey.SomeOrDefault(), senderX25519PublicKeyPEM);
+            (receiveKey, serverKey) = DeriveSymmetricKeys(maybeRecipientX25519PrivateKey.ValueUnsafe, senderX25519PublicKeyPEM);
          }
          catch (Exception)
          {
