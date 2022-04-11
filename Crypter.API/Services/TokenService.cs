@@ -26,6 +26,8 @@
 
 using Crypter.API.Models;
 using Crypter.API.Startup;
+using Crypter.Common.Exceptions;
+using Crypter.Common.Monads;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
@@ -40,9 +42,9 @@ namespace Crypter.API.Services
       string NewAuthenticationToken(Guid userId);
       (string token, DateTime expiration) NewSessionToken(Guid userId, Guid tokenId);
       (string token, DateTime expiration) NewRefreshToken(Guid userId, Guid tokenId);
-      (bool success, ClaimsPrincipal? claimsPrincipal) ValidateToken(string token);
+      Maybe<ClaimsPrincipal> ValidateToken(string token);
       Guid ParseUserId(ClaimsPrincipal claimsPrincipal);
-      bool TryParseTokenId(ClaimsPrincipal claimsPrincipal, out Guid tokenId);
+      Maybe<Guid> ParseTokenId(ClaimsPrincipal claimsPrincipal);
    }
 
    public class TokenService : ITokenService
@@ -72,54 +74,42 @@ namespace Crypter.API.Services
          return (NewToken(userId, expiration, tokenId), expiration);
       }
 
-      public (bool success, ClaimsPrincipal? claimsPrincipal) ValidateToken(string token)
+      public Maybe<ClaimsPrincipal> ValidateToken(string token)
       {
          var validationParameters = JwtBearerConfiguration.GetTokenValidationParameters(_tokenSettings);
 
          try
          {
-            var principal = new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out _);
-            return (true, principal);
+            return new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out _);
          }
          catch (Exception)
          {
-            return (false, default);
+            return Maybe<ClaimsPrincipal>.None;
          }
       }
 
       public Guid ParseUserId(ClaimsPrincipal claimsPrincipal)
       {
          var userClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
-         if (userClaim is null)
+         if (userClaim is null || !Guid.TryParse(userClaim.Value, out Guid userId))
          {
-            return Guid.Empty;
-         }
-
-         if (!Guid.TryParse(userClaim.Value, out Guid userId))
-         {
-            return Guid.Empty;
+            throw new InvalidTokenException();
          }
 
          return userId;
       }
 
-      public bool TryParseTokenId(ClaimsPrincipal claimsPrincipal, out Guid tokenId)
+      public Maybe<Guid> ParseTokenId(ClaimsPrincipal claimsPrincipal)
       {
-         tokenId = Guid.Empty;
-         
          var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
          if (idClaim is null)
          {
-            return false;
+            return Maybe<Guid>.None;
          }
 
-         if (Guid.TryParse(idClaim.Value, out Guid foundTokenId))
-         {
-            tokenId = foundTokenId;
-            return tokenId != Guid.Empty;
-         }
-
-         return false;
+         return Guid.TryParse(idClaim.Value, out Guid tokenId)
+            ? tokenId
+            : Maybe<Guid>.None;
       }
 
       private string NewToken(Guid userId, DateTime expiration, Guid tokenId = default)

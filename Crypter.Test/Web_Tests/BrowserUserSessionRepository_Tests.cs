@@ -93,8 +93,8 @@ namespace Crypter.Test.Web_Tests
          var sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
 
          var fetchedSession = await sut.GetUserSessionAsync();
-         Assert.AreEqual("foo", fetchedSession.SomeOrDefault().Username);
-         Assert.AreEqual(true, fetchedSession.SomeOrDefault().RememberUser);
+         Assert.AreEqual("foo", fetchedSession.ValueUnsafe.Username);
+         Assert.AreEqual(true, fetchedSession.ValueUnsafe.RememberUser);
 
          _browserStorageMock.Verify(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession), Times.Once);
       }

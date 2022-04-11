@@ -583,7 +583,7 @@ namespace Crypter.API.Controllers
          var userId = _tokenService.ParseUserId(User);
          var result = await _mediator.Send(new UpsertUserContactCommand(userId, request.Contact), cancellationToken);
          return await result.MatchAsync(
-            left => MakeErrorResponse(result.LeftOrDefault()),
+            left => MakeErrorResponse(result.LeftUnsafe),
             async right =>
             {
                var userContactDTO = await _mediator.Send(new UserContactQuery(userId, right.UserContact), cancellationToken);
