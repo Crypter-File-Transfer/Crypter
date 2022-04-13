@@ -512,7 +512,7 @@ namespace Crypter.API.Controllers
             };
          }
 
-         var requestorId = _tokenService.ParseUserId(User);
+         var requestorId = _tokenService.TryParseUserId(User);
          var getProfileResult = await _mediator.Send(new UserProfileQuery(requestorId, username), cancellationToken);
          return getProfileResult.Match(
             left => MakeErrorResponse(left),

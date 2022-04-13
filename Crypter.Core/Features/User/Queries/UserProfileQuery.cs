@@ -39,10 +39,10 @@ namespace Crypter.Core.Features.User.Queries
 {
    public class UserProfileQuery : IRequest<Either<GetUserProfileError, GetUserProfileResponse>>
    {
-      public Guid RequestorId { get; private set; }
+      public Maybe<Guid> RequestorId { get; private set; }
       public string Username { get; private set; }
 
-      public UserProfileQuery(Guid requestorId, string username)
+      public UserProfileQuery(Maybe<Guid> requestorId, string username)
       {
          RequestorId = requestorId;
          Username = username;
@@ -79,14 +79,17 @@ namespace Crypter.Core.Features.User.Queries
             return GetUserProfileError.NotFound;
          }
 
-         var userAllowsVisitorToViewProfile = _userPrivacyService.UserIsVisibleToVisitor(user, request.RequestorId);
+         Guid requestorId = request.RequestorId
+            .IfNone(Guid.Empty);
+
+         var userAllowsVisitorToViewProfile = _userPrivacyService.UserIsVisibleToVisitor(user, requestorId);
          if (!userAllowsVisitorToViewProfile)
          {
             return GetUserProfileError.NotFound;
          }
 
-         var visitorCanSendMessages = _userPrivacyService.UserAcceptsMessageTransfersFromVisitor(user, request.RequestorId);
-         var visitorCanSendFiles = _userPrivacyService.UserAcceptsFileTransfersFromVisitor(user, request.RequestorId);
+         var visitorCanSendMessages = _userPrivacyService.UserAcceptsMessageTransfersFromVisitor(user, requestorId);
+         var visitorCanSendFiles = _userPrivacyService.UserAcceptsFileTransfersFromVisitor(user, requestorId);
 
          return new GetUserProfileResponse(user.Username, user.Profile.Alias, user.Profile.About,
             user.PrivacySetting.AllowKeyExchangeRequests, visitorCanSendMessages, visitorCanSendFiles,

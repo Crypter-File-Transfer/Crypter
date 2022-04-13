@@ -44,7 +44,8 @@ namespace Crypter.API.Services
       (string token, DateTime expiration) NewRefreshToken(Guid userId, Guid tokenId);
       Maybe<ClaimsPrincipal> ValidateToken(string token);
       Guid ParseUserId(ClaimsPrincipal claimsPrincipal);
-      Maybe<Guid> ParseTokenId(ClaimsPrincipal claimsPrincipal);
+      Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal);
+      Maybe<Guid> TryParseTokenID(ClaimsPrincipal claimsPrincipal);
    }
 
    public class TokenService : ITokenService
@@ -90,16 +91,23 @@ namespace Crypter.API.Services
 
       public Guid ParseUserId(ClaimsPrincipal claimsPrincipal)
       {
+         return TryParseUserId(claimsPrincipal).Match(
+            () => throw new InvalidTokenException(),
+            x => x);
+      }
+
+      public Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal)
+      {
          var userClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
          if (userClaim is null || !Guid.TryParse(userClaim.Value, out Guid userId))
          {
-            throw new InvalidTokenException();
+            return Maybe<Guid>.None;
          }
 
          return userId;
       }
 
-      public Maybe<Guid> ParseTokenId(ClaimsPrincipal claimsPrincipal)
+      public Maybe<Guid> TryParseTokenID(ClaimsPrincipal claimsPrincipal)
       {
          var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
          if (idClaim is null)

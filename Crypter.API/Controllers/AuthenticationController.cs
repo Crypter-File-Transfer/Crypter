@@ -41,7 +41,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -176,7 +175,7 @@ namespace Crypter.API.Controllers
 
          Guid userId = _tokenService.ParseUserId(User);
 
-         var validatedTokenId = _tokenService.ParseTokenId(User)
+         var validatedTokenId = _tokenService.TryParseTokenID(User)
             .ToEither(RefreshError.BearerTokenMissingId);
 
          var validatedDatabaseToken = (await validatedTokenId.BindAsync(
@@ -238,7 +237,7 @@ namespace Crypter.API.Controllers
             .ToEither(LogoutError.RefreshTokenInvalid);
 
          var validatedTokenId = validatedClaimsPrincipal.Bind(
-            x => _tokenService.ParseTokenId(x)
+            x => _tokenService.TryParseTokenID(x)
             .ToEither(LogoutError.RefreshTokenInvalid));
 
          var foundUserToken = await validatedTokenId.BindAsync(

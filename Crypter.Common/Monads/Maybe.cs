@@ -173,6 +173,13 @@ namespace Crypter.Common.Monads
             : Maybe<TResult>.None;
       }
 
+      public TValue IfNone(TValue noneValue)
+      {
+         return IsNone
+            ? noneValue
+            : _value;
+      }
+
       public async Task<Maybe<TResult>> MapAsync<TResult>(Func<TValue, Task<TResult>> mapTask)
       {
          if (mapTask is null)
