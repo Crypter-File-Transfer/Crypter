@@ -29,7 +29,7 @@ using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using NUnit.Framework;
 
-namespace Crypter.Test.CryptoLib_Tests
+namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
 {
    [TestFixture]
    public class ECDSA_Tests

@@ -30,7 +30,7 @@ using Crypter.CryptoLib.Crypto;
 using NUnit.Framework;
 using System.IO;
 
-namespace Crypter.Test.CryptoLib_Tests
+namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
 {
    [TestFixture]
    public class ECDH_Tests

@@ -33,11 +33,11 @@ namespace Crypter.CryptoLib.Crypto
 {
    public class AES
    {
-      private readonly IBufferedCipher Cipher;
+      private readonly IBufferedCipher _cipher;
 
       public AES()
       {
-         Cipher = CipherUtilities.GetCipher("AES/CTR/PKCS7Padding");
+         _cipher = CipherUtilities.GetCipher("AES/CTR/PKCS7Padding");
       }
 
       /// <summary>
@@ -65,36 +65,47 @@ namespace Crypter.CryptoLib.Crypto
       /// </returns>
       public static byte[] GenerateIV()
       {
-         SecureRandom random = new SecureRandom();
+         SecureRandom random = new();
          return random.GenerateSeed(16);
       }
 
       public void Initialize(byte[] key, byte[] iv, bool forEncryption)
       {
          var keyParam = new KeyParameter(key);
-         Cipher.Init(forEncryption, new ParametersWithIV(keyParam, iv));
+         _cipher.Init(forEncryption, new ParametersWithIV(keyParam, iv));
       }
 
       public int GetOutputSize(int inputLength)
       {
-         return Cipher.GetOutputSize(inputLength);
+         return _cipher.GetOutputSize(inputLength);
       }
 
-      public int GetUpdateOutputSize(int updateLength)
+      public int ProcessChunk(byte[] input, int inputOffset, int length, byte[] output, int outputOffset)
       {
-         return Cipher.GetUpdateOutputSize(updateLength);
-      }
-
-      public byte[] ProcessChunk(byte[] chunk)
-      {
-         return Cipher.ProcessBytes(chunk);
+         return _cipher.ProcessBytes(input, inputOffset, length, output, outputOffset);
       }
 
       public byte[] ProcessFinal(byte[] chunk)
       {
-         var finalBytes = Cipher.DoFinal(chunk);
-         Cipher.Reset();
+         var finalBytes = _cipher.DoFinal(chunk);
+         _cipher.Reset();
          return finalBytes;
+      }
+
+      public int EncryptFinal(byte[] input, int inputOffset, int length, byte[] output, int outputOffset)
+      {
+         int processedBytes = _cipher.DoFinal(input, inputOffset, length, output, outputOffset);
+         _cipher.Reset();
+         return processedBytes;
+      }
+
+      public byte[] DecryptFinal(byte[] input, int inputOffset, int length, byte[] output, int outputOffset)
+      {
+         int processedBytes = _cipher.DoFinal(input, inputOffset, length, output, outputOffset);
+         _cipher.Reset();
+
+         int finalSize = outputOffset + processedBytes;
+         return output[0..finalSize];
       }
    }
 }
