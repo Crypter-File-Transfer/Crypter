@@ -27,10 +27,11 @@
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Crypter.Test.CryptoLib_Tests
+namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
 {
    [TestFixture]
    public class AES_Tests
@@ -201,51 +202,34 @@ namespace Crypter.Test.CryptoLib_Tests
 
          var directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
          var sampleFile = Path.Combine(directory, "CryptoLib_Tests", "Assets", "clarity_by_sigi_sagi.jpg");
-         using var sampleStream = File.Open(sampleFile, FileMode.Open);
-         var fileSize = sampleStream.Length;
+
+         byte[] plaintext = File.ReadAllBytes(sampleFile);
+         int fileSize = Convert.ToInt32(plaintext.Length);
 
          int processedPlaintextBytes = 0;
          int currentCiphertextSize = 0;
          int chunkSize = 1048576;
+
          var cipherForEncryption = new AES();
          cipherForEncryption.Initialize(knownKey, knownIV, true);
-         List<byte> plaintext = new List<byte>((int)fileSize);
-         List<byte> ciphertext = new List<byte>(cipherForEncryption.GetOutputSize((int)fileSize));
+
+         byte[] ciphertext = new byte[cipherForEncryption.GetOutputSize(fileSize)];
          while (processedPlaintextBytes + chunkSize < fileSize)
          {
-            var plaintextChunk = new byte[chunkSize];
-            sampleStream.Read(plaintextChunk, 0, plaintextChunk.Length);
-            plaintext.InsertRange(processedPlaintextBytes, plaintextChunk);
-            var ciphertextChunk = cipherForEncryption.ProcessChunk(plaintextChunk);
-
-            ciphertext.InsertRange(currentCiphertextSize, ciphertextChunk);
+            currentCiphertextSize += cipherForEncryption.ProcessChunk(plaintext, processedPlaintextBytes, chunkSize, ciphertext, currentCiphertextSize);
             processedPlaintextBytes += chunkSize;
-            currentCiphertextSize += ciphertextChunk.Length;
          }
 
-         var finalPlaintextChunk = new byte[fileSize - processedPlaintextBytes];
-         sampleStream.Read(finalPlaintextChunk, 0, finalPlaintextChunk.Length);
-         plaintext.InsertRange(processedPlaintextBytes, finalPlaintextChunk);
-         var finalCiphertextChunk = cipherForEncryption.ProcessFinal(finalPlaintextChunk);
-         ciphertext.InsertRange(currentCiphertextSize, finalCiphertextChunk);
+         int finalChunkSize = fileSize - processedPlaintextBytes;
+         cipherForEncryption.EncryptFinal(plaintext, processedPlaintextBytes, finalChunkSize, ciphertext, currentCiphertextSize);
 
          var cipherForDecryption = new AES();
          cipherForDecryption.Initialize(knownKey, knownIV, false);
-         var decrypted = cipherForDecryption.ProcessFinal(ciphertext.ToArray());
+         var decrypted = cipherForDecryption.ProcessFinal(ciphertext);
 
-         Assert.AreEqual(plaintext.ToArray(), decrypted);
+         Assert.AreEqual(plaintext, decrypted);
       }
 
-      /// <summary>
-      /// This test is interesting since the ciphertext will contain some padding, making
-      ///  the ciphertext larger than the original plaintext. This makes it impossible to know
-      ///  exactly how large a decrypted plaintext will be.
-      /// 
-      /// A List<byte> is initialized with a capacity equal to GetOutputSize. It's important
-      ///  to remember the difference between a List's "capacity" and it's "count". When the
-      ///  List is converted to an Array, only the elements in the List are converted. Excess
-      ///  capacity is ignored.
-      /// </summary>
       [Test]
       public void Decryption_Can_Be_Chunked()
       {
@@ -263,36 +247,31 @@ namespace Crypter.Test.CryptoLib_Tests
 
          var directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
          var sampleFile = Path.Combine(directory, "CryptoLib_Tests", "Assets", "clarity_by_sigi_sagi.jpg");
-         using var sampleStream = File.Open(sampleFile, FileMode.Open);
-         byte[] plaintext = new byte[sampleStream.Length];
-         sampleStream.Read(plaintext);
+         
+         byte[] plaintext = File.ReadAllBytes(sampleFile);
 
          var cipherForEncryption = new AES();
          cipherForEncryption.Initialize(knownKey, knownIV, true);
          var ciphertext = cipherForEncryption.ProcessFinal(plaintext);
 
          int processedCiphertextBytes = 0;
-         int currentPlaintextSize = 0;
+         int currentDecryptedSize = 0;
          int chunkSize = 1048576;
+
          var cipherForDecryption = new AES();
          cipherForDecryption.Initialize(knownKey, knownIV, false);
-         List<byte> decrypted = new List<byte>(cipherForDecryption.GetOutputSize(ciphertext.Length));
-         var outputSize = cipherForDecryption.GetOutputSize(ciphertext.Length);
+
+         byte[] decrypted = new byte[cipherForDecryption.GetOutputSize(plaintext.Length)];
          while (processedCiphertextBytes + chunkSize < ciphertext.Length)
          {
-            var ciphertextChunk = ciphertext[processedCiphertextBytes..(processedCiphertextBytes + chunkSize)];
-            var plaintextChunk = cipherForDecryption.ProcessChunk(ciphertextChunk);
-
-            decrypted.InsertRange(currentPlaintextSize, plaintextChunk);
+            currentDecryptedSize += cipherForDecryption.ProcessChunk(ciphertext, processedCiphertextBytes, chunkSize, decrypted, currentDecryptedSize);
             processedCiphertextBytes += chunkSize;
-            currentPlaintextSize += plaintextChunk.Length;
          }
 
-         var finalCiphertextChunk = ciphertext[processedCiphertextBytes..ciphertext.Length];
-         var finalPlaintextChunk = cipherForDecryption.ProcessFinal(finalCiphertextChunk);
-         decrypted.InsertRange(currentPlaintextSize, finalPlaintextChunk);
+         int finalChunkSize = ciphertext.Length - processedCiphertextBytes;
+         decrypted = cipherForDecryption.DecryptFinal(ciphertext, processedCiphertextBytes, finalChunkSize, decrypted, currentDecryptedSize);
 
-         Assert.AreEqual(plaintext, decrypted.ToArray());
+         Assert.AreEqual(plaintext, decrypted);
       }
    }
 }

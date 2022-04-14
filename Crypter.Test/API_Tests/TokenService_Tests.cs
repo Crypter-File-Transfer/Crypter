@@ -90,7 +90,7 @@ namespace Crypter.Test.API_Tests
          var parsedUserId = sut.ParseUserId(maybeClaimsPrincipal.ValueUnsafe);
          Assert.AreEqual(userId, parsedUserId);
 
-         var maybeTokenId = sut.ParseTokenId(maybeClaimsPrincipal.ValueUnsafe);
+         var maybeTokenId = sut.TryParseTokenID(maybeClaimsPrincipal.ValueUnsafe);
          Assert.IsTrue(maybeTokenId.IsSome);
          Assert.AreEqual(tokenId, maybeTokenId.ValueUnsafe);
 
@@ -118,7 +118,7 @@ namespace Crypter.Test.API_Tests
          var parsedUserId = sut.ParseUserId(maybeClaimsPrincipal.ValueUnsafe);
          Assert.AreEqual(userId, parsedUserId);
 
-         var maybeTokenId = sut.ParseTokenId(maybeClaimsPrincipal.ValueUnsafe);
+         var maybeTokenId = sut.TryParseTokenID(maybeClaimsPrincipal.ValueUnsafe);
          Assert.IsTrue(maybeTokenId.IsSome);
          Assert.AreEqual(tokenId, maybeTokenId.ValueUnsafe);
 

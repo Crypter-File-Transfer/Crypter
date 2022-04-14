@@ -103,9 +103,9 @@ namespace Crypter.Web.Shared.Transfer
             {
                ModalForUserRecipient.Open();
             }
-            Cleanup();
          });
 
+         Cleanup();
          EncryptionInProgress = false;
       }
 

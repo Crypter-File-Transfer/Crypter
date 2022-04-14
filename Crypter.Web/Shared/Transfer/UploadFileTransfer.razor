@@ -70,6 +70,6 @@
       <span class="visually-hidden">Loading...</span>
    </div>
    <div class="progress" hidden="@(!ShowProgressBar)">
-      <div class="progress-bar" role="progressbar" style="width: @($"{ProgressPercent * 100}%"); transition: width @(ProgressTransition) ease;" aria-valuenow="@(ProgressPercent * 100)" aria-valuemin="0" aria-valuemax="100"></div>
+      <div class="progress-bar" role="progressbar" style="width: @($"{ProgressPercent * 100}%"); transition: width 50ms linear;" aria-valuenow="@(ProgressPercent * 100)" aria-valuemin="0" aria-valuemax="100"></div>
    </div>
 </div>

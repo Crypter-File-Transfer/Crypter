@@ -29,6 +29,7 @@ using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
+using Crypter.CryptoLib.Services;
 using Microsoft.AspNetCore.Components;
 using Org.BouncyCastle.Crypto;
 using System;
@@ -44,6 +45,9 @@ namespace Crypter.Web.Shared.Transfer
 
       [Inject]
       protected IUserSessionService UserSessionService { get; set; }
+
+      [Inject]
+      protected ISimpleEncryptionService SimpleEncryptionService { get; set; }
 
       [Parameter]
       public bool IsSenderDefined { get; set; }
@@ -167,6 +171,8 @@ namespace Crypter.Web.Shared.Transfer
             RecipientX25519PublicKey = null;
             RecipientEd25519PublicKey = null;
          }
+
+         GC.Collect();
       }
    }
 }
