@@ -24,11 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Blazor.DownloadFileFast.Interfaces;
+using BlazorDownloadFile;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -54,7 +55,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected byte[] DecryptedFile;
 
-      protected override async Task OnDecryptClicked()
+      protected override async Task OnDecryptClickedAsync()
       {
          if (!IsUserRecipient
             && string.IsNullOrEmpty(EncodedX25519PrivateKey))
@@ -146,9 +147,9 @@ namespace Crypter.Web.Shared.Transfer
          });
       }
 
-      protected async Task DownloadFile(string fileName, byte[] fileContent, string contentType)
+      protected async Task DownloadFileAsync()
       {
-         await BlazorDownloadFileService.DownloadFileAsync(fileName, fileContent, contentType);
+         await BlazorDownloadFileService.DownloadFile(FileName, DecryptedFile, ContentType);
       }
    }
 }

@@ -59,7 +59,7 @@
                   Decryption successful!
                </div>
                <div class="mb-3">
-                  <button type="button" class="btn btn-primary" @onclick="@(e => DownloadFile(FileName, DecryptedFile, ContentType))">Download your file</button>
+                  <button type="button" class="btn btn-primary" @onclick="@(async () => await DownloadFileAsync())">Download your file</button>
                </div>
             }
             else if (DecryptionInProgress)
@@ -89,7 +89,7 @@
                @if (!DecryptionInProgress)
                {
                   <div class="mb-3">
-                     <button type="button" class="btn btn-primary" @onclick="@(e => OnDecryptClicked())">Decrypt your file</button>
+                     <button type="button" class="btn btn-primary" @onclick="@(async () => await OnDecryptClickedAsync())">Decrypt your file</button>
                   </div>
                }
 

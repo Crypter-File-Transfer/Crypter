@@ -44,7 +44,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected string DecryptedMessage;
 
-      protected override async Task OnDecryptClicked()
+      protected override async Task OnDecryptClickedAsync()
       {
          if (!IsUserRecipient
             && string.IsNullOrEmpty(EncodedX25519PrivateKey))

@@ -118,7 +118,7 @@ namespace Crypter.Web.Shared.Transfer
             session => session.Username == RecipientUsername);
       }
 
-      protected abstract Task OnDecryptClicked();
+      protected abstract Task OnDecryptClickedAsync();
 
       protected Maybe<PEMString> DecodeX25519RecipientKey()
       {
