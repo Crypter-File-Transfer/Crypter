@@ -58,9 +58,25 @@
                <div class="alert alert-success text-center" role="alert">
                   Decryption successful!
                </div>
-               <div class="mb-3">
-                  <button type="button" class="btn btn-primary" @onclick="@(e => DownloadFile(FileName, DecryptedFile, ContentType))">Download your file</button>
+               <div class="mb-3" hidden="@LocalDownloadInProgress">
+                  <button type="button" class="btn btn-primary" @onclick="@(async () => await DownloadFileAsync())">Download decrypted file</button>
                </div>
+
+               <div hidden="@(!LocalDownloadInProgress)">
+                  <div class="text-center">
+                     Downloading
+                  </div>
+                  <div class="spinner-border" role="status">
+                     <span class="visually-hidden">Loading...</span>
+                  </div>
+               </div>
+
+               @if (!string.IsNullOrEmpty(LocalDownloadErrorMessage))
+               {
+                  <div class="alert alert-danger text-center" role="alert">
+                     @LocalDownloadErrorMessage
+                  </div>
+               }
             }
             else if (DecryptionInProgress)
             {
@@ -89,7 +105,7 @@
                @if (!DecryptionInProgress)
                {
                   <div class="mb-3">
-                     <button type="button" class="btn btn-primary" @onclick="@(e => OnDecryptClicked())">Decrypt your file</button>
+                     <button type="button" class="btn btn-primary" @onclick="@(async () => await OnDecryptClickedAsync())">Decrypt your file</button>
                   </div>
                }
 

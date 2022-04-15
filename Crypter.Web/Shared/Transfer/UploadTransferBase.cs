@@ -171,8 +171,6 @@ namespace Crypter.Web.Shared.Transfer
             RecipientX25519PublicKey = null;
             RecipientEd25519PublicKey = null;
          }
-
-         GC.Collect();
       }
    }
 }
