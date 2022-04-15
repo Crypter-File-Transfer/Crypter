@@ -30,7 +30,7 @@ using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
 using NUnit.Framework;
 
-namespace Crypter.Test.CryptoLib_Tests
+namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
 {
    [TestFixture]
    public class RSA_Tests

@@ -34,6 +34,7 @@ using Crypter.Contracts.Features.Authentication.Logout;
 using Crypter.Contracts.Features.Authentication.Refresh;
 using Crypter.Core.Features.User.Commands;
 using Crypter.Core.Features.User.Queries;
+using Crypter.Core.Models;
 using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -157,43 +158,52 @@ namespace Crypter.API.Controllers
             };
          }
 
-         if (!_tokenService.TryParseTokenId(User, out Guid tokenId))
+         static Either<RefreshError, UserToken> ValidateDatabaseToken(UserToken token, Guid userId)
          {
-            return MakeErrorResponse(RefreshError.BearerTokenMissingId);
+            if (token.Owner != userId)
+            {
+               return RefreshError.DatabaseTokenNotFound;
+            }
+
+            if (token.Expiration < DateTime.UtcNow)
+            {
+               return RefreshError.DatabaseTokenExpired;
+            }
+
+            return token;
          }
 
-         var databaseToken = await _mediator.Send(new UserTokenQuery(tokenId), cancellationToken);
-         if (databaseToken is null)
+         Guid userId = _tokenService.ParseUserId(User);
+
+         var validatedTokenId = _tokenService.TryParseTokenID(User)
+            .ToEither(RefreshError.BearerTokenMissingId);
+
+         var validatedDatabaseToken = (await validatedTokenId.BindAsync(
+            async tokenId => (await _mediator.Send(new UserTokenQuery(tokenId), cancellationToken))
+            .ToEither(RefreshError.DatabaseTokenNotFound)))
+            .Bind(databaseToken => ValidateDatabaseToken(databaseToken, userId));
+
+         var response = await validatedDatabaseToken.MapAsync(async databaseToken =>
          {
-            return MakeErrorResponse(RefreshError.DatabaseTokenNotFound);
-         }
+            await _mediator.Send(new DeleteUserTokenCommand(databaseToken.Id), cancellationToken);
 
-         var requestingUserId = _tokenService.ParseUserId(User);
-         if (databaseToken.Owner != requestingUserId)
-         {
-            return MakeErrorResponse(RefreshError.DatabaseTokenNotFound);
-         }
+            var newAuthToken = _tokenService.NewAuthenticationToken(userId);
 
-         if (databaseToken.Expiration < DateTime.UtcNow)
-         {
-            return MakeErrorResponse(RefreshError.DatabaseTokenExpired);
-         }
+            var newTokenId = Guid.NewGuid();
+            (string newRefreshToken, DateTime newTokenExpiration) = databaseToken.Type == TokenType.Device
+               ? _tokenService.NewRefreshToken(userId, newTokenId)
+               : _tokenService.NewSessionToken(userId, newTokenId);
 
-         await _mediator.Send(new DeleteUserTokenCommand(databaseToken.Id), cancellationToken);
+            string userAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
 
-         var newAuthToken = _tokenService.NewAuthenticationToken(requestingUserId);
+            await _mediator.Send(new InsertUserTokenCommand(newTokenId, userId, userAgent, databaseToken.Type, newTokenExpiration), cancellationToken);
+            BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(newTokenId), CancellationToken.None), newTokenExpiration - DateTime.UtcNow);
+            return new RefreshResponse(newAuthToken, newRefreshToken, databaseToken.Type);
+         });
 
-         var newTokenId = Guid.NewGuid();
-         (string newRefreshToken, DateTime newTokenExpiration) = databaseToken.Type == TokenType.Device
-            ? _tokenService.NewRefreshToken(requestingUserId, newTokenId)
-            : _tokenService.NewSessionToken(requestingUserId, newTokenId);
-
-         string userAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-
-         await _mediator.Send(new InsertUserTokenCommand(newTokenId, requestingUserId, userAgent, databaseToken.Type, newTokenExpiration), cancellationToken);
-         BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(newTokenId), CancellationToken.None), newTokenExpiration - DateTime.UtcNow);
-
-         return new OkObjectResult(new RefreshResponse(newAuthToken, newRefreshToken, databaseToken.Type));
+         return response.Match(
+            left => MakeErrorResponse(left),
+            right => new OkObjectResult(right));
       }
 
       /// <summary>
@@ -221,31 +231,35 @@ namespace Crypter.API.Controllers
             };
          }
 
-         var (tokenIsValid, claimsPrincipal) = _tokenService.ValidateToken(request.RefreshToken);
-         if (!tokenIsValid || claimsPrincipal is null)
-         {
-            return MakeErrorResponse(LogoutError.RefreshTokenInvalid);
-         }
+         Guid userId = _tokenService.ParseUserId(User);
 
-         if (!_tokenService.TryParseTokenId(claimsPrincipal, out var tokenId))
-         {
-            return MakeErrorResponse(LogoutError.RefreshTokenInvalid);
-         }
+         var validatedClaimsPrincipal = _tokenService.ValidateToken(request.RefreshToken)
+            .ToEither(LogoutError.RefreshTokenInvalid);
 
-         var userToken = await _mediator.Send(new UserTokenQuery(tokenId), cancellationToken);
-         if (userToken == null)
-         {
-            return MakeErrorResponse(LogoutError.DatabaseTokenNotFound);
-         }
+         var validatedTokenId = validatedClaimsPrincipal.Bind(
+            x => _tokenService.TryParseTokenID(x)
+            .ToEither(LogoutError.RefreshTokenInvalid));
 
-         var requestingUserId = _tokenService.ParseUserId(User);
-         if (userToken.Owner != requestingUserId)
-         {
-            return MakeErrorResponse(LogoutError.DatabaseTokenNotFound);
-         }
+         var foundUserToken = await validatedTokenId.BindAsync(
+            async tokenId => (await _mediator.Send(new UserTokenQuery(tokenId), cancellationToken))
+            .ToEither(LogoutError.DatabaseTokenNotFound));
 
-         await _mediator.Send(new DeleteUserTokenCommand(userToken.Id), cancellationToken);
-         return new OkObjectResult(new LogoutResponse());
+         var response = await foundUserToken.MapAsync<Either<LogoutError, LogoutResponse>>(async x =>
+         {
+            bool isUserTheTokenOwner = userId == x.Owner;
+            if (isUserTheTokenOwner)
+            {
+               await _mediator.Send(new DeleteUserTokenCommand(x.Id), cancellationToken);
+            }
+
+            return isUserTheTokenOwner
+               ? new LogoutResponse()
+               : LogoutError.DatabaseTokenNotFound;
+         });
+
+         return response.Match(
+            left => MakeErrorResponse(left),
+            right => new OkObjectResult(right));
       }
    }
 }

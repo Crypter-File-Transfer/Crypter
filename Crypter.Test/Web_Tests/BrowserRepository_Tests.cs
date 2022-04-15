@@ -113,23 +113,23 @@ namespace Crypter.Test.Web_Tests
          foreach (DeviceStorageObjectType item in Enum.GetValues(typeof(DeviceStorageObjectType)))
          {
             Assert.IsTrue(sut.HasItem(item));
-            Assert.AreEqual(storageLocation, sut.GetItemLocation(item).SomeOrDefault());
+            Assert.AreEqual(storageLocation, sut.GetItemLocation(item).ValueUnsafe);
          }
 
          var fetchedUserSession = await sut.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession);
-         Assert.AreEqual(storedUserSession.Username, fetchedUserSession.SomeOrDefault().Username);
+         Assert.AreEqual(storedUserSession.Username, fetchedUserSession.ValueUnsafe.Username);
 
          var fetchedAuthenticationToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.AuthenticationToken);
-         Assert.AreEqual(authenticationToken, fetchedAuthenticationToken.SomeOrDefault());
+         Assert.AreEqual(authenticationToken, fetchedAuthenticationToken.ValueUnsafe);
 
          var fetchedRefreshToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.RefreshToken);
-         Assert.AreEqual(refreshToken, fetchedRefreshToken.SomeOrDefault());
+         Assert.AreEqual(refreshToken, fetchedRefreshToken.ValueUnsafe);
 
          var fetchedPlaintextEd25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.Ed25519PrivateKey);
-         Assert.AreEqual(ed25519PrivateKey, fetchedPlaintextEd25519PrivateKey.SomeOrDefault());
+         Assert.AreEqual(ed25519PrivateKey, fetchedPlaintextEd25519PrivateKey.ValueUnsafe);
 
          var fetchedPlaintextX25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.X25519PrivateKey);
-         Assert.AreEqual(x25519PrivateKey, fetchedPlaintextX25519PrivateKey.SomeOrDefault());
+         Assert.AreEqual(x25519PrivateKey, fetchedPlaintextX25519PrivateKey.ValueUnsafe);
       }
    }
 }

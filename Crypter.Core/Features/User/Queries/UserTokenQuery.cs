@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
 using Crypter.Core.Models;
 using MediatR;
 using System;
@@ -32,7 +33,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Features.User.Queries
 {
-   public class UserTokenQuery : IRequest<UserToken>
+   public class UserTokenQuery : IRequest<Maybe<UserToken>>
    {
       public Guid TokenId { get; set; }
 
@@ -42,7 +43,7 @@ namespace Crypter.Core.Features.User.Queries
       }
    }
 
-   public class UserTokenQueryHandler : IRequestHandler<UserTokenQuery, UserToken>
+   public class UserTokenQueryHandler : IRequestHandler<UserTokenQuery, Maybe<UserToken>>
    {
       private readonly DataContext _context;
 
@@ -51,10 +52,12 @@ namespace Crypter.Core.Features.User.Queries
          _context = context;
       }
 
-      public async Task<UserToken> Handle(UserTokenQuery request, CancellationToken cancellationToken)
+      public async Task<Maybe<UserToken>> Handle(UserTokenQuery request, CancellationToken cancellationToken)
       {
-         return await _context.UserTokens
+         var foundToken = await _context.UserTokens
             .FindAsync(new object[] { request.TokenId }, cancellationToken);
+
+         return foundToken ?? Maybe<UserToken>.None;
       }
    }
 }

@@ -61,10 +61,11 @@ namespace Crypter.Test.API_Tests
          Assert.IsNotNull(token);
          Assert.IsNotEmpty(token);
 
-         var (isValid, claimsPrincipal) = sut.ValidateToken(token);
-         Assert.IsTrue(isValid);
+         var maybeClaimsPrincipal = sut.ValidateToken(token);
+         Assert.IsTrue(maybeClaimsPrincipal.IsSome);
+         Assert.IsNotNull(maybeClaimsPrincipal.ValueUnsafe);
 
-         var parsedUserId = sut.ParseUserId(claimsPrincipal);
+         var parsedUserId = sut.ParseUserId(maybeClaimsPrincipal.ValueUnsafe);
          Assert.AreEqual(userId, parsedUserId);
       }
 
@@ -82,15 +83,16 @@ namespace Crypter.Test.API_Tests
          Assert.IsNotNull(token);
          Assert.IsNotEmpty(token);
 
-         var (isValid, claimsPrincipal) = sut.ValidateToken(token);
-         Assert.IsTrue(isValid);
+         var maybeClaimsPrincipal = sut.ValidateToken(token);
+         Assert.IsTrue(maybeClaimsPrincipal.IsSome);
+         Assert.IsNotNull(maybeClaimsPrincipal.ValueUnsafe);
 
-         var parsedUserId = sut.ParseUserId(claimsPrincipal);
+         var parsedUserId = sut.ParseUserId(maybeClaimsPrincipal.ValueUnsafe);
          Assert.AreEqual(userId, parsedUserId);
 
-         var parseTokenIdSuccess = sut.TryParseTokenId(claimsPrincipal, out Guid parsedTokenId);
-         Assert.IsTrue(parseTokenIdSuccess);
-         Assert.AreEqual(tokenId, parsedTokenId);
+         var maybeTokenId = sut.TryParseTokenID(maybeClaimsPrincipal.ValueUnsafe);
+         Assert.IsTrue(maybeTokenId.IsSome);
+         Assert.AreEqual(tokenId, maybeTokenId.ValueUnsafe);
 
          Assert.AreEqual(expectedTokenExpiration.Ticks, actualTokenExpiration.Ticks, TimeSpan.TicksPerSecond);
       }
@@ -109,15 +111,16 @@ namespace Crypter.Test.API_Tests
          Assert.IsNotNull(token);
          Assert.IsNotEmpty(token);
 
-         var (isValid, claimsPrincipal) = sut.ValidateToken(token);
-         Assert.IsTrue(isValid);
+         var maybeClaimsPrincipal = sut.ValidateToken(token);
+         Assert.IsTrue(maybeClaimsPrincipal.IsSome);
+         Assert.IsNotNull(maybeClaimsPrincipal.ValueUnsafe);
 
-         var parsedUserId = sut.ParseUserId(claimsPrincipal);
+         var parsedUserId = sut.ParseUserId(maybeClaimsPrincipal.ValueUnsafe);
          Assert.AreEqual(userId, parsedUserId);
 
-         var parseTokenIdSuccess = sut.TryParseTokenId(claimsPrincipal, out Guid parsedTokenId);
-         Assert.IsTrue(parseTokenIdSuccess);
-         Assert.AreEqual(tokenId, parsedTokenId);
+         var maybeTokenId = sut.TryParseTokenID(maybeClaimsPrincipal.ValueUnsafe);
+         Assert.IsTrue(maybeTokenId.IsSome);
+         Assert.AreEqual(tokenId, maybeTokenId.ValueUnsafe);
 
          Assert.AreEqual(expectedTokenExpiration.Ticks, actualTokenExpiration.Ticks, TimeSpan.TicksPerSecond);
       }

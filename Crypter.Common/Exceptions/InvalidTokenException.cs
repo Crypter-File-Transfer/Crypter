@@ -26,14 +26,9 @@
 
 using System;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Common.Exceptions
 {
-   public interface IUserEphemeralKeyPairs
+   public class InvalidTokenException : ApplicationException
    {
-      public Guid Id { get; set; }
-      public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public DateTime Created { get; set; }
    }
 }

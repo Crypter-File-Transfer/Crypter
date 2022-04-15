@@ -36,9 +36,6 @@ namespace Crypter.Web.Shared
    public partial class MainLayoutBase : LayoutComponentBase
    {
       [Inject]
-      private NavigationManager NavigationManager { get; set; }
-
-      [Inject]
       private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
 
       [Inject]

@@ -27,6 +27,7 @@
 using Crypter.CryptoLib.Crypto;
 using System;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Crypter.CryptoLib.Services
 {
@@ -34,6 +35,7 @@ namespace Crypter.CryptoLib.Services
    {
       byte[] Encrypt(byte[] key, byte[] iv, byte[] plaintext);
       byte[] Encrypt(byte[] key, byte[] iv, string plaintext);
+      Task<byte[]> EncryptChunkedAsync(byte[] key, byte[] iv, byte[] plaintext, int chunkSize, Func<Task> onChunkProcessed);
       (byte[] ciphertext, byte[] iv) Encrypt(byte[] key, byte[] plaintext);
       (byte[] ciphertext, byte[] iv) Encrypt(byte[] key, string plaintext);
       byte[] Decrypt(byte[] key, byte[] iv, byte[] ciphertext);
@@ -63,6 +65,31 @@ namespace Crypter.CryptoLib.Services
          var encrypter = new AES();
          encrypter.Initialize(key, iv, true);
          return encrypter.ProcessFinal(Encoding.UTF8.GetBytes(plaintext));
+      }
+
+      public async Task<byte[]> EncryptChunkedAsync(byte[] key, byte[] iv, byte[] plaintext, int chunkSize, Func<Task> onChunkProcessed)
+      {
+         var encrypter = new AES();
+         encrypter.Initialize(key, iv, true);
+
+         byte[] output = new byte[encrypter.GetOutputSize(plaintext.Length)];
+         int processedPlaintextBytes = 0;
+         int currentOutputSize = 0;
+
+         while (processedPlaintextBytes + chunkSize < plaintext.Length)
+         {
+            currentOutputSize += encrypter.ProcessChunk(plaintext, processedPlaintextBytes, chunkSize, output, currentOutputSize);
+            processedPlaintextBytes += chunkSize;
+
+            await onChunkProcessed();
+         }
+
+         int finalChunkSize = plaintext.Length - processedPlaintextBytes;
+         encrypter.EncryptFinal(plaintext, processedPlaintextBytes, finalChunkSize, output, currentOutputSize);
+
+         await onChunkProcessed();
+
+         return output;
       }
 
       public (byte[] ciphertext, byte[] iv) Encrypt(byte[] key, string plaintext)

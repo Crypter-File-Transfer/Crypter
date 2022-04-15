@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Blazor.DownloadFileFast.Interfaces;
+using BlazorDownloadFile;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
@@ -52,9 +52,13 @@ namespace Crypter.Web.Shared.Transfer
       [Parameter]
       public EventCallback<string> ContentTypeChanged { get; set; }
 
-      protected byte[] DecryptedFile;
+      protected bool LocalDownloadInProgress { get; set; }
 
-      protected override async Task OnDecryptClicked()
+      protected string DecryptedFileBase64 { get; set; }
+
+      protected string LocalDownloadErrorMessage { get; set; }
+
+      protected override async Task OnDecryptClickedAsync()
       {
          if (!IsUserRecipient
             && string.IsNullOrEmpty(EncodedX25519PrivateKey))
@@ -79,7 +83,7 @@ namespace Crypter.Web.Shared.Transfer
          try
          {
             var senderX25519PublicKey = PEMString.From(Encoding.UTF8.GetString(Convert.FromBase64String(SenderX25519PublicKey)));
-            (receiveKey, serverKey) = DeriveSymmetricKeys(maybeRecipientX25519PrivateKey.SomeOrDefault(), senderX25519PublicKey);
+            (receiveKey, serverKey) = DeriveSymmetricKeys(maybeRecipientX25519PrivateKey.ValueUnsafe, senderX25519PublicKey);
          }
          catch (Exception)
          {
@@ -124,7 +128,6 @@ namespace Crypter.Web.Shared.Transfer
 
             await ciphertextResponse.DoRightAsync(async y =>
             {
-               // Decrypt the ciphertext using the symmetric key from the signature
                await SetNewDecryptionStatus($"Decrypting file");
                var ciphertextBytes = Convert.FromBase64String(y.CipherTextBase64);
                var clientEncryptionIV = Convert.FromBase64String(y.ClientEncryptionIVBase64);
@@ -133,7 +136,7 @@ namespace Crypter.Web.Shared.Transfer
                await SetNewDecryptionStatus("Verifying decrypted file");
                if (VerifySignature(plaintextBytes, signature, ed25519PublicKey))
                {
-                  DecryptedFile = plaintextBytes;
+                  DecryptedFileBase64 = Convert.ToBase64String(plaintextBytes);
                   DecryptionCompleted = true;
                }
                else
@@ -146,9 +149,18 @@ namespace Crypter.Web.Shared.Transfer
          });
       }
 
-      protected async Task DownloadFile(string fileName, byte[] fileContent, string contentType)
+      protected async Task DownloadFileAsync()
       {
-         await BlazorDownloadFileService.DownloadFileAsync(fileName, fileContent, contentType);
+         LocalDownloadInProgress = true;
+         StateHasChanged();
+         await Task.Delay(400);
+
+         var localDownloadResult = await BlazorDownloadFileService.DownloadFile(FileName, DecryptedFileBase64, ContentType);
+         LocalDownloadErrorMessage = localDownloadResult.Succeeded
+            ? ""
+            : $"{localDownloadResult.ErrorName} - {localDownloadResult.ErrorMessage}";
+         LocalDownloadInProgress = false;
+         StateHasChanged();
       }
    }
 }

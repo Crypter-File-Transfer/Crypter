@@ -26,15 +26,9 @@
 
 using System;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Common.Exceptions
 {
-   public interface IUserExchangedKeys
+   public class WrongMonadStateException : ApplicationException
    {
-      public Guid Id { get; set; }
-      public Guid Owner { get; set; }
-      public Guid Target { get; set; }
-      public string ReceiveKey { get; set; }
-      public string SendKey { get; set; }
-      public DateTime Created { get; set; }
    }
 }

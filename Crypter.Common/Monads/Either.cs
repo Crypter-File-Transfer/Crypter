@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Exceptions;
 using System;
 using System.Threading.Tasks;
 
@@ -72,18 +73,24 @@ namespace Crypter.Common.Monads
       public bool IsBottom
       { get { return _state == EitherState.Bottom; } }
 
-      public TLeft LeftOrDefault(TLeft defaultValue = default)
+      public TLeft LeftUnsafe
       {
-         return IsLeft
-            ? _left
-            : defaultValue;
+         get
+         {
+            return IsLeft
+               ? _left
+               : throw new WrongMonadStateException();
+         }
       }
 
-      public TRight RightOrDefault(TRight defaultValue = default)
+      public TRight RightUnsafe
       {
-         return IsRight
-            ? _right
-            : defaultValue;
+         get
+         {
+            return IsRight
+               ? _right
+               : throw new WrongMonadStateException();
+         }
       }
 
       private static void ValidateMatch<TL, TR>(Func<TLeft, TL> leftFunction, Func<TRight, TR> rightFunction)

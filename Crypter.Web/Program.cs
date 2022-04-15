@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using BlazorDownloadFile;
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Implementations;
 using Crypter.ClientServices.Interfaces;

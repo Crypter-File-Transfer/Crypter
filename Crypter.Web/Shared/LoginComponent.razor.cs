@@ -77,8 +77,8 @@ namespace Crypter.Web.Shared
             return;
          }
 
-         var username = maybeUsername.RightOrDefault();
-         var password = maybePassword.RightOrDefault();
+         var username = maybeUsername.RightUnsafe;
+         var password = maybePassword.RightUnsafe;
 
          var authSuccess = await UserSessionService.LoginAsync(username, password, LoginModel.RememberMe);
          if (!authSuccess)

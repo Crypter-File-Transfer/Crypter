@@ -110,7 +110,7 @@ namespace Crypter.Core.Features.User.Commands
 
          if (request.EmailAddress.IsSome)
          {
-            bool isEmailAddressAvailable = await _context.Users.IsEmailAddressAvailableAsync(request.EmailAddress.SomeOrDefault(), cancellationToken);
+            bool isEmailAddressAvailable = await _context.Users.IsEmailAddressAvailableAsync(request.EmailAddress.ValueUnsafe, cancellationToken);
             if (!isEmailAddressAvailable)
             {
                return UserRegisterError.EmailTaken;
