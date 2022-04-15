@@ -29,7 +29,6 @@ using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -53,7 +52,9 @@ namespace Crypter.Web.Shared.Transfer
       [Parameter]
       public EventCallback<string> ContentTypeChanged { get; set; }
 
-      protected byte[] DecryptedFile;
+      protected bool LocalDownloadInProgress { get; set; }
+
+      protected string DecryptedFileBase64;
 
       protected override async Task OnDecryptClickedAsync()
       {
@@ -125,7 +126,6 @@ namespace Crypter.Web.Shared.Transfer
 
             await ciphertextResponse.DoRightAsync(async y =>
             {
-               // Decrypt the ciphertext using the symmetric key from the signature
                await SetNewDecryptionStatus($"Decrypting file");
                var ciphertextBytes = Convert.FromBase64String(y.CipherTextBase64);
                var clientEncryptionIV = Convert.FromBase64String(y.ClientEncryptionIVBase64);
@@ -134,7 +134,7 @@ namespace Crypter.Web.Shared.Transfer
                await SetNewDecryptionStatus("Verifying decrypted file");
                if (VerifySignature(plaintextBytes, signature, ed25519PublicKey))
                {
-                  DecryptedFile = plaintextBytes;
+                  DecryptedFileBase64 = Convert.ToBase64String(plaintextBytes);
                   DecryptionCompleted = true;
                }
                else
@@ -149,7 +149,13 @@ namespace Crypter.Web.Shared.Transfer
 
       protected async Task DownloadFileAsync()
       {
-         await BlazorDownloadFileService.DownloadFile(FileName, DecryptedFile, ContentType);
+         LocalDownloadInProgress = true;
+         StateHasChanged();
+         await Task.Delay(400);
+
+         await BlazorDownloadFileService.DownloadFile(FileName, DecryptedFileBase64, ContentType);
+         LocalDownloadInProgress = false;
+         StateHasChanged();
       }
    }
 }
