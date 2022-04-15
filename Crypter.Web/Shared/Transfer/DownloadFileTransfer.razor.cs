@@ -54,7 +54,9 @@ namespace Crypter.Web.Shared.Transfer
 
       protected bool LocalDownloadInProgress { get; set; }
 
-      protected string DecryptedFileBase64;
+      protected string DecryptedFileBase64 { get; set; }
+
+      protected string LocalDownloadErrorMessage { get; set; }
 
       protected override async Task OnDecryptClickedAsync()
       {
@@ -153,7 +155,10 @@ namespace Crypter.Web.Shared.Transfer
          StateHasChanged();
          await Task.Delay(400);
 
-         await BlazorDownloadFileService.DownloadFile(FileName, DecryptedFileBase64, ContentType);
+         var localDownloadResult = await BlazorDownloadFileService.DownloadFile(FileName, DecryptedFileBase64, ContentType);
+         LocalDownloadErrorMessage = localDownloadResult.Succeeded
+            ? ""
+            : $"{localDownloadResult.ErrorName} - {localDownloadResult.ErrorMessage}";
          LocalDownloadInProgress = false;
          StateHasChanged();
       }
