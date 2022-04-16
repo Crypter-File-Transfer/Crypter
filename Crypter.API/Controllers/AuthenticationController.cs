@@ -244,7 +244,7 @@ namespace Crypter.API.Controllers
             async tokenId => (await _mediator.Send(new UserTokenQuery(tokenId), cancellationToken))
             .ToEither(LogoutError.DatabaseTokenNotFound));
 
-         var response = await foundUserToken.MapAsync<Either<LogoutError, LogoutResponse>>(async x =>
+         var response = await foundUserToken.BindAsync<LogoutResponse>(async x =>
          {
             bool isUserTheTokenOwner = userId == x.Owner;
             if (isUserTheTokenOwner)
