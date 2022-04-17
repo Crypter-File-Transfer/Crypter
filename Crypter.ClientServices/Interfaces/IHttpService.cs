@@ -33,14 +33,18 @@ namespace Crypter.ClientServices.Interfaces
 {
    public interface IHttpService
    {
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri, string bearerToken = null)
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri, Maybe<string> bearerToken)
          where TResponse : class;
 
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostAsync<TRequest, TResponse>(string uri, TRequest body = default, string bearerToken = null)
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
          where TRequest : class
          where TResponse : class;
 
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, TRequest body = default, string bearerToken = null)
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
+         where TRequest : class
+         where TResponse : class;
+
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
          where TRequest : class
          where TResponse : class;
    }

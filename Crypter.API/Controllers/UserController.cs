@@ -27,7 +27,6 @@
 using Crypter.API.Methods;
 using Crypter.API.Services;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.User.AddContact;
@@ -424,7 +423,7 @@ namespace Crypter.API.Controllers
       }
 
       [Authorize]
-      [HttpPost("settings/keys/x25519")]
+      [HttpPut("settings/keys/x25519")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateKeysResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
@@ -466,7 +465,7 @@ namespace Crypter.API.Controllers
       }
 
       [Authorize]
-      [HttpPost("settings/keys/ed25519")]
+      [HttpPut("settings/keys/ed25519")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateKeysResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
