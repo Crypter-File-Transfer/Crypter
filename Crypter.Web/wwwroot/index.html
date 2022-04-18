@@ -10,10 +10,9 @@
                default-src 'self';
                img-src data: https:;
                object-src 'none';
-               script-src localhost:*
-                          'self'
-                          data:
+               script-src 'self'
                           'sha256-v8v3RKRPmN4odZ1CWM5gw80QKPCCWMcpNeOmimNL2AA='
+                          'unsafe-inline'
                           'unsafe-eval';
                style-src 'self'
                          'unsafe-inline';
