@@ -26,15 +26,15 @@
 
 using Crypter.ClientServices.Implementations;
 
-namespace Crypter.Web.Models
+namespace Crypter.Web.Models.Settings
 {
    /// <summary>
    /// Caution!  Do not add secrets here!
    /// These settings are available to the client.
    /// </summary>
-   public class ClientAppSettings
+   public class ClientSettings
    {
-      public long MaxUploadSizeMB { get; set; }
       public ClientApiSettings ApiSettings { get; set; }
+      public UploadSettings UploadSettings { get; set; }
    }
 }

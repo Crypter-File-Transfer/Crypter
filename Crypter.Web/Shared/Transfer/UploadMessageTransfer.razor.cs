@@ -29,6 +29,7 @@ using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -69,7 +70,7 @@ namespace Crypter.Web.Shared.Transfer
          var signature = SignPlaintext(messageBytes, senderEd25519PrivateKey);
 
          await SetNewEncryptionStatus("Uploading");
-         var encodedCipherText = Convert.ToBase64String(ciphertext);
+         var encodedCipherText = new List<string> { Convert.ToBase64String(ciphertext) };
          var encodedECDHSenderKey = Convert.ToBase64String(
             Encoding.UTF8.GetBytes(KeyConversion.ConvertX25519PrivateKeyFromPEM(senderX25519PrivateKey).GeneratePublicKey().ConvertToPEM().Value));
          var encodedECDSASenderKey = Convert.ToBase64String(
@@ -121,7 +122,7 @@ namespace Crypter.Web.Shared.Transfer
          var ed25519PrivateDecoded = KeyConversion.ConvertEd25519PrivateKeyFromPEM(ed25519PrivateKey);
          var signer = new ECDSA();
          signer.InitializeSigner(ed25519PrivateDecoded);
-         signer.SignerDigestChunk(message);
+         signer.SignerDigestPart(message);
          return signer.GenerateSignature();
       }
 

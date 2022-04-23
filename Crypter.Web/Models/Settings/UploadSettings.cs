@@ -24,28 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
-using Crypter.Contracts.Common;
-using System.Net;
-using System.Threading.Tasks;
-
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.Web.Models.Settings
 {
-   public interface IHttpService
+   public class UploadSettings
    {
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri, Maybe<string> bearerToken)
-         where TResponse : class;
-
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
-         where TRequest : class
-         where TResponse : class;
-
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
-         where TRequest : class
-         where TResponse : class;
-
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
-         where TRequest : class
-         where TResponse : class;
+      public int MaxUploadSizeMB { get; set; }
+      public int PartSizeBytes { get; set; }
    }
 }

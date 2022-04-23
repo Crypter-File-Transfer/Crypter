@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Transfer.Upload
@@ -31,7 +32,7 @@ namespace Crypter.Contracts.Features.Transfer.Upload
    public class UploadMessageTransferRequest : IUploadTransferRequest
    {
       public string Subject { get; set; }
-      public string CipherTextBase64 { get; set; }
+      public List<string> CipherTextBase64 { get; set; }
       public string SignatureBase64 { get; set; }
       public string ClientEncryptionIVBase64 { get; set; }
       public string ServerEncryptionKeyBase64 { get; set; }
@@ -40,7 +41,7 @@ namespace Crypter.Contracts.Features.Transfer.Upload
       public int LifetimeHours { get; set; }
 
       [JsonConstructor]
-      public UploadMessageTransferRequest(string subject, string cipherTextBase64, string signatureBase64, string clientEncryptionIVBase64, string serverEncryptionKeyBase64, string x25519PublicKeyBase64, string ed25519PublicKeyBase64, int lifetimeHours)
+      public UploadMessageTransferRequest(string subject, List<string> cipherTextBase64, string signatureBase64, string clientEncryptionIVBase64, string serverEncryptionKeyBase64, string x25519PublicKeyBase64, string ed25519PublicKeyBase64, int lifetimeHours)
       {
          Subject = subject;
          CipherTextBase64 = cipherTextBase64;

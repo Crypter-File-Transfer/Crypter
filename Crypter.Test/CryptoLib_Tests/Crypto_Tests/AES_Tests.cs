@@ -28,7 +28,6 @@ using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
@@ -36,9 +35,22 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
    [TestFixture]
    public class AES_Tests
    {
-      [SetUp]
-      public void Setup()
+      private byte[] _knownKey;
+      private byte[] _knownIV;
+
+      [OneTimeSetUp]
+      public void SetupOnce()
       {
+         _knownKey = new byte[] {
+            0x41, 0x73, 0xc0, 0xd2, 0xe7, 0x1a, 0xe5, 0x4f,
+            0xe1, 0x90, 0x83, 0x8f, 0x2e, 0x5a, 0xc7, 0xfc
+         };
+
+         _knownIV = new byte[]
+         {
+            0x5e, 0xdd, 0xed, 0x1a, 0x92, 0xa4, 0x89, 0x31,
+            0x81, 0xb6, 0xa3, 0x47, 0xf6, 0xed, 0x8a, 0x6a
+         };
       }
 
       [Test]
@@ -88,17 +100,6 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
       [Test]
       public void Encryption_Is_Predictable()
       {
-         var knownKey = new byte[] {
-            0x41, 0x73, 0xc0, 0xd2, 0xe7, 0x1a, 0xe5, 0x4f,
-            0xe1, 0x90, 0x83, 0x8f, 0x2e, 0x5a, 0xc7, 0xfc
-         };
-
-         var knownIV = new byte[]
-         {
-            0x5e, 0xdd, 0xed, 0x1a, 0x92, 0xa4, 0x89, 0x31,
-            0x81, 0xb6, 0xa3, 0x47, 0xf6, 0xed, 0x8a, 0x6a
-         };
-
          var knownPlaintext = new byte[]
          {
             0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -114,7 +115,7 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
          };
 
          var cipher = new AES();
-         cipher.Initialize(knownKey, knownIV, true);
+         cipher.Initialize(_knownKey, _knownIV, true);
          var newCiphertext = cipher.ProcessFinal(knownPlaintext);
          Assert.AreEqual(knownCiphertext, newCiphertext);
       }
@@ -122,17 +123,6 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
       [Test]
       public void Decryption_Is_Predictable()
       {
-         var knownKey = new byte[] {
-            0x41, 0x73, 0xc0, 0xd2, 0xe7, 0x1a, 0xe5, 0x4f,
-            0xe1, 0x90, 0x83, 0x8f, 0x2e, 0x5a, 0xc7, 0xfc
-         };
-
-         var knownIV = new byte[]
-         {
-            0x5e, 0xdd, 0xed, 0x1a, 0x92, 0xa4, 0x89, 0x31,
-            0x81, 0xb6, 0xa3, 0x47, 0xf6, 0xed, 0x8a, 0x6a
-         };
-
          var knownPlaintext = new byte[]
          {
             0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -148,7 +138,7 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
          };
 
          var cipher = new AES();
-         cipher.Initialize(knownKey, knownIV, false);
+         cipher.Initialize(_knownKey, _knownIV, false);
          var newPlaintext = cipher.ProcessFinal(knownCiphertext);
          Assert.AreEqual(knownPlaintext, newPlaintext);
       }
@@ -156,18 +146,6 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
       [Test]
       public void Encryption_And_Decryption_Work_On_A_Large_File()
       {
-         var knownKey = new byte[]
-         {
-                0x41, 0x73, 0xc0, 0xd2, 0xe7, 0x1a, 0xe5, 0x4f,
-                0xe1, 0x90, 0x83, 0x8f, 0x2e, 0x5a, 0xc7, 0xfc
-         };
-
-         var knownIV = new byte[]
-         {
-                0x5e, 0xdd, 0xed, 0x1a, 0x92, 0xa4, 0x89, 0x31,
-                0x81, 0xb6, 0xa3, 0x47, 0xf6, 0xed, 0x8a, 0x6a
-         };
-
          var directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
          var sampleFile = Path.Combine(directory, "CryptoLib_Tests", "Assets", "clarity_by_sigi_sagi.jpg");
          using var sampleStream = File.Open(sampleFile, FileMode.Open);
@@ -175,31 +153,19 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
          sampleStream.Read(plaintext, 0, (int)sampleStream.Length);
 
          var cipherForEncryption = new AES();
-         cipherForEncryption.Initialize(knownKey, knownIV, true);
+         cipherForEncryption.Initialize(_knownKey, _knownIV, true);
          var cipherText = cipherForEncryption.ProcessFinal(plaintext);
 
          var cipherForDecryption = new AES();
-         cipherForDecryption.Initialize(knownKey, knownIV, false);
+         cipherForDecryption.Initialize(_knownKey, _knownIV, false);
          var decrypted = cipherForDecryption.ProcessFinal(cipherText);
 
          Assert.AreEqual(plaintext, decrypted);
       }
 
       [Test]
-      public void Encryption_Can_Be_Chunked()
+      public void Encryption_Can_Be_Parted()
       {
-         var knownKey = new byte[]
-         {
-                0x41, 0x73, 0xc0, 0xd2, 0xe7, 0x1a, 0xe5, 0x4f,
-                0xe1, 0x90, 0x83, 0x8f, 0x2e, 0x5a, 0xc7, 0xfc
-         };
-
-         var knownIV = new byte[]
-         {
-                0x5e, 0xdd, 0xed, 0x1a, 0x92, 0xa4, 0x89, 0x31,
-                0x81, 0xb6, 0xa3, 0x47, 0xf6, 0xed, 0x8a, 0x6a
-         };
-
          var directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
          var sampleFile = Path.Combine(directory, "CryptoLib_Tests", "Assets", "clarity_by_sigi_sagi.jpg");
 
@@ -208,68 +174,56 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
 
          int processedPlaintextBytes = 0;
          int currentCiphertextSize = 0;
-         int chunkSize = 1048576;
+         int partSize = 1048576;
 
          var cipherForEncryption = new AES();
-         cipherForEncryption.Initialize(knownKey, knownIV, true);
+         cipherForEncryption.Initialize(_knownKey, _knownIV, true);
 
          byte[] ciphertext = new byte[cipherForEncryption.GetOutputSize(fileSize)];
-         while (processedPlaintextBytes + chunkSize < fileSize)
+         while (processedPlaintextBytes + partSize < fileSize)
          {
-            currentCiphertextSize += cipherForEncryption.ProcessChunk(plaintext, processedPlaintextBytes, chunkSize, ciphertext, currentCiphertextSize);
-            processedPlaintextBytes += chunkSize;
+            currentCiphertextSize += cipherForEncryption.ProcessPart(plaintext, processedPlaintextBytes, partSize, ciphertext, currentCiphertextSize);
+            processedPlaintextBytes += partSize;
          }
 
-         int finalChunkSize = fileSize - processedPlaintextBytes;
-         cipherForEncryption.EncryptFinal(plaintext, processedPlaintextBytes, finalChunkSize, ciphertext, currentCiphertextSize);
+         int finalPartSize = fileSize - processedPlaintextBytes;
+         cipherForEncryption.EncryptFinal(plaintext, processedPlaintextBytes, finalPartSize, ciphertext, currentCiphertextSize);
 
          var cipherForDecryption = new AES();
-         cipherForDecryption.Initialize(knownKey, knownIV, false);
+         cipherForDecryption.Initialize(_knownKey, _knownIV, false);
          var decrypted = cipherForDecryption.ProcessFinal(ciphertext);
 
          Assert.AreEqual(plaintext, decrypted);
       }
 
       [Test]
-      public void Decryption_Can_Be_Chunked()
+      public void Decryption_Can_Be_Parted()
       {
-         var knownKey = new byte[]
-         {
-                0x41, 0x73, 0xc0, 0xd2, 0xe7, 0x1a, 0xe5, 0x4f,
-                0xe1, 0x90, 0x83, 0x8f, 0x2e, 0x5a, 0xc7, 0xfc
-         };
-
-         var knownIV = new byte[]
-         {
-                0x5e, 0xdd, 0xed, 0x1a, 0x92, 0xa4, 0x89, 0x31,
-                0x81, 0xb6, 0xa3, 0x47, 0xf6, 0xed, 0x8a, 0x6a
-         };
-
          var directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
          var sampleFile = Path.Combine(directory, "CryptoLib_Tests", "Assets", "clarity_by_sigi_sagi.jpg");
          
          byte[] plaintext = File.ReadAllBytes(sampleFile);
 
          var cipherForEncryption = new AES();
-         cipherForEncryption.Initialize(knownKey, knownIV, true);
+         cipherForEncryption.Initialize(_knownKey, _knownIV, true);
          var ciphertext = cipherForEncryption.ProcessFinal(plaintext);
 
          int processedCiphertextBytes = 0;
          int currentDecryptedSize = 0;
-         int chunkSize = 1048576;
+         int partSize = 1048576;
 
          var cipherForDecryption = new AES();
-         cipherForDecryption.Initialize(knownKey, knownIV, false);
+         cipherForDecryption.Initialize(_knownKey, _knownIV, false);
 
          byte[] decrypted = new byte[cipherForDecryption.GetOutputSize(plaintext.Length)];
-         while (processedCiphertextBytes + chunkSize < ciphertext.Length)
+         while (processedCiphertextBytes + partSize < ciphertext.Length)
          {
-            currentDecryptedSize += cipherForDecryption.ProcessChunk(ciphertext, processedCiphertextBytes, chunkSize, decrypted, currentDecryptedSize);
-            processedCiphertextBytes += chunkSize;
+            currentDecryptedSize += cipherForDecryption.ProcessPart(ciphertext, processedCiphertextBytes, partSize, decrypted, currentDecryptedSize);
+            processedCiphertextBytes += partSize;
          }
 
-         int finalChunkSize = ciphertext.Length - processedCiphertextBytes;
-         decrypted = cipherForDecryption.DecryptFinal(ciphertext, processedCiphertextBytes, finalChunkSize, decrypted, currentDecryptedSize);
+         int finalPartSize = ciphertext.Length - processedCiphertextBytes;
+         decrypted = cipherForDecryption.DecryptFinal(ciphertext, processedCiphertextBytes, finalPartSize, decrypted, currentDecryptedSize);
 
          Assert.AreEqual(plaintext, decrypted);
       }
