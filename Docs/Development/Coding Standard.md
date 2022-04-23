@@ -100,17 +100,17 @@ Identifiers in C# code should follow the formats provided below.
 
 | Type             | Format              |
 |------------------|---------------------|
-| Interface        | **IUpperCamelCase** |
-| Private field    | **_lowerCamelCase** |
-| Public field     | UpperCamelCase      |
-| Protected field  | UpperCamelCase      |
-| Internal field   | UpperCamelCase      |
-| Property         | UpperCamelCase      |
-| Method           | UpperCamelCase      |
-| Class            | UpperCamelCase      |
-| Local Variable   | UpperCamelCase      |
-| Parameter        | UpperCamelCase      |
-| Enum             | UpperCamelCase      |
+| Interface        | **IPascalCase**     |
+| Private field    | **_camelCase**      |
+| Public field     | PascalCase          |
+| Protected field  | PascalCase          |
+| Internal field   | PascalCase          |
+| Property         | PascalCase          |
+| Method           | PascalCase          |
+| Class            | PascalCase          |
+| Enum             | PascalCase          |
+| Local Variable   | **camelCase**       |
+| Parameter        | **camelCase**       |
 
 ### Enumerations
 
