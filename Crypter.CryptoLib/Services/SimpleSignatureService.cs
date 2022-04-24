@@ -24,15 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.CryptoLib.Crypto;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace Crypter.CryptoLib.Services
 {
    public interface ISimpleSignatureService
    {
-      public byte[] Sign(PEMString ed25519PrivateKey, byte[] data);
-      public bool Verify(PEMString ed25519PublicKey, byte[] data, byte[] signature);
+      byte[] Sign(PEMString ed25519PrivateKey, byte[] data);
+      Task<byte[]> SignStreamAsync(PEMString ed25519PrivateKey, Stream stream, long streamLength, int partSize, Maybe<Func<double, Task>> progressFunc);
+      bool Verify(PEMString ed25519PublicKey, byte[] data, byte[] signature);
    }
 
    public class SimpleSignatureService : ISimpleSignatureService
@@ -43,8 +48,40 @@ namespace Crypter.CryptoLib.Services
 
          var signer = new ECDSA();
          signer.InitializeSigner(privateKey);
-         signer.SignerDigestChunk(data);
+         signer.SignerDigestPart(data);
          return signer.GenerateSignature();
+      }
+
+      public async Task<byte[]> SignStreamAsync(PEMString ed25519PrivateKey, Stream stream, long streamLength, int partSize, Maybe<Func<double, Task>> progressFunc)
+      {
+         var privateKey = KeyConversion.ConvertEd25519PrivateKeyFromPEM(ed25519PrivateKey);
+
+         var signer = new ECDSA();
+         signer.InitializeSigner(privateKey);
+
+         int bytesRead = 0;
+         while (bytesRead + partSize < streamLength)
+         {
+            byte[] readBuffer = new byte[partSize];
+            bytesRead += await stream.ReadAsync(readBuffer.AsMemory(0, partSize));
+
+            signer.SignerDigestPart(readBuffer);
+
+            await progressFunc.IfSomeAsync(async func =>
+            {
+               double progress = (double)bytesRead / streamLength;
+               await func.Invoke(progress);
+            });
+         }
+
+         int finalPlaintextLength = Convert.ToInt32(streamLength) - bytesRead;
+         byte[] finalReadBuffer = new byte[finalPlaintextLength];
+         await stream.ReadAsync(finalReadBuffer.AsMemory(0, finalPlaintextLength));
+
+         signer.SignerDigestPart(finalReadBuffer);
+         byte[] signature = signer.GenerateSignature();
+         await progressFunc.IfSomeAsync(async func => await func.Invoke(1.0));
+         return signature;
       }
 
       public bool Verify(PEMString ed25519PublicKey, byte[] data, byte[] signature)
@@ -53,7 +90,7 @@ namespace Crypter.CryptoLib.Services
 
          var verifier = new ECDSA();
          verifier.InitializeVerifier(publicKey);
-         verifier.VerifierDigestChunk(data);
+         verifier.VerifierDigestPart(data);
          return verifier.VerifySignature(signature);
       }
    }

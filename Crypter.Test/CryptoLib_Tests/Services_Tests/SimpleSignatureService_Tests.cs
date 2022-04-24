@@ -24,22 +24,24 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.CryptoLib;
-using Crypter.CryptoLib.Crypto;
+using Crypter.CryptoLib.Services;
 using NUnit.Framework;
-using Org.BouncyCastle.Crypto.Parameters;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
-namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
+namespace Crypter.Test.CryptoLib_Tests.Services_Tests
 {
    [TestFixture]
-   public class ECDSA_Tests
+   public class SimpleSignatureService_Tests
    {
       private PEMString _knownPrivatePEM;
-      private Ed25519PrivateKeyParameters _knownPrivateKey;
-      private Ed25519PublicKeyParameters _knownPublicKey;
+      private PEMString _knownPublicPEM;
       private byte[] _knownData;
       private byte[] _knownSignature;
+      private SimpleSignatureService _sut;
 
       [OneTimeSetUp]
       public void SetupOnce()
@@ -49,9 +51,9 @@ MFECAQEwBQYDK2VwBCIEIMFjaUZrHJYPJH4O2bPTsnFwqXsGTVRooB2jw78TnGjH
 gSEARRpYb3MlC/w8giB4NsNrKvPsnfuVsXBlHFywuEfJQQo=
 -----END PRIVATE KEY-----");
 
-         _knownPrivateKey = KeyConversion.ConvertEd25519PrivateKeyFromPEM(_knownPrivatePEM);
-
-         _knownPublicKey = _knownPrivateKey.GeneratePublicKey();
+         _knownPublicPEM = PEMString.From(@"-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEARRpYb3MlC/w8giB4NsNrKvPsnfuVsXBlHFywuEfJQQo=
+-----END PUBLIC KEY-----");
 
          _knownData = new byte[]
          {
@@ -70,83 +72,61 @@ gSEARRpYb3MlC/w8giB4NsNrKvPsnfuVsXBlHFywuEfJQQo=
             0xa7, 0xd3, 0x10, 0xe0, 0x85, 0xea, 0x37, 0x9e,
             0x35, 0x0d, 0x80, 0xef, 0xf2, 0xef, 0xf9, 0x00
          };
+
+         _sut = new SimpleSignatureService();
       }
 
       [Test]
-      public void KeyGen_Works()
+      public void Signing_Is_Predicatable()
       {
-         Assert.DoesNotThrow(() => ECDSA.GenerateKeys());
-      }
-
-      [Test]
-      public void KeyGen_Produces_Unique_Keys()
-      {
-         var alice = ECDSA.GenerateKeys().Private.ConvertToPEM();
-         var bob = ECDSA.GenerateKeys().Private.ConvertToPEM();
-         Assert.AreNotEqual(alice, bob);
-      }
-
-      [Test]
-      public void Private_Key_Can_Be_Deserialized()
-      {
-         var alice = ECDSA.GenerateKeys().Private;
-         var pemPrivate = alice.ConvertToPEM();
-         Assert.DoesNotThrow(() => KeyConversion.ConvertEd25519PrivateKeyFromPEM(pemPrivate));
-
-         var deserializedPrivate = KeyConversion.ConvertEd25519PrivateKeyFromPEM(pemPrivate);
-         Assert.AreEqual(pemPrivate, deserializedPrivate.ConvertToPEM());
-      }
-
-      [Test]
-      public void Signing_Is_Predictable()
-      {
-         var signer = new ECDSA();
-         signer.InitializeSigner(_knownPrivateKey);
-         signer.SignerDigestPart(_knownData);
-         var signature = signer.GenerateSignature();
-
-         Assert.AreEqual(_knownSignature, signature);
+         var newSignature = _sut.Sign(_knownPrivatePEM, _knownData);
+         Assert.AreEqual(_knownSignature, newSignature);
       }
 
       [Test]
       public void Verification_Can_Succeed()
       {
-         var verifier = new ECDSA();
-         verifier.InitializeVerifier(_knownPublicKey);
-         verifier.VerifierDigestPart(_knownData);
-         var verificationResult = verifier.VerifySignature(_knownSignature);
-
-         Assert.True(verificationResult);
+         bool verificationSuccess = _sut.Verify(_knownPublicPEM, _knownData, _knownSignature);
+         Assert.IsTrue(verificationSuccess);
       }
 
       [Test]
       public void Verification_Can_Fail_From_Bad_Data()
       {
-         var badData = new byte[_knownData.Length];
+         byte[] badData = new byte[_knownData.Length];
          _knownData.CopyTo(badData, 0);
          badData[0]--;
 
-         var verifier = new ECDSA();
-         verifier.InitializeVerifier(_knownPublicKey);
-         verifier.VerifierDigestPart(badData);
-         var verificationResult = verifier.VerifySignature(_knownSignature);
-
-         Assert.False(verificationResult);
+         bool verificationSuccess = _sut.Verify(_knownPublicPEM, badData, _knownSignature);
+         Assert.IsFalse(verificationSuccess);
       }
 
       [Test]
       public void Verification_Can_Fail_From_Bad_Signature()
       {
-         var badSignature = new byte[_knownSignature.Length];
+         byte[] badSignature = new byte[_knownSignature.Length];
          _knownSignature.CopyTo(badSignature, 0);
          badSignature[0]--;
 
-         var verifier = new ECDSA();
-         verifier.InitializeVerifier(_knownPublicKey);
-         verifier.VerifierDigestPart(_knownData);
-         var verificationResult = verifier.VerifySignature(badSignature);
+         bool verificationSuccess = _sut.Verify(_knownPublicPEM, _knownData, badSignature);
+         Assert.IsFalse(verificationSuccess);
+      }
 
-         Assert.False(verificationResult);
+      [Test]
+      public async Task Stream_Signing_Matches_Regular_Signing()
+      {
+         var directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+         var sampleFile = Path.Combine(directory, "CryptoLib_Tests", "Assets", "clarity_by_sigi_sagi.jpg");
+         using var stream = File.Open(sampleFile, FileMode.Open);
+
+         byte[] streamSignature = await _sut.SignStreamAsync(_knownPrivatePEM, stream, stream.Length, 60000, Maybe<Func<double, Task>>.None);
+
+         stream.Seek(0, SeekOrigin.Begin);
+         byte[] fileBytes = new byte[stream.Length];
+         stream.Read(fileBytes, 0, (int)stream.Length);
+         byte[] regularSignature = _sut.Sign(_knownPrivatePEM, fileBytes);
+         
+         Assert.AreEqual(regularSignature, streamSignature);
       }
    }
 }

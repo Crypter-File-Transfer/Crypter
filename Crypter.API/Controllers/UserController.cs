@@ -539,7 +539,7 @@ namespace Crypter.API.Controllers
 
          var verifier = new ECDSA();
          verifier.InitializeVerifier(verificationKey);
-         verifier.VerifierDigestChunk(verificationCode.ToByteArray());
+         verifier.VerifierDigestPart(verificationCode.ToByteArray());
          if (!verifier.VerifySignature(signature))
          {
             return new NotFoundObjectResult(new ErrorResponse(VerifyEmailAddressError.NotFound));

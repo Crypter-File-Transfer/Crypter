@@ -35,11 +35,11 @@ using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Implementations
 {
-   public class HttpService : IHttpService
+   public partial class CrypterApiHttpService : ICrypterApiHttpService
    {
       private readonly HttpClient _httpClient;
 
-      public HttpService(HttpClient httpClient)
+      public CrypterApiHttpService(HttpClient httpClient)
       {
          _httpClient = httpClient;
       }

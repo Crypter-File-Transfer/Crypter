@@ -24,15 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
-using Crypter.Web.Models;
+using Crypter.Web.Models.Settings;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -41,10 +43,9 @@ namespace Crypter.Web.Shared.Transfer
    public partial class UploadFileTransferBase : UploadTransferBase
    {
       [Inject]
-      public ClientAppSettings AppSettings { get; set; }
+      public UploadSettings UploadSettings { get; set; }
 
       protected const int MaxFileCount = 1;
-      protected const int FileReadBlockSize = 1048576;
 
       protected long MaxFileSizeBytes;
       protected bool ShowProgressBar = false;
@@ -56,7 +57,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected override void OnInitialized()
       {
-         MaxFileSizeBytes = AppSettings.MaxUploadSizeMB * (long)Math.Pow(2, 20);
+         MaxFileSizeBytes = UploadSettings.MaxUploadSizeMB * (long)Math.Pow(2, 20);
          base.OnInitialized();
       }
 
@@ -85,7 +86,7 @@ namespace Crypter.Web.Shared.Transfer
 
          if (file.Size > MaxFileSizeBytes)
          {
-            ErrorMessages.Add($"The max file size is {AppSettings.MaxUploadSizeMB} MB.");
+            ErrorMessages.Add($"The max file size is {UploadSettings.MaxUploadSizeMB} MB.");
             return;
          }
 
@@ -114,7 +115,7 @@ namespace Crypter.Web.Shared.Transfer
          var iv = AES.GenerateIV();
 
          await SetNewEncryptionStatus("Encrypting your file");
-         var ciphertext = await EncryptBytesAsync(SelectedFile, sendKey, iv);
+         var partitionedCiphertext = await EncryptBytesAsync(SelectedFile, sendKey, iv);
          await HideEncryptionProgress();
 
          await SetNewEncryptionStatus("Signing your file");
@@ -122,7 +123,10 @@ namespace Crypter.Web.Shared.Transfer
          await HideEncryptionProgress();
 
          await SetNewEncryptionStatus("Uploading");
-         var encodedCipherText = Convert.ToBase64String(ciphertext);
+         var encodedCipherText = partitionedCiphertext
+            .Select(x => Convert.ToBase64String(x))
+            .ToList();
+
          var encodedECDHSenderKey = Convert.ToBase64String(
             Encoding.UTF8.GetBytes(KeyConversion.ConvertX25519PrivateKeyFromPEM(senderX25519PrivateKey).GeneratePublicKey().ConvertToPEM().Value));
          var encodedECDSASenderKey = Convert.ToBase64String(
@@ -170,70 +174,26 @@ namespace Crypter.Web.Shared.Transfer
          EncryptionInProgress = false;
       }
 
-      protected async Task<byte[]> EncryptBytesAsync(IBrowserFile file, byte[] symmetricKey, byte[] symmetricIV)
+      protected async Task<List<byte[]>> EncryptBytesAsync(IBrowserFile file, byte[] symmetricKey, byte[] symmetricIV)
       {
          await SetProgressBar(0.0);
 
-         var fileBytes = await ReadFileAsync(file);
+         var setProgressBarTask = new Maybe<Func<double, Task>>(SetProgressBar);
 
-         int chunksEncrypted = 0;
-         int chunkSize = (int)Math.Ceiling((double)fileBytes.Length / 100);
-         byte[] ciphertext = await SimpleEncryptionService.EncryptChunkedAsync(symmetricKey, symmetricIV, fileBytes, chunkSize,
-            async () =>
-            {
-               chunksEncrypted++;
-               double bytesProcessed = chunksEncrypted * chunkSize;
-               double encryptionProgress = bytesProcessed / fileBytes.Length;
-               await SetProgressBar(encryptionProgress);
-            });
-
-         return ciphertext;
+         using var fileStream = file.OpenReadStream(MaxFileSizeBytes);
+         return await SimpleEncryptionService.EncryptStreamAsync(symmetricKey, symmetricIV, fileStream, file.Size, UploadSettings.PartSizeBytes,
+            setProgressBarTask);
       }
 
       protected async Task<byte[]> SignBytesAsync(IBrowserFile file, PEMString ed25519PrivateKey)
       {
          await SetProgressBar(0.0);
-         var ed25519PrivateDecoded = KeyConversion.ConvertEd25519PrivateKeyFromPEM(ed25519PrivateKey);
-         var signer = new ECDSA();
-         signer.InitializeSigner(ed25519PrivateDecoded);
 
-         byte[] fileBytes = await ReadFileAsync(file);
+         var setProgressBarTask = new Maybe<Func<double, Task>>(SetProgressBar);
 
-         int processedBytes = 0;
-         int chunkSize = (int)Math.Ceiling((double)fileBytes.Length / 100);
-         while (processedBytes + chunkSize < fileBytes.Length)
-         {
-            var plaintextChunk = fileBytes[processedBytes..(processedBytes + chunkSize)];
-
-            signer.SignerDigestChunk(plaintextChunk);
-
-            processedBytes += chunkSize;
-            await SetProgressBar((double)processedBytes / fileBytes.Length);
-         }
-
-         int bytesRemaining = fileBytes.Length - processedBytes;
-         var finalPlaintextChunk = fileBytes[processedBytes..(processedBytes + bytesRemaining)];
-         signer.SignerDigestChunk(finalPlaintextChunk);
-         var signature = signer.GenerateSignature();
-         await SetProgressBar(1.0);
-         return signature;
-      }
-
-      private async Task<byte[]> ReadFileAsync(IBrowserFile file)
-      {
-         var fileSize = Convert.ToInt32(file.Size);
-         byte[] plaintextBytes = new byte[fileSize];
          using var fileStream = file.OpenReadStream(MaxFileSizeBytes);
-
-         int loadedFileBytes = 0;
-         while (loadedFileBytes + FileReadBlockSize < fileSize)
-         {
-            loadedFileBytes += await fileStream.ReadAsync(plaintextBytes.AsMemory(loadedFileBytes, FileReadBlockSize));
-         }
-
-         int remainingBytesToRead = fileSize - loadedFileBytes;
-         await fileStream.ReadAsync(plaintextBytes.AsMemory(loadedFileBytes, remainingBytesToRead));
-         return plaintextBytes;
+         return await SimpleSignatureService.SignStreamAsync(ed25519PrivateKey, fileStream, file.Size, UploadSettings.PartSizeBytes,
+            setProgressBarTask);
       }
 
       protected override void Cleanup()
@@ -252,6 +212,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected async Task HideEncryptionProgress()
       {
+         await Task.Delay(400);
          ShowProgressBar = false;
          StateHasChanged();
          await Task.Delay(400);

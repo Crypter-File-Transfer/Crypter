@@ -24,18 +24,28 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
+using Crypter.Common.Monads;
+using Crypter.Contracts.Common;
+using System.Net;
+using System.Threading.Tasks;
 
-namespace Crypter.Contracts.Features.Transfer.Upload
+namespace Crypter.ClientServices.Interfaces
 {
-   public interface IUploadTransferRequest
+   public interface ICrypterApiHttpService
    {
-      List<string> CipherTextBase64 { get; set; }
-      string SignatureBase64 { get; set; }
-      string ClientEncryptionIVBase64 { get; set; }
-      string ServerEncryptionKeyBase64 { get; set; }
-      string X25519PublicKeyBase64 { get; set; }
-      string Ed25519PublicKeyBase64 { get; set; }
-      int LifetimeHours { get; set; }
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri, Maybe<string> bearerToken)
+         where TResponse : class;
+
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
+         where TRequest : class
+         where TResponse : class;
+
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
+         where TRequest : class
+         where TResponse : class;
+
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
+         where TRequest : class
+         where TResponse : class;
    }
 }

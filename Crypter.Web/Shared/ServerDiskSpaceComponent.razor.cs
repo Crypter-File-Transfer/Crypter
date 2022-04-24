@@ -25,7 +25,7 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Web.Models;
+using Crypter.Web.Models.Settings;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -35,7 +35,7 @@ namespace Crypter.Web.Shared
    public partial class ServerDiskSpaceComponentBase : ComponentBase
    {
       [Inject]
-      protected ClientAppSettings AppSettings { get; set; }
+      protected UploadSettings UploadSettings { get; set; }
 
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
@@ -56,7 +56,7 @@ namespace Crypter.Web.Shared
             left => false,
             right =>
             {
-               long maxUploadBytes = AppSettings.MaxUploadSizeMB * (long)Math.Pow(2, 20);
+               long maxUploadBytes = UploadSettings.MaxUploadSizeMB * (long)Math.Pow(2, 20);
                return right.Available > maxUploadBytes;
             });
       }

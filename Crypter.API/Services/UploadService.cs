@@ -35,6 +35,7 @@ using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -68,7 +69,7 @@ namespace Crypter.API.Services
          )
       {
          AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(2, 30);
-         MaxUploadSize = long.Parse(configuration["MaxUploadSizeMB"]) * (long)Math.Pow(2, 20);
+         MaxUploadSize = long.Parse(configuration["UploadSettings:MaxUploadSizeMB"]) * (long)Math.Pow(2, 20);
          MessageTransferService = messageTransferService;
          FileTransferService = fileTransferService;
          EmailService = emailService;
@@ -102,7 +103,21 @@ namespace Crypter.API.Services
          byte[] originalCiphertextBytes;
          try
          {
-            originalCiphertextBytes = Convert.FromBase64String(request.CipherTextBase64);
+            var bytePartitions = request.CipherTextBase64
+               .Select(x => Convert.FromBase64String(x))
+               .ToList();
+
+            int ciphertextLength = bytePartitions
+               .Sum(x => x.Length);
+
+            originalCiphertextBytes = new byte[ciphertextLength];
+
+            int currentPosition = 0;
+            foreach (var bytePartition in bytePartitions)
+            {
+               bytePartition.CopyTo(originalCiphertextBytes, currentPosition);
+               currentPosition += bytePartition.Length;
+            }
          }
          catch (Exception)
          {
@@ -115,7 +130,7 @@ namespace Crypter.API.Services
          }
 
          // Digest the ciphertext BEFORE applying server-side encryption
-         var serverDigest = ItemDigestFunction(originalCiphertextBytes);
+      var serverDigest = ItemDigestFunction(originalCiphertextBytes);
 
          // Apply server-side encryption
          if (hashedSymmetricEncryptionKey.Length != 32)

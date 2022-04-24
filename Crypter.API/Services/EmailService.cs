@@ -131,7 +131,7 @@ namespace Crypter.API.Services
 
          var signer = new ECDSA();
          signer.InitializeSigner(ecdsaPrivateKey);
-         signer.SignerDigestChunk(codeBytes);
+         signer.SignerDigestPart(codeBytes);
          var signature = signer.GenerateSignature();
 
          var encodedVerificationCode = EmailVerificationEncoder.EncodeVerificationCodeUrlSafe(verificationCode);

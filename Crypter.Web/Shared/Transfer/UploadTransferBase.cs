@@ -49,6 +49,9 @@ namespace Crypter.Web.Shared.Transfer
       [Inject]
       protected ISimpleEncryptionService SimpleEncryptionService { get; set; }
 
+      [Inject]
+      protected ISimpleSignatureService SimpleSignatureService { get; set; }
+
       [Parameter]
       public bool IsSenderDefined { get; set; }
 
