@@ -66,6 +66,7 @@
 
          this._downloadLink = document.createElement('a');
          this._downloadLink.download = fileName;
+         this._downloadLink.target = '_self';
          this._downloadLink.style.display = 'none';
 
          this._downloadUrl = URL.createObjectURL(this._downloadBlob);
