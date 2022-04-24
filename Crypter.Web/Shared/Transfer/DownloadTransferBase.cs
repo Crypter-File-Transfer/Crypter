@@ -168,7 +168,7 @@ namespace Crypter.Web.Shared.Transfer
 
          var verifier = new ECDSA();
          verifier.InitializeVerifier(ed25519PublicDecoded);
-         verifier.VerifierDigestChunk(plaintext);
+         verifier.VerifierDigestPart(plaintext);
          return verifier.VerifySignature(signature);
       }
 

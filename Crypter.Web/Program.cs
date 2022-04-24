@@ -24,14 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using BlazorDownloadFile;
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Implementations;
 using Crypter.ClientServices.Interfaces;
 using Crypter.CryptoLib.Services;
 using Crypter.Web;
-using Crypter.Web.Models;
+using Crypter.Web.Models.Settings;
 using Crypter.Web.Repositories;
+using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -42,10 +42,10 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddSingleton<ClientAppSettings>(sp =>
+builder.Services.AddSingleton<ClientSettings>(sp =>
 {
    var config = sp.GetService<IConfiguration>();
-   return config.Get<ClientAppSettings>();
+   return config.Get<ClientSettings>();
 });
 
 builder.Services.AddSingleton<IClientApiSettings>(sp =>
@@ -54,10 +54,14 @@ builder.Services.AddSingleton<IClientApiSettings>(sp =>
    return config.GetSection("ApiSettings").Get<ClientApiSettings>();
 });
 
+builder.Services.AddSingleton(sp =>
+{
+   var config = sp.GetService<IConfiguration>();
+   return config.GetSection("UploadSettings").Get<UploadSettings>();
+});
+
 builder.Services
-   .AddBlazorDownloadFile()
    .AddScoped(sp => new HttpClient())
-   .AddScoped<IHttpService, HttpService>()
    .AddScoped<IDeviceRepository<BrowserStorageLocation>, BrowserRepository>()
    .AddScoped<ITokenRepository, BrowserTokenRepository>()
    .AddScoped<IUserKeysRepository, BrowserUserKeysRepository>()
@@ -66,6 +70,8 @@ builder.Services
    .AddScoped<ICrypterApiService, CrypterApiService>()
    .AddScoped<IUserKeysService, UserKeysService>()
    .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>()
-   .AddScoped<IUserContactsService, UserContactsService>();
+   .AddScoped<ISimpleSignatureService, SimpleSignatureService>()
+   .AddScoped<IUserContactsService, UserContactsService>()
+   .AddScoped<IDownloadFileService, DownloadFileService>();
 
 await builder.Build().RunAsync();

@@ -35,8 +35,8 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
    [TestFixture]
    public class ECDH_Tests
    {
-      [SetUp]
-      public void Setup()
+      [OneTimeSetUp]
+      public void SetupOnce()
       {
       }
 

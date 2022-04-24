@@ -45,8 +45,8 @@ namespace Crypter.CryptoLib.Crypto
 
       public static AsymmetricCipherKeyPair GenerateKeys()
       {
-         SecureRandom random = new SecureRandom();
-         Ed25519KeyPairGenerator kpg = new Ed25519KeyPairGenerator();
+         SecureRandom random = new();
+         Ed25519KeyPairGenerator kpg = new();
          kpg.Init(new Ed25519KeyGenerationParameters(random));
          return kpg.GenerateKeyPair();
       }
@@ -63,12 +63,12 @@ namespace Crypter.CryptoLib.Crypto
          Verifier.Init(false, publicKey);
       }
 
-      public void SignerDigestChunk(byte[] data)
+      public void SignerDigestPart(byte[] data)
       {
          Signer.BlockUpdate(data, 0, data.Length);
       }
 
-      public void VerifierDigestChunk(byte[] data)
+      public void VerifierDigestPart(byte[] data)
       {
          Verifier.BlockUpdate(data, 0, data.Length);
       }

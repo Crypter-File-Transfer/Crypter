@@ -24,8 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
 using Crypter.CryptoLib.Crypto;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -35,7 +38,7 @@ namespace Crypter.CryptoLib.Services
    {
       byte[] Encrypt(byte[] key, byte[] iv, byte[] plaintext);
       byte[] Encrypt(byte[] key, byte[] iv, string plaintext);
-      Task<byte[]> EncryptChunkedAsync(byte[] key, byte[] iv, byte[] plaintext, int chunkSize, Func<Task> onChunkProcessed);
+      Task<List<byte[]>> EncryptStreamAsync(byte[] key, byte[] iv, Stream stream, long streamLength, int partSize, Maybe<Func<double, Task>> progressFunc);
       (byte[] ciphertext, byte[] iv) Encrypt(byte[] key, byte[] plaintext);
       (byte[] ciphertext, byte[] iv) Encrypt(byte[] key, string plaintext);
       byte[] Decrypt(byte[] key, byte[] iv, byte[] ciphertext);
@@ -67,29 +70,38 @@ namespace Crypter.CryptoLib.Services
          return encrypter.ProcessFinal(Encoding.UTF8.GetBytes(plaintext));
       }
 
-      public async Task<byte[]> EncryptChunkedAsync(byte[] key, byte[] iv, byte[] plaintext, int chunkSize, Func<Task> onChunkProcessed)
+      public async Task<List<byte[]>> EncryptStreamAsync(byte[] key, byte[] iv, Stream stream, long streamLength, int partSize, Maybe<Func<double, Task>> progressFunc)
       {
          var encrypter = new AES();
          encrypter.Initialize(key, iv, true);
 
-         byte[] output = new byte[encrypter.GetOutputSize(plaintext.Length)];
-         int processedPlaintextBytes = 0;
-         int currentOutputSize = 0;
+         int partCount = Convert.ToInt32(Math.Ceiling(streamLength / (double)partSize));
+         List<byte[]> encryptedParts = new(partCount);
 
-         while (processedPlaintextBytes + chunkSize < plaintext.Length)
+         int bytesRead = 0;
+         while (bytesRead + partSize < streamLength)
          {
-            currentOutputSize += encrypter.ProcessChunk(plaintext, processedPlaintextBytes, chunkSize, output, currentOutputSize);
-            processedPlaintextBytes += chunkSize;
+            byte[] readBuffer = new byte[partSize];
+            bytesRead += await stream.ReadAsync(readBuffer.AsMemory(0, partSize));
 
-            await onChunkProcessed();
+            byte[] encryptedPart = encrypter.ProcessPart(readBuffer);
+            encryptedParts.Add(encryptedPart);
+
+            await progressFunc.IfSomeAsync(async func =>
+            {
+               double progress = (double)bytesRead / streamLength;
+               await func.Invoke(progress);
+            });
          }
 
-         int finalChunkSize = plaintext.Length - processedPlaintextBytes;
-         encrypter.EncryptFinal(plaintext, processedPlaintextBytes, finalChunkSize, output, currentOutputSize);
+         int finalPlaintextLength = Convert.ToInt32(streamLength) - bytesRead;
+         byte[] finalReadBuffer = new byte[finalPlaintextLength];
+         await stream.ReadAsync(finalReadBuffer.AsMemory(0, finalPlaintextLength));
 
-         await onChunkProcessed();
-
-         return output;
+         byte[] finalEncryptedPart = encrypter.ProcessFinal(finalReadBuffer);
+         encryptedParts.Add(finalEncryptedPart);
+         await progressFunc.IfSomeAsync(async func => await func.Invoke(1.0));
+         return encryptedParts;
       }
 
       public (byte[] ciphertext, byte[] iv) Encrypt(byte[] key, string plaintext)

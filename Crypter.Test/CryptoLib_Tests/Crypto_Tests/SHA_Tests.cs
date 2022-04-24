@@ -39,7 +39,7 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
       }
 
       [Test]
-      public void Sha256_Digest_Works()
+      public void SHA256_Digest_Works()
       {
          byte[] foo = new byte[] { 0x01 };
          var digestor = new SHA(SHAFunction.SHA256);
@@ -50,7 +50,7 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
       }
 
       [Test]
-      public void Sha512_Digest_Works()
+      public void SHA512_Digest_Works()
       {
          byte[] foo = new byte[] { 0x01 };
          var digestor = new SHA(SHAFunction.SHA512);
@@ -61,7 +61,7 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
       }
 
       [Test]
-      public void Sha256_Digests_Are_Unique()
+      public void SHA256_Digests_Are_Unique()
       {
          byte[] first = new byte[]
          {
@@ -85,7 +85,7 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
       }
 
       [Test]
-      public void Sha256_Digest_Is_Predictable()
+      public void SHA256_Digest_Is_Predictable()
       {
          byte[] knownInput = new byte[] {
             0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20
@@ -105,7 +105,7 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
       }
 
       [Test]
-      public void Sha512_Digest_Is_Predictable()
+      public void SHA512_Digest_Is_Predictable()
       {
          byte[] knownInput = new byte[] {
             0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20
@@ -129,7 +129,7 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
       }
 
       [Test]
-      public void Sha256_Chunking_Produces_Same_Result()
+      public void SHA256_Parting_Produces_Same_Result()
       {
          byte[] knownInput = new byte[] {
             0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
@@ -139,12 +139,12 @@ namespace Crypter.Test.CryptoLib_Tests.Crypto_Tests
          controlDigestor.BlockUpdate(knownInput);
          var controlResult = controlDigestor.GetDigest();
 
-         var chunkedDigestor = new SHA(SHAFunction.SHA256);
-         chunkedDigestor.BlockUpdate(knownInput[0..4]);
-         chunkedDigestor.BlockUpdate(knownInput[4..8]);
-         var chunkedResult = chunkedDigestor.GetDigest();
+         var partedDigestor = new SHA(SHAFunction.SHA256);
+         partedDigestor.BlockUpdate(knownInput[0..4]);
+         partedDigestor.BlockUpdate(knownInput[4..8]);
+         var partedResult = partedDigestor.GetDigest();
 
-         Assert.AreEqual(controlResult, chunkedResult);
+         Assert.AreEqual(controlResult, partedResult);
       }
    }
 }

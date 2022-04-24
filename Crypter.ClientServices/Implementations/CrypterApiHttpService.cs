@@ -35,23 +35,31 @@ using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Implementations
 {
-   public class HttpService : IHttpService
+   public partial class CrypterApiHttpService : ICrypterApiHttpService
    {
       private readonly HttpClient _httpClient;
 
-      public HttpService(HttpClient httpClient)
+      public CrypterApiHttpService(HttpClient httpClient)
       {
          _httpClient = httpClient;
       }
 
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri, string bearerToken = null)
+      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri, Maybe<string> bearerToken)
          where TResponse : class
       {
-         var request = MakeRequestMessage<object>(HttpMethod.Get, uri, default, bearerToken);
+         var request = MakeRequestMessage(HttpMethod.Get, uri, Maybe<object>.None, bearerToken);
          return await SendRequestAsync<TResponse>(request);
       }
 
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostAsync<TRequest, TResponse>(string uri, TRequest body = default, string bearerToken = null)
+      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
+         where TResponse : class
+         where TRequest : class
+      {
+         var request = MakeRequestMessage(HttpMethod.Put, uri, body, bearerToken);
+         return await SendRequestAsync<TResponse>(request);
+      }
+
+      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
          where TResponse : class
          where TRequest : class
       {
@@ -59,7 +67,7 @@ namespace Crypter.ClientServices.Implementations
          return await SendRequestAsync<TResponse>(request);
       }
 
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, TRequest body = default, string bearerToken = null)
+      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
          where TResponse : class
          where TRequest : class
       {
@@ -67,19 +75,19 @@ namespace Crypter.ClientServices.Implementations
          return await SendRequestAsync<TResponse>(request);
       }
 
-      private static HttpRequestMessage MakeRequestMessage<TRequest>(HttpMethod method, string uri, TRequest body = default, string bearerToken = null)
+      private static HttpRequestMessage MakeRequestMessage<TRequest>(HttpMethod method, string uri, Maybe<TRequest> body, Maybe<string> bearerToken)
          where TRequest : class
       {
-         var message = new HttpRequestMessage(method, uri);
-         if (body != default)
+         var message = new HttpRequestMessage(method, uri)
          {
-            message.Content = JsonContent.Create(body);
-         }
+            Content = body.Match(
+               () => null,
+               x => JsonContent.Create(x)),
+         };
 
-         if (bearerToken is not null)
-         {
-            message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
-         }
+         message.Headers.Authorization = bearerToken.Match(
+            () => null,
+            x => new AuthenticationHeaderValue("Bearer", x));
 
          return message;
       }

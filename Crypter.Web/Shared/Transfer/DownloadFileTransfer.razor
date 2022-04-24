@@ -70,13 +70,6 @@
                      <span class="visually-hidden">Loading...</span>
                   </div>
                </div>
-
-               @if (!string.IsNullOrEmpty(LocalDownloadErrorMessage))
-               {
-                  <div class="alert alert-danger text-center" role="alert">
-                     @LocalDownloadErrorMessage
-                  </div>
-               }
             }
             else if (DecryptionInProgress)
             {

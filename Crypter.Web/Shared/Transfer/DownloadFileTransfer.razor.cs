@@ -24,12 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using BlazorDownloadFile;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
+using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -38,7 +39,7 @@ namespace Crypter.Web.Shared.Transfer
    public partial class DownloadFileTransferBase : DownloadTransferBase
    {
       [Inject]
-      protected IBlazorDownloadFileService BlazorDownloadFileService { get; set; }
+      private IDownloadFileService DownloadFileService { get; set; }
 
       [Parameter]
       public string FileName { get; set; }
@@ -54,9 +55,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected bool LocalDownloadInProgress { get; set; }
 
-      protected string DecryptedFileBase64 { get; set; }
-
-      protected string LocalDownloadErrorMessage { get; set; }
+      protected List<byte[]> PlaintextBytes { get; set; }
 
       protected override async Task OnDecryptClickedAsync()
       {
@@ -136,7 +135,7 @@ namespace Crypter.Web.Shared.Transfer
                await SetNewDecryptionStatus("Verifying decrypted file");
                if (VerifySignature(plaintextBytes, signature, ed25519PublicKey))
                {
-                  DecryptedFileBase64 = Convert.ToBase64String(plaintextBytes);
+                  PlaintextBytes = new List<byte[]>{ plaintextBytes };
                   DecryptionCompleted = true;
                }
                else
@@ -155,10 +154,9 @@ namespace Crypter.Web.Shared.Transfer
          StateHasChanged();
          await Task.Delay(400);
 
-         var localDownloadResult = await BlazorDownloadFileService.DownloadFile(FileName, DecryptedFileBase64, ContentType);
-         LocalDownloadErrorMessage = localDownloadResult.Succeeded
-            ? ""
-            : $"{localDownloadResult.ErrorName} - {localDownloadResult.ErrorMessage}";
+         await DownloadFileService.ResetDownloadAsync();
+         await DownloadFileService.DownloadFileAsync(FileName, ContentType, PlaintextBytes);
+
          LocalDownloadInProgress = false;
          StateHasChanged();
       }
