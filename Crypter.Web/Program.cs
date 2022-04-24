@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using BlazorDownloadFile;
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Implementations;
 using Crypter.ClientServices.Interfaces;
@@ -32,6 +31,7 @@ using Crypter.CryptoLib.Services;
 using Crypter.Web;
 using Crypter.Web.Models.Settings;
 using Crypter.Web.Repositories;
+using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -61,7 +61,6 @@ builder.Services.AddSingleton(sp =>
 });
 
 builder.Services
-   .AddBlazorDownloadFile()
    .AddScoped(sp => new HttpClient())
    .AddScoped<IDeviceRepository<BrowserStorageLocation>, BrowserRepository>()
    .AddScoped<ITokenRepository, BrowserTokenRepository>()
@@ -72,6 +71,7 @@ builder.Services
    .AddScoped<IUserKeysService, UserKeysService>()
    .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>()
    .AddScoped<ISimpleSignatureService, SimpleSignatureService>()
-   .AddScoped<IUserContactsService, UserContactsService>();
+   .AddScoped<IUserContactsService, UserContactsService>()
+   .AddScoped<IDownloadFileService, DownloadFileService>();
 
 await builder.Build().RunAsync();
