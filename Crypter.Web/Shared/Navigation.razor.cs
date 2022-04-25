@@ -49,12 +49,6 @@ namespace Crypter.Web.Shared
       [Inject]
       protected IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
 
-      [Inject]
-      protected IUserKeysService UserKeysService { get; set; }
-
-      [Inject]
-      protected IUserContactsService UserContactsService { get; set; }
-
       protected UploadFileTransferModal FileTransferModal { get; set; }
 
       protected UploadMessageTransferModal MessageTransferModal { get; set; }
@@ -72,6 +66,7 @@ namespace Crypter.Web.Shared
          HandleUserSessionStateChanged();
 
          NavigationManager.LocationChanged += HandleLocationChanged;
+         UserSessionService.ServiceInitializedEventHandler += UserSessionStateChangedEventHandler;
          UserSessionService.UserLoggedInEventHandler += UserSessionStateChangedEventHandler;
          UserSessionService.UserLoggedOutEventHandler += UserSessionStateChangedEventHandler;
       }
@@ -129,6 +124,7 @@ namespace Crypter.Web.Shared
       public void Dispose()
       {
          NavigationManager.LocationChanged -= HandleLocationChanged;
+         UserSessionService.ServiceInitializedEventHandler -= UserSessionStateChangedEventHandler;
          UserSessionService.UserLoggedInEventHandler -= UserSessionStateChangedEventHandler;
          UserSessionService.UserLoggedOutEventHandler -= UserSessionStateChangedEventHandler;
          GC.SuppressFinalize(this);
