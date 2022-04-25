@@ -27,12 +27,12 @@
 @inherits MainLayoutBase
 
 <div class="page h-100">
+   <NavigationBar />
    @if (ServicesInitialized)
    {
-      <NavigationBar />
       <main role="main" class="pb-3">
          @Body
       </main>
-      <Footer></Footer>
    }
+   <Footer />
 </div>

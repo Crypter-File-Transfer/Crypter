@@ -24,26 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.DeviceStorage.Models;
-using Crypter.ClientServices.Interfaces.Events;
-using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using System;
-using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.ClientServices.Interfaces.Events
 {
-   public interface IUserSessionService
+   public class UserSessionServiceInitializedEventArgs : EventArgs
    {
-      bool LoggedIn { get; }
-      Maybe<UserSession> Session { get; }
+      public bool IsLoggedIn { get; init; }
 
-      Task InitializeAsync();
-      Task<bool> LoginAsync(Username username, Password password, bool rememberUser);
-      Task LogoutAsync();
-
-      event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler;
-      event EventHandler<UserLoggedInEventArgs> UserLoggedInEventHandler;
-      event EventHandler UserLoggedOutEventHandler;
+      public UserSessionServiceInitializedEventArgs(bool isLoggedIn)
+      {
+         IsLoggedIn = isLoggedIn;
+      }
    }
 }
