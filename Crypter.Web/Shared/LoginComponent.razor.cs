@@ -64,7 +64,10 @@ namespace Crypter.Web.Shared
             return;
          }
 
-         LoginModel = new();
+         LoginModel = new()
+         {
+            RememberMe = true
+         };
       }
 
       protected async Task SubmitLoginAsync()
