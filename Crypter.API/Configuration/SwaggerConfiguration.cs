@@ -24,39 +24,43 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.API.Models;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using System;
 
-namespace Crypter.API.Startup
+namespace Crypter.API.Configuration
 {
-   public static class JwtBearerConfiguration
+   public static class SwaggerConfiguration
    {
-      internal static AuthenticationBuilder AddJwtBearerConfiguration(this AuthenticationBuilder builder, TokenSettings tokenSettings)
+      internal static void AddSwaggerGenOptions(this SwaggerGenOptions options)
       {
-         return builder.AddJwtBearer(options =>
+         OpenApiSecurityScheme securityDefinition = new()
          {
-            options.TokenValidationParameters = GetTokenValidationParameters(tokenSettings);
-         });
-      }
-
-      public static TokenValidationParameters GetTokenValidationParameters(TokenSettings tokenSettings)
-      {
-         return new TokenValidationParameters
-         {
-            ValidateAudience = true,
-            ValidAudience = tokenSettings.Audience,
-            ValidIssuer = tokenSettings.Issuer,
-            ValidateIssuer = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSettings.SecretKey)),
-            ValidateLifetime = true,
-            ClockSkew = TokenValidationParameters.DefaultClockSkew,
-            RequireExpirationTime = true,
-            ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 }
+            Name = "Bearer",
+            BearerFormat = "JWT",
+            Scheme = "bearer",
+            Description = "Specify the authorization token.",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http
          };
+
+         OpenApiSecurityScheme securityScheme = new()
+         {
+            Reference = new OpenApiReference()
+            {
+               Id = "jwt_auth",
+               Type = ReferenceType.SecurityScheme
+            }
+         };
+
+         OpenApiSecurityRequirement securityRequirements = new()
+         {
+             {securityScheme, Array.Empty<string>()},
+         };
+
+         options.AddSecurityDefinition("jwt_auth", securityDefinition);
+         options.AddSecurityRequirement(securityRequirements);
       }
    }
 }

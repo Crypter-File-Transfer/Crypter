@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.API.Configuration;
 using Crypter.API.Models;
 using Crypter.API.Services;
-using Crypter.API.Startup;
 using Crypter.Core;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Models;
@@ -41,6 +41,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
+using System;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -90,7 +92,7 @@ builder.Services.AddControllers()
    });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(SwaggerConfiguration.AddSwaggerGenOptions);
 
 var app = builder.Build();
 
