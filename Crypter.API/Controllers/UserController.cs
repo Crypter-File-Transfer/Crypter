@@ -65,6 +65,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
 {
+#nullable enable // gross
    [ApiController]
    [Route("api/user")]
    public class UserController : ControllerBase

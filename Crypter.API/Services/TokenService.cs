@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.API.Configuration;
 using Crypter.API.Models;
-using Crypter.API.Startup;
 using Crypter.Common.Exceptions;
 using Crypter.Common.Monads;
 using Microsoft.IdentityModel.Tokens;

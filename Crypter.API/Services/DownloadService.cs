@@ -40,6 +40,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.API.Services
 {
+#nullable enable // gross
    public class DownloadService
    {
       private readonly IBaseTransferService<IMessageTransferItem> MessageService;

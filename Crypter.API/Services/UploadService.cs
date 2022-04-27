@@ -41,6 +41,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.API.Services
 {
+#nullable enable // gross
    public class UploadService
    {
       private readonly long AllocatedDiskSpace;
