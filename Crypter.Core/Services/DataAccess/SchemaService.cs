@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
@@ -40,7 +41,7 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task<ISchema> ReadAsync(CancellationToken cancellationToken)
+      public async Task<Schema> ReadAsync(CancellationToken cancellationToken)
       {
          return await Context.Schema.FirstOrDefaultAsync(cancellationToken);
       }

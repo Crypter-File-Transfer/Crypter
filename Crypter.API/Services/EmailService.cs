@@ -58,11 +58,11 @@ namespace Crypter.API.Services
       private readonly IUserService UserService;
       private readonly IUserEmailVerificationService UserEmailVerificationService;
       private readonly IUserNotificationSettingService UserNotificationSettingService;
-      private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
-      private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
+      private readonly IBaseTransferService<IMessageTransfer> MessageTransferService;
+      private readonly IBaseTransferService<IFileTransfer> FileTransferService;
 
       public EmailService(EmailSettings emailSettings, IUserService userService, IUserEmailVerificationService userEmailVerificationService, IUserNotificationSettingService userNotificationSettingService,
-         IBaseTransferService<IMessageTransferItem> messageTransferService, IBaseTransferService<IFileTransferItem> fileTransferService)
+         IBaseTransferService<IMessageTransfer> messageTransferService, IBaseTransferService<IFileTransfer> fileTransferService)
       {
          Settings = emailSettings;
          UserService = userService;

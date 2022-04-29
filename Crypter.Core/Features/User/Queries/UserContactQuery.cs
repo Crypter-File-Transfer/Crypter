@@ -26,8 +26,8 @@
 
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.User.GetContacts;
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;

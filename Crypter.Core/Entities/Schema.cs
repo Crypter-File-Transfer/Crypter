@@ -24,10 +24,24 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Interfaces
+using Crypter.Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Crypter.Core.Entities
 {
-   public interface IMessageTransferItem : IBaseTransferItem
+   [Table("Schema")]
+   [Keyless]
+   public class Schema
    {
-      string Subject { get; set; }
+      public int Version { get; set; }
+      public DateTime Updated { get; set; }
+
+      public Schema(int version, DateTime updated)
+      {
+         Version = version;
+         Updated = updated;
+      }
    }
 }

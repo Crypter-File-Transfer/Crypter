@@ -25,7 +25,7 @@
  */
 
 using Crypter.Common.Monads;
-using Crypter.Core.Models;
+using Crypter.Core.Entities;
 using MediatR;
 using System;
 using System.Threading;

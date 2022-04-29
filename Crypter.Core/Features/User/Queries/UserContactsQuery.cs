@@ -59,7 +59,7 @@ namespace Crypter.Core.Features.User.Queries
 
       public async Task<IEnumerable<UserContactDTO>> Handle(UserContactsQuery request, CancellationToken cancellationToken)
       {
-         List<Models.UserContact> contacts = await _context.UserContacts
+         List<Entities.UserContact> contacts = await _context.UserContacts
             .Where(x => x.OwnerId == request.User)
             .Include(x => x.Contact)
                .ThenInclude(x => x.Profile)

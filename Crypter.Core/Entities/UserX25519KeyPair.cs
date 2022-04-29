@@ -26,41 +26,33 @@
 
 using Crypter.Core.Interfaces;
 using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Crypter.Core.Models
+namespace Crypter.Core.Entities
 {
-   /// <summary>
-   /// This class does not represent an entity tracked in the database.
-   /// </summary>
-   public class BaseTransfer : IBaseTransferItem
+   [Table("UserX25519KeyPair")]
+   public class UserX25519KeyPair : IUserPublicKeyPair
    {
+      [Key]
       public Guid Id { get; set; }
-      public Guid Sender { get; set; }
-      public Guid Recipient { get; set; }
-      public int Size { get; set; }
+      [ForeignKey("User")]
+      public Guid Owner { get; set; }
+      public string PrivateKey { get; set; }
+      public string PublicKey { get; set; }
       public string ClientIV { get; set; }
-      public string Signature { get; set; }
-      public string X25519PublicKey { get; set; }
-      public string Ed25519PublicKey { get; set; }
-      public byte[] ServerIV { get; set; }
-      public byte[] ServerDigest { get; set; }
       public DateTime Created { get; set; }
-      public DateTime Expiration { get; set; }
 
-      public BaseTransfer(Guid id, Guid sender, Guid recipient, int size, string clientIV, string signature, string x25519PublicKey, string ed25519PublicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
+      public virtual User User { get; set; }
+
+      public UserX25519KeyPair(Guid id, Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
       {
          Id = id;
-         Sender = sender;
-         Recipient = recipient;
-         Size = size;
+         Owner = owner;
+         PrivateKey = privateKey;
+         PublicKey = publicKey;
          ClientIV = clientIV;
-         Signature = signature;
-         X25519PublicKey = x25519PublicKey;
-         Ed25519PublicKey = ed25519PublicKey;
-         ServerIV = serverIV;
-         ServerDigest = serverDigest;
          Created = created;
-         Expiration = expiration;
       }
    }
 }

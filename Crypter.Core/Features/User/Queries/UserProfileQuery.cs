@@ -64,7 +64,7 @@ namespace Crypter.Core.Features.User.Queries
       {
          string lowerUsername = request.Username.ToLower();
 
-         Models.User user = await _context.Users
+         Entities.User user = await _context.Users
             .Where(x => x.Username.ToLower() == lowerUsername)
             .Include(x => x.Profile)
             .Include(x => x.PrivacySetting)

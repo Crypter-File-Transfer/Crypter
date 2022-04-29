@@ -27,8 +27,8 @@
 using Crypter.Common.Enums;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Transfer.Upload;
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.CryptoLib.Services;
 using Hangfire;
@@ -47,8 +47,8 @@ namespace Crypter.API.Services
       private readonly long AllocatedDiskSpace;
       private readonly long MaxUploadSize;
 
-      private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
-      private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
+      private readonly IBaseTransferService<IMessageTransfer> MessageTransferService;
+      private readonly IBaseTransferService<IFileTransfer> FileTransferService;
       private readonly IEmailService EmailService;
       private readonly IApiValidationService ApiValidationService;
       private readonly ITransferItemStorageService MessageTransferItemStorageService;
@@ -60,8 +60,8 @@ namespace Crypter.API.Services
 
       public UploadService(
          IConfiguration configuration,
-         IBaseTransferService<IMessageTransferItem> messageTransferService,
-         IBaseTransferService<IFileTransferItem> fileTransferService,
+         IBaseTransferService<IMessageTransfer> messageTransferService,
+         IBaseTransferService<IFileTransfer> fileTransferService,
          IEmailService emailService,
          IApiValidationService apiValidationService,
          ISimpleEncryptionService simpleEncryptionService,
@@ -83,7 +83,7 @@ namespace Crypter.API.Services
          ItemDigestFunction = SimpleHashService.DigestSha256;
       }
 
-      private async Task<(bool Success, UploadTransferError ErrorCode, IBaseTransferItem? GenericTransferData, byte[]? ServerEncryptedCipherText)> ReceiveTransferAsync(IUploadTransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
+      private async Task<(bool Success, UploadTransferError ErrorCode, ITransferBase? GenericTransferData, byte[]? ServerEncryptedCipherText)> ReceiveTransferAsync(IUploadTransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
       {
          var serverHasSpaceRemaining = await ApiValidationService.IsEnoughSpaceForNewTransferAsync(AllocatedDiskSpace, MaxUploadSize, cancellationToken);
          if (!serverHasSpaceRemaining)

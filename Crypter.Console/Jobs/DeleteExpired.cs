@@ -36,11 +36,11 @@ namespace Crypter.Console.Jobs
    internal class DeleteExpired
    {
       private string FileStorePath { get; }
-      private IBaseTransferService<IMessageTransferItem> MessageService { get; }
-      private IBaseTransferService<IFileTransferItem> FileService { get; }
+      private IBaseTransferService<IMessageTransfer> MessageService { get; }
+      private IBaseTransferService<IFileTransfer> FileService { get; }
       private readonly ILogger<DeleteExpired> Logger;
 
-      public DeleteExpired(string fileStorePath, IBaseTransferService<IMessageTransferItem> messageService, IBaseTransferService<IFileTransferItem> fileService, ILogger<DeleteExpired> logger)
+      public DeleteExpired(string fileStorePath, IBaseTransferService<IMessageTransfer> messageService, IBaseTransferService<IFileTransfer> fileService, ILogger<DeleteExpired> logger)
       {
          FileStorePath = fileStorePath;
          MessageService = messageService;
@@ -50,13 +50,13 @@ namespace Crypter.Console.Jobs
 
       public async Task RunAsync()
       {
-         Logger.LogInformation($"{DateTime.Now:HH:mm:ss} DeleteExpired is working.");
+         Logger.LogInformation("{timestamp} DeleteExpired is working.", new object[] { DateTime.Now.ToString("HH:mm:ss") });
 
          var messageStorageService = new TransferItemStorageService(FileStorePath, TransferItemType.Message);
          var expiredMessages = await MessageService.FindExpiredAsync(default);
          foreach (var expiredItem in expiredMessages)
          {
-            Logger.LogInformation($"Deleting message {expiredItem.Id}");
+            Logger.LogInformation("Deleting message {itemId}", new object[] { expiredItem.Id });
             await MessageService.DeleteAsync(expiredItem.Id, default);
             messageStorageService.Delete(expiredItem.Id);
             Logger.LogInformation($"Delete complete");
@@ -66,7 +66,7 @@ namespace Crypter.Console.Jobs
          var expiredFiles = await FileService.FindExpiredAsync(default);
          foreach (var expiredItem in expiredFiles)
          {
-            Logger.LogInformation($"Deleting file {expiredItem.Id}");
+            Logger.LogInformation("Deleting file {itemId}", new object[] { expiredItem.Id });
             await FileService.DeleteAsync(expiredItem.Id, default);
             fileStorageService.Delete(expiredItem.Id);
             Logger.LogInformation($"Delete complete");

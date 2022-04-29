@@ -25,8 +25,8 @@
  */
 
 using Crypter.Common.Enums;
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;

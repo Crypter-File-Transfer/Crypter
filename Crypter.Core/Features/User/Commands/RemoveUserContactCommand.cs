@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Models;
+using Crypter.Core.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;

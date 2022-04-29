@@ -47,8 +47,8 @@ namespace Crypter.Console
             .AddLogging(configure => configure.AddConsole())
             .AddSingleton(configuration)
             .AddSingleton<DataContext>()
-            .AddSingleton<IBaseTransferService<IMessageTransferItem>, MessageTransferItemService>()
-            .AddSingleton<IBaseTransferService<IFileTransferItem>, FileTransferItemService>()
+            .AddSingleton<IBaseTransferService<IMessageTransfer>, MessageTransferItemService>()
+            .AddSingleton<IBaseTransferService<IFileTransfer>, FileTransferItemService>()
             .BuildServiceProvider();
 
          if (args == null || args.Length == 0 || HelpRequired(args[0]))
@@ -60,8 +60,8 @@ namespace Crypter.Console
          if (RequestDeleteExpired(args[0]))
          {
             var deleteJob = new DeleteExpired(configuration["EncryptedFileStore"],
-               serviceProvider.GetService<IBaseTransferService<IMessageTransferItem>>()!,
-               serviceProvider.GetService<IBaseTransferService<IFileTransferItem>>()!,
+               serviceProvider.GetService<IBaseTransferService<IMessageTransfer>>()!,
+               serviceProvider.GetService<IBaseTransferService<IFileTransfer>>()!,
                serviceProvider.GetService<ILogger<DeleteExpired>>()!);
 
             await deleteJob.RunAsync();

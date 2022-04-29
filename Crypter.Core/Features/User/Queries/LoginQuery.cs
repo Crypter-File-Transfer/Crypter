@@ -89,7 +89,7 @@ namespace Crypter.Core.Features.User.Queries
       public async Task<Either<LoginError, LoginQueryResult>> Handle(LoginQuery request, CancellationToken cancellationToken)
       {
          string lowerUsername = request.Username.Value.ToLower();
-         Models.User user = await _context.Users
+         Entities.User user = await _context.Users
             .FirstOrDefaultAsync(x => x.Username.ToLower() == lowerUsername, cancellationToken);
 
          if (user is null)

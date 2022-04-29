@@ -24,18 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
-using System;
-
 namespace Crypter.Core.Interfaces
 {
-   public interface IUserToken
+   public interface IMessageTransfer : ITransferBase
    {
-      Guid Id { get; set; }
-      Guid Owner { get; set; }
-      string Description { get; set; }
-      TokenType Type { get; set; }
-      DateTime Created { get; set; }
-      DateTime Expiration { get; set; }
+      string Subject { get; set; }
    }
 }

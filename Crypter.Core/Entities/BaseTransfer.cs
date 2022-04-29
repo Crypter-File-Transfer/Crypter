@@ -26,20 +26,17 @@
 
 using Crypter.Core.Interfaces;
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Crypter.Core.Models
+namespace Crypter.Core.Entities
 {
-   [Table("FileTransfer")]
-   public class FileTransfer : IFileTransferItem
+   /// <summary>
+   /// This class does not represent an entity tracked in the database.
+   /// </summary>
+   public class BaseTransfer : ITransferBase
    {
-      [Key]
       public Guid Id { get; set; }
       public Guid Sender { get; set; }
       public Guid Recipient { get; set; }
-      public string FileName { get; set; }
-      public string ContentType { get; set; }
       public int Size { get; set; }
       public string ClientIV { get; set; }
       public string Signature { get; set; }
@@ -50,13 +47,11 @@ namespace Crypter.Core.Models
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
 
-      public FileTransfer(Guid id, Guid sender, Guid recipient, string fileName, string contentType, int size, string clientIV, string signature, string x25519PublicKey, string ed25519PublicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
+      public BaseTransfer(Guid id, Guid sender, Guid recipient, int size, string clientIV, string signature, string x25519PublicKey, string ed25519PublicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
       {
          Id = id;
          Sender = sender;
          Recipient = recipient;
-         FileName = fileName;
-         ContentType = contentType;
          Size = size;
          ClientIV = clientIV;
          Signature = signature;

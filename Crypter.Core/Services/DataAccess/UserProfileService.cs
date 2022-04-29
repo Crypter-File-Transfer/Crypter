@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,7 +41,7 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task<IUserProfile> ReadAsync(Guid id, CancellationToken cancellationToken)
+      public async Task<UserProfile> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
          return await Context.UserProfiles.FindAsync(new object[] { id }, cancellationToken);
       }

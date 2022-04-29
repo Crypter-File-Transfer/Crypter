@@ -24,35 +24,30 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Interfaces;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Crypter.Core.Models
+namespace Crypter.Core.Entities
 {
-   [Table("UserContact")]
-   public class UserContact : IUserContact
+   [Table("UserProfile")]
+   public class UserProfile
    {
       [Key]
-      public Guid Id { get; set; }
+      [ForeignKey("User")]
+      public Guid Owner { get; set; }
+      public string Alias { get; set; }
+      public string About { get; set; }
+      public string Image { get; set; }
 
-      [Column("Owner")]
-      [ForeignKey("Owner")]
-      public Guid OwnerId { get; set; }
+      public virtual User User { get; set; }
 
-      [Column("Contact")]
-      [ForeignKey("Contact")]
-      public Guid ContactId { get; set; }
-
-      public virtual User Owner { get; set; }
-      public virtual User Contact { get; set; }
-
-      public UserContact(Guid id, Guid ownerId, Guid contactId)
+      public UserProfile(Guid owner, string alias, string about, string image)
       {
-         Id = id;
-         OwnerId = ownerId;
-         ContactId = contactId;
+         Owner = owner;
+         Alias = alias;
+         About = about;
+         Image = image;
       }
    }
 }
