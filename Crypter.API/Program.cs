@@ -53,6 +53,9 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IApiValidationService, ApiValidationService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
 builder.Services.AddSingleton<IUserPrivacyService, UserPrivacyService>();
+builder.Services.AddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
+builder.Services.AddScoped<IUploadService, UploadService>();
+builder.Services.AddScoped<IDownloadService, DownloadService>();
 
 builder.Services.AddDbContext<DataContext>();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -62,7 +65,6 @@ builder.Services.AddScoped<IUserPublicKeyPairService<UserX25519KeyPair>, UserX25
 builder.Services.AddScoped<IUserPublicKeyPairService<UserEd25519KeyPair>, UserEd25519KeyPairService>();
 builder.Services.AddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
 builder.Services.AddScoped<IUserNotificationSettingService, UserNotificationSettingService>();
-builder.Services.AddScoped<IUserTokenService, UserTokenService>();
 builder.Services.AddScoped<IBaseTransferService<IMessageTransfer>, MessageTransferItemService>();
 builder.Services.AddScoped<IBaseTransferService<IFileTransfer>, FileTransferItemService>();
 

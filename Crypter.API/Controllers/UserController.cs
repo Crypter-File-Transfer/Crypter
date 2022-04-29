@@ -79,7 +79,7 @@ namespace Crypter.API.Controllers
       private readonly IUserNotificationSettingService _userNotificationSettingService;
       private readonly IBaseTransferService<IMessageTransfer> _messageTransferService;
       private readonly IBaseTransferService<IFileTransfer> _fileTransferService;
-      private readonly IEmailService _emailService;
+      private readonly IHangfireBackgroundService _hangfireBackgroundService;
       private readonly ITokenService _tokenService;
       private readonly IMediator _mediator;
 
@@ -93,7 +93,7 @@ namespace Crypter.API.Controllers
           IUserNotificationSettingService userNotificationSettingService,
           IBaseTransferService<IMessageTransfer> messageService,
           IBaseTransferService<IFileTransfer> fileService,
-          IEmailService emailService,
+          IHangfireBackgroundService hangfireBackgroundService,
           ITokenService tokenService,
           IMediator mediator
           )
@@ -107,7 +107,7 @@ namespace Crypter.API.Controllers
          _userNotificationSettingService = userNotificationSettingService;
          _messageTransferService = messageService;
          _fileTransferService = fileService;
-         _emailService = emailService;
+         _hangfireBackgroundService = hangfireBackgroundService;
          _tokenService = tokenService;
          _mediator = mediator;
       }
@@ -135,7 +135,7 @@ namespace Crypter.API.Controllers
          {
             if (x.SendVerificationEmail)
             {
-               BackgroundJob.Enqueue(() => _emailService.HangfireSendEmailVerificationAsync(x.UserId));
+               BackgroundJob.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(x.UserId, CancellationToken.None));
             }
          });
 
@@ -354,7 +354,7 @@ namespace Crypter.API.Controllers
 
          if (isValidEmailAddress)
          {
-            BackgroundJob.Enqueue(() => _emailService.HangfireSendEmailVerificationAsync(userId));
+            BackgroundJob.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId, CancellationToken.None));
          }
 
          return new OkObjectResult(new UpdateContactInfoResponse());

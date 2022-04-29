@@ -31,11 +31,8 @@ using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
 using Crypter.Contracts.Features.Transfer.Upload;
-using Crypter.Core.Interfaces;
-using Crypter.CryptoLib.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,24 +42,14 @@ namespace Crypter.API.Controllers
    [Route("api/transfer")]
    public class TransferController : ControllerBase
    {
-      private readonly UploadService _uploadService;
-      private readonly DownloadService _downloadService;
+      private readonly IUploadService _uploadService;
+      private readonly IDownloadService _downloadService;
       private readonly ITokenService _tokenService;
 
-      public TransferController(IConfiguration configuration,
-          IBaseTransferService<IMessageTransfer> messageService,
-          IBaseTransferService<IFileTransfer> fileService,
-          IUserService userService,
-          IUserProfileService userProfileService,
-          IEmailService emailService,
-          IApiValidationService apiValidationService,
-          ISimpleEncryptionService simpleEncryptionService,
-          ISimpleHashService simpleHashService,
-          ITokenService tokenService
-         )
+      public TransferController(ITokenService tokenService, IUploadService uploadService, IDownloadService downloadService)
       {
-         _uploadService = new UploadService(configuration, messageService, fileService, emailService, apiValidationService, simpleEncryptionService, userService, simpleHashService);
-         _downloadService = new DownloadService(configuration, messageService, fileService, userService, userProfileService, simpleEncryptionService, simpleHashService);
+         _uploadService = uploadService;
+         _downloadService = downloadService;
          _tokenService = tokenService;
       }
 
