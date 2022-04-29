@@ -27,7 +27,6 @@
 using Crypter.API.Models;
 using Crypter.API.Services;
 using Crypter.Common.Primitives;
-using Moq;
 using NUnit.Framework;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,23 +36,21 @@ namespace Crypter.Test.API_Tests
    [TestFixture]
    public class EmailService_Tests
    {
-      private EmailSettings _emailSettings;
+      private EmailSettings _defaultEmailSettings;
 
       [OneTimeSetUp]
       public void OneTimeSetup()
       {
-         _emailSettings = new EmailSettings();
+         _defaultEmailSettings = new EmailSettings();
       }
 
       [Test]
       public async Task ServiceDisabled_SendAsync_ReturnsFalse()
       {
-         var emailService = new Mock<EmailService>(_emailSettings)
-         {
-            CallBase = true
-         };
+         var sut = new EmailService(_defaultEmailSettings);
+
          var emailAddress = EmailAddress.From("jack@crypter.dev");
-         var result = await emailService.Object.SendAsync("foo", "bar", emailAddress, CancellationToken.None);
+         var result = await sut.SendAsync("foo", "bar", emailAddress, CancellationToken.None);
          Assert.False(result);
       }
    }
