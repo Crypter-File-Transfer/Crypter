@@ -166,7 +166,7 @@ namespace Crypter.API.Controllers
                recipient = await _userService.ReadAsync(item.Recipient, cancellationToken);
                recipientProfile = await _userProfileService.ReadAsync(item.Recipient, cancellationToken);
             }
-            sentMessages.Add(new UserSentMessageDTO(item.Id, item.Subject, item.Recipient, recipient?.Username, recipientProfile?.Alias, item.Expiration));
+            sentMessages.Add(new UserSentMessageDTO(item.Id, item.Subject, recipient?.Username, recipientProfile?.Alias, item.Expiration));
          }
 
          return new OkObjectResult(new UserSentMessagesResponse(sentMessages));
@@ -194,7 +194,7 @@ namespace Crypter.API.Controllers
                recipient = await _userService.ReadAsync(item.Recipient, cancellationToken);
                recipientProfile = await _userProfileService.ReadAsync(item.Recipient, cancellationToken);
             }
-            sentFiles.Add(new UserSentFileDTO(item.Id, item.FileName, item.Recipient, recipient?.Username, recipientProfile?.Alias, item.Expiration));
+            sentFiles.Add(new UserSentFileDTO(item.Id, item.FileName, recipient?.Username, recipientProfile?.Alias, item.Expiration));
          }
 
          return new OkObjectResult(new UserSentFilesResponse(sentFiles));
