@@ -45,10 +45,10 @@ using Crypter.Contracts.Features.User.UpdateNotificationSettings;
 using Crypter.Contracts.Features.User.UpdatePrivacySettings;
 using Crypter.Contracts.Features.User.UpdateProfile;
 using Crypter.Contracts.Features.User.VerifyEmailAddress;
+using Crypter.Core.Entities;
 using Crypter.Core.Features.User.Commands;
 using Crypter.Core.Features.User.Queries;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Hangfire;
@@ -77,8 +77,8 @@ namespace Crypter.API.Controllers
       private readonly IUserPrivacySettingService _userPrivacySettingService;
       private readonly IUserEmailVerificationService _userEmailVerificationService;
       private readonly IUserNotificationSettingService _userNotificationSettingService;
-      private readonly IBaseTransferService<IMessageTransferItem> _messageTransferService;
-      private readonly IBaseTransferService<IFileTransferItem> _fileTransferService;
+      private readonly IBaseTransferService<IMessageTransfer> _messageTransferService;
+      private readonly IBaseTransferService<IFileTransfer> _fileTransferService;
       private readonly IEmailService _emailService;
       private readonly ITokenService _tokenService;
       private readonly IMediator _mediator;
@@ -91,8 +91,8 @@ namespace Crypter.API.Controllers
           IUserPrivacySettingService userPrivacySettingService,
           IUserEmailVerificationService userEmailVerificationService,
           IUserNotificationSettingService userNotificationSettingService,
-          IBaseTransferService<IMessageTransferItem> messageService,
-          IBaseTransferService<IFileTransferItem> fileService,
+          IBaseTransferService<IMessageTransfer> messageService,
+          IBaseTransferService<IFileTransfer> fileService,
           IEmailService emailService,
           ITokenService tokenService,
           IMediator mediator
@@ -160,7 +160,7 @@ namespace Crypter.API.Controllers
          foreach (var item in sentMessagesSansRecipientInfo)
          {
             User? recipient = null;
-            IUserProfile? recipientProfile = null;
+            UserProfile? recipientProfile = null;
             if (item.Recipient != Guid.Empty)
             {
                recipient = await _userService.ReadAsync(item.Recipient, cancellationToken);
@@ -188,7 +188,7 @@ namespace Crypter.API.Controllers
          foreach (var item in sentFilesSansRecipientInfo)
          {
             User? recipient = null;
-            IUserProfile? recipientProfile = null;
+            UserProfile? recipientProfile = null;
             if (item.Recipient != Guid.Empty)
             {
                recipient = await _userService.ReadAsync(item.Recipient, cancellationToken);
@@ -216,7 +216,7 @@ namespace Crypter.API.Controllers
          foreach (var item in receivedMessagesSansSenderInfo)
          {
             User? sender = null;
-            IUserProfile? senderProfile = null;
+            UserProfile? senderProfile = null;
             if (item.Sender != Guid.Empty)
             {
                sender = await _userService.ReadAsync(item.Sender, cancellationToken);
@@ -244,7 +244,7 @@ namespace Crypter.API.Controllers
          foreach (var item in receivedFilesSansSenderInfo)
          {
             User? sender = null;
-            IUserProfile? senderProfile = null;
+            UserProfile? senderProfile = null;
             if (item.Sender != Guid.Empty)
             {
                sender = await _userService.ReadAsync(item.Sender, cancellationToken);

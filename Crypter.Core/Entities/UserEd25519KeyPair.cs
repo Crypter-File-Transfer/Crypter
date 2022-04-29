@@ -24,15 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Interfaces;
 using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Core.Entities
 {
-   public interface IUserProfile
+   [Table("UserEd25519KeyPair")]
+   public class UserEd25519KeyPair : IUserPublicKeyPair
    {
+      [Key]
+      public Guid Id { get; set; }
+      [ForeignKey("User")]
       public Guid Owner { get; set; }
-      public string Alias { get; set; }
-      public string About { get; set; }
-      public string Image { set; get; }
+      public string PrivateKey { get; set; }
+      public string PublicKey { get; set; }
+      public string ClientIV { get; set; }
+      public DateTime Created { get; set; }
+
+      public virtual User User { get; set; }
+
+      public UserEd25519KeyPair(Guid id, Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
+      {
+         Id = id;
+         Owner = owner;
+         PrivateKey = privateKey;
+         PublicKey = publicKey;
+         ClientIV = clientIV;
+         Created = created;
+      }
    }
 }

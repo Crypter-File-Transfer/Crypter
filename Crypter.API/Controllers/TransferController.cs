@@ -50,8 +50,8 @@ namespace Crypter.API.Controllers
       private readonly ITokenService _tokenService;
 
       public TransferController(IConfiguration configuration,
-          IBaseTransferService<IMessageTransferItem> messageService,
-          IBaseTransferService<IFileTransferItem> fileService,
+          IBaseTransferService<IMessageTransfer> messageService,
+          IBaseTransferService<IFileTransfer> fileService,
           IUserService userService,
           IUserProfileService userProfileService,
           IEmailService emailService,

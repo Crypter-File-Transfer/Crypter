@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,8 +34,8 @@ namespace Crypter.Core.Interfaces
    public interface IUserEmailVerificationService
    {
       Task<bool> InsertAsync(Guid userId, Guid code, byte[] verificationKey, CancellationToken cancellationToken);
-      Task<IUserEmailVerification> ReadAsync(Guid userId, CancellationToken cancellationToken);
-      Task<IUserEmailVerification> ReadCodeAsync(Guid code, CancellationToken cancellationToken);
+      Task<UserEmailVerification> ReadAsync(Guid userId, CancellationToken cancellationToken);
+      Task<UserEmailVerification> ReadCodeAsync(Guid code, CancellationToken cancellationToken);
       Task DeleteAsync(Guid userId, CancellationToken cancellationToken);
    }
 }

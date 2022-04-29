@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,6 +32,6 @@ namespace Crypter.Core.Interfaces
 {
    public interface ISchemaService
    {
-      Task<ISchema> ReadAsync(CancellationToken cancellationToken);
+      Task<Schema> ReadAsync(CancellationToken cancellationToken);
    }
 }

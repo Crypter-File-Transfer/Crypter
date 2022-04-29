@@ -25,8 +25,8 @@
  */
 
 using Crypter.Common.Enums;
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,7 +62,7 @@ namespace Crypter.Core.Services.DataAccess
          return true;
       }
 
-      public async Task<IUserPrivacySetting> ReadAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<UserPrivacySetting> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
          return await _context.UserPrivacySettings.FindAsync(new object[] { userId }, cancellationToken);
       }

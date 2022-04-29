@@ -26,9 +26,8 @@
 
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.User.AddContact;
-using Crypter.Contracts.Features.User.GetContacts;
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -72,7 +71,7 @@ namespace Crypter.Core.Features.User.Commands
 
       public async Task<Either<AddUserContactError, UpsertUserContactCommandResult>> Handle(UpsertUserContactCommand request, CancellationToken cancellationToken)
       {
-         Models.User contactUser = await _context.Users
+         Entities.User contactUser = await _context.Users
             .Include(x => x.PrivacySetting)
             .Include(x => x.Contacts)
             .FirstOrDefaultAsync(x => x.Id == request.Contact, cancellationToken);

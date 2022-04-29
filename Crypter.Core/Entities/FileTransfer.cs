@@ -29,16 +29,17 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Crypter.Core.Models
+namespace Crypter.Core.Entities
 {
-   [Table("MessageTransfer")]
-   public class MessageTransfer : IMessageTransferItem
+   [Table("FileTransfer")]
+   public class FileTransfer : IFileTransfer
    {
       [Key]
       public Guid Id { get; set; }
       public Guid Sender { get; set; }
       public Guid Recipient { get; set; }
-      public string Subject { get; set; }
+      public string FileName { get; set; }
+      public string ContentType { get; set; }
       public int Size { get; set; }
       public string ClientIV { get; set; }
       public string Signature { get; set; }
@@ -49,12 +50,13 @@ namespace Crypter.Core.Models
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
 
-      public MessageTransfer(Guid id, Guid sender, Guid recipient, string subject, int size, string clientIV, string signature, string x25519PublicKey, string ed25519PublicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
+      public FileTransfer(Guid id, Guid sender, Guid recipient, string fileName, string contentType, int size, string clientIV, string signature, string x25519PublicKey, string ed25519PublicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
       {
          Id = id;
          Sender = sender;
          Recipient = recipient;
-         Subject = subject;
+         FileName = fileName;
+         ContentType = contentType;
          Size = size;
          ClientIV = clientIV;
          Signature = signature;

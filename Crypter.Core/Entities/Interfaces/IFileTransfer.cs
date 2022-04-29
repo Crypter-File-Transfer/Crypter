@@ -24,17 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Models;
-using System;
-
 namespace Crypter.Core.Interfaces
 {
-   public interface IUserContact
+   public interface IFileTransfer : ITransferBase
    {
-      public Guid Id { get; set; }
-      public Guid OwnerId { get; set; }
-      public Guid ContactId { get; set; }
-      public User Owner { get; set; }
-      public User Contact { get; set; }
+      string FileName { get; set; }
+      string ContentType { get; set; }
    }
 }

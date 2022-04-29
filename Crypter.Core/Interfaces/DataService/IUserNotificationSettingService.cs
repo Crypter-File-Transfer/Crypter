@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,7 +33,7 @@ namespace Crypter.Core.Interfaces
 {
    public interface IUserNotificationSettingService
    {
-      Task<IUserNotificationSetting> ReadAsync(Guid userId, CancellationToken cancellationToken);
+      Task<UserNotificationSetting> ReadAsync(Guid userId, CancellationToken cancellationToken);
       Task UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications, CancellationToken cancellationToken);
    }
 }

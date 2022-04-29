@@ -24,34 +24,34 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
-using Crypter.Core.Interfaces;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Crypter.Core.Models
+namespace Crypter.Core.Entities
 {
-   [Table("UserPrivacySetting")]
-   public class UserPrivacySetting : IUserPrivacySetting
+   [Table("UserContact")]
+   public class UserContact
    {
       [Key]
-      [ForeignKey("User")]
-      public Guid Owner { get; set; }
-      public bool AllowKeyExchangeRequests { get; set; }
-      public UserVisibilityLevel Visibility { get; set; }
-      public UserItemTransferPermission ReceiveFiles { get; set; }
-      public UserItemTransferPermission ReceiveMessages { get; set; }
+      public Guid Id { get; set; }
 
-      public virtual User User { get; set; }
+      [Column("Owner")]
+      [ForeignKey("Owner")]
+      public Guid OwnerId { get; set; }
 
-      public UserPrivacySetting(Guid owner, bool allowKeyExchangeRequests, UserVisibilityLevel visibility, UserItemTransferPermission receiveFiles, UserItemTransferPermission receiveMessages)
+      [Column("Contact")]
+      [ForeignKey("Contact")]
+      public Guid ContactId { get; set; }
+
+      public virtual User Owner { get; set; }
+      public virtual User Contact { get; set; }
+
+      public UserContact(Guid id, Guid ownerId, Guid contactId)
       {
-         Owner = owner;
-         AllowKeyExchangeRequests = allowKeyExchangeRequests;
-         Visibility = visibility;
-         ReceiveFiles = receiveFiles;
-         ReceiveMessages = receiveMessages;
+         Id = id;
+         OwnerId = ownerId;
+         ContactId = contactId;
       }
    }
 }

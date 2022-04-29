@@ -31,7 +31,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Crypter.Core.Models
+namespace Crypter.Core.Entities
 {
    [Table("User")]
    public class User

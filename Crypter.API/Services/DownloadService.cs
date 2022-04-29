@@ -43,8 +43,8 @@ namespace Crypter.API.Services
 #nullable enable // gross
    public class DownloadService
    {
-      private readonly IBaseTransferService<IMessageTransferItem> MessageService;
-      private readonly IBaseTransferService<IFileTransferItem> FileService;
+      private readonly IBaseTransferService<IMessageTransfer> MessageService;
+      private readonly IBaseTransferService<IFileTransfer> FileService;
       private readonly IUserService UserService;
       private readonly IUserProfileService UserProfileService;
       private readonly ITransferItemStorageService MessageTransferItemStorageService;
@@ -55,8 +55,8 @@ namespace Crypter.API.Services
 
       public DownloadService(
          IConfiguration configuration,
-         IBaseTransferService<IMessageTransferItem> messageService,
-         IBaseTransferService<IFileTransferItem> fileService,
+         IBaseTransferService<IMessageTransfer> messageService,
+         IBaseTransferService<IFileTransfer> fileService,
          IUserService userService,
          IUserProfileService userProfileService,
          ISimpleEncryptionService simpleEncryptionService,

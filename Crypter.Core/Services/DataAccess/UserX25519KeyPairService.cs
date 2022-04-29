@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;

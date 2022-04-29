@@ -24,23 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Enums;
 using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Core.Entities
 {
-   public interface IBaseTransferItem
+   [Table("UserToken")]
+   public class UserToken
    {
+      [Key]
       public Guid Id { get; set; }
-      public Guid Sender { get; set; }
-      public Guid Recipient { get; set; }
-      public int Size { get; set; }
-      public string ClientIV { get; set; }
-      public string Signature { get; set; }
-      public string X25519PublicKey { get; set; }
-      public string Ed25519PublicKey { get; set; }
-      public byte[] ServerIV { get; set; }
-      public byte[] ServerDigest { get; set; }
+      [ForeignKey("User")]
+      public Guid Owner { get; set; }
+      public string Description { get; set; }
+      public TokenType Type { get; set; }
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
+
+      public virtual User User { get; set; }
+
+      public UserToken(Guid id, Guid owner, string description, TokenType type, DateTime created, DateTime expiration)
+      {
+         Id = id;
+         Owner = owner;
+         Description = description;
+         Type = type;
+         Created = created;
+         Expiration = expiration;
+      }
    }
 }

@@ -24,35 +24,33 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Interfaces;
+using Crypter.Common.Enums;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Crypter.Core.Models
+namespace Crypter.Core.Entities
 {
-   [Table("UserEd25519KeyPair")]
-   public class UserEd25519KeyPair : IUserPublicKeyPair
+   [Table("UserPrivacySetting")]
+   public class UserPrivacySetting
    {
       [Key]
-      public Guid Id { get; set; }
       [ForeignKey("User")]
       public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
-      public DateTime Created { get; set; }
+      public bool AllowKeyExchangeRequests { get; set; }
+      public UserVisibilityLevel Visibility { get; set; }
+      public UserItemTransferPermission ReceiveFiles { get; set; }
+      public UserItemTransferPermission ReceiveMessages { get; set; }
 
       public virtual User User { get; set; }
 
-      public UserEd25519KeyPair(Guid id, Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
+      public UserPrivacySetting(Guid owner, bool allowKeyExchangeRequests, UserVisibilityLevel visibility, UserItemTransferPermission receiveFiles, UserItemTransferPermission receiveMessages)
       {
-         Id = id;
          Owner = owner;
-         PrivateKey = privateKey;
-         PublicKey = publicKey;
-         ClientIV = clientIV;
-         Created = created;
+         AllowKeyExchangeRequests = allowKeyExchangeRequests;
+         Visibility = visibility;
+         ReceiveFiles = receiveFiles;
+         ReceiveMessages = receiveMessages;
       }
    }
 }
