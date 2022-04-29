@@ -52,13 +52,13 @@ namespace Crypter.API.Controllers
    {
       private readonly IMediator _mediator;
       private readonly ITokenService _tokenService;
+      private readonly IHangfireBackgroundService _hangfireBackgroundService;
 
-      public AuthenticationController(
-         IMediator mediator,
-         ITokenService tokenService)
+      public AuthenticationController(IMediator mediator, ITokenService tokenService, IHangfireBackgroundService hangfireBackgroundService)
       {
          _mediator = mediator;
          _tokenService = tokenService;
+         _hangfireBackgroundService = hangfireBackgroundService;
       }
 
       /// <summary>
@@ -98,7 +98,7 @@ namespace Crypter.API.Controllers
             await makeTokenResult.DoRightAsync(async x =>
             {
                await _mediator.Send(new InsertUserTokenCommand(refreshTokenId, userId, userAgent, tokenType, x.Expiration), cancellationToken);
-               BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(refreshTokenId), CancellationToken.None), x.Expiration - DateTime.UtcNow);
+               BackgroundJob.Schedule(() => _hangfireBackgroundService.DeleteUserTokenAsync(refreshTokenId, CancellationToken.None), x.Expiration - DateTime.UtcNow);
             });
 
             return makeTokenResult.Map(x => x.Token);
@@ -107,9 +107,9 @@ namespace Crypter.API.Controllers
          var loginQueryValidation = LoginQuery.ValidateFrom(request.Username, request.Password);
          var loginQueryResult = await loginQueryValidation.BindAsync(async x => await _mediator.Send(x, cancellationToken));
 
-         loginQueryResult.DoRight(x =>
+         await loginQueryResult.DoRightAsync(async x =>
          {
-            BackgroundJob.Enqueue(() => _mediator.Send(new UpdateLastLoginTimeCommand(x.UserId, DateTime.UtcNow), CancellationToken.None));
+            await _mediator.Send(new UpdateLastLoginTimeCommand(x.UserId, DateTime.UtcNow), CancellationToken.None);
          });
 
          var response = await loginQueryResult.BindAsync(async loginData =>
@@ -197,7 +197,7 @@ namespace Crypter.API.Controllers
             string userAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
 
             await _mediator.Send(new InsertUserTokenCommand(newTokenId, userId, userAgent, databaseToken.Type, newTokenExpiration), cancellationToken);
-            BackgroundJob.Schedule(() => _mediator.Send(new DeleteUserTokenCommand(newTokenId), CancellationToken.None), newTokenExpiration - DateTime.UtcNow);
+            BackgroundJob.Schedule(() => _hangfireBackgroundService.DeleteUserTokenAsync(newTokenId, CancellationToken.None), newTokenExpiration - DateTime.UtcNow);
             return new RefreshResponse(newAuthToken, newRefreshToken, databaseToken.Type);
          });
 

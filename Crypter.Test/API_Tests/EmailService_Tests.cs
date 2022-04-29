@@ -26,14 +26,9 @@
 
 using Crypter.API.Models;
 using Crypter.API.Services;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.Core.Entities;
-using Crypter.Core.Interfaces;
 using Moq;
 using NUnit.Framework;
-using Org.BouncyCastle.Crypto;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -50,191 +45,15 @@ namespace Crypter.Test.API_Tests
          _emailSettings = new EmailSettings();
       }
 
-      [SetUp]
-      public void Setup()
-      {
-      }
-
-      [Test]
-      public async Task HangfireEmailVerification_UserDoesNotExist_EmailNotSent()
-      {
-         var mockUserService = new Mock<IUserService>();
-         mockUserService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
-
-         var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
-         mockUserEmailVerificationService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
-
-         var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransfer>>();
-
-         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
-            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
-         {
-            CallBase = true
-         };
-         await emailService.Object.HangfireSendEmailVerificationAsync(new Guid());
-
-         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<EmailAddress>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()), Times.Never);
-         mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
-      }
-
-      [Test]
-      public async Task HangfireEmailVerification_UserEmailIsEmpty_EmailNotSent()
-      {
-         var username = Username.From("jack");
-         var noEmailAddress = Maybe<EmailAddress>.None;
-         var user = new User(Guid.NewGuid(), username, noEmailAddress, default, default, false, default, default);
-
-         var mockUserService = new Mock<IUserService>();
-         mockUserService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
-
-         var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
-         mockUserEmailVerificationService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
-
-         var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransfer>>();
-
-         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
-            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
-         {
-            CallBase = true
-         };
-         await emailService.Object.HangfireSendEmailVerificationAsync(user.Id);
-
-         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<EmailAddress>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()), Times.Never);
-         mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
-      }
-
-      [Test]
-      public async Task HangfireEmailVerification_UserEmailAlreadyVerified_EmailNotSent()
-      {
-         var username = Username.From("jack");
-         var emailAddress = EmailAddress.From("jack@crypter.dev");
-         var user = new User(Guid.NewGuid(), username, emailAddress, default, default, true, default, default);
-
-         var mockUserService = new Mock<IUserService>();
-         mockUserService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
-
-         var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
-         mockUserEmailVerificationService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
-
-         var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransfer>>();
-
-         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
-            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
-         {
-            CallBase = true
-         };
-         await emailService.Object.HangfireSendEmailVerificationAsync(user.Id);
-
-         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<EmailAddress>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()), Times.Never);
-         mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
-      }
-
-      [Test]
-      public async Task HangfireEmailVerification_UserEmailVerificationAlreadyPending_EmailNotSent()
-      {
-         var username = Username.From("jack");
-         var emailAddress = EmailAddress.From("jack@crypter.dev");
-         var user = new User(Guid.NewGuid(), username, emailAddress, default, default, false, default, default);
-
-         var mockUserService = new Mock<IUserService>();
-         mockUserService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
-
-         var userVerification = new UserEmailVerification(user.Id, Guid.NewGuid(), default, DateTime.UtcNow);
-
-         var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
-         mockUserEmailVerificationService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => userVerification);
-
-         var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransfer>>();
-
-         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
-            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
-         {
-            CallBase = true
-         };
-         await emailService.Object.HangfireSendEmailVerificationAsync(user.Id);
-
-         emailService.Verify(x => x.SendEmailVerificationAsync(It.IsAny<EmailAddress>(), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Never);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()), Times.Never);
-         mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
-      }
-
-      [Test]
-      public async Task HangfireEmailVerification_NewUserNeedsEmailVerification_EmailWillSend()
-      {
-         var username = Username.From("jack");
-         var emailAddress = EmailAddress.From("jack@crypter.dev");
-         var user = new User(Guid.NewGuid(), username, emailAddress, default, default, false, default, default);
-
-         var mockUserService = new Mock<IUserService>();
-         mockUserService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
-
-         var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
-         mockUserEmailVerificationService
-            .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => null);
-
-         var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransfer>>();
-
-         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
-            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
-         {
-            CallBase = true
-         };
-         await emailService.Object.HangfireSendEmailVerificationAsync(user.Id);
-
-         emailService.Verify(x => x.SendEmailVerificationAsync(EmailAddress.From(user.Email), It.IsAny<Guid>(), It.IsAny<AsymmetricKeyParameter>()), Times.Once);
-         emailService.Verify(x => x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), EmailAddress.From(user.Email)), Times.Once);
-         mockUserEmailVerificationService.Verify(x => x.InsertAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<byte[]>(), default), Times.Never);
-      }
-
       [Test]
       public async Task ServiceDisabled_SendAsync_ReturnsFalse()
       {
-         var mockUserService = new Mock<IUserService>();
-         var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
-
-         var mockNotificationService = new Mock<IUserNotificationSettingService>();
-         var mockMessageTransferService = new Mock<IBaseTransferService<IMessageTransfer>>();
-         var mockFileTransferService = new Mock<IBaseTransferService<IFileTransfer>>();
-
-         var emailService = new Mock<EmailService>(_emailSettings, mockUserService.Object, mockUserEmailVerificationService.Object,
-            mockNotificationService.Object, mockMessageTransferService.Object, mockFileTransferService.Object)
+         var emailService = new Mock<EmailService>(_emailSettings)
          {
             CallBase = true
          };
          var emailAddress = EmailAddress.From("jack@crypter.dev");
-         var result = await emailService.Object.SendAsync("foo", "bar", emailAddress);
+         var result = await emailService.Object.SendAsync("foo", "bar", emailAddress, CancellationToken.None);
          Assert.False(result);
       }
    }

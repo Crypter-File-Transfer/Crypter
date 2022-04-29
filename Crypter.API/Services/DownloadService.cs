@@ -41,7 +41,18 @@ using System.Threading.Tasks;
 namespace Crypter.API.Services
 {
 #nullable enable // gross
-   public class DownloadService
+
+   public interface IDownloadService
+   {
+      Task<IActionResult> GetMessagePreviewAsync(DownloadTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken);
+      Task<IActionResult> GetFilePreviewAsync(DownloadTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken);
+      Task<IActionResult> GetMessageCiphertextAsync(DownloadTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken);
+      Task<IActionResult> GetFileCiphertextAsync(DownloadTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken);
+      Task<IActionResult> GetMessageSignatureAsync(DownloadTransferSignatureRequest request, Guid requestorId, CancellationToken cancellationToken);
+      Task<IActionResult> GetFileSignatureAsync(DownloadTransferSignatureRequest request, Guid requestorId, CancellationToken cancellationToken);
+   }
+
+   public class DownloadService : IDownloadService
    {
       private readonly IBaseTransferService<IMessageTransfer> MessageService;
       private readonly IBaseTransferService<IFileTransfer> FileService;

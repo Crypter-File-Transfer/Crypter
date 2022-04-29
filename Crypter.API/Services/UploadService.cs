@@ -42,50 +42,57 @@ using System.Threading.Tasks;
 namespace Crypter.API.Services
 {
 #nullable enable // gross
-   public class UploadService
-   {
-      private readonly long AllocatedDiskSpace;
-      private readonly long MaxUploadSize;
 
-      private readonly IBaseTransferService<IMessageTransfer> MessageTransferService;
-      private readonly IBaseTransferService<IFileTransfer> FileTransferService;
-      private readonly IEmailService EmailService;
-      private readonly IApiValidationService ApiValidationService;
-      private readonly ITransferItemStorageService MessageTransferItemStorageService;
-      private readonly ITransferItemStorageService FileTransferItemStorageService;
-      private readonly ISimpleEncryptionService SimpleEncryptionService;
-      private readonly ISimpleHashService SimpleHashService;
-      private readonly IUserService UserService;
-      private readonly Func<byte[], byte[]> ItemDigestFunction;
+   public interface IUploadService
+   {
+      Task<IActionResult> ReceiveMessageTransferAsync(UploadMessageTransferRequest request, Guid senderId, string recipient, CancellationToken cancellationToken);
+      Task<IActionResult> ReceiveFileTransferAsync(UploadFileTransferRequest request, Guid senderId, string recipient, CancellationToken cancellationToken);
+   }
+
+   public class UploadService : IUploadService
+   {
+      private readonly long _allocatedDiskSpace;
+      private readonly long _maxUploadSize;
+
+      private readonly IBaseTransferService<IMessageTransfer> _messageTransferService;
+      private readonly IBaseTransferService<IFileTransfer> _fileTransferService;
+      private readonly IApiValidationService _apiValidationService;
+      private readonly ITransferItemStorageService _messageTransferItemStorageService;
+      private readonly ITransferItemStorageService _fileTransferItemStorageService;
+      private readonly ISimpleEncryptionService _simpleEncryptionService;
+      private readonly ISimpleHashService _simpleHashService;
+      private readonly IUserService _userService;
+      private readonly IHangfireBackgroundService _hangfireBackgroundService;
+      private readonly Func<byte[], byte[]> _itemDigestFunction;
 
       public UploadService(
          IConfiguration configuration,
          IBaseTransferService<IMessageTransfer> messageTransferService,
          IBaseTransferService<IFileTransfer> fileTransferService,
-         IEmailService emailService,
          IApiValidationService apiValidationService,
          ISimpleEncryptionService simpleEncryptionService,
          IUserService userService,
-         ISimpleHashService simpleHashService
+         ISimpleHashService simpleHashService,
+         IHangfireBackgroundService hangfireBackgroundService
          )
       {
-         AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(2, 30);
-         MaxUploadSize = long.Parse(configuration["UploadSettings:MaxUploadSizeMB"]) * (long)Math.Pow(2, 20);
-         MessageTransferService = messageTransferService;
-         FileTransferService = fileTransferService;
-         EmailService = emailService;
-         ApiValidationService = apiValidationService;
-         MessageTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.Message);
-         FileTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.File);
-         SimpleEncryptionService = simpleEncryptionService;
-         UserService = userService;
-         SimpleHashService = simpleHashService;
-         ItemDigestFunction = SimpleHashService.DigestSha256;
+         _allocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(2, 30);
+         _maxUploadSize = long.Parse(configuration["UploadSettings:MaxUploadSizeMB"]) * (long)Math.Pow(2, 20);
+         _messageTransferService = messageTransferService;
+         _fileTransferService = fileTransferService;
+         _apiValidationService = apiValidationService;
+         _messageTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.Message);
+         _fileTransferItemStorageService = new TransferItemStorageService(configuration["EncryptedFileStore:Location"], TransferItemType.File);
+         _simpleEncryptionService = simpleEncryptionService;
+         _userService = userService;
+         _simpleHashService = simpleHashService;
+         _itemDigestFunction = _simpleHashService.DigestSha256;
+         _hangfireBackgroundService = hangfireBackgroundService;
       }
 
       private async Task<(bool Success, UploadTransferError ErrorCode, ITransferBase? GenericTransferData, byte[]? ServerEncryptedCipherText)> ReceiveTransferAsync(IUploadTransferRequest request, Guid senderId, Guid recipientId, CancellationToken cancellationToken)
       {
-         var serverHasSpaceRemaining = await ApiValidationService.IsEnoughSpaceForNewTransferAsync(AllocatedDiskSpace, MaxUploadSize, cancellationToken);
+         var serverHasSpaceRemaining = await _apiValidationService.IsEnoughSpaceForNewTransferAsync(_allocatedDiskSpace, _maxUploadSize, cancellationToken);
          if (!serverHasSpaceRemaining)
          {
             return (false, UploadTransferError.OutOfSpace, null, null);
@@ -131,7 +138,7 @@ namespace Crypter.API.Services
          }
 
          // Digest the ciphertext BEFORE applying server-side encryption
-      var serverDigest = ItemDigestFunction(originalCiphertextBytes);
+      var serverDigest = _itemDigestFunction(originalCiphertextBytes);
 
          // Apply server-side encryption
          if (hashedSymmetricEncryptionKey.Length != 32)
@@ -139,7 +146,7 @@ namespace Crypter.API.Services
             return (false, UploadTransferError.InvalidServerEncryptionKey, null, null);
          }
 
-         var (serverEncryptedCiphertext, serverIV) = SimpleEncryptionService.Encrypt(hashedSymmetricEncryptionKey, originalCiphertextBytes);
+         var (serverEncryptedCiphertext, serverIV) = _simpleEncryptionService.Encrypt(hashedSymmetricEncryptionKey, originalCiphertextBytes);
 
          Guid itemId = Guid.NewGuid();
          var created = DateTime.UtcNow;
@@ -155,7 +162,7 @@ namespace Crypter.API.Services
 
          if (!string.IsNullOrEmpty(recipient))
          {
-            var maybeUser = await UserService.ReadAsync(recipient, cancellationToken);
+            var maybeUser = await _userService.ReadAsync(recipient, cancellationToken);
             if (maybeUser is null)
             {
                return new BadRequestObjectResult(new ErrorResponse(UploadTransferError.UserNotFound));
@@ -174,7 +181,7 @@ namespace Crypter.API.Services
             return new BadRequestObjectResult(new ErrorResponse(errorCode));
          }
 
-         var saveResult = await MessageTransferItemStorageService.SaveAsync(genericTransferData.Id, ciphertextServerEncrypted, cancellationToken);
+         var saveResult = await _messageTransferItemStorageService.SaveAsync(genericTransferData.Id, ciphertextServerEncrypted, cancellationToken);
          if (!saveResult)
          {
             return new BadRequestObjectResult(new ErrorResponse(UploadTransferError.UnknownError));
@@ -195,11 +202,11 @@ namespace Crypter.API.Services
                genericTransferData.Created,
                genericTransferData.Expiration);
 
-         await MessageTransferService.InsertAsync(messageItem, default);
+         await _messageTransferService.InsertAsync(messageItem, default);
 
          if (recipientId != Guid.Empty)
          {
-            BackgroundJob.Enqueue(() => EmailService.HangfireSendTransferNotificationAsync(TransferItemType.Message, messageItem.Id));
+            BackgroundJob.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(TransferItemType.Message, messageItem.Id, CancellationToken.None));
          }
 
          return new OkObjectResult(
@@ -212,7 +219,7 @@ namespace Crypter.API.Services
 
          if (!string.IsNullOrEmpty(recipient))
          {
-            var maybeUser = await UserService.ReadAsync(recipient, cancellationToken);
+            var maybeUser = await _userService.ReadAsync(recipient, cancellationToken);
 
             if (maybeUser is null)
             {
@@ -232,7 +239,7 @@ namespace Crypter.API.Services
             return new BadRequestObjectResult(new ErrorResponse(errorCode));
          }
 
-         var saveResult = await FileTransferItemStorageService.SaveAsync(genericTransferData.Id, ciphertextServerEncrypted, cancellationToken);
+         var saveResult = await _fileTransferItemStorageService.SaveAsync(genericTransferData.Id, ciphertextServerEncrypted, cancellationToken);
          if (!saveResult)
          {
             return new BadRequestObjectResult(new ErrorResponse(UploadTransferError.UnknownError));
@@ -254,11 +261,11 @@ namespace Crypter.API.Services
                genericTransferData.Created,
                genericTransferData.Expiration);
 
-         await FileTransferService.InsertAsync(fileItem, default);
+         await _fileTransferService.InsertAsync(fileItem, default);
 
          if (recipientId != Guid.Empty)
          {
-            BackgroundJob.Enqueue(() => EmailService.HangfireSendTransferNotificationAsync(TransferItemType.File, fileItem.Id));
+            BackgroundJob.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(TransferItemType.File, fileItem.Id, CancellationToken.None));
          }
 
          return new OkObjectResult(
