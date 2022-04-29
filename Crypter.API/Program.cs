@@ -65,7 +65,6 @@ builder.Services.AddScoped<IUserNotificationSettingService, UserNotificationSett
 builder.Services.AddScoped<IUserTokenService, UserTokenService>();
 builder.Services.AddScoped<IBaseTransferService<IMessageTransfer>, MessageTransferItemService>();
 builder.Services.AddScoped<IBaseTransferService<IFileTransfer>, FileTransferItemService>();
-builder.Services.AddScoped<ISchemaService, SchemaService>();
 
 builder.Services.AddMediatR(Assembly.GetAssembly(typeof(Crypter.Core.DataContext))!);
 
