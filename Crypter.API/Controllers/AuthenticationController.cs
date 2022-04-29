@@ -175,7 +175,7 @@ namespace Crypter.API.Controllers
 
          Guid userId = _tokenService.ParseUserId(User);
 
-         var validatedTokenId = _tokenService.TryParseTokenID(User)
+         var validatedTokenId = _tokenService.TryParseTokenId(User)
             .ToEither(RefreshError.BearerTokenMissingId);
 
          var validatedDatabaseToken = (await validatedTokenId.BindAsync(
@@ -237,7 +237,7 @@ namespace Crypter.API.Controllers
             .ToEither(LogoutError.RefreshTokenInvalid);
 
          var validatedTokenId = validatedClaimsPrincipal.Bind(
-            x => _tokenService.TryParseTokenID(x)
+            x => _tokenService.TryParseTokenId(x)
             .ToEither(LogoutError.RefreshTokenInvalid));
 
          var foundUserToken = await validatedTokenId.BindAsync(
