@@ -53,7 +53,7 @@ namespace Crypter.Core.Features.User.Commands
 
       public async Task<Unit> Handle(DeleteUserTokenCommand request, CancellationToken cancellationToken)
       {
-         UserToken foundToken = await _context.UserTokens
+         UserTokenEntity foundToken = await _context.UserTokens
             .FindAsync(new object[] { request.TokenId }, cancellationToken);
 
          if (foundToken is not null)

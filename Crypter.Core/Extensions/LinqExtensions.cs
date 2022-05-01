@@ -34,7 +34,7 @@ namespace Crypter.Core.Extensions
 {
    public class LinqExtensions
    {
-      public static Expression<Func<User, bool>> UserPrivacyAllowsVisitor(Guid visitorId)
+      public static Expression<Func<UserEntity, bool>> UserPrivacyAllowsVisitor(Guid visitorId)
       {
          return (x) => x.Id == visitorId
             || x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
@@ -42,7 +42,7 @@ namespace Crypter.Core.Extensions
             || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts && x.Contacts.Any(y => y.ContactId == visitorId));
       }
 
-      public static Expression<Func<User, bool>> UserProfileIsComplete()
+      public static Expression<Func<UserEntity, bool>> UserProfileIsComplete()
       {
          return (x) => x.Profile != null
             && x.X25519KeyPair != null

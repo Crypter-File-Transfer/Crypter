@@ -35,6 +35,6 @@ namespace Crypter.Core.Interfaces
    public interface IUserPrivacySettingService
    {
       Task<bool> UpsertAsync(Guid userId, bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission receiveFilesPermission, UserItemTransferPermission receiveMessagesPermission, CancellationToken cancellationToken);
-      Task<UserPrivacySetting> ReadAsync(Guid userId, CancellationToken cancellationToken);
+      Task<UserPrivacySettingEntity> ReadAsync(Guid userId, CancellationToken cancellationToken);
    }
 }

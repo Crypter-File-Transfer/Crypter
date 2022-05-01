@@ -24,34 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Interfaces;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserContact")]
-   public class UserContact
+   [Table("UserX25519KeyPair")]
+   public class UserX25519KeyPairEntity : IUserPublicKeyPair
    {
       [Key]
       public Guid Id { get; set; }
+      [ForeignKey("User")]
+      public Guid Owner { get; set; }
+      public string PrivateKey { get; set; }
+      public string PublicKey { get; set; }
+      public string ClientIV { get; set; }
+      public DateTime Created { get; set; }
 
-      [Column("Owner")]
-      [ForeignKey("Owner")]
-      public Guid OwnerId { get; set; }
+      public virtual UserEntity User { get; set; }
 
-      [Column("Contact")]
-      [ForeignKey("Contact")]
-      public Guid ContactId { get; set; }
-
-      public virtual User Owner { get; set; }
-      public virtual User Contact { get; set; }
-
-      public UserContact(Guid id, Guid ownerId, Guid contactId)
+      public UserX25519KeyPairEntity(Guid id, Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
       {
          Id = id;
-         OwnerId = ownerId;
-         ContactId = contactId;
+         Owner = owner;
+         PrivateKey = privateKey;
+         PublicKey = publicKey;
+         ClientIV = clientIV;
+         Created = created;
       }
    }
 }

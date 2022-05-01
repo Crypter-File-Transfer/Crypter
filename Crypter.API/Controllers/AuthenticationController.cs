@@ -158,7 +158,7 @@ namespace Crypter.API.Controllers
             };
          }
 
-         static Either<RefreshError, UserToken> ValidateDatabaseToken(UserToken token, Guid userId)
+         static Either<RefreshError, UserTokenEntity> ValidateDatabaseToken(UserTokenEntity token, Guid userId)
          {
             if (token.Owner != userId)
             {

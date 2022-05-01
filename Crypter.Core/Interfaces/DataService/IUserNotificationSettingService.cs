@@ -33,7 +33,7 @@ namespace Crypter.Core.Interfaces
 {
    public interface IUserNotificationSettingService
    {
-      Task<UserNotificationSetting> ReadAsync(Guid userId, CancellationToken cancellationToken);
+      Task<UserNotificationSettingEntity> ReadAsync(Guid userId, CancellationToken cancellationToken);
       Task UpsertAsync(Guid userId, bool enableTransferNotifications, bool emailNotifications, CancellationToken cancellationToken);
    }
 }

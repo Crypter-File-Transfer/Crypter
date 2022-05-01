@@ -31,28 +31,41 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserX25519KeyPair")]
-   public class UserX25519KeyPair : IUserPublicKeyPair
+   [Table("FileTransfer")]
+   public class FileTransferEntity : IFileTransfer
    {
       [Key]
       public Guid Id { get; set; }
-      [ForeignKey("User")]
-      public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
+      public Guid Sender { get; set; }
+      public Guid Recipient { get; set; }
+      public string FileName { get; set; }
+      public string ContentType { get; set; }
+      public int Size { get; set; }
       public string ClientIV { get; set; }
+      public string Signature { get; set; }
+      public string X25519PublicKey { get; set; }
+      public string Ed25519PublicKey { get; set; }
+      public byte[] ServerIV { get; set; }
+      public byte[] ServerDigest { get; set; }
       public DateTime Created { get; set; }
+      public DateTime Expiration { get; set; }
 
-      public virtual User User { get; set; }
-
-      public UserX25519KeyPair(Guid id, Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
+      public FileTransferEntity(Guid id, Guid sender, Guid recipient, string fileName, string contentType, int size, string clientIV, string signature, string x25519PublicKey, string ed25519PublicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
       {
          Id = id;
-         Owner = owner;
-         PrivateKey = privateKey;
-         PublicKey = publicKey;
+         Sender = sender;
+         Recipient = recipient;
+         FileName = fileName;
+         ContentType = contentType;
+         Size = size;
          ClientIV = clientIV;
+         Signature = signature;
+         X25519PublicKey = x25519PublicKey;
+         Ed25519PublicKey = ed25519PublicKey;
+         ServerIV = serverIV;
+         ServerDigest = serverDigest;
          Created = created;
+         Expiration = expiration;
       }
    }
 }

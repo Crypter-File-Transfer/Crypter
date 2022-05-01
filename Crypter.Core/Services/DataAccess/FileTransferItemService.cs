@@ -46,7 +46,7 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task InsertAsync(IFileTransfer item, CancellationToken cancellationToken)
       {
-         Context.FileTransfers.Add((FileTransfer)item);
+         Context.FileTransfers.Add((FileTransferEntity)item);
          await Context.SaveChangesAsync(cancellationToken);
       }
 

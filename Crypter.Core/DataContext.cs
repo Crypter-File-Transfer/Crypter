@@ -45,22 +45,22 @@ namespace Crypter.Core
          optionsBuilder.UseNpgsql(connectionString);
       }
 
-      public DbSet<User> Users { get; set; }
-      public DbSet<UserProfile> UserProfiles { get; set; }
-      public DbSet<UserX25519KeyPair> UserX25519KeyPairs { get; set; }
-      public DbSet<UserEd25519KeyPair> UserEd25519KeyPairs { get; set; }
-      public DbSet<UserPrivacySetting> UserPrivacySettings { get; set; }
-      public DbSet<UserEmailVerification> UserEmailVerifications { get; set; }
-      public DbSet<UserNotificationSetting> UserNotificationSettings { get; set; }
-      public DbSet<UserToken> UserTokens { get; set; }
-      public DbSet<UserContact> UserContacts { get; set; }
-      public DbSet<FileTransfer> FileTransfers { get; set; }
-      public DbSet<MessageTransfer> MessageTransfers { get; set; }
-      public DbSet<Schema> Schema { get; set; }
+      public DbSet<UserEntity> Users { get; set; }
+      public DbSet<UserProfileEntity> UserProfiles { get; set; }
+      public DbSet<UserX25519KeyPairEntity> UserX25519KeyPairs { get; set; }
+      public DbSet<UserEd25519KeyPairEntity> UserEd25519KeyPairs { get; set; }
+      public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; set; }
+      public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; set; }
+      public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; set; }
+      public DbSet<UserTokenEntity> UserTokens { get; set; }
+      public DbSet<UserContactEntity> UserContacts { get; set; }
+      public DbSet<FileTransferEntity> FileTransfers { get; set; }
+      public DbSet<MessageTransferEntity> MessageTransfers { get; set; }
+      public DbSet<SchemaEntity> Schema { get; set; }
 
       protected override void OnModelCreating(ModelBuilder builder)
       {
-         builder.Entity<User>()
+         builder.Entity<UserEntity>()
             .HasMany(x => x.Contacts)
             .WithOne(x => x.Owner);
       }

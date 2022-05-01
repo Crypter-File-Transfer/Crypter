@@ -47,7 +47,7 @@ namespace Crypter.Core.Services.DataAccess
          var userPrivacySettings = await ReadAsync(userId, cancellationToken);
          if (userPrivacySettings == null)
          {
-            var newPrivacySettings = new UserPrivacySetting(userId, allowKeyExchangeRequests, visibilityLevel, receiveFilesPermission, receiveMessagesPermission);
+            var newPrivacySettings = new UserPrivacySettingEntity(userId, allowKeyExchangeRequests, visibilityLevel, receiveFilesPermission, receiveMessagesPermission);
             _context.UserPrivacySettings.Add(newPrivacySettings);
          }
          else
@@ -62,7 +62,7 @@ namespace Crypter.Core.Services.DataAccess
          return true;
       }
 
-      public async Task<UserPrivacySetting> ReadAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<UserPrivacySettingEntity> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
          return await _context.UserPrivacySettings.FindAsync(new object[] { userId }, cancellationToken);
       }

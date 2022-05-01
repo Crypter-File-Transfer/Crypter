@@ -24,28 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Interfaces;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserNotificationSetting")]
-   public class UserNotificationSetting
+   [Table("UserEd25519KeyPair")]
+   public class UserEd25519KeyPairEntity : IUserPublicKeyPair
    {
       [Key]
+      public Guid Id { get; set; }
       [ForeignKey("User")]
       public Guid Owner { get; set; }
-      public bool EnableTransferNotifications { get; set; }
-      public bool EmailNotifications { get; set; }
+      public string PrivateKey { get; set; }
+      public string PublicKey { get; set; }
+      public string ClientIV { get; set; }
+      public DateTime Created { get; set; }
 
-      public virtual User User { get; set; }
+      public virtual UserEntity User { get; set; }
 
-      public UserNotificationSetting(Guid owner, bool enableTransferNotifications, bool emailNotifications)
+      public UserEd25519KeyPairEntity(Guid id, Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
       {
+         Id = id;
          Owner = owner;
-         EnableTransferNotifications = enableTransferNotifications;
-         EmailNotifications = emailNotifications;
+         PrivateKey = privateKey;
+         PublicKey = publicKey;
+         ClientIV = clientIV;
+         Created = created;
       }
    }
 }

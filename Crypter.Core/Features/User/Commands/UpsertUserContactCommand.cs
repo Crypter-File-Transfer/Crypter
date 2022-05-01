@@ -71,7 +71,7 @@ namespace Crypter.Core.Features.User.Commands
 
       public async Task<Either<AddUserContactError, UpsertUserContactCommandResult>> Handle(UpsertUserContactCommand request, CancellationToken cancellationToken)
       {
-         Entities.User contactUser = await _context.Users
+         UserEntity contactUser = await _context.Users
             .Include(x => x.PrivacySetting)
             .Include(x => x.Contacts)
             .FirstOrDefaultAsync(x => x.Id == request.Contact, cancellationToken);
@@ -86,7 +86,7 @@ namespace Crypter.Core.Features.User.Commands
             return AddUserContactError.NotFound;
          }
 
-         UserContact existingContact = await _context.UserContacts
+         UserContactEntity existingContact = await _context.UserContacts
             .FirstOrDefaultAsync(x => x.OwnerId == request.User && x.ContactId == request.Contact, cancellationToken);
 
          Guid userContactId = existingContact == default
@@ -98,7 +98,7 @@ namespace Crypter.Core.Features.User.Commands
 
       private async Task<Guid> AddContactAsync(Guid user, Guid contact, CancellationToken cancellationToken)
       {
-         var newContact = new UserContact(Guid.NewGuid(), user, contact);
+         var newContact = new UserContactEntity(Guid.NewGuid(), user, contact);
          _context.UserContacts.Add(newContact);
          await _context.SaveChangesAsync(cancellationToken);
          return newContact.Id;

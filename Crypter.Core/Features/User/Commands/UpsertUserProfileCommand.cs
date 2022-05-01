@@ -24,40 +24,55 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Core.Features.User.Queries
+namespace Crypter.Core.Features.User.Commands
 {
-   public class UserTokenQuery : IRequest<Maybe<UserTokenEntity>>
+   public class UpsertUserProfileCommand : IRequest<Unit>
    {
-      public Guid TokenId { get; set; }
-
-      public UserTokenQuery(Guid tokenId)
+      public Guid UserId { get; init; }
+      public string Alias { get; init; }
+      public string About { get; init; }
+      
+      public UpsertUserProfileCommand(Guid userId, string alias = "", string about = "")
       {
-         TokenId = tokenId;
+         UserId = userId;
+         Alias = alias;
+         About = about;
       }
    }
 
-   public class UserTokenQueryHandler : IRequestHandler<UserTokenQuery, Maybe<UserTokenEntity>>
+   public class UpsertUserProfileCommandHandler : IRequestHandler<UpsertUserProfileCommand, Unit>
    {
       private readonly DataContext _context;
 
-      public UserTokenQueryHandler(DataContext context)
+      public UpsertUserProfileCommandHandler(DataContext context)
       {
          _context = context;
       }
 
-      public async Task<Maybe<UserTokenEntity>> Handle(UserTokenQuery request, CancellationToken cancellationToken)
+      public async Task<Unit> Handle(UpsertUserProfileCommand request, CancellationToken cancellationToken)
       {
-         var foundToken = await _context.UserTokens
-            .FindAsync(new object[] { request.TokenId }, cancellationToken);
+         var userProfile = await _context.UserProfiles
+            .FirstOrDefaultAsync(x => x.Owner == request.UserId, cancellationToken);
+         if (userProfile is null)
+         {
+            var newProfile = new UserProfileEntity(request.UserId, request.Alias, request.About, null);
+            _context.UserProfiles.Add(newProfile);
+         }
+         else
+         {
+            userProfile.Alias = request.Alias;
+            userProfile.About = request.About;
+         }
 
-         return foundToken ?? Maybe<UserTokenEntity>.None;
+         await _context.SaveChangesAsync(cancellationToken);
+         return Unit.Value;
       }
    }
 }

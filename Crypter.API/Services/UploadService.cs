@@ -187,7 +187,7 @@ namespace Crypter.API.Services
             return new BadRequestObjectResult(new ErrorResponse(UploadTransferError.UnknownError));
          }
 
-         var messageItem = new MessageTransfer(
+         var messageItem = new MessageTransferEntity(
                genericTransferData.Id,
                senderId,
                recipientId,
@@ -245,7 +245,7 @@ namespace Crypter.API.Services
             return new BadRequestObjectResult(new ErrorResponse(UploadTransferError.UnknownError));
          }
 
-         var fileItem = new FileTransfer(
+         var fileItem = new FileTransferEntity(
                genericTransferData.Id,
                senderId,
                recipientId,

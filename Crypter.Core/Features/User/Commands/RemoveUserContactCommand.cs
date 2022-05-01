@@ -56,7 +56,7 @@ namespace Crypter.Core.Features.User.Commands
 
       public async Task<Unit> Handle(RemoveUserContactCommand request, CancellationToken cancellationToken)
       {
-         UserContact contact = await _context.UserContacts
+         UserContactEntity contact = await _context.UserContacts
             .FirstOrDefaultAsync(x => x.OwnerId == request.User && x.ContactId == request.Contact, cancellationToken);
 
          if (contact != default)

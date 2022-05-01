@@ -24,35 +24,30 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserToken")]
-   public class UserToken
+   [Table("UserProfile")]
+   public class UserProfileEntity
    {
       [Key]
-      public Guid Id { get; set; }
       [ForeignKey("User")]
       public Guid Owner { get; set; }
-      public string Description { get; set; }
-      public TokenType Type { get; set; }
-      public DateTime Created { get; set; }
-      public DateTime Expiration { get; set; }
+      public string Alias { get; set; }
+      public string About { get; set; }
+      public string Image { get; set; }
 
-      public virtual User User { get; set; }
+      public virtual UserEntity User { get; set; }
 
-      public UserToken(Guid id, Guid owner, string description, TokenType type, DateTime created, DateTime expiration)
+      public UserProfileEntity(Guid owner, string alias, string about, string image)
       {
-         Id = id;
          Owner = owner;
-         Description = description;
-         Type = type;
-         Created = created;
-         Expiration = expiration;
+         Alias = alias;
+         About = about;
+         Image = image;
       }
    }
 }

@@ -33,7 +33,7 @@ namespace Crypter.Core.Interfaces
 {
    public interface IUserProfileService
    {
-      Task<UserProfile> ReadAsync(Guid id, CancellationToken cancellationToken);
+      Task<UserProfileEntity> ReadAsync(Guid id, CancellationToken cancellationToken);
       Task<bool> UpsertAsync(Guid id, string alias, string about, CancellationToken cancellationToken);
    }
 }

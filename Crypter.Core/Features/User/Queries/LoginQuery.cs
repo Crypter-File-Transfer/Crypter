@@ -27,6 +27,7 @@
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication.Login;
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -89,7 +90,7 @@ namespace Crypter.Core.Features.User.Queries
       public async Task<Either<LoginError, LoginQueryResult>> Handle(LoginQuery request, CancellationToken cancellationToken)
       {
          string lowerUsername = request.Username.Value.ToLower();
-         Entities.User user = await _context.Users
+         UserEntity user = await _context.Users
             .FirstOrDefaultAsync(x => x.Username.ToLower() == lowerUsername, cancellationToken);
 
          if (user is null)

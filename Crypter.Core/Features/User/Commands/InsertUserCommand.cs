@@ -121,10 +121,10 @@ namespace Crypter.Core.Features.User.Commands
 
          (byte[] passwordSalt, byte[] passwordHash) = _passwordHashService.MakeSecurePasswordHash(request.Password);
 
-         Entities.User user = new(Guid.NewGuid(), request.Username, request.EmailAddress, passwordHash, passwordSalt, false, DateTime.UtcNow, DateTime.MinValue);
-         user.Profile = new UserProfile(user.Id, null, null, null);
-         user.PrivacySetting = new UserPrivacySetting(user.Id, true, UserVisibilityLevel.Everyone, UserItemTransferPermission.Everyone, UserItemTransferPermission.Everyone);
-         user.NotificationSetting = new UserNotificationSetting(user.Id, false, false);
+         Entities.UserEntity user = new(Guid.NewGuid(), request.Username, request.EmailAddress, passwordHash, passwordSalt, false, DateTime.UtcNow, DateTime.MinValue);
+         user.Profile = new UserProfileEntity(user.Id, null, null, null);
+         user.PrivacySetting = new UserPrivacySettingEntity(user.Id, true, UserVisibilityLevel.Everyone, UserItemTransferPermission.Everyone, UserItemTransferPermission.Everyone);
+         user.NotificationSetting = new UserNotificationSettingEntity(user.Id, false, false);
 
          _context.Users.Add(user);
          await _context.SaveChangesAsync(cancellationToken);
