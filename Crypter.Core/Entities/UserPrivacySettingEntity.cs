@@ -24,30 +24,33 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Enums;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserEmailVerification")]
-   public class UserEmailVerification
+   [Table("UserPrivacySetting")]
+   public class UserPrivacySettingEntity
    {
       [Key]
       [ForeignKey("User")]
       public Guid Owner { get; set; }
-      public Guid Code { get; set; }
-      public byte[] VerificationKey { get; set; }
-      public DateTime Created { get; set; }
+      public bool AllowKeyExchangeRequests { get; set; }
+      public UserVisibilityLevel Visibility { get; set; }
+      public UserItemTransferPermission ReceiveFiles { get; set; }
+      public UserItemTransferPermission ReceiveMessages { get; set; }
 
-      public virtual User User { get; set; }
+      public virtual UserEntity User { get; set; }
 
-      public UserEmailVerification(Guid owner, Guid code, byte[] verificationKey, DateTime created)
+      public UserPrivacySettingEntity(Guid owner, bool allowKeyExchangeRequests, UserVisibilityLevel visibility, UserItemTransferPermission receiveFiles, UserItemTransferPermission receiveMessages)
       {
          Owner = owner;
-         Code = code;
-         VerificationKey = verificationKey;
-         Created = created;
+         AllowKeyExchangeRequests = allowKeyExchangeRequests;
+         Visibility = visibility;
+         ReceiveFiles = receiveFiles;
+         ReceiveMessages = receiveMessages;
       }
    }
 }

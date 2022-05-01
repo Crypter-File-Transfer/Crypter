@@ -47,12 +47,12 @@ namespace Crypter.Core.Services.DataAccess
          _passwordHashService = passwordHashService;
       }
 
-      public async Task<User> ReadAsync(Guid id, CancellationToken cancellationToken)
+      public async Task<UserEntity> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
          return await Context.Users.FindAsync(new object[] { id }, cancellationToken);
       }
 
-      public async Task<User> ReadAsync(string username, CancellationToken cancellationToken)
+      public async Task<UserEntity> ReadAsync(string username, CancellationToken cancellationToken)
       {
          return await Context.Users
             .Where(user => user.Username.ToLower() == username.ToLower())

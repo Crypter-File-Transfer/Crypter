@@ -33,14 +33,14 @@ namespace Crypter.Core.Features.User.Common
 {
    internal static class UserHelpers
    {
-      public static async Task<bool> IsUsernameAvailableAsync(this DbSet<Entities.User> userContext, Username username, CancellationToken cancellationToken)
+      public static async Task<bool> IsUsernameAvailableAsync(this DbSet<Entities.UserEntity> userContext, Username username, CancellationToken cancellationToken)
       {
          string usernameLowercase = username.Value.ToLower();
          return !await userContext
             .AnyAsync(x => x.Username.ToLower() == usernameLowercase, cancellationToken);
       }
 
-      public static async Task<bool> IsEmailAddressAvailableAsync(this DbSet<Entities.User> userContext, EmailAddress email, CancellationToken cancellationToken)
+      public static async Task<bool> IsEmailAddressAvailableAsync(this DbSet<Entities.UserEntity> userContext, EmailAddress email, CancellationToken cancellationToken)
       {
          string emailLowercase = email.Value.ToLower();
          return !await userContext

@@ -45,18 +45,18 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<bool> InsertAsync(Guid userId, Guid code, byte[] verificationKey, CancellationToken cancellationToken)
       {
-         var emailVerification = new UserEmailVerification(userId, code, verificationKey, DateTime.UtcNow);
+         var emailVerification = new UserEmailVerificationEntity(userId, code, verificationKey, DateTime.UtcNow);
          Context.UserEmailVerifications.Add(emailVerification);
          await Context.SaveChangesAsync(cancellationToken);
          return true;
       }
 
-      public async Task<UserEmailVerification> ReadAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<UserEmailVerificationEntity> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
          return await Context.UserEmailVerifications.FindAsync(new object[] { userId }, cancellationToken);
       }
 
-      public async Task<UserEmailVerification> ReadCodeAsync(Guid code, CancellationToken cancellationToken)
+      public async Task<UserEmailVerificationEntity> ReadCodeAsync(Guid code, CancellationToken cancellationToken)
       {
          return await Context.UserEmailVerifications
             .Where(x => x.Code == code)

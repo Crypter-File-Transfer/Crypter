@@ -35,7 +35,7 @@ namespace Crypter.Core.Services
 {
    public class UserPrivacyService : IUserPrivacyService
    {
-      public bool UserIsVisibleToVisitor(User user, Guid visitorID)
+      public bool UserIsVisibleToVisitor(UserEntity user, Guid visitorID)
       {
          if (user.Contacts == null)
          {
@@ -62,17 +62,17 @@ namespace Crypter.Core.Services
          };
       }
 
-      public bool UserAcceptsFileTransfersFromVisitor(User user, Guid visitorId)
+      public bool UserAcceptsFileTransfersFromVisitor(UserEntity user, Guid visitorId)
       {
          return UserAcceptsTransferFromVisitor(user, visitorId, user.PrivacySetting.ReceiveFiles);
       }
 
-      public bool UserAcceptsMessageTransfersFromVisitor(User user, Guid visitorId)
+      public bool UserAcceptsMessageTransfersFromVisitor(UserEntity user, Guid visitorId)
       {
          return UserAcceptsTransferFromVisitor(user, visitorId, user.PrivacySetting.ReceiveMessages);
       }
 
-      private static bool UserAcceptsTransferFromVisitor(User user, Guid visitorId, UserItemTransferPermission transferPermission)
+      private static bool UserAcceptsTransferFromVisitor(UserEntity user, Guid visitorId, UserItemTransferPermission transferPermission)
       {
          return transferPermission switch
          {
@@ -85,7 +85,7 @@ namespace Crypter.Core.Services
          };
       }
 
-      private static bool VisitorIsUserContact(List<UserContact> contacts, Guid visitorId)
+      private static bool VisitorIsUserContact(List<UserContactEntity> contacts, Guid visitorId)
       {
          return contacts.Any(x => x.ContactId == visitorId);
       }

@@ -41,7 +41,7 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task<UserProfile> ReadAsync(Guid id, CancellationToken cancellationToken)
+      public async Task<UserProfileEntity> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
          return await Context.UserProfiles.FindAsync(new object[] { id }, cancellationToken);
       }
@@ -51,7 +51,7 @@ namespace Crypter.Core.Services.DataAccess
          var userProfile = await ReadAsync(id, cancellationToken);
          if (userProfile == null)
          {
-            var newProfile = new UserProfile(id, alias, about, null);
+            var newProfile = new UserProfileEntity(id, alias, about, null);
             Context.UserProfiles.Add(newProfile);
          }
          else

@@ -24,23 +24,34 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Microsoft.EntityFrameworkCore;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("Schema")]
-   [Keyless]
-   public class Schema
+   [Table("UserContact")]
+   public class UserContactEntity
    {
-      public int Version { get; set; }
-      public DateTime Updated { get; set; }
+      [Key]
+      public Guid Id { get; set; }
 
-      public Schema(int version, DateTime updated)
+      [Column("Owner")]
+      [ForeignKey("Owner")]
+      public Guid OwnerId { get; set; }
+
+      [Column("Contact")]
+      [ForeignKey("Contact")]
+      public Guid ContactId { get; set; }
+
+      public virtual UserEntity Owner { get; set; }
+      public virtual UserEntity Contact { get; set; }
+
+      public UserContactEntity(Guid id, Guid ownerId, Guid contactId)
       {
-         Version = version;
-         Updated = updated;
+         Id = id;
+         OwnerId = ownerId;
+         ContactId = contactId;
       }
    }
 }

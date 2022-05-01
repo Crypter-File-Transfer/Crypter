@@ -34,7 +34,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
 {
-   public class UserX25519KeyPairService : IUserPublicKeyPairService<UserX25519KeyPair>
+   public class UserX25519KeyPairService : IUserPublicKeyPairService<UserX25519KeyPairEntity>
    {
       private readonly DataContext Context;
 
@@ -60,12 +60,12 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<bool> InsertUserPublicKeyPairAsync(Guid userId, string privateKey, string publicKey, string clientIV, CancellationToken cancellationToken)
       {
-         if (await GetUserPublicKeyPairAsync(userId, cancellationToken) != default(UserX25519KeyPair))
+         if (await GetUserPublicKeyPairAsync(userId, cancellationToken) != default(UserX25519KeyPairEntity))
          {
             return false;
          }
 
-         var key = new UserX25519KeyPair(
+         var key = new UserX25519KeyPairEntity(
              Guid.NewGuid(),
              userId,
              privateKey,

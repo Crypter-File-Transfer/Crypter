@@ -81,7 +81,7 @@ namespace Crypter.Test.API_Tests
       {
          var username = Username.From("jack");
          var noEmailAddress = Maybe<EmailAddress>.None;
-         var user = new User(Guid.NewGuid(), username, noEmailAddress, default, default, false, default, default);
+         var user = new UserEntity(Guid.NewGuid(), username, noEmailAddress, default, default, false, default, default);
 
          var mockUserService = new Mock<IUserService>();
          mockUserService
@@ -118,7 +118,7 @@ namespace Crypter.Test.API_Tests
       {
          var username = Username.From("jack");
          var emailAddress = EmailAddress.From("jack@crypter.dev");
-         var user = new User(Guid.NewGuid(), username, emailAddress, default, default, true, default, default);
+         var user = new UserEntity(Guid.NewGuid(), username, emailAddress, default, default, true, default, default);
 
          var mockUserService = new Mock<IUserService>();
          mockUserService
@@ -155,14 +155,14 @@ namespace Crypter.Test.API_Tests
       {
          var username = Username.From("jack");
          var emailAddress = EmailAddress.From("jack@crypter.dev");
-         var user = new User(Guid.NewGuid(), username, emailAddress, default, default, false, default, default);
+         var user = new UserEntity(Guid.NewGuid(), username, emailAddress, default, default, false, default, default);
 
          var mockUserService = new Mock<IUserService>();
          mockUserService
             .Setup(x => x.ReadAsync(It.IsAny<Guid>(), default))
             .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => user);
 
-         var userVerification = new UserEmailVerification(user.Id, Guid.NewGuid(), default, DateTime.UtcNow);
+         var userVerification = new UserEmailVerificationEntity(user.Id, Guid.NewGuid(), default, DateTime.UtcNow);
 
          var mockUserEmailVerificationService = new Mock<IUserEmailVerificationService>();
          mockUserEmailVerificationService
@@ -194,7 +194,7 @@ namespace Crypter.Test.API_Tests
       {
          var username = Username.From("jack");
          var emailAddress = EmailAddress.From("jack@crypter.dev");
-         var user = new User(Guid.NewGuid(), username, emailAddress, default, default, false, default, default);
+         var user = new UserEntity(Guid.NewGuid(), username, emailAddress, default, default, false, default, default);
 
          var mockUserService = new Mock<IUserService>();
          mockUserService

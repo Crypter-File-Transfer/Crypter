@@ -31,26 +31,28 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserPrivacySetting")]
-   public class UserPrivacySetting
+   [Table("UserToken")]
+   public class UserTokenEntity
    {
       [Key]
+      public Guid Id { get; set; }
       [ForeignKey("User")]
       public Guid Owner { get; set; }
-      public bool AllowKeyExchangeRequests { get; set; }
-      public UserVisibilityLevel Visibility { get; set; }
-      public UserItemTransferPermission ReceiveFiles { get; set; }
-      public UserItemTransferPermission ReceiveMessages { get; set; }
+      public string Description { get; set; }
+      public TokenType Type { get; set; }
+      public DateTime Created { get; set; }
+      public DateTime Expiration { get; set; }
 
-      public virtual User User { get; set; }
+      public virtual UserEntity User { get; set; }
 
-      public UserPrivacySetting(Guid owner, bool allowKeyExchangeRequests, UserVisibilityLevel visibility, UserItemTransferPermission receiveFiles, UserItemTransferPermission receiveMessages)
+      public UserTokenEntity(Guid id, Guid owner, string description, TokenType type, DateTime created, DateTime expiration)
       {
+         Id = id;
          Owner = owner;
-         AllowKeyExchangeRequests = allowKeyExchangeRequests;
-         Visibility = visibility;
-         ReceiveFiles = receiveFiles;
-         ReceiveMessages = receiveMessages;
+         Description = description;
+         Type = type;
+         Created = created;
+         Expiration = expiration;
       }
    }
 }

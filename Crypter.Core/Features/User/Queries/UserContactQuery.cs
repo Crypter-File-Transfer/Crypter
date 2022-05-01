@@ -61,7 +61,7 @@ namespace Crypter.Core.Features.User.Queries
 
       public async Task<Maybe<UserContactDTO>> Handle(UserContactQuery request, CancellationToken cancellationToken)
       {
-         UserContact userContact = await _context.UserContacts
+         UserContactEntity userContact = await _context.UserContacts
             .Include(x => x.Contact)
                .ThenInclude(x => x.Profile)
             .Include(x => x.Contact)

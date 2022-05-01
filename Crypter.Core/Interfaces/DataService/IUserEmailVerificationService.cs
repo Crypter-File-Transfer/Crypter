@@ -34,8 +34,8 @@ namespace Crypter.Core.Interfaces
    public interface IUserEmailVerificationService
    {
       Task<bool> InsertAsync(Guid userId, Guid code, byte[] verificationKey, CancellationToken cancellationToken);
-      Task<UserEmailVerification> ReadAsync(Guid userId, CancellationToken cancellationToken);
-      Task<UserEmailVerification> ReadCodeAsync(Guid code, CancellationToken cancellationToken);
+      Task<UserEmailVerificationEntity> ReadAsync(Guid userId, CancellationToken cancellationToken);
+      Task<UserEmailVerificationEntity> ReadCodeAsync(Guid code, CancellationToken cancellationToken);
       Task DeleteAsync(Guid userId, CancellationToken cancellationToken);
    }
 }

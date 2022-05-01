@@ -24,46 +24,30 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Interfaces;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("MessageTransfer")]
-   public class MessageTransfer : IMessageTransfer
+   [Table("UserEmailVerification")]
+   public class UserEmailVerificationEntity
    {
       [Key]
-      public Guid Id { get; set; }
-      public Guid Sender { get; set; }
-      public Guid Recipient { get; set; }
-      public string Subject { get; set; }
-      public int Size { get; set; }
-      public string ClientIV { get; set; }
-      public string Signature { get; set; }
-      public string X25519PublicKey { get; set; }
-      public string Ed25519PublicKey { get; set; }
-      public byte[] ServerIV { get; set; }
-      public byte[] ServerDigest { get; set; }
+      [ForeignKey("User")]
+      public Guid Owner { get; set; }
+      public Guid Code { get; set; }
+      public byte[] VerificationKey { get; set; }
       public DateTime Created { get; set; }
-      public DateTime Expiration { get; set; }
 
-      public MessageTransfer(Guid id, Guid sender, Guid recipient, string subject, int size, string clientIV, string signature, string x25519PublicKey, string ed25519PublicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
+      public virtual UserEntity User { get; set; }
+
+      public UserEmailVerificationEntity(Guid owner, Guid code, byte[] verificationKey, DateTime created)
       {
-         Id = id;
-         Sender = sender;
-         Recipient = recipient;
-         Subject = subject;
-         Size = size;
-         ClientIV = clientIV;
-         Signature = signature;
-         X25519PublicKey = x25519PublicKey;
-         Ed25519PublicKey = ed25519PublicKey;
-         ServerIV = serverIV;
-         ServerDigest = serverDigest;
+         Owner = owner;
+         Code = code;
+         VerificationKey = verificationKey;
          Created = created;
-         Expiration = expiration;
       }
    }
 }
