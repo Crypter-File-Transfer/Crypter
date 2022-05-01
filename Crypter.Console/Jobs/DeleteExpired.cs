@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Enums;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Services;
 using Microsoft.Extensions.Logging;

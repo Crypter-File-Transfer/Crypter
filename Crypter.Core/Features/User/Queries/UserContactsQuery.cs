@@ -73,8 +73,8 @@ namespace Crypter.Core.Features.User.Queries
             .Select(x =>
             {
                return _userPrivacyService.UserIsVisibleToVisitor(x.Contact, request.User)
-                  ? new UserContactDTO(x.ContactId, x.Contact.Username, x.Contact.Profile.Alias)
-                  : new UserContactDTO(x.ContactId, "{ Private }", null);
+                  ? new UserContactDTO(x.Contact.Username, x.Contact.Profile.Alias)
+                  : new UserContactDTO("{ Private }");
             })
             .ToList();
       }

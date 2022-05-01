@@ -39,7 +39,7 @@ namespace Crypter.ClientServices.Implementations
    public class UserContactsService : IUserContactsService
    {
       private readonly ICrypterApiService _crypterApiService;
-      private IDictionary<Guid, UserContactDTO> _contacts;
+      private IDictionary<string, UserContactDTO> _contacts;
 
       public UserContactsService(ICrypterApiService crypterApiService)
       {
@@ -63,31 +63,33 @@ namespace Crypter.ClientServices.Implementations
          return _contacts.Values.ToList();
       }
 
-      public bool IsContact(Guid userId)
+      public bool IsContact(string contactUsername)
       {
-         return _contacts.ContainsKey(userId);
+         return _contacts.ContainsKey(contactUsername.ToLower());
       }
 
-      public async Task<Either<AddUserContactError, UserContactDTO>> AddContactAsync(Guid userId)
+      public async Task<Either<AddUserContactError, UserContactDTO>> AddContactAsync(string contactUsername)
       {
-         if (_contacts.ContainsKey(userId))
+         string lowerContactUsername = contactUsername.ToLower();
+         if (_contacts.ContainsKey(lowerContactUsername))
          {
-            return _contacts[userId];
+            return _contacts[lowerContactUsername];
          }
 
-         var request = new AddUserContactRequest(userId);
+         var request = new AddUserContactRequest(lowerContactUsername);
          var response = await _crypterApiService.AddUserContactAsync(request);
-         response.DoRight(x => _contacts.Add(x.Contact.Id, x.Contact));
+         response.DoRight(x => _contacts.Add(lowerContactUsername, x.Contact));
          return response.Match<Either<AddUserContactError, UserContactDTO>>(
             left => left,
             right => right.Contact);
       }
 
-      public async Task RemoveContactAsync(Guid userId)
+      public async Task RemoveContactAsync(string contactUsername)
       {
-         var request = new RemoveUserContactRequest(userId);
+         string lowerContactUsername = contactUsername.ToLower();
+         var request = new RemoveUserContactRequest(lowerContactUsername);
          var response = await _crypterApiService.RemoveUserContactAsync(request);
-         response.DoRight(x => _contacts.Remove(userId));
+         response.DoRight(x => _contacts.Remove(lowerContactUsername));
       }
 
       public void Recycle()
@@ -95,12 +97,12 @@ namespace Crypter.ClientServices.Implementations
          _contacts = null;
       }
 
-      private async Task<IDictionary<Guid, UserContactDTO>> FetchContactsAsync()
+      private async Task<IDictionary<string, UserContactDTO>> FetchContactsAsync()
       {
          var response = await _crypterApiService.GetUserContactsAsync();
          return response.Match(
-            left => new Dictionary<Guid, UserContactDTO>(),
-            right => right.Contacts.ToDictionary(x => x.Id));
+            left => new Dictionary<string, UserContactDTO>(),
+            right => right.Contacts.ToDictionary(x => x.Username.ToLower()));
       }
    }
 }

@@ -28,6 +28,7 @@ using Crypter.Common.Enums;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Transfer.Upload;
 using Crypter.Core.Entities;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Services;
 using Crypter.CryptoLib.Services;

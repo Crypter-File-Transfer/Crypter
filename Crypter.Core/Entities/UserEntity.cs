@@ -28,15 +28,11 @@ using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("User")]
    public class UserEntity
    {
-      [Key]
       public Guid Id { get; set; }
       public string Username { get; set; }
       public string Email { get; set; }
@@ -48,23 +44,18 @@ namespace Crypter.Core.Entities
 
       public virtual UserProfileEntity Profile { get; set; }
       public virtual UserPrivacySettingEntity PrivacySetting { get; set; }
+      public virtual UserEmailVerificationEntity EmailVerification { get; set; }
       public virtual UserNotificationSettingEntity NotificationSetting { get; set; }
       public virtual UserEd25519KeyPairEntity Ed25519KeyPair { get; set; }
       public virtual UserX25519KeyPairEntity X25519KeyPair { get; set; }
       public virtual List<UserTokenEntity> Tokens { get; set; }
       public virtual List<UserContactEntity> Contacts { get; set; }
+      public virtual List<UserContactEntity> Contactors { get; set; }
+
 
       /// <summary>
-      /// Don't use this
+      /// Do not use this.
       /// </summary>
-      /// <param name="id"></param>
-      /// <param name="username"></param>
-      /// <param name="email"></param>
-      /// <param name="passwordHash"></param>
-      /// <param name="passwordSalt"></param>
-      /// <param name="emailVerified"></param>
-      /// <param name="created"></param>
-      /// <param name="lastLogin"></param>
       public UserEntity(Guid id, string username, string email, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
       {
          Id = id;

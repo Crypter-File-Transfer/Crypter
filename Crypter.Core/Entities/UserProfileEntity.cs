@@ -25,16 +25,11 @@
  */
 
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserProfile")]
    public class UserProfileEntity
    {
-      [Key]
-      [ForeignKey("User")]
       public Guid Owner { get; set; }
       public string Alias { get; set; }
       public string About { get; set; }

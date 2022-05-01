@@ -26,7 +26,7 @@
 
 using System;
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Core.Entities.Interfaces
 {
    public interface ITransferBase
    {

@@ -46,6 +46,7 @@ using Crypter.Contracts.Features.User.UpdatePrivacySettings;
 using Crypter.Contracts.Features.User.UpdateProfile;
 using Crypter.Contracts.Features.User.VerifyEmailAddress;
 using Crypter.Core.Entities;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Features.User.Commands;
 using Crypter.Core.Features.User.Queries;
 using Crypter.Core.Interfaces;
@@ -581,16 +582,16 @@ namespace Crypter.API.Controllers
          }
 
          var userId = _tokenService.ParseUserId(User);
-         var result = await _mediator.Send(new UpsertUserContactCommand(userId, request.Contact), cancellationToken);
+         var result = await _mediator.Send(new UpsertUserContactCommand(userId, request.ContactUsername), cancellationToken);
          return await result.MatchAsync(
-            left => MakeErrorResponse(left),
-            async right =>
+            async () =>
             {
-               var userContactDTO = await _mediator.Send(new UserContactQuery(userId, right.UserContact), cancellationToken);
+               var userContactDTO = await _mediator.Send(new UserContactQuery(userId, request.ContactUsername), cancellationToken);
                return userContactDTO.Match(
                   () => MakeErrorResponse(AddUserContactError.NotFound),
                   some => new OkObjectResult(new AddUserContactResponse(some)));
-            });
+            },
+            error => MakeErrorResponse(error));
       }
 
       [Authorize]
@@ -600,7 +601,7 @@ namespace Crypter.API.Controllers
       public async Task<IActionResult> RemoveUserContactAsync([FromBody] RemoveUserContactRequest request, CancellationToken cancellationToken)
       {
          var userId = _tokenService.ParseUserId(User);
-         await _mediator.Send(new RemoveUserContactCommand(userId, request.Contact), cancellationToken);
+         await _mediator.Send(new RemoveUserContactCommand(userId, request.ContactUsername), cancellationToken);
          return new OkObjectResult(new RemoveUserContactResponse());
       }
    }

@@ -29,6 +29,7 @@ using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Services;
 using Crypter.CryptoLib.Services;

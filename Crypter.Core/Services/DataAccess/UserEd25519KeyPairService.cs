@@ -25,6 +25,7 @@
  */
 
 using Crypter.Core.Entities;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -66,7 +67,6 @@ namespace Crypter.Core.Services.DataAccess
          }
 
          var key = new UserEd25519KeyPairEntity(
-             Guid.NewGuid(),
              userId,
              privateKey,
              publicKey,

@@ -56,9 +56,9 @@ namespace Crypter.Web.Pages
             : $"{alias} ({username})";
       }
 
-      protected async Task RemoveContactAsync(Guid userId)
+      protected async Task RemoveContactAsync(string contactUsername)
       {
-         await UserContactsService.RemoveContactAsync(userId);
+         await UserContactsService.RemoveContactAsync(contactUsername);
          Contacts = await UserContactsService.GetContactsAsync();
       }
    }

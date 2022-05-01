@@ -63,13 +63,13 @@
                               </a>
                            </div>
                            <div class="p-2 bd-highlight">
-                              @if (UserContactsService.IsContact(result.Id))
+                              @if (UserContactsService.IsContact(result.Username))
                               {
                                  <button type="button" disable class="btn btn-outline-success">Added</button>
                               }
                               else
                               {
-                                 <button type="button" class="btn btn-outline-dark" @onclick="async () => await AddContactAsync(result.Id)">Add Contact</button>
+                                 <button type="button" class="btn btn-outline-dark" @onclick="async () => await AddContactAsync(result.Username)">Add Contact</button>
                               }
                            </div>
                         </div>

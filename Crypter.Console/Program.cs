@@ -26,6 +26,7 @@
 
 using Crypter.Console.Jobs;
 using Crypter.Core;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Services.DataAccess;
 using Microsoft.Extensions.Configuration;

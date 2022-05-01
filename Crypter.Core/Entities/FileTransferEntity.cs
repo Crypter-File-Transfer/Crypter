@@ -24,17 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Interfaces;
+using Crypter.Core.Entities.Interfaces;
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("FileTransfer")]
    public class FileTransferEntity : IFileTransfer
    {
-      [Key]
       public Guid Id { get; set; }
       public Guid Sender { get; set; }
       public Guid Recipient { get; set; }
