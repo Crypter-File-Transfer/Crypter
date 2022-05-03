@@ -25,6 +25,7 @@
  */
 
 using Crypter.Core.Entities;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;

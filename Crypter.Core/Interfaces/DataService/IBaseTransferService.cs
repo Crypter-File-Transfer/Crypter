@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading;

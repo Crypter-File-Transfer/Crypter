@@ -26,6 +26,7 @@
 
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Features.User.Commands;
 using Crypter.Core.Interfaces;
 using Crypter.CryptoLib;

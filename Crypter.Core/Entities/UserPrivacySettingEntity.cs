@@ -26,16 +26,11 @@
 
 using Crypter.Common.Enums;
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserPrivacySetting")]
    public class UserPrivacySettingEntity
    {
-      [Key]
-      [ForeignKey("User")]
       public Guid Owner { get; set; }
       public bool AllowKeyExchangeRequests { get; set; }
       public UserVisibilityLevel Visibility { get; set; }

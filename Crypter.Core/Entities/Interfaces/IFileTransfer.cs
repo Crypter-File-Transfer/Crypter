@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Interfaces
+namespace Crypter.Core.Entities.Interfaces
 {
    public interface IFileTransfer : ITransferBase
    {

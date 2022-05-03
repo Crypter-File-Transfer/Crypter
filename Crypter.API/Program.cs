@@ -29,6 +29,7 @@ using Crypter.API.Models;
 using Crypter.API.Services;
 using Crypter.Core;
 using Crypter.Core.Entities;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Services;
 using Crypter.Core.Services.DataAccess;

@@ -25,31 +25,19 @@
  */
 
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserContact")]
    public class UserContactEntity
    {
-      [Key]
-      public Guid Id { get; set; }
-
-      [Column("Owner")]
-      [ForeignKey("Owner")]
       public Guid OwnerId { get; set; }
-
-      [Column("Contact")]
-      [ForeignKey("Contact")]
       public Guid ContactId { get; set; }
 
       public virtual UserEntity Owner { get; set; }
       public virtual UserEntity Contact { get; set; }
 
-      public UserContactEntity(Guid id, Guid ownerId, Guid contactId)
+      public UserContactEntity(Guid ownerId, Guid contactId)
       {
-         Id = id;
          OwnerId = ownerId;
          ContactId = contactId;
       }

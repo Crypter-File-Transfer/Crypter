@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.API.Models;
 using Crypter.API.Services;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
 using MediatR;
 using Moq;

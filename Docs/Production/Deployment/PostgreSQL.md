@@ -9,31 +9,40 @@ Both databases are required.
 
 1. Copy the [./Containers/PostgreSQL](../../../Containers/PostgreSQL) directory to the database server.
 2. Review and configure the `.env` file.
-3. Modify the user password in the `./postgres-init-files/init.sh` file, line 10.
+3. Modify the user passwords in the `./postgres-init-files/init.sh` file, lines 10 and 25.
 4. Invoke `docker-compose up -d`.
 
 ## Crypter schema
 
-After getting the PostgrSQL container running, the `crypter` database will exist, but it will not have any tables.
+After getting the PostgreSQL container running, the `crypter` database will exist, but it will not have any tables.
 There are two ways to create these tables.
 
-### Method 1 - The hacky way
+### Method 1 - Development
 
 Crypter.API will automatically create any missing tables in the database when it is run in development mode.
 All you need to do is set the correct connection string in the project's `appsettings.json` and run the API.
 
 A few drawbacks to this method are:
-* The API does not run in development mode in production.
-* The schema will be slightly different than what exists in production.
+* This requires the API connect to the database with a user that has total control over the database schema. This violates the principal of least privilege.
+* Migrations are not automatically handled. If the schema changes, it will be easier to just delete your database and start fresh with the latest schema.
 
-### Method 2 - The proper way
+### Method 2 - Production
 
-Crypter.Console has a function to create the schema.
-You can use this function by building Crypter.Console then invoke via `./Crypter.Console.exe --create-schema {connection_string}`.
+To create the database:
 
-All of the scripts used to create the schema are stored in the Crypter.Consolr project folder.
-If a new tables gets added, then we need to add a corresponding table creation script.
-These scripts are the same ones used in production.
+ 1. Verify the user configured in the `Crypter.API/appsettings.json` file's `DefaultConnection` connection string is a superuser. This is usually the `postgres` user with a password of `CHANGE_ME`.
+ 2. Open the Package Manager Console in Visual Studio.
+ 3. Select `Crypter.Core` as the default project.
+ 4. Invoke `Update-Database` to create the most recent version of the database.
+ 5. Undo the change you made to `Crypter.API/appsettings.json`.
+
+To migrate the database:
+
+ 1. Open the Package Manager Console in Visual Studio.
+ 2. Select `Crypter.Core` as the default project.
+ 3. Use `Script-Migration` to produce a migration script. You may need to use the `-From`, `-To`, or `-Idempotent` arguments to get what you really need.
+ 4. Backup the database using `pg_dump dbname > outfile`.
+ 5. Run the migration script as a superuser.
 
 ## Hangfire Notes + Steps
 
@@ -41,14 +50,4 @@ Crypter uses [Hangfire.io](https://www.hangfire.io/), which requires it's own da
 Although the SQL in `init.sh` will create a `crypter_hangfire` database, it will not contain any of the tables or sequences expected by Hangfire.
 
 I recommend letting Hangfire take care of it's own needs.
-This can be accomplished by following the rough steps below.
-
-1. Find a Crypter project that makes use of Hangfire. E.g., Crypter.API.
-2. Temporarily configure that project so it connects to the `crypter_hangfire` database using the `postgres` user.
-3. Run the project.
-4. Verify the `crypter_hangfire` database contains a schema named `hangfire`.
-5. Verify the `hangfire` schema contains a number of tables **and** sequences.
-6. Stop the project. Reconfigure the project so that it connects to `crypter_hangfire` using `cryptuser`.
-7. Revoke all permissions from `crypteruser` on the tables that were created.
-8. Manually grant SELECT, INSERT, UPDATE, and DELETE permissions  to those tables.
-9. Run the project again and check for errors when doing things that involve Hangfire.
+Running `Crypter.API` is sufficient to get this database scaffolded, assuming the `init.sh` script has already been run.

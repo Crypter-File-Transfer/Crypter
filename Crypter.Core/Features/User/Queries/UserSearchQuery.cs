@@ -98,12 +98,7 @@ namespace Crypter.Core.Features.User.Queries
             .OrderBy(x => x.Username)
             .Skip(request.StartingIndex)
             .Take(request.Count)
-            .Select(x =>
-               new UserSearchResultDTO(
-                  x.Id,
-                  x.Username,
-                  x.Profile.Alias
-               ))
+            .Select(x => new UserSearchResultDTO(x.Username, x.Profile.Alias))
             .ToListAsync(cancellationToken);
 
          return new UserSearchQueryResult(totalMatches, users);

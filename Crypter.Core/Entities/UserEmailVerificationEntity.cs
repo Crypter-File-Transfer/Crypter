@@ -25,16 +25,11 @@
  */
 
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserEmailVerification")]
    public class UserEmailVerificationEntity
    {
-      [Key]
-      [ForeignKey("User")]
       public Guid Owner { get; set; }
       public Guid Code { get; set; }
       public byte[] VerificationKey { get; set; }

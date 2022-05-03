@@ -24,14 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Microsoft.EntityFrameworkCore;
 using System;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("Schema")]
-   [Keyless]
    public class SchemaEntity
    {
       public int Version { get; set; }

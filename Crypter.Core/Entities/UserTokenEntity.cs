@@ -26,17 +26,12 @@
 
 using Crypter.Common.Enums;
 using System;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Crypter.Core.Entities
 {
-   [Table("UserToken")]
    public class UserTokenEntity
    {
-      [Key]
       public Guid Id { get; set; }
-      [ForeignKey("User")]
       public Guid Owner { get; set; }
       public string Description { get; set; }
       public TokenType Type { get; set; }
