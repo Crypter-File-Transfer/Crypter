@@ -35,9 +35,6 @@ Commands:
 
     -h --help /?                                      Show this menu
     -d --delete-expired                               Delete expired uploads
-    --create-schema {connection-string}               Create tables for the 'crypter' database
-    --migrate-schema {filename} {connection-string}   Migrate the 'crypter' database schema
-    --delete-schema {connection-string}               Delete tables for the 'crypter' database
 ");
       }
    }
