@@ -47,6 +47,7 @@ namespace Crypter.ClientServices.Implementations
       private readonly IUserSessionRepository _userSessionRepository;
       private readonly ITokenRepository _tokenRepository;
 
+      private EventHandler<UserSessionServiceInitializedEventArgs> _serviceInitializedEventHandler;
       private EventHandler<UserLoggedInEventArgs> _userLoggedInEventHandler;
       private EventHandler _userLoggedOutEventHandler;
 
@@ -91,6 +92,7 @@ namespace Crypter.ClientServices.Implementations
          {
             _initializationMutex.Release();
          }
+         HandleServiceInitializedEvent();
       }
 
       public async Task<bool> LoginAsync(Username username, Password password, bool rememberUser)
@@ -132,11 +134,20 @@ namespace Crypter.ClientServices.Implementations
          });
       }
 
+      private void HandleServiceInitializedEvent() =>
+         _serviceInitializedEventHandler?.Invoke(this, new UserSessionServiceInitializedEventArgs(LoggedIn));
+
       private void HandleUserLoggedInEvent(Username username, Password password, bool rememberUser) =>
          _userLoggedInEventHandler?.Invoke(this, new UserLoggedInEventArgs(username, password, rememberUser));
 
       private void HandleUserLoggedOutEvent() =>
          _userLoggedOutEventHandler?.Invoke(this, EventArgs.Empty);
+
+      public event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler
+      {
+         add => _serviceInitializedEventHandler = (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Combine(_serviceInitializedEventHandler, value);
+         remove => _serviceInitializedEventHandler = (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Remove(_serviceInitializedEventHandler, value);
+      }
 
       public event EventHandler<UserLoggedInEventArgs> UserLoggedInEventHandler
       {

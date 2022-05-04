@@ -25,7 +25,7 @@
  */
 
 using Crypter.Common.Enums;
-using Crypter.Core.Models;
+using Crypter.Core.Entities;
 using MediatR;
 using System;
 using System.Threading;
@@ -62,7 +62,7 @@ namespace Crypter.Core.Features.User.Commands
 
       public async Task<Unit> Handle(InsertUserTokenCommand request, CancellationToken cancellationToken)
       {
-         UserToken token = new(request.TokenId, request.UserId, request.UserAgent, request.TokenType, DateTime.UtcNow, request.TokenExpiration);
+         UserTokenEntity token = new(request.TokenId, request.UserId, request.UserAgent, request.TokenType, DateTime.UtcNow, request.TokenExpiration);
          _context.UserTokens.Add(token);
          await _context.SaveChangesAsync(cancellationToken);
          return Unit.Value;

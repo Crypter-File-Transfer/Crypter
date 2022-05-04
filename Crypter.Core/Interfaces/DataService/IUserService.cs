@@ -26,7 +26,7 @@
 
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.User.UpdateContactInfo;
-using Crypter.Core.Models;
+using Crypter.Core.Entities;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,8 +35,8 @@ namespace Crypter.Core.Interfaces
 {
    public interface IUserService
    {
-      Task<User> ReadAsync(Guid id, CancellationToken cancellationToken);
-      Task<User> ReadAsync(string username, CancellationToken cancellationToken);
+      Task<UserEntity> ReadAsync(Guid id, CancellationToken cancellationToken);
+      Task<UserEntity> ReadAsync(string username, CancellationToken cancellationToken);
       Task<(bool Success, UpdateContactInfoError Error)> UpdateContactInfoAsync(Guid id, EmailAddress emailAddress, AuthenticationPassword currentPassword, CancellationToken cancellationToken);
       Task UpdateEmailAddressVerification(Guid id, bool isVerified, CancellationToken cancellationToken);
       Task DeleteAsync(Guid id, CancellationToken cancellationToken);

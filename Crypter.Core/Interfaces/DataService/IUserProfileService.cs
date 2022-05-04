@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -32,7 +33,7 @@ namespace Crypter.Core.Interfaces
 {
    public interface IUserProfileService
    {
-      Task<IUserProfile> ReadAsync(Guid id, CancellationToken cancellationToken);
+      Task<UserProfileEntity> ReadAsync(Guid id, CancellationToken cancellationToken);
       Task<bool> UpsertAsync(Guid id, string alias, string about, CancellationToken cancellationToken);
    }
 }

@@ -24,19 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-
 namespace Crypter.Contracts.Features.User.GetContacts
 {
    public class UserContactDTO
    {
-      public Guid Id { get; private set; }
       public string Username { get; private set; }
       public string Alias { get; private set; }
 
-      public UserContactDTO(Guid id, string username, string alias)
+      public UserContactDTO(string username, string alias = "")
       {
-         Id = id;
          Username = username;
          Alias = alias;
       }

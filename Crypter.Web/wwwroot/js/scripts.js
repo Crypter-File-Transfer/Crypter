@@ -1,19 +1,24 @@
 ﻿window.Crypter = {
    CopyToClipboard: function (text) {
+      const animationTiming = {
+         duration: 500,
+         iterations: 1
+      };
+
       navigator.clipboard.writeText(text).then(() => {
-         $('.copiedToolTip').css('display', 'block');
-         $('.copiedToolTip').animate({
-            opacity: 1
-         }, 500, function () {
-            $('.copiedToolTip').delay(500).animate({
-               opacity: 0
-            }, 500, function () {
-               $('.copiedToolTip').css('display', 'none');
-            });
-         });
-      }).catch((error) => {
-         console.log(error);
-      })
+         const tooltip = document.querySelector('.toolTipText');
+         tooltip.style.display = 'block'
+         tooltip.animate([{ opacity: 0 }, { opacity: 1 }], animationTiming)
+            .onfinish = (e) => {
+               tooltip.style.opacity = 1;
+               setTimeout(() => {
+                  document.querySelector('.toolTipText').animate([{ opacity: 1 }, { opacity: 0 }], animationTiming)
+                     .onfinish = (e) => {
+                        document.querySelector('.toolTipText').style.display = 'none';
+                     }
+               }, 500);
+            }
+      });
    },
 
    SetActivePage: function (page) {

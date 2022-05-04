@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -31,7 +32,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Interfaces
 {
-   public interface IBaseTransferService<T> where T : IBaseTransferItem
+   public interface IBaseTransferService<T> where T : ITransferBase
    {
       Task InsertAsync(T item, CancellationToken cancellationToken);
       Task<T> ReadAsync(Guid id, CancellationToken cancellationToken);

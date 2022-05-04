@@ -24,8 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -34,7 +35,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
 {
-   public class UserX25519KeyPairService : IUserPublicKeyPairService<UserX25519KeyPair>
+   public class UserX25519KeyPairService : IUserPublicKeyPairService<UserX25519KeyPairEntity>
    {
       private readonly DataContext Context;
 
@@ -60,13 +61,12 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<bool> InsertUserPublicKeyPairAsync(Guid userId, string privateKey, string publicKey, string clientIV, CancellationToken cancellationToken)
       {
-         if (await GetUserPublicKeyPairAsync(userId, cancellationToken) != default(UserX25519KeyPair))
+         if (await GetUserPublicKeyPairAsync(userId, cancellationToken) != default(UserX25519KeyPairEntity))
          {
             return false;
          }
 
-         var key = new UserX25519KeyPair(
-             Guid.NewGuid(),
+         var key = new UserX25519KeyPairEntity(
              userId,
              privateKey,
              publicKey,

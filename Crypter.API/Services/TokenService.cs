@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.API.Configuration;
 using Crypter.API.Models;
-using Crypter.API.Startup;
 using Crypter.Common.Exceptions;
 using Crypter.Common.Monads;
 using Microsoft.IdentityModel.Tokens;
@@ -45,7 +45,7 @@ namespace Crypter.API.Services
       Maybe<ClaimsPrincipal> ValidateToken(string token);
       Guid ParseUserId(ClaimsPrincipal claimsPrincipal);
       Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal);
-      Maybe<Guid> TryParseTokenID(ClaimsPrincipal claimsPrincipal);
+      Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal);
    }
 
    public class TokenService : ITokenService
@@ -107,7 +107,7 @@ namespace Crypter.API.Services
          return userId;
       }
 
-      public Maybe<Guid> TryParseTokenID(ClaimsPrincipal claimsPrincipal)
+      public Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal)
       {
          var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
          if (idClaim is null)

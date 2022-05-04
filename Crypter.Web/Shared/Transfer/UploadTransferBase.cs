@@ -30,6 +30,7 @@ using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
 using Crypter.CryptoLib.Services;
+using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using Org.BouncyCastle.Crypto;
 using System;
@@ -106,8 +107,10 @@ namespace Crypter.Web.Shared.Transfer
       [Parameter]
       public int RequestedExpirationHours { get; set; }
 
-      protected Modal.TransferSuccessModal ModalForAnonymousRecipient { get; set; }
-      protected Modal.BasicModal ModalForUserRecipient { get; set; }
+      [CascadingParameter]
+      public TransferSuccessModal ModalForAnonymousRecipient { get; set; }
+
+      protected BasicModal ModalForUserRecipient { get; set; }
 
       protected bool EncryptionInProgress = false;
       protected string EncryptionStatusMessage = "";

@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -45,18 +45,18 @@ namespace Crypter.Core.Services.DataAccess
 
       public async Task<bool> InsertAsync(Guid userId, Guid code, byte[] verificationKey, CancellationToken cancellationToken)
       {
-         var emailVerification = new UserEmailVerification(userId, code, verificationKey, DateTime.UtcNow);
+         var emailVerification = new UserEmailVerificationEntity(userId, code, verificationKey, DateTime.UtcNow);
          Context.UserEmailVerifications.Add(emailVerification);
          await Context.SaveChangesAsync(cancellationToken);
          return true;
       }
 
-      public async Task<IUserEmailVerification> ReadAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<UserEmailVerificationEntity> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
          return await Context.UserEmailVerifications.FindAsync(new object[] { userId }, cancellationToken);
       }
 
-      public async Task<IUserEmailVerification> ReadCodeAsync(Guid code, CancellationToken cancellationToken)
+      public async Task<UserEmailVerificationEntity> ReadCodeAsync(Guid code, CancellationToken cancellationToken)
       {
          return await Context.UserEmailVerifications
             .Where(x => x.Code == code)

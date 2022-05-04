@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -55,7 +56,7 @@ namespace Crypter.Core.Features.User.Commands
 
       public async Task<Unit> Handle(UpdateLastLoginTimeCommand request, CancellationToken cancellationToken)
       {
-         Models.User user = await _context.Users
+         UserEntity user = await _context.Users
             .FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken);
 
          if (user is not null)

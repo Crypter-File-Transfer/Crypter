@@ -27,13 +27,14 @@
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Interfaces.Events;
+using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
 {
-   public partial class MainLayoutBase : LayoutComponentBase
+   public partial class MainLayoutBase : LayoutComponentBase, IDisposable
    {
       [Inject]
       private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
@@ -47,9 +48,9 @@ namespace Crypter.Web.Shared
       [Inject]
       private IUserKeysService UserKeysService { get; set; }
 
-      protected bool ServicesInitialized { get; set; }
+      public TransferSuccessModal TransferSuccessModal { get; protected set; }
 
-      protected bool UserNeedsReauthentication { get; set; }
+      protected bool ServicesInitialized { get; set; }
 
       protected override async Task OnInitializedAsync()
       {
@@ -66,15 +67,18 @@ namespace Crypter.Web.Shared
          UserSessionService.UserLoggedOutEventHandler += OnUserLoggedOut;
 
          ServicesInitialized = true;
-         StateHasChanged();
       }
 
       private void OnUserLoggedIn(object sender, UserLoggedInEventArgs eventArgs)
       {
+         ServicesInitialized = false;
+
          InvokeAsync(async () =>
          {
             await UserKeysService.PrepareUserKeysOnUserLoginAsync(eventArgs.Username, eventArgs.Password, eventArgs.RememberUser);
             await UserContactsService.InitializeAsync();
+            ServicesInitialized = true;
+            StateHasChanged();
          });
       }
 
@@ -82,6 +86,13 @@ namespace Crypter.Web.Shared
       {
          UserKeysService.Recycle();
          UserContactsService.Recycle();
+      }
+
+      public void Dispose()
+      {
+         UserSessionService.UserLoggedInEventHandler -= OnUserLoggedIn;
+         UserSessionService.UserLoggedOutEventHandler -= OnUserLoggedOut;
+         GC.SuppressFinalize(this);
       }
    }
 }

@@ -26,9 +26,8 @@
 
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.User.AddContact;
-using Crypter.Contracts.Features.User.GetContacts;
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -37,29 +36,19 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Features.User.Commands
 {
-   public class UpsertUserContactCommand : IRequest<Either<AddUserContactError, UpsertUserContactCommandResult>>
+   public class UpsertUserContactCommand : IRequest<Maybe<AddUserContactError>>
    {
-      public Guid User { get; init; }
-      public Guid Contact { get; init; }
+      public Guid UserId { get; init; }
+      public string ContactUsername { get; init; }
 
-      public UpsertUserContactCommand(Guid user, Guid contact)
+      public UpsertUserContactCommand(Guid userId, string contactUsername)
       {
-         User = user;
-         Contact = contact;
+         UserId = userId;
+         ContactUsername = contactUsername;
       }
    }
 
-   public class UpsertUserContactCommandResult
-   {
-      public Guid UserContact { get; init; }
-
-      public UpsertUserContactCommandResult(Guid userContact)
-      {
-         UserContact = userContact;
-      }
-   }
-
-   public class UpsertUserContactCommandHandler : IRequestHandler<UpsertUserContactCommand, Either<AddUserContactError, UpsertUserContactCommandResult>>
+   public class UpsertUserContactCommandHandler : IRequestHandler<UpsertUserContactCommand, Maybe<AddUserContactError>>
    {
       private readonly DataContext _context;
       private readonly IUserPrivacyService _userPrivacyService;
@@ -70,39 +59,39 @@ namespace Crypter.Core.Features.User.Commands
          _userPrivacyService = userPrivacyService;
       }
 
-      public async Task<Either<AddUserContactError, UpsertUserContactCommandResult>> Handle(UpsertUserContactCommand request, CancellationToken cancellationToken)
+      public async Task<Maybe<AddUserContactError>> Handle(UpsertUserContactCommand request, CancellationToken cancellationToken)
       {
-         Models.User contactUser = await _context.Users
+         UserEntity contactUser = await _context.Users
             .Include(x => x.PrivacySetting)
             .Include(x => x.Contacts)
-            .FirstOrDefaultAsync(x => x.Id == request.Contact, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Username == request.ContactUsername, cancellationToken);
 
          if (contactUser == default)
          {
             return AddUserContactError.NotFound;
          }
 
-         if (!_userPrivacyService.UserIsVisibleToVisitor(contactUser, request.User))
+         if (!_userPrivacyService.UserIsVisibleToVisitor(contactUser, request.UserId))
          {
             return AddUserContactError.NotFound;
          }
 
-         UserContact existingContact = await _context.UserContacts
-            .FirstOrDefaultAsync(x => x.OwnerId == request.User && x.ContactId == request.Contact, cancellationToken);
+         UserContactEntity existingContact = await _context.UserContacts
+            .FirstOrDefaultAsync(x => x.OwnerId == request.UserId && x.ContactId == contactUser.Id, cancellationToken);
 
-         Guid userContactId = existingContact == default
-            ? await AddContactAsync(request.User, request.Contact, cancellationToken)
-            : existingContact.Id;
+         if (existingContact == default)
+         {
+            await AddContactAsync(request.UserId, contactUser.Id, cancellationToken);
+         }
 
-         return new UpsertUserContactCommandResult(userContactId);
+         return Maybe<AddUserContactError>.None;
       }
 
-      private async Task<Guid> AddContactAsync(Guid user, Guid contact, CancellationToken cancellationToken)
+      private async Task AddContactAsync(Guid userId, Guid contactId, CancellationToken cancellationToken)
       {
-         var newContact = new UserContact(Guid.NewGuid(), user, contact);
+         var newContact = new UserContactEntity(userId, contactId);
          _context.UserContacts.Add(newContact);
          await _context.SaveChangesAsync(cancellationToken);
-         return newContact.Id;
       }
    }
 }

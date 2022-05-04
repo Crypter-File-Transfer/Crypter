@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Models;
+using Crypter.Core.Entities;
 using System;
 
 namespace Crypter.Core.Interfaces
@@ -40,7 +40,7 @@ namespace Crypter.Core.Interfaces
       /// <remarks>
       /// The provided user's 'PrivacySetting' and 'Contacts' may not be null.
       /// </remarks>
-      bool UserIsVisibleToVisitor(User user, Guid visitorId);
+      bool UserIsVisibleToVisitor(UserEntity user, Guid visitorId);
 
       /// <summary>
       /// Return whether a user allows a given visitor to send them message transfers.
@@ -51,7 +51,7 @@ namespace Crypter.Core.Interfaces
       /// <remarks>
       /// The provided user's 'PrivacySetting' and 'Contacts' may not be null.
       /// </remarks>
-      bool UserAcceptsMessageTransfersFromVisitor(User user, Guid visitorId);
+      bool UserAcceptsMessageTransfersFromVisitor(UserEntity user, Guid visitorId);
 
       /// <summary>
       /// Return whether a user allows a given visitor to send them file transfers.
@@ -62,6 +62,6 @@ namespace Crypter.Core.Interfaces
       /// <remarks>
       /// The provided user's 'PrivacySetting' and 'Contacts' may not be null.
       /// </remarks>
-      bool UserAcceptsFileTransfersFromVisitor(User user, Guid visitorId);
+      bool UserAcceptsFileTransfersFromVisitor(UserEntity user, Guid visitorId);
    }
 }

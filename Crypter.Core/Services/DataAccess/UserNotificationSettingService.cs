@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,7 +46,7 @@ namespace Crypter.Core.Services.DataAccess
          var userNotificationSettings = await ReadAsync(userId, cancellationToken);
          if (userNotificationSettings == null)
          {
-            var newUserNotificationSettings = new UserNotificationSetting(userId, enableTransferNotifications, emailNotifications);
+            var newUserNotificationSettings = new UserNotificationSettingEntity(userId, enableTransferNotifications, emailNotifications);
             Context.UserNotificationSettings.Add(newUserNotificationSettings);
          }
          else
@@ -58,7 +58,7 @@ namespace Crypter.Core.Services.DataAccess
          await Context.SaveChangesAsync(cancellationToken);
       }
 
-      public async Task<IUserNotificationSetting> ReadAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<UserNotificationSettingEntity> ReadAsync(Guid userId, CancellationToken cancellationToken)
       {
          return await Context.UserNotificationSettings.FindAsync(new object[] { userId }, cancellationToken);
       }

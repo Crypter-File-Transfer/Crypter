@@ -24,8 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Entities;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -35,7 +36,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Services.DataAccess
 {
-   public class FileTransferItemService : IBaseTransferService<IFileTransferItem>
+   public class FileTransferItemService : IBaseTransferService<IFileTransfer>
    {
       private readonly DataContext Context;
 
@@ -44,13 +45,13 @@ namespace Crypter.Core.Services.DataAccess
          Context = context;
       }
 
-      public async Task InsertAsync(IFileTransferItem item, CancellationToken cancellationToken)
+      public async Task InsertAsync(IFileTransfer item, CancellationToken cancellationToken)
       {
-         Context.FileTransfers.Add((FileTransfer)item);
+         Context.FileTransfers.Add((FileTransferEntity)item);
          await Context.SaveChangesAsync(cancellationToken);
       }
 
-      public async Task<IFileTransferItem> ReadAsync(Guid id, CancellationToken cancellationToken)
+      public async Task<IFileTransfer> ReadAsync(Guid id, CancellationToken cancellationToken)
       {
          return await Context.FileTransfers
              .FindAsync(new object[] { id }, cancellationToken);
@@ -62,21 +63,21 @@ namespace Crypter.Core.Services.DataAccess
              .ExecuteSqlRawAsync("DELETE FROM \"FileTransfer\" WHERE \"FileTransfer\".\"Id\" = {0}", new object[] { id }, cancellationToken);
       }
 
-      public async Task<IEnumerable<IFileTransferItem>> FindBySenderAsync(Guid senderId, CancellationToken cancellationToken)
+      public async Task<IEnumerable<IFileTransfer>> FindBySenderAsync(Guid senderId, CancellationToken cancellationToken)
       {
          return await Context.FileTransfers
              .Where(x => x.Sender == senderId)
              .ToListAsync(cancellationToken);
       }
 
-      public async Task<IEnumerable<IFileTransferItem>> FindByRecipientAsync(Guid recipientId, CancellationToken cancellationToken)
+      public async Task<IEnumerable<IFileTransfer>> FindByRecipientAsync(Guid recipientId, CancellationToken cancellationToken)
       {
          return await Context.FileTransfers
              .Where(x => x.Recipient == recipientId)
              .ToListAsync(cancellationToken);
       }
 
-      public async Task<IEnumerable<IFileTransferItem>> FindExpiredAsync(CancellationToken cancellationToken)
+      public async Task<IEnumerable<IFileTransfer>> FindExpiredAsync(CancellationToken cancellationToken)
       {
          return await Context.FileTransfers
              .Where(x => x.Expiration < DateTime.UtcNow)

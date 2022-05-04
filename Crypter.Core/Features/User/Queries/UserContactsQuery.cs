@@ -59,7 +59,7 @@ namespace Crypter.Core.Features.User.Queries
 
       public async Task<IEnumerable<UserContactDTO>> Handle(UserContactsQuery request, CancellationToken cancellationToken)
       {
-         List<Models.UserContact> contacts = await _context.UserContacts
+         List<Entities.UserContactEntity> contacts = await _context.UserContacts
             .Where(x => x.OwnerId == request.User)
             .Include(x => x.Contact)
                .ThenInclude(x => x.Profile)
@@ -73,8 +73,8 @@ namespace Crypter.Core.Features.User.Queries
             .Select(x =>
             {
                return _userPrivacyService.UserIsVisibleToVisitor(x.Contact, request.User)
-                  ? new UserContactDTO(x.ContactId, x.Contact.Username, x.Contact.Profile.Alias)
-                  : new UserContactDTO(x.ContactId, "{ Private }", null);
+                  ? new UserContactDTO(x.Contact.Username, x.Contact.Profile.Alias)
+                  : new UserContactDTO("{ Private }");
             })
             .ToList();
       }

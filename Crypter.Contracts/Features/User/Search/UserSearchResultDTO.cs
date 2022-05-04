@@ -24,19 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-
 namespace Crypter.Contracts.Features.User.Search
 {
-    public class UserSearchResultDTO
+   public class UserSearchResultDTO
     {
-        public Guid Id { get; set; }
         public string Username { get; set; }
         public string Alias { get; set; }
 
-        public UserSearchResultDTO(Guid id, string username, string alias)
+        public UserSearchResultDTO(string username, string alias)
         {
-            Id = id;
             Username = username;
             Alias = alias;
         }

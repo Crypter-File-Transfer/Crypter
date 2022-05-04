@@ -27,7 +27,6 @@
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.User.AddContact;
 using Crypter.Contracts.Features.User.GetContacts;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -37,9 +36,9 @@ namespace Crypter.ClientServices.Interfaces
    {
       Task InitializeAsync();
       Task<IReadOnlyCollection<UserContactDTO>> GetContactsAsync(bool getCached = true);
-      bool IsContact(Guid userId);
-      Task<Either<AddUserContactError, UserContactDTO>> AddContactAsync(Guid userId);
-      Task RemoveContactAsync(Guid userId);
+      bool IsContact(string contactUsername);
+      Task<Either<AddUserContactError, UserContactDTO>> AddContactAsync(string contactUsername);
+      Task RemoveContactAsync(string contactUsername);
       void Recycle();
    }
 }

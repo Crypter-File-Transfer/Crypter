@@ -26,17 +26,13 @@
 
 using Crypter.API.Methods;
 using Crypter.API.Models;
-using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
-using Crypter.Core.Interfaces;
-using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 using Org.BouncyCastle.Crypto;
 using System;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -44,32 +40,18 @@ namespace Crypter.API.Services
 {
    public interface IEmailService
    {
-      Task<bool> SendAsync(string subject, string message, EmailAddress recipient);
-      Task<bool> SendEmailVerificationAsync(EmailAddress emailAddress, Guid verificationCode, AsymmetricKeyParameter ecdsaPrivateKey);
-      Task HangfireSendEmailVerificationAsync(Guid userId);
-      Task<bool> SendTransferNotificationAsync(EmailAddress emailAddress);
-      Task HangfireSendTransferNotificationAsync(TransferItemType itemType, Guid itemId);
+      Task<bool> SendAsync(string subject, string message, EmailAddress recipient, CancellationToken cancellationToken);
+      Task<bool> SendEmailVerificationAsync(EmailAddress emailAddress, Guid verificationCode, AsymmetricKeyParameter ecdsaPrivateKey, CancellationToken cancellationToken);
+      Task<bool> SendTransferNotificationAsync(EmailAddress emailAddress, CancellationToken cancellationToken);
    }
 
    public class EmailService : IEmailService
    {
       private readonly EmailSettings Settings;
 
-      private readonly IUserService UserService;
-      private readonly IUserEmailVerificationService UserEmailVerificationService;
-      private readonly IUserNotificationSettingService UserNotificationSettingService;
-      private readonly IBaseTransferService<IMessageTransferItem> MessageTransferService;
-      private readonly IBaseTransferService<IFileTransferItem> FileTransferService;
-
-      public EmailService(EmailSettings emailSettings, IUserService userService, IUserEmailVerificationService userEmailVerificationService, IUserNotificationSettingService userNotificationSettingService,
-         IBaseTransferService<IMessageTransferItem> messageTransferService, IBaseTransferService<IFileTransferItem> fileTransferService)
+      public EmailService(EmailSettings emailSettings)
       {
          Settings = emailSettings;
-         UserService = userService;
-         UserEmailVerificationService = userEmailVerificationService;
-         UserNotificationSettingService = userNotificationSettingService;
-         MessageTransferService = messageTransferService;
-         FileTransferService = fileTransferService;
       }
 
       /// <summary>
@@ -80,7 +62,7 @@ namespace Crypter.API.Services
       /// <param name="recipient"></param>
       /// <remarks>This method is 'virtual' to enable some unit tests.</remarks>
       /// <returns></returns>
-      public virtual async Task<bool> SendAsync(string subject, string message, EmailAddress recipient)
+      public virtual async Task<bool> SendAsync(string subject, string message, EmailAddress recipient, CancellationToken cancellationToken)
       {
          if (!Settings.Enabled)
          {
@@ -101,9 +83,9 @@ namespace Crypter.API.Services
 
          try
          {
-            await smtpClient.ConnectAsync(Settings.Host, Settings.Port, SecureSocketOptions.StartTls);
-            await smtpClient.AuthenticateAsync(Settings.Username, Settings.Password);
-            await smtpClient.SendAsync(mailMessage);
+            await smtpClient.ConnectAsync(Settings.Host, Settings.Port, SecureSocketOptions.StartTls, cancellationToken);
+            await smtpClient.AuthenticateAsync(Settings.Username, Settings.Password, cancellationToken);
+            await smtpClient.SendAsync(mailMessage, cancellationToken);
          }
          catch (Exception ex)
          {
@@ -112,7 +94,7 @@ namespace Crypter.API.Services
          }
          finally
          {
-            await smtpClient.DisconnectAsync(true);
+            await smtpClient.DisconnectAsync(true, cancellationToken);
          }
          return true;
       }
@@ -125,7 +107,7 @@ namespace Crypter.API.Services
       /// <param name="ecdsaPrivateKey"></param>
       /// <remarks>This method is 'virtual' to enable some unit tests.</remarks>
       /// <returns></returns>
-      public virtual async Task<bool> SendEmailVerificationAsync(EmailAddress emailAddress, Guid verificationCode, AsymmetricKeyParameter ecdsaPrivateKey)
+      public virtual async Task<bool> SendEmailVerificationAsync(EmailAddress emailAddress, Guid verificationCode, AsymmetricKeyParameter ecdsaPrivateKey, CancellationToken cancellationToken)
       {
          var codeBytes = verificationCode.ToByteArray();
 
@@ -138,98 +120,12 @@ namespace Crypter.API.Services
          var encodedSignature = EmailVerificationEncoder.EncodeSignatureUrlSafe(signature);
          var verificationLink = $"https://www.crypter.dev/verify?code={encodedVerificationCode}&signature={encodedSignature}";
 
-         return await SendAsync("Verify your email address", verificationLink, emailAddress);
+         return await SendAsync("Verify your email address", verificationLink, emailAddress, cancellationToken);
       }
 
-      /// <summary>
-      /// Send a verification email using Hangfire best practices.
-      /// </summary>
-      /// <param name="userId"></param>
-      /// <remarks>
-      /// See: https://docs.hangfire.io/en/latest/best-practices.html
-      /// </remarks>
-      /// <returns></returns>
-      public async Task HangfireSendEmailVerificationAsync(Guid userId)
+      public async Task<bool> SendTransferNotificationAsync(EmailAddress emailAddress, CancellationToken cancellationToken)
       {
-         var userEntity = await UserService.ReadAsync(userId, CancellationToken.None);
-         var userEmailVerificationEntity = await UserEmailVerificationService.ReadAsync(userId, CancellationToken.None);
-
-         if (userEntity == null                                         // User does not exist
-            || userEntity.EmailVerified                                 // User's email address is already verified
-            || userEmailVerificationEntity != null)                     // User already has a UserEmailVerification entity
-         {
-            return;
-         }
-
-         if (!EmailAddress.TryFrom(userEntity.Email, out var emailAddress))
-         {
-            return;
-         }
-
-         var verificationCode = Guid.NewGuid();
-         var keys = ECDSA.GenerateKeys();
-
-         var success = await SendEmailVerificationAsync(emailAddress, verificationCode, keys.Private);
-         if (success)
-         {
-            byte[] verificationKey = Encoding.UTF8.GetBytes(keys.Public.ConvertToPEM().Value);
-            await UserEmailVerificationService.InsertAsync(userId, verificationCode, verificationKey, CancellationToken.None);
-         }
-      }
-
-      public async Task<bool> SendTransferNotificationAsync(EmailAddress emailAddress)
-      {
-         return await SendAsync("Someone sent you a transfer", "Someone sent you something on Crypter!  Login to https://www.crypter.dev see what it is.", emailAddress);
-      }
-
-      public async Task HangfireSendTransferNotificationAsync(TransferItemType itemType, Guid itemId)
-      {
-         Guid recipientId;
-
-         switch (itemType)
-         {
-            case TransferItemType.Message:
-               var message = await MessageTransferService.ReadAsync(itemId, CancellationToken.None);
-               if (message is null)
-               {
-                  return;
-               }
-
-               recipientId = message.Recipient;
-               break;
-            case TransferItemType.File:
-               var file = await FileTransferService.ReadAsync(itemId, CancellationToken.None);
-               if (file is null)
-               {
-                  return;
-               }
-
-               recipientId = file.Recipient;
-               break;
-            default:
-               return;
-         }
-
-         var user = await UserService.ReadAsync(recipientId, CancellationToken.None);
-         if (user is null || !user.EmailVerified)
-         {
-            return;
-         }
-
-         if (!EmailAddress.TryFrom(user.Email, out var emailAddress))
-         {
-            return;
-         }
-
-         var userNotification = await UserNotificationSettingService.ReadAsync(recipientId, CancellationToken.None);
-         if (userNotification is null
-            || !userNotification.EnableTransferNotifications
-            || !userNotification.EmailNotifications)
-         {
-            return;
-         }
-
-         await SendTransferNotificationAsync(emailAddress);
+         return await SendAsync("Someone sent you a transfer", "Someone sent you something on Crypter!  Login to https://www.crypter.dev see what it is.", emailAddress, cancellationToken);
       }
    }
 }

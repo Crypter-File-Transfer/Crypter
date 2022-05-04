@@ -26,6 +26,7 @@
 
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.User.GetPublicProfile;
+using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
 using Crypter.Core.Interfaces;
 using MediatR;
@@ -64,7 +65,7 @@ namespace Crypter.Core.Features.User.Queries
       {
          string lowerUsername = request.Username.ToLower();
 
-         Models.User user = await _context.Users
+         UserEntity user = await _context.Users
             .Where(x => x.Username.ToLower() == lowerUsername)
             .Include(x => x.Profile)
             .Include(x => x.PrivacySetting)

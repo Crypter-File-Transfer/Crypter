@@ -26,8 +26,8 @@
 
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.User.GetContacts;
+using Crypter.Core.Entities;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -39,12 +39,12 @@ namespace Crypter.Core.Features.User.Queries
    public class UserContactQuery : IRequest<Maybe<UserContactDTO>>
    {
       public Guid UserId { get; init; }
-      public Guid EntityId { get; init; }
+      public string ContactUsername { get; init; }
 
-      public UserContactQuery(Guid userId, Guid userContact)
+      public UserContactQuery(Guid userId, string contactUsername)
       {
          UserId = userId;
-         EntityId = userContact;
+         ContactUsername = contactUsername;
       }
    }
 
@@ -61,14 +61,14 @@ namespace Crypter.Core.Features.User.Queries
 
       public async Task<Maybe<UserContactDTO>> Handle(UserContactQuery request, CancellationToken cancellationToken)
       {
-         UserContact userContact = await _context.UserContacts
+         UserContactEntity userContact = await _context.UserContacts
             .Include(x => x.Contact)
                .ThenInclude(x => x.Profile)
             .Include(x => x.Contact)
                .ThenInclude(x => x.PrivacySetting)
             .Include(x => x.Contact)
                .ThenInclude(x => x.Contacts)
-            .FirstOrDefaultAsync(x => x.Id == request.EntityId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Contact.Username == request.ContactUsername, cancellationToken);
 
          if (userContact == default)
          {
@@ -76,8 +76,8 @@ namespace Crypter.Core.Features.User.Queries
          }
 
          var contactDTO = _userPrivacyService.UserIsVisibleToVisitor(userContact.Contact, request.UserId)
-            ? new UserContactDTO(userContact.ContactId, userContact.Contact.Username, userContact.Contact.Profile.Alias)
-            : new UserContactDTO(userContact.ContactId, "{ Private }", null);
+            ? new UserContactDTO(userContact.Contact.Username, userContact.Contact.Profile.Alias)
+            : new UserContactDTO("{ Private }");
 
          return contactDTO;
       }

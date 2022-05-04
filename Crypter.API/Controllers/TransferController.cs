@@ -24,17 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.API.Attributes;
 using Crypter.API.Services;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
 using Crypter.Contracts.Features.Transfer.Upload;
-using Crypter.Core.Interfaces;
-using Crypter.CryptoLib.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,28 +42,19 @@ namespace Crypter.API.Controllers
    [Route("api/transfer")]
    public class TransferController : ControllerBase
    {
-      private readonly UploadService _uploadService;
-      private readonly DownloadService _downloadService;
+      private readonly IUploadService _uploadService;
+      private readonly IDownloadService _downloadService;
       private readonly ITokenService _tokenService;
 
-      public TransferController(IConfiguration configuration,
-          IBaseTransferService<IMessageTransferItem> messageService,
-          IBaseTransferService<IFileTransferItem> fileService,
-          IUserService userService,
-          IUserProfileService userProfileService,
-          IEmailService emailService,
-          IApiValidationService apiValidationService,
-          ISimpleEncryptionService simpleEncryptionService,
-          ISimpleHashService simpleHashService,
-          ITokenService tokenService
-         )
+      public TransferController(ITokenService tokenService, IUploadService uploadService, IDownloadService downloadService)
       {
-         _uploadService = new UploadService(configuration, messageService, fileService, emailService, apiValidationService, simpleEncryptionService, userService, simpleHashService);
-         _downloadService = new DownloadService(configuration, messageService, fileService, userService, userProfileService, simpleEncryptionService, simpleHashService);
+         _uploadService = uploadService;
+         _downloadService = downloadService;
          _tokenService = tokenService;
       }
 
       [HttpPost("message")]
+      [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> MessageTransferAsync([FromBody] UploadMessageTransferRequest request, CancellationToken cancellationToken)
@@ -76,6 +65,7 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("message/{recipient}")]
+      [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> UserMessageTransferAsync([FromBody] UploadMessageTransferRequest request, string recipient, CancellationToken cancellationToken)
@@ -86,6 +76,7 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("file")]
+      [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> FileTransferAsync([FromBody] UploadFileTransferRequest request, CancellationToken cancellationToken)
@@ -96,6 +87,7 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("file/{recipient}")]
+      [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> UserFileTransferAsync([FromBody] UploadFileTransferRequest request, string recipient, CancellationToken cancellationToken)
@@ -106,6 +98,7 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("message/preview")]
+      [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> GetMessagePreviewAsync([FromBody] DownloadTransferPreviewRequest request, CancellationToken cancellationToken)
@@ -116,6 +109,7 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("file/preview")]
+      [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> GetFilePreviewAsync([FromBody] DownloadTransferPreviewRequest request, CancellationToken cancellationToken)
@@ -126,6 +120,7 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("message/ciphertext")]
+      [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferCiphertextResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
@@ -137,6 +132,7 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("file/ciphertext")]
+      [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferCiphertextResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
@@ -148,6 +144,7 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("message/signature")]
+      [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferSignatureResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
@@ -159,6 +156,7 @@ namespace Crypter.API.Controllers
       }
 
       [HttpPost("file/signature")]
+      [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferSignatureResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]

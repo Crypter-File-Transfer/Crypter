@@ -29,6 +29,7 @@ using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
 using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Crypter.Contracts.Features.Transfer.DownloadSignature;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Interfaces;
 using Crypter.Core.Services;
 using Crypter.CryptoLib.Services;
@@ -40,10 +41,22 @@ using System.Threading.Tasks;
 
 namespace Crypter.API.Services
 {
-   public class DownloadService
+#nullable enable // gross
+
+   public interface IDownloadService
    {
-      private readonly IBaseTransferService<IMessageTransferItem> MessageService;
-      private readonly IBaseTransferService<IFileTransferItem> FileService;
+      Task<IActionResult> GetMessagePreviewAsync(DownloadTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken);
+      Task<IActionResult> GetFilePreviewAsync(DownloadTransferPreviewRequest request, Guid requestorId, CancellationToken cancellationToken);
+      Task<IActionResult> GetMessageCiphertextAsync(DownloadTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken);
+      Task<IActionResult> GetFileCiphertextAsync(DownloadTransferCiphertextRequest request, Guid requestorId, CancellationToken cancellationToken);
+      Task<IActionResult> GetMessageSignatureAsync(DownloadTransferSignatureRequest request, Guid requestorId, CancellationToken cancellationToken);
+      Task<IActionResult> GetFileSignatureAsync(DownloadTransferSignatureRequest request, Guid requestorId, CancellationToken cancellationToken);
+   }
+
+   public class DownloadService : IDownloadService
+   {
+      private readonly IBaseTransferService<IMessageTransfer> MessageService;
+      private readonly IBaseTransferService<IFileTransfer> FileService;
       private readonly IUserService UserService;
       private readonly IUserProfileService UserProfileService;
       private readonly ITransferItemStorageService MessageTransferItemStorageService;
@@ -54,8 +67,8 @@ namespace Crypter.API.Services
 
       public DownloadService(
          IConfiguration configuration,
-         IBaseTransferService<IMessageTransferItem> messageService,
-         IBaseTransferService<IFileTransferItem> fileService,
+         IBaseTransferService<IMessageTransfer> messageService,
+         IBaseTransferService<IFileTransfer> fileService,
          IUserService userService,
          IUserProfileService userProfileService,
          ISimpleEncryptionService simpleEncryptionService,

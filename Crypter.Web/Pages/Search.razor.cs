@@ -130,9 +130,9 @@ namespace Crypter.Web.Pages
          }
       }
 
-      protected async Task AddContactAsync(Guid user)
+      protected async Task AddContactAsync(string contactUsername)
       {
-         await UserContactsService.AddContactAsync(user);
+         await UserContactsService.AddContactAsync(contactUsername);
          StateHasChanged();
       }
 

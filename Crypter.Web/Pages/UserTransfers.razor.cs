@@ -79,7 +79,6 @@ namespace Crypter.Web.Pages
             {
                Id = x.Id,
                Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
-               RecipientId = x.RecipientId,
                RecipientUsername = x.RecipientUsername,
                RecipientAlias = x.RecipientAlias,
                ItemType = TransferItemType.Message,
@@ -90,7 +89,6 @@ namespace Crypter.Web.Pages
                {
                   Id = x.Id,
                   Name = x.FileName,
-                  RecipientId = x.RecipientId,
                   RecipientUsername = x.RecipientUsername,
                   RecipientAlias = x.RecipientAlias,
                   ItemType = TransferItemType.File,
@@ -116,7 +114,6 @@ namespace Crypter.Web.Pages
             {
                Id = x.Id,
                Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
-               SenderId = x.SenderId,
                SenderUsername = x.SenderUsername,
                SenderAlias = x.SenderAlias,
                ItemType = TransferItemType.Message,
@@ -127,7 +124,6 @@ namespace Crypter.Web.Pages
                {
                   Id = x.Id,
                   Name = x.FileName,
-                  SenderId = x.SenderId,
                   SenderUsername = x.SenderUsername,
                   SenderAlias = x.SenderAlias,
                   ItemType = TransferItemType.File,

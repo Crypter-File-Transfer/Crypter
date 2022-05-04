@@ -25,7 +25,7 @@
  */
 
 using Crypter.Common.Monads;
-using Crypter.Core.Models;
+using Crypter.Core.Entities;
 using MediatR;
 using System;
 using System.Threading;
@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Core.Features.User.Queries
 {
-   public class UserTokenQuery : IRequest<Maybe<UserToken>>
+   public class UserTokenQuery : IRequest<Maybe<UserTokenEntity>>
    {
       public Guid TokenId { get; set; }
 
@@ -43,7 +43,7 @@ namespace Crypter.Core.Features.User.Queries
       }
    }
 
-   public class UserTokenQueryHandler : IRequestHandler<UserTokenQuery, Maybe<UserToken>>
+   public class UserTokenQueryHandler : IRequestHandler<UserTokenQuery, Maybe<UserTokenEntity>>
    {
       private readonly DataContext _context;
 
@@ -52,12 +52,12 @@ namespace Crypter.Core.Features.User.Queries
          _context = context;
       }
 
-      public async Task<Maybe<UserToken>> Handle(UserTokenQuery request, CancellationToken cancellationToken)
+      public async Task<Maybe<UserTokenEntity>> Handle(UserTokenQuery request, CancellationToken cancellationToken)
       {
          var foundToken = await _context.UserTokens
             .FindAsync(new object[] { request.TokenId }, cancellationToken);
 
-         return foundToken ?? Maybe<UserToken>.None;
+         return foundToken ?? Maybe<UserTokenEntity>.None;
       }
    }
 }

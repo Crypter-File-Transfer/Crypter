@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Models;
+using Crypter.Core.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -36,12 +36,12 @@ namespace Crypter.Core.Features.User.Commands
    public class RemoveUserContactCommand : IRequest<Unit>
    {
       public Guid User { get; private set; }
-      public Guid Contact { get; private set; }
+      public string ContactUsername { get; private set; }
 
-      public RemoveUserContactCommand(Guid user, Guid contact)
+      public RemoveUserContactCommand(Guid user, string contactUsername)
       {
          User = user;
-         Contact = contact;
+         ContactUsername = contactUsername;
       }
    }
 
@@ -56,8 +56,10 @@ namespace Crypter.Core.Features.User.Commands
 
       public async Task<Unit> Handle(RemoveUserContactCommand request, CancellationToken cancellationToken)
       {
-         UserContact contact = await _context.UserContacts
-            .FirstOrDefaultAsync(x => x.OwnerId == request.User && x.ContactId == request.Contact, cancellationToken);
+         string lowerContactUsername = request.ContactUsername.ToLower();
+
+         UserContactEntity contact = await _context.UserContacts
+            .FirstOrDefaultAsync(x => x.OwnerId == request.User && x.Contact.Username == lowerContactUsername, cancellationToken);
 
          if (contact != default)
          {

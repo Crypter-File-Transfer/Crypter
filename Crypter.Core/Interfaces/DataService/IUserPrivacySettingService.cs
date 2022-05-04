@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Enums;
+using Crypter.Core.Entities;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,6 +35,6 @@ namespace Crypter.Core.Interfaces
    public interface IUserPrivacySettingService
    {
       Task<bool> UpsertAsync(Guid userId, bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission receiveFilesPermission, UserItemTransferPermission receiveMessagesPermission, CancellationToken cancellationToken);
-      Task<IUserPrivacySetting> ReadAsync(Guid userId, CancellationToken cancellationToken);
+      Task<UserPrivacySettingEntity> ReadAsync(Guid userId, CancellationToken cancellationToken);
    }
 }

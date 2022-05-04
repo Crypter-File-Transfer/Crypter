@@ -99,7 +99,7 @@ namespace Crypter.ClientServices.Implementations
                async tokenObject => await request(tokenObject.Token));
          }
 
-         _refreshSemaphore.Wait();
+         await _refreshSemaphore.WaitAsync().ConfigureAwait(false);
          _refreshSemaphore.Release();
          var initialAttempt = await MakeRequestAsync();
          if (initialAttempt.httpStatus == HttpStatusCode.Unauthorized)

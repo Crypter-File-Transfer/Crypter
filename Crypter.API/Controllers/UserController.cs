@@ -45,10 +45,11 @@ using Crypter.Contracts.Features.User.UpdateNotificationSettings;
 using Crypter.Contracts.Features.User.UpdatePrivacySettings;
 using Crypter.Contracts.Features.User.UpdateProfile;
 using Crypter.Contracts.Features.User.VerifyEmailAddress;
+using Crypter.Core.Entities;
+using Crypter.Core.Entities.Interfaces;
 using Crypter.Core.Features.User.Commands;
 using Crypter.Core.Features.User.Queries;
 using Crypter.Core.Interfaces;
-using Crypter.Core.Models;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Hangfire;
@@ -65,34 +66,35 @@ using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
 {
+#nullable enable // gross
    [ApiController]
    [Route("api/user")]
    public class UserController : ControllerBase
    {
       private readonly IUserService _userService;
       private readonly IUserProfileService _userProfileService;
-      private readonly IUserPublicKeyPairService<UserX25519KeyPair> _userX25519KeyPairService;
-      private readonly IUserPublicKeyPairService<UserEd25519KeyPair> _userEd25519KeyPairService;
+      private readonly IUserPublicKeyPairService<UserX25519KeyPairEntity> _userX25519KeyPairService;
+      private readonly IUserPublicKeyPairService<UserEd25519KeyPairEntity> _userEd25519KeyPairService;
       private readonly IUserPrivacySettingService _userPrivacySettingService;
       private readonly IUserEmailVerificationService _userEmailVerificationService;
       private readonly IUserNotificationSettingService _userNotificationSettingService;
-      private readonly IBaseTransferService<IMessageTransferItem> _messageTransferService;
-      private readonly IBaseTransferService<IFileTransferItem> _fileTransferService;
-      private readonly IEmailService _emailService;
+      private readonly IBaseTransferService<IMessageTransfer> _messageTransferService;
+      private readonly IBaseTransferService<IFileTransfer> _fileTransferService;
+      private readonly IHangfireBackgroundService _hangfireBackgroundService;
       private readonly ITokenService _tokenService;
       private readonly IMediator _mediator;
 
       public UserController(
           IUserService userService,
           IUserProfileService userProfileService,
-          IUserPublicKeyPairService<UserX25519KeyPair> userX25519KeyPairService,
-          IUserPublicKeyPairService<UserEd25519KeyPair> userEd25519KeyPairService,
+          IUserPublicKeyPairService<UserX25519KeyPairEntity> userX25519KeyPairService,
+          IUserPublicKeyPairService<UserEd25519KeyPairEntity> userEd25519KeyPairService,
           IUserPrivacySettingService userPrivacySettingService,
           IUserEmailVerificationService userEmailVerificationService,
           IUserNotificationSettingService userNotificationSettingService,
-          IBaseTransferService<IMessageTransferItem> messageService,
-          IBaseTransferService<IFileTransferItem> fileService,
-          IEmailService emailService,
+          IBaseTransferService<IMessageTransfer> messageService,
+          IBaseTransferService<IFileTransfer> fileService,
+          IHangfireBackgroundService hangfireBackgroundService,
           ITokenService tokenService,
           IMediator mediator
           )
@@ -106,7 +108,7 @@ namespace Crypter.API.Controllers
          _userNotificationSettingService = userNotificationSettingService;
          _messageTransferService = messageService;
          _fileTransferService = fileService;
-         _emailService = emailService;
+         _hangfireBackgroundService = hangfireBackgroundService;
          _tokenService = tokenService;
          _mediator = mediator;
       }
@@ -134,7 +136,7 @@ namespace Crypter.API.Controllers
          {
             if (x.SendVerificationEmail)
             {
-               BackgroundJob.Enqueue(() => _emailService.HangfireSendEmailVerificationAsync(x.UserId));
+               BackgroundJob.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(x.UserId, CancellationToken.None));
             }
          });
 
@@ -158,14 +160,14 @@ namespace Crypter.API.Controllers
          var sentMessages = new List<UserSentMessageDTO>();
          foreach (var item in sentMessagesSansRecipientInfo)
          {
-            User? recipient = null;
-            IUserProfile? recipientProfile = null;
+            UserEntity? recipient = null;
+            UserProfileEntity? recipientProfile = null;
             if (item.Recipient != Guid.Empty)
             {
                recipient = await _userService.ReadAsync(item.Recipient, cancellationToken);
                recipientProfile = await _userProfileService.ReadAsync(item.Recipient, cancellationToken);
             }
-            sentMessages.Add(new UserSentMessageDTO(item.Id, item.Subject, item.Recipient, recipient?.Username, recipientProfile?.Alias, item.Expiration));
+            sentMessages.Add(new UserSentMessageDTO(item.Id, item.Subject, recipient?.Username, recipientProfile?.Alias, item.Expiration));
          }
 
          return new OkObjectResult(new UserSentMessagesResponse(sentMessages));
@@ -186,14 +188,14 @@ namespace Crypter.API.Controllers
          var sentFiles = new List<UserSentFileDTO>();
          foreach (var item in sentFilesSansRecipientInfo)
          {
-            User? recipient = null;
-            IUserProfile? recipientProfile = null;
+            UserEntity? recipient = null;
+            UserProfileEntity? recipientProfile = null;
             if (item.Recipient != Guid.Empty)
             {
                recipient = await _userService.ReadAsync(item.Recipient, cancellationToken);
                recipientProfile = await _userProfileService.ReadAsync(item.Recipient, cancellationToken);
             }
-            sentFiles.Add(new UserSentFileDTO(item.Id, item.FileName, item.Recipient, recipient?.Username, recipientProfile?.Alias, item.Expiration));
+            sentFiles.Add(new UserSentFileDTO(item.Id, item.FileName, recipient?.Username, recipientProfile?.Alias, item.Expiration));
          }
 
          return new OkObjectResult(new UserSentFilesResponse(sentFiles));
@@ -214,14 +216,14 @@ namespace Crypter.API.Controllers
          var receivedMessages = new List<UserReceivedMessageDTO>();
          foreach (var item in receivedMessagesSansSenderInfo)
          {
-            User? sender = null;
-            IUserProfile? senderProfile = null;
+            UserEntity? sender = null;
+            UserProfileEntity? senderProfile = null;
             if (item.Sender != Guid.Empty)
             {
                sender = await _userService.ReadAsync(item.Sender, cancellationToken);
                senderProfile = await _userProfileService.ReadAsync(item.Sender, cancellationToken);
             }
-            receivedMessages.Add(new UserReceivedMessageDTO(item.Id, item.Subject, item.Sender, sender?.Username, senderProfile?.Alias, item.Expiration));
+            receivedMessages.Add(new UserReceivedMessageDTO(item.Id, item.Subject, sender?.Username, senderProfile?.Alias, item.Expiration));
          }
 
          return new OkObjectResult(new UserReceivedMessagesResponse(receivedMessages));
@@ -242,14 +244,14 @@ namespace Crypter.API.Controllers
          var receivedFiles = new List<UserReceivedFileDTO>();
          foreach (var item in receivedFilesSansSenderInfo)
          {
-            User? sender = null;
-            IUserProfile? senderProfile = null;
+            UserEntity? sender = null;
+            UserProfileEntity? senderProfile = null;
             if (item.Sender != Guid.Empty)
             {
                sender = await _userService.ReadAsync(item.Sender, cancellationToken);
                senderProfile = await _userProfileService.ReadAsync(item.Sender, cancellationToken);
             }
-            receivedFiles.Add(new UserReceivedFileDTO(item.Id, item.FileName, item.Sender, sender?.Username, senderProfile?.Alias, item.Expiration));
+            receivedFiles.Add(new UserReceivedFileDTO(item.Id, item.FileName, sender?.Username, senderProfile?.Alias, item.Expiration));
          }
 
          return new OkObjectResult(new UserReceivedFilesResponse(receivedFiles));
@@ -353,7 +355,7 @@ namespace Crypter.API.Controllers
 
          if (isValidEmailAddress)
          {
-            BackgroundJob.Enqueue(() => _emailService.HangfireSendEmailVerificationAsync(userId));
+            BackgroundJob.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId, CancellationToken.None));
          }
 
          return new OkObjectResult(new UpdateContactInfoResponse());
@@ -580,16 +582,16 @@ namespace Crypter.API.Controllers
          }
 
          var userId = _tokenService.ParseUserId(User);
-         var result = await _mediator.Send(new UpsertUserContactCommand(userId, request.Contact), cancellationToken);
+         var result = await _mediator.Send(new UpsertUserContactCommand(userId, request.ContactUsername), cancellationToken);
          return await result.MatchAsync(
-            left => MakeErrorResponse(left),
-            async right =>
+            async () =>
             {
-               var userContactDTO = await _mediator.Send(new UserContactQuery(userId, right.UserContact), cancellationToken);
+               var userContactDTO = await _mediator.Send(new UserContactQuery(userId, request.ContactUsername), cancellationToken);
                return userContactDTO.Match(
                   () => MakeErrorResponse(AddUserContactError.NotFound),
                   some => new OkObjectResult(new AddUserContactResponse(some)));
-            });
+            },
+            error => MakeErrorResponse(error));
       }
 
       [Authorize]
@@ -599,7 +601,7 @@ namespace Crypter.API.Controllers
       public async Task<IActionResult> RemoveUserContactAsync([FromBody] RemoveUserContactRequest request, CancellationToken cancellationToken)
       {
          var userId = _tokenService.ParseUserId(User);
-         await _mediator.Send(new RemoveUserContactCommand(userId, request.Contact), cancellationToken);
+         await _mediator.Send(new RemoveUserContactCommand(userId, request.ContactUsername), cancellationToken);
          return new OkObjectResult(new RemoveUserContactResponse());
       }
    }
