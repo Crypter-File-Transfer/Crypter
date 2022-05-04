@@ -27,6 +27,7 @@
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Interfaces.Events;
+using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -46,6 +47,8 @@ namespace Crypter.Web.Shared
 
       [Inject]
       private IUserKeysService UserKeysService { get; set; }
+
+      public TransferSuccessModal TransferSuccessModal { get; protected set; }
 
       protected bool ServicesInitialized { get; set; }
 

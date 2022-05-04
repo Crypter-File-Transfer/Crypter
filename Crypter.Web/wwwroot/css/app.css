@@ -52,3 +52,7 @@ a, .btn-link {
 .word-wrap {
     white-space: pre-line;
 }
+
+.nav-link {
+   color: #000000
+}

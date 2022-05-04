@@ -39,36 +39,28 @@ namespace Crypter.Web.Shared.Modal
       [Inject]
       NavigationManager NavigationManager { get; set; }
 
-      [Parameter]
-      public string UploadType { get; set; }
+      protected string UploadType { get; set; }
 
-      [Parameter]
-      public Guid ItemId { get; set; }
+      protected Guid ItemId { get; set; }
 
-      [Parameter]
-      public string RecipientX25519PrivateKey { get; set; }
+      protected string RecipientX25519PrivateKey { get; set; }
 
-      [Parameter]
-      public EventCallback<string> UploadTypeChanged { get; set; }
+      protected int RequestedExpirationHours { get; set; }
 
-      [Parameter]
-      public EventCallback<Guid> ItemIdChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> RecipientX25519PrivateKeyChanged { get; set; }
-
-      [Parameter]
-      public EventCallback ModalClosedCallback { get; set; }
-
-      [Parameter]
-      public int RequestedExpirationHours { get; set; }
+      protected EventCallback OnClosed { get; set; }
 
       public string ModalDisplay = "none;";
       public string ModalClass = "";
       public bool ShowBackdrop = false;
 
-      public void Open()
+      public void Open(string uploadType, Guid itemId, string recipientX25519PrivateKey, int requestedExpirationHours, EventCallback onClosed)
       {
+         UploadType = uploadType;
+         ItemId = itemId;
+         RecipientX25519PrivateKey = recipientX25519PrivateKey;
+         RequestedExpirationHours = requestedExpirationHours;
+         OnClosed = onClosed;
+
          ModalDisplay = "block;";
          ModalClass = "Show";
          ShowBackdrop = true;
@@ -81,7 +73,7 @@ namespace Crypter.Web.Shared.Modal
          ModalClass = "";
          ShowBackdrop = false;
          StateHasChanged();
-         await ModalClosedCallback.InvokeAsync();
+         await OnClosed.InvokeAsync();
       }
 
       protected string GetDownloadLink()
