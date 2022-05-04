@@ -27,12 +27,15 @@
 @inherits MainLayoutBase
 
 <div class="page h-100">
-   <NavigationBar />
-   @if (ServicesInitialized)
-   {
-      <main role="main" class="pb-3">
-         @Body
-      </main>
-   }
+   <CascadingValue Value=@TransferSuccessModal>
+      <NavigationBar />
+      @if (ServicesInitialized)
+      {
+         <main role="main" class="pb-3">
+            @Body
+         </main>
+      }
+   </CascadingValue>
+   <TransferSuccessModal @ref=TransferSuccessModal />
    <Footer />
 </div>

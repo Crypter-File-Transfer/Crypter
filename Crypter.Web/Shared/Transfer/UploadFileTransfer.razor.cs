@@ -162,7 +162,7 @@ namespace Crypter.Web.Shared.Transfer
 
             if (string.IsNullOrEmpty(Recipient))
             {
-               ModalForAnonymousRecipient.Open();
+               ModalForAnonymousRecipient.Open("file", TransferId, EncodedRecipientX25519PrivateKey, RequestedExpirationHours, UploadCompletedEvent);
             }
             else
             {
