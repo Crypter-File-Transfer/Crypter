@@ -3,7 +3,7 @@ version: '3.8'
 services:
    database:
       container_name: postgres
-      image: postgres:14.0
+      image: postgres:14.2
       volumes:
          - "./postgres-init-files:/docker-entrypoint-initdb.d"
          - "${POSTGRES_DATA_DIR:?err}:/var/lib/postgresql/data"
