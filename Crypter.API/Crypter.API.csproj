@@ -24,7 +24,7 @@
       </PackageReference>
       <PackageReference Include="MimeKit" Version="3.2.0" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.1" />
-      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.17.0" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.18.0" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.4" />
    </ItemGroup>
 </Project>
