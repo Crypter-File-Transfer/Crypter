@@ -16,7 +16,7 @@
       <PackageReference Include="Hangfire" Version="1.7.28" />
       <PackageReference Include="Hangfire.AspNetCore" Version="1.7.28" />
       <PackageReference Include="Hangfire.PostgreSql" Version="1.9.7" />
-      <PackageReference Include="MailKit" Version="3.2.0" />
+      <PackageReference Include="MailKit" Version="3.3.0" />
       <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="10.0.1" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.4">
         <PrivateAssets>all</PrivateAssets>
