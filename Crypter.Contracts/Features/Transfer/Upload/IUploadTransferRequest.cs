@@ -26,16 +26,16 @@
 
 using System.Collections.Generic;
 
-namespace Crypter.Contracts.Features.Transfer.Upload
+namespace Crypter.Contracts.Features.Transfer
 {
    public interface IUploadTransferRequest
    {
-      List<string> CipherTextBase64 { get; set; }
-      string SignatureBase64 { get; set; }
-      string ClientEncryptionIVBase64 { get; set; }
-      string ServerEncryptionKeyBase64 { get; set; }
-      string X25519PublicKeyBase64 { get; set; }
-      string Ed25519PublicKeyBase64 { get; set; }
+      string InitializationVector { get; set; }
+      List<string> Ciphertext { get; set; }
+      string DigitalSignature { get; set; }
+      string DigitalSignaturePublicKey { get; set; }
+      string DiffieHellmanPublicKey { get; set; }
+      string RecipientProof { get; set; }
       int LifetimeHours { get; set; }
    }
 }

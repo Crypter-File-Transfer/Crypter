@@ -27,10 +27,7 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.User.UpdateContactInfo;
-using Crypter.Contracts.Features.User.UpdateNotificationSettings;
-using Crypter.Contracts.Features.User.UpdatePrivacySettings;
-using Crypter.Contracts.Features.User.UpdateProfile;
+using Crypter.Contracts.Features.Settings;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -102,6 +99,12 @@ namespace Crypter.Web.Pages
 
       protected override async Task OnInitializedAsync()
       {
+         if (!UserSessionService.LoggedIn)
+         {
+            NavigationManager.NavigateTo("/");
+            return;
+         }
+
          Loading = true;
          IsEditing = false;
          AreProfileControlsEnabled = false;
@@ -109,12 +112,6 @@ namespace Crypter.Web.Pages
          AreNotificationControlsEnabled = false;
          ArePasswordControlsEnabled = false;
          ArePrivacyControlsEnabled = false;
-
-         if (!UserSessionService.LoggedIn)
-         {
-            NavigationManager.NavigateTo("/");
-            return;
-         }
 
          Username = UserSessionService.Session.Match(
             () => null,
@@ -151,7 +148,7 @@ namespace Crypter.Web.Pages
       protected async Task OnSaveProfileInfoClickedAsync()
       {
          var request = new UpdateProfileRequest(EditedAlias, EditedAbout);
-         await CrypterApiService.UpdateUserProfileInfoAsync(request);
+         await CrypterApiService.UpdateProfileInfoAsync(request);
 
          Alias = EditedAlias;
          About = EditedAbout;
@@ -192,42 +189,40 @@ namespace Crypter.Web.Pages
          string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
 
          var request = new UpdateContactInfoRequest(EditedEmail, digestedPasswordBase64);
-         var maybeUpdate = await CrypterApiService.UpdateUserContactInfoAsync(request);
-         UpdateContactInfoFailed = maybeUpdate.Match(
-            left =>
-            {
-               switch (left)
-               {
-                  case UpdateContactInfoError.UserNotFound:
-                  case UpdateContactInfoError.ErrorResettingNotificationPreferences:
-                     ContactInfoGenericError = "This shouldn't happen";
-                     break;
-                  case UpdateContactInfoError.EmailUnavailable:
-                     ContactInfoEmailError = "Email address unavailable";
-                     break;
-                  case UpdateContactInfoError.EmailInvalid:
-                     ContactInfoEmailError = "Invalid email address";
-                     break;
-                  case UpdateContactInfoError.PasswordValidationFailed:
-                     ContactInfoPasswordError = "Incorrect password";
-                     break;
-                  case UpdateContactInfoError.UnknownError:
-                  default:
-                     ContactInfoGenericError = "An error occurred";
-                     break;
-               }
-               return true;
-            },
-            right =>
-            {
-               Email = EditedEmail;
-               CurrentPasswordForContactInfo = "";
-               EditedEnableTransferNotifications = false;
-               EmailVerified = false;
-               AreContactInfoControlsEnabled = false;
-               IsEditing = false;
-               return false;
-            });
+         var maybeUpdate = await CrypterApiService.UpdateContactInfoAsync(request);
+
+         maybeUpdate.DoLeftOrNeither(HandleContactInfoUpdateError, () => HandleContactInfoUpdateError());
+         maybeUpdate.DoRight(right =>
+         {
+            Email = EditedEmail;
+            CurrentPasswordForContactInfo = "";
+            EditedEnableTransferNotifications = false;
+            EmailVerified = false;
+            AreContactInfoControlsEnabled = false;
+            IsEditing = false;
+         });
+
+         UpdateContactInfoFailed = !maybeUpdate.IsRight;
+      }
+
+      private void HandleContactInfoUpdateError(UpdateContactInfoError error = UpdateContactInfoError.UnknownError)
+      {
+         switch (error)
+         {
+            case UpdateContactInfoError.UnknownError:
+            case UpdateContactInfoError.UserNotFound:
+               ContactInfoEmailError = "An error occurred";
+               break;
+            case UpdateContactInfoError.EmailAddressUnavailable:
+               ContactInfoEmailError = "Email address unavailable";
+               break;
+            case UpdateContactInfoError.InvalidEmailAddress:
+               ContactInfoEmailError = "Invalid email address";
+               break;
+            case UpdateContactInfoError.InvalidPassword:
+               ContactInfoPasswordError = "Incorrect password";
+               break;
+         }
       }
 
       protected void OnEditPasswordClicked()
@@ -269,7 +264,7 @@ namespace Crypter.Web.Pages
       protected async Task OnSavePrivacyClickedAsync()
       {
          var request = new UpdatePrivacySettingsRequest(EditedAllowKeyExchangeRequests, (UserVisibilityLevel)EditedVisibility, (UserItemTransferPermission)EditedMessageTransferPermission, (UserItemTransferPermission)EditedFileTransferPermission);
-         await CrypterApiService.UpdateUserPrivacyAsync(request);
+         await CrypterApiService.UpdateUserPrivacySettingsAsync(request);
 
          AllowKeyExchangeRequests = EditedAllowKeyExchangeRequests;
          Visibility = EditedVisibility;
@@ -295,7 +290,7 @@ namespace Crypter.Web.Pages
       protected async Task OnSaveNotificationPreferencesClickedAsync()
       {
          var request = new UpdateNotificationSettingsRequest(EditedEnableTransferNotifications, EditedEnableTransferNotifications);
-         await CrypterApiService.UpdateUserNotificationAsync(request);
+         await CrypterApiService.UpdateNotificationPreferencesAsync(request);
 
          EnableTransferNotifications = EditedEnableTransferNotifications;
          AreNotificationControlsEnabled = false;
@@ -308,7 +303,7 @@ namespace Crypter.Web.Pages
          maybeSettings.DoRight(right =>
          {
             EmailVerified = right.EmailVerified;
-            EditedEmail = Email = right.Email;
+            EditedEmail = Email = right.EmailAddress;
             EditedAlias = Alias = right.Alias;
             EditedAbout = About = right.About;
             EditedVisibility = Visibility = (int)right.Visibility;

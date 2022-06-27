@@ -25,7 +25,7 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Contracts.Features.User.VerifyEmailAddress;
+using Crypter.Contracts.Features.Settings;
 using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
@@ -76,7 +76,7 @@ namespace Crypter.Web.Pages
             new VerifyEmailAddressRequest(EmailVerificationParams.Code, EmailVerificationParams.Signature));
 
          EmailVerificationSuccess = maybeVerification.Match(
-            left => false,
+            false,
             right => true);
 
          EmailVerificationInProgress = false;

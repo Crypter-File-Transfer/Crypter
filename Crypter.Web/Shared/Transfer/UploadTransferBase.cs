@@ -25,157 +25,145 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Transfer;
+using Crypter.ClientServices.Transfer.Handlers.Base;
+using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Enums;
+using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.CryptoLib;
-using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Enums;
-using Crypter.CryptoLib.Services;
+using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
-using Org.BouncyCastle.Crypto;
 using System;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
 {
-   public abstract class UploadTransferBase : ComponentBase
+   public class UploadTransferBase : ComponentBase
    {
-      [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
-
       [Inject]
       protected IUserSessionService UserSessionService { get; set; }
 
       [Inject]
-      protected ISimpleEncryptionService SimpleEncryptionService { get; set; }
+      protected IUserKeysService UserKeysService { get; set; }
 
       [Inject]
-      protected ISimpleSignatureService SimpleSignatureService { get; set; }
+      protected NavigationManager NavigationManager { get; set; }
+
+      [Inject]
+      protected UploadSettings UploadSettings { get; set; }
+
+      [Inject]
+      protected TransferHandlerFactory TransferHandlerFactory { get; set; }
 
       [Parameter]
-      public bool IsSenderDefined { get; set; }
+      public Maybe<string> RecipientUsername { get; set; }
 
       [Parameter]
-      public string SenderX25519PrivateKey { get; set; }
+      public Maybe<PEMString> RecipientDiffieHellmanPublicKey { get; set; }
 
       [Parameter]
-      public string SenderEd25519PrivateKey { get; set; }
-
-      [Parameter]
-      public bool IsRecipientDefined { get; set; }
-
-      [Parameter]
-      public string Recipient { get; set; }
-
-      [Parameter]
-      public string RecipientX25519PrivateKey { get; set; }
-
-      [Parameter]
-      public string RecipientX25519PublicKey { get; set; }
-
-      [Parameter]
-      public string RecipientEd25519PublicKey { get; set; }
-
-      [Parameter]
-      public EventCallback<bool> IsSenderDefinedChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> SenderX25519PrivateKeyChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> SenderEd25519PrivateKeyChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<bool> IsRecipientDefinedChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> RecipientChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> RecipientX25519PrivateKeyChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> RecipientX25519PublicKeyChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> RecipientEd25519PublicKeyChanged { get; set; }
+      public int ExpirationHours { get; set; }
 
       [Parameter]
       public EventCallback UploadCompletedEvent { get; set; }
 
-      [Parameter]
-      public int RequestedExpirationHours { get; set; }
-
       [CascadingParameter]
       public TransferSuccessModal ModalForAnonymousRecipient { get; set; }
 
-      protected BasicModal ModalForUserRecipient { get; set; }
+      [CascadingParameter]
+      public BasicModal ModalForUserRecipient { get; set; }
 
       protected bool EncryptionInProgress = false;
-      protected string EncryptionStatusMessage = "";
+      protected string ErrorMessage = string.Empty;
+      protected string UploadStatusMessage = string.Empty;
 
-      protected Guid TransferId;
-      protected string EncodedRecipientX25519PrivateKey;
+      private const string _unknownError = "An error occurred.";
+      private const string _serverOutOfSpace = "Server is out of space. Try again later.";
+      private const string _userNotFound = "User not found.";
+      private const string _expirationRange = "Expiration must be between 1 and 24 hours.";
+      protected const string _encryptingLiteral = "Encrypting";
+      protected const string _signingLiteral = "Signing";
+      protected const string _uploadingLiteral = "Uploading";
 
-      protected string UploadSuccessForUserMessage = "Your file has been encrypted and uploaded." +
-         " The recipient will see the file during their next login." +
-         "\nUploads automatically expire after 24 hours.";
-
-      protected abstract Task OnEncryptClicked();
-
-      protected void GenerateMissingAsymmetricKeys()
+      protected void SetHandlerUserInfo(IUserUploadHandler handler)
       {
-         if (!IsSenderDefined)
+         if (UserSessionService.LoggedIn)
          {
-            SenderX25519PrivateKey = ECDH.GenerateKeys().Private.ConvertToPEM().Value;
-            SenderEd25519PrivateKey = ECDSA.GenerateKeys().Private.ConvertToPEM().Value;
+            PEMString senderEd25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
+               () => throw new Exception("Missing sender Ed25519 private key"),
+               x => x);
+
+            PEMString senderX25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
+               () => throw new Exception("Missing sender X25519 private key"),
+               x => x);
+
+            handler.SetSenderInfo(senderX25519PrivateKey, senderEd25519PrivateKey);
          }
 
-         if (!IsRecipientDefined)
+         RecipientUsername.IfSome(x =>
          {
-            var recipientX25519Keys = ECDH.GenerateKeys();
-            RecipientX25519PrivateKey = recipientX25519Keys.Private.ConvertToPEM().Value;
-            RecipientX25519PublicKey = recipientX25519Keys.Public.ConvertToPEM().Value;
-            RecipientEd25519PublicKey = ECDSA.GenerateKeys().Public.ConvertToPEM().Value;
-            EncodedRecipientX25519PrivateKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(RecipientX25519PrivateKey));
-         }
+            PEMString recipientX25519PublicKey = RecipientDiffieHellmanPublicKey.Match(
+               () => throw new Exception("Missing recipient X25519 public key"),
+               x => x);
+
+            handler.SetRecipientInfo(x, recipientX25519PublicKey);
+         });
       }
 
-      protected static (byte[] SendKey, byte[] ServerKey) DeriveSymmetricKeys(PEMString senderX25519PrivateKey, PEMString recipientX25519PublicKey)
+      protected async void HandleUploadResponse(Either<UploadTransferError, UploadHandlerResponse> uploadResponse)
       {
-         var senderX25519PrivateDecoded = KeyConversion.ConvertX25519PrivateKeyFromPEM(senderX25519PrivateKey);
-         var senderX25519PublicDecoded = senderX25519PrivateDecoded.GeneratePublicKey();
-         var senderKeyPair = new AsymmetricCipherKeyPair(senderX25519PublicDecoded, senderX25519PrivateDecoded);
-         var recipientX25519PublicDecoded = KeyConversion.ConvertX25519PublicKeyFromPEM(recipientX25519PublicKey);
-         (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(senderKeyPair, recipientX25519PublicDecoded);
-         var digestor = new SHA(SHAFunction.SHA256);
-         digestor.BlockUpdate(sendKey);
-         var serverEncryptionKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
+         uploadResponse.DoLeftOrNeither(HandleUploadError, () => HandleUploadError());
 
-         return (sendKey, serverEncryptionKey);
+         await uploadResponse.DoRightAsync(async response =>
+         {
+            await UploadCompletedEvent.InvokeAsync();
+
+#pragma warning disable CS8524
+            string itemType = (response.ItemType) switch
+            {
+               TransferItemType.Message => "message",
+               TransferItemType.File => "file"
+            };
+#pragma warning restore CS8524
+
+            response.RecipientDecryptionKey.IfNone(() =>
+            {
+               ModalForUserRecipient.Open("Sent", $"Your {itemType} has been sent.", "Ok", Maybe<string>.None, Maybe<EventCallback<bool>>.None);
+            });
+
+            response.RecipientDecryptionKey.IfSome(x =>
+            {
+               StringBuilder urlBuilder = new StringBuilder(NavigationManager.BaseUri);
+               urlBuilder.Append($"decrypt/{itemType}/?id=");
+               urlBuilder.Append(response.TransferId);
+
+               if (response.UserType == TransferUserType.User)
+               {
+                  urlBuilder.Append("&user=true");
+               }
+
+               ModalForAnonymousRecipient.Open(urlBuilder.ToString(), x, response.ExpirationHours, UploadCompletedEvent);
+            });
+         });
       }
 
-      protected async Task SetNewEncryptionStatus(string status)
+      protected void HandleUploadError(UploadTransferError error = UploadTransferError.UnknownError)
       {
-         EncryptionStatusMessage = status;
-         StateHasChanged();
-         await Task.Delay(400);
-      }
-
-      protected virtual void Cleanup()
-      {
-         if (!IsSenderDefined)
+         switch (error)
          {
-            SenderEd25519PrivateKey = null;
-            SenderX25519PrivateKey = null;
-         }
-
-         if (!IsRecipientDefined)
-         {
-            RecipientX25519PrivateKey = null;
-            RecipientX25519PublicKey = null;
-            RecipientEd25519PublicKey = null;
+            case UploadTransferError.UnknownError:
+               ErrorMessage = _unknownError;
+               break;
+            case UploadTransferError.InvalidRequestedLifetimeHours:
+               ErrorMessage = _expirationRange;
+               break;
+            case UploadTransferError.RecipientNotFound:
+               ErrorMessage = _userNotFound;
+               break;
+            case UploadTransferError.OutOfSpace:
+               ErrorMessage = _serverOutOfSpace;
+               break;
          }
       }
    }

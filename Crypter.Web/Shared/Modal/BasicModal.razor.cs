@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -31,48 +32,33 @@ namespace Crypter.Web.Shared.Modal
 {
    public partial class BasicModalBase : ComponentBase
    {
-      [Parameter]
-      public string Subject { get; set; }
+      protected string Subject { get; set; }
 
-      [Parameter]
-      public string Message { get; set; }
+      protected string Message { get; set; }
 
-      [Parameter]
-      public string PrimaryButtonText { get; set; }
+      protected string PrimaryButtonText { get; set; }
 
-      [Parameter]
-      public string SecondaryButtonText { get; set; }
+      protected string SecondaryButtonText { get; set; }
 
-      [Parameter]
-      public bool ShowSecondaryButton { get; set; }
+      protected Maybe<EventCallback<bool>> ModalClosedCallback { get; set; }
 
-      [Parameter]
-      public EventCallback<string> SubjectChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> MessageChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> PrimaryButtonTextChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> SecondaryButtonTextChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<bool> ShowSecondaryButtonChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<bool> ModalClosedCallback { get; set; }
-
+      protected bool Show = false;
       protected string ModalDisplay = "none;";
       protected string ModalClass = "";
-      protected bool ShowBackdrop = false;
 
-      public void Open()
+      public void Open(string subject, string message, string primaryButtonText, Maybe<string> secondaryButtonText, Maybe<EventCallback<bool>> modalClosedCallback)
       {
+         Subject = subject;
+         Message = message;
+         PrimaryButtonText = primaryButtonText;
+         SecondaryButtonText = secondaryButtonText.Match(
+            () => string.Empty,
+            x => x);
+         ModalClosedCallback = modalClosedCallback;
+
          ModalDisplay = "block;";
          ModalClass = "Show";
-         ShowBackdrop = true;
+         Show = true;
          StateHasChanged();
       }
 
@@ -80,9 +66,10 @@ namespace Crypter.Web.Shared.Modal
       {
          ModalDisplay = "none";
          ModalClass = "";
-         ShowBackdrop = false;
+         Show = false;
          StateHasChanged();
-         await ModalClosedCallback.InvokeAsync(modalClosedInTheAffirmative);
+
+         await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync(modalClosedInTheAffirmative));
       }
    }
 }

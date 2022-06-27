@@ -37,7 +37,7 @@ namespace Crypter.Core.Entities
       public UserItemTransferPermission ReceiveFiles { get; set; }
       public UserItemTransferPermission ReceiveMessages { get; set; }
 
-      public virtual UserEntity User { get; set; }
+      public UserEntity User { get; set; }
 
       public UserPrivacySettingEntity(Guid owner, bool allowKeyExchangeRequests, UserVisibilityLevel visibility, UserItemTransferPermission receiveFiles, UserItemTransferPermission receiveMessages)
       {

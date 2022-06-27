@@ -24,11 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Authentication.Login
+namespace Crypter.Contracts.Features.Authentication
 {
    public enum LoginError
    {
-      NotFound,
+      UnknownError,
+      InvalidUsername,
+      InvalidPassword,
       InvalidTokenTypeRequested
    }
 }

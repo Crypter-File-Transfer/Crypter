@@ -24,14 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Transfer.Handlers;
+using Crypter.Common.Enums;
+using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
-using Crypter.Contracts.Features.Transfer.DownloadSignature;
+using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
@@ -39,113 +40,77 @@ namespace Crypter.Web.Shared.Transfer
    public partial class DownloadFileTransferBase : DownloadTransferBase
    {
       [Inject]
-      private IDownloadFileService DownloadFileService { get; set; }
+      protected IBrowserDownloadFileService BrowserDownloadFileService { get; set; }
 
-      [Parameter]
-      public string FileName { get; set; }
-
-      [Parameter]
-      public string ContentType { get; set; }
-
-      [Parameter]
-      public EventCallback<string> FileNameChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> ContentTypeChanged { get; set; }
-
+      protected string FileName = string.Empty;
+      protected string ContentType = string.Empty;
+      protected List<byte[]> PlaintextBytes = null;
+      protected int FileSize = 0;
       protected bool LocalDownloadInProgress { get; set; }
 
-      protected List<byte[]> PlaintextBytes { get; set; }
+      private DownloadFileHandler _downloadHandler;
 
-      protected override async Task OnDecryptClickedAsync()
+      protected override async Task OnInitializedAsync()
       {
-         if (!IsUserRecipient
-            && string.IsNullOrEmpty(EncodedX25519PrivateKey))
-         {
-            DecryptionInProgress = false;
-            ErrorMessage = "You must enter a decryption key";
-            return;
-         }
+         await PrepareFilePreviewAsync();
+         FinishedLoading = true;
+      }
 
+      protected async Task PrepareFilePreviewAsync()
+      {
+         TransferUserType transferUserType = IsUserTransfer
+            ? TransferUserType.User
+            : TransferUserType.Anonymous;
+
+         _downloadHandler = TransferHandlerFactory.CreateDownloadFileHandler(TransferId, transferUserType);
+         var previewResponse = await _downloadHandler.DownloadPreviewAsync();
+         previewResponse.DoRight(x =>
+         {
+            FileName = string.IsNullOrEmpty(x.FileName)
+               ? "{ no file name }"
+               : x.FileName;
+            ContentType = x.ContentType;
+            Created = x.CreationUTC.ToLocalTime();
+            Expiration = x.ExpirationUTC.ToLocalTime();
+            FileSize = x.Size;
+            SenderUsername = x.Sender;
+            SpecificRecipient = !string.IsNullOrEmpty(x.Recipient);
+         });
+
+         ItemFound = previewResponse.IsRight;
+         Console.WriteLine(ItemFound);
+      }
+
+      protected async Task OnDecryptClickedAsync()
+      {
          DecryptionInProgress = true;
-         ErrorMessage = "";
 
-         await SetNewDecryptionStatus("Decoding keys");
-         var maybeRecipientX25519PrivateKey = DecodeX25519RecipientKey();
-         if (maybeRecipientX25519PrivateKey.IsNone)
+         Maybe<PEMString> recipientPrivateKey = SpecificRecipient
+            ? UserKeysService.X25519PrivateKey
+            : ValidateAndDecodeUserProvidedDecryptionKey(UserProvidedDecryptionKey);
+
+         recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key.");
+         await recipientPrivateKey.IfSomeAsync(async x =>
          {
-            return;
-         }
+            _downloadHandler.SetRecipientInfo(x);
 
-         byte[] receiveKey;
-         byte[] serverKey;
-         try
-         {
-            var senderX25519PublicKey = PEMString.From(Encoding.UTF8.GetString(Convert.FromBase64String(SenderX25519PublicKey)));
-            (receiveKey, serverKey) = DeriveSymmetricKeys(maybeRecipientX25519PrivateKey.ValueUnsafe, senderX25519PublicKey);
-         }
-         catch (Exception)
-         {
-            DecryptionInProgress = false;
-            ErrorMessage = "Invalid X25519 key format";
-            return;
-         }
+            await SetProgressMessage(_downloadingLiteral);
+            var showDecryptingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_decryptingLiteral));
+            var showVerifyingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_verifyingLiteral));
+            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync(showDecryptingMessage, showVerifyingMessage);
 
-         // Get the signature before downloading the ciphertext
-         // Remember, the API will DELETE the ciphertext and it's database records as soon as the ciphertext is downloaded
-         var signatureRequest = new DownloadTransferSignatureRequest(TransferId);
-         var signatureResponse = await CrypterApiService.DownloadFileSignatureAsync(signatureRequest, UserSessionService.LoggedIn);
-         await signatureResponse.DoRightAsync(async x =>
-         {
-            var signature = Convert.FromBase64String(x.SignatureBase64);
-            var ed25519PublicKey = PEMString.From(Encoding.UTF8.GetString(Convert.FromBase64String(x.Ed25519PublicKeyBase64)));
+            decryptionResponse.DoLeftOrNeither(
+            x => HandleDownloadError(x),
+            () => HandleDownloadError());
 
-            // Request the ciphertext from the server
-            await SetNewDecryptionStatus("Downloading encrypted file");
-            var encodedServerDecryptionKey = Convert.ToBase64String(serverKey);
-            var ciphertextRequest = new DownloadTransferCiphertextRequest(TransferId, encodedServerDecryptionKey);
-            var ciphertextResponse = await CrypterApiService.DownloadFileCiphertextAsync(ciphertextRequest, UserSessionService.LoggedIn);
-
-            ciphertextResponse.DoLeft(y =>
+            decryptionResponse.DoRight(x =>
             {
-               switch (y)
-               {
-                  case DownloadTransferCiphertextError.NotFound:
-                     ErrorMessage = "File not found";
-                     DecryptionInProgress = false;
-                     break;
-                  case DownloadTransferCiphertextError.ServerDecryptionFailed:
-                     ErrorMessage = "Failed to remove server-side encryption";
-                     DecryptionInProgress = false;
-                     break;
-                  default:
-                     ErrorMessage = "";
-                     DecryptionInProgress = false;
-                     break;
-               }
-            });
-
-            await ciphertextResponse.DoRightAsync(async y =>
-            {
-               await SetNewDecryptionStatus($"Decrypting file");
-               var ciphertextBytes = Convert.FromBase64String(y.CipherTextBase64);
-               var clientEncryptionIV = Convert.FromBase64String(y.ClientEncryptionIVBase64);
-               var plaintextBytes = DecryptBytes(ciphertextBytes, receiveKey, clientEncryptionIV);
-
-               await SetNewDecryptionStatus("Verifying decrypted file");
-               if (VerifySignature(plaintextBytes, signature, ed25519PublicKey))
-               {
-                  PlaintextBytes = new List<byte[]>{ plaintextBytes };
-                  DecryptionCompleted = true;
-               }
-               else
-               {
-                  ErrorMessage = "Failed to verify decrypted file";
-               }
-
-               DecryptionInProgress = false;
+               PlaintextBytes = new List<byte[]> { x };
+               DecryptionComplete = true;
             });
          });
+
+         DecryptionInProgress = false;
       }
 
       protected async Task DownloadFileAsync()
@@ -154,11 +119,31 @@ namespace Crypter.Web.Shared.Transfer
          StateHasChanged();
          await Task.Delay(400);
 
-         await DownloadFileService.ResetDownloadAsync();
-         await DownloadFileService.DownloadFileAsync(FileName, ContentType, PlaintextBytes);
+         await BrowserDownloadFileService.ResetDownloadAsync();
+         await BrowserDownloadFileService.DownloadFileAsync(FileName, ContentType, PlaintextBytes);
 
          LocalDownloadInProgress = false;
          StateHasChanged();
+      }
+
+      protected async Task SetProgressMessage(string message)
+      {
+         DecryptionStatusMessage = message;
+         StateHasChanged();
+         await Task.Delay(400);
+      }
+
+      private void HandleDownloadError(DownloadTransferCiphertextError error = DownloadTransferCiphertextError.UnknownError)
+      {
+         switch (error)
+         {
+            case DownloadTransferCiphertextError.NotFound:
+               ErrorMessage = "File not found";
+               break;
+            case DownloadTransferCiphertextError.UnknownError:
+               ErrorMessage = "An error occurred";
+               break;
+         }
       }
    }
 }

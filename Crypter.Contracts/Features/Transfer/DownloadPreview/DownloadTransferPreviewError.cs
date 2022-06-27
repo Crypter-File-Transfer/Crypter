@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Transfer.DownloadPreview
+namespace Crypter.Contracts.Features.Transfer
 {
    public enum DownloadTransferPreviewError
    {

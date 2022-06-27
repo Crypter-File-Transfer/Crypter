@@ -25,61 +25,88 @@
  */
 
 using Crypter.API.Configuration;
-using Crypter.API.Models;
-using Crypter.API.Services;
 using Crypter.Core;
-using Crypter.Core.Entities;
-using Crypter.Core.Entities.Interfaces;
-using Crypter.Core.Interfaces;
+using Crypter.Core.Identity;
 using Crypter.Core.Services;
-using Crypter.Core.Services.DataAccess;
+using Crypter.Core.Settings;
 using Crypter.CryptoLib.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
-using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
+var tokenSettings = builder.Configuration
+   .GetSection("TokenSettings")
+   .Get<TokenSettings>();
+
+builder.Services.AddEmailService(options =>
+{
+   var settings = builder.Configuration
+   .GetSection("EmailSettings")
+   .Get<EmailSettings>();
+
+   options.Enabled = settings.Enabled;
+   options.From = settings.From;
+   options.Username = settings.Username;
+   options.Password = settings.Password;
+   options.Host = settings.Host;
+   options.Port = settings.Port;
+});
+
+builder.Services.AddTokenService(options =>
+{
+   options.Audience = tokenSettings.Audience;
+   options.Issuer = tokenSettings.Issuer;
+   options.SecretKey = tokenSettings.SecretKey;
+   options.AuthenticationTokenLifetimeMinutes = tokenSettings.AuthenticationTokenLifetimeMinutes;
+   options.SessionTokenLifetimeMinutes = tokenSettings.SessionTokenLifetimeMinutes;
+   options.DeviceTokenLifetimeDays = tokenSettings.DeviceTokenLifetimeDays;
+});
+
+builder.Services.AddTransferStorageService(options =>
+{
+   var settings = builder.Configuration
+      .GetSection("TransferStorageSettings")
+      .Get<TransferStorageSettings>();
+
+   options.AllocatedGB = settings.AllocatedGB;
+   options.Location = settings.Location;
+});
+
+builder.Services.AddDbContext<DataContext>();
 
 builder.Services.AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>();
 builder.Services.AddSingleton<ISimpleHashService, SimpleHashService>();
 builder.Services.AddSingleton<ISimpleSignatureService, SimpleSignatureService>();
-builder.Services.AddSingleton<ITokenService, TokenService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IApiValidationService, ApiValidationService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
-builder.Services.AddSingleton<IUserPrivacyService, UserPrivacyService>();
+
 builder.Services.AddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
-builder.Services.AddScoped<IUploadService, UploadService>();
-builder.Services.AddScoped<IDownloadService, DownloadService>();
-
-builder.Services.AddDbContext<DataContext>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IUserProfileService, UserProfileService>();
-builder.Services.AddScoped<IUserPrivacySettingService, UserPrivacySettingService>();
-builder.Services.AddScoped<IUserPublicKeyPairService<UserX25519KeyPairEntity>, UserX25519KeyPairService>();
-builder.Services.AddScoped<IUserPublicKeyPairService<UserEd25519KeyPairEntity>, UserEd25519KeyPairService>();
+builder.Services.AddScoped<IServerMetricsService, ServerMetricsService>();
+builder.Services.AddScoped<ITransferDownloadService, TransferDownloadService>();
+builder.Services.AddScoped<ITransferUploadService, TransferUploadService>();
+builder.Services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
+builder.Services.AddScoped<IUserContactsService, UserContactsService>();
 builder.Services.AddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
-builder.Services.AddScoped<IUserNotificationSettingService, UserNotificationSettingService>();
-builder.Services.AddScoped<IBaseTransferService<IMessageTransfer>, MessageTransferItemService>();
-builder.Services.AddScoped<IBaseTransferService<IFileTransfer>, FileTransferItemService>();
-
-builder.Services.AddMediatR(Assembly.GetAssembly(typeof(Crypter.Core.DataContext))!);
-
-var configuration = builder.Configuration;
-var tokenSettings = configuration.GetSection("TokenSettings").Get<TokenSettings>();
-builder.Services.AddSingleton((serviceProvider) => tokenSettings);
-builder.Services.AddSingleton((serviceProvider) => configuration.GetSection("EmailSettings").Get<EmailSettings>());
+builder.Services.AddScoped<IUserKeysService, UserKeysService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IUserTransferService, UserTransferService>();
 
 builder.Services.AddHangfire(config => config
-   .UsePostgreSqlStorage(configuration.GetConnectionString("HangfireConnection"))
+   .UsePostgreSqlStorage(builder.Configuration.GetConnectionString("HangfireConnection"))
    .UseRecommendedSerializerSettings());
-builder.Services.AddHangfireServer(options => options.WorkerCount = configuration.GetValue<int>("HangfireSettings:Workers"));
+
+builder.Services.AddHangfireServer(options =>
+{
+   var hangfireSettings = builder.Configuration
+      .GetSection("HangfireSettings")
+      .Get<HangfireSettings>();
+
+   options.WorkerCount = hangfireSettings.Workers;
+});
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
    .AddJwtBearerConfiguration(tokenSettings);
@@ -100,14 +127,16 @@ if (app.Environment.IsDevelopment())
 {
    app.UseDeveloperExceptionPage();
    app.UseCors(x =>
-      x.AllowAnyMethod()
-      .AllowAnyHeader()
-      .AllowAnyOrigin());
+   {
+      x.AllowAnyMethod();
+      x.AllowAnyHeader();
+      x.AllowAnyOrigin();
+   });
 
    app.UseSwagger();
    app.UseSwaggerUI();
 
-   using var serviceScope = app.Services.GetService<IServiceScopeFactory>()!.CreateScope();
+   using var serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope();
    var context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
    context.Database.EnsureCreated();
 }

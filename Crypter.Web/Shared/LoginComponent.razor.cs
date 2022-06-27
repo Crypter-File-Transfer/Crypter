@@ -28,6 +28,7 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;
+using Crypter.Contracts.Features.Authentication;
 using Crypter.Web.Helpers;
 using Crypter.Web.Models.Forms;
 using Microsoft.AspNetCore.Components;
@@ -72,29 +73,33 @@ namespace Crypter.Web.Shared
 
       protected async Task SubmitLoginAsync()
       {
-         var maybeUsername = ValidateUsername();
-         var maybePassword = ValidatePassword();
+         var loginTask = from username in ValidateUsername().ToEither(LoginError.InvalidUsername).AsTask()
+                         from password in ValidatePassword().ToEither(LoginError.InvalidPassword).AsTask()
+                         from loginResult in LoginAsync(username, password, LoginModel.RememberMe).ToEitherAsync(LoginError.InvalidPassword)
+                         select loginResult;
 
-         if (maybeUsername.IsLeft || maybePassword.IsLeft)
-         {
-            return;
-         }
-
-         var username = maybeUsername.RightUnsafe;
-         var password = maybePassword.RightUnsafe;
-
-         var authSuccess = await UserSessionService.LoginAsync(username, password, LoginModel.RememberMe);
-         if (!authSuccess)
+         var loginTaskResult = await loginTask;
+         if (!loginTaskResult.IsRight)
          {
             HandleLoginFailure();
             return;
          }
 
-         var returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";
-         NavigationManager.NavigateTo(returnUrl);
+         loginTaskResult.DoRight(loginSuccess =>
+         {
+            if (loginSuccess)
+            {
+               string returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";
+               NavigationManager.NavigateTo(returnUrl);
+            }
+            else
+            {
+               HandleLoginFailure();
+            }
+         });
       }
 
-      private Either<Nothing, Username> ValidateUsername()
+      private Maybe<Username> ValidateUsername()
       {
          var validationResult = Username.CheckValidation(LoginModel.Username);
 
@@ -115,12 +120,12 @@ namespace Crypter.Web.Shared
             };
          });
 
-         return validationResult.Match<Either<Nothing, Username>>(
+         return validationResult.Match(
             () => Username.From(LoginModel.Username),
-            _ => new Nothing());
+            _ => Maybe<Username>.None);
       }
 
-      private Either<Nothing, Password> ValidatePassword()
+      private Maybe<Password> ValidatePassword()
       {
          var validationResult = Password.CheckValidation(LoginModel.Password);
 
@@ -141,9 +146,14 @@ namespace Crypter.Web.Shared
             };
          });
 
-         return validationResult.Match<Either<Nothing, Password>>(
-            () => Password.From(LoginModel.Password),
-            _ => new Nothing());
+         return validationResult.Match(
+           () => Password.From(LoginModel.Password),
+           _ => Maybe<Password>.None);
+      }
+
+      private Task<Maybe<bool>> LoginAsync(Username username, Password password, bool rememberUser)
+      {
+         return Maybe<bool>.FromAsync(UserSessionService.LoginAsync(username, password, rememberUser));
       }
 
       private void HandleLoginFailure()

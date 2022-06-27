@@ -38,9 +38,8 @@ namespace Crypter.ClientServices.Interfaces
       bool LoggedIn { get; }
       Maybe<UserSession> Session { get; }
 
-      Task InitializeAsync();
       Task<bool> LoginAsync(Username username, Password password, bool rememberUser);
-      Task LogoutAsync();
+      Task<Unit> LogoutAsync();
 
       event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler;
       event EventHandler<UserLoggedInEventArgs> UserLoggedInEventHandler;

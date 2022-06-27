@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Authentication.Refresh
+namespace Crypter.Contracts.Features.Authentication
 {
    public enum RefreshError
    {
-      BearerTokenMissingId,
-      DatabaseTokenNotFound,
-      DatabaseTokenExpired
+      UnknownError,
+      UserNotFound,
+      InvalidToken
    }
 }

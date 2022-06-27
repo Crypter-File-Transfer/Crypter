@@ -38,7 +38,7 @@ namespace Crypter.Core.Entities
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
 
-      public virtual UserEntity User { get; set; }
+      public UserEntity User { get; set; }
 
       public UserTokenEntity(Guid id, Guid owner, string description, TokenType type, DateTime created, DateTime expiration)
       {

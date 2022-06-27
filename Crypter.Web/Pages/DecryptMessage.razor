@@ -24,24 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@page "/decrypt/message/{transferId:guid}"
+@page "/decrypt/message"
 
 @inherits DecryptMessageBase
 
 <PageTitle>Crypter - Decrypt</PageTitle>
 
-@if (!Loading)
-{
-   if (ItemFound)
-   {
-      <div class="container my-4">
-         <h1>Decrypt Message</h1>
-         <DownloadMessageTransfer @bind-TransferId="TransferId" @bind-Subject="Subject" @bind-Created="Created" @bind-Expiration="Expiration" @bind-Size="Size"
-                                @bind-SenderUsername="SenderUsername" @bind-SenderAlias="SenderAlias" @bind-RecipientUsername="RecipientUsername" @bind-SenderX25519PublicKey="X25519PublicKey"></DownloadMessageTransfer>
-      </div>
-   }
-   else
-   {
-      <ItemNotFoundComponent></ItemNotFoundComponent>
-   }
-}
+<div class="container my-4">
+   <h1>Decrypt Message</h1>
+   <DownloadMessageTransfer TransferId="TransferId" IsUserTransfer="IsUserTransfer" />
+</div>

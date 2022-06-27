@@ -24,20 +24,25 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.Transfer.DownloadCiphertext
+namespace Crypter.Contracts.Features.Transfer
 {
    public class DownloadTransferCiphertextResponse
    {
-      public string CipherTextBase64 { get; set; }
-      public string ClientEncryptionIVBase64 { get; set; }
+      public List<string> Ciphertext { get; init; }
+      public string InitializationVector { get; init; }
+      public string DigitalSignature { get; init; }
+      public string DigitalSignaturePublicKey { get; init; }
 
       [JsonConstructor]
-      public DownloadTransferCiphertextResponse(string cipherTextBase64, string clientEncryptionIVBase64)
+      public DownloadTransferCiphertextResponse(List<string> ciphertext, string initializationVector, string digitalSignature, string digitalSignaturePublicKey)
       {
-         CipherTextBase64 = cipherTextBase64;
-         ClientEncryptionIVBase64 = clientEncryptionIVBase64;
+         Ciphertext = ciphertext;
+         InitializationVector = initializationVector;
+         DigitalSignature = digitalSignature;
+         DigitalSignaturePublicKey = digitalSignaturePublicKey;
       }
    }
 }

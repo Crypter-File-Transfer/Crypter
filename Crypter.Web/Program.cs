@@ -25,8 +25,11 @@
  */
 
 using Crypter.ClientServices.DeviceStorage.Enums;
-using Crypter.ClientServices.Implementations;
 using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Repositories;
+using Crypter.ClientServices.Services;
+using Crypter.ClientServices.Transfer;
+using Crypter.ClientServices.Transfer.Models;
 using Crypter.CryptoLib.Services;
 using Crypter.Web;
 using Crypter.Web.Models.Settings;
@@ -36,13 +39,13 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Net.Http;
+using System;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddSingleton<ClientSettings>(sp =>
+builder.Services.AddSingleton(sp =>
 {
    var config = sp.GetService<IConfiguration>();
    return config.Get<ClientSettings>();
@@ -60,18 +63,42 @@ builder.Services.AddSingleton(sp =>
    return config.GetSection("UploadSettings").Get<UploadSettings>();
 });
 
-builder.Services
-   .AddScoped(sp => new HttpClient())
-   .AddScoped<IDeviceRepository<BrowserStorageLocation>, BrowserRepository>()
-   .AddScoped<ITokenRepository, BrowserTokenRepository>()
-   .AddScoped<IUserKeysRepository, BrowserUserKeysRepository>()
-   .AddScoped<IUserSessionRepository, BrowserUserSessionRepository>()
-   .AddScoped<IUserSessionService, UserSessionService<BrowserStorageLocation>>()
-   .AddScoped<ICrypterApiService, CrypterApiService>()
-   .AddScoped<IUserKeysService, UserKeysService>()
-   .AddScoped<ISimpleEncryptionService, SimpleEncryptionService>()
-   .AddScoped<ISimpleSignatureService, SimpleSignatureService>()
-   .AddScoped<IUserContactsService, UserContactsService>()
-   .AddScoped<IDownloadFileService, DownloadFileService>();
+builder.Services.AddHttpClient<ICrypterHttpService, CrypterHttpService>(httpClient =>
+{
+   var config = builder.Services
+      .BuildServiceProvider()
+      .GetService<IClientApiSettings>();
 
-await builder.Build().RunAsync();
+   httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
+});
+
+builder.Services.AddHttpClient<ICrypterAuthenticatedHttpService, CrypterAuthenticatedHttpService>(httpClient =>
+{
+   var config = builder.Services
+      .BuildServiceProvider()
+      .GetService<IClientApiSettings>();
+
+   httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
+});
+
+builder.Services
+   .AddSingleton<IDeviceRepository<BrowserStorageLocation>, BrowserRepository>()
+   .AddSingleton<ITokenRepository, BrowserTokenRepository>()
+   .AddSingleton<IUserKeysRepository, BrowserUserKeysRepository>()
+   .AddSingleton<IUserSessionRepository, BrowserUserSessionRepository>()
+   .AddSingleton<IUserSessionService, UserSessionService<BrowserStorageLocation>>()
+   .AddSingleton<ICrypterApiService, CrypterApiService>()
+   .AddSingleton<IUserKeysService, UserKeysService>()
+   .AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>()
+   .AddSingleton<ISimpleSignatureService, SimpleSignatureService>()
+   .AddSingleton<IUserContactsService, UserContactsService>()
+   .AddSingleton<IBrowserDownloadFileService, BrowserDownloadFileService>()
+   .AddSingleton<TransferHandlerFactory>()
+   .AddSingleton<Func<ICrypterApiService>>(sp => () => sp.GetService<ICrypterApiService>());
+
+var host = builder.Build();
+var contactsService = host.Services.GetRequiredService<IUserContactsService>();
+var userKeysService = host.Services.GetRequiredService<IUserKeysService>();
+var userSessionService = host.Services.GetRequiredService<IUserSessionService>();
+
+await host.RunAsync();

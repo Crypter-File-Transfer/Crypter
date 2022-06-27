@@ -28,7 +28,7 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;
-using Crypter.Contracts.Features.User.Register;
+using Crypter.Contracts.Features.Authentication;
 using Crypter.Web.Models.Forms;
 using Microsoft.AspNetCore.Components;
 using System;
@@ -68,17 +68,17 @@ namespace Crypter.Web.Shared
          RegistrationModel = new();
       }
 
-      private Either<Nothing, Username> ValidateUsername()
+      private Maybe<Username> ValidateUsername()
       {
-         var validationResult = Username.CheckValidation(RegistrationModel.Username);
+         var invalidReason = Username.CheckValidation(RegistrationModel.Username);
 
-         validationResult.IfNone(() =>
+         invalidReason.IfNone(() =>
          {
             UsernameInvalidClassPlaceholder = "";
             UsernameValidationErrorMessage = "";
          });
 
-         validationResult.IfSome(error =>
+         invalidReason.IfSome(error =>
          {
             UsernameInvalidClassPlaceholder = _invalidClassName;
             UsernameValidationErrorMessage = error switch
@@ -91,22 +91,22 @@ namespace Crypter.Web.Shared
             };
          });
 
-         return validationResult.Match<Either<Nothing, Username>>(
+         return invalidReason.Match(
             () => Username.From(RegistrationModel.Username),
-            _ => new Nothing());
+            _ => Maybe<Username>.None);
       }
 
-      private Either<Nothing, Password> ValidatePassword()
+      private Maybe<Password> ValidatePassword()
       {
-         var validationResult = Password.CheckValidation(RegistrationModel.Password);
+         var invalidReason = Password.CheckValidation(RegistrationModel.Password);
 
-         validationResult.IfNone(() =>
+         invalidReason.IfNone(() =>
          {
             PasswordInvalidClassPlaceholder = "";
             PasswordValidationErrorMessage = "";
          });
 
-         validationResult.IfSome(error =>
+         invalidReason.IfSome(error =>
          {
             PasswordInvalidClassPlaceholder = _invalidClassName;
             PasswordValidationErrorMessage = error switch
@@ -117,9 +117,9 @@ namespace Crypter.Web.Shared
             };
          });
 
-         return validationResult.Match<Either<Nothing, Password>>(
+         return invalidReason.Match(
             () => Password.From(RegistrationModel.Password),
-            _ => new Nothing());
+            _ => Maybe<Password>.None);
       }
 
       private bool ValidatePasswordConfirmation()
@@ -145,7 +145,7 @@ namespace Crypter.Web.Shared
          return true;
       }
 
-      private Either<Nothing, Maybe<EmailAddress>> ValidateEmailAddress()
+      private Either<Unit, Maybe<EmailAddress>> ValidateEmailAddress()
       {
          bool isEmailAddressEmpty = string.IsNullOrEmpty(RegistrationModel.EmailAddress);
          if (isEmailAddressEmpty)
@@ -153,65 +153,62 @@ namespace Crypter.Web.Shared
             return Maybe<EmailAddress>.None;
          }
 
-         var validationResult = EmailAddress.CheckValidation(RegistrationModel.EmailAddress);
+         var invalidReason = EmailAddress.CheckValidation(RegistrationModel.EmailAddress);
 
-         validationResult.IfNone(() =>
+         invalidReason.IfNone(() =>
          {
             EmailAddressInvalidClassPlaceholder = "";
             EmailAddressValidationErrorMessage = "";
          });
 
-         validationResult.IfSome(error =>
+         invalidReason.IfSome(error =>
          {
             EmailAddressInvalidClassPlaceholder = _invalidClassName;
             EmailAddressValidationErrorMessage = "Invalid email address";
          });
 
-         return validationResult.Match<Either<Nothing, Maybe<EmailAddress>>>(
-            () => new Maybe<EmailAddress>(EmailAddress.From(RegistrationModel.EmailAddress)),
-            _ => new Nothing());
+         return invalidReason.Match<Either<Unit, Maybe<EmailAddress>>>(
+            () => Maybe<EmailAddress>.From(EmailAddress.From(RegistrationModel.EmailAddress)),
+            _ => Unit.Default);
       }
 
       protected async Task SubmitRegistrationAsync()
       {
-         var maybeUsername = ValidateUsername();
-         var maybePassword = ValidatePassword();
-         bool passwordsMatch = ValidatePasswordConfirmation();
-         var maybeEmailAddress = ValidateEmailAddress();
+         var registrationTask = from username in ValidateUsername().ToEither(RegistrationError.InvalidUsername).AsTask()
+                                from password in ValidatePassword().ToEither(RegistrationError.InvalidPassword).AsTask()
+                                from emailAddress in ValidateEmailAddress().MapLeft(_ => RegistrationError.InvalidEmailAddress).AsTask()
+                                where ValidatePasswordConfirmation()
+                                let authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password)
+                                let authPasswordEncoded = Convert.ToBase64String(authPasswordBytes)
+                                let authenticationPassword = AuthenticationPassword.From(authPasswordEncoded)
+                                let requestBody = new RegistrationRequest(username, authenticationPassword, emailAddress)
+                                from registrationResponse in CrypterApiService.RegisterUserAsync(requestBody)
+                                let _ = UserProvidedEmailAddress = emailAddress.IsSome
+                                select registrationResponse;
 
-         if (maybeUsername.IsLeft || maybePassword.IsLeft || !passwordsMatch || maybeEmailAddress.IsLeft)
-         {
-            return;
-         }
-
-         var username = maybeUsername.RightUnsafe;
-         var password = maybePassword.RightUnsafe;
-         var emailAddress = maybeEmailAddress.RightUnsafe;
-
-         byte[] authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
-         string authPasswordEncoded = Convert.ToBase64String(authPasswordBytes);
-         var authenticationPassword = AuthenticationPassword.From(authPasswordEncoded);
-
-         var requestBody = new UserRegisterRequest(username, authenticationPassword, emailAddress);
-         var registrationAttempt = await CrypterApiService.RegisterUserAsync(requestBody);
-
-         registrationAttempt.DoLeft(HandleRegistrationFailure);
-         registrationAttempt.DoRight(_ => UserProvidedEmailAddress = emailAddress.IsSome);
-         RegistrationAttemptSucceeded = registrationAttempt.IsRight;
+         var registrationResult = await registrationTask;
+         registrationResult.DoLeftOrNeither(HandleRegistrationFailure, HandleUnknownRegistrationFailure);
+         RegistrationAttemptSucceeded = registrationResult.IsRight;
       }
 
-      private void HandleRegistrationFailure(UserRegisterError error)
+      private void HandleRegistrationFailure(RegistrationError error)
       {
          RegistrationAttemptFailed = true;
          RegistrationAttemptErrorMessage = error switch
          {
-            UserRegisterError.InvalidUsername => "Invalid username",
-            UserRegisterError.InvalidPassword => "Invalid password",
-            UserRegisterError.InvalidEmailAddress => "Invalid email address",
-            UserRegisterError.UsernameTaken => "Username is already taken",
-            UserRegisterError.EmailTaken => "Email address is associated with an existing account",
+            RegistrationError.InvalidUsername => "Invalid username",
+            RegistrationError.InvalidPassword => "Invalid password",
+            RegistrationError.InvalidEmailAddress => "Invalid email address",
+            RegistrationError.UsernameTaken => "Username is already taken",
+            RegistrationError.EmailAddressTaken => "Email address is associated with an existing account",
             _ => "???"
          };
+      }
+
+      private void HandleUnknownRegistrationFailure()
+      {
+         RegistrationAttemptFailed = true;
+         RegistrationAttemptErrorMessage = "An unknown error occurred.";
       }
    }
 }

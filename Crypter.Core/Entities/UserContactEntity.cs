@@ -33,8 +33,8 @@ namespace Crypter.Core.Entities
       public Guid OwnerId { get; set; }
       public Guid ContactId { get; set; }
 
-      public virtual UserEntity Owner { get; set; }
-      public virtual UserEntity Contact { get; set; }
+      public UserEntity Owner { get; set; }
+      public UserEntity Contact { get; set; }
 
       public UserContactEntity(Guid ownerId, Guid contactId)
       {

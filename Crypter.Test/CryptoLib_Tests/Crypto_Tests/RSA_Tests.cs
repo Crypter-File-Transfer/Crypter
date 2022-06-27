@@ -66,7 +66,8 @@ vQIhANCjmyt3t+fpKcrUg8gLt8KsASOvIKFoE5qgL+KD/d8VAiEAsXciMeKy/6Tl
 rG4Gq2AAv8mqEkB93ic/XGYmPOd//pUCIQCYR/HHxjfK4xoH2xjceAEF67lhLD+q
 z2YPo/+PWzt/CQIgc4JolnHJMo6BE7+1xZxCQJMhiKnDg3KmUh0G7IN+ExUCIF5l
 2zoR2BRJjNEpn4SSIuv1D87yFG8wlcgxeTCl1/yk
------END RSA PRIVATE KEY-----");
+-----END RSA PRIVATE KEY-----
+".ReplaceLineEndings());
 
          var knownPlaintext = new byte[]
          {
@@ -102,7 +103,8 @@ vQIhANCjmyt3t+fpKcrUg8gLt8KsASOvIKFoE5qgL+KD/d8VAiEAsXciMeKy/6Tl
 rG4Gq2AAv8mqEkB93ic/XGYmPOd//pUCIQCYR/HHxjfK4xoH2xjceAEF67lhLD+q
 z2YPo/+PWzt/CQIgc4JolnHJMo6BE7+1xZxCQJMhiKnDg3KmUh0G7IN+ExUCIF5l
 2zoR2BRJjNEpn4SSIuv1D87yFG8wlcgxeTCl1/yk
------END RSA PRIVATE KEY-----");
+-----END RSA PRIVATE KEY-----
+".ReplaceLineEndings());
 
          var knownPlaintext = new byte[]
          {

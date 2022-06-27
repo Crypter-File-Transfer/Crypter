@@ -25,6 +25,7 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Primitives;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Text;
@@ -53,8 +54,8 @@ namespace Crypter.Web.Pages
       protected string ProperUsername;
       protected bool AllowsFiles;
       protected bool AllowsMessages;
-      protected string UserEd25519PublicKey;
-      protected string UserX25519PublicKey;
+      protected PEMString UserEd25519PublicKey;
+      protected PEMString UserX25519PublicKey;
 
       protected override async Task OnInitializedAsync()
       {
@@ -65,21 +66,23 @@ namespace Crypter.Web.Pages
 
       protected async Task PrepareUserProfileAsync()
       {
-         var response = await CrypterApiService.GetUserPublicProfileAsync(Username, UserSessionService.LoggedIn);
+         var response = await CrypterApiService.GetUserProfileAsync(Username, UserSessionService.LoggedIn);
          response.DoRight(x =>
          {
-            Alias = x.Alias;
-            About = x.About;
-            ProperUsername = x.Username;
-            AllowsFiles = x.ReceivesFiles;
-            AllowsMessages = x.ReceivesMessages;
-            UserEd25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(x.PublicDSAKey));
-            UserX25519PublicKey = Encoding.UTF8.GetString(Convert.FromBase64String(x.PublicDHKey));
+            Alias = x.Result.Alias;
+            About = x.Result.About;
+            ProperUsername = x.Result.Username;
+            AllowsFiles = x.Result.ReceivesFiles;
+            AllowsMessages = x.Result.ReceivesMessages;
+            UserEd25519PublicKey = PEMString.From(
+               Encoding.UTF8.GetString(Convert.FromBase64String(x.Result.PublicDSAKey)));
+            UserX25519PublicKey = PEMString.From(
+               Encoding.UTF8.GetString(Convert.FromBase64String(x.Result.PublicDHKey)));
          });
 
          IsProfileAvailable = response.Match(
-            left => false,
-            right => !string.IsNullOrEmpty(right.PublicDHKey) && !string.IsNullOrEmpty(right.PublicDSAKey));
+            false,
+            right => !string.IsNullOrEmpty(right.Result.PublicDHKey) && !string.IsNullOrEmpty(right.Result.PublicDSAKey));
       }
    }
 }

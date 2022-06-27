@@ -25,13 +25,18 @@
  */
 
 using Crypter.Common.Primitives;
-using Crypter.Core.Interfaces;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System;
 using System.Security.Cryptography;
 
 namespace Crypter.Core.Services
 {
+   public interface IPasswordHashService
+   {
+      (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(AuthenticationPassword password);
+      bool VerifySecurePasswordHash(AuthenticationPassword password, byte[] existingHash, byte[] existingSalt);
+   }
+
    public class PasswordHashService : IPasswordHashService
    {
       private static readonly int Iterations = 100001;
