@@ -1,8 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-#nullable disable
-
 namespace Crypter.Core.Migrations
 {
    public partial class UseFluentApi : Migration

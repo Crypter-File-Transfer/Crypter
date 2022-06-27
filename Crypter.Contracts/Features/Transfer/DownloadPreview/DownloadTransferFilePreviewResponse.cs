@@ -27,7 +27,7 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.Transfer.DownloadPreview
+namespace Crypter.Contracts.Features.Transfer
 {
    public class DownloadTransferFilePreviewResponse
    {
@@ -37,12 +37,12 @@ namespace Crypter.Contracts.Features.Transfer.DownloadPreview
       public string Sender { get; set; }
       public string SenderAlias { get; set; }
       public string Recipient { get; set; }
-      public string X25519PublicKey { get; set; }
+      public string DiffieHellmanPublicKey { get; set; }
       public DateTime CreationUTC { get; set; }
       public DateTime ExpirationUTC { get; set; }
 
       [JsonConstructor]
-      public DownloadTransferFilePreviewResponse(string fileName, string contentType, int size, string sender, string senderAlias, string recipient, string x25519PublicKey, DateTime creationUTC, DateTime expirationUTC)
+      public DownloadTransferFilePreviewResponse(string fileName, string contentType, int size, string sender, string senderAlias, string recipient, string diffieHellmanPublicKey, DateTime creationUTC, DateTime expirationUTC)
       {
          FileName = fileName;
          ContentType = contentType;
@@ -50,7 +50,7 @@ namespace Crypter.Contracts.Features.Transfer.DownloadPreview
          Sender = sender;
          SenderAlias = senderAlias;
          Recipient = recipient;
-         X25519PublicKey = x25519PublicKey;
+         DiffieHellmanPublicKey = diffieHellmanPublicKey;
          CreationUTC = creationUTC;
          ExpirationUTC = expirationUTC;
       }

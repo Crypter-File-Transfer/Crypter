@@ -31,67 +31,56 @@
 <PageTitle>Crypter - User Search</PageTitle>
 
 <div class="container my-4">
-   <h1>Find a user</h1>
-   <form>
-      <div class="row">
-         <div class="col-md-9">
-            <div class="input-group mb-3">
-               <input type="text" @bind="SearchParameters.Keyword" class="form-control" />
-               <button class="btn btn-primary" type="submit" id="button-addon2">Search</button>
+   @if (!Loading)
+   {
+      <h1>Find a user</h1>
+      <form @onsubmit:preventDefault @onsubmit="@OnSearchClicked">
+         <div class="row">
+            <div class="col-md-9">
+               <div class="input-group mb-3">
+                  <input type="text" @bind="SearchParameters.Keyword" class="form-control" />
+                  <button class="btn btn-primary" type="submit" id="button-addon2">Search</button>
+               </div>
             </div>
          </div>
-      </div>
-   </form>
-   <div class="row">
-      @if (SearchResults != null)
-      {
-         @if (SearchResults.Total == 0)
+      </form>
+      <div class="row">
+         @if (SearchResults != null)
          {
-            <h3 class="text-center">No results found</h3>
-         }
-         else
-         {
-            @foreach (var result in SearchResults.Result)
+            @if (SearchResults.Result.Count == 0)
             {
-               <div class="col-md-6">
-                  <div class="card my-1">
-                     <div class="card-body">
-                        <div class="d-flex bd-highlight mb-3">
-                           <div class="me-auto p-2 bd-highlight">
-                              <a class="text-decoration-none" href="/user/profile/@result.Username">
-                                 <h5 class="card-title">@GetDisplayName(result.Username, result.Alias)</h5>
-                              </a>
-                           </div>
-                           <div class="p-2 bd-highlight">
-                              @if (UserContactsService.IsContact(result.Username))
-                              {
-                                 <button type="button" disable class="btn btn-outline-success">Added</button>
-                              }
-                              else
-                              {
-                                 <button type="button" class="btn btn-outline-dark" @onclick="async () => await AddContactAsync(result.Username)">Add Contact</button>
-                              }
+               <h3 class="text-center">No results found</h3>
+            }
+            else
+            {
+               @foreach (var result in SearchResults.Result)
+               {
+                  <div class="col-md-6">
+                     <div class="card my-1">
+                        <div class="card-body">
+                           <div class="d-flex bd-highlight mb-3">
+                              <div class="me-auto p-2 bd-highlight">
+                                 <a class="text-decoration-none" href="/user/profile/@result.Username">
+                                    <h5 class="card-title">@GetDisplayName(result.Username, result.Alias)</h5>
+                                 </a>
+                              </div>
+                              <div class="p-2 bd-highlight">
+                                 @if (UserContactsService.IsContact(result.Username))
+                                 {
+                                    <button type="button" disable class="btn btn-outline-success">Added</button>
+                                 }
+                                 else if (result.Username.ToLower() != @SessionUsernameLowercase)
+                                 {
+                                    <button type="button" class="btn btn-outline-dark" @onclick="async () => await AddContactAsync(result.Username)">Add Contact</button>
+                                 }
+                              </div>
                            </div>
                         </div>
                      </div>
                   </div>
-               </div>
-            }
-            if (SearchResults.Total > SearchParameters.Count)
-            {
-               decimal numberPages = (SearchResults.Total / SearchParameters.Count);
-
-               <nav aria-label="User Search Results">
-                  <ul class="pagination">
-                     @for (int i = 0; i <= Math.Ceiling(numberPages); i++)
-                     {
-                        string pageUrl = "/user/search?query=" + SearchParameters.Keyword + "&page=" + (i + 1);
-                        <li class="page-item page"><a class="page-link" @onclick="() => GoToPage(pageUrl)">@(i + 1)</a></li>
-                     }
-                  </ul>
-               </nav>
+               }
             }
          }
-      }
-   </div>
+      </div>
+   }
 </div>

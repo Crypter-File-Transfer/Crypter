@@ -27,7 +27,7 @@
 using Crypter.Common.Enums;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.Authentication.Refresh
+namespace Crypter.Contracts.Features.Authentication
 {
    public class RefreshResponse
    {

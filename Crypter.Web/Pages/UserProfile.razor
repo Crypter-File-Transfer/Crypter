@@ -49,19 +49,15 @@
                      {
                         <button class="btn btn-secondary mr-3" @onclick="() => FileModal.Open()">Send a file</button>
                         <UploadFileTransferModal @ref="FileModal"
-                           IsRecipientDefined=true
-                           Recipient="@ProperUsername"
-                           RecipientX25519PublicKey="@UserX25519PublicKey"
-                           RecipientEd25519PublicKey="@UserEd25519PublicKey" />
+                           RecipientUsername="@ProperUsername"
+                           RecipientX25519PublicKey="@UserX25519PublicKey" />
                      }
                      @if (AllowsMessages)
                      {
                         <button class="btn btn-secondary" @onclick="() => MessageModal.Open()">Send a message</button>
                         <UploadMessageTransferModal @ref="MessageModal"
-                           IsRecipientDefined=true
-                           Recipient="@ProperUsername"
-                           RecipientX25519PublicKey="@UserX25519PublicKey"
-                           RecipientEd25519PublicKey="@UserEd25519PublicKey" />
+                           RecipientUsername="@ProperUsername"
+                           RecipientX25519PublicKey="@UserX25519PublicKey" />
                      }
                   </div>
                </div>

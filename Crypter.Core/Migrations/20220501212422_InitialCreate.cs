@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 using System;
 
-#nullable disable
-
 namespace Crypter.Core.Migrations
 {
    public partial class InitialCreate : Migration

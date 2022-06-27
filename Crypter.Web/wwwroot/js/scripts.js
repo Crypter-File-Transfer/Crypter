@@ -30,10 +30,6 @@
       }
    },
 
-   SetPageUrl: function (urlString) {
-      window.history.pushState(null, '', urlString);
-   },
-
    SetPageTitle: function (title) {
       document.title = title;
    },

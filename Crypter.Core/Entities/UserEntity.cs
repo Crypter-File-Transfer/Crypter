@@ -35,32 +35,36 @@ namespace Crypter.Core.Entities
    {
       public Guid Id { get; set; }
       public string Username { get; set; }
-      public string Email { get; set; }
+      public string EmailAddress { get; set; }
       public byte[] PasswordHash { get; set; }
       public byte[] PasswordSalt { get; set; }
       public bool EmailVerified { get; set; }
       public DateTime Created { get; set; }
       public DateTime LastLogin { get; set; }
 
-      public virtual UserProfileEntity Profile { get; set; }
-      public virtual UserPrivacySettingEntity PrivacySetting { get; set; }
-      public virtual UserEmailVerificationEntity EmailVerification { get; set; }
-      public virtual UserNotificationSettingEntity NotificationSetting { get; set; }
-      public virtual UserEd25519KeyPairEntity Ed25519KeyPair { get; set; }
-      public virtual UserX25519KeyPairEntity X25519KeyPair { get; set; }
-      public virtual List<UserTokenEntity> Tokens { get; set; }
-      public virtual List<UserContactEntity> Contacts { get; set; }
-      public virtual List<UserContactEntity> Contactors { get; set; }
+      public UserProfileEntity Profile { get; set; }
+      public UserPrivacySettingEntity PrivacySetting { get; set; }
+      public UserEmailVerificationEntity EmailVerification { get; set; }
+      public UserNotificationSettingEntity NotificationSetting { get; set; }
+      public UserEd25519KeyPairEntity Ed25519KeyPair { get; set; }
+      public UserX25519KeyPairEntity X25519KeyPair { get; set; }
+      public List<UserTokenEntity> Tokens { get; set; }
+      public List<UserContactEntity> Contacts { get; set; }
+      public List<UserContactEntity> Contactors { get; set; }
+      public List<UserFileTransferEntity> SentFileTransfers { get; set; }
+      public List<UserFileTransferEntity> ReceivedFileTransfers { get; set; }
+      public List<UserMessageTransferEntity> SentMessageTransfers { get; set; }
+      public List<UserMessageTransferEntity> ReceivedMessageTransfers { get; set; }
 
 
       /// <summary>
       /// Do not use this.
       /// </summary>
-      public UserEntity(Guid id, string username, string email, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
+      public UserEntity(Guid id, string username, string emailAddress, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
       {
          Id = id;
          Username = username;
-         Email = email;
+         EmailAddress = emailAddress;
          PasswordHash = passwordHash;
          PasswordSalt = passwordSalt;
          EmailVerified = emailVerified;
@@ -68,11 +72,11 @@ namespace Crypter.Core.Entities
          LastLogin = lastLogin;
       }
 
-      public UserEntity(Guid id, Username username, Maybe<EmailAddress> email, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
+      public UserEntity(Guid id, Username username, Maybe<EmailAddress> emailAddress, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
       {
          Id = id;
          Username = username.Value;
-         Email = email.Match(
+         EmailAddress = emailAddress.Match(
             () => null,
             some => some.Value);
          PasswordHash = passwordHash;

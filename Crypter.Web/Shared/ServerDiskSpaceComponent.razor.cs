@@ -25,7 +25,7 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Web.Models.Settings;
+using Crypter.ClientServices.Transfer.Models;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -49,11 +49,11 @@ namespace Crypter.Web.Shared
          var response = await CrypterApiService.GetDiskMetricsAsync();
 
          ServerSpacePercentageRemaining = response.Match(
-            left => 0.0,
+            0.0,
             right => 100.0 * (right.Available / (double)right.Allocated));
 
          ServerHasDiskSpace = response.Match(
-            left => false,
+            false,
             right =>
             {
                long maxUploadBytes = UploadSettings.MaxUploadSizeMB * (long)Math.Pow(2, 20);

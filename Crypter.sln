@@ -14,11 +14,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Core", "Crypter.Cor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Test", "Crypter.Test\Crypter.Test.csproj", "{29F529FE-52A2-43C8-BC5D-A0F7DD3CC99A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Console", "Crypter.Console\Crypter.Console.csproj", "{7D8A5A7F-4C0D-4F48-8913-ACCCD945DE82}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Common", "Crypter.Common\Crypter.Common.csproj", "{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.ClientServices", "Crypter.ClientServices\Crypter.ClientServices.csproj", "{D5A29A8E-462D-4FA3-A6BE-CCFA7703BDDE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9485ACA9-CF19-4D8A-B0AE-E6D432FCA066}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,10 +53,6 @@ Global
 		{29F529FE-52A2-43C8-BC5D-A0F7DD3CC99A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{29F529FE-52A2-43C8-BC5D-A0F7DD3CC99A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{29F529FE-52A2-43C8-BC5D-A0F7DD3CC99A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7D8A5A7F-4C0D-4F48-8913-ACCCD945DE82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7D8A5A7F-4C0D-4F48-8913-ACCCD945DE82}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7D8A5A7F-4C0D-4F48-8913-ACCCD945DE82}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7D8A5A7F-4C0D-4F48-8913-ACCCD945DE82}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BB1D0B65-34E4-4B9B-9752-CA2F6BEE9F6A}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -26,8 +26,7 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Enums;
-using Crypter.Contracts.Features.User.GetReceivedTransfers;
-using Crypter.Contracts.Features.User.GetSentTransfers;
+using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
@@ -64,14 +63,14 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserSentItem>> GetUserSentItems()
       {
-         var maybeSentMessages = await CrypterApiService.GetUserSentMessagesAsync();
+         var maybeSentMessages = await CrypterApiService.GetSentMessagesAsync();
          var sentMessages = maybeSentMessages.Match(
-            left => new List<UserSentMessageDTO>(),
+            new List<UserSentMessageDTO>(),
             right => right.Messages);
 
-         var maybeSentFiles = await CrypterApiService.GetUserSentFilesAsync();
+         var maybeSentFiles = await CrypterApiService.GetSentFilesAsync();
          var sentFiles = maybeSentFiles.Match(
-            left => new List<UserSentFileDTO>(),
+            new List<UserSentFileDTO>(),
             right => right.Files);
 
          return sentMessages
@@ -99,14 +98,14 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
       {
-         var maybeReceivedMessages = await CrypterApiService.GetUserReceivedMessagesAsync();
+         var maybeReceivedMessages = await CrypterApiService.GetReceivedMessagesAsync();
          var receivedMessages = maybeReceivedMessages.Match(
-            left => new List<UserReceivedMessageDTO>(),
+            new List<UserReceivedMessageDTO>(),
             right => right.Messages);
 
-         var maybeReceivedFiles = await CrypterApiService.GetUserReceivedFilesAsync();
+         var maybeReceivedFiles = await CrypterApiService.GetReceivedFilesAsync();
          var receivedFiles = maybeReceivedFiles.Match(
-            left => new List<UserReceivedFileDTO>(),
+            new List<UserReceivedFileDTO>(),
             right => right.Files);
 
          return receivedMessages

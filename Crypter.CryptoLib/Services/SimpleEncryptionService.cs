@@ -72,6 +72,8 @@ namespace Crypter.CryptoLib.Services
 
       public async Task<List<byte[]>> EncryptStreamAsync(byte[] key, byte[] iv, Stream stream, long streamLength, int partSize, Maybe<Func<double, Task>> progressFunc)
       {
+         await progressFunc.IfSomeAsync(async func => await func.Invoke(0.0));
+
          var encrypter = new AES();
          encrypter.Initialize(key, iv, true);
 

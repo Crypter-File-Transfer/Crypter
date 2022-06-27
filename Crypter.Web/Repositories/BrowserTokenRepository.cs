@@ -26,7 +26,7 @@
 
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.DeviceStorage.Models;
-using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using System.Collections.Generic;
@@ -37,13 +37,11 @@ namespace Crypter.Web.Repositories
    public class BrowserTokenRepository : ITokenRepository
    {
       private readonly IDeviceRepository<BrowserStorageLocation> _browserRepository;
-
       private readonly IReadOnlyDictionary<TokenType, BrowserStorageLocation> _tokenStorageMap;
 
       public BrowserTokenRepository(IDeviceRepository<BrowserStorageLocation> browserRepository)
       {
          _browserRepository = browserRepository;
-
          _tokenStorageMap = new Dictionary<TokenType, BrowserStorageLocation>
          {
             { TokenType.Authentication, BrowserStorageLocation.Memory },
@@ -52,26 +50,28 @@ namespace Crypter.Web.Repositories
          };
       }
 
-      public async Task StoreAuthenticationTokenAsync(string token)
+      public async Task<Unit> StoreAuthenticationTokenAsync(string token)
       {
          TokenObject tokenObject = new(TokenType.Authentication, token);
          await _browserRepository.SetItemAsync(DeviceStorageObjectType.AuthenticationToken, tokenObject, _tokenStorageMap[TokenType.Authentication]);
+         return Unit.Default;
       }
 
-      public async Task<Maybe<TokenObject>> GetAuthenticationTokenAsync()
+      public Task<Maybe<TokenObject>> GetAuthenticationTokenAsync()
       {
-         return await _browserRepository.GetItemAsync<TokenObject>(DeviceStorageObjectType.AuthenticationToken);
+         return _browserRepository.GetItemAsync<TokenObject>(DeviceStorageObjectType.AuthenticationToken);
       }
 
-      public async Task StoreRefreshTokenAsync(string token, TokenType tokenType)
+      public async Task<Unit> StoreRefreshTokenAsync(string token, TokenType tokenType)
       {
          TokenObject tokenObject = new(tokenType, token);
          await _browserRepository.SetItemAsync(DeviceStorageObjectType.RefreshToken, tokenObject, _tokenStorageMap[tokenType]);
+         return Unit.Default;
       }
 
-      public async Task<Maybe<TokenObject>> GetRefreshTokenAsync()
+      public Task<Maybe<TokenObject>> GetRefreshTokenAsync()
       {
-         return await _browserRepository.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken);
+         return _browserRepository.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken);
       }
    }
 }

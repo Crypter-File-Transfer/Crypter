@@ -31,20 +31,25 @@ namespace Crypter.ClientServices.DeviceStorage.Models
 {
    public class UserSession
    {
+      public const int LATEST_SCHEMA = 1;
+
       public string Username { get; set; }
       public bool RememberUser { get; set; }
+      public int Schema { get; set; }
 
       [JsonConstructor]
-      public UserSession(string username, bool rememberUser)
+      public UserSession(string username, bool rememberUser, int schema = -1)
       {
          Username = username;
          RememberUser = rememberUser;
+         Schema = schema;
       }
 
-      public UserSession(Username username, bool rememberUser)
+      public UserSession(Username username, bool rememberUser, int schema)
       {
          Username = username.Value;
          RememberUser = rememberUser;
+         Schema = schema;
       }
    }
 }

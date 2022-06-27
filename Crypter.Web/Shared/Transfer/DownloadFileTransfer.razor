@@ -26,90 +26,102 @@
 
 @inherits DownloadFileTransferBase
 
-<div class="row">
-   <div class="col-md-4">
-      <div class="card">
-         <h5 class="card-header">Details</h5>
-         <ul class="list-group list-group-flush">
-            <li class="list-group-item"><span class="fw-bold">File name: </span>@FileName</li>
-            <li class="list-group-item">
-               <span class="fw-bold">Sender: </span>
-               @if (string.IsNullOrEmpty(SenderUsername))
-               {
-                  <span>Unknown</span>
-               }
-               else
-               {
-                  <a href=@($"/user/profile/{SenderUsername}")>@($"@{SenderUsername}")</a>
-               }
-            </li>
-            <li class="list-group-item"><span class="fw-bold">Type: </span>@ContentType</li>
-            <li class="list-group-item"><span class="fw-bold">Encrypted Size: </span>@Size bytes</li>
-            <li class="list-group-item"><span class="fw-bold">Created: </span>@Created</li>
-            <li class="list-group-item"><span class="fw-bold">Expiration: </span>@Expiration</li>
-         </ul>
-      </div>
-   </div>
-   <div class="col-md-8">
-      <div class="card">
-         <div class="card-body text-center">
-            @if (DecryptionCompleted)
-            {
-               <div class="alert alert-success text-center" role="alert">
-                  Decryption successful!
-               </div>
-               <div class="mb-3" hidden="@LocalDownloadInProgress">
-                  <button type="button" class="btn btn-primary" @onclick="@(async () => await DownloadFileAsync())">Download decrypted file</button>
-               </div>
+@if (FinishedLoading)
+{
+   @if (ItemFound)
+   {
+      <div class="row">
+         <div class="col-md-4">
+            <div class="card">
+               <h5 class="card-header">Details</h5>
+               <ul class="list-group list-group-flush">
+                  <li class="list-group-item"><span class="fw-bold">File name: </span>@FileName</li>
+                  <li class="list-group-item">
+                     <span class="fw-bold">Sender: </span>
+                     @if (string.IsNullOrEmpty(SenderUsername))
+                     {
+                        <span>Unknown</span>
+                     }
+                     else
+                     {
+                        <a href=@($"/user/profile/{SenderUsername}")>@($"@{SenderUsername}")</a>
+                     }
+                  </li>
+                  <li class="list-group-item"><span class="fw-bold">Type: </span>@ContentType</li>
+                  <li class="list-group-item"><span class="fw-bold">Encrypted Size: </span>@FileSize bytes</li>
+                  <li class="list-group-item"><span class="fw-bold">Created: </span>@Created</li>
+                  <li class="list-group-item"><span class="fw-bold">Expiration: </span>@Expiration</li>
+               </ul>
+            </div>
+         </div>
+         <div class="col-md-8">
+            <div class="card">
+               <div class="card-body text-center">
+                  @if (DecryptionComplete)
+                  {
+                     <div class="alert alert-success text-center" role="alert">
+                        Decryption successful!
+                     </div>
+                     <p class="card-text fst-italic">Click 'Download' to save the decrypted file to your device</p>
+                     <div class="mb-3" hidden="@LocalDownloadInProgress">
+                        <button type="button" class="btn btn-primary" @onclick="@(async () => await DownloadFileAsync())">Download</button>
+                     </div>
 
-               <div hidden="@(!LocalDownloadInProgress)">
-                  <div class="text-center">
-                     Downloading
-                  </div>
-                  <div class="spinner-border" role="status">
-                     <span class="visually-hidden">Loading...</span>
-                  </div>
-               </div>
-            }
-            else if (DecryptionInProgress)
-            {
-               <div class="mb-3">
-                  <h3>@DecryptionStatusMessage</h3>
-                  <div class="spinner-border" role="status">
-                     <span class="visually-hidden">Loading...</span>
-                  </div>
-               </div>
-            }
-            else
-            {
-               <h5 class="card-title">Decryption Key Required</h5>
-               @if (IsUserRecipient)
-               {
-                  <p class="card-text fst-italic">This file was sent directly to you and encrypted using your public key. Decryption will occur with your private key.</p>
-               }
-               else
-               {
-                  <p class="card-text fst-italic">This should have been provided by the sender</p>
-                  <div class="mb-3">
-                     <input type="text" class="form-control" id="decryptionKey" @bind="EncodedX25519PrivateKey" placeholder="Decryption key">
-                  </div>
-               }
+                     <div hidden="@(!LocalDownloadInProgress)">
+                        <div class="text-center">
+                           Downloading
+                        </div>
+                        <div class="spinner-border" role="status">
+                           <span class="visually-hidden">Loading...</span>
+                        </div>
+                     </div>
+                  }
+                  else if (DecryptionInProgress)
+                  {
+                     <div class="mb-3">
+                        <h3>@DecryptionStatusMessage</h3>
+                        <div class="spinner-border" role="status">
+                           <span class="visually-hidden">Loading...</span>
+                        </div>
+                     </div>
+                  }
+                  else
+                  {
+                     @if (SpecificRecipient)
+                     {
+                        <h5 class="card-title">Ready to Decrypt</h5>
+                        <p class="card-text fst-italic">Click 'Decrypt' to begin decrypting your file</p>
+                     }
+                     else
+                     {
+                        <h5 class="card-title">Decryption Key Required</h5>
+                        <p class="card-text fst-italic">This should have been provided by the sender</p>
+                        <div class="mb-3">
+                           <input type="text" class="form-control" id="decryptionKey" @bind="UserProvidedDecryptionKey" placeholder="Decryption key">
+                        </div>
+                     }
 
-               @if (!DecryptionInProgress)
-               {
-                  <div class="mb-3">
-                     <button type="button" class="btn btn-primary" @onclick="@(async () => await OnDecryptClickedAsync())">Decrypt your file</button>
-                  </div>
-               }
+                     @if (!DecryptionInProgress)
+                     {
+                        <div class="mb-3">
+                           <button type="button" class="btn btn-primary" @onclick="@(async () => await OnDecryptClickedAsync())">Decrypt</button>
+                        </div>
+                     }
 
-               @if (!string.IsNullOrEmpty(ErrorMessage))
-               {
-                  <div class="alert alert-danger text-center" role="alert">
-                     @ErrorMessage
-                  </div>
-               }
-            }
+                     @if (!string.IsNullOrEmpty(ErrorMessage))
+                     {
+                        <div class="alert alert-danger text-center" role="alert">
+                           @ErrorMessage
+                        </div>
+                     }
+                  }
+               </div>
+            </div>
          </div>
       </div>
-   </div>
-</div>
+   }
+   else
+   {
+      <ItemNotFoundComponent />
+   }
+}

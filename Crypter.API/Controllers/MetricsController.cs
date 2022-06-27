@@ -24,35 +24,28 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Features.Metrics.Disk;
-using Crypter.Core.Features.Metrics.Queries;
-using MediatR;
+using Crypter.Core.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
 {
    [Route("api/metrics")]
-   public class MetricsController : ControllerBase
+   public class MetricsController : CrypterController
    {
-      private readonly IMediator _mediator;
-      private readonly long AllocatedDiskSpace;
+      private readonly IServerMetricsService _serverMetricsService;
 
-      public MetricsController(IConfiguration configuration, IMediator mediator)
+      public MetricsController(IServerMetricsService serverMetricsService)
       {
-         AllocatedDiskSpace = long.Parse(configuration["EncryptedFileStore:AllocatedGB"]) * (long)Math.Pow(2, 30);
-         _mediator = mediator;
+         _serverMetricsService = serverMetricsService;
       }
 
       [HttpGet("disk")]
       public async Task<IActionResult> GetDiskMetrics(CancellationToken cancellationToken)
       {
-         var result = await _mediator.Send(new DiskMetricsQuery(AllocatedDiskSpace), cancellationToken);
-         var responseBody = new DiskMetricsResponse(AllocatedDiskSpace, result.FreeBytes);
-         return new OkObjectResult(responseBody);
+         var result = await _serverMetricsService.GetAggregateDiskMetricsAsync(cancellationToken);
+         return Ok(result);
       }
    }
 }

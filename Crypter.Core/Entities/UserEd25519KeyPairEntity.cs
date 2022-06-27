@@ -37,7 +37,7 @@ namespace Crypter.Core.Entities
       public string ClientIV { get; set; }
       public DateTime Created { get; set; }
 
-      public virtual UserEntity User { get; set; }
+      public UserEntity User { get; set; }
 
       public UserEd25519KeyPairEntity(Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
       {

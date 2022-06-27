@@ -26,7 +26,6 @@
 
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Interfaces
 {
@@ -35,11 +34,7 @@ namespace Crypter.ClientServices.Interfaces
       Maybe<PEMString> X25519PrivateKey { get; }
       Maybe<PEMString> Ed25519PrivateKey { get; }
 
-      Task InitializeAsync();
-      Task<bool> PrepareUserKeysOnUserLoginAsync(Username username, Password password, bool rememberUser);
-      (PEMString PrivateKey, PEMString PublicKey) NewX25519KeyPair();
-      (PEMString PrivateKey, PEMString PublicKey) NewEd25519KeyPair();
-
-      void Recycle();
+      (PEMString PrivateKey, PEMString PublicKey) CreateX25519KeyPair();
+      (PEMString PrivateKey, PEMString PublicKey) CreateEd25519KeyPair();
    }
 }

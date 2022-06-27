@@ -28,7 +28,7 @@ using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.Authentication.Login
+namespace Crypter.Contracts.Features.Authentication
 {
    public class LoginRequest
    {

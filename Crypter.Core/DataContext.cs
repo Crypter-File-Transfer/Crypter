@@ -54,8 +54,10 @@ namespace Crypter.Core
       public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; set; }
       public DbSet<UserTokenEntity> UserTokens { get; set; }
       public DbSet<UserContactEntity> UserContacts { get; set; }
-      public DbSet<FileTransferEntity> FileTransfers { get; set; }
-      public DbSet<MessageTransferEntity> MessageTransfers { get; set; }
+      public DbSet<AnonymousFileTransferEntity> AnonymousFileTransfers { get; set; }
+      public DbSet<AnonymousMessageTransferEntity> AnonymousMessageTransfers { get; set; }
+      public DbSet<UserFileTransferEntity> UserFileTransfers { get; set; }
+      public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; set; }
       public DbSet<SchemaEntity> Schema { get; set; }
 
       protected override void OnModelCreating(ModelBuilder builder)
@@ -71,8 +73,10 @@ namespace Crypter.Core
          ConfigureUserNotificationSettingsEntity(builder);
          ConfigureUserTokenEntity(builder);
          ConfigureUserContactEntity(builder);
-         ConfigureFileTransferEntity(builder);
-         ConfigureMessageTransferEntity(builder);
+         ConfigureUserMessageTransferEntity(builder);
+         ConfigureUserFileTransferEntity(builder);
+         ConfigureAnonymousMessageTransferEntity(builder);
+         ConfigureAnonymousFileTransferEntity(builder);
          ConfigureSchemaEntity(builder);
       }
 
@@ -89,15 +93,39 @@ namespace Crypter.Core
             .HasColumnType("citext");
 
          builder.Entity<UserEntity>()
-            .Property(x => x.Email)
+            .Property(x => x.EmailAddress)
             .HasColumnType("citext");
+
+         builder.Entity<UserEntity>()
+            .HasMany(x => x.Contacts)
+            .WithOne(x => x.Owner);
+
+         builder.Entity<UserEntity>()
+            .HasMany(x => x.SentFileTransfers)
+            .WithOne(x => x.Sender)
+            .HasForeignKey(x => x.SenderId);
+
+         builder.Entity<UserEntity>()
+            .HasMany(x => x.ReceivedFileTransfers)
+            .WithOne(x => x.Recipient)
+            .HasForeignKey(x => x.RecipientId);
+
+         builder.Entity<UserEntity>()
+            .HasMany(x => x.SentMessageTransfers)
+            .WithOne(x => x.Sender)
+            .HasForeignKey(x => x.SenderId);
+
+         builder.Entity<UserEntity>()
+            .HasMany(x => x.ReceivedMessageTransfers)
+            .WithOne(x => x.Recipient)
+            .HasForeignKey(x => x.RecipientId);
 
          builder.Entity<UserEntity>()
             .HasIndex(x => x.Username)
             .IsUnique();
 
          builder.Entity<UserEntity>()
-            .HasIndex(x => x.Email)
+            .HasIndex(x => x.EmailAddress)
             .IsUnique();
       }
 
@@ -244,32 +272,144 @@ namespace Crypter.Core
             .OnDelete(DeleteBehavior.Cascade);
       }
 
-      /// <summary>
-      /// Relationships are not configured for now.
-      /// This table will be migrated to something new, soon.
-      /// </summary>
-      /// <param name="builder"></param>
-      private static void ConfigureFileTransferEntity(ModelBuilder builder)
+      private static void ConfigureUserMessageTransferEntity(ModelBuilder builder)
       {
-         builder.Entity<FileTransferEntity>()
-            .ToTable("FileTransfer");
+         builder.Entity<UserMessageTransferEntity>()
+            .ToTable("UserMessageTransfer");
 
-         builder.Entity<FileTransferEntity>()
+         builder.Entity<UserMessageTransferEntity>()
             .HasKey(x => x.Id);
+
+         builder.Entity<UserMessageTransferEntity>()
+            .Property(x => x.SenderId)
+            .HasColumnName("Sender");
+
+         builder.Entity<UserMessageTransferEntity>()
+            .Property(x => x.RecipientId)
+            .HasColumnName("Recipient");
+
+         builder.Entity<UserMessageTransferEntity>()
+            .Property(x => x.DigitalSignature)
+            .IsRequired();
+
+         builder.Entity<UserMessageTransferEntity>()
+            .Property(x => x.DigitalSignaturePublicKey)
+            .IsRequired();
+
+         builder.Entity<UserMessageTransferEntity>()
+            .Property(x => x.DiffieHellmanPublicKey)
+            .IsRequired();
+
+         builder.Entity<UserMessageTransferEntity>()
+            .Property(x => x.RecipientProof)
+            .IsRequired();
+
+         builder.Entity<UserMessageTransferEntity>()
+            .Property(x => x.Subject)
+            .IsRequired();
       }
 
-      /// <summary>
-      /// Relationships are not configured for now.
-      /// This table will be migrated to something new, soon.
-      /// </summary>
-      /// <param name="builder"></param>
-      private static void ConfigureMessageTransferEntity(ModelBuilder builder)
+      private static void ConfigureUserFileTransferEntity(ModelBuilder builder)
       {
-         builder.Entity<MessageTransferEntity>()
-            .ToTable("MessageTransfer");
+         builder.Entity<UserFileTransferEntity>()
+            .ToTable("UserFileTransfer");
 
-         builder.Entity<MessageTransferEntity>()
+         builder.Entity<UserFileTransferEntity>()
             .HasKey(x => x.Id);
+
+         builder.Entity<UserFileTransferEntity>()
+            .Property(x => x.SenderId)
+            .HasColumnName("Sender");
+
+         builder.Entity<UserFileTransferEntity>()
+            .Property(x => x.RecipientId)
+            .HasColumnName("Recipient");
+
+         builder.Entity<UserFileTransferEntity>()
+            .Property(x => x.DigitalSignature)
+            .IsRequired();
+
+         builder.Entity<UserFileTransferEntity>()
+            .Property(x => x.DigitalSignaturePublicKey)
+            .IsRequired();
+
+         builder.Entity<UserFileTransferEntity>()
+            .Property(x => x.DiffieHellmanPublicKey)
+            .IsRequired();
+
+         builder.Entity<UserFileTransferEntity>()
+            .Property(x => x.RecipientProof)
+            .IsRequired();
+
+         builder.Entity<UserFileTransferEntity>()
+            .Property(x => x.FileName)
+            .IsRequired();
+
+         builder.Entity<UserFileTransferEntity>()
+            .Property(x => x.ContentType)
+            .IsRequired();
+      }
+
+      private static void ConfigureAnonymousMessageTransferEntity(ModelBuilder builder)
+      {
+         builder.Entity<AnonymousMessageTransferEntity>()
+            .ToTable("AnonymousMessageTransfer");
+
+         builder.Entity<AnonymousMessageTransferEntity>()
+            .HasKey(x => x.Id);
+
+         builder.Entity<AnonymousMessageTransferEntity>()
+            .Property(x => x.DigitalSignature)
+            .IsRequired();
+
+         builder.Entity<AnonymousMessageTransferEntity>()
+            .Property(x => x.DigitalSignaturePublicKey)
+            .IsRequired();
+
+         builder.Entity<AnonymousMessageTransferEntity>()
+            .Property(x => x.DiffieHellmanPublicKey)
+            .IsRequired();
+
+         builder.Entity<AnonymousMessageTransferEntity>()
+            .Property(x => x.RecipientProof)
+            .IsRequired();
+
+         builder.Entity<AnonymousMessageTransferEntity>()
+            .Property(x => x.Subject)
+            .IsRequired();
+      }
+
+      private static void ConfigureAnonymousFileTransferEntity(ModelBuilder builder)
+      {
+         builder.Entity<AnonymousFileTransferEntity>()
+            .ToTable("AnonymousFileTransfer");
+
+         builder.Entity<AnonymousFileTransferEntity>()
+            .HasKey(x => x.Id);
+
+         builder.Entity<AnonymousFileTransferEntity>()
+            .Property(x => x.DigitalSignature)
+            .IsRequired();
+
+         builder.Entity<AnonymousFileTransferEntity>()
+            .Property(x => x.DigitalSignaturePublicKey)
+            .IsRequired();
+
+         builder.Entity<AnonymousFileTransferEntity>()
+            .Property(x => x.DiffieHellmanPublicKey)
+            .IsRequired();
+
+         builder.Entity<AnonymousFileTransferEntity>()
+            .Property(x => x.RecipientProof)
+            .IsRequired();
+
+         builder.Entity<AnonymousFileTransferEntity>()
+            .Property(x => x.FileName)
+            .IsRequired();
+
+         builder.Entity<AnonymousFileTransferEntity>()
+            .Property(x => x.ContentType)
+            .IsRequired();
       }
 
       private static void ConfigureSchemaEntity(ModelBuilder builder)

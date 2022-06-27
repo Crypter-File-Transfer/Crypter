@@ -47,4 +47,4 @@ Steps:
 
 ## Notes
 
-This guide does not cover Let's Encrypt or Certbot, which are required to get host Crypter and does have an impact on the Nginx setup.
+This guide does not cover Let's Encrypt or Certbot, which are required to host Crypter and does have an impact on the Nginx setup.

@@ -26,7 +26,7 @@
 
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.DeviceStorage.Models;
-using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Web.Repositories;
@@ -55,11 +55,11 @@ namespace Crypter.Test.Web_Tests
                DeviceStorageObjectType.UserSession,
                It.IsAny<UserSession>(),
                BrowserStorageLocation.SessionStorage))
-            .Returns((DeviceStorageObjectType objectType, UserSession userSession, BrowserStorageLocation browserStorageLocation) => Task.CompletedTask);
+            .ReturnsAsync((DeviceStorageObjectType objectType, UserSession userSession, BrowserStorageLocation browserStorageLocation) => Unit.Default);
 
          var sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
 
-         UserSession session = new(Username.From("foo"), false);
+         UserSession session = new(Username.From("foo"), false, UserSession.LATEST_SCHEMA);
          await sut.StoreUserSessionAsync(session, false);
 
          _browserStorageMock.Verify(x => x.SetItemAsync(DeviceStorageObjectType.UserSession, It.IsAny<UserSession>(), BrowserStorageLocation.SessionStorage), Times.Once);
@@ -73,11 +73,11 @@ namespace Crypter.Test.Web_Tests
                DeviceStorageObjectType.UserSession,
                It.IsAny<UserSession>(),
                BrowserStorageLocation.LocalStorage))
-            .Returns((DeviceStorageObjectType objectType, UserSession userSession, BrowserStorageLocation browserStorageLocation) => Task.CompletedTask);
+            .ReturnsAsync((DeviceStorageObjectType objectType, UserSession userSession, BrowserStorageLocation browserStorageLocation) => Unit.Default);
 
          var sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
 
-         UserSession session = new(Username.From("foo"), true);
+         UserSession session = new(Username.From("foo"), true, UserSession.LATEST_SCHEMA);
          await sut.StoreUserSessionAsync(session, true);
 
          _browserStorageMock.Verify(x => x.SetItemAsync(DeviceStorageObjectType.UserSession, It.IsAny<UserSession>(), BrowserStorageLocation.LocalStorage), Times.Once);
@@ -88,13 +88,17 @@ namespace Crypter.Test.Web_Tests
       {
          _browserStorageMock
             .Setup(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession))
-            .ReturnsAsync((DeviceStorageObjectType objectType) => new UserSession("foo", true));
+            .ReturnsAsync((DeviceStorageObjectType objectType) => new UserSession("foo", true, UserSession.LATEST_SCHEMA));
 
          var sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
 
          var fetchedSession = await sut.GetUserSessionAsync();
-         Assert.AreEqual("foo", fetchedSession.ValueUnsafe.Username);
-         Assert.AreEqual(true, fetchedSession.ValueUnsafe.RememberUser);
+         fetchedSession.IfNone(Assert.Fail);
+         fetchedSession.IfSome(x =>
+         {
+            Assert.AreEqual("foo", x.Username);
+            Assert.IsTrue(x.RememberUser);
+         });
 
          _browserStorageMock.Verify(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession), Times.Once);
       }

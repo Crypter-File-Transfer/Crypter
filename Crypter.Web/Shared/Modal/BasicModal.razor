@@ -26,27 +26,27 @@
 
 @inherits BasicModalBase
 
-<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
-   <div class="modal-dialog" role="document">
-      <div class="modal-content">
-         <div class="modal-header">
-            <h3>@Subject</h3>
-         </div>
-         <div class="modal-body justify-content-center">
-            <p class="word-wrap">@Message</p>
-         </div>
-         <div class="modal-footer">
-            @if (ShowSecondaryButton)
-            {
-               <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="async () => await CloseAsync(false)">@SecondaryButtonText</button>
-            }
-            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="async () => await CloseAsync(true)">@PrimaryButtonText</button>
+@if (Show)
+{
+   <div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+            <div class="modal-header">
+               <h3>@Subject</h3>
+            </div>
+            <div class="modal-body justify-content-center">
+               <p class="word-wrap">@Message</p>
+            </div>
+            <div class="modal-footer">
+               @if (!string.IsNullOrEmpty(SecondaryButtonText))
+               {
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="async () => await CloseAsync(false)">@SecondaryButtonText</button>
+               }
+               <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="async () => await CloseAsync(true)">@PrimaryButtonText</button>
+            </div>
          </div>
       </div>
    </div>
-</div>
 
-@if (ShowBackdrop)
-{
    <div class="modal-backdrop fade show"></div>
 }

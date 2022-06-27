@@ -35,30 +35,22 @@ namespace Crypter.Core.Entities
    public class BaseTransfer : ITransferBase
    {
       public Guid Id { get; set; }
-      public Guid Sender { get; set; }
-      public Guid Recipient { get; set; }
       public int Size { get; set; }
-      public string ClientIV { get; set; }
-      public string Signature { get; set; }
-      public string X25519PublicKey { get; set; }
-      public string Ed25519PublicKey { get; set; }
-      public byte[] ServerIV { get; set; }
-      public byte[] ServerDigest { get; set; }
+      public string DigitalSignature { get; set; }
+      public string DigitalSignaturePublicKey { get; set; }
+      public string DiffieHellmanPublicKey { get; set; }
+      public string RecipientProof { get; set; }
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
 
-      public BaseTransfer(Guid id, Guid sender, Guid recipient, int size, string clientIV, string signature, string x25519PublicKey, string ed25519PublicKey, byte[] serverIV, byte[] serverDigest, DateTime created, DateTime expiration)
+      public BaseTransfer(Guid id, int size, string digitalSignature, string digitalSignaturePublicKey, string diffieHellmanPublicKey, string recipientProof, DateTime created, DateTime expiration)
       {
          Id = id;
-         Sender = sender;
-         Recipient = recipient;
          Size = size;
-         ClientIV = clientIV;
-         Signature = signature;
-         X25519PublicKey = x25519PublicKey;
-         Ed25519PublicKey = ed25519PublicKey;
-         ServerIV = serverIV;
-         ServerDigest = serverDigest;
+         DigitalSignature = digitalSignature;
+         DigitalSignaturePublicKey = digitalSignaturePublicKey;
+         DiffieHellmanPublicKey = diffieHellmanPublicKey;
+         RecipientProof = recipientProof;
          Created = created;
          Expiration = expiration;
       }

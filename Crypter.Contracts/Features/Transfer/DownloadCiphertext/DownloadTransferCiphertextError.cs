@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Transfer.DownloadCiphertext
+namespace Crypter.Contracts.Features.Transfer
 {
    public enum DownloadTransferCiphertextError
    {
       UnknownError,
-      NotFound,
-      ServerDecryptionFailed
+      NotFound
    }
 }

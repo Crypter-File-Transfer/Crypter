@@ -35,7 +35,7 @@ namespace Crypter.Core.Entities
       public string About { get; set; }
       public string Image { get; set; }
 
-      public virtual UserEntity User { get; set; }
+      public UserEntity User { get; set; }
 
       public UserProfileEntity(Guid owner, string alias, string about, string image)
       {

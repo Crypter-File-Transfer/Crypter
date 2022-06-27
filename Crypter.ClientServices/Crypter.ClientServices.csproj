@@ -7,9 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Collections" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
     <ProjectReference Include="..\Crypter.Contracts\Crypter.Contracts.csproj" />
     <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Services\Base\" />
   </ItemGroup>
 
 </Project>
