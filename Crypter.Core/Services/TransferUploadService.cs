@@ -91,7 +91,8 @@ namespace Crypter.Core.Services
                     let transferId = Guid.NewGuid()
                     from savedToDisk in SaveTransferToDiskAsync(TransferItemType.Message, TransferUserType.User, transferId, request, cancellationToken).ToLeftEitherAsync(Unit.Default)
                     from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveUserMessageTransferToDatabaseAsync(transferId, diskSpace, sender, recipientId, request, cancellationToken))
-                    let jobId = ScheduleTransferDeletion(transferId, TransferItemType.Message, TransferUserType.User, savedToDatabase.ExpirationUTC)
+                    from emailJobId in Either<UploadTransferError, string>.FromRightAsync(QueueTransferNotificationAsync(transferId, TransferItemType.Message, recipientId))
+                    let deletionJobId = ScheduleTransferDeletion(transferId, TransferItemType.Message, TransferUserType.User, savedToDatabase.ExpirationUTC)
                     select savedToDatabase;
 
          return await task;
@@ -124,7 +125,8 @@ namespace Crypter.Core.Services
                     let transferId = Guid.NewGuid()
                     from savedToDisk in SaveTransferToDiskAsync(TransferItemType.File, TransferUserType.User, transferId, request, cancellationToken).ToLeftEitherAsync(Unit.Default)
                     from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveUserFileTransferToDatabaseAsync(transferId, diskSpace, sender, recipientId, request, cancellationToken))
-                    let jobId = ScheduleTransferDeletion(transferId, TransferItemType.File, TransferUserType.User, savedToDatabase.ExpirationUTC)
+                    from emailJobId in Either<UploadTransferError, string>.FromRightAsync(QueueTransferNotificationAsync(transferId, TransferItemType.File, recipientId))
+                    let deletionJobId = ScheduleTransferDeletion(transferId, TransferItemType.File, TransferUserType.User, savedToDatabase.ExpirationUTC)
                     select savedToDatabase;
 
          return await task;
@@ -241,6 +243,23 @@ namespace Crypter.Core.Services
       {
          var diskMetrics = await _serverMetricsService.GetAggregateDiskMetricsAsync(cancellationToken);
          return transferSize <= diskMetrics.Available;
+      }
+
+      private async Task<string> QueueTransferNotificationAsync(Guid itemId, TransferItemType itemType, Maybe<Guid> maybeUserId)
+      {
+         return await maybeUserId.MatchAsync(
+            () => string.Empty,
+            async userId =>
+            {
+               UserEntity user = await _context.Users
+                  .Where(x => x.Id == userId)
+                  .Where(x => x.NotificationSetting.EnableTransferNotifications
+                     && x.EmailVerified
+                     && x.NotificationSetting.EmailNotifications)
+                  .FirstOrDefaultAsync();
+
+               return BackgroundJob.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType, CancellationToken.None));
+            });
       }
 
       private string ScheduleTransferDeletion(Guid itemId, TransferItemType itemType, TransferUserType userType, DateTime itemExpiration)

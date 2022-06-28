@@ -469,7 +469,7 @@ namespace Crypter.ClientServices.Services
 
       public Task<Either<VerifyEmailAddressError, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo)
       {
-         string url = $"{_baseApiUrl}/verify";
+         string url = $"{_baseApiUrl}/settings/verify";
          return from response in Either<VerifyEmailAddressError, (HttpStatusCode httpStatus, Either<ErrorResponse, VerifyEmailAddressResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<VerifyEmailAddressRequest, VerifyEmailAddressResponse>(url, verificationInfo))
                 from errorableResponse in ExtractErrorCode<VerifyEmailAddressError, VerifyEmailAddressResponse>(response.data).AsTask()
