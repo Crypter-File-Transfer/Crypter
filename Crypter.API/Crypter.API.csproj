@@ -16,17 +16,13 @@
       <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
    </ItemGroup>
    <ItemGroup>
-      <PackageReference Include="Hangfire" Version="1.7.30" />
       <PackageReference Include="Hangfire.AspNetCore" Version="1.7.30" />
       <PackageReference Include="Hangfire.PostgreSql" Version="1.9.8" />
-      <PackageReference Include="MailKit" Version="3.3.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.5">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="MimeKit" Version="3.3.0" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.1" />
-      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.20.0" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.6" />
    </ItemGroup>
 </Project>
