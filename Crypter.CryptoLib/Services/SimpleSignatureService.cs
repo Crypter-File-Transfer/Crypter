@@ -71,7 +71,6 @@ namespace Crypter.CryptoLib.Services
          int bytesRead = 0;
          while (bytesRead + partSize < streamLength)
          {
-            Console.WriteLine($"Signing bytes: {bytesRead}");
             byte[] readBuffer = new byte[partSize];
             bytesRead += await stream.ReadAsync(readBuffer.AsMemory(0, partSize));
 
