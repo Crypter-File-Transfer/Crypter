@@ -154,14 +154,7 @@ namespace Crypter.Core.Services
                 from emailAddressAvailabilityCheck in isEmailAddressAvailable
                   ? Either<UpdateContactInfoError, Unit>.FromRight(Unit.Default).AsTask()
                   : Either<UpdateContactInfoError, Unit>.FromLeft(UpdateContactInfoError.EmailAddressUnavailable).AsTask()
-                let emailAddressChanged = string.IsNullOrEmpty(user.EmailAddress) || user.EmailAddress.ToLower() != emailAddress.Value.ToLower()
-                let _ = user.EmailAddress = request.EmailAddress
-                from notificationSettingsReset in Either<UpdateContactInfoError, Unit>.FromRightAsync(ResetUserNotificationSettings(user.Id, cancellationToken))
-                from pendingEmailVerificationDeleted in Either<UpdateContactInfoError, Unit>.FromRightAsync(DeleteUserEmailVerificationEntityAsync(user.Id, cancellationToken))
-                from entriesModified in Either<UpdateContactInfoError, int>.FromRightAsync(SaveChangesAsync(cancellationToken))
-                let jobId = emailAddressChanged
-                  ? EnqueueEmailAddressVerificationEmailDelivery(user.Id)
-                  : string.Empty
+                from unit in Either<UpdateContactInfoError, Unit>.FromRightAsync(UpdateUserEmailAddressAsync(user, emailAddress, cancellationToken))
                 select new UpdateContactInfoResponse();
       }
 
@@ -315,15 +308,25 @@ namespace Crypter.Core.Services
          return _tokenService.NewAuthenticationToken(userId);
       }
 
-      private async Task<Unit> ResetUserNotificationSettings(Guid userId, CancellationToken cancellationToken)
+      private async Task<Unit> UpdateUserEmailAddressAsync(UserEntity user, EmailAddress newEmailAddress, CancellationToken cancellationToken)
       {
-         UserNotificationSettingEntity foundEntity = await _context.UserNotificationSettings
-            .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
-
-         if (foundEntity is not null)
+         if (string.IsNullOrEmpty(user.EmailAddress) || user.EmailAddress.ToLower() != newEmailAddress.Value.ToLower())
          {
-            foundEntity.EnableTransferNotifications = false;
-            foundEntity.EmailNotifications = false;
+            user.EmailAddress = newEmailAddress.Value;
+            user.EmailVerified = false;
+
+            UserNotificationSettingEntity foundEntity = await _context.UserNotificationSettings
+               .FirstOrDefaultAsync(x => x.Owner == user.Id, cancellationToken);
+
+            if (foundEntity is not null)
+            {
+               foundEntity.EnableTransferNotifications = false;
+               foundEntity.EmailNotifications = false;
+            }
+
+            await DeleteUserEmailVerificationEntityAsync(user.Id, cancellationToken);
+            await SaveChangesAsync(cancellationToken);
+            EnqueueEmailAddressVerificationEmailDelivery(user.Id);
          }
 
          return Unit.Default;

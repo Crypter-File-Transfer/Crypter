@@ -16,8 +16,4 @@
     <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Services\Base\" />
-  </ItemGroup>
-
 </Project>
