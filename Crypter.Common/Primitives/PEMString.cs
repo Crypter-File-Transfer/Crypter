@@ -24,11 +24,55 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives.Enums;
+using Crypter.Common.Primitives.ValidationHandlers;
+using System.Text.RegularExpressions;
 using ValueOf;
 
 namespace Crypter.Common.Primitives
 {
    public class PEMString : ValueOf<string, PEMString>
    {
+      private static readonly Regex _pemPattern
+         = new(@"^(-----BEGIN (RSA )?(PRIVATE|PUBLIC) KEY-----)(.|\s)*(-----END (RSA )?(PRIVATE|PUBLIC) KEY-----\s?)$");
+
+      /// <summary>
+      /// Do not use this.
+      /// </summary>
+      public PEMString()
+      {
+      }
+
+      protected override void Validate()
+      {
+         StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
+      }
+
+      protected override bool TryValidate()
+      {
+         return CheckValidation(Value)
+            .IsNone;
+      }
+
+      public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+      {
+         if (value is null)
+         {
+            return StringPrimitiveValidationFailure.IsNull;
+         }
+
+         if (string.IsNullOrWhiteSpace(value))
+         {
+            return StringPrimitiveValidationFailure.IsEmpty;
+         }
+
+         if (!_pemPattern.IsMatch(value))
+         {
+            return StringPrimitiveValidationFailure.Invalid;
+         }
+
+         return Maybe<StringPrimitiveValidationFailure>.None;
+      }
    }
 }

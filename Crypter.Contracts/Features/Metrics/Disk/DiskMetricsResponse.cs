@@ -26,7 +26,7 @@
 
 using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.Metrics.Disk
+namespace Crypter.Contracts.Features.Metrics
 {
    public class DiskMetricsResponse
    {

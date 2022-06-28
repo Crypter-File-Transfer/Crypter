@@ -34,7 +34,7 @@ namespace Crypter.Contracts.Common
       public int ErrorCode { get; private set; }
       public string ErrorMessage { get; private set; }
 
-      public ErrorResponse(System.Enum errorCode)
+      public ErrorResponse(Enum errorCode)
       {
          ErrorCode = Convert.ToInt32(errorCode);
          ErrorMessage = errorCode.ToString();

@@ -34,7 +34,7 @@ namespace Crypter.Core.Entities
       public bool EnableTransferNotifications { get; set; }
       public bool EmailNotifications { get; set; }
 
-      public virtual UserEntity User { get; set; }
+      public UserEntity User { get; set; }
 
       public UserNotificationSettingEntity(Guid owner, bool enableTransferNotifications, bool emailNotifications)
       {

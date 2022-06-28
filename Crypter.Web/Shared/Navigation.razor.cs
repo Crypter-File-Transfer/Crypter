@@ -26,6 +26,7 @@
 
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
@@ -53,18 +54,14 @@ namespace Crypter.Web.Shared
 
       protected UploadMessageTransferModal MessageTransferModal { get; set; }
 
-      protected bool ShowUserNavigation;
-
-      protected string Username;
-
-      protected string ProfileUrl;
-
-      protected string SearchKeyword;
+      protected bool ShowNavigation = false;
+      protected bool ShowUserNavigation = false;
+      protected string Username = string.Empty;
+      protected string ProfileUrl = string.Empty;
+      protected string SearchKeyword = string.Empty;
 
       protected override void OnInitialized()
       {
-         HandleUserSessionStateChanged();
-
          NavigationManager.LocationChanged += HandleLocationChanged;
          UserSessionService.ServiceInitializedEventHandler += UserSessionStateChangedEventHandler;
          UserSessionService.UserLoggedInEventHandler += UserSessionStateChangedEventHandler;
@@ -75,9 +72,10 @@ namespace Crypter.Web.Shared
       {
          ShowUserNavigation = UserSessionService.LoggedIn;
          Username = UserSessionService.Session.Match(
-            () => null,
+            () => "",
             session => session.Username);
          ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
+         ShowNavigation = true;
          StateHasChanged();
       }
 
@@ -101,14 +99,16 @@ namespace Crypter.Web.Shared
          HandleUserSessionStateChanged();
       }
 
-      protected void OnEncryptFileClicked()
+      protected async void OnEncryptFileClicked()
       {
          FileTransferModal.Open();
+         await CollapseNavigationMenuAsync();
       }
 
-      protected void OnEncryptMessageClicked()
+      protected async void OnEncryptMessageClicked()
       {
          MessageTransferModal.Open();
+         await CollapseNavigationMenuAsync();
       }
 
       protected async Task CollapseNavigationMenuAsync()
@@ -118,7 +118,7 @@ namespace Crypter.Web.Shared
 
       protected void OnSearchClicked()
       {
-         NavigationManager.NavigateTo($"/user/search?query={SearchKeyword}&type=username&page=1");
+         NavigationManager.NavigateTo($"/user/search?query={SearchKeyword}");
       }
 
       public void Dispose()

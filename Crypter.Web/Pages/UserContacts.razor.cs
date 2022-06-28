@@ -25,9 +25,8 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Contracts.Features.User.GetContacts;
+using Crypter.Contracts.Features.Contacts;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -36,9 +35,24 @@ namespace Crypter.Web.Pages
    public partial class UserContactsBase : ComponentBase
    {
       [Inject]
-      IUserContactsService UserContactsService { get; set; }
+      protected IUserSessionService UserSessionService { get; set; }
+
+      [Inject]
+      protected IUserContactsService UserContactsService { get; set; }
+
+      [Inject]
+      protected NavigationManager NavigationManager { get; set; }
 
       protected IReadOnlyCollection<UserContactDTO> Contacts { get; set; }
+
+      protected override void OnInitialized()
+      {
+         if (!UserSessionService.LoggedIn)
+         {
+            NavigationManager.NavigateTo("/");
+            return;
+         }
+      }
 
       protected override async Task OnAfterRenderAsync(bool firstRender)
       {

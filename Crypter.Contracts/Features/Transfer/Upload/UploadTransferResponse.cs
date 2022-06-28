@@ -24,21 +24,24 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Enums;
 using System;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.Transfer.Upload
+namespace Crypter.Contracts.Features.Transfer
 {
    public class UploadTransferResponse
    {
       public Guid Id { get; set; }
       public DateTime ExpirationUTC { get; set; }
+      public TransferUserType UserType { get; set; }
 
       [JsonConstructor]
-      public UploadTransferResponse(Guid id, DateTime expirationUTC)
+      public UploadTransferResponse(Guid id, DateTime expirationUTC, TransferUserType userType)
       {
          Id = id;
          ExpirationUTC = expirationUTC;
+         UserType = userType;
       }
    }
 }

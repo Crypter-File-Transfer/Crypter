@@ -7,15 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="10.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="6.0.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.4" />
+    <PackageReference Include="Hangfire.Core" Version="1.7.30" />
+    <PackageReference Include="MailKit" Version="3.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="6.0.6" />
+    <PackageReference Include="MimeKit" Version="3.3.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.5" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.20.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,4 +25,5 @@
   <ItemGroup>
     <Folder Include="Migrations\" />
   </ItemGroup>
+
 </Project>

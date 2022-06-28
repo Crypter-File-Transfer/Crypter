@@ -27,18 +27,16 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.Transfer.DownloadCiphertext
+namespace Crypter.Contracts.Features.Transfer
 {
    public class DownloadTransferCiphertextRequest
    {
-      public Guid Id { get; set; }
-      public string ServerDecryptionKeyBase64 { get; set; }
+      public string RecipientProof { get; set; }
 
       [JsonConstructor]
-      public DownloadTransferCiphertextRequest(Guid id, string serverDecryptionKeyBase64)
+      public DownloadTransferCiphertextRequest(string recipientProof)
       {
-         Id = id;
-         ServerDecryptionKeyBase64 = serverDecryptionKeyBase64;
+         RecipientProof = recipientProof;
       }
    }
 }

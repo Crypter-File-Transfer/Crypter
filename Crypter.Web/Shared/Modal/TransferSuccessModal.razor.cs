@@ -24,9 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Modal
@@ -34,36 +37,31 @@ namespace Crypter.Web.Shared.Modal
    public partial class TranferSuccessModalBase : ComponentBase
    {
       [Inject]
-      IJSRuntime JSRuntime { get; set; }
+      private IJSRuntime JSRuntime { get; set; }
 
-      [Inject]
-      NavigationManager NavigationManager { get; set; }
+      protected string DownloadUrl { get; set; }
 
-      protected string UploadType { get; set; }
+      protected Base64String DecryptionKey { get; set; }
 
-      protected Guid ItemId { get; set; }
+      protected int ExpirationHours { get; set; }
 
-      protected string RecipientX25519PrivateKey { get; set; }
+      protected Maybe<EventCallback> ModalClosedCallback { get; set; }
 
-      protected int RequestedExpirationHours { get; set; }
+      protected bool Show = false;
+      protected string ModalDisplay = "none;";
+      protected string ModalClass = "";
 
-      protected EventCallback OnClosed { get; set; }
-
-      public string ModalDisplay = "none;";
-      public string ModalClass = "";
-      public bool ShowBackdrop = false;
-
-      public void Open(string uploadType, Guid itemId, string recipientX25519PrivateKey, int requestedExpirationHours, EventCallback onClosed)
+      public void Open(string downloadUrl, PEMString recipientX25519PrivateKey, int expirationHours, Maybe<EventCallback> modalClosedCallback)
       {
-         UploadType = uploadType;
-         ItemId = itemId;
-         RecipientX25519PrivateKey = recipientX25519PrivateKey;
-         RequestedExpirationHours = requestedExpirationHours;
-         OnClosed = onClosed;
+         DownloadUrl = downloadUrl;
+         DecryptionKey = Base64String.From(Convert.ToBase64String(
+            Encoding.UTF8.GetBytes(recipientX25519PrivateKey.Value)));
+         ExpirationHours = expirationHours;
+         ModalClosedCallback = modalClosedCallback;
 
          ModalDisplay = "block;";
          ModalClass = "Show";
-         ShowBackdrop = true;
+         Show = true;
          StateHasChanged();
       }
 
@@ -71,19 +69,15 @@ namespace Crypter.Web.Shared.Modal
       {
          ModalDisplay = "none";
          ModalClass = "";
-         ShowBackdrop = false;
+         Show = false;
          StateHasChanged();
-         await OnClosed.InvokeAsync();
-      }
 
-      protected string GetDownloadLink()
-      {
-         return $"{NavigationManager.BaseUri}decrypt/{UploadType}/{ItemId}";
+         await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
       }
 
       protected async Task CopyToClipboardAsync()
       {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", RecipientX25519PrivateKey);
+         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", DecryptionKey.Value);
       }
    }
 }

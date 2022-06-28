@@ -32,15 +32,16 @@ To create the database:
 
  1. Verify the user configured in the `Crypter.API/appsettings.json` file's `DefaultConnection` connection string is a superuser. This is usually the `postgres` user with a password of `CHANGE_ME`.
  2. Open the Package Manager Console in Visual Studio.
- 3. Select `Crypter.Core` as the default project.
+ 3. Select `Crypter.API` as the default project.
  4. Invoke `Update-Database` to create the most recent version of the database.
  5. Undo the change you made to `Crypter.API/appsettings.json`.
 
 To migrate the database:
 
  1. Open the Package Manager Console in Visual Studio.
- 2. Select `Crypter.Core` as the default project.
+ 2. Select `Crypter.API` as the default project.
  3. Use `Script-Migration` to produce a migration script. You may need to use the `-From`, `-To`, or `-Idempotent` arguments to get what you really need.
+    * Example: `Script-Migration -From {MigrationName} -To {MigrationName}`
  4. Backup the database using `pg_dump dbname > outfile`.
  5. Run the migration script as a superuser.
 

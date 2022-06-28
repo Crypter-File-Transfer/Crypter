@@ -8,4 +8,4 @@ updates:
   - package-ecosystem: "nuget"
     directory: "/" # Find the .sln file
     schedule:
-      interval: "weekly"
+      interval: "monthly"

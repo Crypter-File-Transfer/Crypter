@@ -65,11 +65,11 @@ namespace Crypter.Test.Web_Tests
       [TestCase(BrowserRepository.LocalStorageLiteral, BrowserStorageLocation.LocalStorage)]
       public async Task Repository_Initializes_Values_From_Browser_Storage(string storageLiteral, BrowserStorageLocation storageLocation)
       {
-         var storedUserSession = new UserSession("foo", true);
+         var storedUserSession = new UserSession("foo", true, UserSession.LATEST_SCHEMA);
          var authenticationToken = "authentication";
          var refreshToken = "refresh";
-         var x25519PrivateKey = "plaintextX25519";
          var ed25519PrivateKey = "plaintextEd25519";
+         var x25519PrivateKey = "plaintextX25519";
          var jsRuntime = new Mock<IJSRuntime>();
 
          // UserSession
@@ -113,23 +113,31 @@ namespace Crypter.Test.Web_Tests
          foreach (DeviceStorageObjectType item in Enum.GetValues(typeof(DeviceStorageObjectType)))
          {
             Assert.IsTrue(sut.HasItem(item));
-            Assert.AreEqual(storageLocation, sut.GetItemLocation(item).ValueUnsafe);
+            var itemLocation = sut.GetItemLocation(item);
+            
+            itemLocation.IfNone(Assert.Fail);
+            itemLocation.IfSome(x => Assert.AreEqual(storageLocation, x));
          }
 
          var fetchedUserSession = await sut.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession);
-         Assert.AreEqual(storedUserSession.Username, fetchedUserSession.ValueUnsafe.Username);
-
+         fetchedUserSession.IfNone(Assert.Fail);
+         fetchedUserSession.IfSome(x => Assert.AreEqual(storedUserSession.Username, x.Username));
+         
          var fetchedAuthenticationToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.AuthenticationToken);
-         Assert.AreEqual(authenticationToken, fetchedAuthenticationToken.ValueUnsafe);
+         fetchedAuthenticationToken.IfNone(Assert.Fail);
+         fetchedAuthenticationToken.IfSome(x => Assert.AreEqual(authenticationToken, x));
 
          var fetchedRefreshToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.RefreshToken);
-         Assert.AreEqual(refreshToken, fetchedRefreshToken.ValueUnsafe);
+         fetchedRefreshToken.IfNone(Assert.Fail);
+         fetchedRefreshToken.IfSome(x => Assert.AreEqual(refreshToken, x));
 
          var fetchedPlaintextEd25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.Ed25519PrivateKey);
-         Assert.AreEqual(ed25519PrivateKey, fetchedPlaintextEd25519PrivateKey.ValueUnsafe);
+         fetchedPlaintextEd25519PrivateKey.IfNone(Assert.Fail);
+         fetchedPlaintextEd25519PrivateKey.IfSome(x => Assert.AreEqual(ed25519PrivateKey, x));
 
          var fetchedPlaintextX25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.X25519PrivateKey);
-         Assert.AreEqual(x25519PrivateKey, fetchedPlaintextX25519PrivateKey.ValueUnsafe);
+         fetchedPlaintextX25519PrivateKey.IfNone(Assert.Fail);
+         fetchedPlaintextX25519PrivateKey.IfSome(x => Assert.AreEqual(x25519PrivateKey, x));
       }
    }
 }

@@ -25,7 +25,7 @@
  */
 
 using Crypter.ClientServices.DeviceStorage.Enums;
-using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Common.Exceptions;
 using Crypter.Common.Monads;
 using Microsoft.JSInterop;
@@ -43,13 +43,11 @@ namespace Crypter.Web.Repositories
       public const string LocalStorageLiteral = "localStorage";
 
       private readonly IJSRuntime _jsRuntime;
-
       private readonly Dictionary<string, object> _inMemoryStorage;
       private readonly Dictionary<string, BrowserStorageLocation> _objectLocations;
-
       private readonly SemaphoreSlim _initializationSemaphore = new(1);
-
       private bool _initialized;
+      private EventHandler _initializedEventHandler;
 
       public BrowserRepository(IJSRuntime jSRuntime)
       {
@@ -71,6 +69,7 @@ namespace Crypter.Web.Repositories
                   await InitializeItemFromSessionStorage(item);
                }
                _initialized = true;
+               _initializedEventHandler?.Invoke(this, EventArgs.Empty);
             }
          }
          finally
@@ -111,30 +110,32 @@ namespace Crypter.Web.Repositories
          string strItemType = itemType.ToString();
          if (_objectLocations.TryGetValue(strItemType, out var location))
          {
-            string storedJson;
+            ValueTask<string> jsonTask;
             switch (location)
             {
                case BrowserStorageLocation.Memory:
-                  return (T)_inMemoryStorage[strItemType];
+                  return Maybe<T>.From((T)_inMemoryStorage[strItemType]);
                case BrowserStorageLocation.SessionStorage:
-                  storedJson = await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.getItem", new object[] { strItemType });
+                  jsonTask = _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.getItem", new object[] { strItemType });
                   break;
                case BrowserStorageLocation.LocalStorage:
-                  storedJson = await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.getItem", new object[] { strItemType });
+                  jsonTask = _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.getItem", new object[] { strItemType });
                   break;
                default:
                   throw new NotImplementedException();
             }
+
+            string json = await jsonTask;
             try
             {
-               return JsonSerializer.Deserialize<T>(storedJson);
+               return JsonSerializer.Deserialize<T>(json);
             }
             catch (JsonException)
             {
-               return Maybe<T>.None;
+               return default;
             }
          }
-         return Maybe<T>.None;
+         return default;
       }
 
       public bool HasItem(DeviceStorageObjectType itemType)
@@ -153,7 +154,7 @@ namespace Crypter.Web.Repositories
          return Maybe<BrowserStorageLocation>.None;
       }
 
-      public async Task SetItemAsync<T>(DeviceStorageObjectType itemType, T value, BrowserStorageLocation location)
+      public async Task<Unit> SetItemAsync<T>(DeviceStorageObjectType itemType, T value, BrowserStorageLocation location)
       {
          await RemoveItemAsync(itemType);
          string strItemType = itemType.ToString();
@@ -173,9 +174,10 @@ namespace Crypter.Web.Repositories
          }
 
          _objectLocations.Add(strItemType, location);
+         return Unit.Default;
       }
 
-      public async Task RemoveItemAsync(DeviceStorageObjectType itemType)
+      public async Task<Unit> RemoveItemAsync(DeviceStorageObjectType itemType)
       {
          AssertInitialized();
          if (_objectLocations.TryGetValue(itemType.ToString(), out var location))
@@ -196,15 +198,23 @@ namespace Crypter.Web.Repositories
                   throw new NotImplementedException();
             }
          }
+         return Unit.Default;
       }
 
-      public async Task RecycleAsync()
+      public async Task<Unit> RecycleAsync()
       {
          AssertInitialized();
          foreach (DeviceStorageObjectType item in Enum.GetValues(typeof(DeviceStorageObjectType)))
          {
             await RemoveItemAsync(item);
          }
+         return Unit.Default;
+      }
+
+      public event EventHandler InitializedEventHandler
+      {
+         add => _initializedEventHandler = (EventHandler)Delegate.Combine(_initializedEventHandler, value);
+         remove => _initializedEventHandler = (EventHandler)Delegate.Remove(_initializedEventHandler, value);
       }
    }
 }

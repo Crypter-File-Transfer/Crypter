@@ -24,22 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Transfer.Upload
+namespace Crypter.Contracts.Features.Transfer
 {
    public enum UploadTransferError
    {
       UnknownError,
-      InvalidFileName,
-      InvalidContentType,
-      InvalidCipherText,
-      InvalidServerEncryptionKey,
-      InvalidClientEncryptionIV,
-      InvalidSignature,
-      InvalidX25519PublicKey,
-      InvalidEd25519PublicKey,
-      InvalidRequestedExpiration,
-      BlockedByUserPrivacy,
+      InvalidRequestedLifetimeHours,
       OutOfSpace,
-      UserNotFound
+      RecipientNotFound
    }
 }

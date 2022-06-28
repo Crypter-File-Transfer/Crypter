@@ -26,7 +26,7 @@
 
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.DeviceStorage.Models;
-using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Common.Monads;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -36,13 +36,11 @@ namespace Crypter.Web.Repositories
    public class BrowserUserSessionRepository : IUserSessionRepository
    {
       private readonly IDeviceRepository<BrowserStorageLocation> _browserRepository;
-
       private readonly IReadOnlyDictionary<bool, BrowserStorageLocation> _trustDeviceStorageMap;
 
       public BrowserUserSessionRepository(IDeviceRepository<BrowserStorageLocation> browserRepository)
       {
          _browserRepository = browserRepository;
-
          _trustDeviceStorageMap = new Dictionary<bool, BrowserStorageLocation>
          {
             { false, BrowserStorageLocation.SessionStorage },
@@ -50,9 +48,9 @@ namespace Crypter.Web.Repositories
          };
       }
 
-      public async Task<Maybe<UserSession>> GetUserSessionAsync()
+      public Task<Maybe<UserSession>> GetUserSessionAsync()
       {
-         return await _browserRepository.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession);
+         return _browserRepository.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession);
       }
 
       public async Task StoreUserSessionAsync(UserSession userSession, bool trustDevice)

@@ -24,11 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.API.Models;
+using Crypter.Core.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 namespace Crypter.API.Configuration
 {
@@ -38,25 +36,8 @@ namespace Crypter.API.Configuration
       {
          return builder.AddJwtBearer(options =>
          {
-            options.TokenValidationParameters = GetTokenValidationParameters(tokenSettings);
+            options.TokenValidationParameters = TokenParametersProvider.GetTokenValidationParameters(tokenSettings);
          });
-      }
-
-      internal static TokenValidationParameters GetTokenValidationParameters(TokenSettings tokenSettings)
-      {
-         return new TokenValidationParameters
-         {
-            ValidateAudience = true,
-            ValidAudience = tokenSettings.Audience,
-            ValidIssuer = tokenSettings.Issuer,
-            ValidateIssuer = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSettings.SecretKey)),
-            ValidateLifetime = true,
-            ClockSkew = TokenValidationParameters.DefaultClockSkew,
-            RequireExpirationTime = true,
-            ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 }
-         };
       }
    }
 }

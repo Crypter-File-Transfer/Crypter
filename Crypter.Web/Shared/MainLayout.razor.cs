@@ -25,28 +25,19 @@
  */
 
 using Crypter.ClientServices.DeviceStorage.Enums;
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Events;
+using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
 {
-   public partial class MainLayoutBase : LayoutComponentBase, IDisposable
+   public partial class MainLayoutBase : LayoutComponentBase
    {
       [Inject]
       private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
 
-      [Inject]
-      private IUserSessionService UserSessionService { get; set; }
-
-      [Inject]
-      private IUserContactsService UserContactsService { get; set; }
-
-      [Inject]
-      private IUserKeysService UserKeysService { get; set; }
+      public BasicModal BasicModal { get; protected set; }
 
       public TransferSuccessModal TransferSuccessModal { get; protected set; }
 
@@ -55,44 +46,7 @@ namespace Crypter.Web.Shared
       protected override async Task OnInitializedAsync()
       {
          await BrowserRepository.InitializeAsync();
-         await UserSessionService.InitializeAsync();
-
-         await UserSessionService.Session.IfSomeAsync(async x =>
-         {
-            await UserKeysService.InitializeAsync();
-            await UserContactsService.InitializeAsync();
-         });
-
-         UserSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
-         UserSessionService.UserLoggedOutEventHandler += OnUserLoggedOut;
-
          ServicesInitialized = true;
-      }
-
-      private void OnUserLoggedIn(object sender, UserLoggedInEventArgs eventArgs)
-      {
-         ServicesInitialized = false;
-
-         InvokeAsync(async () =>
-         {
-            await UserKeysService.PrepareUserKeysOnUserLoginAsync(eventArgs.Username, eventArgs.Password, eventArgs.RememberUser);
-            await UserContactsService.InitializeAsync();
-            ServicesInitialized = true;
-            StateHasChanged();
-         });
-      }
-
-      private void OnUserLoggedOut(object sender, EventArgs _)
-      {
-         UserKeysService.Recycle();
-         UserContactsService.Recycle();
-      }
-
-      public void Dispose()
-      {
-         UserSessionService.UserLoggedInEventHandler -= OnUserLoggedIn;
-         UserSessionService.UserLoggedOutEventHandler -= OnUserLoggedOut;
-         GC.SuppressFinalize(this);
       }
    }
 }

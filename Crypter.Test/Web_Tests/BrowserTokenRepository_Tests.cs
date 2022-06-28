@@ -26,7 +26,7 @@
 
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.DeviceStorage.Models;
-using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Web.Repositories;
@@ -56,7 +56,7 @@ namespace Crypter.Test.Web_Tests
                DeviceStorageObjectType.AuthenticationToken,
                It.IsAny<TokenObject>(),
                BrowserStorageLocation.Memory))
-            .Returns((DeviceStorageObjectType objectType, TokenObject tokenObject, BrowserStorageLocation browserStorageLocation) => Task.CompletedTask);
+            .ReturnsAsync((DeviceStorageObjectType objectType, TokenObject tokenObject, BrowserStorageLocation browserStorageLocation) => Unit.Default);
 
          var sut = new BrowserTokenRepository(_browserStorageMock.Object);
          await sut.StoreAuthenticationTokenAsync("foo");
@@ -73,7 +73,7 @@ namespace Crypter.Test.Web_Tests
                DeviceStorageObjectType.RefreshToken,
                It.IsAny<TokenObject>(),
                browserStorageLocation))
-            .Returns((DeviceStorageObjectType objectType, TokenObject tokenObject, BrowserStorageLocation location) => Task.CompletedTask);
+            .ReturnsAsync((DeviceStorageObjectType objectType, TokenObject tokenObject, BrowserStorageLocation location) => Unit.Default);
 
          var sut = new BrowserTokenRepository(_browserStorageMock.Object);
          await sut.StoreRefreshTokenAsync("foo", tokenType);
@@ -91,8 +91,12 @@ namespace Crypter.Test.Web_Tests
          var sut = new BrowserTokenRepository(_browserStorageMock.Object);
 
          var fetchedToken = await sut.GetAuthenticationTokenAsync();
-         Assert.AreEqual(TokenType.Authentication, fetchedToken.ValueUnsafe.TokenType);
-         Assert.AreEqual("foo", fetchedToken.ValueUnsafe.Token);
+         fetchedToken.IfNone(Assert.Fail);
+         fetchedToken.IfSome(x =>
+         {
+            Assert.AreEqual(TokenType.Authentication, x.TokenType);
+            Assert.AreEqual("foo", x.Token);
+         });
 
          _browserStorageMock.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.AuthenticationToken), Times.Once);
       }
@@ -123,8 +127,12 @@ namespace Crypter.Test.Web_Tests
          var sut = new BrowserTokenRepository(_browserStorageMock.Object);
 
          var fetchedToken = await sut.GetRefreshTokenAsync();
-         Assert.AreEqual(tokenType, fetchedToken.ValueUnsafe.TokenType);
-         Assert.AreEqual("foo", fetchedToken.ValueUnsafe.Token);
+         fetchedToken.IfNone(Assert.Fail);
+         fetchedToken.IfSome(x =>
+         {
+            Assert.AreEqual(tokenType, x.TokenType);
+            Assert.AreEqual("foo", x.Token);
+         });
 
          _browserStorageMock.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken), Times.Once);
       }

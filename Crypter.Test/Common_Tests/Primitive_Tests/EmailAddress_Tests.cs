@@ -31,6 +31,7 @@ using NUnit.Framework;
 namespace Crypter.Test.Common_Tests.Primitive_Tests
 {
    [TestFixture]
+   [Parallelizable]
    public class EmailAddress_Tests
    {
       [TestCase(null)]

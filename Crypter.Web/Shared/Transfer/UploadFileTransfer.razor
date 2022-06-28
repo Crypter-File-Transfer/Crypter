@@ -36,15 +36,13 @@
             </p>
             <InputFile id="fileInput" OnChange="@HandleFileInputChange" @ondragenter="HandleDragEnter" @ondragleave="HandleDragLeave" />
          </div>
-         @foreach (var errorMessage in ErrorMessages)
-         {
-            <div class="validation-errors my-3">
-               <div class="alert alert-danger" role="alert">
-                  @errorMessage
-               </div>
+         <div hidden="@(string.IsNullOrEmpty(ErrorMessage))" class="validation-errors my-3">
+            <div class="alert alert-danger" role="alert">
+               @ErrorMessage
             </div>
-         }
-         @if (SelectedFile != null)
+         </div>
+
+         @if (SelectedFile is not null)
          {
             <div class="card my-3">
                <div class="card-body">
@@ -53,18 +51,18 @@
                </div>
             </div>
          }
+
       </div>
       <div class="row">
          <div class="col-12 p-0">
             <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptClicked())">Encrypt</button>
          </div>
       </div>
-        <BasicModal @ref="ModalForUserRecipient" Subject="Upload Successful" Message=@UploadSuccessForUserMessage PrimaryButtonText="Okay" ModalClosedCallback="@UploadCompletedEvent" />
    </div>
 </div>
 
 <div class="encrypt-status text-center" hidden="@(!EncryptionInProgress)">
-   <h3>@EncryptionStatusMessage</h3>
+   <h3>@UploadStatusMessage</h3>
    <div class="spinner-border" role="status" hidden="@(ShowProgressBar)">
       <span class="visually-hidden">Loading...</span>
    </div>

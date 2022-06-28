@@ -29,6 +29,7 @@ using Crypter.Common.Primitives;
 using Crypter.CryptoLib.Crypto;
 using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.CryptoLib.Services
@@ -36,6 +37,7 @@ namespace Crypter.CryptoLib.Services
    public interface ISimpleSignatureService
    {
       byte[] Sign(PEMString ed25519PrivateKey, byte[] data);
+      byte[] Sign(PEMString ed25519PrivateKey, string data);
       Task<byte[]> SignStreamAsync(PEMString ed25519PrivateKey, Stream stream, long streamLength, int partSize, Maybe<Func<double, Task>> progressFunc);
       bool Verify(PEMString ed25519PublicKey, byte[] data, byte[] signature);
    }
@@ -52,8 +54,15 @@ namespace Crypter.CryptoLib.Services
          return signer.GenerateSignature();
       }
 
+      public byte[] Sign(PEMString ed25519PrivateKey, string data)
+      {
+         return Sign(ed25519PrivateKey, Encoding.UTF8.GetBytes(data));
+      }
+
       public async Task<byte[]> SignStreamAsync(PEMString ed25519PrivateKey, Stream stream, long streamLength, int partSize, Maybe<Func<double, Task>> progressFunc)
       {
+         await progressFunc.IfSomeAsync(async func => await func.Invoke(0.0));
+
          var privateKey = KeyConversion.ConvertEd25519PrivateKeyFromPEM(ed25519PrivateKey);
 
          var signer = new ECDSA();
@@ -62,6 +71,7 @@ namespace Crypter.CryptoLib.Services
          int bytesRead = 0;
          while (bytesRead + partSize < streamLength)
          {
+            Console.WriteLine($"Signing bytes: {bytesRead}");
             byte[] readBuffer = new byte[partSize];
             bytesRead += await stream.ReadAsync(readBuffer.AsMemory(0, partSize));
 

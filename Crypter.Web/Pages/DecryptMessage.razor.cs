@@ -25,64 +25,34 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Contracts.Features.Transfer.DownloadPreview;
 using Microsoft.AspNetCore.Components;
 using System;
-using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
    public partial class DecryptMessageBase : ComponentBase
    {
+      [Parameter]
+      [SupplyParameterFromQuery(Name = "id")]
+      public Guid TransferId { get; set; }
+
+      [Parameter]
+      [SupplyParameterFromQuery(Name = "user")]
+      public bool IsUserTransfer { get; set; }
+
       [Inject]
       protected IUserSessionService UserSessionService { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected NavigationManager NavigationManager { get; set; }
 
-      [Parameter]
-      public Guid TransferId { get; set; }
-
-      protected bool Loading;
-      protected bool ItemFound;
-
-      protected string Subject;
-      protected int Size;
-      protected string Created;
-      protected string Expiration;
-      
-      protected string SenderUsername;
-      protected string SenderAlias;
-      protected string X25519PublicKey;
-
-      protected string RecipientUsername;
-
-      protected override async Task OnInitializedAsync()
+      protected override void OnInitialized()
       {
-         Loading = true;
-         await PrepareMessagePreviewAsync();
-         Loading = false;
-      }
-
-      protected async Task PrepareMessagePreviewAsync()
-      {
-         var messagePreviewRequest = new DownloadTransferPreviewRequest(TransferId);
-         var response = await CrypterApiService.DownloadMessagePreviewAsync(messagePreviewRequest, UserSessionService.LoggedIn);
-         response.DoRight(x =>
+         if (!UserSessionService.LoggedIn)
          {
-            Subject = string.IsNullOrEmpty(x.Subject)
-               ? "{ no subject }"
-               : x.Subject;
-            Created = x.CreationUTC.ToLocalTime().ToString();
-            Expiration = x.ExpirationUTC.ToLocalTime().ToString();
-            Size = x.Size;
-            SenderUsername = x.Sender;
-            SenderAlias = x.SenderAlias;
-            RecipientUsername = x.Recipient;
-            X25519PublicKey = x.X25519PublicKey;
-         });
-
-         ItemFound = response.IsRight;
+            NavigationManager.NavigateTo("/");
+            return;
+         }
       }
    }
 }

@@ -65,7 +65,7 @@ namespace Crypter.CryptoLib.Services
          return true;
       }
 
-      private byte[] DigestBase(SHAFunction function, byte[] data)
+      private static byte[] DigestBase(SHAFunction function, byte[] data)
       {
          var digestor = new SHA(function);
          digestor.BlockUpdate(data);

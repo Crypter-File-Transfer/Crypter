@@ -31,15 +31,11 @@ namespace Crypter.Core.Entities.Interfaces
    public interface ITransferBase
    {
       public Guid Id { get; set; }
-      public Guid Sender { get; set; }
-      public Guid Recipient { get; set; }
       public int Size { get; set; }
-      public string ClientIV { get; set; }
-      public string Signature { get; set; }
-      public string X25519PublicKey { get; set; }
-      public string Ed25519PublicKey { get; set; }
-      public byte[] ServerIV { get; set; }
-      public byte[] ServerDigest { get; set; }
+      public string DigitalSignature { get; set; }
+      public string DigitalSignaturePublicKey { get; set; }
+      public string DiffieHellmanPublicKey { get; set; }
+      public string RecipientProof { get; set; }
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
    }

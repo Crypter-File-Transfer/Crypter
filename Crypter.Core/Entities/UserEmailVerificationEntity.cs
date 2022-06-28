@@ -35,7 +35,7 @@ namespace Crypter.Core.Entities
       public byte[] VerificationKey { get; set; }
       public DateTime Created { get; set; }
 
-      public virtual UserEntity User { get; set; }
+      public UserEntity User { get; set; }
 
       public UserEmailVerificationEntity(Guid owner, Guid code, byte[] verificationKey, DateTime created)
       {

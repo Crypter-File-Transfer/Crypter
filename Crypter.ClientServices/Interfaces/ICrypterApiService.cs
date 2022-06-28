@@ -26,30 +26,13 @@
 
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Authentication.Login;
-using Crypter.Contracts.Features.Authentication.Logout;
-using Crypter.Contracts.Features.Authentication.Refresh;
-using Crypter.Contracts.Features.Metrics.Disk;
-using Crypter.Contracts.Features.Transfer.DownloadCiphertext;
-using Crypter.Contracts.Features.Transfer.DownloadPreview;
-using Crypter.Contracts.Features.Transfer.DownloadSignature;
-using Crypter.Contracts.Features.Transfer.Upload;
-using Crypter.Contracts.Features.User.AddContact;
-using Crypter.Contracts.Features.User.GetContacts;
-using Crypter.Contracts.Features.User.GetPrivateKey;
-using Crypter.Contracts.Features.User.GetPublicProfile;
-using Crypter.Contracts.Features.User.GetReceivedTransfers;
-using Crypter.Contracts.Features.User.GetSentTransfers;
-using Crypter.Contracts.Features.User.GetSettings;
-using Crypter.Contracts.Features.User.Register;
-using Crypter.Contracts.Features.User.RemoveUserContact;
-using Crypter.Contracts.Features.User.Search;
-using Crypter.Contracts.Features.User.UpdateContactInfo;
-using Crypter.Contracts.Features.User.UpdateKeys;
-using Crypter.Contracts.Features.User.UpdateNotificationSettings;
-using Crypter.Contracts.Features.User.UpdatePrivacySettings;
-using Crypter.Contracts.Features.User.UpdateProfile;
-using Crypter.Contracts.Features.User.VerifyEmailAddress;
+using Crypter.Contracts.Features.Authentication;
+using Crypter.Contracts.Features.Contacts;
+using Crypter.Contracts.Features.Keys;
+using Crypter.Contracts.Features.Metrics;
+using Crypter.Contracts.Features.Settings;
+using Crypter.Contracts.Features.Transfer;
+using Crypter.Contracts.Features.Users;
 using System;
 using System.Threading.Tasks;
 
@@ -57,44 +40,69 @@ namespace Crypter.ClientServices.Interfaces
 {
    public interface ICrypterApiService
    {
-      // Authentication
-      Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest);
-      Task<Either<RefreshError, RefreshResponse>> RefreshAsync();
-      Task<Either<LogoutError, LogoutResponse>> LogoutAsync(LogoutRequest logoutRequest);
+      event EventHandler RefreshTokenRejectedEventHandler;
 
-      // Metrics
-      Task<Either<DummyError, DiskMetricsResponse>> GetDiskMetricsAsync();
+      #region Authentication
+      Task<Either<RegistrationError, RegistrationResponse>> RegisterUserAsync(RegistrationRequest registerRequest);
+      Task<Either<LoginError, LoginResponse>>LoginAsync(LoginRequest loginRequest);
+      Task<Either<RefreshError, RefreshResponse>>RefreshAsync();
+      Task<Either<LogoutError, LogoutResponse>>LogoutAsync();
+      #endregion
 
-      // User
-      Task<Either<UserRegisterError, UserRegisterResponse>> RegisterUserAsync(UserRegisterRequest registerRequest);
-      Task<Either<GetUserProfileError, GetUserProfileResponse>> GetUserPublicProfileAsync(string username, bool withAuthentication);
-      Task<Either<DummyError, UserSettingsResponse>> GetUserSettingsAsync();
-      Task<Either<UpdateProfileError, UpdateProfileResponse>> UpdateUserProfileInfoAsync(UpdateProfileRequest request);
-      Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(UpdateContactInfoRequest request);
-      Task<Either<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>> UpdateUserPrivacyAsync(UpdatePrivacySettingsRequest request);
-      Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpdateUserNotificationAsync(UpdateNotificationSettingsRequest request);
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetUserX25519PrivateKeyAsync();
-      Task<Either<UpdateKeysError, UpdateKeysResponse>> InsertUserX25519KeysAsync(UpdateKeysRequest request);
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetUserEd25519PrivateKeyAsync();
-      Task<Either<UpdateKeysError, UpdateKeysResponse>> InsertUserEd25519KeysAsync(UpdateKeysRequest request);
-      Task<Either<DummyError, UserSentMessagesResponse>> GetUserSentMessagesAsync();
-      Task<Either<DummyError, UserSentFilesResponse>> GetUserSentFilesAsync();
-      Task<Either<DummyError, UserReceivedMessagesResponse>> GetUserReceivedMessagesAsync();
-      Task<Either<DummyError, UserReceivedFilesResponse>> GetUserReceivedFilesAsync();
-      Task<Either<DummyError, UserSearchResponse>> GetUserSearchResultsAsync(UserSearchParameters searchInfo);
-      Task<Either<VerifyEmailAddressError, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
+      #region Contacts
       Task<Either<DummyError, GetUserContactsResponse>> GetUserContactsAsync();
       Task<Either<AddUserContactError, AddUserContactResponse>> AddUserContactAsync(AddUserContactRequest request);
       Task<Either<DummyError, RemoveUserContactResponse>> RemoveUserContactAsync(RemoveUserContactRequest request);
+      #endregion
 
-      // Transfer
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, Maybe<string> recipient, bool withAuthentication);
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, Maybe<string> recipient, bool withAuthentication);
-      Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadMessagePreviewAsync(DownloadTransferPreviewRequest downloadRequest, bool withAuthentication);
-      Task<Either<DownloadTransferSignatureError, DownloadTransferSignatureResponse>> DownloadMessageSignatureAsync(DownloadTransferSignatureRequest downloadRequest, bool withAuthentication);
-      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadMessageCiphertextAsync(DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
-      Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadFilePreviewAsync(DownloadTransferPreviewRequest downloadRequest, bool withAuthentication);
-      Task<Either<DownloadTransferSignatureError, DownloadTransferSignatureResponse>> DownloadFileSignatureAsync(DownloadTransferSignatureRequest downloadRequest, bool withAuthentication);
-      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadFileCiphertextAsync(DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
+      #region File Transfer
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, bool withAuthentication);
+      Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadAnonymousFilePreviewAsync(Guid id);
+      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadAnonymousFileCiphertextAsync(Guid id, DownloadTransferCiphertextRequest downloadRequest);
+      Task<Either<DummyError, UserSentFilesResponse>> GetSentFilesAsync();
+      Task<Either<DummyError, UserReceivedFilesResponse>> GetReceivedFilesAsync();
+      Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadUserFilePreviewAsync(Guid id, bool withAuthentication);
+      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadUserFileCiphertextAsync(Guid id, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
+      #endregion
+
+      #region Keys
+      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync();
+      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeysAsync(InsertKeyPairRequest request);
+      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync();
+      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeysAsync(InsertKeyPairRequest request);
+      #endregion
+
+      #region Message Transfer
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, bool withAuthentication);
+      Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadAnonymousMessagePreviewAsync(Guid id);
+      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadAnonymousMessageCiphertextAsync(Guid id, DownloadTransferCiphertextRequest downloadRequest);
+      Task<Either<DummyError, UserSentMessagesResponse>> GetSentMessagesAsync();
+      Task<Either<DummyError, UserReceivedMessagesResponse>> GetReceivedMessagesAsync();
+      Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadUserMessagePreviewAsync(Guid id, bool withAuthentication);
+      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadUserMessageCiphertextAsync(Guid id, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
+      #endregion
+
+      #region Metrics
+      Task<Either<DummyError, DiskMetricsResponse>>GetDiskMetricsAsync();
+      #endregion
+
+      #region Search
+      Task<Either<DummyError, UserSearchResponse>> GetUserSearchResultsAsync(UserSearchParameters searchInfo);
+      #endregion
+
+      #region Settings
+      Task<Either<DummyError, UserSettingsResponse>> GetUserSettingsAsync();
+      Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateContactInfoAsync(UpdateContactInfoRequest request);
+      Task<Either<UpdateProfileError, UpdateProfileResponse>> UpdateProfileInfoAsync(UpdateProfileRequest request);
+      Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request);
+      Task<Either<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request);
+      Task<Either<VerifyEmailAddressError, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
+      #endregion
+
+      #region User
+      Task<Either<GetUserProfileError, GetUserProfileResponse>> GetUserProfileAsync(string username, bool withAuthentication);
+      Task<Either<UploadTransferError, UploadTransferResponse>> SendUserFileTransferAsync(string username, UploadFileTransferRequest request, bool withAuthentication);
+      Task<Either<UploadTransferError, UploadTransferResponse>> SendUserMessageTransferAsync(string username, UploadMessageTransferRequest request, bool withAuthentication);
+      #endregion
    }
 }
