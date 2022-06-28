@@ -29,6 +29,8 @@ The `appsettings.json` can be updated at any point for Crypter.API.  Review the 
 
 * Database connection string
 * FileStore settings
+  * Verify the `www-data` user full permission to the encrypted file store
+  * Example: `chmod www-data:jack {path}`
 
 ## Run the application
 
