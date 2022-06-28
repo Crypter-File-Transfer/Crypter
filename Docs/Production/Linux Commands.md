@@ -33,12 +33,6 @@ Stop the Kestrel web server before updating `Crypter.API`.
 * systemctl stop kestrel-crypter.api.service
 * systemctl restart kestrel-crypter.api.service
 
-## Cron
-
-A cron job exists to periodically run `Crypter.Console` in order to delete expired transfers.
-
-Run `$ crontab -e` to view and edit the cron job.
-
 ## PostgreSQL
 
 Run `$ psql --username {user} --password --dbname {dbname}` to login to the PostgreSQL server.  You will be prompted for a password.

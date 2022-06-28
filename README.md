@@ -31,7 +31,7 @@ A RESTful API written using ASP.NET.
 
 ### Crypter.ClientServices
 
-A class library containing various interfaces and most of their implementations.
+A class library containing various interfaces and most of their implementations for use in client applications.
 
 The "Repository" interfaces must be implemented per-environment, since these implementations must decide where and how to store data on the client device.
 These decisions and locations are device-specific.  For example, storing data in a browser is likely to be different than storing data on a mobile phone.
@@ -39,11 +39,6 @@ These decisions and locations are device-specific.  For example, storing data in
 ### Crypter.Common
 
 A small class library containing domain models and data types that may be used in any project.
-
-### Crypter.Console
-
-A command-line program that helps administer the Crypter servers.
-For example, this program contains commands to create all the database tables from scratch and perform schema migrations.
 
 ### Crypter.Contracts
 
