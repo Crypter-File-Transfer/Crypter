@@ -51,10 +51,3 @@ You will need to acknowledge the API's self-signed certificate.
 3. Invoke `dotnet run`.
 
 This will run the web app on `https://localhost:5001`.
-
-## Crypter.Console
-
-1. Review and configure the `.\Crypter.Console\appsettings.json` file.
-2. Build the project.
-3. Open `.\Crypter.Console\bin\Debug\net6.0` in a terminal.
-4. Invoke `.\Crypter.Console.exe`. This will run the program and output a help menu.
