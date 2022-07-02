@@ -121,7 +121,7 @@ namespace Crypter.ClientServices.Services
          }
       }
 
-      public async Task<bool> LoginAsync(Username username, Password password, bool rememberUser)
+      public async Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser)
       {
          var loginTask = from loginResponse in SendLoginRequestAsync(username, password, _trustDeviceRefreshTokenTypeMap[rememberUser])
                          from unit0 in Either<LoginError, Unit>.FromRightAsync(OnSuccessfulLoginAsync(loginResponse, rememberUser))
@@ -134,7 +134,7 @@ namespace Crypter.ClientServices.Services
             HandleUserLoggedInEvent(username, password, rememberUser);
          }
 
-         return LoggedIn;
+         return loginResult;
       }
 
       public async Task<Unit> LogoutAsync()

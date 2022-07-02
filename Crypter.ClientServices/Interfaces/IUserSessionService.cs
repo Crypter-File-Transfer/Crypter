@@ -28,6 +28,7 @@ using Crypter.ClientServices.DeviceStorage.Models;
 using Crypter.ClientServices.Interfaces.Events;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.Authentication;
 using System;
 using System.Threading.Tasks;
 
@@ -38,7 +39,7 @@ namespace Crypter.ClientServices.Interfaces
       bool LoggedIn { get; }
       Maybe<UserSession> Session { get; }
 
-      Task<bool> LoginAsync(Username username, Password password, bool rememberUser);
+      Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser);
       Task<Unit> LogoutAsync();
 
       event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler;
