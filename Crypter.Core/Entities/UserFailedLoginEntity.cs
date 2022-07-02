@@ -24,14 +24,23 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Authentication
+using System;
+
+namespace Crypter.Core.Entities
 {
-   public enum LoginError
+   public class UserFailedLoginEntity
    {
-      UnknownError,
-      InvalidUsername,
-      InvalidPassword,
-      InvalidTokenTypeRequested,
-      ExcessiveFailedLoginAttempts,
+      public Guid Id { get; set; }
+      public Guid Owner { get; set; }
+      public DateTime Date { get; set; }
+
+      public UserEntity User { get; set; }
+
+      public UserFailedLoginEntity(Guid id, Guid owner, DateTime date)
+      {
+         Id = id;
+         Owner = owner;
+         Date = date;
+      }
    }
 }

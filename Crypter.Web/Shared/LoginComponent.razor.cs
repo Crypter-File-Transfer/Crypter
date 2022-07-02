@@ -75,27 +75,20 @@ namespace Crypter.Web.Shared
       {
          var loginTask = from username in ValidateUsername().ToEither(LoginError.InvalidUsername).AsTask()
                          from password in ValidatePassword().ToEither(LoginError.InvalidPassword).AsTask()
-                         from loginResult in LoginAsync(username, password, LoginModel.RememberMe).ToEitherAsync(LoginError.InvalidPassword)
+                         from loginResult in UserSessionService.LoginAsync(username, password, LoginModel.RememberMe)
                          select loginResult;
 
          var loginTaskResult = await loginTask;
-         if (!loginTaskResult.IsRight)
-         {
-            HandleLoginFailure();
-            return;
-         }
 
-         loginTaskResult.DoRight(loginSuccess =>
+         loginTaskResult.DoLeftOrNeither(
+            left => HandleLoginFailure(left),
+            () => HandleLoginFailure(LoginError.UnknownError));
+
+
+         loginTaskResult.DoRight(_ =>
          {
-            if (loginSuccess)
-            {
-               string returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";
-               NavigationManager.NavigateTo(returnUrl);
-            }
-            else
-            {
-               HandleLoginFailure();
-            }
+            string returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";
+            NavigationManager.NavigateTo(returnUrl);
          });
       }
 
@@ -151,15 +144,19 @@ namespace Crypter.Web.Shared
            _ => Maybe<Password>.None);
       }
 
-      private Task<Maybe<bool>> LoginAsync(Username username, Password password, bool rememberUser)
-      {
-         return Maybe<bool>.FromAsync(UserSessionService.LoginAsync(username, password, rememberUser));
-      }
-
-      private void HandleLoginFailure()
+      private void HandleLoginFailure(LoginError error)
       {
          LoginAttemptFailed = true;
-         LoginAttemptErrorMessage = "Incorrect username or password";
+#pragma warning disable CS8524
+         LoginAttemptErrorMessage = error switch
+         {
+            LoginError.UnknownError 
+               or LoginError.InvalidTokenTypeRequested => "An unknown error occurred",
+            LoginError.InvalidUsername
+               or LoginError.InvalidPassword => "Invalid username or password",
+            LoginError.ExcessiveFailedLoginAttempts => "Too many failed login attempts. Try again later.",
+         };
+#pragma warning restore CS8524
       }
    }
 }

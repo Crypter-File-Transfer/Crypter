@@ -55,10 +55,11 @@ namespace Crypter.Core.Entities
       public List<UserFileTransferEntity> ReceivedFileTransfers { get; set; }
       public List<UserMessageTransferEntity> SentMessageTransfers { get; set; }
       public List<UserMessageTransferEntity> ReceivedMessageTransfers { get; set; }
-
+      public List<UserFailedLoginEntity> FailedLoginAttempts { get; set; }
 
       /// <summary>
-      /// Do not use this.
+      /// Please avoid using this.
+      /// This is only intended to be used by Entity Framework.
       /// </summary>
       public UserEntity(Guid id, string username, string emailAddress, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
       {

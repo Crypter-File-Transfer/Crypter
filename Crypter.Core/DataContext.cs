@@ -58,6 +58,7 @@ namespace Crypter.Core
       public DbSet<AnonymousMessageTransferEntity> AnonymousMessageTransfers { get; set; }
       public DbSet<UserFileTransferEntity> UserFileTransfers { get; set; }
       public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; set; }
+      public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; set; }
       public DbSet<SchemaEntity> Schema { get; set; }
 
       protected override void OnModelCreating(ModelBuilder builder)
@@ -77,6 +78,7 @@ namespace Crypter.Core
          ConfigureUserFileTransferEntity(builder);
          ConfigureAnonymousMessageTransferEntity(builder);
          ConfigureAnonymousFileTransferEntity(builder);
+         ConfigureUserFailedLoginEntity(builder);
          ConfigureSchemaEntity(builder);
       }
 
@@ -410,6 +412,22 @@ namespace Crypter.Core
          builder.Entity<AnonymousFileTransferEntity>()
             .Property(x => x.ContentType)
             .IsRequired();
+      }
+
+      private static void ConfigureUserFailedLoginEntity(ModelBuilder builder)
+      {
+         builder.Entity<UserFailedLoginEntity>()
+            .ToTable("UserFailedLogin");
+
+         builder.Entity<UserFailedLoginEntity>()
+            .HasKey(x => x.Id);
+
+         builder.Entity<UserFailedLoginEntity>()
+            .HasOne(x => x.User)
+            .WithMany(x => x.FailedLoginAttempts)
+            .HasForeignKey(x => x.Owner)
+            .IsRequired(true)
+            .OnDelete(DeleteBehavior.Cascade);
       }
 
       private static void ConfigureSchemaEntity(ModelBuilder builder)
