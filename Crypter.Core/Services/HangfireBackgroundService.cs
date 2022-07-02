@@ -42,6 +42,7 @@ namespace Crypter.Core.Services
       Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType, CancellationToken cancellationToken);
       Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, CancellationToken cancellationToken);
       Task DeleteUserTokenAsync(Guid tokenId, CancellationToken cancellationToken);
+      Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId, CancellationToken cancellationToken);
    }
 
    public class HangfireBackgroundService : IHangfireBackgroundService
@@ -168,6 +169,18 @@ namespace Crypter.Core.Services
       public async Task DeleteUserTokenAsync(Guid tokenId, CancellationToken cancellationToken)
       {
          await _userService.DeleteUserTokenEntityAsync(tokenId, cancellationToken);
+      }
+
+      public async Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId, CancellationToken cancellationToken)
+      {
+         var foundAttempt = await _context.UserFailedLoginAttempts
+            .FirstOrDefaultAsync(x => x.Id == failedAttemptId, cancellationToken);
+
+         if (foundAttempt is not null)
+         {
+            _context.UserFailedLoginAttempts.Remove(foundAttempt);
+            await _context.SaveChangesAsync(cancellationToken);
+         }
       }
    }
 }

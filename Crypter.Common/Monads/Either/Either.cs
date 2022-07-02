@@ -97,6 +97,14 @@ namespace Crypter.Common.Monads
             : new Either<TLeft, TRight>(value);
       }
 
+      public static async Task<Either<TLeft, TRight>> FromLeftAsync(Task<TLeft> leftAsync)
+      {
+         var left = await leftAsync;
+         return left is null
+            ? Neither
+            : left;
+      }
+
       public bool IsLeft
       { get { return _state == EitherState.Left; } }
 

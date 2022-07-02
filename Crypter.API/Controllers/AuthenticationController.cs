@@ -105,7 +105,8 @@ namespace Crypter.API.Controllers
                LoginError.UnknownError => ServerError(errorResponse),
                LoginError.InvalidUsername
                   or LoginError.InvalidPassword
-                  or LoginError.InvalidTokenTypeRequested => BadRequest(errorResponse)
+                  or LoginError.InvalidTokenTypeRequested
+                  or LoginError.ExcessiveFailedLoginAttempts => BadRequest(errorResponse)
             };
 #pragma warning restore CS8524
          }
