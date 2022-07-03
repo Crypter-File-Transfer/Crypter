@@ -32,12 +32,39 @@ Copy the output to `/var/www/Crypter.Web` on the web server.
 
 The production server currently uses Nginx to serve Crypter.Web as a **static** website. This deviates from what we may be doing on our developer machines.
 
-The Nginx configuration is checked in to source control at [..\Configurations\nginx_config](..\Configurations\nginx_config).
+The primary Nginx configuration for the web server is checked in to source control at [..\Configurations\nginx.conf](..\Configurations\nginx.conf).
 
-Steps:
+The Nginx configuration for the Crypter web app is checked in at [..\Configurations\nginx_crypter__config](..\Configurations\nginx_crypter_config).
+This includes configuration for both Crypter.API and Crypter.Web.
 
-1. Copy the `nginx_config` to `/etc/nginx/sites-available`
-2. Rename the `nginx_config` file to `crypter`
+Steps for the primary Nginx configuration:
+
+1. Get the version of Nginx currently installed
+   * `nginx -v`
+2. Download the corresponding source code from the Nginx website
+   * `wget https://nginx.org/download/nginx-1.18.0.tar.gz`
+3. Extract the source code
+   * `tar xzf nginx-1.18.0.tar.gz`
+4. Clone the `ngx_brotli` module source code
+   * `git clone --recursive https://github.com/google/ngx_brotli`
+5. Configure the Brotli module
+   * `cd nginx-1.18.0`
+   * `sudo ./configure --with-compat --add-dynamic-module=../ngx_brotli`
+   * Note, you may need to install the `build-essential`, `libpcre3-dev`, and `zlib1g-dev` build and fully configure the module
+6. Compile the Brotli modules from within the `nginx-1.18.0` directory
+   * `sudo make modules`
+7. Copy the compiled files to the Nginx `modules` folder
+   * `cd nginx-1.18.0/objs`
+   * `sudo cp ngx_http_brotli*.so /usr/share/nginx/modules`
+8. The Nginx `modules` folder should contain the following files:
+   * `ngx_http_brotli_filter_module.so`
+   * `ngx_http_brotli_static_module.so`
+9. Copy the settings in `nginx.conf` to `/etc/nginx/nginx.conf`.
+
+Steps for configuring Nginx for Crypter:
+
+1. Place the `nginx_crypter_config` file in `/etc/nginx/sites-available`
+2. Rename the `nginx_crypter_config` file to `crypter`
 3. Create a symlink to `/etc/nginx/sites-enabled`
    * `sudo ln -s /etc/nginx/sites-available/crypter /etc/nginx/sites-enabled/crypter`
 4. Remove the `default` config from `sites-enabled`, if it exists. This is usually just a symlink to a file in `sites-available`

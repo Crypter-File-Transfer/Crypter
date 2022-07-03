@@ -16,5 +16,8 @@
 * [UFW Essentials: Common Firewall Rules and Commands](https://www.digitalocean.com/community/tutorials/ufw-essentials-common-firewall-rules-and-commands) - DigitalOcean
 * [How To Set Up a Firewall with UFW on Ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-20-04) - DigitalOcean
 
+## Nginx
+* [How to Enable Brotli Compression in Nginx](https://linuxhint.com/enable-brotli-compression-nginx/) - Blog post
+
 ## SSL
 * [How To Secure Nginx with Let's Encrypt on Ubuntu 20.04](https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-20-04) - DigitalOcean
