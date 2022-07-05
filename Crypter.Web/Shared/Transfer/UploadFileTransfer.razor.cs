@@ -125,7 +125,13 @@ namespace Crypter.Web.Shared.Transfer
          {
             UploadStatusMessage = _encryptingLiteral;
          }
+
          await SetProgressBar(percentComplete);
+
+         if (percentComplete == 1.0)
+         {
+            await Task.Delay(400);
+         }
       }
 
       protected async Task SetSigningProgress(double percentComplete)
@@ -134,7 +140,13 @@ namespace Crypter.Web.Shared.Transfer
          {
             UploadStatusMessage = _signingLiteral;
          }
+
          await SetProgressBar(percentComplete);
+
+         if (percentComplete == 1.0)
+         {
+            await Task.Delay(400);
+         }
       }
 
       protected async Task SetProgressBar(double percentComplete)
