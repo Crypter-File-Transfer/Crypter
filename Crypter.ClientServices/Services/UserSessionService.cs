@@ -59,10 +59,10 @@ namespace Crypter.ClientServices.Services
 
       // State
       private readonly SemaphoreSlim _initializationMutex = new(1);
-      private bool _initialized;
 
       public bool LoggedIn { get; protected set; } = false;
       public Maybe<UserSession> Session { get; protected set; } = Maybe<UserSession>.None;
+      public bool Initialized { get; private set; }
 
       public UserSessionService(
          ICrypterApiService crypterApiService,
@@ -90,7 +90,7 @@ namespace Crypter.ClientServices.Services
          await _initializationMutex.WaitAsync().ConfigureAwait(false);
          try
          {
-            if (!_initialized)
+            if (!Initialized)
             {
                var preExistingSession = await _userSessionRepository.GetUserSessionAsync();
                await preExistingSession.IfSomeAsync(async session =>
@@ -111,7 +111,7 @@ namespace Crypter.ClientServices.Services
                   }
                });
 
-               _initialized = true;
+               Initialized = true;
                HandleServiceInitializedEvent();
             }
          }
