@@ -38,6 +38,7 @@ namespace Crypter.ClientServices.Interfaces
    {
       bool LoggedIn { get; }
       Maybe<UserSession> Session { get; }
+      bool Initialized { get; }
 
       Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser);
       Task<Unit> LogoutAsync();
