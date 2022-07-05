@@ -78,7 +78,6 @@ namespace Crypter.Web.Shared.Transfer
          });
 
          ItemFound = previewResponse.IsRight;
-         Console.WriteLine(ItemFound);
       }
 
       protected async Task OnDecryptClickedAsync()
