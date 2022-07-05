@@ -25,12 +25,13 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Events;
 using Microsoft.AspNetCore.Components;
 using System;
 
 namespace Crypter.Web.Pages
 {
-   public partial class DecryptMessageBase : ComponentBase
+   public partial class DecryptMessageBase : ComponentBase, IDisposable
    {
       [Parameter]
       [SupplyParameterFromQuery(Name = "id")]
@@ -43,16 +44,19 @@ namespace Crypter.Web.Pages
       [Inject]
       protected IUserSessionService UserSessionService { get; set; }
 
-      [Inject]
-      protected NavigationManager NavigationManager { get; set; }
-
       protected override void OnInitialized()
       {
-         if (!UserSessionService.LoggedIn)
-         {
-            NavigationManager.NavigateTo("/");
-            return;
-         }
+         UserSessionService.ServiceInitializedEventHandler += OnUserSessionServiceInitialized;
+      }
+
+      private void OnUserSessionServiceInitialized(object sender, UserSessionServiceInitializedEventArgs _)
+      {
+         StateHasChanged();
+      }
+
+      public void Dispose()
+      {
+         UserSessionService.ServiceInitializedEventHandler -= OnUserSessionServiceInitialized;
       }
    }
 }
