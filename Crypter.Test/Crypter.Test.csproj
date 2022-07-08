@@ -20,6 +20,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="ClientServices_Tests\Assets\Saturn.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ClientServices_Tests\Assets\Saturn.jpg.gz">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ClientServices_Tests\Assets\WindowsCodecsRaw.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="CryptoLib_Tests\Assets\Alice_ECDH_Key.pem">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
