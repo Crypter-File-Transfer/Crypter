@@ -51,7 +51,7 @@ namespace Crypter.Web.Shared.Transfer
       protected NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected UploadSettings UploadSettings { get; set; }
+      protected FileTransferSettings UploadSettings { get; set; }
 
       [Inject]
       protected TransferHandlerFactory TransferHandlerFactory { get; set; }
@@ -64,6 +64,9 @@ namespace Crypter.Web.Shared.Transfer
 
       [Parameter]
       public int ExpirationHours { get; set; }
+
+      [Parameter]
+      public bool UseCompression { get; set; }
 
       [Parameter]
       public EventCallback UploadCompletedEvent { get; set; }
@@ -82,6 +85,7 @@ namespace Crypter.Web.Shared.Transfer
       private const string _serverOutOfSpace = "Server is out of space. Try again later.";
       private const string _userNotFound = "User not found.";
       private const string _expirationRange = "Expiration must be between 1 and 24 hours.";
+      protected const string _compressingLiteral = "Compressing";
       protected const string _encryptingLiteral = "Encrypting";
       protected const string _signingLiteral = "Signing";
       protected const string _uploadingLiteral = "Uploading";

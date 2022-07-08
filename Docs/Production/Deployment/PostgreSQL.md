@@ -36,6 +36,13 @@ To create the database:
  4. Invoke `Update-Database` to create the most recent version of the database.
  5. Undo the change you made to `Crypter.API/appsettings.json`.
 
+To create a database migration:
+
+ 1. Open the Package Manager Console in Visual Studio.
+ 2. Select `Crypter.API` as the startup project.
+ 3. Select `Crypter.Core` as the default project.
+ 4. Invoke `AddMigration {MigrationName}`
+
 To migrate the database:
 
  1. Open the Package Manager Console in Visual Studio.

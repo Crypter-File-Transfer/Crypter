@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Enums;
 using System;
 
 namespace Crypter.Core.Entities.Interfaces
@@ -36,6 +37,7 @@ namespace Crypter.Core.Entities.Interfaces
       public string DigitalSignaturePublicKey { get; set; }
       public string DiffieHellmanPublicKey { get; set; }
       public string RecipientProof { get; set; }
+      public CompressionType CompressionType { get; set; }
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
    }

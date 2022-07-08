@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Enums;
 using Crypter.Core.Entities.Interfaces;
 using System;
 
@@ -37,6 +38,7 @@ namespace Crypter.Core.Entities
       public string DigitalSignaturePublicKey { get; set; }
       public string DiffieHellmanPublicKey { get; set; }
       public string RecipientProof { get; set; }
+      public CompressionType CompressionType { get; set; }
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
 
@@ -51,7 +53,7 @@ namespace Crypter.Core.Entities
       public string FileName { get; set; }
       public string ContentType { get; set; }
 
-      public UserFileTransferEntity(Guid id, int size, string digitalSignature, string digitalSignaturePublicKey, string diffieHellmanPublicKey, string recipientProof, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType)
+      public UserFileTransferEntity(Guid id, int size, string digitalSignature, string digitalSignaturePublicKey, string diffieHellmanPublicKey, string recipientProof, CompressionType compressionType, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType)
       {
          Id = id;
          Size = size;
@@ -59,6 +61,7 @@ namespace Crypter.Core.Entities
          DigitalSignaturePublicKey = digitalSignaturePublicKey;
          DiffieHellmanPublicKey = diffieHellmanPublicKey;
          RecipientProof = recipientProof;
+         CompressionType = compressionType;
          Created = created;
          Expiration = expiration;
          SenderId = senderId;

@@ -46,7 +46,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
       private string _messageBody;
       private int _expirationHours;
 
-      public UploadMessageHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, UploadSettings uploadSettings)
+      public UploadMessageHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, FileTransferSettings uploadSettings)
          : base(crypterApiService, simpleEncryptionService, simpleSignatureService, uploadSettings)
       { }
 
@@ -113,7 +113,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
 
          string encodedServerKey = Convert.ToBase64String(serverKey);
 
-         var request = new UploadMessageTransferRequest(_messageSubject, encodedInitializationVector, encodedCipherText, encodedSignature, encodedECDSASenderKey, encodedECDHSenderKey, encodedServerKey, _expirationHours);
+         var request = new UploadMessageTransferRequest(_messageSubject, encodedInitializationVector, encodedCipherText, encodedSignature, encodedECDSASenderKey, encodedECDHSenderKey, encodedServerKey, _expirationHours, CompressionType.None);
          var response = await _recipientUsername.Match(
             () => _crypterApiService.UploadMessageTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserMessageTransferAsync(x, request, _senderDefined));

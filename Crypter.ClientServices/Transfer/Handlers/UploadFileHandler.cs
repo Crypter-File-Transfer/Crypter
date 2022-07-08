@@ -30,6 +30,7 @@ using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using Crypter.Common.Streams;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Services;
@@ -42,27 +43,70 @@ using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Transfer.Handlers
 {
-   public class UploadFileHandler : UploadHandler
+   public class UploadFileHandler : UploadHandler, IDisposable
    {
-      private Stream _encryptionStream;
-      private Stream _signingStream;
+      private Stream _fileStream;
       private string _fileName;
       private long _fileSize;
       private string _fileContentType;
       private int _expirationHours;
+      private bool _useCompression;
+      private CompressionType _usedCompressionType;
 
-      public UploadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, UploadSettings uploadSettings)
-         : base(crypterApiService, simpleEncryptionService, simpleSignatureService, uploadSettings)
-      { }
+      private MemoryStream _preparedStream;
 
-      internal void SetTransferInfo(Stream fileStream, Stream signingStream, string fileName, long fileSize, string fileContentType, int expirationHours)
+      private readonly ICompressionService _compressionService;
+      private readonly HashSet<string> _fileExtensionCompressionBlacklist;
+
+      public readonly int BufferSize;
+
+      public UploadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, FileTransferSettings fileTransferSettings, ICompressionService compressionService)
+         : base(crypterApiService, simpleEncryptionService, simpleSignatureService, fileTransferSettings)
       {
-         _encryptionStream = fileStream;
-         _signingStream = signingStream;
+         _compressionService = compressionService;
+         BufferSize = fileTransferSettings.PartSizeBytes;
+
+         _fileExtensionCompressionBlacklist = new HashSet<string>
+         {
+            "7z",
+            "arj",
+            "deb",
+            "gz",
+            "pkg",
+            "rar",
+            "rpm",
+            "z",
+            "zip"
+         };
+
+         _usedCompressionType = CompressionType.None;
+      }
+
+      internal void SetTransferInfo(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours, bool useCompression)
+      {
+         _fileStream = fileStream;
          _fileName = fileName;
          _fileSize = fileSize;
          _fileContentType = fileContentType;
          _expirationHours = expirationHours;
+         _useCompression = useCompression;
+      }
+
+      public async Task PrepareMemoryStream(Maybe<Func<double, Task>> compressionProgress)
+      {
+         MemoryStream stream = await StreamCopy.StreamToMemoryStream(_fileStream, _fileSize, BufferSize, Maybe<Func<double, Task>>.None);
+
+         if (UseCompressionOnFile())
+         {
+            _usedCompressionType = CompressionType.GZip; 
+            _preparedStream = await compressionProgress.MatchAsync(
+               async () => await _compressionService.CompressStreamAsync(stream),
+               async func => await _compressionService.CompressStreamAsync(stream, _fileSize, BufferSize, func));
+         }
+         else
+         {
+            _preparedStream = stream;
+         }
       }
 
       public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<double, Task>> encryptionProgress, Maybe<Func<double, Task>> signatureProgress, Maybe<Func<Task>> invokeBeforeUploading)
@@ -92,8 +136,9 @@ namespace Crypter.ClientServices.Transfer.Handlers
          (byte[] sendKey, byte[] serverKey) = DeriveSymmetricKeys(senderDiffieHellmanPrivateKey, recipientDiffieHellmanPublicKey);
          byte[] initializationVector = AES.GenerateIV();
 
-         List<byte[]> partitionedCiphertext = await _simpleEncryptionService.EncryptStreamAsync(sendKey, initializationVector, _encryptionStream, _fileSize, _uploadSettings.PartSizeBytes, encryptionProgress);
-         byte[] signature = await _simpleSignatureService.SignStreamAsync(senderDigitalSignaturePrivateKey, _signingStream, _fileSize, _uploadSettings.PartSizeBytes, signatureProgress);
+         List<byte[]> partitionedCiphertext = await _simpleEncryptionService.EncryptStreamAsync(sendKey, initializationVector, _preparedStream, _preparedStream.Length, BufferSize, encryptionProgress);
+         _preparedStream.Position = 0;
+         byte[] signature = await _simpleSignatureService.SignStreamAsync(senderDigitalSignaturePrivateKey, _preparedStream, _preparedStream.Length, BufferSize, signatureProgress);
          await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
 
          string encodedInitializationVector = Convert.ToBase64String(initializationVector);
@@ -122,12 +167,28 @@ namespace Crypter.ClientServices.Transfer.Handlers
 
          string encodedServerKey = Convert.ToBase64String(serverKey);
 
-         var request = new UploadFileTransferRequest(_fileName, _fileContentType, encodedInitializationVector, encodedCipherText, encodedSignature, encodedECDSASenderKey, encodedECDHSenderKey, encodedServerKey, _expirationHours);
+         var request = new UploadFileTransferRequest(_fileName, _fileContentType, encodedInitializationVector, encodedCipherText, encodedSignature, encodedECDSASenderKey, encodedECDHSenderKey, encodedServerKey, _expirationHours, _usedCompressionType);
          var response = await _recipientUsername.Match(
             () => _crypterApiService.UploadFileTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserFileTransferAsync(x, request, _senderDefined));
  
          return response.Map(x => new UploadHandlerResponse(x.Id, _expirationHours, TransferItemType.File, x.UserType, _recipientDiffieHellmanPrivateKey));
+      }
+
+      private bool UseCompressionOnFile()
+      {
+         string fileExtension = _fileName.Contains('.')
+            ? _fileName.Split('.').Last()
+            : string.Empty;
+
+         return _useCompression && !_fileExtensionCompressionBlacklist.Contains(fileExtension);
+      }
+
+      public void Dispose()
+      {
+         _fileStream?.Dispose();
+         _preparedStream?.Dispose();
+         GC.SuppressFinalize(this);
       }
    }
 }

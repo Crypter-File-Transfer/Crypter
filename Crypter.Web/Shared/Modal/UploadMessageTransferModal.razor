@@ -28,13 +28,33 @@
 
 <div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-         <div class="modal-header">
-            <h3 class="my-0">Upload a Message</h3>
+      <div class="modal-content card">
+         <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+               <li class="nav-item" role="presentation">
+                  <button class="nav-link active" id="message-modal-tab1" data-bs-toggle="tab" data-bs-target="#message-modal-message-tab" type="button" role="tab" aria-controls="file" aria-selected="true">Encrypt a Message</button>
+               </li>
+               <li class="nav-item ms-auto" role="presentation">
+                  <button class="nav-link" id="message-modal-tab2" data-bs-toggle="tab" data-bs-target="#message-modal-settings-tab" type="button" role="tab" aria-controls="settings" aria-selected="false">
+                     <i class="bi bi-gear-fill"></i>
+                  </button>
+               </li>
+            </ul>
          </div>
-         <div class="modal-body justify-content-center">
-            <UploadMessageTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientDiffieHellmanPublicKey="RecipientX25519PublicKey" ExpirationHours="24" UploadCompletedEvent="CloseAsync" />
+
+         <div class="card-body justify-content-center">
+            <div class="tab-content">
+               <div class="tab-pane fade show active" id="message-modal-message-tab" role="tabpanel" aria-labelledby="message-tab">
+                  <UploadMessageTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientDiffieHellmanPublicKey="RecipientX25519PublicKey" ExpirationHours="RequestedExpirationHours" UseCompression="UseCompression" UploadCompletedEvent="CloseAsync" />
+               </div>
+
+               <div class="tab-pane fade" id="message-modal-settings-tab" role="tabpanel" aria-labelledby="settings-tab">
+                  <h2 class="card-title mt-0 mb-0">Configuration</h2>
+                  <TransferSettings @bind-RequestedExpirationHours=RequestedExpirationHours @bind-UseCompression=UseCompression />
+               </div>
+            </div>
          </div>
+
          <div class="modal-footer">
             <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="CloseAsync">Close</button>
          </div>

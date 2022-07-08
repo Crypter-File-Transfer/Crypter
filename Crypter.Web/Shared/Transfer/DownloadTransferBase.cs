@@ -63,6 +63,7 @@ namespace Crypter.Web.Shared.Transfer
       protected string UserProvidedDecryptionKey = string.Empty;
 
       protected const string _downloadingLiteral = "Downloading";
+      protected const string _decompressingLiteral = "Decompressing";
       protected const string _decryptingLiteral = "Decrypting";
       protected const string _verifyingLiteral = "Verifying";
 

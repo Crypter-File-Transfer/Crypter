@@ -25,6 +25,7 @@
  */
 
 using Crypter.ClientServices.Transfer;
+using Crypter.ClientServices.Transfer.Handlers;
 using Crypter.Common.Monads;
 using Microsoft.AspNetCore.Components.Forms;
 using System;
@@ -98,19 +99,20 @@ namespace Crypter.Web.Shared.Transfer
          EncryptionInProgress = true;
          ErrorMessage = string.Empty;
 
-         using Stream encryptionStream = SelectedFile.OpenReadStream(SelectedFile.Size);
-         using Stream signingStream = SelectedFile.OpenReadStream(SelectedFile.Size);
-
-         var fileUploader = TransferHandlerFactory.CreateUploadFileHandler(encryptionStream, signingStream, SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours);
+         await SetProgressMessage("Reading file");
+         using Stream fileStream = SelectedFile.OpenReadStream(SelectedFile.Size);
+         using UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(fileStream, SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours, UseCompression);
 
          SetHandlerUserInfo(fileUploader);
 
+         var compressionProgressTask = Maybe<Func<double, Task>>.From(SetCompressionProgress);
          var encryptionProgressTask = Maybe<Func<double, Task>>.From(SetEncryptionProgress);
          var signingProgressTask = Maybe<Func<double, Task>>.From(SetSigningProgress);
          var showUploadingMessage = Maybe<Func<Task>>.From(async () => {
             ShowProgressBar = false;
             await SetProgressMessage(_uploadingLiteral);
          });
+         await fileUploader.PrepareMemoryStream(compressionProgressTask);
          var uploadResponse = await fileUploader.UploadAsync(encryptionProgressTask, signingProgressTask, showUploadingMessage);
 
          HandleUploadResponse(uploadResponse);
@@ -119,12 +121,23 @@ namespace Crypter.Web.Shared.Transfer
          EncryptionInProgress = false;
       }
 
+      protected async Task SetCompressionProgress(double percentComplete)
+      {
+         if (UploadStatusMessage != _compressingLiteral)
+         {
+            UploadStatusMessage = _compressingLiteral;
+         }
+
+         await SetProgressBar(percentComplete);
+      }
+
       protected async Task SetEncryptionProgress(double percentComplete)
       {
          if (UploadStatusMessage != _encryptingLiteral)
          {
             UploadStatusMessage = _encryptingLiteral;
          }
+
          await SetProgressBar(percentComplete);
       }
 
@@ -134,6 +147,7 @@ namespace Crypter.Web.Shared.Transfer
          {
             UploadStatusMessage = _signingLiteral;
          }
+
          await SetProgressBar(percentComplete);
       }
 
@@ -142,7 +156,12 @@ namespace Crypter.Web.Shared.Transfer
          ShowProgressBar = true;
          ProgressPercent = percentComplete;
          StateHasChanged();
-         await Task.Delay(5);
+
+         int delay = percentComplete == 1.0
+            ? 400
+            : 5;
+
+         await Task.Delay(delay);
       }
 
       protected async Task SetProgressMessage(string message)

@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Enums;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -31,17 +32,18 @@ namespace Crypter.Contracts.Features.Transfer
 {
    public class UploadMessageTransferRequest : IUploadTransferRequest
    {
-      public string Subject { get; set; }
-      public string InitializationVector { get; set; }
-      public List<string> Ciphertext { get; set; }
-      public string DigitalSignature { get; set; }
-      public string DigitalSignaturePublicKey { get; set; }
-      public string DiffieHellmanPublicKey { get; set; }
-      public string RecipientProof { get; set; }
-      public int LifetimeHours { get; set; }
+      public string Subject { get; init; }
+      public string InitializationVector { get; init; }
+      public List<string> Ciphertext { get; init; }
+      public string DigitalSignature { get; init; }
+      public string DigitalSignaturePublicKey { get; init; }
+      public string DiffieHellmanPublicKey { get; init; }
+      public string RecipientProof { get; init; }
+      public int LifetimeHours { get; init; }
+      public CompressionType CompressionType { get; init; }
 
       [JsonConstructor]
-      public UploadMessageTransferRequest(string subject, string initializationVector, List<string> ciphertext, string digitalSignature, string digitalSignaturePublicKey, string diffieHellmanPublicKey, string recipientProof, int lifetimeHours)
+      public UploadMessageTransferRequest(string subject, string initializationVector, List<string> ciphertext, string digitalSignature, string digitalSignaturePublicKey, string diffieHellmanPublicKey, string recipientProof, int lifetimeHours, CompressionType compressionType)
       {
          Subject = subject;
          InitializationVector = initializationVector;
@@ -51,6 +53,7 @@ namespace Crypter.Contracts.Features.Transfer
          DiffieHellmanPublicKey = diffieHellmanPublicKey;
          RecipientProof = recipientProof;
          LifetimeHours = lifetimeHours;
+         CompressionType = compressionType;
       }
    }
 }

@@ -75,9 +75,6 @@
                <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnLogoutClicked">Logout</a></li>
             </ul>
          </li>
-
-         <UploadFileTransferModal @ref="FileTransferModal" RecipientUsername="Maybe<string>.None" RecipientX25519PublicKey="Maybe<PEMString>.None" />
-         <UploadMessageTransferModal @ref="MessageTransferModal" RecipientUsername="Maybe<string>.None" RecipientX25519PublicKey="Maybe<PEMString>.None" />
       }
       else
       {
@@ -90,3 +87,6 @@
       }
    </ul>
 </div>
+
+<UploadFileTransferModal @ref="FileTransferModal" RecipientUsername="Maybe<string>.None" RecipientX25519PublicKey="Maybe<PEMString>.None" />
+<UploadMessageTransferModal @ref="MessageTransferModal" RecipientUsername="Maybe<string>.None" RecipientX25519PublicKey="Maybe<PEMString>.None" />

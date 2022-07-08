@@ -29,35 +29,35 @@
 <div class="container" id="encrypt">
    <div class="card">
       <div class="card-header">
-         <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+         <ul class="nav nav-tabs card-header-tabs" id="encryptionTab" role="tablist">
             <li class="nav-item" role="presentation">
-               <button class="nav-link active" id="file-tab" data-bs-toggle="tab" data-bs-target="#file" type="button" role="tab" aria-controls="file" aria-selected="true">Encrypt a file</button>
+               <button class="nav-link active" id="encryption-tab1" data-bs-toggle="tab" data-bs-target="#file-tab" type="button" role="tab" aria-controls="file" aria-selected="true">Encrypt a file</button>
             </li>
             <li class="nav-item" role="presentation">
-               <button class="nav-link" id="message-tab" data-bs-toggle="tab" data-bs-target="#message" type="button" role="tab" aria-controls="message" aria-selected="false">Encrypt a message</button>
+               <button class="nav-link" id="encryption-tab2" data-bs-toggle="tab" data-bs-target="#message-tab" type="button" role="tab" aria-controls="message" aria-selected="false">Encrypt a message</button>
             </li>
             <li class="nav-item ms-auto" role="presentation">
-               <button class="nav-link" id="message-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="message" aria-selected="false">
+               <button class="nav-link" id="encryption-tab3" data-bs-toggle="tab" data-bs-target="#settings-tab" type="button" role="tab" aria-controls="settings" aria-selected="false">
                   <i class="bi bi-gear-fill"></i>
                </button>
             </li>
          </ul>
       </div>
       <div class="card-body">
-         <div class="tab-content" id="myTabContent">
-            <div class="tab-pane fade show active" id="file" role="tabpanel" aria-labelledby="file-tab">
+         <div class="tab-content" id="encryptionTabContent">
+            <div class="tab-pane fade show active" id="file-tab" role="tabpanel" aria-labelledby="file-tab">
                <h2 class="card-title mt-0">Upload a file</h2>
-               <UploadFileTransfer ExpirationHours=RequestedExpirationHours />
+               <UploadFileTransfer ExpirationHours=RequestedExpirationHours UseCompression=UseCompression />
             </div>
 
-            <div class="tab-pane fade" id="message" role="tabpanel" aria-labelledby="message-tab">
+            <div class="tab-pane fade" id="message-tab" role="tabpanel" aria-labelledby="message-tab">
                <h2 class="card-title mt-0 mb-0">Upload a message</h2>
-               <UploadMessageTransfer ExpirationHours=RequestedExpirationHours />
+               <UploadMessageTransfer ExpirationHours=RequestedExpirationHours UseCompression=false />
             </div>
 
-            <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="message-tab">
+            <div class="tab-pane fade" id="settings-tab" role="tabpanel" aria-labelledby="settings-tab">
                <h2 class="card-title mt-0 mb-0">Configuration</h2>
-               <TransferSettings @bind-RequestedExpirationHours=RequestedExpirationHours />
+               <TransferSettings @bind-RequestedExpirationHours=RequestedExpirationHours @bind-UseCompression=UseCompression />
             </div>
          </div>
       </div>
