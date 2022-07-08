@@ -24,35 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Entities.Interfaces;
+using Crypter.Common.Monads;
 using System;
+using System.IO;
+using System.Threading.Tasks;
 
-namespace Crypter.Core.Entities
+namespace Crypter.ClientServices.Interfaces
 {
-   /// <summary>
-   /// This class does not represent an entity tracked in the database.
-   /// </summary>
-   public class BaseTransfer : ITransferBase
+   public interface ICompressionService
    {
-      public Guid Id { get; set; }
-      public int Size { get; set; }
-      public string DigitalSignature { get; set; }
-      public string DigitalSignaturePublicKey { get; set; }
-      public string DiffieHellmanPublicKey { get; set; }
-      public string RecipientProof { get; set; }
-      public DateTime Created { get; set; }
-      public DateTime Expiration { get; set; }
-
-      public BaseTransfer(Guid id, int size, string digitalSignature, string digitalSignaturePublicKey, string diffieHellmanPublicKey, string recipientProof, DateTime created, DateTime expiration)
-      {
-         Id = id;
-         Size = size;
-         DigitalSignature = digitalSignature;
-         DigitalSignaturePublicKey = digitalSignaturePublicKey;
-         DiffieHellmanPublicKey = diffieHellmanPublicKey;
-         RecipientProof = recipientProof;
-         Created = created;
-         Expiration = expiration;
-      }
+      Task<MemoryStream> CompressStreamAsync(Stream stream, long streamLength, int bufferSize, Func<double, Task> progressFunc, int compressionLevel = 6);
+      Task<MemoryStream> CompressStreamAsync(Stream stream, int compressionLevel = 6);
+      Task<MemoryStream> DecompressStreamAsync(Stream compressedStream, long streamLength, int bufferSize, Maybe<Func<double, Task>> progressFunc);
    }
 }

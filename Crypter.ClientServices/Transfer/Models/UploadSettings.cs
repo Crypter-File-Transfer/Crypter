@@ -26,7 +26,7 @@
 
 namespace Crypter.ClientServices.Transfer.Models
 {
-   public class UploadSettings
+   public class FileTransferSettings
    {
       public int MaxUploadSizeMB { get; set; }
       public int PartSizeBytes { get; set; }

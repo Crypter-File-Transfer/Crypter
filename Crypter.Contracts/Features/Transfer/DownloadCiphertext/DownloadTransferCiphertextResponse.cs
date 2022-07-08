@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Enums;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -35,14 +36,16 @@ namespace Crypter.Contracts.Features.Transfer
       public string InitializationVector { get; init; }
       public string DigitalSignature { get; init; }
       public string DigitalSignaturePublicKey { get; init; }
+      public CompressionType CompressionType { get; init; }
 
       [JsonConstructor]
-      public DownloadTransferCiphertextResponse(List<string> ciphertext, string initializationVector, string digitalSignature, string digitalSignaturePublicKey)
+      public DownloadTransferCiphertextResponse(List<string> ciphertext, string initializationVector, string digitalSignature, string digitalSignaturePublicKey, CompressionType compressionType)
       {
          Ciphertext = ciphertext;
          InitializationVector = initializationVector;
          DigitalSignature = digitalSignature;
          DigitalSignaturePublicKey = digitalSignaturePublicKey;
+         CompressionType = compressionType;
       }
    }
 }

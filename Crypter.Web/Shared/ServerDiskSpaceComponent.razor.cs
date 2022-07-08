@@ -35,7 +35,7 @@ namespace Crypter.Web.Shared
    public partial class ServerDiskSpaceComponentBase : ComponentBase
    {
       [Inject]
-      protected UploadSettings UploadSettings { get; set; }
+      protected FileTransferSettings FileTransferSettings { get; set; }
 
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
@@ -56,7 +56,7 @@ namespace Crypter.Web.Shared
             false,
             right =>
             {
-               long maxUploadBytes = UploadSettings.MaxUploadSizeMB * (long)Math.Pow(2, 20);
+               long maxUploadBytes = FileTransferSettings.MaxUploadSizeMB * (long)Math.Pow(2, 20);
                return right.Available > maxUploadBytes;
             });
       }

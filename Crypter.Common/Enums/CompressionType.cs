@@ -24,13 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Microsoft.AspNetCore.Components;
-
-namespace Crypter.Web.Shared.Transfer
+namespace Crypter.Common.Enums
 {
-   public partial class TabbedUploadTransferComponentBase : ComponentBase
+   public enum CompressionType
    {
-      public int RequestedExpirationHours { get; set; }
-      public bool UseCompression { get; set; }
+      None,
+      GZip
    }
 }
