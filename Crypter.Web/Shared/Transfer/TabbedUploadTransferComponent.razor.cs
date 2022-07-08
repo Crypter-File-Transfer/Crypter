@@ -31,5 +31,6 @@ namespace Crypter.Web.Shared.Transfer
    public partial class TabbedUploadTransferComponentBase : ComponentBase
    {
       public int RequestedExpirationHours { get; set; }
+      public bool UseCompression { get; set; }
    }
 }

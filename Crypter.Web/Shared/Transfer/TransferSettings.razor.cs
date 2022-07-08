@@ -28,31 +28,48 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.Transfer
 {
-    public partial class TransferSettingsBase : ComponentBase
-    {
-        private int _requestedExpirationHours;
+   public partial class TransferSettingsBase : ComponentBase
+   {
+      private int _requestedExpirationHours;
+      private bool _useCompression;
 
-        [Parameter]
-        public int RequestedExpirationHours
-        {
-            get => _requestedExpirationHours;
-            set
-            {
-                if (_requestedExpirationHours == value) return;
-                if (value < 1) value = 1;
-                if (value > 24) value = 24;
-                _requestedExpirationHours = value;
+      [Parameter]
+      public int RequestedExpirationHours
+      {
+         get => _requestedExpirationHours;
+         set
+         {
+            if (_requestedExpirationHours == value) return;
+            if (value < 1) value = 1;
+            if (value > 24) value = 24;
+            _requestedExpirationHours = value;
 
-                RequestedExpirationHoursChanged.InvokeAsync(value);
-            }
-        }
+            RequestedExpirationHoursChanged.InvokeAsync(value);
+         }
+      }
 
-        [Parameter]
-        public EventCallback<int> RequestedExpirationHoursChanged { get; set; }
+      [Parameter]
+      public EventCallback<int> RequestedExpirationHoursChanged { get; set; }
 
-        protected override void OnInitialized()
-        {
-            RequestedExpirationHours = 24;
-        }
-    }
+      [Parameter]
+      public bool UseCompression
+      {
+         get => _useCompression;
+         set
+         {
+            if (_useCompression == value) return;
+            _useCompression = value;
+            UseCompressionChanged.InvokeAsync(value);
+         }
+      }
+
+      [Parameter]
+      public EventCallback<bool> UseCompressionChanged { get; set; }
+
+      protected override void OnInitialized()
+      {
+         RequestedExpirationHours = 24;
+         UseCompression = true;
+      }
+   }
 }

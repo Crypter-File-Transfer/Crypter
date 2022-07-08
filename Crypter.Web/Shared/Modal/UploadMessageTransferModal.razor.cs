@@ -52,6 +52,8 @@ namespace Crypter.Web.Shared.Modal
       protected bool IsSenderDefined = false;
       protected string SenderX25519PrivateKey;
       protected string SenderEd25519PrivateKey;
+      protected int RequestedExpirationHours;
+      protected bool UseCompression;
 
       protected string ModalDisplay = "none;";
       protected string ModalClass = "";

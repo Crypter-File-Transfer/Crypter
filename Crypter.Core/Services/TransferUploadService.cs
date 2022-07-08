@@ -181,7 +181,7 @@ namespace Crypter.Core.Services
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
-         var newTransferEntity = new AnonymousMessageTransferEntity(id, requiredDiskSpace, request.DigitalSignature, request.DigitalSignaturePublicKey, request.DiffieHellmanPublicKey, request.RecipientProof, now, expiration, request.Subject);
+         var newTransferEntity = new AnonymousMessageTransferEntity(id, requiredDiskSpace, request.DigitalSignature, request.DigitalSignaturePublicKey, request.DiffieHellmanPublicKey, request.RecipientProof, request.CompressionType, now, expiration, request.Subject);
          _context.AnonymousMessageTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
@@ -201,7 +201,7 @@ namespace Crypter.Core.Services
             () => null,
             x => x);
 
-         var newTransferEntity = new UserMessageTransferEntity(id, requiredDiskSpace, request.DigitalSignature, request.DigitalSignaturePublicKey, request.DiffieHellmanPublicKey, request.RecipientProof, now, expiration, nullableSenderId, nullableRecipientId, request.Subject);
+         var newTransferEntity = new UserMessageTransferEntity(id, requiredDiskSpace, request.DigitalSignature, request.DigitalSignaturePublicKey, request.DiffieHellmanPublicKey, request.RecipientProof, request.CompressionType, now, expiration, nullableSenderId, nullableRecipientId, request.Subject);
          _context.UserMessageTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
@@ -212,7 +212,7 @@ namespace Crypter.Core.Services
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
-         var newTransferEntity = new AnonymousFileTransferEntity(id, requiredDiskSpace, request.DigitalSignature, request.DigitalSignaturePublicKey, request.DiffieHellmanPublicKey, request.RecipientProof, now, expiration, request.Filename, request.ContentType);
+         var newTransferEntity = new AnonymousFileTransferEntity(id, requiredDiskSpace, request.DigitalSignature, request.DigitalSignaturePublicKey, request.DiffieHellmanPublicKey, request.RecipientProof, request.CompressionType, now, expiration, request.Filename, request.ContentType);
          _context.AnonymousFileTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
@@ -232,7 +232,7 @@ namespace Crypter.Core.Services
             () => null,
             x => x);
 
-         var newTransferEntity = new UserFileTransferEntity(id, requiredDiskSpace, request.DigitalSignature, request.DigitalSignaturePublicKey, request.DiffieHellmanPublicKey, request.RecipientProof, now, expiration, nullableSenderId, nullableRecipientId, request.Filename, request.ContentType);
+         var newTransferEntity = new UserFileTransferEntity(id, requiredDiskSpace, request.DigitalSignature, request.DigitalSignaturePublicKey, request.DiffieHellmanPublicKey, request.RecipientProof, request.CompressionType, now, expiration, nullableSenderId, nullableRecipientId, request.Filename, request.ContentType);
          _context.UserFileTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 

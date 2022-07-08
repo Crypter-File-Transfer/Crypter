@@ -60,7 +60,7 @@ builder.Services.AddSingleton<IClientApiSettings>(sp =>
 builder.Services.AddSingleton(sp =>
 {
    var config = sp.GetService<IConfiguration>();
-   return config.GetSection("UploadSettings").Get<UploadSettings>();
+   return config.GetSection("FileTransferSettings").Get<FileTransferSettings>();
 });
 
 builder.Services.AddHttpClient<ICrypterHttpService, CrypterHttpService>(httpClient =>
@@ -91,6 +91,7 @@ builder.Services
    .AddSingleton<IUserKeysService, UserKeysService>()
    .AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>()
    .AddSingleton<ISimpleSignatureService, SimpleSignatureService>()
+   .AddSingleton<ICompressionService, CompressionService>()
    .AddSingleton<IUserContactsService, UserContactsService>()
    .AddSingleton<IBrowserDownloadFileService, BrowserDownloadFileService>()
    .AddSingleton<TransferHandlerFactory>()

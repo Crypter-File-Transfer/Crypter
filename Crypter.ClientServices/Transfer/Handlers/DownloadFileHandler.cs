@@ -26,6 +26,7 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer.Handlers.Base;
+using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
@@ -33,6 +34,7 @@ using Crypter.Contracts.Features.Transfer;
 using Crypter.CryptoLib.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -41,9 +43,15 @@ namespace Crypter.ClientServices.Transfer.Handlers
 {
    public class DownloadFileHandler : DownloadHandler
    {
-      public DownloadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, IUserSessionService userSessionService)
+      private readonly ICompressionService _compressionService;
+      private readonly FileTransferSettings _fileTransferSettings;
+
+      public DownloadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, IUserSessionService userSessionService, ICompressionService compressionService, FileTransferSettings fileTransferSettings)
          : base(crypterApiService, simpleEncryptionService, simpleSignatureService, userSessionService)
-      { }
+      {
+         _compressionService = compressionService;
+         _fileTransferSettings = fileTransferSettings;
+      }
 
       public async Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadPreviewAsync()
       {
@@ -63,7 +71,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
          return response;
       }
 
-      public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeAfterDownloading, Maybe<Func<Task>> invokeAfterDecryption)
+      public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeBeforeDecryption, Maybe<Func<Task>> invokeBeforeVerification, Maybe<Func<Task>> invokeBeforeDecompression)
       {
          var request = _serverKey.Match(
             () => throw new Exception("Missing server key"),
@@ -76,8 +84,6 @@ namespace Crypter.ClientServices.Transfer.Handlers
             TransferUserType.User => await _crypterApiService.DownloadUserFileCiphertextAsync(_transferId, request, _userSessionService.LoggedIn)
          };
 #pragma warning restore CS8524
-         await invokeAfterDownloading.IfSomeAsync(async x => await x.Invoke());
-
          return await response.MatchAsync<Either<DownloadTransferCiphertextError, byte[]>>(
             left => left,
             async right =>
@@ -86,12 +92,31 @@ namespace Crypter.ClientServices.Transfer.Handlers
                   Convert.FromBase64String(right.DigitalSignaturePublicKey));
 
                SetSenderDigitalSignaturePublicKey(PEMString.From(digitalSignaturePublicKeyPEM));
-               byte[] plaintext = DecryptFile(right.Ciphertext, right.InitializationVector);
-               await invokeAfterDecryption.IfSomeAsync(async x => await x.Invoke());
 
-               return VerifyFile(plaintext, Convert.FromBase64String(right.DigitalSignature))
-                  ? plaintext
-                  : DownloadTransferCiphertextError.UnknownError;
+               await invokeBeforeDecryption.IfSomeAsync(async x => await x.Invoke());
+
+               byte[] plaintext = DecryptFile(right.Ciphertext, right.InitializationVector);
+               await invokeBeforeVerification.IfSomeAsync(async x => await x.Invoke());
+
+               bool verifiedFile = VerifyFile(plaintext, Convert.FromBase64String(right.DigitalSignature));
+
+               if (verifiedFile)
+               {
+                  if (right.CompressionType == CompressionType.GZip)
+                  {
+                     await invokeBeforeDecompression.IfSomeAsync(async x => await x.Invoke());
+
+                     using MemoryStream compressedStream = new MemoryStream(plaintext);
+                     using MemoryStream decompressedPlaintext = await _compressionService.DecompressStreamAsync(compressedStream, compressedStream.Length, _fileTransferSettings.PartSizeBytes, Maybe<Func<double, Task>>.None);
+                     return decompressedPlaintext.ToArray();
+                  }
+                  else
+                  {
+                     return plaintext;
+                  }
+               }
+
+               return DownloadTransferCiphertextError.UnknownError;
             },
             DownloadTransferCiphertextError.UnknownError);
       }

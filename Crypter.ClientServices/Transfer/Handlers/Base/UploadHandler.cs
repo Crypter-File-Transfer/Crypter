@@ -42,7 +42,7 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       protected readonly ICrypterApiService _crypterApiService;
       protected readonly ISimpleEncryptionService _simpleEncryptionService;
       protected readonly ISimpleSignatureService _simpleSignatureService;
-      protected readonly UploadSettings _uploadSettings;
+      protected readonly FileTransferSettings _fileTransferSettings;
 
       protected TransferUserType _transferUserType = TransferUserType.Anonymous;
 
@@ -59,12 +59,12 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
       protected Maybe<PEMString> _recipientDiffieHellmanPublicKey = Maybe<PEMString>.None;
 
-      public UploadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, UploadSettings uploadSettings)
+      public UploadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, FileTransferSettings fileTransferSettings)
       {
          _crypterApiService = crypterApiService;
          _simpleEncryptionService = simpleEncryptionService;
          _simpleSignatureService = simpleSignatureService;
-         _uploadSettings = uploadSettings;
+         _fileTransferSettings = fileTransferSettings;
       }
 
       public void SetSenderInfo(PEMString diffieHellmanPrivateKey, PEMString digitalSignaturePrivateKey)

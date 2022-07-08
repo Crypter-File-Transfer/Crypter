@@ -24,18 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Enums;
 using System.Collections.Generic;
 
 namespace Crypter.Contracts.Features.Transfer
 {
    public interface IUploadTransferRequest
    {
-      string InitializationVector { get; set; }
-      List<string> Ciphertext { get; set; }
-      string DigitalSignature { get; set; }
-      string DigitalSignaturePublicKey { get; set; }
-      string DiffieHellmanPublicKey { get; set; }
-      string RecipientProof { get; set; }
-      int LifetimeHours { get; set; }
+      string InitializationVector { get; init; }
+      List<string> Ciphertext { get; init; }
+      string DigitalSignature { get; init; }
+      string DigitalSignaturePublicKey { get; init; }
+      string DiffieHellmanPublicKey { get; init; }
+      string RecipientProof { get; init; }
+      int LifetimeHours { get; init; }
+      CompressionType CompressionType { get; init; }
    }
 }
