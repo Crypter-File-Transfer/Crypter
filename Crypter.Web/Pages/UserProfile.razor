@@ -49,6 +49,7 @@
                      {
                         <button class="btn btn-secondary mr-3" @onclick="() => FileModal.Open()">Send a file</button>
                         <UploadFileTransferModal @ref="FileModal"
+                           InstanceId="user-profile"
                            RecipientUsername="@ProperUsername"
                            RecipientX25519PublicKey="@UserX25519PublicKey" />
                      }
@@ -56,6 +57,7 @@
                      {
                         <button class="btn btn-secondary" @onclick="() => MessageModal.Open()">Send a message</button>
                         <UploadMessageTransferModal @ref="MessageModal"
+                           InstanceId="user-profile"
                            RecipientUsername="@ProperUsername"
                            RecipientX25519PublicKey="@UserX25519PublicKey" />
                      }
