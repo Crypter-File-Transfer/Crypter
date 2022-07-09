@@ -34,6 +34,7 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -120,6 +121,11 @@ builder.Services.AddControllers()
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(SwaggerConfiguration.AddSwaggerGenOptions);
+
+builder.WebHost.UseKestrel(options =>
+{
+   options.Limits.MaxRequestBodySize = null;
+});
 
 var app = builder.Build();
 
