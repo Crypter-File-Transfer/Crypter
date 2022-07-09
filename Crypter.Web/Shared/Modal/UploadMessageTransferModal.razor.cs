@@ -39,6 +39,9 @@ namespace Crypter.Web.Shared.Modal
       protected IUserKeysService UserKeysService { get; set; }
 
       [Parameter]
+      public string InstanceId { get; set; }
+
+      [Parameter]
       public Maybe<string> RecipientUsername { get; set; }
 
       [Parameter]
