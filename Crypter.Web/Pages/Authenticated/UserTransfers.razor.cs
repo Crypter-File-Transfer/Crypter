@@ -28,6 +28,7 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Enums;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Models;
+using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,27 +36,25 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class UserTransfersBase : ComponentBase
+   public partial class UserTransfersBase : AuthenticatedPageBase
    {
       [Inject]
-      private NavigationManager NavigationManager { get; set; }
-
-      [Inject]
-      private IUserSessionService UserSessionService { get; set; }
-
-      [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
+
+      protected bool Loading = true;
 
       protected IEnumerable<UserSentItem> Sent;
       protected IEnumerable<UserReceivedItem> Received;
 
       protected override async Task OnInitializedAsync()
       {
-         if (!UserSessionService.LoggedIn)
+         await base.OnInitializedAsync();
+         if (UserSessionService.Session.IsNone)
          {
-            NavigationManager.NavigateTo("/");
             return;
          }
+
+         Loading = false;
 
          Sent = await GetUserSentItems();
          Received = await GetUserReceivedItems();

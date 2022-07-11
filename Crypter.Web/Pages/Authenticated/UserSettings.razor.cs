@@ -28,27 +28,22 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Settings;
+using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class UserSettingsBase : ComponentBase
+   public partial class UserSettingsBase : AuthenticatedPageBase
    {
-      [Inject]
-      private NavigationManager NavigationManager { get; set; }
-
-      [Inject]
-      private IUserSessionService UserSessionService { get; set; }
-
       [Inject]
       private ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
       private IUserKeysService UserKeysService { get; set; }
 
-      protected bool Loading;
+      protected bool Loading = true;
       protected bool IsEditing;
       protected bool AreProfileControlsEnabled;
       protected bool AreContactInfoControlsEnabled;
@@ -99,13 +94,12 @@ namespace Crypter.Web.Pages
 
       protected override async Task OnInitializedAsync()
       {
-         if (!UserSessionService.LoggedIn)
+         await base.OnInitializedAsync();
+         if (UserSessionService.Session.IsNone)
          {
-            NavigationManager.NavigateTo("/");
             return;
          }
 
-         Loading = true;
          IsEditing = false;
          AreProfileControlsEnabled = false;
          AreContactInfoControlsEnabled = false;

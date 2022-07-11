@@ -32,7 +32,7 @@
 
 <div class="container my-4">
    <h1>Decrypt Message</h1>
-   @if (UserSessionService.Initialized)
+   @if (!Loading)
    {
       <DownloadMessageTransfer TransferId="TransferId" IsUserTransfer="IsUserTransfer" />
    }

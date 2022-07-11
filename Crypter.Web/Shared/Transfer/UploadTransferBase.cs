@@ -92,7 +92,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected void SetHandlerUserInfo(IUserUploadHandler handler)
       {
-         if (UserSessionService.LoggedIn)
+         if (UserSessionService.Session.IsSome)
          {
             PEMString senderEd25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
                () => throw new Exception("Missing sender Ed25519 private key"),
