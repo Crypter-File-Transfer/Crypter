@@ -26,37 +26,36 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Contracts.Features.Contacts;
+using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class UserContactsBase : ComponentBase
+   public partial class UserContactsBase : AuthenticatedPageBase
    {
-      [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
-
       [Inject]
       protected IUserContactsService UserContactsService { get; set; }
 
-      [Inject]
-      protected NavigationManager NavigationManager { get; set; }
+      protected bool Loading = true;
 
       protected IReadOnlyCollection<UserContactDTO> Contacts { get; set; }
 
-      protected override void OnInitialized()
+      protected override async Task OnInitializedAsync()
       {
-         if (!UserSessionService.LoggedIn)
+         await base.OnInitializedAsync();
+         if (UserSessionService.Session.IsNone)
          {
-            NavigationManager.NavigateTo("/");
             return;
          }
+
+         Loading = false;
       }
 
       protected override async Task OnAfterRenderAsync(bool firstRender)
       {
-         if (firstRender)
+         if (firstRender && UserSessionService.Session.IsSome)
          {
             Contacts = await UserContactsService.GetContactsAsync();
             StateHasChanged();

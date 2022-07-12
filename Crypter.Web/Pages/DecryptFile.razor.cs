@@ -25,13 +25,13 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Events;
 using Microsoft.AspNetCore.Components;
 using System;
+using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class DecryptFileBase : ComponentBase, IDisposable
+   public partial class DecryptFileBase : ComponentBase
    {
       [Parameter]
       [SupplyParameterFromQuery(Name = "id")]
@@ -44,19 +44,13 @@ namespace Crypter.Web.Pages
       [Inject]
       protected IUserSessionService UserSessionService { get; set; }
 
-      protected override void OnInitialized()
-      {
-         UserSessionService.ServiceInitializedEventHandler += OnUserSessionServiceInitialized;
-      }
+      protected bool Loading { get; set; }
 
-      private void OnUserSessionServiceInitialized(object sender, UserSessionServiceInitializedEventArgs _)
+      protected override async Task OnInitializedAsync()
       {
-         StateHasChanged();
-      }
-
-      public void Dispose()
-      {
-         UserSessionService.ServiceInitializedEventHandler -= OnUserSessionServiceInitialized;
+         Loading = true;
+         await UserSessionService.IsLoggedInAsync();
+         Loading = false;
       }
    }
 }

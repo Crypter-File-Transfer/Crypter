@@ -70,7 +70,7 @@ namespace Crypter.Web.Shared
 
       protected void HandleUserSessionStateChanged()
       {
-         ShowUserNavigation = UserSessionService.LoggedIn;
+         ShowUserNavigation = UserSessionService.Session.IsSome;
          Username = UserSessionService.Session.Match(
             () => "",
             session => session.Username);

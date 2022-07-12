@@ -24,19 +24,33 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Contacts;
-using System.Collections.Generic;
+using Crypter.ClientServices.Interfaces;
+using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.Web.Pages.Authenticated.Base
 {
-   public interface IUserContactsService
+   public partial class AuthenticatedPageBase : ComponentBase
    {
-      Task InitializeAsync();
-      Task<IReadOnlyCollection<UserContactDTO>> GetContactsAsync(bool getCached = true);
-      bool IsContact(string contactUsername);
-      Task<Either<AddUserContactError, UserContactDTO>> AddContactAsync(string contactUsername);
-      Task RemoveContactAsync(string contactUsername);
+      [Inject]
+      protected NavigationManager NavigationManager { get; set; }
+
+      [Inject]
+      protected IUserSessionService UserSessionService { get; set; }
+
+      private const string _loginPage = "/login";
+
+      protected override async Task OnInitializedAsync()
+      {
+         if (!await UserSessionService.IsLoggedInAsync())
+         {
+            string returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+            string redirect = string.IsNullOrWhiteSpace(returnUrl)
+               ? _loginPage
+               : $"{_loginPage}/?returnUrl={returnUrl}";
+
+            NavigationManager.NavigateTo(redirect);
+         }
+      }
    }
 }

@@ -44,6 +44,7 @@ namespace Crypter.Web.Shared
       [Inject]
       protected IUserSessionService UserSessionService { get; set; }
 
+      private const string _userLandingPage = "/user/transfers";
       private const string _invalidClassName = "is-invalid";
 
       protected LoginForm LoginModel;
@@ -59,13 +60,7 @@ namespace Crypter.Web.Shared
 
       protected override void OnInitialized()
       {
-         if (UserSessionService.LoggedIn)
-         {
-            NavigationManager.NavigateTo("/user/transfers");
-            return;
-         }
-
-         LoginModel = new()
+         LoginModel = new  LoginForm()
          {
             RememberMe = true
          };
@@ -87,7 +82,7 @@ namespace Crypter.Web.Shared
 
          loginTaskResult.DoRight(_ =>
          {
-            string returnUrl = NavigationManager.QueryString("returnUrl") ?? "user/transfers";
+            string returnUrl = NavigationManager.QueryString("returnUrl") ?? _userLandingPage;
             NavigationManager.NavigateTo(returnUrl);
          });
       }
