@@ -25,11 +25,13 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Events;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Contacts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Services
@@ -40,20 +42,27 @@ namespace Crypter.ClientServices.Services
       private readonly IUserSessionService _userSessionService;
       private IDictionary<string, UserContactDTO> _contacts;
 
+      private readonly SemaphoreSlim _fetchMutex = new(1);
+
       public UserContactsService(ICrypterApiService crypterApiService, IUserSessionService userSessionService)
       {
          _crypterApiService = crypterApiService;
          _userSessionService = userSessionService;
-         _userSessionService.UserLoggedInEventHandler += OnUserSessionStateChanged;
-         _userSessionService.ServiceInitializedEventHandler += OnUserSessionStateChanged;
-         _userSessionService.UserLoggedOutEventHandler += OnUserSessionStateChanged;
+         _userSessionService.ServiceInitializedEventHandler += OnSessionServiceInitialized;
+         _userSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
+         _userSessionService.UserLoggedOutEventHandler += OnUserLoggedOut;
+      }
+
+      public async Task InitializeAsync()
+      {
+         await InitializeContactsCacheAsync();
       }
 
       public async Task<IReadOnlyCollection<UserContactDTO>> GetContactsAsync(bool getCached = true)
       {
-         if (!getCached)
+         if (!getCached || _contacts is null)
          {
-            await FetchAndStoreContactsAsync();
+            await InitializeContactsCacheAsync(true);
          }
 
          return _contacts.Values.ToList();
@@ -98,17 +107,27 @@ namespace Crypter.ClientServices.Services
             right => right.Contacts.ToDictionary(x => x.Username.ToLower()));
       }
 
-      private async Task FetchAndStoreContactsAsync()
+      private async Task InitializeContactsCacheAsync(bool refreshCache = false)
       {
-         var contacts = await FetchContactsAsync();
-         _contacts = contacts;
+         await _fetchMutex.WaitAsync().ConfigureAwait(false);
+         try
+         {
+            if (_userSessionService.Session.IsSome && (_contacts is null || refreshCache))
+            {
+               _contacts = await FetchContactsAsync();
+            }
+         }
+         finally
+         {
+            _fetchMutex.Release();
+         }
       }
 
-      private async void OnUserSessionStateChanged(object sender, EventArgs _)
+      private async void OnSessionServiceInitialized(object sender, UserSessionServiceInitializedEventArgs args)
       {
-         if (_userSessionService.LoggedIn)
+         if (args.IsLoggedIn)
          {
-            await FetchAndStoreContactsAsync();
+            await InitializeContactsCacheAsync();
          }
          else
          {
@@ -116,11 +135,21 @@ namespace Crypter.ClientServices.Services
          }
       }
 
+      private async void OnUserLoggedIn(object sender, UserLoggedInEventArgs _)
+      {
+         await InitializeContactsCacheAsync();
+      }
+
+      private void OnUserLoggedOut(object sender, EventArgs _)
+      {
+         _contacts = null;
+      }
+
       public void Dispose()
       {
-         _userSessionService.UserLoggedInEventHandler -= OnUserSessionStateChanged;
-         _userSessionService.ServiceInitializedEventHandler -= OnUserSessionStateChanged;
-         _userSessionService.UserLoggedOutEventHandler -= OnUserSessionStateChanged;
+         _userSessionService.ServiceInitializedEventHandler -= OnSessionServiceInitialized;
+         _userSessionService.UserLoggedInEventHandler -= OnUserLoggedIn;
+         _userSessionService.UserLoggedOutEventHandler -= OnUserLoggedOut;
          GC.SuppressFinalize(this);
       }
    }

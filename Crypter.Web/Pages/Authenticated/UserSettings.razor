@@ -1,0 +1,78 @@
+﻿@*
+ * Copyright (C) 2022 Crypter File Transfer
+ *
+ * This file is part of the Crypter file transfer project.
+ *
+ * Crypter is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The Crypter source code is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * You can be released from the requirements of the aforementioned license
+ * by purchasing a commercial license. Buying such a license is mandatory
+ * as soon as you develop commercial activities involving the Crypter source
+ * code without disclosing the source code of your own applications.
+ *
+ * Contact the current copyright holder to discuss commercial license options.
+ *@
+
+@page "/user/settings"
+
+@inherits UserSettingsBase
+
+<PageTitle>Crypter - Settings</PageTitle>
+
+<div class="container my-4">
+   @if (!Loading)
+   {
+      <h1>Settings</h1>
+
+      <div class="d-flex justify-content-evenly flex-md-row flex-lg-row flex-xl-row flex-xxl-row flex-column">
+         <div class="text-center mx-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+               <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+               <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z" />
+            </svg>
+            <h2>@Username</h2>
+         </div>
+
+         <div class="mx-2">
+            <nav class="mb-3">
+               <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                  <button class="nav-link active" id="navSettingsPublicDetails-tab" data-bs-toggle="tab" data-bs-target="#navSettingsPublicDetails" type="button" role="tab" aria-controls="navSettingsPublicDetails" aria-selected="true">Public Details</button>
+                  <button class="nav-link" id="navSettingsContactInfo-tab" data-bs-toggle="tab" data-bs-target="#navSettingsContactInfo" type="button" role="tab" aria-controls="navSettingsContactInfo" aria-selected="false">Contact Info</button>
+                  <button class="nav-link" id="navSettingsNotificationSettings-tab" data-bs-toggle="tab" data-bs-target="#navSettingsNotificationSettings" type="button" role="tab" aria-controls="navSettingsNotificationSettings" aria-selected="false">Notifications</button>
+                  <button class="nav-link" id="navSettingsPrivacySettings-tab" data-bs-toggle="tab" data-bs-target="#navSettingsPrivacySettings" type="button" role="tab" aria-controls="navSettingsPrivacySettings" aria-selected="false">Privacy</button>
+                  <button class="nav-link" id="navSettingsKeys-tab" data-bs-toggle="tab" data-bs-target="#navSettingsKeys" type="button" role="tab" aria-controls="navSettingsKeys" aria-selected="false">Secret Keys</button>
+               </div>
+            </nav>
+
+            <div class="tab-content" id="nav-tabContent">
+               <div class="tab-pane fade show active" id="navSettingsPublicDetails" role="tabpanel" aria-labelledby="navSettingsPublicDetails-tab">
+                  <UserSettingsPublicDetails About="@About" Alias="@Alias" />
+               </div>
+               <div class="tab-pane fade" id="navSettingsContactInfo" role="tabpanel" aria-labelledby="navSettingsContactInfo-tab">
+                  <UserSettingsContactInfo Username="@Username" EmailAddress="@EmailAddress" @bind-EmailAddressVerified="@EmailAddressVerified" />
+               </div>
+               <div class="tab-pane fade" id="navSettingsNotificationSettings" role="tabpanel" aria-labelledby="navSettingsNotificationSettings-tab">
+                  <UserSettingsNotificationSettings EmailAddressVerified="@EmailAddressVerified" EnableTransferNotifications="@EnableTransferNotifications" />
+               </div>
+               <div class="tab-pane fade" id="navSettingsPrivacySettings" role="tabpanel" aria-labelledby="navSettingsPrivacySettings-tab">
+                  <UserSettingsPrivacySettings ProfileVisibility="@UserProfileVisibility" MessageTransferPermission="@MessageTransferPermission" FileTransferPermission="@FileTransferPermission" />
+               </div>
+               <div class="tab-pane fade" id="navSettingsKeys" role="tabpanel" aria-labelledby="navSettingsKeys-tab">
+                  <UserSettingsKeys />
+               </div>
+            </div>
+         </div>
+      </div>
+   }
+</div>

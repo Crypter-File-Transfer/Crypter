@@ -66,7 +66,8 @@ namespace Crypter.Web.Pages
 
       protected async Task PrepareUserProfileAsync()
       {
-         var response = await CrypterApiService.GetUserProfileAsync(Username, UserSessionService.LoggedIn);
+         bool isLoggedIn = await UserSessionService.IsLoggedInAsync();
+         var response = await CrypterApiService.GetUserProfileAsync(Username, isLoggedIn);
          response.DoRight(x =>
          {
             Alias = x.Result.Alias;

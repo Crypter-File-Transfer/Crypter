@@ -59,7 +59,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
          var response = _transferUserType switch
          {
             TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFilePreviewAsync(_transferId),
-            TransferUserType.User => await _crypterApiService.DownloadUserFilePreviewAsync(_transferId, _userSessionService.LoggedIn)
+            TransferUserType.User => await _crypterApiService.DownloadUserFilePreviewAsync(_transferId, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
 
@@ -81,7 +81,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
          var response = _transferUserType switch
          {
             TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFileCiphertextAsync(_transferId, request),
-            TransferUserType.User => await _crypterApiService.DownloadUserFileCiphertextAsync(_transferId, request, _userSessionService.LoggedIn)
+            TransferUserType.User => await _crypterApiService.DownloadUserFileCiphertextAsync(_transferId, request, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
          return await response.MatchAsync<Either<DownloadTransferCiphertextError, byte[]>>(

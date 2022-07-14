@@ -27,6 +27,7 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Users;
+using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.WebUtilities;
@@ -36,33 +37,28 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class SearchBase : ComponentBase, IDisposable
+   public partial class SearchBase : AuthenticatedPageBase
    {
-      [Inject]
-      NavigationManager NavigationManager { get; set; }
-
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
       protected IUserContactsService UserContactsService { get; set; }
 
-      [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
-
-      protected bool Loading;
+      protected bool Loading = true;
       protected string SessionUsernameLowercase = string.Empty;
       protected UserSearchParameters SearchParameters;
       protected UserSearchResponse SearchResults;
 
       protected override async Task OnInitializedAsync()
       {
-         Loading = true;
-         if (!UserSessionService.LoggedIn)
+         await base.OnInitializedAsync();
+         if (UserSessionService.Session.IsNone)
          {
-            NavigationManager.NavigateTo("/");
             return;
          }
+
+         await UserContactsService.InitializeAsync();
 
          SearchParameters = new UserSearchParameters(string.Empty, 0, 20);
          NavigationManager.LocationChanged += HandleLocationChanged;

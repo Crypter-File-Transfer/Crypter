@@ -31,25 +31,28 @@
 <PageTitle>Crypter - Transfers</PageTitle>
 
 <div class="container my-4">
-   <h1>Transfers</h1>
-   <div class="row">
-      <UserReceivedItemsComponent @bind-Items="Received"></UserReceivedItemsComponent>
-      <UserSentItemsComponent @bind-Items="Sent"></UserSentItemsComponent>
-   </div>
-   <div class="row justify-content-center">
-      <div class="col-md-8">
-         <div class="card mb-4">
-            <div class="card-body">
-               <h5 class="card-title">A message from the developers</h5>
-               <p>
-                  Are you a new user? Check out the <a class="text-decoration-none" href="./user/settings">Settings</a> page to finish setting up your account.
-               </p>
-               <p>
-                  Have feedback? Add an issue in GitHub or get in touch with me directly. My contact info is on the <a class="text-decoration-none" href="./contact">Contact</a> page.
-               </p>
-               <p class="float-end"> - Jack</p>
+   @if (!Loading)
+   {
+      <h1>Transfers</h1>
+      <div class="row">
+         <UserReceivedItemsComponent @bind-Items="Received"></UserReceivedItemsComponent>
+         <UserSentItemsComponent @bind-Items="Sent"></UserSentItemsComponent>
+      </div>
+      <div class="row justify-content-center">
+         <div class="col-md-8">
+            <div class="card mb-4">
+               <div class="card-body">
+                  <h5 class="card-title">A message from the developers</h5>
+                  <p>
+                     Are you a new user? Check out the <a class="text-decoration-none" href="./user/settings">Settings</a> page to finish setting up your account.
+                  </p>
+                  <p>
+                     Have feedback? Add an issue in GitHub or get in touch with me directly. My contact info is on the <a class="text-decoration-none" href="./contact">Contact</a> page.
+                  </p>
+                  <p class="float-end"> - Jack</p>
+               </div>
             </div>
          </div>
       </div>
-   </div>
+   }
 </div>

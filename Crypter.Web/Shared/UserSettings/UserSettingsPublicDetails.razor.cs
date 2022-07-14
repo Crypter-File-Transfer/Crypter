@@ -25,55 +25,53 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Contracts.Features.Contacts;
+using Crypter.Contracts.Features.Settings;
 using Microsoft.AspNetCore.Components;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Shared.UserSettings
 {
-   public partial class UserContactsBase : ComponentBase
+   public partial class UserSettingsPublicDetailsBase : ComponentBase
    {
       [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
+      protected ICrypterApiService CrypterApiService { get; set; }
 
-      [Inject]
-      protected IUserContactsService UserContactsService { get; set; }
+      [Parameter]
+      public string Alias { get; set; }
 
-      [Inject]
-      protected NavigationManager NavigationManager { get; set; }
+      [Parameter]
+      public string About { get; set; }
 
-      protected IReadOnlyCollection<UserContactDTO> Contacts { get; set; }
+      protected bool IsEditing;
+      protected string AliasEdit;
+      protected string AboutEdit;
 
-      protected override void OnInitialized()
+      protected override void OnParametersSet()
       {
-         if (!UserSessionService.LoggedIn)
-         {
-            NavigationManager.NavigateTo("/");
-            return;
-         }
+         AliasEdit = Alias;
+         AboutEdit = About;
       }
 
-      protected override async Task OnAfterRenderAsync(bool firstRender)
+      protected void OnEditClicked()
       {
-         if (firstRender)
-         {
-            Contacts = await UserContactsService.GetContactsAsync();
-            StateHasChanged();
-         }
+         IsEditing = true;
       }
 
-      protected static string GetDisplayName(string username, string alias)
+      protected void OnCancelClicked()
       {
-         return string.IsNullOrEmpty(alias)
-            ? username
-            : $"{alias} ({username})";
+         AliasEdit = Alias;
+         AboutEdit = About;
+         IsEditing = false;
       }
 
-      protected async Task RemoveContactAsync(string contactUsername)
+      protected async Task OnSaveClickedAsync()
       {
-         await UserContactsService.RemoveContactAsync(contactUsername);
-         Contacts = await UserContactsService.GetContactsAsync();
+         var request = new UpdateProfileRequest(AliasEdit, AboutEdit);
+         await CrypterApiService.UpdateProfileInfoAsync(request);
+
+         Alias = AliasEdit;
+         About = AboutEdit;
+         IsEditing = false;
       }
    }
 }

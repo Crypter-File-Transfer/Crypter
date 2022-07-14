@@ -57,12 +57,12 @@ namespace Crypter.ClientServices.Services
       // Configuration
       private readonly IReadOnlyDictionary<bool, TokenType> _trustDeviceRefreshTokenTypeMap;
 
-      // State
+      // Private state
+      private bool _isInitialized = false;
       private readonly SemaphoreSlim _initializationMutex = new(1);
 
-      public bool LoggedIn { get; protected set; } = false;
+      // Public properties
       public Maybe<UserSession> Session { get; protected set; } = Maybe<UserSession>.None;
-      public bool Initialized { get; private set; }
 
       public UserSessionService(
          ICrypterApiService crypterApiService,
@@ -81,16 +81,16 @@ namespace Crypter.ClientServices.Services
             { true, TokenType.Device }
          };
 
-         _deviceRepository.InitializedEventHandler += InitializeAsync;
+         _deviceRepository.InitializedEventHandler += OnDeviceRepositoryInitializedAsync;
          _crypterApiService.RefreshTokenRejectedEventHandler += OnRefreshTokenRejectedByApi;
       }
 
-      private async void InitializeAsync(object sender, EventArgs _)
+      private async Task InitializeAsync()
       {
          await _initializationMutex.WaitAsync().ConfigureAwait(false);
          try
          {
-            if (!Initialized)
+            if (!_isInitialized)
             {
                var preExistingSession = await _userSessionRepository.GetUserSessionAsync();
                await preExistingSession.IfSomeAsync(async session =>
@@ -102,7 +102,6 @@ namespace Crypter.ClientServices.Services
                         await _tokenRepository.StoreAuthenticationTokenAsync(x.AuthenticationToken);
                         await _tokenRepository.StoreRefreshTokenAsync(x.RefreshToken, x.RefreshTokenType);
                         Session = session;
-                        LoggedIn = true;
                      });
                   }
                   else
@@ -111,14 +110,24 @@ namespace Crypter.ClientServices.Services
                   }
                });
 
-               Initialized = true;
                HandleServiceInitializedEvent();
+               _isInitialized = true;
             }
          }
          finally
          {
             _initializationMutex.Release();
          }
+      }
+
+      public async Task<bool> IsLoggedInAsync()
+      {
+         if (!_isInitialized)
+         {
+            await InitializeAsync();
+         }
+
+         return Session.IsSome;
       }
 
       public async Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser)
@@ -128,12 +137,7 @@ namespace Crypter.ClientServices.Services
                          select Unit.Default;
 
          var loginResult = await loginTask;
-         LoggedIn = loginResult.IsRight;
-         if (LoggedIn)
-         {
-            HandleUserLoggedInEvent(username, password, rememberUser);
-         }
-
+         loginResult.DoRight(x => HandleUserLoggedInEvent(username, password, rememberUser));
          return loginResult;
       }
 
@@ -145,20 +149,20 @@ namespace Crypter.ClientServices.Services
 
       private async Task<Unit> RecycleAsync()
       {
-         LoggedIn = false;
          Session = Maybe<UserSession>.None;
          await _deviceRepository.RecycleAsync();
          HandleUserLoggedOutEvent();
          return Unit.Default;
       }
 
-      private async void OnRefreshTokenRejectedByApi(object sender, EventArgs _)
-      {
+      private async void OnDeviceRepositoryInitializedAsync(object sender, EventArgs _) =>
+         await InitializeAsync();
+
+      private async void OnRefreshTokenRejectedByApi(object sender, EventArgs _) =>
          await RecycleAsync();
-      }
 
       private void HandleServiceInitializedEvent() =>
-         _serviceInitializedEventHandler?.Invoke(this, new UserSessionServiceInitializedEventArgs(LoggedIn));
+         _serviceInitializedEventHandler?.Invoke(this, new UserSessionServiceInitializedEventArgs(Session.IsSome));
 
       private void HandleUserLoggedInEvent(Username username, Password password, bool rememberUser) =>
          _userLoggedInEventHandler?.Invoke(this, new UserLoggedInEventArgs(username, password, rememberUser));
@@ -209,7 +213,7 @@ namespace Crypter.ClientServices.Services
 
       public void Dispose()
       {
-         _deviceRepository.InitializedEventHandler -= InitializeAsync;
+         _deviceRepository.InitializedEventHandler -= OnDeviceRepositoryInitializedAsync;
          _crypterApiService.RefreshTokenRejectedEventHandler -= OnRefreshTokenRejectedByApi;
          GC.SuppressFinalize(this);
       }

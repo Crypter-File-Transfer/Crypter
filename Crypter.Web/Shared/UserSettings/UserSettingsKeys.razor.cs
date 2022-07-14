@@ -24,19 +24,28 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Contacts;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Crypter.ClientServices.Interfaces;
+using Microsoft.AspNetCore.Components;
 
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.Web.Shared.UserSettings
 {
-   public interface IUserContactsService
+   public partial class UserSettingsKeysBase : ComponentBase
    {
-      Task InitializeAsync();
-      Task<IReadOnlyCollection<UserContactDTO>> GetContactsAsync(bool getCached = true);
-      bool IsContact(string contactUsername);
-      Task<Either<AddUserContactError, UserContactDTO>> AddContactAsync(string contactUsername);
-      Task RemoveContactAsync(string contactUsername);
+      [Inject]
+      private IUserKeysService UserKeysService { get; set; }
+
+      protected string Ed25519PrivateKey;
+      protected string X25519PrivateKey;
+
+      protected override void OnInitialized()
+      {
+         Ed25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
+            () => "",
+            some => some.Value);
+
+         X25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
+            () => "",
+            some => some.Value);
+      }
    }
 }
