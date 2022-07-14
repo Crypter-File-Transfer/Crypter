@@ -1,26 +1,26 @@
 ﻿@*
  * Copyright (C) 2022 Crypter File Transfer
- * 
+ *
  * This file is part of the Crypter file transfer project.
- * 
+ *
  * Crypter is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The Crypter source code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * You can be released from the requirements of the aforementioned license
  * by purchasing a commercial license. Buying such a license is mandatory
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
- * 
+ *
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
@@ -31,44 +31,61 @@
 <PageTitle>Crypter - User Profile</PageTitle>
 
 <div class="container my-4">
-   <div class="row">
-      <div class="col-md-6 offset-md-3">
-         @if (!Loading)
+   <div class="d-flex justify-content-evenly flex-md-row flex-lg-row flex-xl-row flex-xxl-row flex-column">
+      @if (!Loading)
+      {
+         if (IsProfileAvailable)
          {
-            if (IsProfileAvailable)
-            {
-               @if (!string.IsNullOrEmpty(Alias))
+            <div class="text-center mx-2">
+               <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                  <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+                  <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z" />
+               </svg>
+
+               @if (string.IsNullOrEmpty(Alias))
                {
-                  <h2>@Alias</h2>
+                  <h3>@($"@{ProperUsername}")</h3>
                }
-               <h3>@ProperUsername</h3>
-               <p>@About</p>
+               else
+               {
+                  <h3>@Alias</h3>
+                  <h4>@($"@{ProperUsername}")</h4>
+               }
+            </div>
+
+            <div class="mx-2 mt-auto">
                <div class="row">
+                  <h3>About</h3>
+                  <p>@About</p>
+               </div>
+               
+               <div class="row">
+                  <h3>Transfer</h3>
                   <div class="col-12">
                      @if (AllowsFiles)
                      {
                         <button class="btn btn-secondary mr-3" @onclick="() => FileModal.Open()">Send a file</button>
                         <UploadFileTransferModal @ref="FileModal"
-                           InstanceId="user-profile"
-                           RecipientUsername="@ProperUsername"
-                           RecipientX25519PublicKey="@UserX25519PublicKey" />
+                                        InstanceId="user-profile"
+                                        RecipientUsername="@ProperUsername"
+                                        RecipientX25519PublicKey="@UserX25519PublicKey" />
                      }
                      @if (AllowsMessages)
                      {
                         <button class="btn btn-secondary" @onclick="() => MessageModal.Open()">Send a message</button>
                         <UploadMessageTransferModal @ref="MessageModal"
-                           InstanceId="user-profile"
-                           RecipientUsername="@ProperUsername"
-                           RecipientX25519PublicKey="@UserX25519PublicKey" />
+                                           InstanceId="user-profile"
+                                           RecipientUsername="@ProperUsername"
+                                           RecipientX25519PublicKey="@UserX25519PublicKey" />
                      }
                   </div>
                </div>
-            }
-            else
-            {
-               <h3 class="text-center">Profile is unavailable.</h3>
-            }
+            </div>
          }
-      </div>
+         else
+         {
+            <h3 class="text-center">Profile not available.</h3>
+         }
+      }
    </div>
 </div>
