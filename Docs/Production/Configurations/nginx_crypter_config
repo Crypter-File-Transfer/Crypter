@@ -47,7 +47,7 @@ server {
   }
 
   location /api/file {
-    client_max_body_size 75M;
+    client_max_body_size 130M;
 
     proxy_pass http://127.0.0.1:8000;
     proxy_set_header Connection "";
@@ -57,7 +57,7 @@ server {
   }
 
   location ~* /api/user/(.*?)/file {
-    client_max_body_size 75M;
+    client_max_body_size 130M;
 
     proxy_pass http://127.0.0.1:8000;
     proxy_set_header Connection "";
