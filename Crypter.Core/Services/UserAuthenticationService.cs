@@ -111,6 +111,11 @@ namespace Crypter.Core.Services
                   .Include(x => x.FailedLoginAttempts)
                   .FirstOrDefaultAsync();
 
+               if (user is null)
+               {
+                  return LoginError.InvalidUsername;
+               }
+
                if (user.FailedLoginAttempts.Count >= _maximumFailedLoginAttempts)
                {
                   return LoginError.ExcessiveFailedLoginAttempts;
