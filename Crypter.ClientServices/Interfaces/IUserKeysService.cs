@@ -26,6 +26,7 @@
 
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Interfaces
 {
@@ -36,5 +37,6 @@ namespace Crypter.ClientServices.Interfaces
 
       (PEMString PrivateKey, PEMString PublicKey) CreateX25519KeyPair();
       (PEMString PrivateKey, PEMString PublicKey) CreateEd25519KeyPair();
+      Task<Maybe<byte[]>> GetUserMasterKeyAsync(Username username, Password password);
    }
 }

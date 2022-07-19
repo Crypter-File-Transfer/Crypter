@@ -1,20 +1,20 @@
 ﻿window.Crypter = {
-   CopyToClipboard: function (text) {
+   CopyToClipboard: function (textToCopy, tooltipId) {
       const animationTiming = {
          duration: 500,
          iterations: 1
       };
 
-      navigator.clipboard.writeText(text).then(() => {
-         const tooltip = document.querySelector('.toolTipText');
+      navigator.clipboard.writeText(textToCopy).then(() => {
+         const tooltip = document.getElementById(tooltipId)
          tooltip.style.display = 'block'
          tooltip.animate([{ opacity: 0 }, { opacity: 1 }], animationTiming)
             .onfinish = (e) => {
                tooltip.style.opacity = 1;
                setTimeout(() => {
-                  document.querySelector('.toolTipText').animate([{ opacity: 1 }, { opacity: 0 }], animationTiming)
+                  tooltip.animate([{ opacity: 1 }, { opacity: 0 }], animationTiming)
                      .onfinish = (e) => {
-                        document.querySelector('.toolTipText').style.display = 'none';
+                        tooltip.style.display = 'none';
                      }
                }, 500);
             }

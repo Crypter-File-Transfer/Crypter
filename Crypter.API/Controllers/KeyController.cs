@@ -48,6 +48,42 @@ namespace Crypter.API.Controllers
          _tokenService = tokenService;
       }
 
+      [HttpGet("master")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetMasterKeyResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetMasterKeyAsync(CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(GetMasterKeyError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+#pragma warning disable CS8524
+            return error switch
+            {
+               GetMasterKeyError.UnknownError => ServerError(errorResponse),
+               GetMasterKeyError.NotFound => NotFound(errorResponse)
+            };
+#pragma warning restore CS8524
+         }
+
+         var userId = _tokenService.ParseUserId(User);
+         var result = await _userKeysService.GetMasterKeyAsync(userId, cancellationToken);
+         return result.Match(
+            MakeErrorResponse,
+            Ok,
+            MakeErrorResponse(GetMasterKeyError.UnknownError));
+      }
+
+      [HttpPut("master")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpsertMasterKeyResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+
+
       [HttpGet("diffie-hellman/private")]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetPrivateKeyResponse))]
@@ -78,30 +114,29 @@ namespace Crypter.API.Controllers
 
       [HttpPut("diffie-hellman")]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertKeyPairResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpsertKeyPairResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> InsertDiffieHellmanKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
+      public async Task<IActionResult> UpsertDiffieHellmanKeysAsync([FromBody] UpsertKeyPairRequest body, CancellationToken cancellationToken)
       {
-         IActionResult MakeErrorResponse(InsertKeyPairError error)
+         IActionResult MakeErrorResponse(UpsertKeyPairError error)
          {
             var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               InsertKeyPairError.UnknownError => ServerError(errorResponse),
-               InsertKeyPairError.KeyPairAlreadyExists => Conflict(errorResponse),
+               UpsertKeyPairError.UnknownError => ServerError(errorResponse)
             };
 #pragma warning restore CS8524
          }
 
          var userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.InsertDiffieHellmanKeyPairAsync(userId, body, cancellationToken);
+         var result = await _userKeysService.UpsertDiffieHellmanKeyPairAsync(userId, body, cancellationToken);
          return result.Match(
             MakeErrorResponse,
             Ok,
-            MakeErrorResponse(InsertKeyPairError.UnknownError));
+            MakeErrorResponse(UpsertKeyPairError.UnknownError));
       }
 
       [HttpGet("digital-signature/private")]
@@ -134,30 +169,29 @@ namespace Crypter.API.Controllers
 
       [HttpPut("digital-signature")]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertKeyPairResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpsertKeyPairResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> InsertDigitalSignatureKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
+      public async Task<IActionResult> UpsertDigitalSignatureKeysAsync([FromBody] UpsertKeyPairRequest body, CancellationToken cancellationToken)
       {
-         IActionResult MakeErrorResponse(InsertKeyPairError error)
+         IActionResult MakeErrorResponse(UpsertKeyPairError error)
          {
             var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               InsertKeyPairError.UnknownError => ServerError(errorResponse),
-               InsertKeyPairError.KeyPairAlreadyExists => Conflict(errorResponse),
+               UpsertKeyPairError.UnknownError => ServerError(errorResponse)
             };
 #pragma warning restore CS8524
          }
 
          var userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.InsertDigitalSignatureKeyPairAsync(userId, body, cancellationToken);
+         var result = await _userKeysService.UpsertDigitalSignatureKeyPairAsync(userId, body, cancellationToken);
          return result.Match(
             MakeErrorResponse,
             Ok,
-            MakeErrorResponse(InsertKeyPairError.UnknownError));
+            MakeErrorResponse(UpsertKeyPairError.UnknownError));
       }
    }
 }

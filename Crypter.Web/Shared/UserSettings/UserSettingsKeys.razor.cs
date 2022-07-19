@@ -25,17 +25,32 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Events;
+using Crypter.Common.Monads;
+using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using System;
+using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.UserSettings
 {
-   public partial class UserSettingsKeysBase : ComponentBase
+   public partial class UserSettingsKeysBase : ComponentBase, IDisposable
    {
       [Inject]
-      private IUserKeysService UserKeysService { get; set; }
+      protected IUserSessionService UserSessionService { get; set; }
+
+      [Inject]
+      protected IUserKeysService UserKeysService { get; set; }
+
+      [Inject]
+      protected IJSRuntime JSRuntime { get; set; }
+
+      protected PasswordModal PasswordModal { get; set; }
 
       protected string Ed25519PrivateKey;
       protected string X25519PrivateKey;
+      protected string RecoveryKey;
 
       protected override void OnInitialized()
       {
@@ -46,6 +61,31 @@ namespace Crypter.Web.Shared.UserSettings
          X25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
             () => "",
             some => some.Value);
+
+         RecoveryKey = string.Empty;
+
+         UserSessionService.UserPasswordTestSuccessEventHandler += OnPasswordTestSuccess;
+      }
+
+      private async void OnPasswordTestSuccess(object sender, UserPasswordTestSuccessEventArgs args)
+      {
+         RecoveryKey = await UserKeysService.GetUserMasterKeyAsync(args.Username, args.Password)
+            .MatchAsync(
+            () => "An error occurred",
+            x => Convert.ToBase64String(x));
+
+         await InvokeAsync(() => StateHasChanged());
+      }
+
+      protected async Task CopyRecoveryKeyToClipboardAsync()
+      {
+         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyCopyTooltip" });
+      }
+
+      public void Dispose()
+      {
+         UserSessionService.UserPasswordTestSuccessEventHandler -= OnPasswordTestSuccess;
+         GC.SuppressFinalize(this);
       }
    }
 }

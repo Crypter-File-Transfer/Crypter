@@ -24,22 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
-
 namespace Crypter.Contracts.Features.Keys
 {
-   public class InsertKeyPairRequest
+   public class UpsertKeyPairResponse
    {
-      public string EncryptedPrivateKeyBase64 { get; set; }
-      public string PublicKeyBase64 { get; set; }
-      public string ClientIVBase64 { get; set; }
-
-      [JsonConstructor]
-      public InsertKeyPairRequest(string encryptedPrivateKeyBase64, string publicKeyBase64, string clientIVBase64)
-      {
-         EncryptedPrivateKeyBase64 = encryptedPrivateKeyBase64;
-         PublicKeyBase64 = publicKeyBase64;
-         ClientIVBase64 = clientIVBase64;
-      }
    }
 }

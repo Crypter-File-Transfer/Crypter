@@ -53,6 +53,7 @@ namespace Crypter.ClientServices.Services
       private EventHandler<UserSessionServiceInitializedEventArgs> _serviceInitializedEventHandler;
       private EventHandler<UserLoggedInEventArgs> _userLoggedInEventHandler;
       private EventHandler _userLoggedOutEventHandler;
+      private EventHandler<UserPasswordTestSuccessEventArgs> _userPasswordTestSuccessEventHandler;
 
       // Configuration
       private readonly IReadOnlyDictionary<bool, TokenType> _trustDeviceRefreshTokenTypeMap;
@@ -141,6 +142,21 @@ namespace Crypter.ClientServices.Services
          return loginResult;
       }
 
+      public async Task<bool> TestPasswordAsync(Password password)
+      {
+         Username username = Session.Match(
+            () => throw new InvalidOperationException("Invalid session"),
+            x => Username.From(x.Username));
+
+         var response = await SendTestPasswordRequestAsync(username, password);
+
+         if (response.IsRight)
+         {
+            HandleTestPasswordSuccessEvent(username, password);
+         }
+         return response.IsRight;
+      }
+
       public async Task<Unit> LogoutAsync()
       {
          await _crypterApiService.LogoutAsync();
@@ -170,6 +186,9 @@ namespace Crypter.ClientServices.Services
       private void HandleUserLoggedOutEvent() =>
          _userLoggedOutEventHandler?.Invoke(this, EventArgs.Empty);
 
+      private void HandleTestPasswordSuccessEvent(Username username, Password password) =>
+         _userPasswordTestSuccessEventHandler?.Invoke(this, new UserPasswordTestSuccessEventArgs(username, password));
+
       public event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler
       {
          add => _serviceInitializedEventHandler = (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Combine(_serviceInitializedEventHandler, value);
@@ -188,13 +207,28 @@ namespace Crypter.ClientServices.Services
          remove => _userLoggedOutEventHandler = (EventHandler)Delegate.Remove(_userLoggedOutEventHandler, value);
       }
 
+      public event EventHandler<UserPasswordTestSuccessEventArgs> UserPasswordTestSuccessEventHandler
+      {
+         add => _userPasswordTestSuccessEventHandler = (EventHandler<UserPasswordTestSuccessEventArgs>)Delegate.Combine(_userPasswordTestSuccessEventHandler, value);
+         remove => _userPasswordTestSuccessEventHandler = (EventHandler<UserPasswordTestSuccessEventArgs>)Delegate.Remove(_userPasswordTestSuccessEventHandler, value);
+      }
+
       private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, Password password, TokenType refreshTokenType)
       {
          byte[] authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
          AuthenticationPassword authPassword = AuthenticationPassword.From(Convert.ToBase64String(authPasswordBytes));
 
-         LoginRequest loginRequest = new(username, authPassword, refreshTokenType);
+         LoginRequest loginRequest = new LoginRequest(username, authPassword, refreshTokenType);
          return _crypterApiService.LoginAsync(loginRequest);
+      }
+
+      private Task<Either<TestPasswordError, TestPasswordResponse>> SendTestPasswordRequestAsync(Username username, Password password)
+      {
+         byte[] authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
+         AuthenticationPassword authPassword = AuthenticationPassword.From(Convert.ToBase64String(authPasswordBytes));
+
+         TestPasswordRequest testRequest = new TestPasswordRequest(username, authPassword);
+         return _crypterApiService.TestPasswordAsync(testRequest);
       }
 
       private Task<Unit> OnSuccessfulLoginAsync(LoginResponse response, bool rememberUser)

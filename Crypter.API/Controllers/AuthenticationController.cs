@@ -176,7 +176,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+      public async Task<IActionResult> LogoutAsync(CancellationToken cancellationToken)
       {
          IActionResult MakeErrorResponse(LogoutError error)
          {
@@ -196,6 +196,39 @@ namespace Crypter.API.Controllers
             MakeErrorResponse,
             Ok,
             MakeErrorResponse(LogoutError.UnknownError));
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="request"></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      [HttpPost("password/test")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TestPasswordResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> TestPasswordAsync([FromBody] TestPasswordRequest request, CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(TestPasswordError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+#pragma warning disable CS8524
+            return error switch
+            {
+               TestPasswordError.UnknownError => ServerError(errorResponse),
+               TestPasswordError.InvalidPassword => BadRequest(errorResponse)
+            };
+#pragma warning restore CS8524
+         }
+
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(User, request, cancellationToken);
+
+         return testPasswordResult.Match(
+            MakeErrorResponse,
+            Ok,
+            MakeErrorResponse(TestPasswordError.UnknownError));
       }
    }
 }

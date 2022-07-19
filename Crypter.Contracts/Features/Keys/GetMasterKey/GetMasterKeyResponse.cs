@@ -24,17 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+using System.Text.Json.Serialization;
 
-namespace Crypter.Core.Entities.Interfaces
+namespace Crypter.Contracts.Features.Keys
 {
-   public interface IUserPublicKeyPair
+   public class GetMasterKeyResponse
    {
-      public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
-      public DateTime Updated { get; set; }
-      public DateTime Created { get; set; }
+      public string EncryptedKey { get; init; }
+      public string ClientIV { get; init; }
+
+      [JsonConstructor]
+      public GetMasterKeyResponse(string encryptedKey, string clientIV)
+      {
+         EncryptedKey = encryptedKey;
+         ClientIV = clientIV;
+      }
    }
 }
