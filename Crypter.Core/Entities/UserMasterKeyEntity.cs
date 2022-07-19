@@ -26,15 +26,25 @@
 
 using System;
 
-namespace Crypter.Core.Entities.Interfaces
+namespace Crypter.Core.Entities
 {
-   public interface IUserPublicKeyPair
+   public class UserMasterKeyEntity
    {
       public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
+      public string Key { get; set; }
       public string ClientIV { get; set; }
       public DateTime Updated { get; set; }
       public DateTime Created { get; set; }
+
+      public UserEntity User { get; set; }
+
+      public UserMasterKeyEntity(Guid owner, string key, string clientIV, DateTime updated, DateTime created)
+      {
+         Owner = owner;
+         Key = key;
+         ClientIV = clientIV;
+         Updated = updated;
+         Created = created;
+      }
    }
 }

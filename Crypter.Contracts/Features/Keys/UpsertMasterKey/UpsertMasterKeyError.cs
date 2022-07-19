@@ -24,19 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-
-namespace Crypter.Core.Entities
+namespace Crypter.Contracts.Features.Keys
 {
-   public class SchemaEntity
+   public enum UpsertMasterKeyError
    {
-      public int Version { get; set; }
-      public DateTime Updated { get; set; }
-
-      public SchemaEntity(int version, DateTime updated)
-      {
-         Version = version;
-         Updated = updated;
-      }
+      UnknownError
    }
 }

@@ -77,7 +77,7 @@ namespace Crypter.Web.Shared.Modal
 
       protected async Task CopyToClipboardAsync()
       {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", DecryptionKey.Value);
+         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { DecryptionKey.Value, "transferSuccessCopyTooltip" });
       }
    }
 }

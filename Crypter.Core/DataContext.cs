@@ -59,7 +59,7 @@ namespace Crypter.Core
       public DbSet<UserFileTransferEntity> UserFileTransfers { get; set; }
       public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; set; }
       public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; set; }
-      public DbSet<SchemaEntity> Schema { get; set; }
+      public DbSet<UserMasterKeyEntity> UserMasterKeys { get; set; }
 
       protected override void OnModelCreating(ModelBuilder builder)
       {
@@ -79,7 +79,7 @@ namespace Crypter.Core
          ConfigureAnonymousMessageTransferEntity(builder);
          ConfigureAnonymousFileTransferEntity(builder);
          ConfigureUserFailedLoginEntity(builder);
-         ConfigureSchemaEntity(builder);
+         ConfigureUserMasterKeyEntity(builder);
       }
 
       private static void ConfigureUserEntity(ModelBuilder builder)
@@ -430,13 +430,19 @@ namespace Crypter.Core
             .OnDelete(DeleteBehavior.Cascade);
       }
 
-      private static void ConfigureSchemaEntity(ModelBuilder builder)
+      private static void ConfigureUserMasterKeyEntity(ModelBuilder builder)
       {
-         builder.Entity<SchemaEntity>()
-            .ToTable("Schema");
+         builder.Entity<UserMasterKeyEntity>()
+            .ToTable("UserSymmetricKey");
 
-         builder.Entity<SchemaEntity>()
-            .HasNoKey();
+         builder.Entity<UserMasterKeyEntity>()
+            .HasKey(x => x.Owner);
+
+         builder.Entity<UserMasterKeyEntity>()
+            .HasOne(x => x.User)
+            .WithOne(x => x.MasterKey)
+            .HasForeignKey<UserMasterKeyEntity>(x => x.Owner)
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }

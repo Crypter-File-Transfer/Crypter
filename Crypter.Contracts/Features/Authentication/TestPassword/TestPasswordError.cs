@@ -24,17 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-
-namespace Crypter.Core.Entities.Interfaces
+namespace Crypter.Contracts.Features.Authentication
 {
-   public interface IUserPublicKeyPair
+   public enum TestPasswordError
    {
-      public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
-      public DateTime Updated { get; set; }
-      public DateTime Created { get; set; }
+      UnknownError,
+      InvalidPassword
    }
 }

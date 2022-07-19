@@ -35,16 +35,18 @@ namespace Crypter.Core.Entities
       public string PrivateKey { get; set; }
       public string PublicKey { get; set; }
       public string ClientIV { get; set; }
+      public DateTime Updated { get; set; }
       public DateTime Created { get; set; }
 
       public UserEntity User { get; set; }
 
-      public UserX25519KeyPairEntity(Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
+      public UserX25519KeyPairEntity(Guid owner, string privateKey, string publicKey, string clientIV, DateTime updated, DateTime created)
       {
          Owner = owner;
          PrivateKey = privateKey;
          PublicKey = publicKey;
          ClientIV = clientIV;
+         Updated = updated;
          Created = created;
       }
    }

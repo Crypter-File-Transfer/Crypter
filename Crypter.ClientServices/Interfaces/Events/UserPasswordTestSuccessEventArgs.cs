@@ -24,17 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+using Crypter.Common.Primitives;
 
-namespace Crypter.Core.Entities.Interfaces
+namespace Crypter.ClientServices.Interfaces.Events
 {
-   public interface IUserPublicKeyPair
+   public class UserPasswordTestSuccessEventArgs
    {
-      public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
-      public DateTime Updated { get; set; }
-      public DateTime Created { get; set; }
+      public Username Username { get; init; }
+      public Password Password { get; init; }
+
+      public UserPasswordTestSuccessEventArgs(Username username, Password password)
+      {
+         Username = username;
+         Password = password;
+      }
    }
 }

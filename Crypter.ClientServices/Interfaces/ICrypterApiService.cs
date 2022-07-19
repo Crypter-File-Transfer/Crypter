@@ -44,9 +44,10 @@ namespace Crypter.ClientServices.Interfaces
 
       #region Authentication
       Task<Either<RegistrationError, RegistrationResponse>> RegisterUserAsync(RegistrationRequest registerRequest);
-      Task<Either<LoginError, LoginResponse>>LoginAsync(LoginRequest loginRequest);
-      Task<Either<RefreshError, RefreshResponse>>RefreshAsync();
-      Task<Either<LogoutError, LogoutResponse>>LogoutAsync();
+      Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest);
+      Task<Either<TestPasswordError, TestPasswordResponse>> TestPasswordAsync(TestPasswordRequest testPasswordRequest);
+      Task<Either<RefreshError, RefreshResponse>> RefreshAsync();
+      Task<Either<LogoutError, LogoutResponse>> LogoutAsync();
       #endregion
 
       #region Contacts
@@ -66,10 +67,12 @@ namespace Crypter.ClientServices.Interfaces
       #endregion
 
       #region Keys
+      Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
+      Task<Either<UpsertMasterKeyError, UpsertMasterKeyResponse>> UpsertMasterKeyAsync(UpsertMasterKeyRequest request);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync();
-      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeysAsync(InsertKeyPairRequest request);
+      Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UpsertDiffieHellmanKeysAsync(UpsertKeyPairRequest request);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync();
-      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeysAsync(InsertKeyPairRequest request);
+      Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UpsertDigitalSignatureKeysAsync(UpsertKeyPairRequest request);
       #endregion
 
       #region Message Transfer

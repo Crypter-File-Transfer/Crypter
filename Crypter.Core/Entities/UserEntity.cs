@@ -48,6 +48,7 @@ namespace Crypter.Core.Entities
       public UserNotificationSettingEntity NotificationSetting { get; set; }
       public UserEd25519KeyPairEntity Ed25519KeyPair { get; set; }
       public UserX25519KeyPairEntity X25519KeyPair { get; set; }
+      public UserMasterKeyEntity MasterKey { get; set; }
       public List<UserTokenEntity> Tokens { get; set; }
       public List<UserContactEntity> Contacts { get; set; }
       public List<UserContactEntity> Contactors { get; set; }

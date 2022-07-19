@@ -50,6 +50,7 @@ namespace Crypter.Core.Services
       Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription, CancellationToken cancellationToken);
       Task<Either<LogoutError, LogoutResponse>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
       Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken);
+      Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(ClaimsPrincipal claimsPrincipal, TestPasswordRequest request, CancellationToken cancellationToken);
    }
 
    public class UserAuthenticationService : IUserAuthenticationService
@@ -178,6 +179,17 @@ namespace Crypter.Core.Services
                 from isEmailAddressAvailable in VerifyEmailIsAddressAvailable(user, emailAddress, UpdateContactInfoError.EmailAddressUnavailable, cancellationToken)
                 from unit in Either<UpdateContactInfoError, Unit>.FromRightAsync(UpdateUserEmailAddressAsync(user, emailAddress, cancellationToken))
                 select new UpdateContactInfoResponse();
+      }
+
+      public Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(ClaimsPrincipal claimsPrincipal, TestPasswordRequest request, CancellationToken cancellationToken)
+      {
+         return from suppliedPassword in ValidateRequestPassword(request.Password, TestPasswordError.InvalidPassword).AsTask()
+                from userId in ParseUserId(claimsPrincipal).ToEither(TestPasswordError.UnknownError).AsTask()
+                from user in FetchUserAsync(userId, TestPasswordError.UnknownError, cancellationToken)
+                from passwordVerified in VerifyPassword(suppliedPassword, user.PasswordHash, user.PasswordSalt)
+                  ? Either<TestPasswordError, Unit>.FromRight(Unit.Default).AsTask()
+                  : Either<TestPasswordError, Unit>.FromLeft(TestPasswordError.InvalidPassword).AsTask()
+                select new TestPasswordResponse();
       }
 
       private Either<LoginError, ValidLoginRequest> ValidateLoginRequest(LoginRequest request)

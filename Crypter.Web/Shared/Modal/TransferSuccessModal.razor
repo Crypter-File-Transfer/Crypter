@@ -41,13 +41,13 @@
                <h4>Decryption Key</h4>
                <div class="copiedTooltip">
                   <div class="input-group mb-3">
-                     <input class="form-control" value="@DecryptionKey.Value" type="text" name="privateKey" id="privateKey" readonly @onclick="CopyToClipboardAsync" />
+                     <input class="form-control" value="@DecryptionKey.Value" type="text" name="privateKey" id="privateKey" readonly />
                      <div class="input-group-append">
                         <button class="btn btn-secondary" type="button" @onclick="CopyToClipboardAsync">Copy</button>
                      </div>
                   </div>
 
-                  <span class="copiedToolTip toolTipText">Copied</span>
+                  <span id="transferSuccessCopyTooltip" class="copiedToolTip toolTipText">Copied</span>
                </div>
             </div>
             <div class="modal-footer">

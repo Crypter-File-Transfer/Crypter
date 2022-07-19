@@ -24,11 +24,27 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Keys
+using Crypter.Common.Primitives;
+using System.Text.Json.Serialization;
+
+namespace Crypter.Contracts.Features.Authentication
 {
-   public enum InsertKeyPairError
+   public class TestPasswordRequest
    {
-      UnknownError,
-      KeyPairAlreadyExists
+      public string Username { get; init; }
+      public string Password { get; init; }
+
+      [JsonConstructor]
+      public TestPasswordRequest(string username, string password)
+      {
+         Username = username;
+         Password = password;
+      }
+
+      public TestPasswordRequest(Username username, AuthenticationPassword password)
+      {
+         Username = username.Value;
+         Password = password.Value;
+      }
    }
 }
