@@ -28,13 +28,13 @@ using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Keys
 {
-   public class UpsertMasterKeyRequest
+   public class InsertMasterKeyRequest
    {
       public string EncryptedKey { get; init; }
       public string ClientIV { get; init; }
 
       [JsonConstructor]
-      public UpsertMasterKeyRequest(string encryptedKey, string clientIV)
+      public InsertMasterKeyRequest(string encryptedKey, string clientIV)
       {
          EncryptedKey = encryptedKey;
          ClientIV = clientIV;

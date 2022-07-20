@@ -26,8 +26,9 @@
 
 namespace Crypter.Contracts.Features.Keys
 {
-   public enum UpsertMasterKeyError
+   public enum InsertKeyPairError
    {
-      UnknownError
+      UnknownError,
+      Conflict
    }
 }

@@ -174,7 +174,7 @@ namespace Crypter.ClientServices.Services
          string encodedEncryptedKey = Convert.ToBase64String(encryptedKey);
          string encodedIV = Convert.ToBase64String(iv);
 
-         return _crypterApiService.UpsertMasterKeyAsync(new UpsertMasterKeyRequest(encodedEncryptedKey, encodedIV))
+         return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(encodedEncryptedKey, encodedIV))
             .ToMaybeTask()
             .BindAsync(x => Maybe<byte[]>.From(newMasterKey).AsTask());
       }
@@ -204,17 +204,17 @@ namespace Crypter.ClientServices.Services
          }
       }
 
-      private Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UploadKeyPairAsync(byte[] encryptedPrivateKey, PEMString publicKey, byte[] iv, UserKeyType keyType)
+      private Task<Either<InsertKeyPairError, InsertKeyPairResponse>> UploadKeyPairAsync(byte[] encryptedPrivateKey, PEMString publicKey, byte[] iv, UserKeyType keyType)
       {
          var base64PublicKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(publicKey.Value));
          var base64EncryptedPrivateKey = Convert.ToBase64String(encryptedPrivateKey);
          var base64IV = Convert.ToBase64String(iv);
 
-         var request = new UpsertKeyPairRequest(base64EncryptedPrivateKey, base64PublicKey, base64IV);
+         var request = new InsertKeyPairRequest(base64EncryptedPrivateKey, base64PublicKey, base64IV);
          return keyType switch
          {
-            UserKeyType.Ed25519 => _crypterApiService.UpsertDigitalSignatureKeysAsync(request),
-            UserKeyType.X25519 => _crypterApiService.UpsertDiffieHellmanKeysAsync(request),
+            UserKeyType.Ed25519 => _crypterApiService.InsertDigitalSignatureKeysAsync(request),
+            UserKeyType.X25519 => _crypterApiService.InsertDiffieHellmanKeysAsync(request),
             _ => throw new NotImplementedException("Unknown key type.")
          };
       }

@@ -244,12 +244,12 @@ namespace Crypter.ClientServices.Services
                 select errorableResponse;
       }
 
-      public Task<Either<UpsertMasterKeyError, UpsertMasterKeyResponse>> UpsertMasterKeyAsync(UpsertMasterKeyRequest request)
+      public Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(InsertMasterKeyRequest request)
       {
          string url = $"{_baseApiUrl}/keys/master";
-         return from response in Either<UpsertMasterKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpsertMasterKeyResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpService.PutAsync<UpsertMasterKeyRequest, UpsertMasterKeyResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<UpsertMasterKeyError, UpsertMasterKeyResponse>(response.data).AsTask()
+         return from response in Either<InsertMasterKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertMasterKeyResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.PutAsync<InsertMasterKeyRequest, InsertMasterKeyResponse>(url, request))
+                from errorableResponse in ExtractErrorCode<InsertMasterKeyError, InsertMasterKeyResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 
@@ -262,12 +262,12 @@ namespace Crypter.ClientServices.Services
                 select errorableResponse;
       }
 
-      public Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UpsertDiffieHellmanKeysAsync(UpsertKeyPairRequest request)
+      public Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeysAsync(InsertKeyPairRequest request)
       {
          string url = $"{_baseApiUrl}/keys/diffie-hellman";
-         return from response in Either<UpsertKeyPairError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpsertKeyPairResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpService.PutAsync<UpsertKeyPairRequest, UpsertKeyPairResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<UpsertKeyPairError, UpsertKeyPairResponse>(response.data).AsTask()
+         return from response in Either<InsertKeyPairError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertKeyPairResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.PutAsync<InsertKeyPairRequest, InsertKeyPairResponse>(url, request))
+                from errorableResponse in ExtractErrorCode<InsertKeyPairError, InsertKeyPairResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 
@@ -280,12 +280,12 @@ namespace Crypter.ClientServices.Services
                 select errorableResponse;
       }
 
-      public Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UpsertDigitalSignatureKeysAsync(UpsertKeyPairRequest request)
+      public Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeysAsync(InsertKeyPairRequest request)
       {
          string url = $"{_baseApiUrl}/keys/digital-signature";
-         return from response in Either<UpsertKeyPairError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpsertKeyPairResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpService.PutAsync<UpsertKeyPairRequest, UpsertKeyPairResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<UpsertKeyPairError, UpsertKeyPairResponse>(response.data).AsTask()
+         return from response in Either<InsertKeyPairError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertKeyPairResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.PutAsync<InsertKeyPairRequest, InsertKeyPairResponse>(url, request))
+                from errorableResponse in ExtractErrorCode<InsertKeyPairError, InsertKeyPairResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 

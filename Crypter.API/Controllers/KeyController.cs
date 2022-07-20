@@ -78,7 +78,7 @@ namespace Crypter.API.Controllers
 
       [HttpPut("master")]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpsertMasterKeyResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertMasterKeyResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
@@ -114,29 +114,30 @@ namespace Crypter.API.Controllers
 
       [HttpPut("diffie-hellman")]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpsertKeyPairResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertKeyPairResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpsertDiffieHellmanKeysAsync([FromBody] UpsertKeyPairRequest body, CancellationToken cancellationToken)
+      public async Task<IActionResult> UpsertDiffieHellmanKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
       {
-         IActionResult MakeErrorResponse(UpsertKeyPairError error)
+         IActionResult MakeErrorResponse(InsertKeyPairError error)
          {
             var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               UpsertKeyPairError.UnknownError => ServerError(errorResponse)
+               InsertKeyPairError.UnknownError => ServerError(errorResponse),
+               InsertKeyPairError.Conflict => Conflict(errorResponse)
             };
 #pragma warning restore CS8524
          }
 
          var userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.UpsertDiffieHellmanKeyPairAsync(userId, body, cancellationToken);
+         var result = await _userKeysService.InsertDiffieHellmanKeyPairAsync(userId, body, cancellationToken);
          return result.Match(
             MakeErrorResponse,
             Ok,
-            MakeErrorResponse(UpsertKeyPairError.UnknownError));
+            MakeErrorResponse(InsertKeyPairError.UnknownError));
       }
 
       [HttpGet("digital-signature/private")]
@@ -169,29 +170,30 @@ namespace Crypter.API.Controllers
 
       [HttpPut("digital-signature")]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpsertKeyPairResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertKeyPairResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpsertDigitalSignatureKeysAsync([FromBody] UpsertKeyPairRequest body, CancellationToken cancellationToken)
+      public async Task<IActionResult> UpsertDigitalSignatureKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
       {
-         IActionResult MakeErrorResponse(UpsertKeyPairError error)
+         IActionResult MakeErrorResponse(InsertKeyPairError error)
          {
             var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               UpsertKeyPairError.UnknownError => ServerError(errorResponse)
+               InsertKeyPairError.UnknownError => ServerError(errorResponse),
+               InsertKeyPairError.Conflict => Conflict(errorResponse)
             };
 #pragma warning restore CS8524
          }
 
          var userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.UpsertDigitalSignatureKeyPairAsync(userId, body, cancellationToken);
+         var result = await _userKeysService.InsertDigitalSignatureKeyPairAsync(userId, body, cancellationToken);
          return result.Match(
             MakeErrorResponse,
             Ok,
-            MakeErrorResponse(UpsertKeyPairError.UnknownError));
+            MakeErrorResponse(InsertKeyPairError.UnknownError));
       }
    }
 }
