@@ -68,11 +68,11 @@ namespace Crypter.ClientServices.Interfaces
 
       #region Keys
       Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
-      Task<Either<UpsertMasterKeyError, UpsertMasterKeyResponse>> UpsertMasterKeyAsync(UpsertMasterKeyRequest request);
+      Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync();
-      Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UpsertDiffieHellmanKeysAsync(UpsertKeyPairRequest request);
+      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeysAsync(InsertKeyPairRequest request);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync();
-      Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UpsertDigitalSignatureKeysAsync(UpsertKeyPairRequest request);
+      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeysAsync(InsertKeyPairRequest request);
       #endregion
 
       #region Message Transfer

@@ -38,11 +38,11 @@ namespace Crypter.Core.Services
    public interface IUserKeysService
    {
       Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken);
-      Task<Either<UpsertMasterKeyError, UpsertMasterKeyResponse>> UpsertMasterKeyAsync(Guid userId, UpsertMasterKeyRequest request, CancellationToken cancellationToken);
+      Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
-      Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UpsertDiffieHellmanKeyPairAsync(Guid userId, UpsertKeyPairRequest request, CancellationToken cancellationToken);
-      Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UpsertDigitalSignatureKeyPairAsync(Guid userId, UpsertKeyPairRequest request, CancellationToken cancellationToken);
+      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken);
+      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken);
    }
 
    public class UserKeysService : IUserKeysService
@@ -63,26 +63,22 @@ namespace Crypter.Core.Services
                .FirstOrDefaultAsync(cancellationToken), GetMasterKeyError.NotFound);
       }
 
-      public async Task<Either<UpsertMasterKeyError, UpsertMasterKeyResponse>> UpsertMasterKeyAsync(Guid userId, UpsertMasterKeyRequest request, CancellationToken cancellationToken)
+      public async Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken)
       {
          var masterKeyEntity = await _context.UserMasterKeys
             .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
 
-         DateTime now = DateTime.UtcNow;
-         if (masterKeyEntity is null)
+         if (masterKeyEntity is not null)
          {
-            var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.ClientIV, now, now);
-            _context.UserMasterKeys.Add(newEntity);
-         }
-         else
-         {
-            masterKeyEntity.Key = request.EncryptedKey;
-            masterKeyEntity.ClientIV = request.ClientIV;
-            masterKeyEntity.Updated = now;
+            return InsertMasterKeyError.Conflict;
          }
 
+         DateTime now = DateTime.UtcNow;
+         var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.ClientIV, now, now);
+         _context.UserMasterKeys.Add(newEntity);
+
          await _context.SaveChangesAsync(cancellationToken);
-         return new UpsertMasterKeyResponse();
+         return new InsertMasterKeyResponse();
       }
 
       public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken)
@@ -103,50 +99,40 @@ namespace Crypter.Core.Services
                .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
       }
 
-      public async Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UpsertDiffieHellmanKeyPairAsync(Guid userId, UpsertKeyPairRequest request, CancellationToken cancellationToken)
+      public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken)
       {
          var keyPairEntity = await _context.UserX25519KeyPairs
             .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
 
+         if (keyPairEntity is not null)
+         {
+            return InsertKeyPairError.Conflict;
+         }
+
          DateTime now = DateTime.UtcNow;
-         if (keyPairEntity is null)
-         {
-            var newEntity = new UserX25519KeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.ClientIV, now, now);
-            _context.UserX25519KeyPairs.Add(newEntity);
-         }
-         else
-         {
-            keyPairEntity.PrivateKey = request.EncryptedPrivateKey;
-            keyPairEntity.PublicKey = request.PublicKey;
-            keyPairEntity.ClientIV = request.ClientIV;
-            keyPairEntity.Updated = now;
-         }
+         var newEntity = new UserX25519KeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.ClientIV, now, now);
+         _context.UserX25519KeyPairs.Add(newEntity);
 
          await _context.SaveChangesAsync(cancellationToken);
-         return new UpsertKeyPairResponse();
+         return new InsertKeyPairResponse();
       }
 
-      public async Task<Either<UpsertKeyPairError, UpsertKeyPairResponse>> UpsertDigitalSignatureKeyPairAsync(Guid userId, UpsertKeyPairRequest request, CancellationToken cancellationToken)
+      public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken)
       {
          var keyPairEntity = await _context.UserEd25519KeyPairs
             .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
 
-         DateTime now = DateTime.UtcNow;
-         if (keyPairEntity is null)
+         if (keyPairEntity is not null)
          {
-            var newEntity = new UserEd25519KeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.ClientIV, now, now);
-            _context.UserEd25519KeyPairs.Add(newEntity);
-         }
-         else
-         {
-            keyPairEntity.PrivateKey = request.EncryptedPrivateKey;
-            keyPairEntity.PublicKey = request.PublicKey;
-            keyPairEntity.ClientIV = request.ClientIV;
-            keyPairEntity.Updated = now;
+            return InsertKeyPairError.Conflict;
          }
 
+         DateTime now = DateTime.UtcNow;
+         var newEntity = new UserEd25519KeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.ClientIV, now, now);
+         _context.UserEd25519KeyPairs.Add(newEntity);
+
          await _context.SaveChangesAsync(cancellationToken);
-         return new UpsertKeyPairResponse();
+         return new InsertKeyPairResponse();
       }
    }
 }
