@@ -95,12 +95,12 @@ namespace Crypter.ClientServices.Services
          {
             Ed25519PrivateKey = await ed25519DownloadResult.MatchAsync(
                async downloadError => await HandlePrivateKeyDownloadErrorAsync(downloadError, UserKeyType.Ed25519, masterKey),
-               async encryptedKeyInfo => await DecryptDownloadedPrivateKeyAsync(encryptedKeyInfo, UserKeyType.Ed25519, masterKey, credentialKey),
+               encryptedKeyInfo => DecodeAndDecryptUserPrivateKey(encryptedKeyInfo.EncryptedKey, encryptedKeyInfo.ClientIV, masterKey),
                Maybe<PEMString>.None);
 
             X25519PrivateKey = await x25519DownloadResult.MatchAsync(
                async downloadError => await HandlePrivateKeyDownloadErrorAsync(downloadError, UserKeyType.X25519, masterKey),
-               async encryptedKeyInfo => await DecryptDownloadedPrivateKeyAsync(encryptedKeyInfo, UserKeyType.X25519, masterKey, credentialKey),
+               encryptedKeyInfo => DecodeAndDecryptUserPrivateKey(encryptedKeyInfo.EncryptedKey, encryptedKeyInfo.ClientIV, masterKey),
                Maybe<PEMString>.None);
          });
 
@@ -166,41 +166,6 @@ namespace Crypter.ClientServices.Services
             .BindAsync(x => Maybe<PEMString>.From(privateKey).AsTask());
       }
 
-      /// <summary>
-      /// Crypter began by using the user's "credential" key to encrypt/decrypt user private keys.
-      /// In order to support account recovery and password changes, a "master" key was introduced.
-      /// This method migrates private keys from being encrypted with the "credential" key to being encrypted with the "master" key.
-      /// </summary>
-      /// <param name="downloadResponse"></param>
-      /// <param name="keyType"></param>
-      /// <param name="masterKey"></param>
-      /// <param name="credentialKey"></param>
-      /// <returns></returns>
-      /// <remarks>
-      /// Would really like to get rid of this.
-      /// </remarks>
-      private async Task<Maybe<PEMString>> MigrateUserKeyPairToMasterKeyEncryptionAsync(GetPrivateKeyResponse downloadResponse, UserKeyType keyType, byte[] masterKey, byte[] credentialKey)
-      {
-         Maybe<PEMString> credentialKeyDecryptionResult = DecryptUserPrivateKey(downloadResponse.EncryptedKey, downloadResponse.ClientIV, credentialKey);
-         await credentialKeyDecryptionResult.IfSomeAsync(async decryptedPEMString =>
-         {
-            Console.WriteLine("Migrating private key from 'credential' key to 'master' key encryption");
-            byte[] decodedIV = Convert.FromBase64String(downloadResponse.ClientIV);
-            byte[] masterKeyEncryptedPrivateKey = _simpleEncryptionService.Encrypt(masterKey, decodedIV, decryptedPEMString.Value);
-
-#pragma warning disable CS8524
-            PEMString publicKey = keyType switch
-            {
-               UserKeyType.Ed25519 => CryptoLib.KeyConversion.ConvertToPEM(CryptoLib.KeyConversion.ConvertEd25519PrivateKeyFromPEM(decryptedPEMString).GeneratePublicKey()),
-               UserKeyType.X25519 => CryptoLib.KeyConversion.ConvertToPEM(CryptoLib.KeyConversion.ConvertX25519PrivateKeyFromPEM(decryptedPEMString).GeneratePublicKey())
-            };
-#pragma warning restore CS8524
-
-            await UploadKeyPairAsync(masterKeyEncryptedPrivateKey, publicKey, decodedIV, keyType);
-         });
-         return credentialKeyDecryptionResult;
-      }
-
       private Task<Maybe<byte[]>> UploadNewMasterKeyAsync(byte[] userSymmetricKey)
       {
          byte[] newMasterKey = _simpleEncryptionService.GenerateKey();
@@ -224,7 +189,7 @@ namespace Crypter.ClientServices.Services
          };
       }
 
-      private Maybe<PEMString> DecryptUserPrivateKey(string encryptedPrivateKey, string iv, byte[] decryptionKey)
+      private Maybe<PEMString> DecodeAndDecryptUserPrivateKey(string encryptedPrivateKey, string iv, byte[] decryptionKey)
       {
          byte[] decodedPrivateKey = Convert.FromBase64String(encryptedPrivateKey);
          byte[] decodedIV = Convert.FromBase64String(iv);
@@ -252,14 +217,6 @@ namespace Crypter.ClientServices.Services
             UserKeyType.X25519 => _crypterApiService.UpsertDiffieHellmanKeysAsync(request),
             _ => throw new NotImplementedException("Unknown key type.")
          };
-      }
-
-      private Task<Maybe<PEMString>> DecryptDownloadedPrivateKeyAsync(GetPrivateKeyResponse downloadResponse, UserKeyType keyType, byte[] masterKey, byte[] credentialKey)
-      {
-         Maybe<PEMString> masterKeyDecryptionResult = DecryptUserPrivateKey(downloadResponse.EncryptedKey, downloadResponse.ClientIV, masterKey);
-         return masterKeyDecryptionResult.MatchAsync(
-            async () => await MigrateUserKeyPairToMasterKeyEncryptionAsync(downloadResponse, keyType, masterKey, credentialKey),
-            x => x);
       }
 
       private async void OnUserSessionServiceInitialized(object sender, UserSessionServiceInitializedEventArgs args)
