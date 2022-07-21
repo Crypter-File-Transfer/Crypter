@@ -25,6 +25,7 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -38,19 +39,11 @@ namespace Crypter.Web.Shared.Modal
       [Parameter]
       public EventCallback<bool> ModalClosedCallback { get; set; }
 
-      protected string Username;
+      protected ModalBehavior ModalBehaviorRef { get; set; }
 
+      protected string Username;
       protected string Password;
       protected bool PasswordTestFailed;
-
-      protected string ModalDisplayClass;
-      protected string ModalClassPlaceholder;
-      protected bool ShowBackDrop;
-
-      protected override void OnInitialized()
-      {
-         ModalDisplayClass = "none";
-      }
 
       public void Open()
       {
@@ -58,18 +51,13 @@ namespace Crypter.Web.Shared.Modal
             () => string.Empty,
             x => x.Username);
 
-         ModalDisplayClass = "block;";
-         ModalClassPlaceholder = "Show";
-         ShowBackDrop = true;
-         StateHasChanged();
+         ModalBehaviorRef.Open();
       }
 
       public async Task CloseAsync(bool success)
       {
-         ModalDisplayClass = "none";
-         ModalClassPlaceholder = "";
-         ShowBackDrop = false;
          await ModalClosedCallback.InvokeAsync(success);
+         ModalBehaviorRef.Close();
       }
 
       public async Task<bool> TestPasswordAsync()

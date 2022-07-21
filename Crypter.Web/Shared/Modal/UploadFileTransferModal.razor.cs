@@ -27,6 +27,7 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using Crypter.Web.Shared.Modal.Template;
 using Crypter.Web.Shared.Transfer;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
@@ -50,6 +51,8 @@ namespace Crypter.Web.Shared.Modal
       [Parameter]
       public EventCallback ModalClosedCallback { get; set; }
 
+      protected ModalBehavior ModalBehaviorRef { get; set; }
+
       protected UploadFileTransfer UploadComponent;
 
       protected bool IsSenderDefined = false;
@@ -57,10 +60,6 @@ namespace Crypter.Web.Shared.Modal
       protected string SenderEd25519PrivateKey;
       protected int RequestedExpirationHours;
       protected bool UseCompression;
-
-      protected string ModalDisplay = "none;";
-      protected string ModalClass = "";
-      protected bool ShowBackdrop = false;
 
       public void Open()
       {
@@ -73,20 +72,14 @@ namespace Crypter.Web.Shared.Modal
             () => default,
             key => key.Value);
 
-         ModalDisplay = "block;";
-         ModalClass = "Show";
-         ShowBackdrop = true;
-         StateHasChanged();
+         ModalBehaviorRef.Open();
       }
 
       public async Task CloseAsync()
       {
-         ModalDisplay = "none";
-         ModalClass = "";
-         ShowBackdrop = false;
-         StateHasChanged();
          UploadComponent.Recycle();
          await ModalClosedCallback.InvokeAsync();
+         ModalBehaviorRef.Close();
       }
    }
 }
