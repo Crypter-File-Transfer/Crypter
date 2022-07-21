@@ -1,4 +1,4 @@
-﻿@*
+﻿/*
  * Copyright (C) 2022 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
@@ -22,30 +22,39 @@
  * code without disclosing the source code of your own applications.
  * 
  * Contact the current copyright holder to discuss commercial license options.
- *@
+ */
 
-@inherits PasswordModalBase
+using Microsoft.AspNetCore.Components;
 
-<ModalBehavior @ref=ModalBehaviorRef>
-   <Content>
-      <div class="modal-content">
-         <div class="modal-header">
-            <h3>Password Required</h3>
-         </div>
-         <form @onsubmit:preventDefault @onsubmit="OnSubmitClickedAsync">
-            <div class="modal-body justify-content-center">
-               <p class="word-wrap">Provide your password to continue.</p>
-               <div class="mb-3">
-                  <input type="password" class="form-control" id="password" @bind="Password" placeholder="Password">
-                  <span hidden="@(!PasswordTestFailed)" class="text-danger">Invalid password</span>
-               </div>
-            </div>
-            <div class="modal-footer">
-               <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="OnCancelClickedAsync">Cancel</button>
-               <button type="submit" class="btn btn-primary" data-dismiss="modal">Submit</button>
-            </div>
-         </form>
-      </div>
-   </Content>
-</ModalBehavior>
+namespace Crypter.Web.Shared.Modal.Template
+{
+   public partial class ModalBehaviorBase : ComponentBase
+   {
+      [Parameter]
+      public RenderFragment Content { get; set; }
 
+      private const string _modalDisplayNone = "none;";
+      private const string _modalDisplayBlock = "block;";
+      private const string _modalClassShow = "Show";
+
+      protected bool Show = false;
+      protected string ModalDisplay = _modalDisplayNone;
+      protected string ModalClass = string.Empty;
+
+      public void Open()
+      {
+         ModalDisplay = _modalDisplayBlock;
+         ModalClass = _modalClassShow;
+         Show = true;
+         StateHasChanged();
+      }
+
+      public void Close()
+      {
+         ModalDisplay = _modalDisplayNone;
+         ModalClass = string.Empty;
+         Show = false;
+         StateHasChanged();
+      }
+   }
+}

@@ -26,8 +26,8 @@
 
 @inherits SpinnerModalBase
 
-<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
-   <div class="modal-dialog" role="document">
+<ModalBehavior @ref=ModalBehaviorRef>
+   <Content>
       <div class="modal-content">
          <div class="modal-header">
             <h3>@Subject</h3>
@@ -47,10 +47,5 @@
             </div>
          }
       </div>
-   </div>
-</div>
-
-@if (ShowBackdrop)
-{
-   <div class="modal-backdrop fade show"></div>
-}
+   </Content>
+</ModalBehavior>
