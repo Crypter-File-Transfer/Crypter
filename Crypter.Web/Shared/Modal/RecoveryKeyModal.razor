@@ -1,0 +1,56 @@
+﻿@*
+ * Copyright (C) 2022 Crypter File Transfer
+ * 
+ * This file is part of the Crypter file transfer project.
+ * 
+ * Crypter is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * The Crypter source code is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * You can be released from the requirements of the aforementioned license
+ * by purchasing a commercial license. Buying such a license is mandatory
+ * as soon as you develop commercial activities involving the Crypter source
+ * code without disclosing the source code of your own applications.
+ * 
+ * Contact the current copyright holder to discuss commercial license options.
+ *@
+
+ @inherits RecoveryKeyModalBase
+
+ <ModalBehavior @ref=ModalBehaviorRef>
+   <Content>
+      <div class="modal-content">
+         <div class="modal-header">
+            <h3>Important Message</h3>
+         </div>
+         <div class="modal-body justify-content-center">
+            <p class="word-wrap">Please copy the provided recovery key and keep it safe.</p>
+            <p class="word-wrap">All your data will be lost if you fail to provide this recovery key during a password reset event.</p>
+            <div class="copiedTooltip mb-3">
+               <label for="recoveryKeyModalInput" class="form-label">Recovery Key</label>
+               <div class="input-group mb-3">
+                  <input class="form-control" value="@RecoveryKey" type="text" id="recoveryKeyModalInput" readonly />
+                  <div class="input-group-append">
+                     <button class="btn btn-secondary" type="button" @onclick="CopyRecoveryKeyToClipboardAsync">Copy</button>
+                  </div>
+               </div>
+
+               <span id="recoveryKeyModalCopyTooltip" class="copiedToolTip toolTipText">Copied</span>
+            </div>
+         </div>
+         <div class="modal-footer">
+            <p>You accept any and all risks associated with failing to copy this recovery key.</p>
+            <button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="OnAcknowledgedClickedAsync">I understand and accept the risks</button>
+         </div>
+      </div>
+   </Content>
+</ModalBehavior>
