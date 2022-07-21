@@ -29,7 +29,7 @@
 <form>
    <div class="mb-3">
       <label for="contactInfoEmailAddress" class="form-label">Email Address</label>
-      <input @bind="EmailAddressEdit" type="email" class="form-control" id="contactInfoEmailAddress" placeholder="Email Not Set" readonly="@(!IsEditing)" />
+      <input @bind="EmailAddressEdit" type="email" class="form-control" id="contactInfoEmailAddress" name="email" placeholder="Email Not Set" readonly="@(!IsEditing)" />
       @if (IsEditing)
       {
          @if (!string.IsNullOrEmpty(EmailAddressError))
