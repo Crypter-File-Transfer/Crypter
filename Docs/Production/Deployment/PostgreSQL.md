@@ -41,7 +41,7 @@ To create a database migration:
  1. Open the Package Manager Console in Visual Studio.
  2. Select `Crypter.API` as the startup project.
  3. Select `Crypter.Core` as the default project.
- 4. Invoke `AddMigration {MigrationName}`
+ 4. Invoke `Add-Migration {MigrationName}`
 
 To migrate the database:
 

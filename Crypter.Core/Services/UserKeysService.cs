@@ -74,7 +74,7 @@ namespace Crypter.Core.Services
          }
 
          DateTime now = DateTime.UtcNow;
-         var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.ClientIV, now, now);
+         var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.ClientIV, request.KeyHash, now, now);
          _context.UserMasterKeys.Add(newEntity);
 
          await _context.SaveChangesAsync(cancellationToken);

@@ -33,16 +33,18 @@ namespace Crypter.Core.Entities
       public Guid Owner { get; set; }
       public string Key { get; set; }
       public string ClientIV { get; set; }
+      public string KeyHash { get; set; }
       public DateTime Updated { get; set; }
       public DateTime Created { get; set; }
 
       public UserEntity User { get; set; }
 
-      public UserMasterKeyEntity(Guid owner, string key, string clientIV, DateTime updated, DateTime created)
+      public UserMasterKeyEntity(Guid owner, string key, string clientIV, string keyHash, DateTime updated, DateTime created)
       {
          Owner = owner;
          Key = key;
          ClientIV = clientIV;
+         KeyHash = keyHash;
          Updated = updated;
          Created = created;
       }

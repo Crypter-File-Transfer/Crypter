@@ -435,10 +435,22 @@ namespace Crypter.Core
       private static void ConfigureUserMasterKeyEntity(ModelBuilder builder)
       {
          builder.Entity<UserMasterKeyEntity>()
-            .ToTable("UserSymmetricKey");
+            .ToTable("UserMasterKey");
 
          builder.Entity<UserMasterKeyEntity>()
             .HasKey(x => x.Owner);
+
+         builder.Entity<UserMasterKeyEntity>()
+            .Property(x => x.Key)
+            .IsRequired();
+
+         builder.Entity<UserMasterKeyEntity>()
+            .Property(x => x.ClientIV)
+            .IsRequired();
+
+         builder.Entity<UserMasterKeyEntity>()
+            .Property(x => x.KeyHash)
+            .IsRequired();
 
          builder.Entity<UserMasterKeyEntity>()
             .HasOne(x => x.User)

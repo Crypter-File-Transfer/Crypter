@@ -44,16 +44,18 @@ namespace Crypter.ClientServices.Services
       private readonly ISimpleEncryptionService _simpleEncryptionService;
       private readonly IUserKeysRepository _userKeysRepository;
       private readonly IUserSessionService _userSessionService;
+      private readonly ISimpleHashService _simpleHashService;
 
       public Maybe<PEMString> Ed25519PrivateKey { get; protected set; }
       public Maybe<PEMString> X25519PrivateKey { get; protected set; }
 
-      public UserKeysService(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService)
+      public UserKeysService(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService, ISimpleHashService simpleHashService)
       {
          _crypterApiService = crypterApiService;
          _simpleEncryptionService = simpleEncryptionService;
          _userKeysRepository = userKeysRepository;
          _userSessionService = userSessionService;
+         _simpleHashService = simpleHashService;
 
          _userSessionService.ServiceInitializedEventHandler += OnUserSessionServiceInitialized;
          _userSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
@@ -173,8 +175,9 @@ namespace Crypter.ClientServices.Services
 
          string encodedEncryptedKey = Convert.ToBase64String(encryptedKey);
          string encodedIV = Convert.ToBase64String(iv);
+         string encodedKeyHash = Convert.ToBase64String(_simpleHashService.DigestSha512(newMasterKey));
 
-         return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(encodedEncryptedKey, encodedIV))
+         return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(encodedEncryptedKey, encodedIV, encodedKeyHash))
             .ToMaybeTask()
             .BindAsync(x => Maybe<byte[]>.From(newMasterKey).AsTask());
       }

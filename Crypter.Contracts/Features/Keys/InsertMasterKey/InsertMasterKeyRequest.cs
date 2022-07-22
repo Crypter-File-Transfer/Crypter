@@ -32,12 +32,14 @@ namespace Crypter.Contracts.Features.Keys
    {
       public string EncryptedKey { get; init; }
       public string ClientIV { get; init; }
+      public string KeyHash { get; init; }
 
       [JsonConstructor]
-      public InsertMasterKeyRequest(string encryptedKey, string clientIV)
+      public InsertMasterKeyRequest(string encryptedKey, string clientIV, string keyHash)
       {
          EncryptedKey = encryptedKey;
          ClientIV = clientIV;
+         KeyHash = keyHash;
       }
    }
 }
