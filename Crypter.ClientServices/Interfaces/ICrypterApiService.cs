@@ -27,6 +27,7 @@
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Authentication;
+using Crypter.Contracts.Features.Consent;
 using Crypter.Contracts.Features.Contacts;
 using Crypter.Contracts.Features.Keys;
 using Crypter.Contracts.Features.Metrics;
@@ -48,6 +49,12 @@ namespace Crypter.ClientServices.Interfaces
       Task<Either<TestPasswordError, TestPasswordResponse>> TestPasswordAsync(TestPasswordRequest testPasswordRequest);
       Task<Either<RefreshError, RefreshResponse>> RefreshAsync();
       Task<Either<LogoutError, LogoutResponse>> LogoutAsync();
+      #endregion
+
+      #region Consent
+
+      Task<Either<DummyError, ConsentToRecoveryKeyRisksResponse>> ConsentToRecoveryKeyRisksAsync();
+
       #endregion
 
       #region Contacts

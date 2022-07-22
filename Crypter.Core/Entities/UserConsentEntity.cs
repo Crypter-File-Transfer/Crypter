@@ -24,42 +24,32 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.Web.Shared.Modal.Template;
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using System.Threading.Tasks;
-
-namespace Crypter.Web.Shared.Modal
+namespace Crypter.Core.Entities
 {
-   public partial class RecoveryKeyModalBase : ComponentBase
+   public class UserConsentEntity
    {
-      [Inject]
-      protected IJSRuntime JSRuntime { get; set; }
+      public long Id { get; set; }
+      public Guid Owner { get; set; }
+      public ConsentType ConsentType { get; set; }
+      public DateTime Timestamp { get; set; }
 
-      [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      public UserEntity User { get; set; }
 
-      protected string RecoveryKey;
-
-      protected ModalBehavior ModalBehaviorRef { get; set; }
-
-      public void Open()
+      public UserConsentEntity(Guid owner, ConsentType consentType, DateTime timestamp, long id = 0)
       {
-         RecoveryKey = "foo";
-         ModalBehaviorRef.Open();
+         Id = id;
+         Owner = owner;
+         ConsentType = consentType;
+         Timestamp = timestamp;
       }
+   }
 
-      protected async Task CopyRecoveryKeyToClipboardAsync()
-      {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyModalCopyTooltip" });
-      }
-
-      public async void OnAcknowledgedClickedAsync()
-      {
-         await CrypterApiService.ConsentToRecoveryKeyRisksAsync();
-         ModalBehaviorRef.Close();
-      }
+   public enum ConsentType
+   {
+      TermsOfService,
+      PrivacyPolicy,
+      RecoveryKeyRisks
    }
 }

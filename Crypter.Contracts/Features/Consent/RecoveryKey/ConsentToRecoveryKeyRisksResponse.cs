@@ -24,42 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-
-using Crypter.ClientServices.Interfaces;
-using Crypter.Web.Shared.Modal.Template;
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
-using System.Threading.Tasks;
-
-namespace Crypter.Web.Shared.Modal
+namespace Crypter.Contracts.Features.Consent
 {
-   public partial class RecoveryKeyModalBase : ComponentBase
+   public class ConsentToRecoveryKeyRisksResponse
    {
-      [Inject]
-      protected IJSRuntime JSRuntime { get; set; }
-
-      [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
-
-      protected string RecoveryKey;
-
-      protected ModalBehavior ModalBehaviorRef { get; set; }
-
-      public void Open()
-      {
-         RecoveryKey = "foo";
-         ModalBehaviorRef.Open();
-      }
-
-      protected async Task CopyRecoveryKeyToClipboardAsync()
-      {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyModalCopyTooltip" });
-      }
-
-      public async void OnAcknowledgedClickedAsync()
-      {
-         await CrypterApiService.ConsentToRecoveryKeyRisksAsync();
-         ModalBehaviorRef.Close();
-      }
    }
 }

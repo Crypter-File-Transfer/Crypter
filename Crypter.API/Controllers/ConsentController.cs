@@ -24,42 +24,37 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-
-using Crypter.ClientServices.Interfaces;
-using Crypter.Web.Shared.Modal.Template;
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
+using Crypter.Contracts.Features.Consent;
+using Crypter.Core.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
-namespace Crypter.Web.Shared.Modal
+namespace Crypter.API.Controllers
 {
-   public partial class RecoveryKeyModalBase : ComponentBase
+   [ApiController]
+   [Route("api/consent")]
+   public class ConsentController : CrypterController
    {
-      [Inject]
-      protected IJSRuntime JSRuntime { get; set; }
+      private readonly ITokenService _tokenService;
+      private readonly IUserService _userService;
 
-      [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
-
-      protected string RecoveryKey;
-
-      protected ModalBehavior ModalBehaviorRef { get; set; }
-
-      public void Open()
+      public ConsentController(ITokenService tokenService, IUserService userService)
       {
-         RecoveryKey = "foo";
-         ModalBehaviorRef.Open();
+         _tokenService = tokenService;
+         _userService = userService;
       }
 
-      protected async Task CopyRecoveryKeyToClipboardAsync()
+      [HttpPost("recovery-key")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ConsentToRecoveryKeyRisksResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> ConsentToRecoveryKeyRisksAsync()
       {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyModalCopyTooltip" });
-      }
-
-      public async void OnAcknowledgedClickedAsync()
-      {
-         await CrypterApiService.ConsentToRecoveryKeyRisksAsync();
-         ModalBehaviorRef.Close();
+         var userId = _tokenService.ParseUserId(User);
+         var result = await _userService.SaveUserAcknowledgementOfRecoveryKeyRisksAsync(userId);
+         return Ok(result);
       }
    }
 }

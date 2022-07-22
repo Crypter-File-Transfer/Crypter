@@ -57,6 +57,7 @@ namespace Crypter.Core.Entities
       public List<UserMessageTransferEntity> SentMessageTransfers { get; set; }
       public List<UserMessageTransferEntity> ReceivedMessageTransfers { get; set; }
       public List<UserFailedLoginEntity> FailedLoginAttempts { get; set; }
+      public List<UserConsentEntity> Consents { get; set; }
 
       /// <summary>
       /// Please avoid using this.
