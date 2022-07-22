@@ -28,6 +28,16 @@ using System;
 
 namespace Crypter.Core.Entities
 {
+   /// <summary>
+   /// 
+   /// </summary>
+   /// <remarks>
+   /// Ideally this class would not have an 'Id', but this is required in order to use Entity Framework.
+   /// EF does not track keyless entities; it cannot even perform INSERT operations on them.
+   /// 
+   /// The 'Id' property is configured as an "Identity" column in the ModelBuilder.
+   /// The database engine will take care of assigning this value.
+   /// </remarks>
    public class UserConsentEntity
    {
       public long Id { get; set; }
