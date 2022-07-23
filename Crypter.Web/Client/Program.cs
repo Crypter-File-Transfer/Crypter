@@ -91,6 +91,7 @@ builder.Services
    .AddSingleton<IUserKeysService, UserKeysService>()
    .AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>()
    .AddSingleton<ISimpleSignatureService, SimpleSignatureService>()
+   .AddSingleton<ISimpleHashService, SimpleHashService>()
    .AddSingleton<ICompressionService, CompressionService>()
    .AddSingleton<IUserContactsService, UserContactsService>()
    .AddSingleton<IBrowserDownloadFileService, BrowserDownloadFileService>()

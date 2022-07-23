@@ -82,7 +82,27 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> InsertMasterKeyAsync(InsertMasterKeyRequest request, CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(InsertMasterKeyError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+#pragma warning disable CS8524
+            return error switch
+            {
+               InsertMasterKeyError.UnknownError => ServerError(errorResponse),
+               InsertMasterKeyError.Conflict => Conflict(errorResponse)
+            };
+#pragma warning restore CS8524
+         }
 
+         var userId = _tokenService.ParseUserId(User);
+         var result = await _userKeysService.InsertMasterKeyAsync(userId, request, cancellationToken);
+         return result.Match(
+            MakeErrorResponse,
+            Ok,
+            MakeErrorResponse(InsertMasterKeyError.UnknownError));
+      }
 
       [HttpGet("diffie-hellman/private")]
       [Authorize]
@@ -118,7 +138,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpsertDiffieHellmanKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
+      public async Task<IActionResult> InsertDiffieHellmanKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
       {
          IActionResult MakeErrorResponse(InsertKeyPairError error)
          {
@@ -174,7 +194,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpsertDigitalSignatureKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
+      public async Task<IActionResult> InsertDigitalSignatureKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
       {
          IActionResult MakeErrorResponse(InsertKeyPairError error)
          {

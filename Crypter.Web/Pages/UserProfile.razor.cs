@@ -26,6 +26,7 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Primitives;
+using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Text;
@@ -44,8 +45,8 @@ namespace Crypter.Web.Pages
       [Parameter]
       public string Username { get; set; }
 
-      protected Shared.Modal.UploadFileTransferModal FileModal { get; set; }
-      protected Shared.Modal.UploadMessageTransferModal MessageModal { get; set; }
+      protected UploadFileTransferModal FileModal { get; set; }
+      protected UploadMessageTransferModal MessageModal { get; set; }
 
       protected bool Loading;
       protected bool IsProfileAvailable;
