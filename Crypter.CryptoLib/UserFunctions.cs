@@ -26,6 +26,7 @@
 
 using Crypter.Common.Primitives;
 using Crypter.CryptoLib.Enums;
+using System;
 using System.Text;
 
 namespace Crypter.CryptoLib
@@ -37,17 +38,20 @@ namespace Crypter.CryptoLib
       /// </summary>
       /// <param name="username">Username will be lowercased within the method.</param>
       /// <param name="password"></param>
-      /// <returns>Array of 64 bytes.</returns>
+      /// <returns>AuthenticationPassword</returns>
       /// <remarks>
       /// The result of this method gets used as the user's password during authentication requests.
       /// The reason for doing this is to keep the user's real password a secret from even our own API.
       /// </remarks>
-      public static byte[] DeriveAuthenticationPasswordFromUserCredentials(Username username, Password password)
+      public static AuthenticationPassword DeriveAuthenticationPasswordFromUserCredentials(Username username, Password password)
       {
          var digestor = new Crypto.SHA(SHAFunction.SHA512);
          digestor.BlockUpdate(Encoding.UTF8.GetBytes(password.Value));
          digestor.BlockUpdate(Encoding.UTF8.GetBytes(username.Value.ToLower()));
-         return digestor.GetDigest();
+         byte[] digest = digestor.GetDigest();
+
+         string base64 = Convert.ToBase64String(digest);
+         return AuthenticationPassword.From(base64);
       }
 
       /// <summary>

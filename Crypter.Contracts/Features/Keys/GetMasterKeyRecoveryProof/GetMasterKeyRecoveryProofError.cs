@@ -26,10 +26,10 @@
 
 namespace Crypter.Contracts.Features.Keys
 {
-   public enum InsertMasterKeyError
+   public enum GetMasterKeyRecoveryProofError
    {
       UnknownError,
-      Conflict,
+      NotFound,
       InvalidCredentials
    }
 }

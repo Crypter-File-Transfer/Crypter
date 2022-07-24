@@ -27,6 +27,7 @@
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Authentication;
+using Crypter.Contracts.Features.Consent;
 using Crypter.Contracts.Features.Contacts;
 using Crypter.Contracts.Features.Keys;
 using Crypter.Contracts.Features.Metrics;
@@ -50,6 +51,12 @@ namespace Crypter.ClientServices.Interfaces
       Task<Either<LogoutError, LogoutResponse>> LogoutAsync();
       #endregion
 
+      #region Consent
+
+      Task<Either<DummyError, ConsentToRecoveryKeyRisksResponse>> ConsentToRecoveryKeyRisksAsync();
+
+      #endregion
+
       #region Contacts
       Task<Either<DummyError, GetUserContactsResponse>> GetUserContactsAsync();
       Task<Either<AddUserContactError, AddUserContactResponse>> AddUserContactAsync(AddUserContactRequest request);
@@ -69,6 +76,7 @@ namespace Crypter.ClientServices.Interfaces
       #region Keys
       Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
       Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
+      Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync();
       Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeysAsync(InsertKeyPairRequest request);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync();

@@ -25,11 +25,13 @@
  */
 
 using Crypter.Common.Monads;
+using Crypter.Contracts.Features.Authentication;
 using Crypter.Contracts.Features.Keys;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -38,6 +40,7 @@ namespace Crypter.Core.Services
    public interface IUserKeysService
    {
       Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken);
+      Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken);
       Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
@@ -48,10 +51,12 @@ namespace Crypter.Core.Services
    public class UserKeysService : IUserKeysService
    {
       private readonly DataContext _context;
+      private readonly IUserAuthenticationService _userAuthenticationService;
 
-      public UserKeysService(DataContext context)
+      public UserKeysService(DataContext context, IUserAuthenticationService userAuthenticationService)
       {
          _context = context;
+         _userAuthenticationService = userAuthenticationService;
       }
 
       public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken)
@@ -63,22 +68,48 @@ namespace Crypter.Core.Services
                .FirstOrDefaultAsync(cancellationToken), GetMasterKeyError.NotFound);
       }
 
+      public async Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken)
+      {
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new TestPasswordRequest(request.Username, request.Password), cancellationToken);
+         return await testPasswordResult.MatchAsync<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>>(
+            error => GetMasterKeyRecoveryProofError.InvalidCredentials,
+            async _ =>
+            {
+               var recoveryProof = await _context.UserMasterKeys
+                  .Where(x => x.Owner == userId)
+                  .Select(x => x.RecoveryProof)
+                  .FirstOrDefaultAsync(cancellationToken);
+
+               return recoveryProof is null
+                  ? GetMasterKeyRecoveryProofError.NotFound
+                  : new GetMasterKeyRecoveryProofResponse(recoveryProof);
+            },
+            GetMasterKeyRecoveryProofError.UnknownError);
+      }
+
       public async Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken)
       {
-         var masterKeyEntity = await _context.UserMasterKeys
-            .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new TestPasswordRequest(request.Username, request.Password), cancellationToken);
+         return await testPasswordResult.MatchAsync<Either<InsertMasterKeyError, InsertMasterKeyResponse>>(
+            error => InsertMasterKeyError.InvalidCredentials,
+            async _ =>
+            {
+               var masterKeyEntity = await _context.UserMasterKeys
+                  .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
 
-         if (masterKeyEntity is not null)
-         {
-            return InsertMasterKeyError.Conflict;
-         }
+               if (masterKeyEntity is not null)
+               {
+                  return InsertMasterKeyError.Conflict;
+               }
 
-         DateTime now = DateTime.UtcNow;
-         var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.ClientIV, now, now);
-         _context.UserMasterKeys.Add(newEntity);
+               DateTime now = DateTime.UtcNow;
+               var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.ClientIV, request.ClientProof, now, now);
+               _context.UserMasterKeys.Add(newEntity);
 
-         await _context.SaveChangesAsync(cancellationToken);
-         return new InsertMasterKeyResponse();
+               await _context.SaveChangesAsync(cancellationToken);
+               return new InsertMasterKeyResponse();
+            },
+            InsertMasterKeyError.UnknownError);
       }
 
       public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken)

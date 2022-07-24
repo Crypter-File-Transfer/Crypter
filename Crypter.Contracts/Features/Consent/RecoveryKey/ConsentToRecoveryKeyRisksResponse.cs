@@ -24,12 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Keys
+namespace Crypter.Contracts.Features.Consent
 {
-   public enum InsertMasterKeyError
+   public class ConsentToRecoveryKeyRisksResponse
    {
-      UnknownError,
-      Conflict,
-      InvalidCredentials
    }
 }

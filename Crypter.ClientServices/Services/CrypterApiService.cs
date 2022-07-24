@@ -28,6 +28,7 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Authentication;
+using Crypter.Contracts.Features.Consent;
 using Crypter.Contracts.Features.Contacts;
 using Crypter.Contracts.Features.Keys;
 using Crypter.Contracts.Features.Metrics;
@@ -118,6 +119,19 @@ namespace Crypter.ClientServices.Services
          return from response in Either<LogoutError, (HttpStatusCode httpStatus, Either<ErrorResponse, LogoutResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<LogoutResponse>(url, true))
                 from errorableResponse in ExtractErrorCode<LogoutError, LogoutResponse>(response.data).AsTask()
+                select errorableResponse;
+      }
+
+      #endregion
+
+      #region Consent
+
+      public Task<Either<DummyError, ConsentToRecoveryKeyRisksResponse>> ConsentToRecoveryKeyRisksAsync()
+      {
+         string url = $"{_baseApiUrl}/consent/recovery-key";
+         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, ConsentToRecoveryKeyRisksResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.PostAsync<ConsentToRecoveryKeyRisksResponse>(url, true))
+                from errorableResponse in ExtractErrorCode<DummyError, ConsentToRecoveryKeyRisksResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 
@@ -250,6 +264,15 @@ namespace Crypter.ClientServices.Services
          return from response in Either<InsertMasterKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertMasterKeyResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PutAsync<InsertMasterKeyRequest, InsertMasterKeyResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<InsertMasterKeyError, InsertMasterKeyResponse>(response.data).AsTask()
+                select errorableResponse;
+      }
+
+      public Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
+      {
+         string url = $"{_baseApiUrl}/keys/master/recovery-proof";
+         return from response in Either<GetMasterKeyRecoveryProofError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetMasterKeyRecoveryProofResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.PostAsync<GetMasterKeyRecoveryProofRequest, GetMasterKeyRecoveryProofResponse>(url, request))
+                from errorableResponse in ExtractErrorCode<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 

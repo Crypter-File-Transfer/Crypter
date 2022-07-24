@@ -24,12 +24,27 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
+using System.Text.Json.Serialization;
+
 namespace Crypter.Contracts.Features.Keys
 {
-   public enum InsertMasterKeyError
+   public class GetMasterKeyRecoveryProofRequest
    {
-      UnknownError,
-      Conflict,
-      InvalidCredentials
+      public string Username { get; init; }
+      public string Password { get; init; }
+
+      [JsonConstructor]
+      public GetMasterKeyRecoveryProofRequest(string username, string password)
+      {
+         Username = username;
+         Password = password;
+      }
+
+      public GetMasterKeyRecoveryProofRequest(Username username, AuthenticationPassword password)
+      {
+         Username = username.Value;
+         Password = password.Value;
+      }
    }
 }

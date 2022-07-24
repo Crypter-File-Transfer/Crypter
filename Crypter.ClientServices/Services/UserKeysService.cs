@@ -27,6 +27,7 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Interfaces.Events;
 using Crypter.ClientServices.Interfaces.Repositories;
+using Crypter.ClientServices.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
@@ -71,11 +72,11 @@ namespace Crypter.ClientServices.Services
             };
          }
 
-         Task<Maybe<byte[]>> HandleMasterKeyDownloadErrorAsync(GetMasterKeyError error, byte[] userCredentialKey)
+         Task<Maybe<byte[]>> HandleMasterKeyDownloadErrorAsync(GetMasterKeyError error, byte[] userCredentialKey, Username username, AuthenticationPassword password)
          {
             return error switch
             {
-               GetMasterKeyError.NotFound => UploadNewMasterKeyAsync(userCredentialKey),
+               GetMasterKeyError.NotFound => UploadNewMasterKeyAsync(userCredentialKey, username, password),
                _ => Maybe<byte[]>.None.AsTask()
             };
          }
@@ -83,8 +84,13 @@ namespace Crypter.ClientServices.Services
          byte[] credentialKey = CryptoLib.UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, password);
 
          var masterKeyResponse = await _crypterApiService.GetMasterKeyAsync();
+
          Maybe<byte[]> masterKey = await masterKeyResponse.MatchAsync(
-            async downloadError => await HandleMasterKeyDownloadErrorAsync(downloadError, credentialKey),
+            async downloadError =>
+            {
+               AuthenticationPassword authenticationPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
+               return await HandleMasterKeyDownloadErrorAsync(downloadError, credentialKey, username, authenticationPassword);
+            },
             encryptedKeyInfo => DecryptMasterKey(encryptedKeyInfo, credentialKey),
             Maybe<byte[]>.None);
 
@@ -135,6 +141,23 @@ namespace Crypter.ClientServices.Services
             x => DecryptMasterKey(x, credentialKey));
       }
 
+      public async Task<Maybe<RecoveryKey>> GetUserRecoveryKeyAsync(Username username, Password password)
+      {
+         return await GetUserMasterKeyAsync(username, password)
+            .MatchAsync(
+            () => Maybe<RecoveryKey>.None,
+            async masterKey =>
+            {
+               var authenticationPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
+               var request = new GetMasterKeyRecoveryProofRequest(username, authenticationPassword);
+               var recoveryProofResponse = await _crypterApiService.GetMasterKeyRecoveryProofAsync(request);
+
+               return recoveryProofResponse.Match(
+                  Maybe<RecoveryKey>.None,
+                  recoveryProof => new RecoveryKey(masterKey, recoveryProof.RecoveryProof));
+            });
+      }
+
       private Maybe<byte[]> DecryptMasterKey(GetMasterKeyResponse encryptedKeyInfo, byte[] userSymmetricKey)
       {
          byte[] encryptedKey = Convert.FromBase64String(encryptedKeyInfo.EncryptedKey);
@@ -166,15 +189,17 @@ namespace Crypter.ClientServices.Services
             .BindAsync(x => Maybe<PEMString>.From(privateKey).AsTask());
       }
 
-      private Task<Maybe<byte[]>> UploadNewMasterKeyAsync(byte[] userSymmetricKey)
+      private Task<Maybe<byte[]>> UploadNewMasterKeyAsync(byte[] userSymmetricKey, Username username, AuthenticationPassword password)
       {
          byte[] newMasterKey = _simpleEncryptionService.GenerateKey();
          var (encryptedKey, iv) = _simpleEncryptionService.Encrypt(key: userSymmetricKey, plaintext: newMasterKey);
+         byte[] recoveryProof = _simpleEncryptionService.GenerateKey();
 
          string encodedEncryptedKey = Convert.ToBase64String(encryptedKey);
          string encodedIV = Convert.ToBase64String(iv);
+         string encodedRecoveryProof = Convert.ToBase64String(recoveryProof);
 
-         return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(encodedEncryptedKey, encodedIV))
+         return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, password, encodedEncryptedKey, encodedIV, encodedRecoveryProof))
             .ToMaybeTask()
             .BindAsync(x => Maybe<byte[]>.From(newMasterKey).AsTask());
       }

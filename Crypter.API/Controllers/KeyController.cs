@@ -30,6 +30,7 @@ using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -79,10 +80,62 @@ namespace Crypter.API.Controllers
       [HttpPut("master")]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertMasterKeyResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> InsertMasterKeyAsync(InsertMasterKeyRequest request, CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(InsertMasterKeyError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+#pragma warning disable CS8524
+            return error switch
+            {
+               InsertMasterKeyError.UnknownError => ServerError(errorResponse),
+               InsertMasterKeyError.Conflict => Conflict(errorResponse),
+               InsertMasterKeyError.InvalidCredentials => BadRequest(errorResponse)
+            };
+#pragma warning restore CS8524
+         }
 
+         Guid userId = _tokenService.ParseUserId(User);
+         var result = await _userKeysService.InsertMasterKeyAsync(userId, request, cancellationToken);
+         return result.Match(
+            MakeErrorResponse,
+            Ok,
+            MakeErrorResponse(InsertMasterKeyError.UnknownError));
+      }
+
+      [HttpPost("master/recovery-proof")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetMasterKeyRecoveryProofResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(GetMasterKeyRecoveryProofError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+#pragma warning disable CS8524
+            return error switch
+            {
+               GetMasterKeyRecoveryProofError.UnknownError => ServerError(errorResponse),
+               GetMasterKeyRecoveryProofError.NotFound => NotFound(errorResponse),
+               GetMasterKeyRecoveryProofError.InvalidCredentials => BadRequest(errorResponse)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         var result = await _userKeysService.GetMasterKeyProofAsync(userId, request, cancellationToken);
+         return result.Match(
+            MakeErrorResponse,
+            Ok,
+            MakeErrorResponse(GetMasterKeyRecoveryProofError.UnknownError));
+      }
 
       [HttpGet("diffie-hellman/private")]
       [Authorize]
@@ -118,7 +171,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpsertDiffieHellmanKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
+      public async Task<IActionResult> InsertDiffieHellmanKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
       {
          IActionResult MakeErrorResponse(InsertKeyPairError error)
          {
@@ -174,7 +227,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpsertDigitalSignatureKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
+      public async Task<IActionResult> InsertDigitalSignatureKeysAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
       {
          IActionResult MakeErrorResponse(InsertKeyPairError error)
          {

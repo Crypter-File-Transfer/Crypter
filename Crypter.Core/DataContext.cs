@@ -60,6 +60,7 @@ namespace Crypter.Core
       public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; set; }
       public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; set; }
       public DbSet<UserMasterKeyEntity> UserMasterKeys { get; set; }
+      public DbSet<UserConsentEntity> UserConsents { get; set; }
 
       protected override void OnModelCreating(ModelBuilder builder)
       {
@@ -80,6 +81,7 @@ namespace Crypter.Core
          ConfigureAnonymousFileTransferEntity(builder);
          ConfigureUserFailedLoginEntity(builder);
          ConfigureUserMasterKeyEntity(builder);
+         ConfigureUserConsentEntity(builder);
       }
 
       private static void ConfigureUserEntity(ModelBuilder builder)
@@ -433,15 +435,45 @@ namespace Crypter.Core
       private static void ConfigureUserMasterKeyEntity(ModelBuilder builder)
       {
          builder.Entity<UserMasterKeyEntity>()
-            .ToTable("UserSymmetricKey");
+            .ToTable("UserMasterKey");
 
          builder.Entity<UserMasterKeyEntity>()
             .HasKey(x => x.Owner);
 
          builder.Entity<UserMasterKeyEntity>()
+            .Property(x => x.Key)
+            .IsRequired();
+
+         builder.Entity<UserMasterKeyEntity>()
+            .Property(x => x.ClientIV)
+            .IsRequired();
+
+         builder.Entity<UserMasterKeyEntity>()
             .HasOne(x => x.User)
             .WithOne(x => x.MasterKey)
             .HasForeignKey<UserMasterKeyEntity>(x => x.Owner)
+            .OnDelete(DeleteBehavior.Cascade);
+      }
+
+      private static void ConfigureUserConsentEntity(ModelBuilder builder)
+      {
+         builder.Entity<UserConsentEntity>()
+            .ToTable("UserConsent");
+
+         builder.Entity<UserConsentEntity>()
+            .HasKey(x => x.Id);
+
+         builder.Entity<UserConsentEntity>()
+            .Property(x => x.Id)
+            .UseIdentityAlwaysColumn();
+
+         builder.Entity<UserConsentEntity>()
+            .HasIndex(x => x.Owner);
+
+         builder.Entity<UserConsentEntity>()
+            .HasOne(x => x.User)
+            .WithMany(x => x.Consents)
+            .HasForeignKey(x => x.Owner)
             .OnDelete(DeleteBehavior.Cascade);
       }
    }

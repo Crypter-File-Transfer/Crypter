@@ -24,12 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Keys
+using System;
+using System.Text;
+using System.Text.Json;
+
+namespace Crypter.ClientServices.Models
 {
-   public enum InsertMasterKeyError
+   public class RecoveryKey
    {
-      UnknownError,
-      Conflict,
-      InvalidCredentials
+      public string MasterKey { get; set; }
+      public string RecoveryProof { get; set; }
+
+      public RecoveryKey(byte[] masterKey, string recoveryProof)
+      {
+         MasterKey = Convert.ToBase64String(masterKey);
+         RecoveryProof = recoveryProof;
+      }
+
+      public string ToBase64String()
+      {
+         string json = JsonSerializer.Serialize(this);
+         byte[] bytes = Encoding.UTF8.GetBytes(json);
+         return Convert.ToBase64String(bytes);
+      }
+
+      public static RecoveryKey FromBase64String(string encodedRecoveryKey)
+      {
+         byte[] bytes = Convert.FromBase64String(encodedRecoveryKey);
+         string json = Encoding.UTF8.GetString(bytes);
+         return JsonSerializer.Deserialize<RecoveryKey>(json);
+      }
    }
 }

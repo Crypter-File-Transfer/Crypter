@@ -24,12 +24,42 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Keys
+using System;
+
+namespace Crypter.Core.Entities
 {
-   public enum InsertMasterKeyError
+   /// <summary>
+   /// 
+   /// </summary>
+   /// <remarks>
+   /// Ideally this class would not have an 'Id', but this is required in order to use Entity Framework.
+   /// EF does not track keyless entities; it cannot even perform INSERT operations on them.
+   /// 
+   /// The 'Id' property is configured as an "Identity" column in the ModelBuilder.
+   /// The database engine will take care of assigning this value.
+   /// </remarks>
+   public class UserConsentEntity
    {
-      UnknownError,
-      Conflict,
-      InvalidCredentials
+      public long Id { get; set; }
+      public Guid Owner { get; set; }
+      public ConsentType ConsentType { get; set; }
+      public DateTime Timestamp { get; set; }
+
+      public UserEntity User { get; set; }
+
+      public UserConsentEntity(Guid owner, ConsentType consentType, DateTime timestamp, long id = 0)
+      {
+         Id = id;
+         Owner = owner;
+         ConsentType = consentType;
+         Timestamp = timestamp;
+      }
+   }
+
+   public enum ConsentType
+   {
+      TermsOfService,
+      PrivacyPolicy,
+      RecoveryKeyRisks
    }
 }
