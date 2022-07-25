@@ -105,10 +105,8 @@ namespace Crypter.Web.Shared.UserSettings
 
          Common.Primitives.Username username = Common.Primitives.Username.From(Username);
 
-         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
-         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
-
-         var request = new UpdateContactInfoRequest(EmailAddressEdit, digestedPasswordBase64);
+         var authenticationPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
+         var request = new UpdateContactInfoRequest(EmailAddressEdit, authenticationPassword);
          var maybeUpdate = await CrypterApiService.UpdateContactInfoAsync(request);
 
          maybeUpdate.DoLeftOrNeither(HandleContactInfoUpdateError, () => HandleContactInfoUpdateError());

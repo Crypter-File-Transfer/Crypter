@@ -178,9 +178,7 @@ namespace Crypter.Web.Shared
                                 from password in ValidatePassword().ToEither(RegistrationError.InvalidPassword).AsTask()
                                 from emailAddress in ValidateEmailAddress().MapLeft(_ => RegistrationError.InvalidEmailAddress).AsTask()
                                 where ValidatePasswordConfirmation()
-                                let authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password)
-                                let authPasswordEncoded = Convert.ToBase64String(authPasswordBytes)
-                                let authenticationPassword = AuthenticationPassword.From(authPasswordEncoded)
+                                let authenticationPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password)
                                 let requestBody = new RegistrationRequest(username, authenticationPassword, emailAddress)
                                 from registrationResponse in CrypterApiService.RegisterUserAsync(requestBody)
                                 let _ = UserProvidedEmailAddress = emailAddress.IsSome

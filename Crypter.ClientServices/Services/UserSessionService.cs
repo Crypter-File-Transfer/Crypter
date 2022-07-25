@@ -135,11 +135,11 @@ namespace Crypter.ClientServices.Services
       {
          var loginTask = from loginResponse in SendLoginRequestAsync(username, password, _trustDeviceRefreshTokenTypeMap[rememberUser])
                          from unit0 in Either<LoginError, Unit>.FromRightAsync(OnSuccessfulLoginAsync(loginResponse, rememberUser))
-                         select Unit.Default;
+                         select loginResponse;
 
          var loginResult = await loginTask;
-         loginResult.DoRight(x => HandleUserLoggedInEvent(username, password, rememberUser));
-         return loginResult;
+         loginResult.DoRight(x => HandleUserLoggedInEvent(username, password, rememberUser, x.ShowRecoveryKey));
+         return loginResult.Map(x => Unit.Default);
       }
 
       public async Task<bool> TestPasswordAsync(Password password)
@@ -180,8 +180,8 @@ namespace Crypter.ClientServices.Services
       private void HandleServiceInitializedEvent() =>
          _serviceInitializedEventHandler?.Invoke(this, new UserSessionServiceInitializedEventArgs(Session.IsSome));
 
-      private void HandleUserLoggedInEvent(Username username, Password password, bool rememberUser) =>
-         _userLoggedInEventHandler?.Invoke(this, new UserLoggedInEventArgs(username, password, rememberUser));
+      private void HandleUserLoggedInEvent(Username username, Password password, bool rememberUser, bool showRecoveryKeyModal) =>
+         _userLoggedInEventHandler?.Invoke(this, new UserLoggedInEventArgs(username, password, rememberUser, showRecoveryKeyModal));
 
       private void HandleUserLoggedOutEvent() =>
          _userLoggedOutEventHandler?.Invoke(this, EventArgs.Empty);
@@ -215,18 +215,14 @@ namespace Crypter.ClientServices.Services
 
       private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, Password password, TokenType refreshTokenType)
       {
-         byte[] authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
-         AuthenticationPassword authPassword = AuthenticationPassword.From(Convert.ToBase64String(authPasswordBytes));
-
+         AuthenticationPassword authPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
          LoginRequest loginRequest = new LoginRequest(username, authPassword, refreshTokenType);
          return _crypterApiService.LoginAsync(loginRequest);
       }
 
       private Task<Either<TestPasswordError, TestPasswordResponse>> SendTestPasswordRequestAsync(Username username, Password password)
       {
-         byte[] authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
-         AuthenticationPassword authPassword = AuthenticationPassword.From(Convert.ToBase64String(authPasswordBytes));
-
+         AuthenticationPassword authPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
          TestPasswordRequest testRequest = new TestPasswordRequest(username, authPassword);
          return _crypterApiService.TestPasswordAsync(testRequest);
       }

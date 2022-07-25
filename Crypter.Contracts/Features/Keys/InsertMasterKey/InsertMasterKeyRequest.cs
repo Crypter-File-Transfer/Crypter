@@ -24,20 +24,36 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Keys
 {
    public class InsertMasterKeyRequest
    {
+      public string Username { get; init; }
+      public string Password { get; init; }
       public string EncryptedKey { get; init; }
       public string ClientIV { get; init; }
+      public string ClientProof { get; init; }
 
       [JsonConstructor]
-      public InsertMasterKeyRequest(string encryptedKey, string clientIV)
+      public InsertMasterKeyRequest(string username, string password, string encryptedKey, string clientIV, string clientProof)
       {
+         Username = username;
+         Password = password;
          EncryptedKey = encryptedKey;
          ClientIV = clientIV;
+         ClientProof = clientProof;
+      }
+
+      public InsertMasterKeyRequest(Username username, AuthenticationPassword password, string encryptedKey, string clientIV, string clientProof)
+      {
+         Username = username.Value;
+         Password = password.Value;
+         EncryptedKey = encryptedKey;
+         ClientIV = clientIV;
+         ClientProof = clientProof;
       }
    }
 }

@@ -27,6 +27,7 @@
 using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using NUnit.Framework;
+using System;
 
 namespace Crypter.Test.CryptoLib_Tests
 {
@@ -56,41 +57,41 @@ namespace Crypter.Test.CryptoLib_Tests
             0xb7, 0xa1, 0xcd, 0xda, 0x9c, 0x42, 0xc8, 0xe2
          };
 
-         var digestedCredentials = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
-         Assert.AreEqual(knownDigest, digestedCredentials);
+         AuthenticationPassword authPassword = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
+         Assert.AreEqual(knownDigest, Convert.FromBase64String(authPassword.Value));
       }
 
       [Test]
       public void User_Credentials_Are_Digested_Username_Is_Case_Insensitive()
       {
-         var usernameLowercase = Username.From("username");
-         var usernameUppercase = Username.From("USERNAME");
-         var password = Password.From("P@ssw0rd?");
+         Username usernameLowercase = Username.From("username");
+         Username usernameUppercase = Username.From("USERNAME");
+         Password password = Password.From("P@ssw0rd?");
 
-         var lowercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(usernameLowercase, password);
-         var uppercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(usernameUppercase, password);
-         Assert.AreEqual(lowercaseDigest, uppercaseDigest);
+         AuthenticationPassword lowercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(usernameLowercase, password);
+         AuthenticationPassword uppercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(usernameUppercase, password);
+         Assert.AreEqual(lowercaseDigest.Value, uppercaseDigest.Value);
       }
 
       [Test]
       public void User_Credentials_Are_Digested_Password_Is_Case_Sensitive()
       {
-         var username = Username.From("Frodo");
-         var passwordLowercase = Password.From("password");
-         var passwordUppercase = Password.From("PASSWORD");
+         Username username = Username.From("Frodo");
+         Password passwordLowercase = Password.From("password");
+         Password passwordUppercase = Password.From("PASSWORD");
 
-         var lowercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, passwordLowercase);
-         var uppercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, passwordUppercase);
-         Assert.AreNotEqual(lowercaseDigest, uppercaseDigest);
+         AuthenticationPassword lowercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, passwordLowercase);
+         AuthenticationPassword uppercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, passwordUppercase);
+         Assert.AreNotEqual(lowercaseDigest.Value, uppercaseDigest.Value);
       }
 
       [Test]
       public void Symmetric_Key_Can_Be_Derived_From_User_Login_Information()
       {
-         var username = Username.From("Samwise");
-         var password = Password.From("Gamgee");
+         Username username = Username.From("Samwise");
+         Password password = Password.From("Gamgee");
 
-         var knownKey = new byte[]
+         byte[] knownKey = new byte[]
          {
             0x53, 0xb3, 0x5e, 0x2d, 0xfb, 0xac, 0x4e, 0x88,
             0xea, 0x86, 0x6a, 0x63, 0xb6, 0x52, 0xc2, 0x64,
@@ -98,31 +99,31 @@ namespace Crypter.Test.CryptoLib_Tests
             0xfb, 0x91, 0x38, 0x41, 0x2d, 0xa4, 0xde, 0x52
          };
 
-         var key = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, password);
+         byte[] key = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, password);
          Assert.AreEqual(knownKey, key);
       }
 
       [Test]
       public void Symmetric_Key_Derivation_Outputs_Same_Key_Regardless_Of_Username_Capitalization()
       {
-         var usernameLowercase = Username.From("gimli");
-         var usernameUppercase = Username.From("GIMLI");
-         var password = Password.From("TheDwarf");
+         Username usernameLowercase = Username.From("gimli");
+         Username usernameUppercase = Username.From("GIMLI");
+         Password password = Password.From("TheDwarf");
 
-         var lowercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(usernameLowercase, password);
-         var uppercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(usernameUppercase, password);
+         byte[] lowercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(usernameLowercase, password);
+         byte[] uppercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(usernameUppercase, password);
          Assert.AreEqual(lowercaseKey, uppercaseKey);
       }
 
       [Test]
       public void Symmetric_Key_Derivation_Different_Key_When_Password_Capitalization_Changes()
       {
-         var username = Username.From("Aragon");
-         var lowercasePassword = Password.From("son_of_arathorn");
-         var uppercasePassword = Password.From("SON_OF_ARATHORN");
+         Username username = Username.From("Aragon");
+         Password lowercasePassword = Password.From("son_of_arathorn");
+         Password uppercasePassword = Password.From("SON_OF_ARATHORN");
 
-         var lowercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, lowercasePassword);
-         var uppercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, uppercasePassword);
+         byte[] lowercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, lowercasePassword);
+         byte[] uppercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, uppercasePassword);
          Assert.AreNotEqual(lowercaseKey, uppercaseKey);
       }
    }

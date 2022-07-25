@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Authentication
@@ -34,13 +33,15 @@ namespace Crypter.Contracts.Features.Authentication
       public string Username { get; set; }
       public string AuthenticationToken { get; set; }
       public string RefreshToken { get; set; }
+      public bool ShowRecoveryKey { get; set; }
 
       [JsonConstructor]
-      public LoginResponse(string username, string authenticationToken, string refreshToken)
+      public LoginResponse(string username, string authenticationToken, string refreshToken, bool showRecoveryKey)
       {
          Username = username;
          AuthenticationToken = authenticationToken;
          RefreshToken = refreshToken;
+         ShowRecoveryKey = showRecoveryKey;
       }
    }
 }

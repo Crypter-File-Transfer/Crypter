@@ -50,7 +50,7 @@ namespace Crypter.Core.Services
       Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription, CancellationToken cancellationToken);
       Task<Either<LogoutError, LogoutResponse>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
       Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken);
-      Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(ClaimsPrincipal claimsPrincipal, TestPasswordRequest request, CancellationToken cancellationToken);
+      Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(Guid userId, TestPasswordRequest request, CancellationToken cancellationToken);
    }
 
    public class UserAuthenticationService : IUserAuthenticationService
@@ -110,6 +110,7 @@ namespace Crypter.Core.Services
                UserEntity user = await _context.Users
                   .Where(x => x.Username == right.Username.Value)
                   .Include(x => x.FailedLoginAttempts)
+                  .Include(x => x.Consents)
                   .FirstOrDefaultAsync();
 
                if (user is null)
@@ -137,7 +138,9 @@ namespace Crypter.Core.Services
                await _context.SaveChangesAsync(cancellationToken);
                ScheduleRefreshTokenDeletion(refreshToken.TokenId, refreshToken.Expiration);
 
-               return new LoginResponse(user.Username, authToken, refreshToken.Token);
+               bool userHasConsentedToRecoveryKeyRisks = user.Consents.Any(x => x.ConsentType == ConsentType.RecoveryKeyRisks);
+
+               return new LoginResponse(user.Username, authToken, refreshToken.Token, !userHasConsentedToRecoveryKeyRisks);
             },
             LoginError.UnknownError);
       }
@@ -170,7 +173,7 @@ namespace Crypter.Core.Services
 
       public Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken)
       {
-         return from currentPassword in ValidateRequestPassword(request.CurrentPassword, UpdateContactInfoError.InvalidPassword).AsTask()
+         return from currentPassword in ValidateRequestPassword(request.Password, UpdateContactInfoError.InvalidPassword).AsTask()
                 from emailAddress in ValidateRequestEmailAddress(request.EmailAddress, UpdateContactInfoError.InvalidEmailAddress).AsTask()
                 from user in FetchUserAsync(userId, UpdateContactInfoError.UserNotFound, cancellationToken)
                 from passwordVerified in VerifyPassword(currentPassword, user.PasswordHash, user.PasswordSalt)
@@ -181,10 +184,9 @@ namespace Crypter.Core.Services
                 select new UpdateContactInfoResponse();
       }
 
-      public Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(ClaimsPrincipal claimsPrincipal, TestPasswordRequest request, CancellationToken cancellationToken)
+      public Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(Guid userId, TestPasswordRequest request, CancellationToken cancellationToken)
       {
          return from suppliedPassword in ValidateRequestPassword(request.Password, TestPasswordError.InvalidPassword).AsTask()
-                from userId in ParseUserId(claimsPrincipal).ToEither(TestPasswordError.UnknownError).AsTask()
                 from user in FetchUserAsync(userId, TestPasswordError.UnknownError, cancellationToken)
                 from passwordVerified in VerifyPassword(suppliedPassword, user.PasswordHash, user.PasswordSalt)
                   ? Either<TestPasswordError, Unit>.FromRight(Unit.Default).AsTask()

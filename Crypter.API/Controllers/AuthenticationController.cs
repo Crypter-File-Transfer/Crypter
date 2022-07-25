@@ -31,6 +31,7 @@ using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,10 +42,12 @@ namespace Crypter.API.Controllers
    public class AuthenticationController : CrypterController
    {
       private readonly IUserAuthenticationService _userAuthenticationService;
+      private readonly ITokenService _tokenService;
 
-      public AuthenticationController(IUserAuthenticationService userAuthenticationService)
+      public AuthenticationController(IUserAuthenticationService userAuthenticationService, ITokenService tokenService)
       {
          _userAuthenticationService = userAuthenticationService;
+         _tokenService = tokenService;
       }
 
       /// <summary>
@@ -77,7 +80,6 @@ namespace Crypter.API.Controllers
          }
 
          var registrationResult = await _userAuthenticationService.RegisterAsync(request, cancellationToken);
-
          return registrationResult.Match(
             MakeErrorResponse,
             Ok,
@@ -154,7 +156,6 @@ namespace Crypter.API.Controllers
 
          var requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
          var refreshResult = await _userAuthenticationService.RefreshAsync(User, requestUserAgent, cancellationToken);
-
          return refreshResult.Match(
             MakeErrorResponse,
             Ok,
@@ -191,7 +192,6 @@ namespace Crypter.API.Controllers
          }
 
          var logoutResult = await _userAuthenticationService.LogoutAsync(User, cancellationToken);
-
          return logoutResult.Match(
             MakeErrorResponse,
             Ok,
@@ -223,8 +223,8 @@ namespace Crypter.API.Controllers
 #pragma warning restore CS8524
          }
 
-         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(User, request, cancellationToken);
-
+         Guid userId = _tokenService.ParseUserId(User);
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, request, cancellationToken);
          return testPasswordResult.Match(
             MakeErrorResponse,
             Ok,

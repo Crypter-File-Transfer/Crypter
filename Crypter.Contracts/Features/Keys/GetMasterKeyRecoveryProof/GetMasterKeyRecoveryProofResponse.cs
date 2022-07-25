@@ -26,10 +26,13 @@
 
 namespace Crypter.Contracts.Features.Keys
 {
-   public enum InsertMasterKeyError
+   public class GetMasterKeyRecoveryProofResponse
    {
-      UnknownError,
-      Conflict,
-      InvalidCredentials
+      public string RecoveryProof { get; init; }
+
+      public GetMasterKeyRecoveryProofResponse(string recoveryProof)
+      {
+         RecoveryProof = recoveryProof;
+      }
    }
 }

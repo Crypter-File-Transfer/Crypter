@@ -24,68 +24,49 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+
 using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Events;
-using Crypter.Common.Monads;
-using Crypter.Web.Shared.Modal;
+using Crypter.Common.Primitives;
+using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using System;
 using System.Threading.Tasks;
 
-namespace Crypter.Web.Shared.UserSettings
+namespace Crypter.Web.Shared.Modal
 {
-   public partial class UserSettingsKeysBase : ComponentBase, IDisposable
+   public partial class RecoveryKeyModalBase : ComponentBase
    {
       [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
+      protected IJSRuntime JSRuntime { get; set; }
+
+      [Inject]
+      protected ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
       protected IUserKeysService UserKeysService { get; set; }
 
-      [Inject]
-      protected IJSRuntime JSRuntime { get; set; }
-
-      protected PasswordModal PasswordModal { get; set; }
-
-      protected string Ed25519PrivateKey;
-      protected string X25519PrivateKey;
       protected string RecoveryKey;
 
-      protected override void OnInitialized()
+      protected ModalBehavior ModalBehaviorRef { get; set; }
+
+      public async Task OpenAsync(Username username, Password password)
       {
-         Ed25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
-            () => "",
-            some => some.Value);
-
-         X25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
-            () => "",
-            some => some.Value);
-
-         RecoveryKey = string.Empty;
-
-         UserSessionService.UserPasswordTestSuccessEventHandler += OnPasswordTestSuccess;
-      }
-
-      private async void OnPasswordTestSuccess(object sender, UserPasswordTestSuccessEventArgs args)
-      {
-         RecoveryKey = await UserKeysService.GetUserRecoveryKeyAsync(args.Username, args.Password)
-            .MatchAsync(
+         var recoveryKey = await UserKeysService.GetUserRecoveryKeyAsync(username, password);
+         RecoveryKey = recoveryKey.Match(
             () => "An error occurred",
             x => x.ToBase64String());
-
-         await InvokeAsync(() => StateHasChanged());
+         ModalBehaviorRef.Open();
       }
 
       protected async Task CopyRecoveryKeyToClipboardAsync()
       {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyCopyTooltip" });
+         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyModalCopyTooltip" });
       }
 
-      public void Dispose()
+      public async void OnAcknowledgedClickedAsync()
       {
-         UserSessionService.UserPasswordTestSuccessEventHandler -= OnPasswordTestSuccess;
-         GC.SuppressFinalize(this);
+         await CrypterApiService.ConsentToRecoveryKeyRisksAsync();
+         ModalBehaviorRef.Close();
       }
    }
 }
