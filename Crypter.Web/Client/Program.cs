@@ -30,9 +30,9 @@ using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.ClientServices.Services;
 using Crypter.ClientServices.Transfer;
 using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Models;
 using Crypter.CryptoLib.Services;
 using Crypter.Web;
-using Crypter.Web.Models.Settings;
 using Crypter.Web.Repositories;
 using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
@@ -40,28 +40,23 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
+var builder = WebAssemblyHostBuilder.CreateDefault();
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddSingleton(sp =>
-{
-   var config = sp.GetService<IConfiguration>();
-   return config.Get<ClientSettings>();
-});
+builder.Services.AddSingleton<IClientApiSettings>(builder.Configuration
+   .GetSection("ApiSettings")
+   .Get<ClientApiSettings>());
 
-builder.Services.AddSingleton<IClientApiSettings>(sp =>
-{
-   var config = sp.GetService<IConfiguration>();
-   return config.GetSection("ApiSettings").Get<ClientApiSettings>();
-});
+builder.Services.AddSingleton(builder.Configuration
+   .GetSection("FileTransferSettings")
+   .Get<FileTransferSettings>());
 
-builder.Services.AddSingleton(sp =>
-{
-   var config = sp.GetService<IConfiguration>();
-   return config.GetSection("FileTransferSettings").Get<FileTransferSettings>();
-});
+builder.Services.AddSingleton(builder.Configuration
+   .GetSection("PasswordVersions")
+   .Get<List<PasswordVersion>>());
 
 builder.Services.AddHttpClient<ICrypterHttpService, CrypterHttpService>(httpClient =>
 {
@@ -98,8 +93,10 @@ builder.Services
    .AddSingleton<Func<ICrypterApiService>>(sp => () => sp.GetService<ICrypterApiService>());
 
 var host = builder.Build();
-var contactsService = host.Services.GetRequiredService<IUserContactsService>();
-var userKeysService = host.Services.GetRequiredService<IUserKeysService>();
-var userSessionService = host.Services.GetRequiredService<IUserSessionService>();
+
+// These constructors will register events and event handlers
+host.Services.GetRequiredService<IUserContactsService>();
+host.Services.GetRequiredService<IUserKeysService>();
+host.Services.GetRequiredService<IUserSessionService>();
 
 await host.RunAsync();

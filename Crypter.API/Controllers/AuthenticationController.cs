@@ -72,7 +72,8 @@ namespace Crypter.API.Controllers
                RegistrationError.UnknownError => ServerError(errorResponse),
                RegistrationError.InvalidUsername
                   or RegistrationError.InvalidPassword
-                  or RegistrationError.InvalidEmailAddress => BadRequest(errorResponse),
+                  or RegistrationError.InvalidEmailAddress
+                  or RegistrationError.OldPasswordVersion => BadRequest(errorResponse),
                RegistrationError.UsernameTaken
                   or RegistrationError.EmailAddressTaken => Conflict(errorResponse)
             };
@@ -108,7 +109,8 @@ namespace Crypter.API.Controllers
                LoginError.InvalidUsername
                   or LoginError.InvalidPassword
                   or LoginError.InvalidTokenTypeRequested
-                  or LoginError.ExcessiveFailedLoginAttempts => BadRequest(errorResponse)
+                  or LoginError.ExcessiveFailedLoginAttempts
+                  or LoginError.InvalidPasswordVersion => BadRequest(errorResponse)
             };
 #pragma warning restore CS8524
          }
@@ -218,7 +220,8 @@ namespace Crypter.API.Controllers
             return error switch
             {
                TestPasswordError.UnknownError => ServerError(errorResponse),
-               TestPasswordError.InvalidPassword => BadRequest(errorResponse)
+               TestPasswordError.InvalidPassword
+                  or TestPasswordError.PasswordNeedsMigration => BadRequest(errorResponse)
             };
 #pragma warning restore CS8524
          }

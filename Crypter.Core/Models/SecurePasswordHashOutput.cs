@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Authentication
+namespace Crypter.Core.Models
 {
-   public enum TestPasswordError
+   public class SecurePasswordHashOutput
    {
-      UnknownError,
-      InvalidPassword,
-      PasswordNeedsMigration
+      public byte[] Hash { get; set; }
+      public byte[] Salt { get; set; }
    }
 }

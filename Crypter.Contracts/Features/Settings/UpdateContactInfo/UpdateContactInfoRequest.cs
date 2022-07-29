@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.Authentication;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Settings

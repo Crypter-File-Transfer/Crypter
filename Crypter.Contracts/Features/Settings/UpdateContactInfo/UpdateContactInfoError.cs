@@ -32,6 +32,7 @@ namespace Crypter.Contracts.Features.Settings
       UserNotFound,
       EmailAddressUnavailable,
       InvalidEmailAddress,
-      InvalidPassword
+      InvalidPassword,
+      PasswordNeedsMigration
    }
 }

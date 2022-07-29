@@ -27,6 +27,7 @@
 using Crypter.API.Configuration;
 using Crypter.Core;
 using Crypter.Core.Identity;
+using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Crypter.CryptoLib.Services;
@@ -78,6 +79,16 @@ builder.Services.AddTransferStorageService(options =>
    options.Location = settings.Location;
 });
 
+builder.Services.AddUserAuthenticationService(options =>
+{
+   var settings = builder.Configuration
+      .GetSection("PasswordSettings")
+      .Get<ServerPasswordSettings>();
+
+   options.ClientVersion = settings.ClientVersion;
+   options.ServerVersions = settings.ServerVersions;
+});
+
 builder.Services.AddDbContext<DataContext>();
 
 builder.Services.AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>();
@@ -85,6 +96,7 @@ builder.Services.AddSingleton<ISimpleHashService, SimpleHashService>();
 builder.Services.AddSingleton<ISimpleSignatureService, SimpleSignatureService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
 
+builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
 builder.Services.AddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
 builder.Services.AddScoped<IServerMetricsService, ServerMetricsService>();
 builder.Services.AddScoped<ITransferDownloadService, TransferDownloadService>();

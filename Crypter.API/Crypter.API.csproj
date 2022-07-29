@@ -10,9 +10,7 @@
    </ItemGroup>
    <ItemGroup>
       <ProjectReference Include="..\Crypter.Contracts\Crypter.Contracts.csproj" />
-      <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj">
-         <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
-      </ProjectReference>
+      <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
       <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
    </ItemGroup>
    <ItemGroup>

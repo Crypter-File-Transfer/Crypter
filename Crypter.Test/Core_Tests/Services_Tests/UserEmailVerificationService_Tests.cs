@@ -66,7 +66,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [Test]
       public async Task Verification_Parameters_Not_Created_If_User_Email_Already_Verified()
       {
-         UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"), new byte[] { 0x00 }, new byte[] { 0x00 }, true, DateTime.UtcNow, DateTime.UtcNow);
+         UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"), new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, true, DateTime.UtcNow, DateTime.UtcNow);
          _testContext.Users.Add(newUser);
          await _testContext.SaveChangesAsync();
 
@@ -77,7 +77,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [Test]
       public async Task Verification_Parameters_Not_Created_If_User_Verification_Already_Pending()
       {
-         UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"), new byte[] { 0x00 }, new byte[] { 0x00 }, false, DateTime.UtcNow, DateTime.UtcNow);
+         UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"), new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
          newUser.EmailVerification = new UserEmailVerificationEntity(newUser.Id, Guid.NewGuid(), new byte[] { 0x00 }, DateTime.UtcNow);
 
          _testContext.Users.Add(newUser);
@@ -92,7 +92,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [TestCase("invalid email address")]
       public async Task Verification_Parameters_Not_Created_If_User_Email_Address_Is_Invalid(string emailAddress)
       {
-         UserEntity newUser = new UserEntity(Guid.NewGuid(), "username", emailAddress, new byte[] { 0x00 }, new byte[] { 0x00 }, false, DateTime.UtcNow, DateTime.UtcNow);
+         UserEntity newUser = new UserEntity(Guid.NewGuid(), "username", emailAddress, new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
          _testContext.Users.Add(newUser);
          await _testContext.SaveChangesAsync();
 
@@ -103,7 +103,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [Test]
       public async Task Verification_Parameters_Created_If_All_Criteria_Are_Satisfied()
       {
-         UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"), new byte[] { 0x00 }, new byte[] { 0x00 }, false, DateTime.UtcNow, DateTime.UtcNow);
+         UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"), new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
          _testContext.Users.Add(newUser);
          await _testContext.SaveChangesAsync();
 

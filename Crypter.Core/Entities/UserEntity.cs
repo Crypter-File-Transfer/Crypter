@@ -38,6 +38,8 @@ namespace Crypter.Core.Entities
       public string EmailAddress { get; set; }
       public byte[] PasswordHash { get; set; }
       public byte[] PasswordSalt { get; set; }
+      public int ServerPasswordVersion { get; set; }
+      public int ClientPasswordVersion { get; set; }
       public bool EmailVerified { get; set; }
       public DateTime Created { get; set; }
       public DateTime LastLogin { get; set; }
@@ -63,19 +65,21 @@ namespace Crypter.Core.Entities
       /// Please avoid using this.
       /// This is only intended to be used by Entity Framework.
       /// </summary>
-      public UserEntity(Guid id, string username, string emailAddress, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
+      public UserEntity(Guid id, string username, string emailAddress, byte[] passwordHash, byte[] passwordSalt, int serverPasswordVersion, int clientPasswordVersion, bool emailVerified, DateTime created, DateTime lastLogin)
       {
          Id = id;
          Username = username;
          EmailAddress = emailAddress;
          PasswordHash = passwordHash;
          PasswordSalt = passwordSalt;
+         ServerPasswordVersion = serverPasswordVersion;
+         ClientPasswordVersion = clientPasswordVersion;
          EmailVerified = emailVerified;
          Created = created;
          LastLogin = lastLogin;
       }
 
-      public UserEntity(Guid id, Username username, Maybe<EmailAddress> emailAddress, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
+      public UserEntity(Guid id, Username username, Maybe<EmailAddress> emailAddress, byte[] passwordHash, byte[] passwordSalt, int serverPasswordVersion, int clientPasswordVersion, bool emailVerified, DateTime created, DateTime lastLogin)
       {
          Id = id;
          Username = username.Value;
@@ -84,6 +88,8 @@ namespace Crypter.Core.Entities
             some => some.Value);
          PasswordHash = passwordHash;
          PasswordSalt = passwordSalt;
+         ServerPasswordVersion = serverPasswordVersion;
+         ClientPasswordVersion = clientPasswordVersion;
          EmailVerified = emailVerified;
          Created = created;
          LastLogin = lastLogin;
