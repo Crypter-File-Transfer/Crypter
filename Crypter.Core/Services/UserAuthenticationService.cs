@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Enums;
+using Crypter.Common.Models;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication;
@@ -32,8 +33,11 @@ using Crypter.Contracts.Features.Settings;
 using Crypter.Core.DataContextExtensions;
 using Crypter.Core.Entities;
 using Crypter.Core.Identity;
+using Crypter.Core.Models;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,24 +57,46 @@ namespace Crypter.Core.Services
       Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(Guid userId, TestPasswordRequest request, CancellationToken cancellationToken);
    }
 
+   public static class UserAuthenticationServiceExtensions
+   {
+      public static void AddUserAuthenticationService(this IServiceCollection services, Action<ServerPasswordSettings> settings)
+      {
+         if (settings is null)
+         {
+            throw new ArgumentNullException(nameof(settings));
+         }
+
+         services.Configure(settings);
+         services.TryAddSingleton<IUserAuthenticationService, UserAuthenticationService>();
+      }
+   }
+
    public class UserAuthenticationService : IUserAuthenticationService
    {
       private readonly DataContext _context;
       private readonly IPasswordHashService _passwordHashService;
       private readonly ITokenService _tokenService;
+      private readonly IBackgroundJobClient _backgroundJobClient;
       private readonly IHangfireBackgroundService _hangfireBackgroundService;
       private readonly IReadOnlyDictionary<TokenType, Func<Guid, RefreshTokenData>> _refreshTokenProviderMap;
+      private readonly IReadOnlyDictionary<int, PasswordVersion> _serverPasswordVersions;
 
+      private readonly int _clientPasswordVersion;
+      private readonly int _latestServerPasswordVersion;
       private const int _maximumFailedLoginAttempts = 3;
 
-      public UserAuthenticationService(DataContext context, IPasswordHashService passwordHashService, ITokenService tokenService, IHangfireBackgroundService hangfireBackgroundService)
+      public UserAuthenticationService(DataContext context, IPasswordHashService passwordHashService, ITokenService tokenService, IBackgroundJobClient backgroundJobClient, IHangfireBackgroundService hangfireBackgroundService, ServerPasswordSettings passwordSettings)
       {
          _context = context;
          _passwordHashService = passwordHashService;
          _tokenService = tokenService;
+         _backgroundJobClient = backgroundJobClient;
          _hangfireBackgroundService = hangfireBackgroundService;
+         _serverPasswordVersions = passwordSettings.ServerVersions.ToDictionary(x => x.Version);
 
-         _refreshTokenProviderMap = new Dictionary<TokenType, Func<Guid, RefreshTokenData>>()
+         _clientPasswordVersion = passwordSettings.ClientVersion;
+         _latestServerPasswordVersion = passwordSettings.ServerVersions.Max(x => x.Version);
+         _refreshTokenProviderMap = new Dictionary<TokenType, Func<Guid, RefreshTokenData>>
          {
             { TokenType.Session, _tokenService.NewSessionToken },
             { TokenType.Device, _tokenService.NewDeviceToken }
@@ -82,8 +108,8 @@ namespace Crypter.Core.Services
          return from validRegistrationRequest in ValidateRegistrationRequest(request).AsTask()
                 from usernameAvailable in VerifyUsernameIsAvailableAsync(validRegistrationRequest.Username, RegistrationError.UsernameTaken, cancellationToken)
                 from emailAddressAvailable in VerifyEmailIsAddressAvailable(validRegistrationRequest.EmailAddress, RegistrationError.EmailAddressTaken, cancellationToken)
-                let securePasswordData = _passwordHashService.MakeSecurePasswordHash(validRegistrationRequest.Password)
-                from newUserEntity in Either<RegistrationError, UserEntity>.FromRight(InsertNewUserInContext(validRegistrationRequest.Username, validRegistrationRequest.EmailAddress, securePasswordData.Salt, securePasswordData.Hash)).AsTask()
+                let securePasswordData = _passwordHashService.MakeSecurePasswordHash(validRegistrationRequest.Password, _serverPasswordVersions[_latestServerPasswordVersion].Iterations)
+                from newUserEntity in Either<RegistrationError, UserEntity>.FromRight(InsertNewUserInContext(validRegistrationRequest.Username, validRegistrationRequest.EmailAddress, securePasswordData.Salt, securePasswordData.Hash, _latestServerPasswordVersion, _clientPasswordVersion)).AsTask()
                 from entriesModified in Either<RegistrationError, int>.FromRightAsync(SaveContextChangesAsync(cancellationToken))
                 let jobId = EnqueueEmailAddressVerificationEmailDelivery(newUserEntity.Id)
                 select new RegistrationResponse();
@@ -98,17 +124,17 @@ namespace Crypter.Core.Services
       /// <returns></returns>
       /// <remarks>
       /// The reason this does not use Linq query syntax is to save a single trip to the database when querying for the user entity.
-      /// `.Include(x => x.FailedLoginAttempts)` is less likely to be forgotten and break things when the reason for having it is on the very next line.
+      /// `.Include(x => x.Foo)` statements are less likely to be forgotten and cause problems when the reason for having them are on the very next line.
       /// </remarks>
       public async Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription, CancellationToken cancellationToken)
       {
          var validLoginRequest = ValidateLoginRequest(request);
          return await validLoginRequest.MatchAsync<Either<LoginError, LoginResponse>>(
             left => left,
-            async right =>
+            async validatedLoginRequest =>
             {
                UserEntity user = await _context.Users
-                  .Where(x => x.Username == right.Username.Value)
+                  .Where(x => x.Username == validatedLoginRequest.Username.Value)
                   .Include(x => x.FailedLoginAttempts)
                   .Include(x => x.Consents)
                   .FirstOrDefaultAsync();
@@ -123,16 +149,34 @@ namespace Crypter.Core.Services
                   return LoginError.ExcessiveFailedLoginAttempts;
                }
 
-               bool correctPassword = _passwordHashService.VerifySecurePasswordHash(right.Password, user.PasswordHash, user.PasswordSalt);
-               if (!correctPassword)
+               bool requestContainsRequiredPasswordVersions = validatedLoginRequest.VersionedPasswords.ContainsKey(user.ClientPasswordVersion)
+                  && validatedLoginRequest.VersionedPasswords.ContainsKey(_clientPasswordVersion);
+               if (!requestContainsRequiredPasswordVersions)
+               {
+                  return LoginError.InvalidPasswordVersion;
+               }
+
+               AuthenticationPassword currentClientPassword = validatedLoginRequest.VersionedPasswords[user.ClientPasswordVersion];
+               bool isMatchingPassword = _passwordHashService.VerifySecurePasswordHash(currentClientPassword, user.PasswordHash, user.PasswordSalt, _serverPasswordVersions[user.ServerPasswordVersion].Iterations);
+               if (!isMatchingPassword)
                {
                   await HandlePasswordVerificationFailedAsync(user.Id);
                   return LoginError.InvalidPassword;
                }
 
+               if (user.ServerPasswordVersion != _latestServerPasswordVersion || user.ClientPasswordVersion != _clientPasswordVersion)
+               {
+                  AuthenticationPassword latestClientPassword = validatedLoginRequest.VersionedPasswords[_clientPasswordVersion];
+                  var hashOutput = _passwordHashService.MakeSecurePasswordHash(latestClientPassword, _serverPasswordVersions[_latestServerPasswordVersion].Iterations);
+                  user.PasswordHash = hashOutput.Hash;
+                  user.PasswordSalt = hashOutput.Salt;
+                  user.ServerPasswordVersion = _latestServerPasswordVersion;
+                  user.ClientPasswordVersion = _clientPasswordVersion;
+               }
+
                user.LastLogin = DateTime.UtcNow;
 
-               var refreshToken = CreateRefreshTokenInContext(user.Id, right.RefreshTokenType, deviceDescription);
+               var refreshToken = CreateRefreshTokenInContext(user.Id, validatedLoginRequest.RefreshTokenType, deviceDescription);
                var authToken = MakeAuthenticationToken(user.Id);
 
                await _context.SaveChangesAsync(cancellationToken);
@@ -176,11 +220,12 @@ namespace Crypter.Core.Services
          return from currentPassword in ValidateRequestPassword(request.Password, UpdateContactInfoError.InvalidPassword).AsTask()
                 from emailAddress in ValidateRequestEmailAddress(request.EmailAddress, UpdateContactInfoError.InvalidEmailAddress).AsTask()
                 from user in FetchUserAsync(userId, UpdateContactInfoError.UserNotFound, cancellationToken)
-                from passwordVerified in VerifyPassword(currentPassword, user.PasswordHash, user.PasswordSalt)
+                from unit0 in VerifyUserPasswordIsMigrated(user, UpdateContactInfoError.PasswordNeedsMigration).ToLeftEither(Unit.Default).AsTask()
+                from passwordVerified in VerifyPassword(currentPassword, user.PasswordHash, user.PasswordSalt, _serverPasswordVersions[_latestServerPasswordVersion].Iterations)
                   ? Either<UpdateContactInfoError, Unit>.FromRight(Unit.Default).AsTask()
                   : Either<UpdateContactInfoError, Unit>.FromLeft(UpdateContactInfoError.InvalidPassword).AsTask()
                 from isEmailAddressAvailable in VerifyEmailIsAddressAvailable(user, emailAddress, UpdateContactInfoError.EmailAddressUnavailable, cancellationToken)
-                from unit in Either<UpdateContactInfoError, Unit>.FromRightAsync(UpdateUserEmailAddressAsync(user, emailAddress, cancellationToken))
+                from unit1 in Either<UpdateContactInfoError, Unit>.FromRightAsync(UpdateUserEmailAddressAsync(user, emailAddress, cancellationToken))
                 select new UpdateContactInfoResponse();
       }
 
@@ -188,7 +233,8 @@ namespace Crypter.Core.Services
       {
          return from suppliedPassword in ValidateRequestPassword(request.Password, TestPasswordError.InvalidPassword).AsTask()
                 from user in FetchUserAsync(userId, TestPasswordError.UnknownError, cancellationToken)
-                from passwordVerified in VerifyPassword(suppliedPassword, user.PasswordHash, user.PasswordSalt)
+                from unit0 in VerifyUserPasswordIsMigrated(user, TestPasswordError.PasswordNeedsMigration).ToLeftEither(Unit.Default).AsTask()
+                from passwordVerified in VerifyPassword(suppliedPassword, user.PasswordHash, user.PasswordSalt, _serverPasswordVersions[_latestServerPasswordVersion].Iterations)
                   ? Either<TestPasswordError, Unit>.FromRight(Unit.Default).AsTask()
                   : Either<TestPasswordError, Unit>.FromLeft(TestPasswordError.InvalidPassword).AsTask()
                 select new TestPasswordResponse();
@@ -196,14 +242,31 @@ namespace Crypter.Core.Services
 
       private Either<LoginError, ValidLoginRequest> ValidateLoginRequest(LoginRequest request)
       {
+         if (!request.VersionedPasswords.Any(x => x.Version == _clientPasswordVersion))
+         {
+            return LoginError.InvalidPasswordVersion;
+         }
+
          if (!Username.TryFrom(request.Username, out var validUsername))
          {
             return LoginError.InvalidUsername;
          }
 
-         if (!AuthenticationPassword.TryFrom(request.Password, out var validAuthenticationPassword))
+         Dictionary<int, AuthenticationPassword> validVersionedPasswords = new Dictionary<int, AuthenticationPassword>(request.VersionedPasswords.Count);
+         foreach (VersionedPassword versionedPassword in request.VersionedPasswords)
          {
-            return LoginError.InvalidPassword;
+            if (versionedPassword.Version > _clientPasswordVersion || versionedPassword.Version < 0 || validVersionedPasswords.ContainsKey(versionedPassword.Version))
+            {
+               return LoginError.InvalidPasswordVersion;
+            }
+            else if (!AuthenticationPassword.TryFrom(versionedPassword.Password, out var validAuthenticationPassword))
+            {
+               return LoginError.InvalidPassword;
+            }
+            else
+            {
+               validVersionedPasswords.Add(versionedPassword.Version, validAuthenticationPassword);
+            }
          }
 
          if (!_refreshTokenProviderMap.ContainsKey(request.RefreshTokenType))
@@ -211,17 +274,22 @@ namespace Crypter.Core.Services
             return LoginError.InvalidTokenTypeRequested;
          }
 
-         return new ValidLoginRequest(validUsername, validAuthenticationPassword, request.RefreshTokenType);
+         return new ValidLoginRequest(validUsername, validVersionedPasswords, request.RefreshTokenType);
       }
 
-      private static Either<RegistrationError, ValidRegistrationRequest> ValidateRegistrationRequest(RegistrationRequest request)
+      private Either<RegistrationError, ValidRegistrationRequest> ValidateRegistrationRequest(RegistrationRequest request)
       {
+         if (request.VersionedPassword.Version != _clientPasswordVersion)
+         {
+            return RegistrationError.OldPasswordVersion;
+         }
+
          if (!Username.TryFrom(request.Username, out var validUsername))
          {
             return RegistrationError.InvalidUsername;
          }
 
-         if (!AuthenticationPassword.TryFrom(request.Password, out var validAuthenticationPassword))
+         if (!AuthenticationPassword.TryFrom(request.VersionedPassword.Password, out var validAuthenticationPassword))
          {
             return RegistrationError.InvalidPassword;
          }
@@ -243,6 +311,13 @@ namespace Crypter.Core.Services
       {
          return AuthenticationPassword.TryFrom(password, out var validPassword)
             ? validPassword
+            : error;
+      }
+
+      private Maybe<T> VerifyUserPasswordIsMigrated<T>(UserEntity user, T error)
+      {
+         return user.ClientPasswordVersion == _clientPasswordVersion && user.ServerPasswordVersion == _latestServerPasswordVersion
+            ? Maybe<T>.None
             : error;
       }
 
@@ -301,9 +376,9 @@ namespace Crypter.Core.Services
             : Maybe<Unit>.None;
       }
 
-      private UserEntity InsertNewUserInContext(Username username, Maybe<EmailAddress> emailAddress, byte[] passwordSalt, byte[] passwordHash)
+      private UserEntity InsertNewUserInContext(Username username, Maybe<EmailAddress> emailAddress, byte[] passwordSalt, byte[] passwordHash, int serverPasswordVersion, int clientPasswordVersion)
       {
-         UserEntity user = new UserEntity(Guid.NewGuid(), username, emailAddress, passwordHash, passwordSalt, false, DateTime.UtcNow, DateTime.MinValue);
+         UserEntity user = new UserEntity(Guid.NewGuid(), username, emailAddress, passwordHash, passwordSalt, serverPasswordVersion, clientPasswordVersion, false, DateTime.UtcNow, DateTime.MinValue);
          user.Profile = new UserProfileEntity(user.Id, string.Empty, string.Empty, string.Empty);
          user.PrivacySetting = new UserPrivacySettingEntity(user.Id, true, UserVisibilityLevel.Everyone, UserItemTransferPermission.Everyone, UserItemTransferPermission.Everyone);
          user.NotificationSetting = new UserNotificationSettingEntity(user.Id, false, false);
@@ -319,9 +394,9 @@ namespace Crypter.Core.Services
             error);
       }
 
-      private bool VerifyPassword(AuthenticationPassword password, byte[] existingPasswordHash, byte[] passwordSalt)
+      private bool VerifyPassword(AuthenticationPassword password, byte[] existingPasswordHash, byte[] passwordSalt, int iterations)
       {
-         return _passwordHashService.VerifySecurePasswordHash(password, existingPasswordHash, passwordSalt);
+         return _passwordHashService.VerifySecurePasswordHash(password, existingPasswordHash, passwordSalt, iterations);
       }
 
       private async Task HandlePasswordVerificationFailedAsync(Guid userId)
@@ -329,7 +404,7 @@ namespace Crypter.Core.Services
          UserFailedLoginEntity failedLoginEntity = new UserFailedLoginEntity(Guid.NewGuid(), userId, DateTime.UtcNow);
          _context.UserFailedLoginAttempts.Add(failedLoginEntity);
          await _context.SaveChangesAsync(CancellationToken.None);
-         BackgroundJob.Schedule(() => _hangfireBackgroundService.DeleteFailedLoginAttemptAsync(failedLoginEntity.Id, CancellationToken.None), failedLoginEntity.Date.AddDays(1));
+         _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteFailedLoginAttemptAsync(failedLoginEntity.Id, CancellationToken.None), failedLoginEntity.Date.AddDays(1));
       }
 
       private static Unit UpdateLastLoginTimeInContext(UserEntity user)
@@ -362,12 +437,12 @@ namespace Crypter.Core.Services
 
       private string EnqueueEmailAddressVerificationEmailDelivery(Guid userId)
       {
-         return BackgroundJob.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId, CancellationToken.None));
+         return _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId, CancellationToken.None));
       }
 
       private string ScheduleRefreshTokenDeletion(Guid tokenId, DateTime tokenExpiration)
       {
-         return BackgroundJob.Schedule(() => _hangfireBackgroundService.DeleteUserTokenAsync(tokenId, CancellationToken.None), tokenExpiration - DateTime.UtcNow);
+         return _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteUserTokenAsync(tokenId, CancellationToken.None), tokenExpiration - DateTime.UtcNow);
       }
 
       private string MakeAuthenticationToken(Guid userId)
@@ -433,21 +508,21 @@ namespace Crypter.Core.Services
          return _context.SaveChangesAsync(cancellationToken);
       }
 
-      private record ValidLoginRequest
+      private class ValidLoginRequest
       {
          public Username Username { get; init; }
-         public AuthenticationPassword Password { get; init; }
+         public Dictionary<int, AuthenticationPassword> VersionedPasswords { get; init; }
          public TokenType RefreshTokenType { get; init; }
 
-         public ValidLoginRequest(Username username, AuthenticationPassword password, TokenType refreshTokenType)
+         public ValidLoginRequest(Username username, Dictionary<int, AuthenticationPassword> versionedPasswords, TokenType refreshTokenType)
          {
             Username = username;
-            Password = password;
+            VersionedPasswords = versionedPasswords;
             RefreshTokenType = refreshTokenType;
          }
       }
 
-      private record ValidRegistrationRequest
+      private class ValidRegistrationRequest
       {
          public Username Username { get; init; }
          public AuthenticationPassword Password { get; init; }

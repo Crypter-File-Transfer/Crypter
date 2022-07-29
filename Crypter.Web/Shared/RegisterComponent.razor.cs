@@ -25,6 +25,7 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Models;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;
@@ -32,6 +33,8 @@ using Crypter.Contracts.Features.Authentication;
 using Crypter.Web.Models.Forms;
 using Microsoft.AspNetCore.Components;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
@@ -40,6 +43,9 @@ namespace Crypter.Web.Shared
    {
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
+
+      [Inject]
+      protected IEnumerable<PasswordVersion> PasswordVersions { get; set; }
 
       protected const string _invalidClassName = "is-invalid";
 
@@ -174,12 +180,15 @@ namespace Crypter.Web.Shared
 
       protected async Task SubmitRegistrationAsync()
       {
+         int latestPasswordVersion = PasswordVersions.Max(x => x.Version);
+
          var registrationTask = from username in ValidateUsername().ToEither(RegistrationError.InvalidUsername).AsTask()
                                 from password in ValidatePassword().ToEither(RegistrationError.InvalidPassword).AsTask()
                                 from emailAddress in ValidateEmailAddress().MapLeft(_ => RegistrationError.InvalidEmailAddress).AsTask()
                                 where ValidatePasswordConfirmation()
                                 let authenticationPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password)
-                                let requestBody = new RegistrationRequest(username, authenticationPassword, emailAddress)
+                                let passwordInfo = new VersionedPassword(authenticationPassword, latestPasswordVersion)
+                                let requestBody = new RegistrationRequest(username, passwordInfo, emailAddress)
                                 from registrationResponse in CrypterApiService.RegisterUserAsync(requestBody)
                                 let _ = UserProvidedEmailAddress = emailAddress.IsSome
                                 select registrationResponse;

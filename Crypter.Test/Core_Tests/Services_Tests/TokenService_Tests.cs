@@ -24,9 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Identity;
 using Crypter.Core.Services;
-using Microsoft.Extensions.Options;
+using Crypter.Test.Core_Tests.Services_Tests.Helpers;
 using NUnit.Framework;
 using System;
 
@@ -35,30 +34,11 @@ namespace Crypter.Test.Core_Tests.Services_Tests
    [TestFixture]
    public class TokenService_Tests
    {
-      private IOptions<TokenSettings> _tokenSettings;
-
-      [OneTimeSetUp]
-      public void OneTimeSetup()
-      {
-         TokenSettings tokenSettings = new TokenSettings
-         {
-            Audience = "The Fellowship",
-            Issuer = "Legolas",
-            SecretKey = "They're taking the hobbits to Isengard!",
-            AuthenticationTokenLifetimeMinutes = 5,
-            SessionTokenLifetimeMinutes = 30,
-            DeviceTokenLifetimeDays = 5
-         };
-
-         _tokenSettings = Options.Create(tokenSettings);
-      }
-
       [Test]
       public void Can_Create_And_Validate_Authentication_Token()
       {
          var userId = Guid.NewGuid();
-
-         var sut = new TokenService(_tokenSettings);
+         var sut = ServiceTestFactory.GetTokenService();
          var token = sut.NewAuthenticationToken(userId);
 
          Assert.IsNotNull(token);
@@ -79,9 +59,10 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       {
          var userId = Guid.NewGuid();
 
-         var sut = new TokenService(_tokenSettings);
+         var tokenOptions = ServiceTestFactory.GetDefaultTokenOptions();
+         var sut = new TokenService(tokenOptions);
          var tokenCreatedUTC = DateTime.UtcNow;
-         var expectedTokenExpiration = tokenCreatedUTC.AddMinutes(_tokenSettings.Value.SessionTokenLifetimeMinutes);
+         var expectedTokenExpiration = tokenCreatedUTC.AddMinutes(tokenOptions.Value.SessionTokenLifetimeMinutes);
          var tokenData = sut.NewSessionToken(userId);
 
          Assert.IsNotNull(tokenData);
@@ -107,9 +88,10 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       {
          var userId = Guid.NewGuid();
 
-         var sut = new TokenService(_tokenSettings);
+         var tokenOptions = ServiceTestFactory.GetDefaultTokenOptions();
+         var sut = new TokenService(tokenOptions);
          var tokenCreatedUTC = DateTime.UtcNow;
-         var expectedTokenExpiration = tokenCreatedUTC.AddDays(_tokenSettings.Value.DeviceTokenLifetimeDays);
+         var expectedTokenExpiration = tokenCreatedUTC.AddDays(tokenOptions.Value.DeviceTokenLifetimeDays);
          var tokenData = sut.NewDeviceToken(userId);
 
          Assert.IsNotNull(tokenData);

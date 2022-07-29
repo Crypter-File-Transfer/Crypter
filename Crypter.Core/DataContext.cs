@@ -101,6 +101,16 @@ namespace Crypter.Core
             .HasColumnType("citext");
 
          builder.Entity<UserEntity>()
+            .Property(x => x.ServerPasswordVersion)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+         builder.Entity<UserEntity>()
+            .Property(x => x.ClientPasswordVersion)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+         builder.Entity<UserEntity>()
             .HasMany(x => x.Contacts)
             .WithOne(x => x.Owner);
 

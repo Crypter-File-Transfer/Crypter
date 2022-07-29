@@ -150,6 +150,7 @@ namespace Crypter.Web.Shared
             LoginError.InvalidUsername
                or LoginError.InvalidPassword => "Invalid username or password",
             LoginError.ExcessiveFailedLoginAttempts => "Too many failed login attempts. Try again later.",
+            LoginError.InvalidPasswordVersion => "Wrong password version"
          };
 #pragma warning restore CS8524
       }

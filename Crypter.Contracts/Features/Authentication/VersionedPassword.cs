@@ -24,12 +24,27 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
+using System.Text.Json.Serialization;
+
 namespace Crypter.Contracts.Features.Authentication
 {
-   public enum TestPasswordError
+   public class VersionedPassword
    {
-      UnknownError,
-      InvalidPassword,
-      PasswordNeedsMigration
+      public string Password { get; init; }
+      public int Version { get; init; }
+
+      [JsonConstructor]
+      public VersionedPassword(string password, int version)
+      {
+         Password = password;
+         Version = version;
+      }
+
+      public VersionedPassword(AuthenticationPassword password, int version)
+      {
+         Password = password.Value;
+         Version = version;
+      }
    }
 }
