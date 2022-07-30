@@ -33,7 +33,6 @@ using Crypter.Common.Models;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication;
-using Crypter.CryptoLib.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,8 +45,7 @@ namespace Crypter.ClientServices.Services
       where TStorageLocation : Enum
    {
       private readonly ICrypterApiService _crypterApiService;
-      private readonly IPBKDFService _pbkdfService;
-      private readonly IReadOnlyDictionary<int, PasswordVersion> _passwordVersions;
+      private readonly IClientPBKDFService _clientPbkdfService;
 
       // Repositories
       private readonly IDeviceRepository<TStorageLocation> _deviceRepository;
@@ -62,7 +60,6 @@ namespace Crypter.ClientServices.Services
 
       // Configuration
       private readonly IReadOnlyDictionary<bool, TokenType> _trustDeviceRefreshTokenTypeMap;
-      private readonly IReadOnlyDictionary<int, Func<Username, Password, AuthenticationPassword>> _passwordHashProviderVersionMap;
 
       // Private state
       private bool _isInitialized = false;
@@ -73,15 +70,13 @@ namespace Crypter.ClientServices.Services
 
       public UserSessionService(
          ICrypterApiService crypterApiService,
-         IPBKDFService pbkdfService,
-         List<PasswordVersion> passwordVersions,
+         IClientPBKDFService clientPbkdfService,
          IUserSessionRepository userSessionRepository,
          ITokenRepository tokenRepository,
          IDeviceRepository<TStorageLocation> deviceRepository)
       {
          _crypterApiService = crypterApiService;
-         _pbkdfService = pbkdfService;
-         _passwordVersions = passwordVersions.ToDictionary(x => x.Version);
+         _clientPbkdfService = clientPbkdfService;
          _userSessionRepository = userSessionRepository;
          _tokenRepository = tokenRepository;
          _deviceRepository = deviceRepository;
@@ -90,12 +85,6 @@ namespace Crypter.ClientServices.Services
          {
             { false, TokenType.Session },
             { true, TokenType.Device }
-         };
-
-         _passwordHashProviderVersionMap = new Dictionary<int, Func<Username, Password, AuthenticationPassword>>
-         {
-            { 0, (Username username, Password password) => CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password) },
-            { 1, (Username username, Password password) => _pbkdfService.DeriveUserAuthenticationPassword(username, password, _passwordVersions[1].Iterations) }
          };
 
          _deviceRepository.InitializedEventHandler += OnDeviceRepositoryInitializedAsync;
@@ -149,9 +138,8 @@ namespace Crypter.ClientServices.Services
 
       public async Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser)
       {
-         int latestPasswordVersion = _passwordVersions.Keys.Max();
-         AuthenticationPassword authPassword = _passwordHashProviderVersionMap[latestPasswordVersion](username, password);
-         var versionedPasswords = new List<VersionedPassword> { new VersionedPassword(authPassword, latestPasswordVersion) };
+         AuthenticationPassword authPassword = _clientPbkdfService.DeriveUserAuthenticationPassword(username, password, _clientPbkdfService.CurrentPasswordVersion);
+         var versionedPasswords = new List<VersionedPassword> { new VersionedPassword(authPassword, _clientPbkdfService.CurrentPasswordVersion) };
          var loginTask = from loginResponse in LoginRecursiveAsync(username, password, versionedPasswords, _trustDeviceRefreshTokenTypeMap[rememberUser])
                          from unit0 in Either<LoginError, Unit>.FromRightAsync(OnSuccessfulLoginAsync(loginResponse, rememberUser))
                          select loginResponse;
@@ -168,11 +156,11 @@ namespace Crypter.ClientServices.Services
             .MatchAsync(
             async error =>
             {
-               int minPasswordVersion = versionedPasswords.Min(x => x.Version);
-               if (error == LoginError.InvalidPasswordVersion && minPasswordVersion > 0)
+               int oldestPasswordVersionAttempted = versionedPasswords.Min(x => x.Version);
+               if (error == LoginError.InvalidPasswordVersion && oldestPasswordVersionAttempted > 0)
                {
-                  int nextLowestPasswordVersion = minPasswordVersion - 1;
-                  AuthenticationPassword authPassword = _passwordHashProviderVersionMap[nextLowestPasswordVersion](username, password);
+                  int nextLowestPasswordVersion = oldestPasswordVersionAttempted - 1;
+                  AuthenticationPassword authPassword = _clientPbkdfService.DeriveUserAuthenticationPassword(username, password, nextLowestPasswordVersion);
                   versionedPasswords.Add(new VersionedPassword(authPassword, nextLowestPasswordVersion));
                   return await LoginRecursiveAsync(username, password, versionedPasswords, refreshTokenType);
                }
@@ -264,8 +252,7 @@ namespace Crypter.ClientServices.Services
 
       private Task<Either<TestPasswordError, TestPasswordResponse>> SendTestPasswordRequestAsync(Username username, Password password)
       {
-         int passwordVersion = _passwordVersions.Keys.Max();
-         AuthenticationPassword authPassword = _passwordHashProviderVersionMap[passwordVersion](username, password);
+         AuthenticationPassword authPassword = _clientPbkdfService.DeriveUserAuthenticationPassword(username, password, _clientPbkdfService.CurrentPasswordVersion);
          TestPasswordRequest testRequest = new TestPasswordRequest(username, authPassword);
          return _crypterApiService.TestPasswordAsync(testRequest);
       }
