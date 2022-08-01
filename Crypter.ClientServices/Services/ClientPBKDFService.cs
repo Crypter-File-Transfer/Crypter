@@ -24,48 +24,89 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Models;
 using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.Authentication;
+using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
-namespace Crypter.CryptoLib.Services
+namespace Crypter.ClientServices.Services
 {
-   public interface IPBKDFService
+   public static class ClientPBKDFServiceExtensions
    {
-      byte[] DeriveUserCredentialKey(Username username, Password password, int iterations);
-      AuthenticationPassword DeriveUserAuthenticationPassword(Username username, Password password, int iterations);
+      public static void ClientPBKDFServiceService(this IServiceCollection services, Action<List<PasswordVersion>> settings)
+      {
+         if (settings is null)
+         {
+            throw new ArgumentNullException(nameof(settings));
+         }
+
+         services.Configure(settings);
+         services.TryAddSingleton<IClientPBKDFService, ClientPBKDFService>();
+      }
    }
 
    /// <summary>
    /// https://stackoverflow.com/a/34990110
    /// </summary>
-   public class PBKDFService
+   public class ClientPBKDFService : IClientPBKDFService
    {
+      private readonly IReadOnlyDictionary<int, PasswordVersion> _passwordVersions;
       private readonly IDigest _digest;
 
       public const int CredentialKeySize = 256;
       public const int AuthenticationPasswordSize = 512;
 
-      public PBKDFService()
+      public int CurrentPasswordVersion { get; init; }
+
+      public ClientPBKDFService(IOptions<List<PasswordVersion>> settings)
       {
+         _passwordVersions = settings.Value.ToDictionary(x => x.Version);
          _digest = new Sha512Digest();
+
+         CurrentPasswordVersion = _passwordVersions.Keys.Max();
       }
 
-      public byte[] DeriveUserCredentialKey(Username username, Password password, int iterations)
+      public byte[] DeriveUserCredentialKey(Username username, Password password, int passwordVersion)
       {
-         return DeriveHashFromCredentials(username, password, iterations, CredentialKeySize);
+         return passwordVersion switch
+         {
+            0 =>
+#pragma warning disable CS0618
+               UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, password),
+#pragma warning restore CS0618
+            1 => DeriveHashFromCredentials(username, password, _passwordVersions[passwordVersion].Iterations, CredentialKeySize),
+            _ => throw new NotImplementedException()
+         };
       }
 
-      public AuthenticationPassword DeriveUserAuthenticationPassword(Username username, Password password, int iterations)
+      public AuthenticationPassword DeriveUserAuthenticationPassword(Username username, Password password, int passwordVersion)
       {
-         byte[] hash = DeriveHashFromCredentials(username, password, iterations, AuthenticationPasswordSize);
-         return AuthenticationPassword.From(Convert.ToBase64String(hash));
+         switch (passwordVersion)
+         {
+            case 0:
+#pragma warning disable CS0618
+               return UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
+#pragma warning restore CS0618
+            case 1:
+               byte[] hash = DeriveHashFromCredentials(username, password, _passwordVersions[passwordVersion].Iterations, AuthenticationPasswordSize);
+               return AuthenticationPassword.From(Convert.ToBase64String(hash));
+            default:
+               throw new NotImplementedException();
+         }
       }
 
       public byte[] DeriveHashFromCredentials(Username username, Password password, int iterations, int keySize)

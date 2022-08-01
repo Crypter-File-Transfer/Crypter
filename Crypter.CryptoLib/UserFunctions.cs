@@ -43,6 +43,7 @@ namespace Crypter.CryptoLib
       /// The result of this method gets used as the user's password during authentication requests.
       /// The reason for doing this is to keep the user's real password a secret from even our own API.
       /// </remarks>
+      [Obsolete("Use PBKDFService")]
       public static AuthenticationPassword DeriveAuthenticationPasswordFromUserCredentials(Username username, Password password)
       {
          var digestor = new Crypto.SHA(SHAFunction.SHA512);
@@ -60,6 +61,7 @@ namespace Crypter.CryptoLib
       /// <param name="username">Username will be lowercased within the method.</param>
       /// <param name="password"></param>
       /// <returns>Array of 32 bytes.</returns>
+      [Obsolete("Use PBKDFService")]
       public static byte[] DeriveSymmetricKeyFromUserCredentials(Username username, Password password)
       {
          var keyDigestor = new Crypto.SHA(SHAFunction.SHA256);

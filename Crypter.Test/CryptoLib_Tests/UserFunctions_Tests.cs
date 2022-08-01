@@ -57,7 +57,9 @@ namespace Crypter.Test.CryptoLib_Tests
             0xb7, 0xa1, 0xcd, 0xda, 0x9c, 0x42, 0xc8, 0xe2
          };
 
+#pragma warning disable CS0618
          AuthenticationPassword authPassword = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
+#pragma warning restore CS0618
          Assert.AreEqual(knownDigest, Convert.FromBase64String(authPassword.Value));
       }
 
@@ -68,8 +70,11 @@ namespace Crypter.Test.CryptoLib_Tests
          Username usernameUppercase = Username.From("USERNAME");
          Password password = Password.From("P@ssw0rd?");
 
+#pragma warning disable CS0618
          AuthenticationPassword lowercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(usernameLowercase, password);
          AuthenticationPassword uppercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(usernameUppercase, password);
+#pragma warning restore CS0618
+
          Assert.AreEqual(lowercaseDigest.Value, uppercaseDigest.Value);
       }
 
@@ -80,8 +85,10 @@ namespace Crypter.Test.CryptoLib_Tests
          Password passwordLowercase = Password.From("password");
          Password passwordUppercase = Password.From("PASSWORD");
 
+#pragma warning disable CS0618
          AuthenticationPassword lowercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, passwordLowercase);
          AuthenticationPassword uppercaseDigest = UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, passwordUppercase);
+#pragma warning restore CS0618
          Assert.AreNotEqual(lowercaseDigest.Value, uppercaseDigest.Value);
       }
 
@@ -99,7 +106,9 @@ namespace Crypter.Test.CryptoLib_Tests
             0xfb, 0x91, 0x38, 0x41, 0x2d, 0xa4, 0xde, 0x52
          };
 
+#pragma warning disable CS0618
          byte[] key = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, password);
+#pragma warning restore CS0618
          Assert.AreEqual(knownKey, key);
       }
 
@@ -110,8 +119,10 @@ namespace Crypter.Test.CryptoLib_Tests
          Username usernameUppercase = Username.From("GIMLI");
          Password password = Password.From("TheDwarf");
 
+#pragma warning disable CS0618
          byte[] lowercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(usernameLowercase, password);
          byte[] uppercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(usernameUppercase, password);
+#pragma warning restore CS0618
          Assert.AreEqual(lowercaseKey, uppercaseKey);
       }
 
@@ -122,8 +133,10 @@ namespace Crypter.Test.CryptoLib_Tests
          Password lowercasePassword = Password.From("son_of_arathorn");
          Password uppercasePassword = Password.From("SON_OF_ARATHORN");
 
+#pragma warning disable CS0618
          byte[] lowercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, lowercasePassword);
          byte[] uppercaseKey = UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, uppercasePassword);
+#pragma warning restore CS0618
          Assert.AreNotEqual(lowercaseKey, uppercaseKey);
       }
    }

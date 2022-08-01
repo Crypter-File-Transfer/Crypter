@@ -24,21 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Services;
+using Crypter.Common.Models;
 using Crypter.Common.Primitives;
-using Crypter.CryptoLib.Services;
+using Microsoft.Extensions.Options;
 using NUnit.Framework;
+using System.Collections.Generic;
 
-namespace Crypter.Test.CryptoLib_Tests.Services_Tests
+namespace Crypter.Test.ClientServices_Tests
 {
    [TestFixture]
    public class PBKDFService_Tests
    {
-      private PBKDFService _sut;
+      private ClientPBKDFService _sut;
 
       [OneTimeSetUp]
       public void SetupOnce()
       {
-         _sut = new PBKDFService();
+         List<PasswordVersion> passwordSettings = new List<PasswordVersion>
+         {
+            new PasswordVersion
+            {
+               Version = 1,
+               Algorithm = "foo",
+               Iterations = 1
+            }
+         };
+         IOptions<List<PasswordVersion>> passwordOptions = Options.Create(passwordSettings);
+
+         _sut = new ClientPBKDFService(passwordOptions);
       }
 
       [Test]
@@ -77,8 +91,8 @@ namespace Crypter.Test.CryptoLib_Tests.Services_Tests
          Username username = Username.From("jack");
          Password password = Password.From("test");
 
-         byte[] hashOneRound = _sut.DeriveHashFromCredentials(username, password, 1, PBKDFService.CredentialKeySize);
-         byte[] hashTwoRounds = _sut.DeriveHashFromCredentials(username, password, 2, PBKDFService.CredentialKeySize);
+         byte[] hashOneRound = _sut.DeriveHashFromCredentials(username, password, 1, ClientPBKDFService.CredentialKeySize);
+         byte[] hashTwoRounds = _sut.DeriveHashFromCredentials(username, password, 2, ClientPBKDFService.CredentialKeySize);
          Assert.AreNotEqual(hashOneRound, hashTwoRounds);
       }
 
@@ -89,8 +103,8 @@ namespace Crypter.Test.CryptoLib_Tests.Services_Tests
          Username usernameUppercase = Username.From("JACK");
          Password password = Password.From("test");
 
-         byte[] hashUppercase = _sut.DeriveHashFromCredentials(usernameLowercase, password, 1, PBKDFService.CredentialKeySize);
-         byte[] hashLowercase = _sut.DeriveHashFromCredentials(usernameUppercase, password, 1, PBKDFService.CredentialKeySize);
+         byte[] hashUppercase = _sut.DeriveHashFromCredentials(usernameLowercase, password, 1, ClientPBKDFService.CredentialKeySize);
+         byte[] hashLowercase = _sut.DeriveHashFromCredentials(usernameUppercase, password, 1, ClientPBKDFService.CredentialKeySize);
          Assert.AreEqual(hashUppercase, hashLowercase);
       }
 
@@ -101,8 +115,8 @@ namespace Crypter.Test.CryptoLib_Tests.Services_Tests
          Username usernameTwo = Username.From("not-jack");
          Password password = Password.From("test");
 
-         byte[] hashUsernameOne = _sut.DeriveHashFromCredentials(usernameOne, password, 1, PBKDFService.CredentialKeySize);
-         byte[] hashUsernameTwo = _sut.DeriveHashFromCredentials(usernameTwo, password, 1, PBKDFService.CredentialKeySize);
+         byte[] hashUsernameOne = _sut.DeriveHashFromCredentials(usernameOne, password, 1, ClientPBKDFService.CredentialKeySize);
+         byte[] hashUsernameTwo = _sut.DeriveHashFromCredentials(usernameTwo, password, 1, ClientPBKDFService.CredentialKeySize);
          Assert.AreNotEqual(hashUsernameOne, hashUsernameTwo);
       }
 
@@ -113,8 +127,8 @@ namespace Crypter.Test.CryptoLib_Tests.Services_Tests
          Password passwordOne = Password.From("test");
          Password passwordTwo = Password.From("TEST");
 
-         byte[] hashPasswordOne = _sut.DeriveHashFromCredentials(username, passwordOne, 1, PBKDFService.CredentialKeySize);
-         byte[] hashPasswordTwo = _sut.DeriveHashFromCredentials(username, passwordTwo, 1, PBKDFService.CredentialKeySize);
+         byte[] hashPasswordOne = _sut.DeriveHashFromCredentials(username, passwordOne, 1, ClientPBKDFService.CredentialKeySize);
+         byte[] hashPasswordTwo = _sut.DeriveHashFromCredentials(username, passwordTwo, 1, ClientPBKDFService.CredentialKeySize);
          Assert.AreNotEqual(hashPasswordOne, hashPasswordTwo);
       }
    }
