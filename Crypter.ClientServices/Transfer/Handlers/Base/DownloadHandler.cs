@@ -30,7 +30,6 @@ using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Enums;
 using Crypter.CryptoLib.Services;
 using Org.BouncyCastle.Crypto;
 using System;
@@ -106,8 +105,6 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
 
          var senderX25519Public = KeyConversion.ConvertX25519PublicKeyFromPEM(senderX25519PublicKey);
          (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(recipientKeyPair, senderX25519Public);
-         var digestor = new SHA(SHAFunction.SHA256);
-         digestor.BlockUpdate(sendKey);
          var serverKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
 
          return (receiveKey, serverKey);

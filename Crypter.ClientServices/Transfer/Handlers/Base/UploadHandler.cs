@@ -117,8 +117,6 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
          var senderKeyPair = new AsymmetricCipherKeyPair(senderX25519PublicDecoded, senderX25519PrivateDecoded);
          var recipientX25519PublicDecoded = KeyConversion.ConvertX25519PublicKeyFromPEM(recipientX25519PublicKey);
          (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(senderKeyPair, recipientX25519PublicDecoded);
-         var digestor = new SHA(SHAFunction.SHA256);
-         digestor.BlockUpdate(sendKey);
          var serverKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
 
          return (sendKey, serverKey);

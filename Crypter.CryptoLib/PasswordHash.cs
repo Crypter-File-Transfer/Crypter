@@ -24,52 +24,47 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Enums;
+using System.Text;
 
-namespace Crypter.CryptoLib.Services
+namespace Crypter.CryptoLib
 {
-   public interface ISimpleHashService
+   /// <summary>
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/PasswordHash.cs
+   /// </summary>
+   public static class PasswordHash
    {
-      byte[] DigestSha256(byte[] data);
-      byte[] DigestSha512(byte[] data);
-      bool CompareDigests(byte[] expected, byte[] actual);
-   }
-
-   public class SimpleHashService : ISimpleHashService
-   {
-      public byte[] DigestSha256(byte[] data)
+      public enum Strength
       {
-         return DigestBase(SHAFunction.SHA256, data);
+         Interactive = 0,
+         Medium = 1,
+         Moderate = 2,
+         Sensitive = 3
       }
 
-      public byte[] DigestSha512(byte[] data)
+      public static byte[] ArgonGenerateSalt()
       {
-         return DigestBase(SHAFunction.SHA512, data);
+         return Sodium.PasswordHash.ArgonGenerateSalt();
       }
 
-      public bool CompareDigests(byte[] expected, byte[] actual)
+      public static byte[] ArgonDeriveSalt(string fromValue)
       {
-         if (expected.Length != actual.Length)
-         {
-            return false;
-         }
-
-         for (int i = 0; i < actual.Length; i++)
-         {
-            if (!actual[i].Equals(expected[i]))
-            {
-               return false;
-            }
-         }
-         return true;
+         return GenericHash.Hash(fromValue, 16);
       }
 
-      private static byte[] DigestBase(SHAFunction function, byte[] data)
+      public static byte[] ArgonHash(byte[] password, byte[] salt, long outputLength, Strength strength)
       {
-         var digestor = new SHA(function);
-         digestor.BlockUpdate(data);
-         return digestor.GetDigest();
+         return Sodium.PasswordHash.ArgonHashBinary(password, salt, (Sodium.PasswordHash.StrengthArgon)strength, outputLength, Sodium.PasswordHash.ArgonAlgorithm.Argon_2ID13);
+      }
+
+      public static byte[] ArgonHash(string password, byte[] salt, long outputLength, Strength strength)
+      {
+         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+         return ArgonHash(passwordBytes, salt, outputLength, strength);
+      }
+
+      public static bool ArgonVerify(byte[] password, byte[] hash)
+      {
+         return Sodium.PasswordHash.ArgonHashStringVerify(hash, password);
       }
    }
 }

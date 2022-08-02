@@ -27,9 +27,7 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Models;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
 using Crypter.CryptoLib;
-using Crypter.CryptoLib.Crypto;
 using Crypter.CryptoLib.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -113,10 +111,7 @@ namespace Crypter.ClientServices.Services
       {
          char[] passwordChars = password.Value.ToCharArray();
          byte[] pkcs5CompliantPassword = PbeParametersGenerator.Pkcs5PasswordToBytes(passwordChars);
-
-         SHA digestor = new SHA(SHAFunction.SHA512);
-         digestor.BlockUpdate(Encoding.UTF8.GetBytes(username.Value.ToLower()));
-         byte[] usernameSalt = digestor.GetDigest();
+         byte[] usernameSalt = CryptoHash.Sha512(username.Value.ToLower());
 
          Pkcs5S2ParametersGenerator generator = new Pkcs5S2ParametersGenerator(_digest);
          generator.Init(pkcs5CompliantPassword, usernameSalt, iterations);
