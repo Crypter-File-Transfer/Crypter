@@ -36,6 +36,7 @@ namespace Crypter.Web.Shared.Transfer
 {
    public partial class DownloadTransferBase : ComponentBase
    {
+      /*
       [Inject]
       protected IUserKeysService UserKeysService { get; set; }
 
@@ -81,5 +82,6 @@ namespace Crypter.Web.Shared.Transfer
 
          return Maybe<PEMString>.None;
       }
+      */
    }
 }

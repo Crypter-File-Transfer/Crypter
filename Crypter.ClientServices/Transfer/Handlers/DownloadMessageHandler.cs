@@ -30,13 +30,13 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
-using Crypter.CryptoLib.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+/*
 namespace Crypter.ClientServices.Transfer.Handlers
 {
    public class DownloadMessageHandler : DownloadHandler
@@ -121,3 +121,4 @@ namespace Crypter.ClientServices.Transfer.Handlers
       }
    }
 }
+*/

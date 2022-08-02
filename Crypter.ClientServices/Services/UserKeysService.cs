@@ -32,36 +32,26 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Keys;
-using Crypter.CryptoLib.Services;
 using System;
 using System.Text;
 using System.Threading.Tasks;
 
+/*
 namespace Crypter.ClientServices.Services
 {
    public class UserKeysService : IUserKeysService, IDisposable
    {
       private readonly ICrypterApiService _crypterApiService;
-      private readonly ISimpleEncryptionService _simpleEncryptionService;
       private readonly IUserKeysRepository _userKeysRepository;
       private readonly IUserSessionService _userSessionService;
-      private readonly IClientPBKDFService _clientPbkdfService;
 
-      public Maybe<PEMString> Ed25519PrivateKey { get; protected set; }
-      public Maybe<PEMString> X25519PrivateKey { get; protected set; }
+      public Maybe<byte[]> PrivateKey { get; protected set; }
 
-      public UserKeysService(
-         ICrypterApiService crypterApiService,
-         ISimpleEncryptionService simpleEncryptionService,
-         IUserKeysRepository userKeysRepository,
-         IUserSessionService userSessionService,
-         IClientPBKDFService clientPBKDFService)
+      public UserKeysService(ICrypterApiService crypterApiService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService)
       {
          _crypterApiService = crypterApiService;
-         _simpleEncryptionService = simpleEncryptionService;
          _userKeysRepository = userKeysRepository;
          _userSessionService = userSessionService;
-         _clientPbkdfService = clientPBKDFService;
 
          _userSessionService.ServiceInitializedEventHandler += OnUserSessionServiceInitialized;
          _userSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
@@ -79,11 +69,11 @@ namespace Crypter.ClientServices.Services
             };
          }
 
-         Task<Maybe<byte[]>> HandleMasterKeyDownloadErrorAsync(GetMasterKeyError error, byte[] userCredentialKey, Username username, AuthenticationPassword password)
+         Task<Maybe<byte[]>> HandleMasterKeyDownloadErrorAsync(GetUserSeedError error, byte[] userCredentialKey, Username username, AuthenticationPassword password)
          {
             return error switch
             {
-               GetMasterKeyError.NotFound => UploadNewMasterKeyAsync(userCredentialKey, username, password),
+               GetUserSeedError.NotFound => UploadNewMasterKeyAsync(userCredentialKey, username, password),
                _ => Maybe<byte[]>.None.AsTask()
             };
          }
@@ -164,7 +154,7 @@ namespace Crypter.ClientServices.Services
             });
       }
 
-      private Maybe<byte[]> DecryptMasterKey(GetMasterKeyResponse encryptedKeyInfo, byte[] userSymmetricKey)
+      private Maybe<byte[]> DecryptMasterKey(GetUserSeedResponse encryptedKeyInfo, byte[] userSymmetricKey)
       {
          byte[] encryptedKey = Convert.FromBase64String(encryptedKeyInfo.EncryptedKey);
          byte[] iv = Convert.FromBase64String(encryptedKeyInfo.ClientIV);
@@ -278,3 +268,4 @@ namespace Crypter.ClientServices.Services
       }
    }
 }
+*/

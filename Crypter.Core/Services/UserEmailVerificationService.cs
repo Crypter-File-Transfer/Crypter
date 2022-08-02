@@ -29,8 +29,6 @@ using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Settings;
 using Crypter.Core.Entities;
 using Crypter.Core.Models;
-using Crypter.CryptoLib;
-using Crypter.CryptoLib.Crypto;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -38,6 +36,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+/*
 namespace Crypter.Core.Services
 {
    public interface IUserEmailVerificationService
@@ -141,3 +140,4 @@ namespace Crypter.Core.Services
       }
    }
 }
+*/

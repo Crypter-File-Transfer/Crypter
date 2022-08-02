@@ -79,12 +79,12 @@ namespace Crypter.Web.Pages
             UserEd25519PublicKey = PEMString.From(
                Encoding.UTF8.GetString(Convert.FromBase64String(x.Result.PublicDSAKey)));
             UserX25519PublicKey = PEMString.From(
-               Encoding.UTF8.GetString(Convert.FromBase64String(x.Result.PublicDHKey)));
+               Encoding.UTF8.GetString(Convert.FromBase64String(x.Result.PublicKey)));
          });
 
          IsProfileAvailable = response.Match(
             false,
-            right => !string.IsNullOrEmpty(right.Result.PublicDHKey) && !string.IsNullOrEmpty(right.Result.PublicDSAKey));
+            right => !string.IsNullOrEmpty(right.Result.PublicKey) && !string.IsNullOrEmpty(right.Result.PublicDSAKey));
       }
    }
 }

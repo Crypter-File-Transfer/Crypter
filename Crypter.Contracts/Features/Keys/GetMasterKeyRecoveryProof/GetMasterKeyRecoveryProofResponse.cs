@@ -26,11 +26,11 @@
 
 namespace Crypter.Contracts.Features.Keys
 {
-   public class GetMasterKeyRecoveryProofResponse
+   public class GetUserSeedRecoveryProofResponse
    {
       public string RecoveryProof { get; init; }
 
-      public GetMasterKeyRecoveryProofResponse(string recoveryProof)
+      public GetUserSeedRecoveryProofResponse(string recoveryProof)
       {
          RecoveryProof = recoveryProof;
       }

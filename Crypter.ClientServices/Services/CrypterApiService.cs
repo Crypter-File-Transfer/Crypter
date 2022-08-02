@@ -249,12 +249,12 @@ namespace Crypter.ClientServices.Services
 
       #region Keys
 
-      public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync()
+      public Task<Either<GetUserSeedError, GetUserSeedResponse>> GetMasterKeyAsync()
       {
          string url = $"{_baseApiUrl}/keys/master";
-         return from response in Either<GetMasterKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetMasterKeyResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpService.GetAsync<GetMasterKeyResponse>(url))
-                from errorableResponse in ExtractErrorCode<GetMasterKeyError, GetMasterKeyResponse>(response.data).AsTask()
+         return from response in Either<GetUserSeedError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetUserSeedResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.GetAsync<GetUserSeedResponse>(url))
+                from errorableResponse in ExtractErrorCode<GetUserSeedError, GetUserSeedResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 
@@ -267,12 +267,12 @@ namespace Crypter.ClientServices.Services
                 select errorableResponse;
       }
 
-      public Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
+      public Task<Either<GetUserSeedRecoveryProofError, GetUserSeedRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
       {
          string url = $"{_baseApiUrl}/keys/master/recovery-proof";
-         return from response in Either<GetMasterKeyRecoveryProofError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetMasterKeyRecoveryProofResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpService.PostAsync<GetMasterKeyRecoveryProofRequest, GetMasterKeyRecoveryProofResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>(response.data).AsTask()
+         return from response in Either<GetUserSeedRecoveryProofError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetUserSeedRecoveryProofResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.PostAsync<GetMasterKeyRecoveryProofRequest, GetUserSeedRecoveryProofResponse>(url, request))
+                from errorableResponse in ExtractErrorCode<GetUserSeedRecoveryProofError, GetUserSeedRecoveryProofResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 

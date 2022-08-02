@@ -24,12 +24,29 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.CryptoLib.Enums
+using System;
+
+namespace Crypter.Core.Entities
 {
-   public enum AesKeySize
+   public class UserSeedEntity
    {
-      _128 = 128,
-      _192 = 192,
-      _256 = 256
+      public Guid Owner { get; set; }
+      public string Seed { get; set; }
+      public string Nonce { get; set; }
+      public string RecoveryProof { get; set; }
+      public DateTime Updated { get; set; }
+      public DateTime Created { get; set; }
+
+      public UserEntity User { get; set; }
+
+      public UserSeedEntity(Guid owner, string seed, string nonce, string recoveryProof, DateTime updated, DateTime created)
+      {
+         Owner = owner;
+         Seed = seed;
+         Nonce = nonce;
+         RecoveryProof = recoveryProof;
+         Updated = updated;
+         Created = created;
+      }
    }
 }

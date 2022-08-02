@@ -31,7 +31,6 @@ using Crypter.ClientServices.Services;
 using Crypter.ClientServices.Transfer;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Models;
-using Crypter.CryptoLib.Services;
 using Crypter.Web;
 using Crypter.Web.Repositories;
 using Crypter.Web.Services;
@@ -76,6 +75,7 @@ builder.Services.AddHttpClient<ICrypterAuthenticatedHttpService, CrypterAuthenti
    httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
 });
 
+/*
 builder.Services
    .AddSingleton<IDeviceRepository<BrowserStorageLocation>, BrowserRepository>()
    .AddSingleton<ITokenRepository, BrowserTokenRepository>()
@@ -91,6 +91,7 @@ builder.Services
    .AddSingleton<IBrowserDownloadFileService, BrowserDownloadFileService>()
    .AddSingleton<TransferHandlerFactory>()
    .AddSingleton<Func<ICrypterApiService>>(sp => () => sp.GetService<ICrypterApiService>());
+*/
 
 var host = builder.Build();
 

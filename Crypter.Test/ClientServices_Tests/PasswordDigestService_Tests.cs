@@ -31,12 +31,13 @@ using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using System.Collections.Generic;
 
+/*
 namespace Crypter.Test.ClientServices_Tests
 {
    [TestFixture]
-   public class PBKDFService_Tests
+   public class PasswordDigestService_Tests
    {
-      private ClientPBKDFService _sut;
+      private PasswordDigestService _sut;
 
       [OneTimeSetUp]
       public void SetupOnce()
@@ -52,7 +53,7 @@ namespace Crypter.Test.ClientServices_Tests
          };
          IOptions<List<PasswordVersion>> passwordOptions = Options.Create(passwordSettings);
 
-         _sut = new ClientPBKDFService(passwordOptions);
+         _sut = new PasswordDigestService(passwordOptions);
       }
 
       [Test]
@@ -133,3 +134,4 @@ namespace Crypter.Test.ClientServices_Tests
       }
    }
 }
+*/

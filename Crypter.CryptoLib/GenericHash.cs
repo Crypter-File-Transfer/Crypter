@@ -24,13 +24,24 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.CryptoLib.Enums
+using System.Text;
+
+namespace Crypter.CryptoLib
 {
-    public enum SHAFunction
-    {
-        SHA1,
-        SHA224,
-        SHA256,
-        SHA512
-    }
+   /// <summary>
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/GenericHash.cs
+   /// </summary>
+   public static class GenericHash
+   {
+      public static byte[] Hash(byte[] data, int outputLength)
+      {
+         return Sodium.GenericHash.Hash(data, null, outputLength);
+      }
+
+      public static byte[] Hash(string data, int outputLength)
+      {
+         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+         return Hash(dataBytes, outputLength);
+      }
+   }
 }

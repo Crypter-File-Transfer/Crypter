@@ -24,15 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
-
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.CryptoLib.Models
 {
-   public interface IClientPBKDFService
+   public class AsymmetricKeyPair
    {
-      int CurrentPasswordVersion { get; }
-      byte[] DeriveUserCredentialKey(Username username, Password password, int passwordVersion);
-      AuthenticationPassword DeriveUserAuthenticationPassword(Username username, Password password, int passwordVersion);
+      public byte[] PrivateKey { get; init; }
+      public byte[] PublicKey { get; init; }
+
+      public AsymmetricKeyPair(byte[] privateKey, byte[] publicKey)
+      {
+         PrivateKey = privateKey;
+         PublicKey = publicKey;
+      }
    }
 }

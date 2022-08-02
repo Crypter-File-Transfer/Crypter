@@ -39,13 +39,13 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+/*
 namespace Crypter.ClientServices.Services
 {
    public class UserSessionService<TStorageLocation> : IUserSessionService, IDisposable
       where TStorageLocation : Enum
    {
       private readonly ICrypterApiService _crypterApiService;
-      private readonly IClientPBKDFService _clientPbkdfService;
 
       // Repositories
       private readonly IDeviceRepository<TStorageLocation> _deviceRepository;
@@ -70,13 +70,11 @@ namespace Crypter.ClientServices.Services
 
       public UserSessionService(
          ICrypterApiService crypterApiService,
-         IClientPBKDFService clientPbkdfService,
          IUserSessionRepository userSessionRepository,
          ITokenRepository tokenRepository,
          IDeviceRepository<TStorageLocation> deviceRepository)
       {
          _crypterApiService = crypterApiService;
-         _clientPbkdfService = clientPbkdfService;
          _userSessionRepository = userSessionRepository;
          _tokenRepository = tokenRepository;
          _deviceRepository = deviceRepository;
@@ -279,3 +277,4 @@ namespace Crypter.ClientServices.Services
       }
    }
 }
+*/

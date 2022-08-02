@@ -32,8 +32,6 @@ using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Common.Streams;
 using Crypter.Contracts.Features.Transfer;
-using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -41,6 +39,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+/*
 namespace Crypter.ClientServices.Transfer.Handlers
 {
    public class UploadFileHandler : UploadHandler, IDisposable
@@ -192,3 +191,4 @@ namespace Crypter.ClientServices.Transfer.Handlers
       }
    }
 }
+*/

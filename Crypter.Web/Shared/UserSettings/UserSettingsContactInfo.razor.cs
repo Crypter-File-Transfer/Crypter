@@ -33,6 +33,7 @@ namespace Crypter.Web.Shared.UserSettings
 {
    public partial class UserSettingsContactInfoBase : ComponentBase
    {
+      /*
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
 
@@ -140,5 +141,6 @@ namespace Crypter.Web.Shared.UserSettings
                break;
          }
       }
+      */
    }
 }

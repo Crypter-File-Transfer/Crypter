@@ -24,12 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Keys
+namespace Crypter.CryptoLib.Models
 {
-   public enum GetUserSeedRecoveryProofError
+   public class EncryptedBox
    {
-      UnknownError,
-      NotFound,
-      InvalidCredentials
+      public byte[] Nonce { get; init; }
+      public byte[] Ciphertext { get; init; }
+
+      public EncryptedBox(byte[] nonce, byte[] ciphertext)
+      {
+         Nonce = nonce;
+         Ciphertext = ciphertext;
+      }
    }
 }

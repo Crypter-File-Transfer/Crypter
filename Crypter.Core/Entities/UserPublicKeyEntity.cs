@@ -24,12 +24,25 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Contracts.Features.Keys
+using System;
+
+namespace Crypter.Core.Entities
 {
-   public enum GetUserSeedRecoveryProofError
+   public class UserPublicKeyEntity
    {
-      UnknownError,
-      NotFound,
-      InvalidCredentials
+      public Guid Owner { get; set; }
+      public string Key { get; set; }
+      public DateTime Updated { get; set; }
+      public DateTime Created { get; set; }
+
+      public UserEntity User { get; set; }
+
+      public UserPublicKeyEntity(Guid owner, string key, DateTime updated, DateTime created)
+      {
+         Owner = owner;
+         Key = key;
+         Updated = updated;
+         Created = created;
+      }
    }
 }

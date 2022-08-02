@@ -15,7 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
-    <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
     <ProjectReference Include="..\Crypter.Web\Crypter.Web.csproj" />
   </ItemGroup>
 
@@ -27,15 +26,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="ClientServices_Tests\Assets\WindowsCodecsRaw.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="CryptoLib_Tests\Assets\Alice_ECDH_Key.pem">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="CryptoLib_Tests\Assets\Bob_ECDH_Key.pem">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="CryptoLib_Tests\Assets\clarity_by_sigi_sagi.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

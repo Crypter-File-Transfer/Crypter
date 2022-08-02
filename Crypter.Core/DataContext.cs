@@ -47,8 +47,7 @@ namespace Crypter.Core
 
       public DbSet<UserEntity> Users { get; set; }
       public DbSet<UserProfileEntity> UserProfiles { get; set; }
-      public DbSet<UserEd25519KeyPairEntity> UserEd25519KeyPairs { get; set; }
-      public DbSet<UserX25519KeyPairEntity> UserX25519KeyPairs { get; set; }
+      public DbSet<UserPublicKeyEntity> UserPublicKeys { get; set; }
       public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; set; }
       public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; set; }
       public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; set; }
@@ -59,7 +58,7 @@ namespace Crypter.Core
       public DbSet<UserFileTransferEntity> UserFileTransfers { get; set; }
       public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; set; }
       public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; set; }
-      public DbSet<UserMasterKeyEntity> UserMasterKeys { get; set; }
+      public DbSet<UserSeedEntity> UserSeeds { get; set; }
       public DbSet<UserConsentEntity> UserConsents { get; set; }
 
       protected override void OnModelCreating(ModelBuilder builder)
@@ -68,8 +67,7 @@ namespace Crypter.Core
 
          ConfigureUserEntity(builder);
          ConfigureUserProfileEntity(builder);
-         ConfigureUserEd25519KeyPairEntity(builder);
-         ConfigureUserX25519KeyPairEntity(builder);
+         ConfigureUserPublicKeyEntity(builder);
          ConfigureUserPrivacySettingEntity(builder);
          ConfigureUserEmailVerificationEntity(builder);
          ConfigureUserNotificationSettingsEntity(builder);
@@ -80,7 +78,7 @@ namespace Crypter.Core
          ConfigureAnonymousMessageTransferEntity(builder);
          ConfigureAnonymousFileTransferEntity(builder);
          ConfigureUserFailedLoginEntity(builder);
-         ConfigureUserMasterKeyEntity(builder);
+         ConfigureUserSeedEntity(builder);
          ConfigureUserConsentEntity(builder);
       }
 
@@ -159,34 +157,18 @@ namespace Crypter.Core
             .OnDelete(DeleteBehavior.Cascade);
       }
 
-      private static void ConfigureUserEd25519KeyPairEntity(ModelBuilder builder)
+      private static void ConfigureUserPublicKeyEntity(ModelBuilder builder)
       {
-         builder.Entity<UserEd25519KeyPairEntity>()
-            .ToTable("UserEd25519KeyPair");
+         builder.Entity<UserPublicKeyEntity>()
+            .ToTable("UserPublicKey");
 
-         builder.Entity<UserEd25519KeyPairEntity>()
+         builder.Entity<UserPublicKeyEntity>()
             .HasKey(x => x.Owner);
 
-         builder.Entity<UserEd25519KeyPairEntity>()
+         builder.Entity<UserPublicKeyEntity>()
             .HasOne(x => x.User)
-            .WithOne(x => x.Ed25519KeyPair)
-            .HasForeignKey<UserEd25519KeyPairEntity>(x => x.Owner)
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.Cascade);
-      }
-
-      private static void ConfigureUserX25519KeyPairEntity(ModelBuilder builder)
-      {
-         builder.Entity<UserX25519KeyPairEntity>()
-            .ToTable("UserX25519KeyPair");
-
-         builder.Entity<UserX25519KeyPairEntity>()
-            .HasKey(x => x.Owner);
-
-         builder.Entity<UserX25519KeyPairEntity>()
-            .HasOne(x => x.User)
-            .WithOne(x => x.X25519KeyPair)
-            .HasForeignKey<UserX25519KeyPairEntity>(x => x.Owner)
+            .WithOne(x => x.PublicKey)
+            .HasForeignKey<UserPublicKeyEntity>(x => x.Owner)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
       }
@@ -442,26 +424,26 @@ namespace Crypter.Core
             .OnDelete(DeleteBehavior.Cascade);
       }
 
-      private static void ConfigureUserMasterKeyEntity(ModelBuilder builder)
+      private static void ConfigureUserSeedEntity(ModelBuilder builder)
       {
-         builder.Entity<UserMasterKeyEntity>()
-            .ToTable("UserMasterKey");
+         builder.Entity<UserSeedEntity>()
+            .ToTable("UserSeed");
 
-         builder.Entity<UserMasterKeyEntity>()
+         builder.Entity<UserSeedEntity>()
             .HasKey(x => x.Owner);
 
-         builder.Entity<UserMasterKeyEntity>()
-            .Property(x => x.Key)
+         builder.Entity<UserSeedEntity>()
+            .Property(x => x.Seed)
             .IsRequired();
 
-         builder.Entity<UserMasterKeyEntity>()
-            .Property(x => x.ClientIV)
+         builder.Entity<UserSeedEntity>()
+            .Property(x => x.Nonce)
             .IsRequired();
 
-         builder.Entity<UserMasterKeyEntity>()
+         builder.Entity<UserSeedEntity>()
             .HasOne(x => x.User)
-            .WithOne(x => x.MasterKey)
-            .HasForeignKey<UserMasterKeyEntity>(x => x.Owner)
+            .WithOne(x => x.Seed)
+            .HasForeignKey<UserSeedEntity>(x => x.Owner)
             .OnDelete(DeleteBehavior.Cascade);
       }
 

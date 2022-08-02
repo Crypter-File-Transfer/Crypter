@@ -24,30 +24,40 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Entities.Interfaces;
-using System;
+using Crypter.Common.Primitives;
+using Crypter.CryptoLib;
+using System.Text;
 
-namespace Crypter.Core.Entities
+namespace Crypter.ClientServices.Services
 {
-   public class UserEd25519KeyPairEntity : IUserPublicKeyPair
+   public class PasswordDigestService
    {
-      public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
-      public DateTime Updated { get; set; }
-      public DateTime Created { get; set; }
 
-      public UserEntity User { get; set; }
-
-      public UserEd25519KeyPairEntity(Guid owner, string privateKey, string publicKey, string clientIV, DateTime updated, DateTime created)
+      public byte[] DeriveAuthenticationPassword(Username username, Password password)
       {
-         Owner = owner;
-         PrivateKey = privateKey;
-         PublicKey = publicKey;
-         ClientIV = clientIV;
-         Updated = updated;
-         Created = created;
+         byte[] passwordBytes = Encoding.UTF8.GetBytes(password.Value);
+         byte[] usernameSalt = DeriveSaltFromUsername(username);
+
+         return PasswordHash.ArgonHash(passwordBytes, usernameSalt, 64, PasswordHash.Strength.Moderate);
+      }
+
+      public byte[] DeriveCredentialKey(Username username, Password password)
+      {
+         byte[] passwordBytes = Encoding.UTF8.GetBytes(password.Value);
+         byte[] usernameSalt = DeriveSaltFromUsername(username);
+
+         return PasswordHash.ArgonHash(passwordBytes, usernameSalt, 32, PasswordHash.Strength.Moderate);
+      }
+
+      /// <summary>
+      /// Return a 16-byte salt.
+      /// </summary>
+      /// <param name="username"></param>
+      /// <returns></returns>
+      public byte[] DeriveSaltFromUsername(Username username)
+      {
+         byte[] usernameBytes = Encoding.UTF8.GetBytes(username.Value.ToLower());
+         return GenericHash.Hash(usernameBytes, 16);
       }
    }
 }

@@ -30,18 +30,13 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
-using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Enums;
-using Crypter.CryptoLib.Services;
-using Org.BouncyCastle.Crypto;
 
+/*
 namespace Crypter.ClientServices.Transfer.Handlers.Base
 {
    public class UploadHandler : IUserUploadHandler
    {
       protected readonly ICrypterApiService _crypterApiService;
-      protected readonly ISimpleEncryptionService _simpleEncryptionService;
-      protected readonly ISimpleSignatureService _simpleSignatureService;
       protected readonly FileTransferSettings _fileTransferSettings;
 
       protected TransferUserType _transferUserType = TransferUserType.Anonymous;
@@ -59,11 +54,9 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
       protected Maybe<PEMString> _recipientDiffieHellmanPublicKey = Maybe<PEMString>.None;
 
-      public UploadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, FileTransferSettings fileTransferSettings)
+      public UploadHandler(ICrypterApiService crypterApiService, FileTransferSettings fileTransferSettings)
       {
          _crypterApiService = crypterApiService;
-         _simpleEncryptionService = simpleEncryptionService;
-         _simpleSignatureService = simpleSignatureService;
          _fileTransferSettings = fileTransferSettings;
       }
 
@@ -125,3 +118,4 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       }
    }
 }
+*/

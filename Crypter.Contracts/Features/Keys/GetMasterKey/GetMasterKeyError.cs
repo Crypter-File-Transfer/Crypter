@@ -26,7 +26,7 @@
 
 namespace Crypter.Contracts.Features.Keys
 {
-   public enum GetMasterKeyError
+   public enum GetUserSeedError
    {
       UnknownError,
       NotFound

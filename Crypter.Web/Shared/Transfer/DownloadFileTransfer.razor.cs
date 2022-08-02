@@ -39,6 +39,7 @@ namespace Crypter.Web.Shared.Transfer
 {
    public partial class DownloadFileTransferBase : DownloadTransferBase
    {
+      /*
       [Inject]
       protected IBrowserDownloadFileService BrowserDownloadFileService { get; set; }
 
@@ -145,5 +146,6 @@ namespace Crypter.Web.Shared.Transfer
                break;
          }
       }
+      */
    }
 }

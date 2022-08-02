@@ -36,6 +36,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
 {
+   /*
    [ApiController]
    [Route("api/keys")]
    public class KeyController : CrypterController
@@ -51,30 +52,30 @@ namespace Crypter.API.Controllers
 
       [HttpGet("master")]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetMasterKeyResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetUserSeedResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> GetMasterKeyAsync(CancellationToken cancellationToken)
       {
-         IActionResult MakeErrorResponse(GetMasterKeyError error)
+         IActionResult MakeErrorResponse(GetUserSeedError error)
          {
             var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               GetMasterKeyError.UnknownError => ServerError(errorResponse),
-               GetMasterKeyError.NotFound => NotFound(errorResponse)
+               GetUserSeedError.UnknownError => ServerError(errorResponse),
+               GetUserSeedError.NotFound => NotFound(errorResponse)
             };
 #pragma warning restore CS8524
          }
 
          var userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.GetMasterKeyAsync(userId, cancellationToken);
+         var result = await _userKeysService.GetUserSeedAsync(userId, cancellationToken);
          return result.Match(
             MakeErrorResponse,
             Ok,
-            MakeErrorResponse(GetMasterKeyError.UnknownError));
+            MakeErrorResponse(GetUserSeedError.UnknownError));
       }
 
       [HttpPut("master")]
@@ -100,7 +101,7 @@ namespace Crypter.API.Controllers
          }
 
          Guid userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.InsertMasterKeyAsync(userId, request, cancellationToken);
+         var result = await _userKeysService.InsertUserSeedAsync(userId, request, cancellationToken);
          return result.Match(
             MakeErrorResponse,
             Ok,
@@ -109,32 +110,32 @@ namespace Crypter.API.Controllers
 
       [HttpPost("master/recovery-proof")]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetMasterKeyRecoveryProofResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetUserSeedRecoveryProofResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken)
       {
-         IActionResult MakeErrorResponse(GetMasterKeyRecoveryProofError error)
+         IActionResult MakeErrorResponse(GetUserSeedRecoveryProofError error)
          {
             var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               GetMasterKeyRecoveryProofError.UnknownError => ServerError(errorResponse),
-               GetMasterKeyRecoveryProofError.NotFound => NotFound(errorResponse),
-               GetMasterKeyRecoveryProofError.InvalidCredentials => BadRequest(errorResponse)
+               GetUserSeedRecoveryProofError.UnknownError => ServerError(errorResponse),
+               GetUserSeedRecoveryProofError.NotFound => NotFound(errorResponse),
+               GetUserSeedRecoveryProofError.InvalidCredentials => BadRequest(errorResponse)
             };
 #pragma warning restore CS8524
          }
 
          Guid userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.GetMasterKeyProofAsync(userId, request, cancellationToken);
+         var result = await _userKeysService.GetUserSeedProofAsync(userId, request, cancellationToken);
          return result.Match(
             MakeErrorResponse,
             Ok,
-            MakeErrorResponse(GetMasterKeyRecoveryProofError.UnknownError));
+            MakeErrorResponse(GetUserSeedRecoveryProofError.UnknownError));
       }
 
       [HttpGet("diffie-hellman/private")]
@@ -186,7 +187,7 @@ namespace Crypter.API.Controllers
          }
 
          var userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.InsertDiffieHellmanKeyPairAsync(userId, body, cancellationToken);
+         var result = await _userKeysService.InsertPublicKeyAsync(userId, body, cancellationToken);
          return result.Match(
             MakeErrorResponse,
             Ok,
@@ -249,4 +250,5 @@ namespace Crypter.API.Controllers
             MakeErrorResponse(InsertKeyPairError.UnknownError));
       }
    }
+   */
 }

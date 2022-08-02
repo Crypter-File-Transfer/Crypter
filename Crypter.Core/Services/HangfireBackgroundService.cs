@@ -45,6 +45,7 @@ namespace Crypter.Core.Services
       Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId, CancellationToken cancellationToken);
    }
 
+   /*
    public class HangfireBackgroundService : IHangfireBackgroundService
    {
       private readonly DataContext _context;
@@ -183,4 +184,5 @@ namespace Crypter.Core.Services
          }
       }
    }
+   */
 }

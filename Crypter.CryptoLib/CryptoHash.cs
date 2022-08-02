@@ -24,29 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+using System.Text;
 
-namespace Crypter.Core.Entities
+namespace Crypter.CryptoLib
 {
-   public class UserMasterKeyEntity
+   /// <summary>
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/CryptoHash.cs
+   /// </summary>
+   public static class CryptoHash
    {
-      public Guid Owner { get; set; }
-      public string Key { get; set; }
-      public string ClientIV { get; set; }
-      public string RecoveryProof { get; set; }
-      public DateTime Updated { get; set; }
-      public DateTime Created { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserMasterKeyEntity(Guid owner, string key, string clientIV, string recoveryProof, DateTime updated, DateTime created)
+      public static byte[] Sha512(byte[] data)
       {
-         Owner = owner;
-         Key = key;
-         ClientIV = clientIV;
-         RecoveryProof = recoveryProof;
-         Updated = updated;
-         Created = created;
+         return Sodium.CryptoHash.Sha512(data);
+      }
+
+      public static byte[] Sha512(string data)
+      {
+         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+         return Sha512(dataBytes);
+      }
+
+      public static byte[] Sha256(byte[] data)
+      {
+         return Sodium.CryptoHash.Sha256(data);
+      }
+
+      public static byte[] Sha256(string data)
+      {
+         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+         return Sha256(dataBytes);
       }
    }
 }

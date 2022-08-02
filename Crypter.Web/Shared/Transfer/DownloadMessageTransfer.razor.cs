@@ -37,6 +37,7 @@ namespace Crypter.Web.Shared.Transfer
 {
    public partial class DownloadMessageTransferBase : DownloadTransferBase
    {
+      /*
       protected string Subject = string.Empty;
       protected string PlaintextMessage = string.Empty;
       protected int MessageSize = 0;
@@ -123,5 +124,6 @@ namespace Crypter.Web.Shared.Transfer
                break;
          }
       }
+      */
    }
 }

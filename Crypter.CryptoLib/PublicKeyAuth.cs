@@ -24,30 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Entities.Interfaces;
-using System;
+using Crypter.CryptoLib.Models;
+using Sodium;
 
-namespace Crypter.Core.Entities
+namespace Crypter.CryptoLib
 {
-   public class UserX25519KeyPairEntity : IUserPublicKeyPair
+   /// <summary>
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/PublicKeyAuth.cs
+   /// </summary>
+   public static class PublicKeyAuth
    {
-      public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
-      public DateTime Updated { get; set; }
-      public DateTime Created { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserX25519KeyPairEntity(Guid owner, string privateKey, string publicKey, string clientIV, DateTime updated, DateTime created)
+      public static AsymmetricKeyPair GenerateKeyPair()
       {
-         Owner = owner;
-         PrivateKey = privateKey;
-         PublicKey = publicKey;
-         ClientIV = clientIV;
-         Updated = updated;
-         Created = created;
+         KeyPair keyPair = Sodium.PublicKeyAuth.GenerateKeyPair();
+         return new AsymmetricKeyPair(keyPair.PublicKey, keyPair.PrivateKey);
+      }
+
+      public static byte[] GetPublicKey(byte[] privateKey)
+      {
+         return Sodium.PublicKeyAuth.GenerateKeyPair(privateKey).PublicKey;
+      }
+
+      public static byte[] Sign(byte[] message, byte[] privateKey)
+      {
+         return Sodium.PublicKeyAuth.SignDetached(message, privateKey);
+      }
+
+      public static bool Verify(byte[] message, byte[] signature, byte[] publicKey)
+      {
+         return Sodium.PublicKeyAuth.VerifyDetached(signature, message, publicKey);
       }
    }
 }

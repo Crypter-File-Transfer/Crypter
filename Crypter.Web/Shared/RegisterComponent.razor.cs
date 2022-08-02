@@ -38,11 +38,9 @@ namespace Crypter.Web.Shared
 {
    public partial class RegisterComponentBase : ComponentBase
    {
+      /*
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
-
-      [Inject]
-      protected IClientPBKDFService ClientPBKDFService { get; set; }
 
       protected const string _invalidClassName = "is-invalid";
 
@@ -212,5 +210,6 @@ namespace Crypter.Web.Shared
          RegistrationAttemptFailed = true;
          RegistrationAttemptErrorMessage = "An unknown error occurred.";
       }
+      */
    }
 }

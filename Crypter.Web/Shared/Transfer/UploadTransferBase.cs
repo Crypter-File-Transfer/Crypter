@@ -41,6 +41,7 @@ namespace Crypter.Web.Shared.Transfer
 {
    public class UploadTransferBase : ComponentBase
    {
+      /*
       [Inject]
       protected IUserSessionService UserSessionService { get; set; }
 
@@ -170,5 +171,6 @@ namespace Crypter.Web.Shared.Transfer
                break;
          }
       }
+      */
    }
 }

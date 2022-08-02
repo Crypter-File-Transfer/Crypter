@@ -31,7 +31,6 @@ using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,15 +38,14 @@ namespace Crypter.Core.Services
 {
    public interface IUserKeysService
    {
-      Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken);
-      Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken);
-      Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken);
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
-      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken);
-      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken);
+      Task<Either<GetUserSeedError, GetUserSeedResponse>> GetUserSeedAsync(Guid userId, CancellationToken cancellationToken);
+      Task<Either<GetUserSeedRecoveryProofError, GetUserSeedRecoveryProofResponse>> GetUserSeedProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken);
+      Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertUserSeedAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken);
+      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertPublicKeyAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken);
    }
+}
 
+   /*
    public class UserKeysService : IUserKeysService
    {
       private readonly DataContext _context;
@@ -59,42 +57,42 @@ namespace Crypter.Core.Services
          _userAuthenticationService = userAuthenticationService;
       }
 
-      public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken)
+      public Task<Either<GetUserSeedError, GetUserSeedResponse>> GetUserSeedAsync(Guid userId, CancellationToken cancellationToken)
       {
-         return Either<GetMasterKeyError, GetMasterKeyResponse>.FromRightAsync(
-            _context.UserMasterKeys
+         return Either<GetUserSeedError, GetUserSeedResponse>.FromRightAsync(
+            _context.UserSeeds
                .Where(x => x.Owner == userId)
                .Select(x => new GetMasterKeyResponse(x.Key, x.ClientIV))
-               .FirstOrDefaultAsync(cancellationToken), GetMasterKeyError.NotFound);
+               .FirstOrDefaultAsync(cancellationToken), GetUserSeedError.NotFound);
       }
 
-      public async Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken)
+      public async Task<Either<GetUserSeedRecoveryProofError, GetUserSeedRecoveryProofResponse>> GetUserSeedProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken)
       {
          var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new TestPasswordRequest(request.Username, request.Password), cancellationToken);
-         return await testPasswordResult.MatchAsync<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>>(
-            error => GetMasterKeyRecoveryProofError.InvalidCredentials,
+         return await testPasswordResult.MatchAsync<Either<GetUserSeedRecoveryProofError, GetUserSeedRecoveryProofResponse>>(
+            error => GetUserSeedRecoveryProofError.InvalidCredentials,
             async _ =>
             {
-               var recoveryProof = await _context.UserMasterKeys
+               var recoveryProof = await _context.UserSeeds
                   .Where(x => x.Owner == userId)
                   .Select(x => x.RecoveryProof)
                   .FirstOrDefaultAsync(cancellationToken);
 
                return recoveryProof is null
-                  ? GetMasterKeyRecoveryProofError.NotFound
-                  : new GetMasterKeyRecoveryProofResponse(recoveryProof);
+                  ? GetUserSeedRecoveryProofError.NotFound
+                  : new GetUserSeedRecoveryProofResponse(recoveryProof);
             },
-            GetMasterKeyRecoveryProofError.UnknownError);
+            GetUserSeedRecoveryProofError.UnknownError);
       }
 
-      public async Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken)
+      public async Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertUserSeedAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken)
       {
          var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new TestPasswordRequest(request.Username, request.Password), cancellationToken);
          return await testPasswordResult.MatchAsync<Either<InsertMasterKeyError, InsertMasterKeyResponse>>(
             error => InsertMasterKeyError.InvalidCredentials,
             async _ =>
             {
-               var masterKeyEntity = await _context.UserMasterKeys
+               var masterKeyEntity = await _context.UserSeeds
                   .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
 
                if (masterKeyEntity is not null)
@@ -103,8 +101,8 @@ namespace Crypter.Core.Services
                }
 
                DateTime now = DateTime.UtcNow;
-               var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.ClientIV, request.ClientProof, now, now);
-               _context.UserMasterKeys.Add(newEntity);
+               var newEntity = new UserSeedEntity(userId, request.EncryptedKey, request.ClientIV, request.ClientProof, now, now);
+               _context.UserSeeds.Add(newEntity);
 
                await _context.SaveChangesAsync(cancellationToken);
                return new InsertMasterKeyResponse();
@@ -115,7 +113,7 @@ namespace Crypter.Core.Services
       public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken)
       {
          return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
-            _context.UserX25519KeyPairs
+            _context.UserPublicKeys
                .Where(x => x.Owner == userId)
                .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.ClientIV))
                .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
@@ -130,9 +128,9 @@ namespace Crypter.Core.Services
                .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
       }
 
-      public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken)
+      public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertPublicKeyAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken)
       {
-         var keyPairEntity = await _context.UserX25519KeyPairs
+         var keyPairEntity = await _context.UserPublicKeys
             .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
 
          if (keyPairEntity is not null)
@@ -141,8 +139,8 @@ namespace Crypter.Core.Services
          }
 
          DateTime now = DateTime.UtcNow;
-         var newEntity = new UserX25519KeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.ClientIV, now, now);
-         _context.UserX25519KeyPairs.Add(newEntity);
+         var newEntity = new UserPublicKeyEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.ClientIV, now, now);
+         _context.UserPublicKeys.Add(newEntity);
 
          await _context.SaveChangesAsync(cancellationToken);
          return new InsertKeyPairResponse();
@@ -167,3 +165,4 @@ namespace Crypter.Core.Services
       }
    }
 }
+*/

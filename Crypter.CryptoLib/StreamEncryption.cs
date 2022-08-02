@@ -24,40 +24,37 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.CryptoLib.Enums;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Digests;
-using System;
+using Crypter.CryptoLib.Models;
+using System.Text;
 
-namespace Crypter.CryptoLib.Crypto
+namespace Crypter.CryptoLib
 {
-   public class SHA
+   /// <summary>
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/StreamEncryption.cs
+   /// </summary>
+   public static class StreamEncryption
    {
-      private readonly IDigest Digestor;
-
-      public SHA(SHAFunction function)
+      public static byte[] GenerateKey()
       {
-         Digestor = function switch
-         {
-            SHAFunction.SHA1 => new Sha1Digest(),
-            SHAFunction.SHA224 => new Sha224Digest(),
-            SHAFunction.SHA256 => new Sha256Digest(),
-            SHAFunction.SHA512 => new Sha512Digest(),
-            _ => throw new NotImplementedException()
-         };
+         return Sodium.StreamEncryption.GenerateKey();
       }
 
-      public void BlockUpdate(byte[] data)
+      public static EncryptedBox Encrypt(byte[] data, byte[] key)
       {
-         Digestor.BlockUpdate(data, 0, data.Length);
+         byte[] nonce = Sodium.StreamEncryption.GenerateNonce();
+         byte[] ciphertext = Sodium.StreamEncryption.Encrypt(data, nonce, key);
+         return new EncryptedBox(nonce, ciphertext);
       }
 
-      public byte[] GetDigest()
+      public static EncryptedBox Encrypt(string data, byte[] key)
       {
-         byte[] hash = new byte[Digestor.GetDigestSize()];
-         Digestor.DoFinal(hash, 0);
-         Digestor.Reset();
-         return hash;
+         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+         return Encrypt(dataBytes, key);
+      }
+
+      public static byte[] Decrypt(EncryptedBox data, byte[] key)
+      {
+         return Sodium.StreamEncryption.Decrypt(data.Ciphertext, data.Nonce, key);
       }
    }
 }

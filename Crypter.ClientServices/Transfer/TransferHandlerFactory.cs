@@ -28,10 +28,10 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer.Handlers;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
-using Crypter.CryptoLib.Services;
 using System;
 using System.IO;
 
+/*
 namespace Crypter.ClientServices.Transfer
 {
    public class TransferHandlerFactory
@@ -83,3 +83,4 @@ namespace Crypter.ClientServices.Transfer
       }
    }
 }
+*/
