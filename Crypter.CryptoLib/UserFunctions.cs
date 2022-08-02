@@ -25,8 +25,8 @@
  */
 
 using Crypter.Common.Primitives;
-using Crypter.CryptoLib.Enums;
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Crypter.CryptoLib
@@ -46,11 +46,12 @@ namespace Crypter.CryptoLib
       [Obsolete("Use PBKDFService")]
       public static AuthenticationPassword DeriveAuthenticationPasswordFromUserCredentials(Username username, Password password)
       {
-         var digestor = new Crypto.SHA(SHAFunction.SHA512);
-         digestor.BlockUpdate(Encoding.UTF8.GetBytes(password.Value));
-         digestor.BlockUpdate(Encoding.UTF8.GetBytes(username.Value.ToLower()));
-         byte[] digest = digestor.GetDigest();
-
+         List<byte[]> seedData = new List<byte[]>
+         {
+            Encoding.UTF8.GetBytes(password.Value),
+            Encoding.UTF8.GetBytes(username.Value.ToLower())
+         };
+         byte[] digest = CryptoHash.Sha512(seedData);
          string base64 = Convert.ToBase64String(digest);
          return AuthenticationPassword.From(base64);
       }
@@ -64,10 +65,12 @@ namespace Crypter.CryptoLib
       [Obsolete("Use PBKDFService")]
       public static byte[] DeriveSymmetricKeyFromUserCredentials(Username username, Password password)
       {
-         var keyDigestor = new Crypto.SHA(SHAFunction.SHA256);
-         keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(username.Value.ToLower()));
-         keyDigestor.BlockUpdate(Encoding.UTF8.GetBytes(password.Value));
-         return keyDigestor.GetDigest();
+         List<byte[]> seedData = new List<byte[]>
+         {
+            Encoding.UTF8.GetBytes(username.Value.ToLower()),
+            Encoding.UTF8.GetBytes(password.Value)
+         };
+         return CryptoHash.Sha256(seedData);
       }
    }
 }

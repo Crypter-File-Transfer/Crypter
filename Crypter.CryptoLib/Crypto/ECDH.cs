@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.CryptoLib.Enums;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Agreement;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
+using System.Collections.Generic;
 
 namespace Crypter.CryptoLib.Crypto
 {
@@ -76,19 +76,26 @@ namespace Crypter.CryptoLib.Crypto
       /// <returns>A ReceiveKey for Alice and a SendKey for Bob</returns>
       public static (byte[] ReceiveKey, byte[] SendKey) DeriveSharedKeys(AsymmetricCipherKeyPair keyPair, AsymmetricKeyParameter publicKey)
       {
-         var sharedKey = DeriveSharedKey(keyPair.Private, publicKey);
+         byte[] sharedKey = DeriveSharedKey(keyPair.Private, publicKey);
+         byte[] keyPairPublicKeyBytes = ((X25519PublicKeyParameters)keyPair.Public).GetEncoded();
+         byte[] standalonePublicKeyBytes = ((X25519PublicKeyParameters)publicKey).GetEncoded();
 
-         var receiveDigestor = new SHA(SHAFunction.SHA256);
-         receiveDigestor.BlockUpdate(sharedKey);
-         receiveDigestor.BlockUpdate(((X25519PublicKeyParameters)keyPair.Public).GetEncoded());
-         receiveDigestor.BlockUpdate(((X25519PublicKeyParameters)publicKey).GetEncoded());
-         var receiveKey = receiveDigestor.GetDigest();
+         List<byte[]> receiveKeySeedData = new List<byte[]>
+         {
+            sharedKey,
+            keyPairPublicKeyBytes,
+            standalonePublicKeyBytes
+         };
 
-         var sendDigestor = new SHA(SHAFunction.SHA256);
-         sendDigestor.BlockUpdate(sharedKey);
-         sendDigestor.BlockUpdate(((X25519PublicKeyParameters)publicKey).GetEncoded());
-         sendDigestor.BlockUpdate(((X25519PublicKeyParameters)keyPair.Public).GetEncoded());
-         var sendKey = sendDigestor.GetDigest();
+         List<byte[]> sendKeySeedData = new List<byte[]>
+         {
+            sharedKey,
+            standalonePublicKeyBytes,
+            keyPairPublicKeyBytes
+         };
+
+         byte[] receiveKey = CryptoHash.Sha256(receiveKeySeedData);
+         byte[] sendKey = CryptoHash.Sha256(sendKeySeedData);
 
          return (receiveKey, sendKey);
       }
@@ -124,10 +131,13 @@ namespace Crypter.CryptoLib.Crypto
             }
          }
 
-         var digestor = new SHA(SHAFunction.SHA256);
-         digestor.BlockUpdate(firstKey);
-         digestor.BlockUpdate(secondKey);
-         return digestor.GetDigest();
+         List<byte[]> seedData = new List<byte[]>
+         {
+            firstKey,
+            secondKey
+         };
+
+         return CryptoHash.Sha256(seedData);
       }
    }
 }
