@@ -34,15 +34,33 @@ namespace Crypter.CryptoLib
    /// </summary>
    public static class PublicKeyAuth
    {
+      public static int PrivateKeyBytes
+      { get { return Sodium.PublicKeyAuth.SecretKeyBytes; } }
+
+      public static int PublicKeyBytes
+      { get { return Sodium.PublicKeyAuth.PublicKeyBytes; } }
+
+      public static int SignatureBytes
+      { get { return Sodium.PublicKeyAuth.SignatureBytes; } }
+
+      public static int SeedBytes
+      { get { return Sodium.PublicKeyAuth.SeedBytes; } }
+
       public static AsymmetricKeyPair GenerateKeyPair()
       {
          KeyPair keyPair = Sodium.PublicKeyAuth.GenerateKeyPair();
          return new AsymmetricKeyPair(keyPair.PrivateKey, keyPair.PublicKey);
       }
 
-      public static byte[] GetPublicKey(byte[] privateKey)
+      public static byte[] GenerateSeed()
       {
-         return Sodium.PublicKeyAuth.GenerateKeyPair(privateKey).PublicKey;
+         return SodiumCore.GetRandomBytes(SeedBytes);
+      }
+
+      public static AsymmetricKeyPair GenerateSeededKeyPair(byte[] seed)
+      {
+         KeyPair keyPair = Sodium.PublicKeyAuth.GenerateKeyPair(seed);
+         return new AsymmetricKeyPair(keyPair.PrivateKey, keyPair.PublicKey);
       }
 
       public static byte[] Sign(byte[] message, byte[] privateKey)
@@ -53,6 +71,11 @@ namespace Crypter.CryptoLib
       public static bool Verify(byte[] message, byte[] signature, byte[] publicKey)
       {
          return Sodium.PublicKeyAuth.VerifyDetached(signature, message, publicKey);
+      }
+
+      public static byte[] GetPublicKey(byte[] privateKey)
+      {
+         return Sodium.PublicKeyAuth.ExtractEd25519PublicKeyFromEd25519SecretKey(privateKey);
       }
    }
 }
