@@ -92,7 +92,6 @@ builder.Services.AddUserAuthenticationService(options =>
 builder.Services.AddDbContext<DataContext>();
 
 builder.Services.AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>();
-builder.Services.AddSingleton<ISimpleSignatureService, SimpleSignatureService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
 
 builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();

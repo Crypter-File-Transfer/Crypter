@@ -35,21 +35,17 @@ namespace Crypter.Contracts.Features.Transfer
       public string Subject { get; init; }
       public string InitializationVector { get; init; }
       public List<string> Ciphertext { get; init; }
-      public string DigitalSignature { get; init; }
-      public string DigitalSignaturePublicKey { get; init; }
       public string DiffieHellmanPublicKey { get; init; }
       public string RecipientProof { get; init; }
       public int LifetimeHours { get; init; }
       public CompressionType CompressionType { get; init; }
 
       [JsonConstructor]
-      public UploadMessageTransferRequest(string subject, string initializationVector, List<string> ciphertext, string digitalSignature, string digitalSignaturePublicKey, string diffieHellmanPublicKey, string recipientProof, int lifetimeHours, CompressionType compressionType)
+      public UploadMessageTransferRequest(string subject, string initializationVector, List<string> ciphertext, string diffieHellmanPublicKey, string recipientProof, int lifetimeHours, CompressionType compressionType)
       {
          Subject = subject;
          InitializationVector = initializationVector;
          Ciphertext = ciphertext;
-         DigitalSignature = digitalSignature;
-         DigitalSignaturePublicKey = digitalSignaturePublicKey;
          DiffieHellmanPublicKey = diffieHellmanPublicKey;
          RecipientProof = recipientProof;
          LifetimeHours = lifetimeHours;

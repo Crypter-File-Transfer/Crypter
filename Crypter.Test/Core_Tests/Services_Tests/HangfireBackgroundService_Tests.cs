@@ -28,6 +28,7 @@ using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
+using Crypter.CryptoLib;
 using Moq;
 using NUnit.Framework;
 using System;
@@ -94,11 +95,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [Test]
       public async Task Verification_Email_Is_Sent_When_Given_Verification_Parameters()
       {
-         string publicKey = @"-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VuAyEAj5qskz931xpwHXrN40pnxXSEz08Hxuhw2wABl+GG9yA=
------END PUBLIC KEY-----
-".ReplaceLineEndings();
-         var parameters = new UserEmailAddressVerificationParameters(Guid.NewGuid(), EmailAddress.From("test@test.com"), Guid.NewGuid(), new byte[] { 0x00 }, PEMString.From(publicKey));
+         byte[] verificationKey = PublicKeyAuth.GenerateKeyPair().PublicKey;
+         var parameters = new UserEmailAddressVerificationParameters(Guid.NewGuid(), EmailAddress.From("test@test.com"), Guid.NewGuid(), new byte[] { 0x00 }, verificationKey);
 
          _userEmailVerificationMock
             .Setup(x => x.CreateNewVerificationParametersAsync(

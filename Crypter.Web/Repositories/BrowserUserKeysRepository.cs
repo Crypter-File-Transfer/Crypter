@@ -48,18 +48,6 @@ namespace Crypter.Web.Repositories
          };
       }
 
-      public async Task<Maybe<PEMString>> GetEd25519PrivateKeyAsync()
-      {
-         return await _browserRepository.GetItemAsync<string>(DeviceStorageObjectType.Ed25519PrivateKey)
-            .BindAsync(x =>
-            {
-               var pemResult = PEMString.TryFrom(x, out var key)
-                  ? key
-                  : Maybe<PEMString>.None;
-               return pemResult.AsTask();
-            });
-      }
-
       public async Task<Maybe<PEMString>> GetX25519PrivateKeyAsync()
       {
          return await _browserRepository.GetItemAsync<string>(DeviceStorageObjectType.X25519PrivateKey)
@@ -72,19 +60,9 @@ namespace Crypter.Web.Repositories
             });
       }
 
-      public async Task StoreEd25519PrivateKeyAsync(PEMString privateKey, bool trustDevice)
-      {
-         await _browserRepository.SetItemAsync(DeviceStorageObjectType.Ed25519PrivateKey, privateKey.Value, _trustDeviceStorageMap[trustDevice]);
-      }
-
       public async Task StoreX25519PrivateKeyAsync(PEMString privateKey, bool trustDevice)
       {
          await _browserRepository.SetItemAsync(DeviceStorageObjectType.X25519PrivateKey, privateKey.Value, _trustDeviceStorageMap[trustDevice]);
-      }
-
-      public async Task ClearEd25519PrivateKeyAsync()
-      {
-         await _browserRepository.RemoveItemAsync(DeviceStorageObjectType.Ed25519PrivateKey);
       }
 
       public async Task ClearX25519PrivateKeyAsync()

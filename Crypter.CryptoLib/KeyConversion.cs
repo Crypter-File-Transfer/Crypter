@@ -43,20 +43,6 @@ namespace Crypter.CryptoLib
          return PEMString.From(stringWriter.ToString());
       }
 
-      public static AsymmetricCipherKeyPair ConvertRSAPrivateKeyFromPEM(PEMString pemKey)
-      {
-         var stringReader = new StringReader(pemKey.Value);
-         var pemReader = new PemReader(stringReader);
-         return (AsymmetricCipherKeyPair)pemReader.ReadObject();
-      }
-
-      public static AsymmetricKeyParameter ConvertRSAPublicKeyFromPEM(PEMString pemKey)
-      {
-         var stringReader = new StringReader(pemKey.Value);
-         var pemReader = new PemReader(stringReader);
-         return (AsymmetricKeyParameter)pemReader.ReadObject();
-      }
-
       public static X25519PrivateKeyParameters ConvertX25519PrivateKeyFromPEM(PEMString pemKey)
       {
          var stringReader = new StringReader(pemKey.Value);
@@ -69,20 +55,6 @@ namespace Crypter.CryptoLib
          var stringReader = new StringReader(pemKey.Value);
          var pemReader = new PemReader(stringReader);
          return (X25519PublicKeyParameters)pemReader.ReadObject();
-      }
-
-      public static Ed25519PrivateKeyParameters ConvertEd25519PrivateKeyFromPEM(PEMString pemKey)
-      {
-         var stringReader = new StringReader(pemKey.Value);
-         var pemReader = new PemReader(stringReader);
-         return (Ed25519PrivateKeyParameters)pemReader.ReadObject();
-      }
-
-      public static Ed25519PublicKeyParameters ConvertEd25519PublicKeyFromPEM(PEMString pemKey)
-      {
-         var stringReader = new StringReader(pemKey.Value);
-         var pemReader = new PemReader(stringReader);
-         return (Ed25519PublicKeyParameters)pemReader.ReadObject();
       }
    }
 }

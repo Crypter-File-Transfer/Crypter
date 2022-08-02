@@ -87,22 +87,17 @@ namespace Crypter.Web.Shared.Transfer
       private const string _expirationRange = "Expiration must be between 1 and 24 hours.";
       protected const string _compressingLiteral = "Compressing";
       protected const string _encryptingLiteral = "Encrypting";
-      protected const string _signingLiteral = "Signing";
       protected const string _uploadingLiteral = "Uploading";
 
       protected void SetHandlerUserInfo(IUserUploadHandler handler)
       {
          if (UserSessionService.Session.IsSome)
          {
-            PEMString senderEd25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
-               () => throw new Exception("Missing sender Ed25519 private key"),
-               x => x);
-
             PEMString senderX25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
                () => throw new Exception("Missing sender X25519 private key"),
                x => x);
 
-            handler.SetSenderInfo(senderX25519PrivateKey, senderEd25519PrivateKey);
+            handler.SetSenderInfo(senderX25519PrivateKey);
          }
 
          RecipientUsername.IfSome(x =>

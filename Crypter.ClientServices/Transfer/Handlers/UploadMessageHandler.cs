@@ -46,8 +46,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
       private string _messageBody;
       private int _expirationHours;
 
-      public UploadMessageHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, FileTransferSettings uploadSettings)
-         : base(crypterApiService, simpleEncryptionService, simpleSignatureService, uploadSettings)
+      public UploadMessageHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, FileTransferSettings uploadSettings)
+         : base(crypterApiService, simpleEncryptionService, uploadSettings)
       { }
 
       internal void SetTransferInfo(string messageSubject, string messageBody, int expirationHours)
@@ -57,7 +57,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
          _expirationHours = expirationHours;
       }
 
-      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<Task>> invokeBeforeSigning, Maybe<Func<Task>> invokeBeforeUploading)
+      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<Task>> invokeBeforeUploading)
       {
          if (_recipientUsername.IsNone)
          {
@@ -77,31 +77,15 @@ namespace Crypter.ClientServices.Transfer.Handlers
             () => throw new Exception("Missing recipient Diffie Hellman private key"),
             x => x);
 
-         PEMString senderDigitalSignaturePrivateKey = _senderDigitalSignaturePrivateKey.Match(
-            () => throw new Exception("Missing recipient Digital Signature private key"),
-            x => x);
-
          (byte[] sendKey, byte[] serverKey) = DeriveSymmetricKeys(senderDiffieHellmanPrivateKey, recipientDiffieHellmanPublicKey);
          byte[] initializationVector = AES.GenerateIV();
 
          byte[] ciphertext = _simpleEncryptionService.Encrypt(sendKey, initializationVector, _messageBody);
-         await invokeBeforeSigning.IfSomeAsync(async x => await x.Invoke());
-         byte[] signature = _simpleSignatureService.Sign(senderDigitalSignaturePrivateKey, _messageBody);
          await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
 
          string encodedInitializationVector = Convert.ToBase64String(initializationVector);
 
          List<string> encodedCipherText = new List<string> { Convert.ToBase64String(ciphertext) };
-
-         string encodedSignature = Convert.ToBase64String(signature);
-
-         string encodedECDSASenderKey = _senderDigitalSignaturePublicKey.Match(
-            () => throw new Exception("Missing sender Digital Signature public key"),
-            x =>
-            {
-               return Convert.ToBase64String(
-                  Encoding.UTF8.GetBytes(x.Value));
-            });
 
          string encodedECDHSenderKey = _senderDiffieHellmanPublicKey.Match(
             () => throw new Exception("Missing sender Diffie Hellman public key"),
@@ -113,7 +97,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
 
          string encodedServerKey = Convert.ToBase64String(serverKey);
 
-         var request = new UploadMessageTransferRequest(_messageSubject, encodedInitializationVector, encodedCipherText, encodedSignature, encodedECDSASenderKey, encodedECDHSenderKey, encodedServerKey, _expirationHours, CompressionType.None);
+         var request = new UploadMessageTransferRequest(_messageSubject, encodedInitializationVector, encodedCipherText, encodedECDHSenderKey, encodedServerKey, _expirationHours, CompressionType.None);
          var response = await _recipientUsername.Match(
             () => _crypterApiService.UploadMessageTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserMessageTransferAsync(x, request, _senderDefined));

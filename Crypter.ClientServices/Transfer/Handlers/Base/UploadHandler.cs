@@ -31,7 +31,6 @@ using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Enums;
 using Crypter.CryptoLib.Services;
 using Org.BouncyCastle.Crypto;
 
@@ -41,7 +40,6 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
    {
       protected readonly ICrypterApiService _crypterApiService;
       protected readonly ISimpleEncryptionService _simpleEncryptionService;
-      protected readonly ISimpleSignatureService _simpleSignatureService;
       protected readonly FileTransferSettings _fileTransferSettings;
 
       protected TransferUserType _transferUserType = TransferUserType.Anonymous;
@@ -51,23 +49,19 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       protected Maybe<PEMString> _senderDiffieHellmanPrivateKey = Maybe<PEMString>.None;
       protected Maybe<PEMString> _senderDiffieHellmanPublicKey = Maybe<PEMString>.None;
 
-      protected Maybe<PEMString> _senderDigitalSignaturePrivateKey = Maybe<PEMString>.None;
-      protected Maybe<PEMString> _senderDigitalSignaturePublicKey = Maybe<PEMString>.None;
-
       protected Maybe<string> _recipientUsername = Maybe<string>.None;
 
       protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
       protected Maybe<PEMString> _recipientDiffieHellmanPublicKey = Maybe<PEMString>.None;
 
-      public UploadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, FileTransferSettings fileTransferSettings)
+      public UploadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, FileTransferSettings fileTransferSettings)
       {
          _crypterApiService = crypterApiService;
          _simpleEncryptionService = simpleEncryptionService;
-         _simpleSignatureService = simpleSignatureService;
          _fileTransferSettings = fileTransferSettings;
       }
 
-      public void SetSenderInfo(PEMString diffieHellmanPrivateKey, PEMString digitalSignaturePrivateKey)
+      public void SetSenderInfo(PEMString diffieHellmanPrivateKey)
       {
          _senderDefined = true;
          _transferUserType = TransferUserType.User;
@@ -77,12 +71,6 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
 
          _senderDiffieHellmanPrivateKey = diffieHellmanPrivateKey;
          _senderDiffieHellmanPublicKey = senderX25519PublicKeyDecoded.ConvertToPEM();
-
-         var senderEd25519PrivateKeyDecoded = KeyConversion.ConvertEd25519PrivateKeyFromPEM(digitalSignaturePrivateKey);
-         var senderEd25519PublicKeyDecoded = senderEd25519PrivateKeyDecoded.GeneratePublicKey();
-
-         _senderDigitalSignaturePrivateKey = digitalSignaturePrivateKey;
-         _senderDigitalSignaturePublicKey = senderEd25519PublicKeyDecoded.ConvertToPEM();
       }
 
       public void SetRecipientInfo(string username, PEMString diffieHellmanPublicKey)
@@ -97,10 +85,6 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
          var senderX25519KeyPair = ECDH.GenerateKeys();
          _senderDiffieHellmanPrivateKey = senderX25519KeyPair.Private.ConvertToPEM();
          _senderDiffieHellmanPublicKey = senderX25519KeyPair.Public.ConvertToPEM();
-
-         var senderEd25519KeyPair = ECDSA.GenerateKeys();
-         _senderDigitalSignaturePrivateKey = senderEd25519KeyPair.Private.ConvertToPEM();
-         _senderDigitalSignaturePublicKey = senderEd25519KeyPair.Public.ConvertToPEM();
       }
 
       protected void CreateEphemeralRecipientKeys()

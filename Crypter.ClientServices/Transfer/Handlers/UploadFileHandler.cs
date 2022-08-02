@@ -60,8 +60,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
 
       public readonly int BufferSize;
 
-      public UploadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, FileTransferSettings fileTransferSettings, ICompressionService compressionService)
-         : base(crypterApiService, simpleEncryptionService, simpleSignatureService, fileTransferSettings)
+      public UploadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, FileTransferSettings fileTransferSettings, ICompressionService compressionService)
+         : base(crypterApiService, simpleEncryptionService, fileTransferSettings)
       {
          _compressionService = compressionService;
          BufferSize = fileTransferSettings.PartSizeBytes;
@@ -109,7 +109,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
          }
       }
 
-      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<double, Task>> encryptionProgress, Maybe<Func<double, Task>> signatureProgress, Maybe<Func<Task>> invokeBeforeUploading)
+      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<double, Task>> encryptionProgress, Maybe<Func<Task>> invokeBeforeUploading)
       {
          if (_recipientUsername.IsNone)
          {
@@ -129,16 +129,11 @@ namespace Crypter.ClientServices.Transfer.Handlers
             () => throw new Exception("Missing recipient Diffie Hellman private key"),
             x => x);
 
-         PEMString senderDigitalSignaturePrivateKey = _senderDigitalSignaturePrivateKey.Match(
-            () => throw new Exception("Missing recipient Digital Signature private key"),
-            x => x);
-
          (byte[] sendKey, byte[] serverKey) = DeriveSymmetricKeys(senderDiffieHellmanPrivateKey, recipientDiffieHellmanPublicKey);
          byte[] initializationVector = AES.GenerateIV();
 
          List<byte[]> partitionedCiphertext = await _simpleEncryptionService.EncryptStreamAsync(sendKey, initializationVector, _preparedStream, _preparedStream.Length, BufferSize, encryptionProgress);
          _preparedStream.Position = 0;
-         byte[] signature = await _simpleSignatureService.SignStreamAsync(senderDigitalSignaturePrivateKey, _preparedStream, _preparedStream.Length, BufferSize, signatureProgress);
          await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
 
          string encodedInitializationVector = Convert.ToBase64String(initializationVector);
@@ -146,16 +141,6 @@ namespace Crypter.ClientServices.Transfer.Handlers
          List<string> encodedCipherText = partitionedCiphertext
             .Select(x => Convert.ToBase64String(x))
             .ToList();
-
-         string encodedSignature = Convert.ToBase64String(signature);
-
-         string encodedECDSASenderKey = _senderDigitalSignaturePublicKey.Match(
-            () => throw new Exception("Missing sender Digital Signature public key"),
-            x =>
-            {
-               return Convert.ToBase64String(
-                  Encoding.UTF8.GetBytes(x.Value));
-            });
 
          string encodedECDHSenderKey = _senderDiffieHellmanPublicKey.Match(
             () => throw new Exception("Missing sender Diffie Hellman public key"),
@@ -167,7 +152,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
 
          string encodedServerKey = Convert.ToBase64String(serverKey);
 
-         var request = new UploadFileTransferRequest(_fileName, _fileContentType, encodedInitializationVector, encodedCipherText, encodedSignature, encodedECDSASenderKey, encodedECDHSenderKey, encodedServerKey, _expirationHours, _usedCompressionType);
+         var request = new UploadFileTransferRequest(_fileName, _fileContentType, encodedInitializationVector, encodedCipherText, encodedECDHSenderKey, encodedServerKey, _expirationHours, _usedCompressionType);
          var response = await _recipientUsername.Match(
             () => _crypterApiService.UploadFileTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserFileTransferAsync(x, request, _senderDefined));

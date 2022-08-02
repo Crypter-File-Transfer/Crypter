@@ -30,11 +30,10 @@ using Crypter.Contracts.Features.Settings;
 using Crypter.Core.Entities;
 using Crypter.Core.Models;
 using Crypter.CryptoLib;
-using Crypter.CryptoLib.Crypto;
+using Crypter.CryptoLib.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -80,23 +79,18 @@ namespace Crypter.Core.Services
             return Maybe<UserEmailAddressVerificationParameters>.None;
          }
 
-         var verificationCode = Guid.NewGuid();
-         var keys = ECDSA.GenerateKeys();
+         Guid verificationCode = Guid.NewGuid();
+         AsymmetricKeyPair keyPair = PublicKeyAuth.GenerateKeyPair();
 
-         var codeBytes = verificationCode.ToByteArray();
+         byte[] verificationCodeBytes = verificationCode.ToByteArray();
+         byte[] signature = PublicKeyAuth.Sign(verificationCodeBytes, keyPair.PrivateKey);
 
-         var signer = new ECDSA();
-         signer.InitializeSigner(keys.Private);
-         signer.SignerDigestPart(codeBytes);
-         var signature = signer.GenerateSignature();
-
-         return new UserEmailAddressVerificationParameters(userId, validEmailAddress, verificationCode, signature, keys.Public.ConvertToPEM());
+         return new UserEmailAddressVerificationParameters(userId, validEmailAddress, verificationCode, signature, keyPair.PublicKey);
       }
 
       public async Task<int> SaveSentVerificationParametersAsync(UserEmailAddressVerificationParameters parameters, CancellationToken cancellationToken)
       {
-         byte[] verificationKey = Encoding.UTF8.GetBytes(parameters.VerificationKey.Value);
-         var newEntity = new UserEmailVerificationEntity(parameters.UserId, parameters.VerificationCode, verificationKey, DateTime.UtcNow);
+         var newEntity = new UserEmailVerificationEntity(parameters.UserId, parameters.VerificationCode, parameters.VerificationKey, DateTime.UtcNow);
          _context.UserEmailVerifications.Add(newEntity);
          return await _context.SaveChangesAsync(cancellationToken);
       }
@@ -113,15 +107,9 @@ namespace Crypter.Core.Services
             return Maybe<VerifyEmailAddressResponse>.None;
          }
 
-         var signature = EmailVerificationEncoder.DecodeSignatureFromUrlSafe(request.Signature);
+         byte[] signature = EmailVerificationEncoder.DecodeSignatureFromUrlSafe(request.Signature);
 
-         var verificationKeyPem = PEMString.From(Encoding.UTF8.GetString(verificationEntity.VerificationKey));
-         var verificationKey = KeyConversion.ConvertEd25519PublicKeyFromPEM(verificationKeyPem);
-
-         var verifier = new ECDSA();
-         verifier.InitializeVerifier(verificationKey);
-         verifier.VerifierDigestPart(verificationCode.ToByteArray());
-         if (!verifier.VerifySignature(signature))
+         if (!PublicKeyAuth.Verify(verificationEntity.Code.ToByteArray(), signature, verificationEntity.VerificationKey))
          {
             return Maybe<VerifyEmailAddressResponse>.None;
          }

@@ -58,7 +58,6 @@ namespace Crypter.Core.Extensions
       {
          return (x) => x.Profile != null
             && x.X25519KeyPair != null
-            && x.Ed25519KeyPair != null
             && x.PrivacySetting != null;
       }
 
@@ -77,8 +76,7 @@ namespace Crypter.Core.Extensions
                || x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Everyone
                || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Authenticated && visitorId != null)
                || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Contacts && x.Contacts.Any(y => y.ContactId == visitorId)),
-            x.X25519KeyPair.PublicKey,
-            x.Ed25519KeyPair.PublicKey);
+            x.X25519KeyPair.PublicKey);
       }
 
       public static Expression<Func<UserEntity, bool>> UserReceivesEmailNotifications()

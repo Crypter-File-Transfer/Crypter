@@ -114,12 +114,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
             Assert.AreEqual(newUser.Id, x.UserId);
             Assert.AreEqual(newUser.EmailAddress, x.EmailAddress.Value);
 
-            var verifier = new ECDSA();
-            verifier.InitializeVerifier(KeyConversion.ConvertEd25519PublicKeyFromPEM(x.VerificationKey));
-            verifier.VerifierDigestPart(x.VerificationCode.ToByteArray());
-            bool verificatioCodeVerified = verifier.VerifySignature(x.Signature);
-
-            Assert.IsTrue(verificatioCodeVerified);
+            bool verificationCodeVerified = PublicKeyAuth.Verify(x.VerificationCode.ToByteArray(), x.Signature, x.VerificationKey);
+            Assert.IsTrue(verificationCodeVerified);
          });
       }
    }

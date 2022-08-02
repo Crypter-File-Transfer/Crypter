@@ -34,8 +34,6 @@ namespace Crypter.Core.Entities
    {
       public Guid Id { get; set; }
       public int Size { get; set; }
-      public string DigitalSignature { get; set; }
-      public string DigitalSignaturePublicKey { get; set; }
       public string DiffieHellmanPublicKey { get; set; }
       public string RecipientProof { get; set; }
       public CompressionType CompressionType { get; set; }
@@ -52,12 +50,10 @@ namespace Crypter.Core.Entities
       // IMessageTransfer
       public string Subject { get; set; }
 
-      public UserMessageTransferEntity(Guid id, int size, string digitalSignature, string digitalSignaturePublicKey, string diffieHellmanPublicKey, string recipientProof, CompressionType compressionType, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string subject = "")
+      public UserMessageTransferEntity(Guid id, int size, string diffieHellmanPublicKey, string recipientProof, CompressionType compressionType, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string subject = "")
       {
          Id = id;
          Size = size;
-         DigitalSignature = digitalSignature;
-         DigitalSignaturePublicKey = digitalSignaturePublicKey;
          DiffieHellmanPublicKey = diffieHellmanPublicKey;
          RecipientProof = recipientProof;
          CompressionType = compressionType;
