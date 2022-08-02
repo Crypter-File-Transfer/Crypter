@@ -65,7 +65,6 @@ namespace Crypter.Web.Shared.Transfer
       protected const string _downloadingLiteral = "Downloading";
       protected const string _decompressingLiteral = "Decompressing";
       protected const string _decryptingLiteral = "Decrypting";
-      protected const string _verifyingLiteral = "Verifying";
 
       protected static Maybe<PEMString> ValidateAndDecodeUserProvidedDecryptionKey(string decryptionKey)
       {

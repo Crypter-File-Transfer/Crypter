@@ -107,13 +107,12 @@ namespace Crypter.Web.Shared.Transfer
 
          var compressionProgressTask = Maybe<Func<double, Task>>.From(SetCompressionProgress);
          var encryptionProgressTask = Maybe<Func<double, Task>>.From(SetEncryptionProgress);
-         var signingProgressTask = Maybe<Func<double, Task>>.From(SetSigningProgress);
          var showUploadingMessage = Maybe<Func<Task>>.From(async () => {
             ShowProgressBar = false;
             await SetProgressMessage(_uploadingLiteral);
          });
          await fileUploader.PrepareMemoryStream(compressionProgressTask);
-         var uploadResponse = await fileUploader.UploadAsync(encryptionProgressTask, signingProgressTask, showUploadingMessage);
+         var uploadResponse = await fileUploader.UploadAsync(encryptionProgressTask, showUploadingMessage);
 
          HandleUploadResponse(uploadResponse);
 
@@ -136,16 +135,6 @@ namespace Crypter.Web.Shared.Transfer
          if (UploadStatusMessage != _encryptingLiteral)
          {
             UploadStatusMessage = _encryptingLiteral;
-         }
-
-         await SetProgressBar(percentComplete);
-      }
-
-      protected async Task SetSigningProgress(double percentComplete)
-      {
-         if (UploadStatusMessage != _signingLiteral)
-         {
-            UploadStatusMessage = _signingLiteral;
          }
 
          await SetProgressBar(percentComplete);

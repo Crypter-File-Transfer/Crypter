@@ -37,7 +37,7 @@ namespace Crypter.CryptoLib
       public static AsymmetricKeyPair GenerateKeyPair()
       {
          KeyPair keyPair = Sodium.PublicKeyAuth.GenerateKeyPair();
-         return new AsymmetricKeyPair(keyPair.PublicKey, keyPair.PrivateKey);
+         return new AsymmetricKeyPair(keyPair.PrivateKey, keyPair.PublicKey);
       }
 
       public static byte[] GetPublicKey(byte[] privateKey)

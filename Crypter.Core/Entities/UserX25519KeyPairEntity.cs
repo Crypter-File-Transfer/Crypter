@@ -29,7 +29,7 @@ using System;
 
 namespace Crypter.Core.Entities
 {
-   public class UserX25519KeyPairEntity : IUserPublicKeyPair
+   public class UserX25519KeyPairEntity
    {
       public Guid Owner { get; set; }
       public string PrivateKey { get; set; }

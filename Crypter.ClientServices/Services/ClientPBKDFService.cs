@@ -28,7 +28,6 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Models;
 using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
-using Crypter.CryptoLib.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -39,7 +38,6 @@ using Org.BouncyCastle.Crypto.Parameters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Crypter.ClientServices.Services
 {

@@ -48,16 +48,11 @@ namespace Crypter.Web.Shared.UserSettings
 
       protected PasswordModal PasswordModal { get; set; }
 
-      protected string Ed25519PrivateKey;
       protected string X25519PrivateKey;
       protected string RecoveryKey;
 
       protected override void OnInitialized()
       {
-         Ed25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
-            () => "",
-            some => some.Value);
-
          X25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
             () => "",
             some => some.Value);

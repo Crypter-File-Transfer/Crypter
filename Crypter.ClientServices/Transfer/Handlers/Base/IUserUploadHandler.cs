@@ -30,7 +30,7 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
 {
    public interface IUserUploadHandler
    {
-      void SetSenderInfo(PEMString diffieHellmanPrivateKey, PEMString digitalSignaturePrivateKey);
+      void SetSenderInfo(PEMString diffieHellmanPrivateKey);
       void SetRecipientInfo(string username, PEMString diffieHellmanPublicKey);
    }
 }
