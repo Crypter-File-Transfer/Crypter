@@ -25,10 +25,10 @@
  */
 
 using Crypter.Common.Enums;
-using Crypter.Common.Models;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication;
 using Crypter.Core.Entities;
+using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Test.Core_Tests.Services_Tests.Helpers;

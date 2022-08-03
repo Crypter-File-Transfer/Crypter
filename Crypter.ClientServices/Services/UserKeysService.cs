@@ -30,6 +30,7 @@ using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.ClientServices.Models;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.Authentication;
 using Crypter.Contracts.Features.Keys;
 using Crypter.CryptoLib.Services;
 using System;
@@ -44,7 +45,7 @@ namespace Crypter.ClientServices.Services
       private readonly ISimpleEncryptionService _simpleEncryptionService;
       private readonly IUserKeysRepository _userKeysRepository;
       private readonly IUserSessionService _userSessionService;
-      private readonly IClientPBKDFService _clientPbkdfService;
+      private readonly IUserPasswordService _userPasswordService;
 
       public Maybe<PEMString> X25519PrivateKey { get; protected set; }
 
@@ -53,13 +54,13 @@ namespace Crypter.ClientServices.Services
          ISimpleEncryptionService simpleEncryptionService,
          IUserKeysRepository userKeysRepository,
          IUserSessionService userSessionService,
-         IClientPBKDFService clientPBKDFService)
+         IUserPasswordService userPasswordService)
       {
          _crypterApiService = crypterApiService;
          _simpleEncryptionService = simpleEncryptionService;
          _userKeysRepository = userKeysRepository;
          _userSessionService = userSessionService;
-         _clientPbkdfService = clientPBKDFService;
+         _userPasswordService = userPasswordService;
 
          _userSessionService.ServiceInitializedEventHandler += OnUserSessionServiceInitialized;
          _userSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
@@ -86,14 +87,14 @@ namespace Crypter.ClientServices.Services
             };
          }
 
-         byte[] credentialKey = _clientPbkdfService.DeriveUserCredentialKey(username, password, _clientPbkdfService.CurrentPasswordVersion);
+         byte[] credentialKey = _userPasswordService.DeriveUserCredentialKey(username, password, _userPasswordService.CurrentPasswordVersion);
          var masterKeyResponse = await _crypterApiService.GetMasterKeyAsync();
 
          Maybe<byte[]> masterKey = await masterKeyResponse.MatchAsync(
             async downloadError =>
             {
-               AuthenticationPassword authenticationPassword = _clientPbkdfService.DeriveUserAuthenticationPassword(username, password, _clientPbkdfService.CurrentPasswordVersion);
-               return await HandleMasterKeyDownloadErrorAsync(downloadError, credentialKey, username, authenticationPassword);
+               VersionedPassword versionedPassword = _userPasswordService.DeriveUserAuthenticationPassword(username, password, _userPasswordService.CurrentPasswordVersion);
+               return await HandleMasterKeyDownloadErrorAsync(downloadError, credentialKey, username, AuthenticationPassword.From(versionedPassword.Password));
             },
             encryptedKeyInfo => DecryptMasterKey(encryptedKeyInfo, credentialKey),
             Maybe<byte[]>.None);
@@ -122,7 +123,7 @@ namespace Crypter.ClientServices.Services
 
       public async Task<Maybe<byte[]>> GetUserMasterKeyAsync(Username username, Password password)
       {
-         byte[] credentialKey = _clientPbkdfService.DeriveUserCredentialKey(username, password, _clientPbkdfService.CurrentPasswordVersion);
+         byte[] credentialKey = _userPasswordService.DeriveUserCredentialKey(username, password, _userPasswordService.CurrentPasswordVersion);
          var masterKeyResponse = await _crypterApiService.GetMasterKeyAsync();
          return masterKeyResponse.Match(
             Maybe<byte[]>.None,
@@ -136,8 +137,8 @@ namespace Crypter.ClientServices.Services
             () => Maybe<RecoveryKey>.None,
             async masterKey =>
             {
-               var authenticationPassword = _clientPbkdfService.DeriveUserAuthenticationPassword(username, password, _clientPbkdfService.CurrentPasswordVersion);
-               var request = new GetMasterKeyRecoveryProofRequest(username, authenticationPassword);
+               VersionedPassword versionedPassword = _userPasswordService.DeriveUserAuthenticationPassword(username, password, _userPasswordService.CurrentPasswordVersion);
+               var request = new GetMasterKeyRecoveryProofRequest(username, AuthenticationPassword.From(versionedPassword.Password));
                var recoveryProofResponse = await _crypterApiService.GetMasterKeyRecoveryProofAsync(request);
 
                return recoveryProofResponse.Match(

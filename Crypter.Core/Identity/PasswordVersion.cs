@@ -24,14 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Identity;
-using System.Collections.Generic;
-
-namespace Crypter.Core.Models
+namespace Crypter.Core.Identity
 {
-   public class ServerPasswordSettings
+   public class PasswordVersion
    {
-      public int ClientVersion { get; set; }
-      public List<PasswordVersion> ServerVersions { get; set; }
+      public int Version { get; init; }
+      public string Algorithm { get; init; }
+      public int Iterations { get; init; }
    }
 }

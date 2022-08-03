@@ -42,7 +42,7 @@ namespace Crypter.Web.Shared
       protected ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
-      protected IClientPBKDFService ClientPBKDFService { get; set; }
+      protected IUserPasswordService UserPasswordService { get; set; }
 
       protected const string _invalidClassName = "is-invalid";
 
@@ -181,9 +181,8 @@ namespace Crypter.Web.Shared
                                 from password in ValidatePassword().ToEither(RegistrationError.InvalidPassword).AsTask()
                                 from emailAddress in ValidateEmailAddress().MapLeft(_ => RegistrationError.InvalidEmailAddress).AsTask()
                                 where ValidatePasswordConfirmation()
-                                let authenticationPassword = ClientPBKDFService.DeriveUserAuthenticationPassword(username, password, ClientPBKDFService.CurrentPasswordVersion)
-                                let passwordInfo = new VersionedPassword(authenticationPassword, ClientPBKDFService.CurrentPasswordVersion)
-                                let requestBody = new RegistrationRequest(username, passwordInfo, emailAddress)
+                                let versionedPassword = UserPasswordService.DeriveUserAuthenticationPassword(username, password, UserPasswordService.CurrentPasswordVersion)
+                                let requestBody = new RegistrationRequest(username, versionedPassword, emailAddress)
                                 from registrationResponse in CrypterApiService.RegisterUserAsync(requestBody)
                                 let _ = UserProvidedEmailAddress = emailAddress.IsSome
                                 select registrationResponse;

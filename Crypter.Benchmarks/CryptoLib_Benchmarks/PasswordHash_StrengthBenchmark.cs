@@ -24,15 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
+using BenchmarkDotNet.Attributes;
+using Crypter.CryptoLib;
+using System.Text;
 
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.Benchmarks.CryptoLib_Benchmarks
 {
-   public interface IClientPBKDFService
+   [MemoryDiagnoser]
+   [Orderer(BenchmarkDotNet.Order.SummaryOrderPolicy.FastestToSlowest)]
+   [RankColumn]
+   public class PasswordHash_StrengthBenchmark
    {
-      int CurrentPasswordVersion { get; }
-      byte[] DeriveUserCredentialKey(Username username, Password password, int passwordVersion);
-      AuthenticationPassword DeriveUserAuthenticationPassword(Username username, Password password, int passwordVersion);
+      private byte[] _passwordBytes;
+      private byte[] _saltBytes;
+      private int _hashLength = 32;
+
+      [Params(PasswordHash.Strength.Interactive, PasswordHash.Strength.Medium, PasswordHash.Strength.Moderate, PasswordHash.Strength.Sensitive)]
+      public PasswordHash.Strength HashStrength;
+
+      [IterationSetup]
+      public void IterationSetup()
+      {
+         _passwordBytes = Encoding.UTF8.GetBytes("password");
+         _saltBytes = PasswordHash.ArgonDeriveSalt("username");
+      }
+
+      [Benchmark]
+      public void HashWithVaryingStrength()
+      {
+         PasswordHash.ArgonHash(_passwordBytes, _saltBytes, _hashLength, HashStrength);
+      }
    }
 }

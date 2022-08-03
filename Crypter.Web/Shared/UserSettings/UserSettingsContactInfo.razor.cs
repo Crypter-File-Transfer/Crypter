@@ -25,6 +25,7 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Contracts.Features.Authentication;
 using Crypter.Contracts.Features.Settings;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
@@ -37,7 +38,7 @@ namespace Crypter.Web.Shared.UserSettings
       protected ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
-      protected IClientPBKDFService ClientPBKDFService { get; set; }
+      protected IUserPasswordService UserPasswordService { get; set; }
 
       [Parameter]
       public string Username { get; set; }
@@ -107,8 +108,8 @@ namespace Crypter.Web.Shared.UserSettings
 
          Common.Primitives.Username username = Common.Primitives.Username.From(Username);
 
-         var authenticationPassword = ClientPBKDFService.DeriveUserAuthenticationPassword(username, password, ClientPBKDFService.CurrentPasswordVersion);
-         var request = new UpdateContactInfoRequest(EmailAddressEdit, authenticationPassword);
+         VersionedPassword versionedPassword = UserPasswordService.DeriveUserAuthenticationPassword(username, password, UserPasswordService.CurrentPasswordVersion);
+         var request = new UpdateContactInfoRequest(EmailAddressEdit, versionedPassword.Password);
          var maybeUpdate = await CrypterApiService.UpdateContactInfoAsync(request);
 
          maybeUpdate.DoLeftOrNeither(HandleContactInfoUpdateError, () => HandleContactInfoUpdateError());
