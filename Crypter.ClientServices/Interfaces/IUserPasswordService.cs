@@ -24,12 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Models
+using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.Authentication;
+
+namespace Crypter.ClientServices.Interfaces
 {
-   public class PasswordVersion
+   public interface IUserPasswordService
    {
-      public int Version { get; init; }
-      public string Algorithm { get; init; }
-      public int Iterations { get; init; }
+      int CurrentPasswordVersion { get; }
+      int CredentialKeySize { get; }
+      int AuthenticationPasswordSize { get; }
+      VersionedPassword DeriveUserAuthenticationPassword(Username username, Password password, int passwordVersion);
+      byte[] DeriveUserCredentialKey(Username username, Password password, int passwordVersion);
    }
 }

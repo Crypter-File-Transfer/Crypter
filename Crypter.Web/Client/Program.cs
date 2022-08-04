@@ -30,7 +30,6 @@ using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.ClientServices.Services;
 using Crypter.ClientServices.Transfer;
 using Crypter.ClientServices.Transfer.Models;
-using Crypter.Common.Models;
 using Crypter.CryptoLib.Services;
 using Crypter.Web;
 using Crypter.Web.Repositories;
@@ -40,7 +39,6 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 
 var builder = WebAssemblyHostBuilder.CreateDefault();
 builder.RootComponents.Add<App>("#app");
@@ -53,10 +51,6 @@ builder.Services.AddSingleton<IClientApiSettings>(builder.Configuration
 builder.Services.AddSingleton(builder.Configuration
    .GetSection("FileTransferSettings")
    .Get<FileTransferSettings>());
-
-builder.Services.AddSingleton(builder.Configuration
-   .GetSection("PasswordVersions")
-   .Get<List<PasswordVersion>>());
 
 builder.Services.AddHttpClient<ICrypterHttpService, CrypterHttpService>(httpClient =>
 {

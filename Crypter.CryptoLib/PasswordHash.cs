@@ -30,6 +30,7 @@ namespace Crypter.CryptoLib
 {
    /// <summary>
    /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/PasswordHash.cs
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/PasswordHash.Argon.cs
    /// </summary>
    public static class PasswordHash
    {
