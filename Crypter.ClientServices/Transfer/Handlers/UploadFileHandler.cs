@@ -121,11 +121,11 @@ namespace Crypter.ClientServices.Transfer.Handlers
             CreateEphemeralSenderKeys();
          }
 
-         PEMString senderDiffieHellmanPrivateKey = _senderDiffieHellmanPrivateKey.Match(
+         PEMString senderDiffieHellmanPrivateKey = _senderPrivateKey.Match(
             () => throw new Exception("Missing sender Diffie Hellman private key"),
             x => x);
 
-         PEMString recipientDiffieHellmanPublicKey = _recipientDiffieHellmanPublicKey.Match(
+         PEMString recipientDiffieHellmanPublicKey = _recipientPublicKey.Match(
             () => throw new Exception("Missing recipient Diffie Hellman private key"),
             x => x);
 
@@ -142,7 +142,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
             .Select(x => Convert.ToBase64String(x))
             .ToList();
 
-         string encodedECDHSenderKey = _senderDiffieHellmanPublicKey.Match(
+         string encodedECDHSenderKey = _senderPublicKey.Match(
             () => throw new Exception("Missing sender Diffie Hellman public key"),
             x =>
             {
@@ -157,7 +157,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
             () => _crypterApiService.UploadFileTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserFileTransferAsync(x, request, _senderDefined));
  
-         return response.Map(x => new UploadHandlerResponse(x.Id, _expirationHours, TransferItemType.File, x.UserType, _recipientDiffieHellmanPrivateKey));
+         return response.Map(x => new UploadHandlerResponse(x.Id, _expirationHours, TransferItemType.File, x.UserType, _recipientPrivateKey));
       }
 
       private bool UseCompressionOnFile()

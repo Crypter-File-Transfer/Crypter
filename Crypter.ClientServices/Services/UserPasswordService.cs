@@ -27,7 +27,7 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication;
-using Crypter.CryptoLib;
+using Crypter.CryptoLib.Sodium;
 using System;
 using System.Collections.Generic;
 using System.Text;

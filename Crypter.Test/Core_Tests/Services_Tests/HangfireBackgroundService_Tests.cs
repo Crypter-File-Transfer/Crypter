@@ -28,7 +28,7 @@ using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
-using Crypter.CryptoLib;
+using Crypter.CryptoLib.SodiumLib;
 using Moq;
 using NUnit.Framework;
 using System;

@@ -24,24 +24,55 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
-namespace Crypter.CryptoLib
+namespace Crypter.CryptoLib.SodiumLib
 {
    /// <summary>
-   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/GenericHash.cs
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/CryptoHash.cs
    /// </summary>
-   public static class GenericHash
+   public static class CryptoHash
    {
-      public static byte[] Hash(byte[] data, int outputLength)
+      public static byte[] Sha512(byte[] data)
       {
-         return Sodium.GenericHash.Hash(data, null, outputLength);
+         return Sodium.CryptoHash.Sha512(data);
       }
 
-      public static byte[] Hash(string data, int outputLength)
+      public static byte[] Sha512(string data)
       {
          byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-         return Hash(dataBytes, outputLength);
+         return Sha512(dataBytes);
+      }
+
+      public static byte[] Sha512(List<byte[]> data)
+      {
+         byte[] joinedBytes = data
+            .SelectMany(x => x)
+            .ToArray();
+
+         return Sha512(joinedBytes);
+      }
+
+      public static byte[] Sha256(byte[] data)
+      {
+         return Sodium.CryptoHash.Sha256(data);
+      }
+
+      public static byte[] Sha256(string data)
+      {
+         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+         return Sha256(dataBytes);
+      }
+
+      public static byte[] Sha256(List<byte[]> data)
+      {
+         byte[] joinedBytes = data
+            .SelectMany(x => x)
+            .ToArray();
+
+         return Sha256(joinedBytes);
       }
    }
 }

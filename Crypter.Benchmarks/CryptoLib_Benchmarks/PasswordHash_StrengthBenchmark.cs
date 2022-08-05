@@ -25,7 +25,7 @@
  */
 
 using BenchmarkDotNet.Attributes;
-using Crypter.CryptoLib;
+using Crypter.CryptoLib.Sodium;
 using System.Text;
 
 namespace Crypter.Benchmarks.CryptoLib_Benchmarks

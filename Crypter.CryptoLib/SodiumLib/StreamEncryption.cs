@@ -24,20 +24,42 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Sodium;
+using Crypter.CryptoLib.Models;
+using System.Text;
 
-namespace Crypter.CryptoLib
+namespace Crypter.CryptoLib.SodiumLib
 {
-   public static class Random
+   /// <summary>
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/StreamEncryption.cs
+   /// </summary>
+   public static class StreamEncryption
    {
-      public static int RandomNumber(int upperBound)
+      public static byte[] GenerateKey()
       {
-         return SodiumCore.GetRandomNumber(upperBound);
+         return GenerateKey();
       }
 
-      public static byte[] RandomBytes(int bytes)
+      public static EncryptedBox Encrypt(byte[] data, byte[] key)
       {
-         return SodiumCore.GetRandomBytes(bytes);
+         byte[] nonce = Sodium.StreamEncryption.GenerateNonce();
+         byte[] ciphertext = Sodium.StreamEncryption.Encrypt(data, nonce, key);
+         return new EncryptedBox(ciphertext, nonce);
+      }
+
+      public static EncryptedBox Encrypt(string data, byte[] key)
+      {
+         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+         return Encrypt(dataBytes, key);
+      }
+
+      public static byte[] Decrypt(EncryptedBox data, byte[] key)
+      {
+         return Decrypt(data.Contents, data.Nonce, key);
+      }
+
+      public static byte[] Decrypt(byte[] ciphertext, byte[] nonce, byte[] key)
+      {
+         return Sodium.StreamEncryption.Decrypt(ciphertext, nonce, key);
       }
    }
 }

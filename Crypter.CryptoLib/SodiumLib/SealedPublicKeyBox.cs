@@ -26,46 +26,28 @@
 
 using System.Text;
 
-namespace Crypter.CryptoLib
+namespace Crypter.CryptoLib.SodiumLib
 {
    /// <summary>
-   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/PasswordHash.cs
-   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/PasswordHash.Argon.cs
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/SealedPublicKeyBox.cs
    /// </summary>
-   public static class PasswordHash
+   public static class SealedPublicKeyBox
    {
-      public enum Strength
+      public static byte[] Create(byte[] data, byte[] recipientPublicKey)
       {
-         Interactive = 0,
-         Medium = 1,
-         Moderate = 2,
-         Sensitive = 3
+         return Sodium.SealedPublicKeyBox.Create(data, recipientPublicKey);
       }
 
-      public static byte[] ArgonGenerateSalt()
+      public static byte[] Create(string message, byte[] recipientPublicKey)
       {
-         return Sodium.PasswordHash.ArgonGenerateSalt();
+         byte[] data = Encoding.UTF8.GetBytes(message);
+         return Create(data, recipientPublicKey);
       }
 
-      public static byte[] ArgonDeriveSalt(string fromValue)
+      public static byte[] Open(byte[] ciphertext, byte[] recipientPrivateKey)
       {
-         return GenericHash.Hash(fromValue, 16);
-      }
-
-      public static byte[] ArgonHash(byte[] password, byte[] salt, long outputLength, Strength strength)
-      {
-         return Sodium.PasswordHash.ArgonHashBinary(password, salt, (Sodium.PasswordHash.StrengthArgon)strength, outputLength, Sodium.PasswordHash.ArgonAlgorithm.Argon_2ID13);
-      }
-
-      public static byte[] ArgonHash(string password, byte[] salt, long outputLength, Strength strength)
-      {
-         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-         return ArgonHash(passwordBytes, salt, outputLength, strength);
-      }
-
-      public static bool ArgonVerify(byte[] password, byte[] hash)
-      {
-         return Sodium.PasswordHash.ArgonHashStringVerify(hash, password);
+         byte[] recipientPublicKey = ScalarMult.GetPublicKey(recipientPrivateKey);
+         return Sodium.SealedPublicKeyBox.Open(ciphertext, recipientPrivateKey, recipientPublicKey);
       }
    }
 }

@@ -27,7 +27,7 @@
 using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
 using Crypter.Core.Services;
-using Crypter.CryptoLib;
+using Crypter.CryptoLib.SodiumLib;
 using NUnit.Framework;
 using System;
 using System.Threading;

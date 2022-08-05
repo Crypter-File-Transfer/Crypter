@@ -24,42 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.CryptoLib.Models;
-using System.Text;
-
-namespace Crypter.CryptoLib
+namespace Crypter.CryptoLib.Models
 {
-   /// <summary>
-   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/StreamEncryption.cs
-   /// </summary>
-   public static class StreamEncryption
+   public class TransmissionKeyRing
    {
-      public static byte[] GenerateKey()
-      {
-         return Sodium.StreamEncryption.GenerateKey();
-      }
+      public byte[] SendKey { get; set; }
+      public byte[] ReceiveKey { get; set; }
+      public byte[] ServerProof { get; set; }
 
-      public static EncryptedBox Encrypt(byte[] data, byte[] key)
+      public TransmissionKeyRing(byte[] sendKey, byte[] receiveKey, byte[] serverProof)
       {
-         byte[] nonce = Sodium.StreamEncryption.GenerateNonce();
-         byte[] ciphertext = Sodium.StreamEncryption.Encrypt(data, nonce, key);
-         return new EncryptedBox(ciphertext, nonce);
-      }
-
-      public static EncryptedBox Encrypt(string data, byte[] key)
-      {
-         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-         return Encrypt(dataBytes, key);
-      }
-
-      public static byte[] Decrypt(EncryptedBox data, byte[] key)
-      {
-         return Sodium.StreamEncryption.Decrypt(data.Ciphertext, data.Nonce, key);
-      }
-
-      public static byte[] Decrypt(byte[] ciphertext, byte[] nonce, byte[] key)
-      {
-         return Sodium.StreamEncryption.Decrypt(ciphertext, nonce, key);
+         SendKey = sendKey;
+         ReceiveKey = receiveKey;
+         ServerProof = serverProof;
       }
    }
 }

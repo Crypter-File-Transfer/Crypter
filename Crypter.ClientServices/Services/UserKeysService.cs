@@ -32,8 +32,8 @@ using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication;
 using Crypter.Contracts.Features.Keys;
-using Crypter.CryptoLib;
 using Crypter.CryptoLib.Models;
+using Crypter.CryptoLib.Sodium;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -155,7 +155,7 @@ namespace Crypter.ClientServices.Services
          AsymmetricKeyPair keyPair = PublicKeyBox.GenerateKeyPair();
          EncryptedBox encryptionInfo = StreamEncryption.Encrypt(keyPair.PrivateKey, masterKey);
 
-         return UploadKeyPairAsync(encryptionInfo.Ciphertext, keyPair.PublicKey, encryptionInfo.Nonce)
+         return UploadKeyPairAsync(encryptionInfo.Contents, keyPair.PublicKey, encryptionInfo.Nonce)
             .ToMaybeTask()
             .BindAsync(x => Maybe<byte[]>.From(keyPair.PrivateKey).AsTask());
       }
@@ -164,9 +164,9 @@ namespace Crypter.ClientServices.Services
       {
          byte[] newMasterKey = StreamEncryption.GenerateKey();
          EncryptedBox encryptedBox = StreamEncryption.Encrypt(newMasterKey, credentialKey);
-         byte[] recoveryProof = CryptoLib.Random.RandomBytes(16);
+         byte[] recoveryProof = CryptoLib.Sodium.Random.RandomBytes(16);
 
-         string encodedEncryptedKey = Convert.ToBase64String(encryptedBox.Ciphertext);
+         string encodedEncryptedKey = Convert.ToBase64String(encryptedBox.Contents);
          string encodedNonce = Convert.ToBase64String(encryptedBox.Nonce);
          string encodedRecoveryProof = Convert.ToBase64String(recoveryProof);
 

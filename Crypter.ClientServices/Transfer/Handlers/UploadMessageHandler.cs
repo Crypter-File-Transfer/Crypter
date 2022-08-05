@@ -69,11 +69,11 @@ namespace Crypter.ClientServices.Transfer.Handlers
             CreateEphemeralSenderKeys();
          }
 
-         PEMString senderDiffieHellmanPrivateKey = _senderDiffieHellmanPrivateKey.Match(
+         PEMString senderDiffieHellmanPrivateKey = _senderPrivateKey.Match(
             () => throw new Exception("Missing sender Diffie Hellman private key"),
             x => x);
 
-         PEMString recipientDiffieHellmanPublicKey = _recipientDiffieHellmanPublicKey.Match(
+         PEMString recipientDiffieHellmanPublicKey = _recipientPublicKey.Match(
             () => throw new Exception("Missing recipient Diffie Hellman private key"),
             x => x);
 
@@ -87,7 +87,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
 
          List<string> encodedCipherText = new List<string> { Convert.ToBase64String(ciphertext) };
 
-         string encodedECDHSenderKey = _senderDiffieHellmanPublicKey.Match(
+         string encodedECDHSenderKey = _senderPublicKey.Match(
             () => throw new Exception("Missing sender Diffie Hellman public key"),
             x =>
             {
@@ -102,7 +102,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
             () => _crypterApiService.UploadMessageTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserMessageTransferAsync(x, request, _senderDefined));
 
-         return response.Map(x => new UploadHandlerResponse(x.Id, _expirationHours, TransferItemType.Message, x.UserType, _recipientDiffieHellmanPrivateKey));
+         return response.Map(x => new UploadHandlerResponse(x.Id, _expirationHours, TransferItemType.Message, x.UserType, _recipientPrivateKey));
       }
    }
 }

@@ -24,17 +24,21 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.CryptoLib.Models
+namespace Crypter.CryptoLib.SodiumLib
 {
-   public class EncryptedBox
+   /// <summary>
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/ScalarMult.cs
+   /// </summary>
+   public static class ScalarMult
    {
-      public byte[] Contents { get; init; }
-      public byte[] Nonce { get; init; }
-
-      public EncryptedBox(byte[] contents, byte[] nonce)
+      public static byte[] GetPublicKey(byte[] privateKey)
       {
-         Contents = contents;
-         Nonce = nonce;
+         return Sodium.ScalarMult.Base(privateKey);
+      }
+
+      public static byte[] GetSharedKey(byte[] privateKey, byte[] publicKey)
+      {
+         return Sodium.ScalarMult.Mult(privateKey, publicKey);
       }
    }
 }

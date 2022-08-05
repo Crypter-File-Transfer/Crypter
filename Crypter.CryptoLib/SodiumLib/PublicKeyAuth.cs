@@ -27,7 +27,7 @@
 using Crypter.CryptoLib.Models;
 using Sodium;
 
-namespace Crypter.CryptoLib
+namespace Crypter.CryptoLib.SodiumLib
 {
    /// <summary>
    /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/PublicKeyAuth.cs

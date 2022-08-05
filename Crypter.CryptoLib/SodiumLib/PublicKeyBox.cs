@@ -32,49 +32,93 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypter.CryptoLib
+namespace Crypter.CryptoLib.SodiumLib
 {
    /// <summary>
    /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/PublicKeyBox.cs
    /// </summary>
    public static class PublicKeyBox
    {
+      /// <summary>
+      /// Creates a new key pair based on a random seed.
+      /// </summary>
+      /// <returns></returns>
       public static AsymmetricKeyPair GenerateKeyPair()
       {
          KeyPair keyPair = Sodium.PublicKeyBox.GenerateKeyPair();
          return new AsymmetricKeyPair(keyPair.PrivateKey, keyPair.PublicKey);
       }
 
+      /// <summary>
+      /// Creates a new key pair based on the provided seed.
+      /// </summary>
+      /// <param name="seed"></param>
+      /// <returns></returns>
       public static AsymmetricKeyPair GenerateSeededKeyPair(byte[] seed)
       {
          KeyPair keyPair = Sodium.PublicKeyBox.GenerateSeededKeyPair(seed);
          return new AsymmetricKeyPair(keyPair.PrivateKey, keyPair.PublicKey);
       }
 
-      public static byte[] GetPublicKey(byte[] privateKey)
+      /// <summary>
+      /// Creates a new key pair based on the provided private key.
+      /// </summary>
+      /// <param name="privateKey"></param>
+      /// <returns></returns>
+      public static AsymmetricKeyPair GenerateKeyPair(byte[] privateKey)
       {
-         return Sodium.PublicKeyBox.GenerateKeyPair(privateKey).PublicKey;
+         KeyPair keyPair = Sodium.PublicKeyBox.GenerateKeyPair(privateKey);
+         return new AsymmetricKeyPair(keyPair.PrivateKey, keyPair.PrivateKey);
       }
 
-      public static EncryptedBox Encrypt(byte[] data, byte[] privateKey, byte[] publicKey)
+      /// <summary>
+      /// Create an EncryptedBox, where the contents contains both the authentication tag and encrypted message.
+      /// </summary>
+      /// <param name="data"></param>
+      /// <param name="privateKey"></param>
+      /// <param name="publicKey"></param>
+      /// <returns></returns>
+      public static EncryptedBox Create(byte[] data, byte[] privateKey, byte[] publicKey)
       {
          byte[] nonce = Sodium.PublicKeyBox.GenerateNonce();
          byte[] ciphertext = Sodium.PublicKeyBox.Create(data, nonce, privateKey, publicKey);
          return new EncryptedBox(ciphertext, nonce);
       }
 
-      public static EncryptedBox Encrypt(string data, byte[] privateKey, byte[] publicKey)
+      /// <summary>
+      /// Create an EncryptedBox, where the contents contains both the authentication tag and encrypted message.
+      /// </summary>
+      /// <param name="data"></param>
+      /// <param name="privateKey"></param>
+      /// <param name="publicKey"></param>
+      /// <returns></returns>
+      public static EncryptedBox Create(string data, byte[] privateKey, byte[] publicKey)
       {
          byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-         return Encrypt(dataBytes, privateKey, publicKey);
+         return Create(dataBytes, privateKey, publicKey);
       }
 
-      public static byte[] Decrypt(EncryptedBox data, byte[] privateKey, byte[] publicKey)
+      /// <summary>
+      /// Open an EncryptedBox, where the contents are decrypted as well as verified for authenticity.
+      /// </summary>
+      /// <param name="data"></param>
+      /// <param name="privateKey"></param>
+      /// <param name="publicKey"></param>
+      /// <returns></returns>
+      public static byte[] Open(EncryptedBox data, byte[] privateKey, byte[] publicKey)
       {
-         return Sodium.PublicKeyBox.Open(data.Ciphertext, data.Nonce, privateKey, publicKey);
+         return Sodium.PublicKeyBox.Open(data.Contents, data.Nonce, privateKey, publicKey);
       }
 
-      public static async Task<List<EncryptedBox>> EncryptPartsAsync(List<byte[]> dataParts, byte[] privateKey, byte[] publicKey, Maybe<Func<double, Task>> progressFunc)
+      /// <summary>
+      /// Create a list of EncryptedBoxes
+      /// </summary>
+      /// <param name="dataParts"></param>
+      /// <param name="privateKey"></param>
+      /// <param name="publicKey"></param>
+      /// <param name="progressFunc"></param>
+      /// <returns></returns>
+      public static async Task<List<EncryptedBox>> CreateManyAsync(List<byte[]> dataParts, byte[] privateKey, byte[] publicKey, Maybe<Func<double, Task>> progressFunc)
       {
          await progressFunc.IfSomeAsync(async func => await func.Invoke(0.0));
 
@@ -82,7 +126,7 @@ namespace Crypter.CryptoLib
 
          for (int i = 0; i < dataParts.Count; i++)
          {
-            boxes.Add(Encrypt(dataParts[i], privateKey, publicKey));
+            boxes.Add(Create(dataParts[i], privateKey, publicKey));
 
             await progressFunc.IfSomeAsync(async func =>
             {
@@ -95,7 +139,15 @@ namespace Crypter.CryptoLib
          return boxes;
       }
 
-      public static async Task<List<byte[]>> DecryptPartsAsync(List<EncryptedBox> dataParts, byte[] privateKey, byte[] publicKey, Maybe<Func<double, Task>> progressFunc)
+      /// <summary>
+      /// Open a list of EncryptedBoxes
+      /// </summary>
+      /// <param name="dataParts"></param>
+      /// <param name="privateKey"></param>
+      /// <param name="publicKey"></param>
+      /// <param name="progressFunc"></param>
+      /// <returns></returns>
+      public static async Task<List<byte[]>> OpenManyAsync(List<EncryptedBox> dataParts, byte[] privateKey, byte[] publicKey, Maybe<Func<double, Task>> progressFunc)
       {
          await progressFunc.IfSomeAsync(async func => await func.Invoke(0.0));
 
@@ -103,7 +155,7 @@ namespace Crypter.CryptoLib
 
          for (int i = 0; i < dataParts.Count; i++)
          {
-            plaintextParts.Add(Decrypt(dataParts[i], privateKey, publicKey));
+            plaintextParts.Add(Open(dataParts[i], privateKey, publicKey));
 
             await progressFunc.IfSomeAsync(async func =>
             {

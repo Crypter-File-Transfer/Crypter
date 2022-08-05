@@ -24,17 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.CryptoLib.Models
-{
-   public class EncryptedBox
-   {
-      public byte[] Contents { get; init; }
-      public byte[] Nonce { get; init; }
+using Sodium;
 
-      public EncryptedBox(byte[] contents, byte[] nonce)
+namespace Crypter.CryptoLib.SodiumLib
+{
+   public static class Random
+   {
+      public static int RandomNumber(int upperBound)
       {
-         Contents = contents;
-         Nonce = nonce;
+         return SodiumCore.GetRandomNumber(upperBound);
+      }
+
+      public static byte[] RandomBytes(int bytes)
+      {
+         return SodiumCore.GetRandomBytes(bytes);
       }
    }
 }

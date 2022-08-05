@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.CryptoLib;
+using Crypter.CryptoLib.SodiumLib;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Text;

@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.CryptoLib;
 using Crypter.CryptoLib.Models;
+using Crypter.CryptoLib.SodiumLib;
 using NUnit.Framework;
 
-namespace Crypter.Test
+namespace Crypter.Test.CryptoLib_Tests
 {
    [TestFixture]
    internal class PublicKeyAuth_Tests

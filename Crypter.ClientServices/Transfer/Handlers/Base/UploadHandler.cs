@@ -29,7 +29,8 @@ using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Org.BouncyCastle.Crypto;
+using Crypter.CryptoLib.Models;
+using Crypter.CryptoLib.SodiumLib;
 
 namespace Crypter.ClientServices.Transfer.Handlers.Base
 {
@@ -42,13 +43,13 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
 
       protected bool _senderDefined = false;
 
-      protected Maybe<PEMString> _senderDiffieHellmanPrivateKey = Maybe<PEMString>.None;
-      protected Maybe<PEMString> _senderDiffieHellmanPublicKey = Maybe<PEMString>.None;
+      protected Maybe<byte[]> _senderPrivateKey = Maybe<byte[]>.None;
+      protected Maybe<byte[]> _senderPublicKey = Maybe<byte[]>.None;
 
-      protected Maybe<string> _recipientUsername = Maybe<string>.None;
+      protected Maybe<Username> _recipientUsername = Maybe<Username>.None;
 
-      protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
-      protected Maybe<PEMString> _recipientDiffieHellmanPublicKey = Maybe<PEMString>.None;
+      protected Maybe<byte[]> _recipientPrivateKey = Maybe<byte[]>.None;
+      protected Maybe<byte[]> _recipientPublicKey = Maybe<byte[]>.None;
 
       public UploadHandler(ICrypterApiService crypterApiService, FileTransferSettings fileTransferSettings)
       {
@@ -56,49 +57,34 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
          _fileTransferSettings = fileTransferSettings;
       }
 
-      public void SetSenderInfo(PEMString diffieHellmanPrivateKey)
+      public void SetSenderInfo(byte[] privateKey)
       {
          _senderDefined = true;
          _transferUserType = TransferUserType.User;
 
-         var senderX25519PrivateKeyDecoded = KeyConversion.ConvertX25519PrivateKeyFromPEM(diffieHellmanPrivateKey);
-         var senderX25519PublicKeyDecoded = senderX25519PrivateKeyDecoded.GeneratePublicKey();
-
-         _senderDiffieHellmanPrivateKey = diffieHellmanPrivateKey;
-         _senderDiffieHellmanPublicKey = senderX25519PublicKeyDecoded.ConvertToPEM();
+         _senderPrivateKey = privateKey;
+         _senderPublicKey = ScalarMult.GetPublicKey(privateKey);
       }
 
-      public void SetRecipientInfo(string username, PEMString diffieHellmanPublicKey)
+      public void SetRecipientInfo(Username username, byte[] publicKey)
       {
          _transferUserType = TransferUserType.User;
          _recipientUsername = username;
-         _recipientDiffieHellmanPublicKey = diffieHellmanPublicKey;
+         _recipientPublicKey = publicKey;
       }
 
       protected void CreateEphemeralSenderKeys()
       {
-         var senderX25519KeyPair = ECDH.GenerateKeys();
-         _senderDiffieHellmanPrivateKey = senderX25519KeyPair.Private.ConvertToPEM();
-         _senderDiffieHellmanPublicKey = senderX25519KeyPair.Public.ConvertToPEM();
+         AsymmetricKeyPair senderKeyPair = PublicKeyAuth.GenerateKeyPair();
+         _senderPrivateKey = senderKeyPair.PrivateKey;
+         _senderPublicKey = senderKeyPair.PublicKey;
       }
 
       protected void CreateEphemeralRecipientKeys()
       {
-         var recipientX25519KeyPair = ECDH.GenerateKeys();
-         _recipientDiffieHellmanPrivateKey = recipientX25519KeyPair.Private.ConvertToPEM();
-         _recipientDiffieHellmanPublicKey = recipientX25519KeyPair.Public.ConvertToPEM();
-      }
-
-      protected static (byte[] SendKey, byte[] ServerKey) DeriveSymmetricKeys(PEMString senderX25519PrivateKey, PEMString recipientX25519PublicKey)
-      {
-         var senderX25519PrivateDecoded = KeyConversion.ConvertX25519PrivateKeyFromPEM(senderX25519PrivateKey);
-         var senderX25519PublicDecoded = senderX25519PrivateDecoded.GeneratePublicKey();
-         var senderKeyPair = new AsymmetricCipherKeyPair(senderX25519PublicDecoded, senderX25519PrivateDecoded);
-         var recipientX25519PublicDecoded = KeyConversion.ConvertX25519PublicKeyFromPEM(recipientX25519PublicKey);
-         (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(senderKeyPair, recipientX25519PublicDecoded);
-         var serverKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
-
-         return (sendKey, serverKey);
+         AsymmetricKeyPair recipientKeyPair = PublicKeyAuth.GenerateKeyPair();
+         _recipientPrivateKey = recipientKeyPair.PrivateKey;
+         _recipientPublicKey = recipientKeyPair.PublicKey;
       }
    }
 }
