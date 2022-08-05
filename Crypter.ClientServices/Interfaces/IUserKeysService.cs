@@ -33,9 +33,9 @@ namespace Crypter.ClientServices.Interfaces
 {
    public interface IUserKeysService
    {
-      Maybe<PEMString> X25519PrivateKey { get; }
+      Maybe<byte[]> MasterKey { get; }
+      Maybe<byte[]> PrivateKey { get; }
 
-      (PEMString PrivateKey, PEMString PublicKey) CreateX25519KeyPair();
       Task<Maybe<byte[]>> GetUserMasterKeyAsync(Username username, Password password);
       Task<Maybe<RecoveryKey>> GetUserRecoveryKeyAsync(Username username, Password password);
    }

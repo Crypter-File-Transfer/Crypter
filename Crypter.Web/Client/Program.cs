@@ -30,7 +30,6 @@ using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.ClientServices.Services;
 using Crypter.ClientServices.Transfer;
 using Crypter.ClientServices.Transfer.Models;
-using Crypter.CryptoLib.Services;
 using Crypter.Web;
 using Crypter.Web.Repositories;
 using Crypter.Web.Services;
@@ -78,7 +77,6 @@ builder.Services
    .AddSingleton<IUserSessionService, UserSessionService<BrowserStorageLocation>>()
    .AddSingleton<ICrypterApiService, CrypterApiService>()
    .AddSingleton<IUserKeysService, UserKeysService>()
-   .AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>()
    .AddSingleton<ICompressionService, CompressionService>()
    .AddSingleton<IUserContactsService, UserContactsService>()
    .AddSingleton<IBrowserDownloadFileService, BrowserDownloadFileService>()

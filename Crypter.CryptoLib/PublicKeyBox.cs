@@ -60,7 +60,7 @@ namespace Crypter.CryptoLib
       {
          byte[] nonce = Sodium.PublicKeyBox.GenerateNonce();
          byte[] ciphertext = Sodium.PublicKeyBox.Create(data, nonce, privateKey, publicKey);
-         return new EncryptedBox(nonce, ciphertext);
+         return new EncryptedBox(ciphertext, nonce);
       }
 
       public static EncryptedBox Encrypt(string data, byte[] privateKey, byte[] publicKey)

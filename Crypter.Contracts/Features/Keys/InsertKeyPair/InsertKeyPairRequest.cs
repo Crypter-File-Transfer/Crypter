@@ -30,16 +30,16 @@ namespace Crypter.Contracts.Features.Keys
 {
    public class InsertKeyPairRequest
    {
-      public string EncryptedPrivateKey { get; set; }
+      public string PrivateKey { get; set; }
       public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
+      public string Nonce { get; set; }
 
       [JsonConstructor]
-      public InsertKeyPairRequest(string encryptedPrivateKey, string publicKey, string clientIV)
+      public InsertKeyPairRequest(string privateKey, string publicKey, string nonce)
       {
-         EncryptedPrivateKey = encryptedPrivateKey;
+         PrivateKey = privateKey;
          PublicKey = publicKey;
-         ClientIV = clientIV;
+         Nonce = nonce;
       }
    }
 }

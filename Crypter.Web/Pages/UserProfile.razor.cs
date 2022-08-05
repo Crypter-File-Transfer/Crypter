@@ -76,12 +76,12 @@ namespace Crypter.Web.Pages
             AllowsFiles = x.Result.ReceivesFiles;
             AllowsMessages = x.Result.ReceivesMessages;
             UserX25519PublicKey = PEMString.From(
-               Encoding.UTF8.GetString(Convert.FromBase64String(x.Result.PublicDHKey)));
+               Encoding.UTF8.GetString(Convert.FromBase64String(x.Result.PublicKey)));
          });
 
          IsProfileAvailable = response.Match(
             false,
-            right => !string.IsNullOrEmpty(right.Result.PublicDHKey));
+            right => !string.IsNullOrEmpty(right.Result.PublicKey));
       }
    }
 }

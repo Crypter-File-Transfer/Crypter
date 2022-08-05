@@ -137,7 +137,7 @@ namespace Crypter.API.Controllers
             MakeErrorResponse(GetMasterKeyRecoveryProofError.UnknownError));
       }
 
-      [HttpGet("diffie-hellman/private")]
+      [HttpGet("key-pair/private")]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetPrivateKeyResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
@@ -165,7 +165,7 @@ namespace Crypter.API.Controllers
             MakeErrorResponse(GetPrivateKeyError.UnkownError));
       }
 
-      [HttpPut("diffie-hellman")]
+      [HttpPut("key-pair")]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertKeyPairResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]

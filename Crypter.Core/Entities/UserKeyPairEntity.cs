@@ -24,30 +24,29 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
+using System;
 
-namespace Crypter.Contracts.Features.Users
+namespace Crypter.Core.Entities
 {
-   public class UserProfileDTO
+   public class UserKeyPairEntity
    {
-      public string Username { get; set; }
-      public string Alias { get; set; }
-      public string About { get; set; }
-      public bool AllowKeyExchangeRequests { get; set; }
-      public bool ReceivesMessages { get; set; }
-      public bool ReceivesFiles { get; set; }
-      public string PublicDHKey { get; set; }
+      public Guid Owner { get; set; }
+      public string PrivateKey { get; set; }
+      public string PublicKey { get; set; }
+      public string Nonce { get; set; }
+      public DateTime Updated { get; set; }
+      public DateTime Created { get; set; }
 
-      [JsonConstructor]
-      public UserProfileDTO(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, string publicDHKey)
+      public UserEntity User { get; set; }
+
+      public UserKeyPairEntity(Guid owner, string privateKey, string publicKey, string nonce, DateTime updated, DateTime created)
       {
-         Username = username;
-         Alias = alias;
-         About = about;
-         AllowKeyExchangeRequests = allowKeyExchangeRequests;
-         ReceivesMessages = receivesMessages;
-         ReceivesFiles = receivesFiles;
-         PublicDHKey = publicDHKey;
+         Owner = owner;
+         PrivateKey = privateKey;
+         PublicKey = publicKey;
+         Nonce = nonce;
+         Updated = updated;
+         Created = created;
       }
    }
 }

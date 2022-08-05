@@ -30,12 +30,24 @@ namespace Crypter.Contracts.Features.Users
 {
    public class GetUserProfileResponse
    {
-      public UserProfileDTO Result { get; set; }
+      public string Username { get; set; }
+      public string Alias { get; set; }
+      public string About { get; set; }
+      public bool AllowKeyExchangeRequests { get; set; }
+      public bool ReceivesMessages { get; set; }
+      public bool ReceivesFiles { get; set; }
+      public string PublicKey { get; set; }
 
       [JsonConstructor]
-      public GetUserProfileResponse(UserProfileDTO result)
+      public GetUserProfileResponse(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, string publicKey)
       {
-         Result = result;
+         Username = username;
+         Alias = alias;
+         About = about;
+         AllowKeyExchangeRequests = allowKeyExchangeRequests;
+         ReceivesMessages = receivesMessages;
+         ReceivesFiles = receivesFiles;
+         PublicKey = publicKey;
       }
    }
 }

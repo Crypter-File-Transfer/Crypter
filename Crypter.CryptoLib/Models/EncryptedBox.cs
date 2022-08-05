@@ -28,13 +28,13 @@ namespace Crypter.CryptoLib.Models
 {
    public class EncryptedBox
    {
-      public byte[] Nonce { get; init; }
       public byte[] Ciphertext { get; init; }
+      public byte[] Nonce { get; init; }
 
-      public EncryptedBox(byte[] nonce, byte[] ciphertext)
+      public EncryptedBox(byte[] ciphertext, byte[] nonce)
       {
-         Nonce = nonce;
          Ciphertext = ciphertext;
+         Nonce = nonce;
       }
    }
 }

@@ -24,37 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.OpenSsl;
-using System.IO;
+using Sodium;
 
 namespace Crypter.CryptoLib
 {
-   public static class KeyConversion
+   public static class Random
    {
-      public static PEMString ConvertToPEM(this AsymmetricKeyParameter keyParams)
+      public static int RandomNumber(int upperBound)
       {
-         var stringWriter = new StringWriter();
-         var pemWriter = new PemWriter(stringWriter);
-         pemWriter.WriteObject(keyParams);
-         pemWriter.Writer.Flush();
-         return PEMString.From(stringWriter.ToString());
+         return SodiumCore.GetRandomNumber(upperBound);
       }
 
-      public static X25519PrivateKeyParameters ConvertX25519PrivateKeyFromPEM(PEMString pemKey)
+      public static byte[] RandomBytes(int bytes)
       {
-         var stringReader = new StringReader(pemKey.Value);
-         var pemReader = new PemReader(stringReader);
-         return (X25519PrivateKeyParameters)pemReader.ReadObject();
-      }
-
-      public static X25519PublicKeyParameters ConvertX25519PublicKeyFromPEM(PEMString pemKey)
-      {
-         var stringReader = new StringReader(pemKey.Value);
-         var pemReader = new PemReader(stringReader);
-         return (X25519PublicKeyParameters)pemReader.ReadObject();
+         return SodiumCore.GetRandomBytes(bytes);
       }
    }
 }

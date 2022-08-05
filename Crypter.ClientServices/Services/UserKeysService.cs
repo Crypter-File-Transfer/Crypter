@@ -32,7 +32,8 @@ using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication;
 using Crypter.Contracts.Features.Keys;
-using Crypter.CryptoLib.Services;
+using Crypter.CryptoLib;
+using Crypter.CryptoLib.Models;
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -42,22 +43,20 @@ namespace Crypter.ClientServices.Services
    public class UserKeysService : IUserKeysService, IDisposable
    {
       private readonly ICrypterApiService _crypterApiService;
-      private readonly ISimpleEncryptionService _simpleEncryptionService;
       private readonly IUserKeysRepository _userKeysRepository;
       private readonly IUserSessionService _userSessionService;
       private readonly IUserPasswordService _userPasswordService;
 
-      public Maybe<PEMString> X25519PrivateKey { get; protected set; }
+      public Maybe<byte[]> MasterKey { get; protected set; }
+      public Maybe<byte[]> PrivateKey { get; protected set; }
 
       public UserKeysService(
          ICrypterApiService crypterApiService,
-         ISimpleEncryptionService simpleEncryptionService,
          IUserKeysRepository userKeysRepository,
          IUserSessionService userSessionService,
          IUserPasswordService userPasswordService)
       {
          _crypterApiService = crypterApiService;
-         _simpleEncryptionService = simpleEncryptionService;
          _userKeysRepository = userKeysRepository;
          _userSessionService = userSessionService;
          _userPasswordService = userPasswordService;
@@ -67,58 +66,48 @@ namespace Crypter.ClientServices.Services
          _userSessionService.UserLoggedOutEventHandler += OnUserLoggedOut;
       }
 
-      private async Task PrepareUserKeysOnUserLoginAsync(Username username, Password password, bool rememberUser)
+      private async Task InitializeAsync(Username username, Password password, bool rememberUser)
       {
-         Task<Maybe<PEMString>> HandlePrivateKeyDownloadErrorAsync(GetPrivateKeyError error, byte[] masterKey)
+         Task<Maybe<byte[]>> HandlePrivateKeyDownloadErrorAsync(GetPrivateKeyError error, byte[] masterKey)
          {
+#pragma warning disable CS8524
             return error switch
             {
                GetPrivateKeyError.NotFound => UploadNewUserKeyPairAsync(masterKey),
-               _ => Maybe<PEMString>.None.AsTask()
+               GetPrivateKeyError.UnkownError => Maybe<byte[]>.None.AsTask()
             };
+#pragma warning restore CS8524
          }
 
-         Task<Maybe<byte[]>> HandleMasterKeyDownloadErrorAsync(GetMasterKeyError error, byte[] userCredentialKey, Username username, AuthenticationPassword password)
+         Task<Maybe<byte[]>> HandleMasterKeyDownloadErrorAsync(GetMasterKeyError error, byte[] userCredentialKey, Username username, Password password)
          {
+            VersionedPassword versionedPassword = _userPasswordService.DeriveUserAuthenticationPassword(username, password, _userPasswordService.CurrentPasswordVersion);
+#pragma warning disable CS8524
             return error switch
             {
-               GetMasterKeyError.NotFound => UploadNewMasterKeyAsync(userCredentialKey, username, password),
-               _ => Maybe<byte[]>.None.AsTask()
+               GetMasterKeyError.NotFound => UploadNewMasterKeyAsync(userCredentialKey, username, AuthenticationPassword.From(versionedPassword.Password)),
+               GetMasterKeyError.UnknownError => Maybe<byte[]>.None.AsTask()
             };
+#pragma warning restore CS8524
          }
 
          byte[] credentialKey = _userPasswordService.DeriveUserCredentialKey(username, password, _userPasswordService.CurrentPasswordVersion);
-         var masterKeyResponse = await _crypterApiService.GetMasterKeyAsync();
 
-         Maybe<byte[]> masterKey = await masterKeyResponse.MatchAsync(
-            async downloadError =>
-            {
-               VersionedPassword versionedPassword = _userPasswordService.DeriveUserAuthenticationPassword(username, password, _userPasswordService.CurrentPasswordVersion);
-               return await HandleMasterKeyDownloadErrorAsync(downloadError, credentialKey, username, AuthenticationPassword.From(versionedPassword.Password));
-            },
-            encryptedKeyInfo => DecryptMasterKey(encryptedKeyInfo, credentialKey),
-            Maybe<byte[]>.None);
+         MasterKey = await _crypterApiService.GetMasterKeyAsync()
+            .MatchAsync(
+               async downloadError => await HandleMasterKeyDownloadErrorAsync(downloadError, credentialKey, username, password),
+               encryptedKeyInfo => DecryptMasterKey(encryptedKeyInfo, credentialKey),
+               Maybe<byte[]>.None);
 
-         var x25519DownloadResult = _crypterApiService.GetDiffieHellmanPrivateKeyAsync();
-
-         await masterKey.IfSomeAsync(async masterKey =>
+         await MasterKey.IfSomeAsync(async masterKey =>
          {
-            X25519PrivateKey = await x25519DownloadResult.MatchAsync(
+            PrivateKey = await _crypterApiService.GetPrivateKeyAsync().MatchAsync(
                async downloadError => await HandlePrivateKeyDownloadErrorAsync(downloadError, masterKey),
-               encryptedKeyInfo => DecodeAndDecryptUserPrivateKey(encryptedKeyInfo.EncryptedKey, encryptedKeyInfo.ClientIV, masterKey),
-               Maybe<PEMString>.None);
+               encryptedKeyInfo => DecodeAndDecryptUserPrivateKey(encryptedKeyInfo.Key, encryptedKeyInfo.Nonce, masterKey),
+               Maybe<byte[]>.None);
          });
 
-         await X25519PrivateKey.IfSomeAsync(async x => await _userKeysRepository.StoreX25519PrivateKeyAsync(x, rememberUser));
-      }
-
-      public (PEMString PrivateKey, PEMString PublicKey) CreateX25519KeyPair()
-      {
-         var keyPair = CryptoLib.Crypto.ECDH.GenerateKeys();
-         var privateKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Private);
-         var publicKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Public);
-
-         return (privateKey, publicKey);
+         await PrivateKey.IfSomeAsync(async x => await _userKeysRepository.StorePrivateKeyAsync(x, rememberUser));
       }
 
       public async Task<Maybe<byte[]>> GetUserMasterKeyAsync(Username username, Password password)
@@ -147,13 +136,13 @@ namespace Crypter.ClientServices.Services
             });
       }
 
-      private Maybe<byte[]> DecryptMasterKey(GetMasterKeyResponse encryptedKeyInfo, byte[] userSymmetricKey)
+      private static Maybe<byte[]> DecryptMasterKey(GetMasterKeyResponse encryptedKeyInfo, byte[] userSymmetricKey)
       {
          byte[] encryptedKey = Convert.FromBase64String(encryptedKeyInfo.EncryptedKey);
-         byte[] iv = Convert.FromBase64String(encryptedKeyInfo.ClientIV);
+         byte[] nonce = Convert.FromBase64String(encryptedKeyInfo.Nonce);
          try
          {
-            return _simpleEncryptionService.Decrypt(key: userSymmetricKey, iv: iv, ciphertext: encryptedKey);
+            return StreamEncryption.Decrypt(encryptedKey, nonce, userSymmetricKey);
          }
          catch (Exception)
          {
@@ -161,54 +150,52 @@ namespace Crypter.ClientServices.Services
          }
       }
 
-      private Task<Maybe<PEMString>> UploadNewUserKeyPairAsync(byte[] masterKey)
+      private Task<Maybe<byte[]>> UploadNewUserKeyPairAsync(byte[] masterKey)
       {
-         var (privateKey, publicKey) = CreateX25519KeyPair();
+         AsymmetricKeyPair keyPair = PublicKeyBox.GenerateKeyPair();
+         EncryptedBox encryptionInfo = StreamEncryption.Encrypt(keyPair.PrivateKey, masterKey);
 
-         var (encryptedPrivateKey, iv) = _simpleEncryptionService.Encrypt(masterKey, privateKey.Value);
-
-         return UploadKeyPairAsync(encryptedPrivateKey, publicKey, iv)
+         return UploadKeyPairAsync(encryptionInfo.Ciphertext, keyPair.PublicKey, encryptionInfo.Nonce)
             .ToMaybeTask()
-            .BindAsync(x => Maybe<PEMString>.From(privateKey).AsTask());
+            .BindAsync(x => Maybe<byte[]>.From(keyPair.PrivateKey).AsTask());
       }
 
-      private Task<Maybe<byte[]>> UploadNewMasterKeyAsync(byte[] userSymmetricKey, Username username, AuthenticationPassword password)
+      private Task<Maybe<byte[]>> UploadNewMasterKeyAsync(byte[] credentialKey, Username username, AuthenticationPassword password)
       {
-         byte[] newMasterKey = _simpleEncryptionService.GenerateKey();
-         var (encryptedKey, iv) = _simpleEncryptionService.Encrypt(key: userSymmetricKey, plaintext: newMasterKey);
-         byte[] recoveryProof = _simpleEncryptionService.GenerateKey();
+         byte[] newMasterKey = StreamEncryption.GenerateKey();
+         EncryptedBox encryptedBox = StreamEncryption.Encrypt(newMasterKey, credentialKey);
+         byte[] recoveryProof = CryptoLib.Random.RandomBytes(16);
 
-         string encodedEncryptedKey = Convert.ToBase64String(encryptedKey);
-         string encodedIV = Convert.ToBase64String(iv);
+         string encodedEncryptedKey = Convert.ToBase64String(encryptedBox.Ciphertext);
+         string encodedNonce = Convert.ToBase64String(encryptedBox.Nonce);
          string encodedRecoveryProof = Convert.ToBase64String(recoveryProof);
 
-         return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, password, encodedEncryptedKey, encodedIV, encodedRecoveryProof))
+         return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, password, encodedEncryptedKey, encodedNonce, encodedRecoveryProof))
             .ToMaybeTask()
             .BindAsync(x => Maybe<byte[]>.From(newMasterKey).AsTask());
       }
 
-      private Maybe<PEMString> DecodeAndDecryptUserPrivateKey(string encryptedPrivateKey, string iv, byte[] decryptionKey)
+      private static Maybe<byte[]> DecodeAndDecryptUserPrivateKey(string encryptedPrivateKey, string nonce, byte[] decryptionKey)
       {
          byte[] decodedPrivateKey = Convert.FromBase64String(encryptedPrivateKey);
-         byte[] decodedIV = Convert.FromBase64String(iv);
+         byte[] decodedNonce = Convert.FromBase64String(nonce);
          try
          {
-            string pemString = _simpleEncryptionService.DecryptToString(key: decryptionKey, iv: decodedIV, ciphertext: decodedPrivateKey);
-            return PEMString.From(pemString);
+            return StreamEncryption.Decrypt(decodedPrivateKey, decodedNonce, decryptionKey);
          }
          catch (Exception)
          {
-            return Maybe<PEMString>.None;
+            return Maybe<byte[]>.None;
          }
       }
 
-      private Task<Either<InsertKeyPairError, InsertKeyPairResponse>> UploadKeyPairAsync(byte[] encryptedPrivateKey, PEMString publicKey, byte[] iv)
+      private Task<Either<InsertKeyPairError, InsertKeyPairResponse>> UploadKeyPairAsync(byte[] encryptedPrivateKey, byte[] publicKey, byte[] nonce)
       {
-         var base64PublicKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(publicKey.Value));
-         var base64EncryptedPrivateKey = Convert.ToBase64String(encryptedPrivateKey);
-         var base64IV = Convert.ToBase64String(iv);
+         var encodedPublicKey = Convert.ToBase64String(publicKey);
+         var encodedEncryptedPrivateKey = Convert.ToBase64String(encryptedPrivateKey);
+         var encodedNonce = Convert.ToBase64String(nonce);
 
-         var request = new InsertKeyPairRequest(base64EncryptedPrivateKey, base64PublicKey, base64IV);
+         var request = new InsertKeyPairRequest(encodedEncryptedPrivateKey, encodedPublicKey, encodedNonce);
          return _crypterApiService.InsertDiffieHellmanKeysAsync(request);
       }
 
@@ -216,22 +203,25 @@ namespace Crypter.ClientServices.Services
       {
          if (args.IsLoggedIn)
          {
-            X25519PrivateKey = await _userKeysRepository.GetX25519PrivateKeyAsync();
+            PrivateKey = await _userKeysRepository.GetPrivateKeyAsync();
          }
       }
 
       private async void OnUserLoggedIn(object sender, UserLoggedInEventArgs args)
       {
-         await PrepareUserKeysOnUserLoginAsync(args.Username, args.Password, args.RememberUser);
+         await InitializeAsync(args.Username, args.Password, args.RememberUser);
       }
 
       private void OnUserLoggedOut(object sender, EventArgs _)
       {
-         X25519PrivateKey = Maybe<PEMString>.None;
+         MasterKey = Maybe<byte[]>.None;
+         PrivateKey = Maybe<byte[]>.None;
       }
 
       public void Dispose()
       {
+         MasterKey = Maybe<byte[]>.None;
+         PrivateKey = Maybe<byte[]>.None;
          _userSessionService.UserLoggedInEventHandler -= OnUserLoggedIn;
          _userSessionService.UserLoggedOutEventHandler -= OnUserLoggedOut;
          GC.SuppressFinalize(this);

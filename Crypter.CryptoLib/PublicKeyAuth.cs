@@ -54,7 +54,7 @@ namespace Crypter.CryptoLib
 
       public static byte[] GenerateSeed()
       {
-         return SodiumCore.GetRandomBytes(SeedBytes);
+         return Random.RandomBytes(SeedBytes);
       }
 
       public static AsymmetricKeyPair GenerateSeededKeyPair(byte[] seed)

@@ -28,7 +28,6 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer.Handlers;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
-using Crypter.CryptoLib.Services;
 using System;
 using System.IO;
 
@@ -37,20 +36,17 @@ namespace Crypter.ClientServices.Transfer
    public class TransferHandlerFactory
    {
       private readonly ICrypterApiService _crypterApiService;
-      private readonly ISimpleEncryptionService _simpleEncryptionService;
       private readonly IUserSessionService _userSessionService;
       private readonly ICompressionService _compressionService;
       private readonly FileTransferSettings _fileTransferSettings;
 
       public TransferHandlerFactory(
          ICrypterApiService crypterApiService,
-         ISimpleEncryptionService simpleEncryptionService,
          IUserSessionService userSessionService,
          ICompressionService compressionService,
          FileTransferSettings fileTransferSettings)
       {
          _crypterApiService = crypterApiService;
-         _simpleEncryptionService = simpleEncryptionService;
          _userSessionService = userSessionService;
          _compressionService = compressionService;
          _fileTransferSettings = fileTransferSettings;
@@ -58,14 +54,14 @@ namespace Crypter.ClientServices.Transfer
 
       public UploadFileHandler CreateUploadFileHandler(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours, bool useCompression)
       {
-         var handler = new UploadFileHandler(_crypterApiService, _simpleEncryptionService, _fileTransferSettings, _compressionService);
+         var handler = new UploadFileHandler(_crypterApiService, _fileTransferSettings, _compressionService);
          handler.SetTransferInfo(fileStream, fileName, fileSize, fileContentType, expirationHours, useCompression);
          return handler;
       }
 
       public UploadMessageHandler CreateUploadMessageHandler(string messageSubject, string messageBody, int expirationHours)
       {
-         var handler = new UploadMessageHandler(_crypterApiService, _simpleEncryptionService, _fileTransferSettings);
+         var handler = new UploadMessageHandler(_crypterApiService, _fileTransferSettings);
          handler.SetTransferInfo(messageSubject, messageBody, expirationHours);
          return handler;
       }

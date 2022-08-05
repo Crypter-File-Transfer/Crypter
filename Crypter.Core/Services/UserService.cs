@@ -80,16 +80,14 @@ namespace Crypter.Core.Services
             () => null,
             x => x);
 
-         var profileDTO = await _context.Users
+         GetUserProfileResponse profileResponse = await _context.Users
             .Where(x => x.Username == username)
             .Where(LinqUserExpressions.UserProfileIsComplete())
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(visitorId))
-            .Select(LinqUserExpressions.ToUserProfileDTOForVisitor(visitorId))
+            .Select(LinqUserExpressions.ToUserProfileResponseForVisitor(visitorId))
             .FirstOrDefaultAsync(cancellationToken);
 
-         return profileDTO is null
-            ? Maybe<GetUserProfileResponse>.None
-            : new GetUserProfileResponse(profileDTO);
+         return Maybe<GetUserProfileResponse>.From(profileResponse);
       }
 
       public async Task<UpdateProfileResponse> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken)

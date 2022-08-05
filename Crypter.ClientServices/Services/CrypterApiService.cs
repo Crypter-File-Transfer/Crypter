@@ -276,7 +276,7 @@ namespace Crypter.ClientServices.Services
                 select errorableResponse;
       }
 
-      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync()
+      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync()
       {
          string url = $"{_baseApiUrl}/keys/diffie-hellman/private";
          return from response in Either<GetPrivateKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetPrivateKeyResponse> data)>.FromRightAsync(

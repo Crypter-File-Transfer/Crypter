@@ -100,7 +100,7 @@ namespace Crypter.Core.Services
                }
 
                DateTime now = DateTime.UtcNow;
-               var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.ClientIV, request.ClientProof, now, now);
+               var newEntity = new UserMasterKeyEntity(userId, request.Key, request.Nonce, request.Proof, now, now);
                _context.UserMasterKeys.Add(newEntity);
 
                await _context.SaveChangesAsync(cancellationToken);
@@ -112,15 +112,15 @@ namespace Crypter.Core.Services
       public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken)
       {
          return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
-            _context.UserX25519KeyPairs
+            _context.UserKeyPairs
                .Where(x => x.Owner == userId)
-               .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.ClientIV))
+               .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.Nonce))
                .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
       }
 
       public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken)
       {
-         var keyPairEntity = await _context.UserX25519KeyPairs
+         var keyPairEntity = await _context.UserKeyPairs
             .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
 
          if (keyPairEntity is not null)
@@ -129,8 +129,8 @@ namespace Crypter.Core.Services
          }
 
          DateTime now = DateTime.UtcNow;
-         var newEntity = new UserX25519KeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.ClientIV, now, now);
-         _context.UserX25519KeyPairs.Add(newEntity);
+         var newEntity = new UserKeyPairEntity(userId, request.PrivateKey, request.PublicKey, request.Nonce, now, now);
+         _context.UserKeyPairs.Add(newEntity);
 
          await _context.SaveChangesAsync(cancellationToken);
          return new InsertKeyPairResponse();

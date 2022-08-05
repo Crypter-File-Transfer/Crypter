@@ -48,7 +48,7 @@ namespace Crypter.Web.Repositories
          };
       }
 
-      public async Task<Maybe<PEMString>> GetX25519PrivateKeyAsync()
+      public async Task<Maybe<PEMString>> GetPrivateKeyAsync()
       {
          return await _browserRepository.GetItemAsync<string>(DeviceStorageObjectType.X25519PrivateKey)
             .BindAsync(x =>
@@ -60,7 +60,7 @@ namespace Crypter.Web.Repositories
             });
       }
 
-      public async Task StoreX25519PrivateKeyAsync(PEMString privateKey, bool trustDevice)
+      public async Task StorePrivateKeyAsync(PEMString privateKey, bool trustDevice)
       {
          await _browserRepository.SetItemAsync(DeviceStorageObjectType.X25519PrivateKey, privateKey.Value, _trustDeviceStorageMap[trustDevice]);
       }

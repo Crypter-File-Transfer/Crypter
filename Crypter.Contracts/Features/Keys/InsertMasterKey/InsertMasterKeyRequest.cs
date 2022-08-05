@@ -33,27 +33,27 @@ namespace Crypter.Contracts.Features.Keys
    {
       public string Username { get; init; }
       public string Password { get; init; }
-      public string EncryptedKey { get; init; }
-      public string ClientIV { get; init; }
-      public string ClientProof { get; init; }
+      public string Key { get; init; }
+      public string Nonce { get; init; }
+      public string Proof { get; init; }
 
       [JsonConstructor]
-      public InsertMasterKeyRequest(string username, string password, string encryptedKey, string clientIV, string clientProof)
+      public InsertMasterKeyRequest(string username, string password, string key, string nonce, string proof)
       {
          Username = username;
          Password = password;
-         EncryptedKey = encryptedKey;
-         ClientIV = clientIV;
-         ClientProof = clientProof;
+         Key = key;
+         Nonce = nonce;
+         Proof = proof;
       }
 
-      public InsertMasterKeyRequest(Username username, AuthenticationPassword password, string encryptedKey, string clientIV, string clientProof)
+      public InsertMasterKeyRequest(Username username, AuthenticationPassword password, string key, string nonce, string proof)
       {
          Username = username.Value;
          Password = password.Value;
-         EncryptedKey = encryptedKey;
-         ClientIV = clientIV;
-         ClientProof = clientProof;
+         Key = key;
+         Nonce = nonce;
+         Proof = proof;
       }
    }
 }

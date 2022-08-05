@@ -43,7 +43,7 @@ namespace Crypter.CryptoLib
       {
          byte[] nonce = Sodium.StreamEncryption.GenerateNonce();
          byte[] ciphertext = Sodium.StreamEncryption.Encrypt(data, nonce, key);
-         return new EncryptedBox(nonce, ciphertext);
+         return new EncryptedBox(ciphertext, nonce);
       }
 
       public static EncryptedBox Encrypt(string data, byte[] key)
@@ -55,6 +55,11 @@ namespace Crypter.CryptoLib
       public static byte[] Decrypt(EncryptedBox data, byte[] key)
       {
          return Sodium.StreamEncryption.Decrypt(data.Ciphertext, data.Nonce, key);
+      }
+
+      public static byte[] Decrypt(byte[] ciphertext, byte[] nonce, byte[] key)
+      {
+         return Sodium.StreamEncryption.Decrypt(ciphertext, nonce, key);
       }
    }
 }

@@ -77,7 +77,7 @@ namespace Crypter.ClientServices.Interfaces
       Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
       Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
       Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request);
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync();
+      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync();
       Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeysAsync(InsertKeyPairRequest request);
       #endregion
 

@@ -60,8 +60,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
 
       public readonly int BufferSize;
 
-      public UploadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, FileTransferSettings fileTransferSettings, ICompressionService compressionService)
-         : base(crypterApiService, simpleEncryptionService, fileTransferSettings)
+      public UploadFileHandler(ICrypterApiService crypterApiService, FileTransferSettings fileTransferSettings, ICompressionService compressionService)
+         : base(crypterApiService, fileTransferSettings)
       {
          _compressionService = compressionService;
          BufferSize = fileTransferSettings.PartSizeBytes;

@@ -31,13 +31,13 @@ namespace Crypter.Contracts.Features.Keys
    public class GetMasterKeyResponse
    {
       public string EncryptedKey { get; init; }
-      public string ClientIV { get; init; }
+      public string Nonce { get; init; }
 
       [JsonConstructor]
-      public GetMasterKeyResponse(string encryptedKey, string clientIV)
+      public GetMasterKeyResponse(string encryptedKey, string nonce)
       {
          EncryptedKey = encryptedKey;
-         ClientIV = clientIV;
+         Nonce = nonce;
       }
    }
 }
