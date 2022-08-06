@@ -31,6 +31,7 @@ using NUnit.Framework;
 namespace Crypter.Test.CryptoLib_Tests
 {
    [TestFixture]
+   [Parallelizable]
    internal class PublicKeyAuth_Tests
    {
       [Test]

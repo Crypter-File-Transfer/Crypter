@@ -27,10 +27,9 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
+using Crypter.CryptoLib.SodiumLib;
 using Microsoft.AspNetCore.Components;
 using System;
-using System.Text;
 
 namespace Crypter.Web.Shared.Transfer
 {
@@ -66,19 +65,19 @@ namespace Crypter.Web.Shared.Transfer
       protected const string _decompressingLiteral = "Decompressing";
       protected const string _decryptingLiteral = "Decrypting";
 
-      protected static Maybe<PEMString> ValidateAndDecodeUserProvidedDecryptionKey(string decryptionKey)
+      protected static Maybe<byte[]> DecodeAndValidateUserProvidedDecryptionKey(string encodedKey)
       {
-         if (Base64String.TryFrom(decryptionKey, out Base64String validatedBase64EncryptionKey))
+         try
          {
-            byte[] decodedKey = Convert.FromBase64String(validatedBase64EncryptionKey.Value);
-            string pemFormattedKey = Encoding.UTF8.GetString(decodedKey);
-            if (PEMString.TryFrom(pemFormattedKey, out PEMString validDecryptionKey))
-            {
-               return validDecryptionKey;
-            }
+            byte[] decodedKey = Convert.FromBase64String(encodedKey);
+            return decodedKey.Length == SecretBox.KeyBytes
+               ? decodedKey
+               : Maybe<byte[]>.None;
          }
-
-         return Maybe<PEMString>.None;
+         catch (Exception)
+         {
+            return Maybe<byte[]>.None;
+         }
       }
    }
 }

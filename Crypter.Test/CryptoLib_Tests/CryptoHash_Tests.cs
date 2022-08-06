@@ -32,6 +32,7 @@ using System.Text;
 namespace Crypter.Test.CryptoLib_Tests
 {
    [TestFixture]
+   [Parallelizable]
    internal class CryptoHash_Tests
    {
       [Test]

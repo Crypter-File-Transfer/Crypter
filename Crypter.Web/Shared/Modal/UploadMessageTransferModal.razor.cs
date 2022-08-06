@@ -26,7 +26,6 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Web.Shared.Modal.Template;
 using Crypter.Web.Shared.Transfer;
 using Microsoft.AspNetCore.Components;
@@ -46,7 +45,7 @@ namespace Crypter.Web.Shared.Modal
       public Maybe<string> RecipientUsername { get; set; }
 
       [Parameter]
-      public Maybe<PEMString> RecipientX25519PublicKey { get; set; }
+      public Maybe<byte[]> RecipientPublicKey { get; set; }
 
       [Parameter]
       public EventCallback ModalClosedCallback { get; set; }
@@ -56,16 +55,16 @@ namespace Crypter.Web.Shared.Modal
       protected UploadMessageTransfer UploadComponent;
 
       protected bool IsSenderDefined = false;
-      protected string SenderX25519PrivateKey;
+      protected byte[] SenderPrivateKey;
       protected int RequestedExpirationHours;
       protected bool UseCompression;
       public void Open()
       {
-         IsSenderDefined = UserKeysService.X25519PrivateKey.IsSome;
-
-         SenderX25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
-            () => default,
-            key => key.Value);
+         UserKeysService.PrivateKey.IfSome(x =>
+         {
+            IsSenderDefined = true;
+            SenderPrivateKey = x;
+         });
 
          ModalBehaviorRef.Open();
       }

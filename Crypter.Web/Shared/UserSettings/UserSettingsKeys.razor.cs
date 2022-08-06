@@ -48,14 +48,14 @@ namespace Crypter.Web.Shared.UserSettings
 
       protected PasswordModal PasswordModal { get; set; }
 
-      protected string X25519PrivateKey;
+      protected string PrivateKey;
       protected string RecoveryKey;
 
       protected override void OnInitialized()
       {
-         X25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
-            () => "",
-            some => some.Value);
+         PrivateKey = UserKeysService.PrivateKey.Match(
+            () => "An error occurred",
+            some => Convert.ToBase64String(some));
 
          RecoveryKey = string.Empty;
 

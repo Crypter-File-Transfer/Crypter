@@ -157,7 +157,7 @@ namespace Crypter.ClientServices.Services
 
          return UploadKeyPairAsync(encryptionInfo.Contents, keyPair.PublicKey, encryptionInfo.Nonce)
             .ToMaybeTask()
-            .BindAsync(x => Maybe<byte[]>.From(keyPair.PrivateKey).AsTask());
+            .BindAsync(x => keyPair.PrivateKey);
       }
 
       private Task<Maybe<byte[]>> UploadNewMasterKeyAsync(byte[] credentialKey, Username username, AuthenticationPassword password)
@@ -172,7 +172,7 @@ namespace Crypter.ClientServices.Services
 
          return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, password, encodedEncryptedKey, encodedNonce, encodedRecoveryProof))
             .ToMaybeTask()
-            .BindAsync(x => Maybe<byte[]>.From(newMasterKey).AsTask());
+            .BindAsync(x => newMasterKey);
       }
 
       private static Maybe<byte[]> DecodeAndDecryptUserPrivateKey(string encryptedPrivateKey, string nonce, byte[] decryptionKey)

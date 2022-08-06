@@ -29,9 +29,15 @@ using System.Text;
 
 namespace Crypter.CryptoLib.SodiumLib
 {
+   /// <summary>
+   /// https://github.com/ektrah/libsodium-core/blob/master/src/Sodium.Core/SecretBox.cs
+   /// </summary>
    public static class SecretBox
    {
-      public static byte[] GenerateKey()
+      public static int KeyBytes
+      { get { return 32; } }
+
+public static byte[] GenerateKey()
       {
          return Sodium.SecretBox.GenerateKey();
       }

@@ -55,7 +55,7 @@ namespace Crypter.Web.Pages
       protected string ProperUsername;
       protected bool AllowsFiles;
       protected bool AllowsMessages;
-      protected PEMString UserX25519PublicKey;
+      protected byte[] PublicKey;
 
       protected override async Task OnInitializedAsync()
       {
@@ -70,18 +70,17 @@ namespace Crypter.Web.Pages
          var response = await CrypterApiService.GetUserProfileAsync(Username, isLoggedIn);
          response.DoRight(x =>
          {
-            Alias = x.Result.Alias;
-            About = x.Result.About;
-            ProperUsername = x.Result.Username;
-            AllowsFiles = x.Result.ReceivesFiles;
-            AllowsMessages = x.Result.ReceivesMessages;
-            UserX25519PublicKey = PEMString.From(
-               Encoding.UTF8.GetString(Convert.FromBase64String(x.Result.PublicKey)));
+            Alias = x.Alias;
+            About = x.About;
+            ProperUsername = x.Username;
+            AllowsFiles = x.ReceivesFiles;
+            AllowsMessages = x.ReceivesMessages;
+            PublicKey = x.PublicKey;
          });
 
          IsProfileAvailable = response.Match(
             false,
-            right => !string.IsNullOrEmpty(right.Result.PublicKey));
+            right => right.PublicKey is not null);
       }
    }
 }

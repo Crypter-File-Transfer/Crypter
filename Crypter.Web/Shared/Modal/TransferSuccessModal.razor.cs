@@ -30,7 +30,6 @@ using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Modal
@@ -50,11 +49,10 @@ namespace Crypter.Web.Shared.Modal
 
       protected ModalBehavior ModalBehaviorRef { get; set; }
 
-      public void Open(string downloadUrl, PEMString recipientX25519PrivateKey, int expirationHours, Maybe<EventCallback> modalClosedCallback)
+      public void Open(string downloadUrl, byte[] recipientPrivateKey, int expirationHours, Maybe<EventCallback> modalClosedCallback)
       {
          DownloadUrl = downloadUrl;
-         DecryptionKey = Base64String.From(Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(recipientX25519PrivateKey.Value)));
+         DecryptionKey = Base64String.From(Convert.ToBase64String(recipientPrivateKey));
          ExpirationHours = expirationHours;
          ModalClosedCallback = modalClosedCallback;
 

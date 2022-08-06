@@ -24,13 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.ClientServices.DeviceStorage.Enums
+using Crypter.Common.Monads;
+using NUnit.Framework;
+using System.Threading.Tasks;
+
+namespace Crypter.Test.Common_Tests.Monad_Tests
 {
-   public enum DeviceStorageObjectType
+   [TestFixture]
+   [Parallelizable]
+   internal class MaybeAsyncExtensions_Tests
    {
-      UserSession,
-      AuthenticationToken,
-      RefreshToken,
-      PrivateKey
+      [Test]
+      public async Task BindAsync_Matches_None()
+      {
+         Task<Maybe<int>> isNone = Maybe<int>.None.AsTask();
+         Maybe<string> unwrapped = await isNone.BindAsync(x => x.ToString());
+
+         Assert.IsTrue(unwrapped.IsNone);
+         unwrapped.IfSome(_ => Assert.Fail());
+      }
+
+      [Test]
+      public async Task BindAsync_Matches_Some()
+      {
+         Task<Maybe<int>> isSome = Maybe<int>.From(5).AsTask();
+         Maybe<string> unwrapped = await isSome.BindAsync(x => x.ToString());
+
+         Assert.IsTrue(unwrapped.IsSome);
+         unwrapped.IfSome(x => Assert.AreEqual("5", x));
+         unwrapped.IfNone(() => Assert.Fail());
+      }
    }
 }

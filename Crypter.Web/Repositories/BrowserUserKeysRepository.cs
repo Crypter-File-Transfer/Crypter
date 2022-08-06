@@ -27,8 +27,8 @@
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Repositories
@@ -48,26 +48,20 @@ namespace Crypter.Web.Repositories
          };
       }
 
-      public async Task<Maybe<PEMString>> GetPrivateKeyAsync()
+      public Task<Maybe<byte[]>> GetPrivateKeyAsync()
       {
-         return await _browserRepository.GetItemAsync<string>(DeviceStorageObjectType.X25519PrivateKey)
-            .BindAsync(x =>
-            {
-               var pemResult = PEMString.TryFrom(x, out var key)
-                  ? key
-                  : Maybe<PEMString>.None;
-               return pemResult.AsTask();
-            });
+         return _browserRepository.GetItemAsync<string>(DeviceStorageObjectType.PrivateKey)
+            .BindAsync(x => Encoding.UTF8.GetBytes(x));
       }
 
-      public async Task StorePrivateKeyAsync(PEMString privateKey, bool trustDevice)
+      public async Task StorePrivateKeyAsync(byte[] privateKey, bool trustDevice)
       {
-         await _browserRepository.SetItemAsync(DeviceStorageObjectType.X25519PrivateKey, privateKey.Value, _trustDeviceStorageMap[trustDevice]);
+         await _browserRepository.SetItemAsync(DeviceStorageObjectType.PrivateKey, privateKey, _trustDeviceStorageMap[trustDevice]);
       }
 
-      public async Task ClearX25519PrivateKeyAsync()
+      public async Task ClearPrivateKeyAsync()
       {
-         await _browserRepository.RemoveItemAsync(DeviceStorageObjectType.X25519PrivateKey);
+         await _browserRepository.RemoveItemAsync(DeviceStorageObjectType.PrivateKey);
       }
    }
 }

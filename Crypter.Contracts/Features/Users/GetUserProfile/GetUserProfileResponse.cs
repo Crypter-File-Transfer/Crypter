@@ -36,10 +36,10 @@ namespace Crypter.Contracts.Features.Users
       public bool AllowKeyExchangeRequests { get; set; }
       public bool ReceivesMessages { get; set; }
       public bool ReceivesFiles { get; set; }
-      public string PublicKey { get; set; }
+      public byte[] PublicKey { get; set; }
 
       [JsonConstructor]
-      public GetUserProfileResponse(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, string publicKey)
+      public GetUserProfileResponse(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, byte[] publicKey)
       {
          Username = username;
          Alias = alias;

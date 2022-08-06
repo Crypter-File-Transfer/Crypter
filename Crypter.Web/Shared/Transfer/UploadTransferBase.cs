@@ -60,7 +60,7 @@ namespace Crypter.Web.Shared.Transfer
       public Maybe<string> RecipientUsername { get; set; }
 
       [Parameter]
-      public Maybe<PEMString> RecipientDiffieHellmanPublicKey { get; set; }
+      public Maybe<byte[]> RecipientPublicKey { get; set; }
 
       [Parameter]
       public int ExpirationHours { get; set; }
@@ -93,20 +93,20 @@ namespace Crypter.Web.Shared.Transfer
       {
          if (UserSessionService.Session.IsSome)
          {
-            PEMString senderX25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
-               () => throw new Exception("Missing sender X25519 private key"),
+            byte[] senderPrivateKey = UserKeysService.PrivateKey.Match(
+               () => throw new Exception("Missing sender private key"),
                x => x);
 
-            handler.SetSenderInfo(senderX25519PrivateKey);
+            handler.SetSenderInfo(senderPrivateKey);
          }
 
          RecipientUsername.IfSome(x =>
          {
-            PEMString recipientX25519PublicKey = RecipientDiffieHellmanPublicKey.Match(
-               () => throw new Exception("Missing recipient X25519 public key"),
+            byte[] recipientPublicKey = RecipientPublicKey.Match(
+               () => throw new Exception("Missing recipient public key"),
                x => x);
 
-            handler.SetRecipientInfo(x, recipientX25519PublicKey);
+            handler.SetRecipientInfo(Username.From(x), recipientPublicKey);
          });
       }
 
