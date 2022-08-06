@@ -28,8 +28,9 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer.Handlers.Base;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
+using Crypter.CryptoLib.Models;
+using Crypter.CryptoLib.SodiumLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,19 +55,15 @@ namespace Crypter.ClientServices.Transfer.Handlers
          };
 #pragma warning restore CS8524
 
-         response.DoRight(x => {
-            byte[] decodedPublicKey = Convert.FromBase64String(x.PublicKey);
-            string pemFormattedKey = Encoding.UTF8.GetString(decodedPublicKey);
-            SetSenderPublicKey(PEMString.From(pemFormattedKey));
-         });
+         response.DoRight(x => SetKdfValuesFromApi(x.PublicKey, x.Nonce));
          return response;
       }
 
       public async Task<Either<DownloadTransferCiphertextError, string>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeAfterDownloading)
       {
-         var request = _serverKey.Match(
+         var request = _txKeyRing.Match(
             () => throw new Exception("Missing server key"),
-            x => new DownloadTransferCiphertextRequest(x));
+            x => new DownloadTransferCiphertextRequest(x.ServerProof));
 
 #pragma warning disable CS8524
          var response = _transferUserType switch
@@ -77,23 +74,17 @@ namespace Crypter.ClientServices.Transfer.Handlers
 #pragma warning restore CS8524
          await invokeAfterDownloading.IfSomeAsync(async x => await x.Invoke());
 
+         TransmissionKeyRing keyRing = _txKeyRing.Match(
+                  () => throw new Exception("Missing key ring"),
+                  x => x);
+
          return response.Match<Either<DownloadTransferCiphertextError, string>>(
             left => left,
-            right => DecryptMessage(right.Ciphertext, right.InitializationVector),
+            right => {
+               byte[] data = SecretBox.Open(right.Box, keyRing.ReceiveKey);
+               return Encoding.UTF8.GetString(data);
+            },
             DownloadTransferCiphertextError.UnknownError);
-      }
-
-      private string DecryptMessage(List<string> partionedCiphertext, string initializationVector)
-      {
-         byte[] ciphertext = partionedCiphertext
-               .SelectMany(x => Convert.FromBase64String(x))
-               .ToArray();
-
-         byte[] iv = Convert.FromBase64String(initializationVector);
-
-         return _symmetricKey.Match(
-            () => throw new Exception("Missing symmetric key"),
-            x => _simpleEncryptionService.DecryptToString(x, iv, ciphertext));
       }
    }
 }

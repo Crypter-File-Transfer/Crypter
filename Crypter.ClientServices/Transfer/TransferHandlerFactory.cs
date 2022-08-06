@@ -52,10 +52,10 @@ namespace Crypter.ClientServices.Transfer
          _fileTransferSettings = fileTransferSettings;
       }
 
-      public UploadFileHandler CreateUploadFileHandler(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours, bool useCompression)
+      public UploadFileHandler CreateUploadFileHandler(byte[] fileBytes, string fileName, long fileSize, string fileContentType, int expirationHours, bool useCompression)
       {
          var handler = new UploadFileHandler(_crypterApiService, _fileTransferSettings, _compressionService);
-         handler.SetTransferInfo(fileStream, fileName, fileSize, fileContentType, expirationHours, useCompression);
+         handler.SetTransferInfo(fileBytes, fileName, fileSize, fileContentType, expirationHours, useCompression);
          return handler;
       }
 
@@ -68,14 +68,14 @@ namespace Crypter.ClientServices.Transfer
 
       public DownloadFileHandler CreateDownloadFileHandler(Guid id, TransferUserType userType)
       {
-         var handler = new DownloadFileHandler(_crypterApiService, _simpleEncryptionService, _userSessionService, _compressionService, _fileTransferSettings);
+         var handler = new DownloadFileHandler(_crypterApiService, _userSessionService, _compressionService, _fileTransferSettings);
          handler.SetTransferInfo(id, userType);
          return handler;
       }
 
       public DownloadMessageHandler CreateDownloadMessageHandler(Guid id, TransferUserType userType)
       {
-         var handler = new DownloadMessageHandler(_crypterApiService, _simpleEncryptionService, _userSessionService);
+         var handler = new DownloadMessageHandler(_crypterApiService, _userSessionService);
          handler.SetTransferInfo(id, userType);
          return handler;
       }

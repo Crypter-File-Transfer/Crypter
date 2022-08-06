@@ -29,13 +29,11 @@ using Crypter.ClientServices.Transfer.Handlers.Base;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
+using Crypter.CryptoLib.Models;
+using Crypter.CryptoLib.SodiumLib;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Transfer.Handlers
@@ -69,7 +67,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
       public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeBeforeDecryption, Maybe<Func<Task>> invokeBeforeDecompression)
       {
          var request = _txKeyRing.Match(
-            () => throw new Exception("Missing server key"),
+            () => throw new Exception("Missing key ring"),
             x => new DownloadTransferCiphertextRequest(x.ServerProof));
 
 #pragma warning disable CS8524
@@ -85,7 +83,11 @@ namespace Crypter.ClientServices.Transfer.Handlers
             {
                await invokeBeforeDecryption.IfSomeAsync(async x => await x.Invoke());
 
-               byte[] plaintext = DecryptFile(right.Ciphertext, right.InitializationVector);
+               TransmissionKeyRing keyRing = _txKeyRing.Match(
+                  () => throw new Exception("Missing key ring"),
+                  x => x);
+
+               byte[] plaintext = SecretBox.Open(right.Box, keyRing.ReceiveKey);
 
                if (right.CompressionType == CompressionType.GZip)
                {
