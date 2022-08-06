@@ -35,6 +35,7 @@ namespace Crypter.Core.Entities.Interfaces
       public int Size { get; set; }
       public byte[] PublicKey { get; set; }
       public byte[] ServerProof { get; set; }
+      public byte[] Nonce { get; set; }
       public CompressionType CompressionType { get; set; }
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }

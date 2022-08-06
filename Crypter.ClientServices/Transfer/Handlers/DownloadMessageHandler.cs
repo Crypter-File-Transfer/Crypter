@@ -30,7 +30,6 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
-using Crypter.CryptoLib.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,8 +40,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
 {
    public class DownloadMessageHandler : DownloadHandler
    {
-      public DownloadMessageHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, IUserSessionService userSessionService)
-         : base(crypterApiService, simpleEncryptionService, userSessionService)
+      public DownloadMessageHandler(ICrypterApiService crypterApiService, IUserSessionService userSessionService)
+         : base(crypterApiService, userSessionService)
       { }
 
       public async Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadPreviewAsync()

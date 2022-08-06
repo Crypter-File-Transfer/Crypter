@@ -63,7 +63,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
 #pragma warning restore CS8524
 
          response.DoRight(x => {
-            byte[] decodedPublicKey = Convert.FromBase64String(x.DiffieHellmanPublicKey);
+            byte[] decodedPublicKey = Convert.FromBase64String(x.PublicKey);
             string pemFormattedKey = Encoding.UTF8.GetString(decodedPublicKey);
             SetSenderDiffieHellmanPublicKey(PEMString.From(pemFormattedKey));
          });

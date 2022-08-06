@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Enums;
+using Crypter.CryptoLib.Models;
 using System;
 
 namespace Crypter.Core.Models
@@ -32,18 +33,16 @@ namespace Crypter.Core.Models
    public class TransferStorageParameters
    {
       public Guid Id { get; init; }
-      public TransferItemType ItemType { get; set; }
-      public TransferUserType UserType { get; set; }
-      public byte[] Nonce { get; init; }
-      public byte[] Ciphertext { get; init; }
+      public TransferItemType ItemType { get; init; }
+      public TransferUserType UserType { get; init; }
+      public EncryptedBox Box { get; init; }
 
-      public TransferStorageParameters(Guid id, TransferItemType itemType, TransferUserType userType, byte[] nonce, byte[] ciphertext)
+      public TransferStorageParameters(Guid id, TransferItemType itemType, TransferUserType userType, EncryptedBox box)
       {
          Id = id;
          ItemType = itemType;
          UserType = userType;
-         Nonce = nonce;
-         Ciphertext = ciphertext;
+         Box = box;
       }
    }
 }

@@ -66,7 +66,7 @@ namespace Crypter.Core.Services
       {
          var messagePreview = await _context.AnonymousMessageTransfers
             .Where(x => x.Id == id)
-            .Select(x => new DownloadTransferMessagePreviewResponse(x.Subject, x.Size, string.Empty, string.Empty, string.Empty, x.PublicKey, x.Created, x.Expiration))
+            .Select(x => new DownloadTransferMessagePreviewResponse(x.Subject, x.Size, string.Empty, string.Empty, string.Empty, x.PublicKey, x.Nonce, x.Created, x.Expiration))
             .FirstOrDefaultAsync(cancellationToken);
 
          if (messagePreview is null)

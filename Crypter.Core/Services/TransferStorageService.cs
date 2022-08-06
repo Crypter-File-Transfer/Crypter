@@ -28,6 +28,7 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Core.Models;
 using Crypter.Core.Settings;
+using Crypter.CryptoLib.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -64,7 +65,7 @@ namespace Crypter.Core.Services
    {
       private readonly TransferStorageSettings _transferStorageSettings;
       private const string _ciphertextFileName = "ciphertext";
-      private const string _ivFileName = "iv";
+      private const string _nonceFileName = "nonce";
 
       public TransferStorageService(IOptions<TransferStorageSettings> transferStorageSettings)
       {
@@ -75,22 +76,17 @@ namespace Crypter.Core.Services
       {
          string itemDirectory = GetItemDirectory(data.Id, data.ItemType, data.UserType);
          string ciphertextPath = Path.Join(itemDirectory, _ciphertextFileName);
-         string ivPath = Path.Join(itemDirectory, _ivFileName);
+         string noncePath = Path.Join(itemDirectory, _nonceFileName);
 
          try
          {
             Directory.CreateDirectory(itemDirectory);
 
             using FileStream ciphertextStream = File.OpenWrite(ciphertextPath);
-            foreach (var part in data.Ciphertext)
-            {
-               byte[] partBytes = Convert.FromBase64String(part);
-               await ciphertextStream.WriteAsync(partBytes, cancellationToken); // here
-            }
+            await ciphertextStream.WriteAsync(data.Box.Contents, cancellationToken);
 
-            byte[] ivBytes = Convert.FromBase64String(data.Nonce);
-            using FileStream ivStream = File.OpenWrite(ivPath);
-            await ivStream.WriteAsync(ivBytes, cancellationToken); // here
+            using FileStream nonceStream = File.OpenWrite(noncePath);
+            await nonceStream.WriteAsync(data.Box.Nonce, cancellationToken);
          }
          catch (OperationCanceledException)
          {
@@ -111,19 +107,13 @@ namespace Crypter.Core.Services
       {
          var itemDirectory = GetItemDirectory(id, itemType, userType);
          var ciphertextPath = Path.Join(itemDirectory, _ciphertextFileName);
-         var ivPath = Path.Join(itemDirectory, _ivFileName);
+         var noncePath = Path.Join(itemDirectory, _nonceFileName);
 
-         byte[] ciphertextBytes = await File.ReadAllBytesAsync(ciphertextPath, cancellationToken);
-         string ciphertextBase64 = Convert.ToBase64String(ciphertextBytes);
-         List<string> ciphertextParts = new List<string>
-         {
-            ciphertextBase64
-         };
+         byte[] ciphertext = await File.ReadAllBytesAsync(ciphertextPath, cancellationToken);
+         byte[] nonce = await File.ReadAllBytesAsync(noncePath, cancellationToken);
+         EncryptedBox box = new EncryptedBox(ciphertext, nonce);
 
-         byte[] ivBytes = await File.ReadAllBytesAsync(ivPath, cancellationToken);
-         string ivBase64 = Convert.ToBase64String(ivBytes);
-
-         return new TransferStorageParameters(id, itemType, userType, ivBase64, ciphertextParts);
+         return new TransferStorageParameters(id, itemType, userType, box);
       }
 
       public void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType)

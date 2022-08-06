@@ -36,6 +36,7 @@ namespace Crypter.Core.Entities
       public int Size { get; set; }
       public byte[] PublicKey { get; set; }
       public byte[] ServerProof { get; set; }
+      public byte[] Nonce { get; set; }
       public CompressionType CompressionType { get; set; }
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
@@ -43,12 +44,13 @@ namespace Crypter.Core.Entities
       // IMessageTransfer
       public string Subject { get; set; }
 
-      public AnonymousMessageTransferEntity(Guid id, int size, byte[] publicKey, byte[] serverProof, CompressionType compressionType, DateTime created, DateTime expiration, string subject = "")
+      public AnonymousMessageTransferEntity(Guid id, int size, byte[] publicKey, byte[] serverProof, byte[] nonce, CompressionType compressionType, DateTime created, DateTime expiration, string subject = "")
       {
          Id = id;
          Size = size;
          PublicKey = publicKey;
          ServerProof = serverProof;
+         Nonce = nonce;
          CompressionType = compressionType;
          Created = created;
          Expiration = expiration;
