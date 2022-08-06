@@ -35,6 +35,26 @@ namespace Crypter.ClientServices.Services
 {
    public class CompressionService : ICompressionService
    {
+      public async Task<byte[]> CompressAsync(byte[] bytes, int compressionLevel = 6)
+      {
+         using MemoryStream outputStream = new MemoryStream();
+         using GZipOutputStream gzipStream = new GZipOutputStream(outputStream);
+         gzipStream.IsStreamOwner = true;
+         gzipStream.SetLevel(compressionLevel);
+
+         using MemoryStream inStream = new MemoryStream();
+         await inStream.WriteAsync(bytes, 0, bytes.Length);
+         await inStream.CopyToAsync(gzipStream);
+
+         await gzipStream.FlushAsync();
+         gzipStream.Finish();
+
+         byte[] outBuffer = new byte[outputStream.Length];
+         outputStream.Position = 0;
+         await outputStream.ReadAsync(outBuffer);
+         return outBuffer;
+      }
+
       public async Task<MemoryStream> CompressStreamAsync(Stream stream, long streamLength, int bufferSize, Func<double, Task> progressFunc, int compressionLevel = 6)
       {
          await progressFunc.Invoke(0.0);

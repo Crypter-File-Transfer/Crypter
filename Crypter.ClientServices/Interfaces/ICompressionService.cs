@@ -33,6 +33,7 @@ namespace Crypter.ClientServices.Interfaces
 {
    public interface ICompressionService
    {
+      Task<byte[]> CompressAsync(byte[] bytes, int compressionLevel = 6);
       Task<MemoryStream> CompressStreamAsync(Stream stream, long streamLength, int bufferSize, Func<double, Task> progressFunc, int compressionLevel = 6);
       Task<MemoryStream> CompressStreamAsync(Stream stream, int compressionLevel = 6);
       Task<MemoryStream> DecompressStreamAsync(Stream compressedStream, long streamLength, int bufferSize, Maybe<Func<double, Task>> progressFunc);

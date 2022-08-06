@@ -101,7 +101,9 @@ namespace Crypter.Web.Shared.Transfer
 
          await SetProgressMessage("Reading file");
          using Stream fileStream = SelectedFile.OpenReadStream(SelectedFile.Size);
-         using UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(fileStream, SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours, UseCompression);
+         byte[] fileBytes = new byte[SelectedFile.Size];
+         await fileStream.ReadAsync(fileBytes);
+         UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(fileBytes, SelectedFile.Name, SelectedFile.ContentType, ExpirationHours, UseCompression);
 
          SetHandlerUserInfo(fileUploader);
 
@@ -111,8 +113,7 @@ namespace Crypter.Web.Shared.Transfer
             ShowProgressBar = false;
             await SetProgressMessage(_uploadingLiteral);
          });
-         await fileUploader.PrepareMemoryStream(compressionProgressTask);
-         var uploadResponse = await fileUploader.UploadAsync(encryptionProgressTask, showUploadingMessage);
+         var uploadResponse = await fileUploader.UploadAsync(compressionProgressTask, encryptionProgressTask, showUploadingMessage);
 
          HandleUploadResponse(uploadResponse);
 

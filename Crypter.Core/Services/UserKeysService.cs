@@ -41,7 +41,7 @@ namespace Crypter.Core.Services
       Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken);
       Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken);
       Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken);
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
+      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
       Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken);
    }
 
@@ -109,7 +109,7 @@ namespace Crypter.Core.Services
             InsertMasterKeyError.UnknownError);
       }
 
-      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken)
+      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId, CancellationToken cancellationToken)
       {
          return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
             _context.UserKeyPairs
@@ -129,7 +129,7 @@ namespace Crypter.Core.Services
          }
 
          DateTime now = DateTime.UtcNow;
-         var newEntity = new UserKeyPairEntity(userId, request.PrivateKey, request.PublicKey, request.Nonce, now, now);
+         var newEntity = new UserKeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.Nonce, now, now);
          _context.UserKeyPairs.Add(newEntity);
 
          await _context.SaveChangesAsync(cancellationToken);

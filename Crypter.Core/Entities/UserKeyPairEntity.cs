@@ -31,15 +31,15 @@ namespace Crypter.Core.Entities
    public class UserKeyPairEntity
    {
       public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string Nonce { get; set; }
+      public byte[] PrivateKey { get; set; }
+      public byte[] PublicKey { get; set; }
+      public byte[] Nonce { get; set; }
       public DateTime Updated { get; set; }
       public DateTime Created { get; set; }
 
       public UserEntity User { get; set; }
 
-      public UserKeyPairEntity(Guid owner, string privateKey, string publicKey, string nonce, DateTime updated, DateTime created)
+      public UserKeyPairEntity(Guid owner, byte[] privateKey, byte[] publicKey, byte[] nonce, DateTime updated, DateTime created)
       {
          Owner = owner;
          PrivateKey = privateKey;

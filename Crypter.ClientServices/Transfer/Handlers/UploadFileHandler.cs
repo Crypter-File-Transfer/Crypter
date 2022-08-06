@@ -44,10 +44,9 @@ namespace Crypter.ClientServices.Transfer.Handlers
    {
       private byte[] _fileBytes;
       private string _fileName;
-      private long _fileSize;
       private string _fileContentType;
       private int _expirationHours;
-      private bool _useCompression;
+      private bool _isCompressionDesired;
       private CompressionType _usedCompressionType;
 
       private readonly ICompressionService _compressionService;
@@ -77,17 +76,16 @@ namespace Crypter.ClientServices.Transfer.Handlers
          _usedCompressionType = CompressionType.None;
       }
 
-      internal void SetTransferInfo(byte[] fileBytes, string fileName, long fileSize, string fileContentType, int expirationHours, bool useCompression)
+      internal void SetTransferInfo(byte[] fileBytes, string fileName, string fileContentType, int expirationHours, bool isCompressionDesired)
       {
          _fileBytes = fileBytes;
          _fileName = fileName;
-         _fileSize = fileSize;
          _fileContentType = fileContentType;
          _expirationHours = expirationHours;
-         _useCompression = useCompression;
+         _isCompressionDesired = isCompressionDesired;
       }
 
-      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<double, Task>> encryptionProgress, Maybe<Func<Task>> invokeBeforeUploading)
+      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<double, Task>> compressionProgress, Maybe<Func<double, Task>> encryptionProgress, Maybe<Func<Task>> invokeBeforeUploading)
       {
          if (_recipientUsername.IsNone)
          {
@@ -110,7 +108,19 @@ namespace Crypter.ClientServices.Transfer.Handlers
          byte[] nonce = KDF.GenerateNonce();
          TransmissionKeyRing txKeyRing = KDF.CreateTransmissionKeys(senderKeyPair, recipientPublicKey, nonce);
 
-         EncryptedBox box = SecretBox.Create(_fileBytes, txKeyRing.SendKey);
+         byte[] bytesToUpload;
+         if (UseCompressionOnFile())
+         {
+            bytesToUpload = await _compressionService.CompressAsync(_fileBytes);
+            _usedCompressionType = CompressionType.GZip;
+         }
+         else
+         {
+            bytesToUpload = _fileBytes;
+            _usedCompressionType = CompressionType.None;
+         }
+
+         EncryptedBox box = SecretBox.Create(bytesToUpload, txKeyRing.SendKey);
          await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
 
          var request = new UploadFileTransferRequest(_fileName, _fileContentType, box, txKeyRing.ServerProof, senderKeyPair.PublicKey, nonce, _expirationHours, _usedCompressionType);
@@ -127,7 +137,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
             ? _fileName.Split('.').Last()
             : string.Empty;
 
-         return _useCompression && !_fileExtensionCompressionBlacklist.Contains(fileExtension);
+         return _isCompressionDesired && !_fileExtensionCompressionBlacklist.Contains(fileExtension);
       }
    }
 }

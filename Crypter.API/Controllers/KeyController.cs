@@ -158,7 +158,7 @@ namespace Crypter.API.Controllers
          }
 
          var userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.GetDiffieHellmanPrivateKeyAsync(userId, cancellationToken);
+         var result = await _userKeysService.GetPrivateKeyAsync(userId, cancellationToken);
          return result.Match(
             MakeErrorResponse,
             Ok,

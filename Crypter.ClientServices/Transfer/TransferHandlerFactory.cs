@@ -52,10 +52,10 @@ namespace Crypter.ClientServices.Transfer
          _fileTransferSettings = fileTransferSettings;
       }
 
-      public UploadFileHandler CreateUploadFileHandler(byte[] fileBytes, string fileName, long fileSize, string fileContentType, int expirationHours, bool useCompression)
+      public UploadFileHandler CreateUploadFileHandler(byte[] fileBytes, string fileName, string fileContentType, int expirationHours, bool useCompression)
       {
          var handler = new UploadFileHandler(_crypterApiService, _fileTransferSettings, _compressionService);
-         handler.SetTransferInfo(fileBytes, fileName, fileSize, fileContentType, expirationHours, useCompression);
+         handler.SetTransferInfo(fileBytes, fileName, fileContentType, expirationHours, useCompression);
          return handler;
       }
 

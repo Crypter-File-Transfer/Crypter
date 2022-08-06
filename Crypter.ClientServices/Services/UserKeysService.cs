@@ -102,7 +102,7 @@ namespace Crypter.ClientServices.Services
          {
             PrivateKey = await _crypterApiService.GetPrivateKeyAsync().MatchAsync(
                async downloadError => await HandlePrivateKeyDownloadErrorAsync(downloadError, masterKey),
-               encryptedKeyInfo => DecodeAndDecryptUserPrivateKey(encryptedKeyInfo.Key, encryptedKeyInfo.Nonce, masterKey),
+               encryptedKeyInfo => DecryptUserPrivateKey(encryptedKeyInfo.EncryptedKey, encryptedKeyInfo.Nonce, masterKey),
                Maybe<byte[]>.None);
          });
 
@@ -175,11 +175,9 @@ namespace Crypter.ClientServices.Services
             .BindAsync(x => newMasterKey);
       }
 
-      private static Maybe<byte[]> DecodeAndDecryptUserPrivateKey(string encryptedPrivateKey, string nonce, byte[] decryptionKey)
+      private static Maybe<byte[]> DecryptUserPrivateKey(byte[] encryptedPrivateKey, byte[] nonce, byte[] decryptionKey)
       {
-         byte[] decodedPrivateKey = Convert.FromBase64String(encryptedPrivateKey);
-         byte[] decodedNonce = Convert.FromBase64String(nonce);
-         EncryptedBox encryptedBox = new EncryptedBox(decodedPrivateKey, decodedNonce);
+         EncryptedBox encryptedBox = new EncryptedBox(encryptedPrivateKey, nonce);
          try
          {
             return SecretBox.Open(encryptedBox, decryptionKey);
@@ -192,11 +190,7 @@ namespace Crypter.ClientServices.Services
 
       private Task<Either<InsertKeyPairError, InsertKeyPairResponse>> UploadKeyPairAsync(byte[] encryptedPrivateKey, byte[] publicKey, byte[] nonce)
       {
-         var encodedPublicKey = Convert.ToBase64String(publicKey);
-         var encodedEncryptedPrivateKey = Convert.ToBase64String(encryptedPrivateKey);
-         var encodedNonce = Convert.ToBase64String(nonce);
-
-         var request = new InsertKeyPairRequest(encodedEncryptedPrivateKey, encodedPublicKey, encodedNonce);
+         var request = new InsertKeyPairRequest(encryptedPrivateKey, publicKey, nonce);
          return _crypterApiService.InsertDiffieHellmanKeysAsync(request);
       }
 

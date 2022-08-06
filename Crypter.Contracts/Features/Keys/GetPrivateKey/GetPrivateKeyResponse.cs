@@ -30,13 +30,13 @@ namespace Crypter.Contracts.Features.Keys
 {
    public class GetPrivateKeyResponse
    {
-      public string Key { get; private set; }
-      public string Nonce { get; private set; }
+      public byte[] EncryptedKey { get; init; }
+      public byte[] Nonce { get; init; }
 
       [JsonConstructor]
-      public GetPrivateKeyResponse(string key, string nonce)
+      public GetPrivateKeyResponse(byte[] encryptedKey, byte[] nonce)
       {
-         Key = key;
+         EncryptedKey = encryptedKey;
          Nonce = nonce;
       }
    }
