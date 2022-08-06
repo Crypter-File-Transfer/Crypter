@@ -24,17 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Transfer
 {
    public class DownloadTransferCiphertextRequest
    {
-      public string ServerProof { get; set; }
+      public byte[] ServerProof { get; set; }
 
       [JsonConstructor]
-      public DownloadTransferCiphertextRequest(string serverProof)
+      public DownloadTransferCiphertextRequest(byte[] serverProof)
       {
          ServerProof = serverProof;
       }

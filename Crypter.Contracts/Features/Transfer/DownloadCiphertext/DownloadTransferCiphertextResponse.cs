@@ -33,14 +33,12 @@ namespace Crypter.Contracts.Features.Transfer
    public class DownloadTransferCiphertextResponse
    {
       public EncryptedBox Box { get; init; }
-      public byte[] Nonce { get; init; }
       public CompressionType CompressionType { get; init; }
 
       [JsonConstructor]
-      public DownloadTransferCiphertextResponse(EncryptedBox box, byte[] nonce, CompressionType compressionType)
+      public DownloadTransferCiphertextResponse(EncryptedBox box, CompressionType compressionType)
       {
          Box = box;
-         Nonce = nonce;
          CompressionType = compressionType;
       }
    }

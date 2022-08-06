@@ -34,7 +34,7 @@ namespace Crypter.Contracts.Features.Transfer
       EncryptedBox Box { get; init; }
       byte[] ServerProof { get; init; }
       byte[] PublicKey { get; init; }
-      byte[] KdfNonce { get; init; }
+      byte[] Nonce { get; init; }
       int LifetimeHours { get; init; }
       CompressionType CompressionType { get; init; }
    }

@@ -36,18 +36,18 @@ namespace Crypter.Contracts.Features.Transfer
       public EncryptedBox Box { get; init; }
       public byte[] ServerProof { get; init; }
       public byte[] PublicKey { get; init; }
-      public byte[] KdfNonce { get; init; }
+      public byte[] Nonce { get; init; }
       public int LifetimeHours { get; init; }
       public CompressionType CompressionType { get; init; }
 
       [JsonConstructor]
-      public UploadMessageTransferRequest(string subject, EncryptedBox box, byte[] serverProof, byte[] publicKey, byte[] kdfNonce, int lifetimeHouse, CompressionType compressionType)
+      public UploadMessageTransferRequest(string subject, EncryptedBox box, byte[] serverProof, byte[] publicKey, byte[] nonce, int lifetimeHouse, CompressionType compressionType)
       {
          Subject = subject;
          Box = box;
          ServerProof = serverProof;
          PublicKey = publicKey;
-         KdfNonce = kdfNonce;
+         Nonce = nonce;
          LifetimeHours = lifetimeHouse;
          CompressionType = compressionType;
       }

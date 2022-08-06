@@ -37,7 +37,7 @@ namespace Crypter.Contracts.Features.Transfer
       public EncryptedBox Box { get; init; }
       public byte[] ServerProof { get; init; }
       public byte[] PublicKey { get; init; }
-      public byte[] KdfNonce { get; init; }
+      public byte[] Nonce { get; init; }
       public int LifetimeHours { get; init; }
       public CompressionType CompressionType { get; init; }
 
@@ -49,7 +49,7 @@ namespace Crypter.Contracts.Features.Transfer
          Box = box;
          ServerProof = serverProof;
          PublicKey = publicKey;
-         KdfNonce = kdfNonce;
+         Nonce = kdfNonce;
          LifetimeHours = lifetimeHours;
          CompressionType = compressionType;
       }
