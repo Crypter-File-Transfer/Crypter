@@ -32,12 +32,12 @@ namespace Crypter.ClientServices.Models
 {
    public class RecoveryKey
    {
-      public string MasterKey { get; set; }
-      public string Proof { get; set; }
+      public byte[] MasterKey { get; set; }
+      public byte[] Proof { get; set; }
 
-      public RecoveryKey(byte[] masterKey, string proof)
+      public RecoveryKey(byte[] masterKey, byte[] proof)
       {
-         MasterKey = Convert.ToBase64String(masterKey);
+         MasterKey = masterKey;
          Proof = proof;
       }
 

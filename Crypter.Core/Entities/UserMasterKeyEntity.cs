@@ -31,19 +31,19 @@ namespace Crypter.Core.Entities
    public class UserMasterKeyEntity
    {
       public Guid Owner { get; set; }
-      public string Key { get; set; }
-      public string ClientIV { get; set; }
-      public string RecoveryProof { get; set; }
+      public byte[] EncryptedKey { get; set; }
+      public byte[] Nonce { get; set; }
+      public byte[] RecoveryProof { get; set; }
       public DateTime Updated { get; set; }
       public DateTime Created { get; set; }
 
       public UserEntity User { get; set; }
 
-      public UserMasterKeyEntity(Guid owner, string key, string clientIV, string recoveryProof, DateTime updated, DateTime created)
+      public UserMasterKeyEntity(Guid owner, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof, DateTime updated, DateTime created)
       {
          Owner = owner;
-         Key = key;
-         ClientIV = clientIV;
+         EncryptedKey = encryptedKey;
+         Nonce = nonce;
          RecoveryProof = recoveryProof;
          Updated = updated;
          Created = created;

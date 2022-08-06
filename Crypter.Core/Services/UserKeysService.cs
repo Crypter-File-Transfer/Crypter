@@ -61,7 +61,7 @@ namespace Crypter.Core.Services
          return Either<GetMasterKeyError, GetMasterKeyResponse>.FromRightAsync(
             _context.UserMasterKeys
                .Where(x => x.Owner == userId)
-               .Select(x => new GetMasterKeyResponse(x.Key, x.ClientIV))
+               .Select(x => new GetMasterKeyResponse(x.EncryptedKey, x.Nonce))
                .FirstOrDefaultAsync(cancellationToken), GetMasterKeyError.NotFound);
       }
 
@@ -100,7 +100,7 @@ namespace Crypter.Core.Services
                }
 
                DateTime now = DateTime.UtcNow;
-               var newEntity = new UserMasterKeyEntity(userId, request.Key, request.Nonce, request.Proof, now, now);
+               var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.Nonce, request.Proof, now, now);
                _context.UserMasterKeys.Add(newEntity);
 
                await _context.SaveChangesAsync(cancellationToken);

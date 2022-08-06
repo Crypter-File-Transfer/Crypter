@@ -401,11 +401,11 @@ namespace Crypter.Core
             .HasKey(x => x.Owner);
 
          builder.Entity<UserMasterKeyEntity>()
-            .Property(x => x.Key)
+            .Property(x => x.EncryptedKey)
             .IsRequired();
 
          builder.Entity<UserMasterKeyEntity>()
-            .Property(x => x.ClientIV)
+            .Property(x => x.Nonce)
             .IsRequired();
 
          builder.Entity<UserMasterKeyEntity>()

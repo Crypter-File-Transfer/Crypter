@@ -131,15 +131,13 @@ namespace Crypter.ClientServices.Services
 
                return recoveryProofResponse.Match(
                   Maybe<RecoveryKey>.None,
-                  recoveryProof => new RecoveryKey(masterKey, recoveryProof.RecoveryProof));
+                  recoveryProof => new RecoveryKey(masterKey, recoveryProof.Proof));
             });
       }
 
       private static Maybe<byte[]> DecryptMasterKey(GetMasterKeyResponse encryptedKeyInfo, byte[] userSymmetricKey)
       {
-         byte[] encryptedKey = Convert.FromBase64String(encryptedKeyInfo.EncryptedKey);
-         byte[] nonce = Convert.FromBase64String(encryptedKeyInfo.Nonce);
-         EncryptedBox encryptedBox = new EncryptedBox(encryptedKey, nonce);
+         EncryptedBox encryptedBox = new EncryptedBox(encryptedKeyInfo.EncryptedKey, encryptedKeyInfo.Nonce);
          try
          {
             return SecretBox.Open(encryptedBox, userSymmetricKey);
@@ -166,11 +164,7 @@ namespace Crypter.ClientServices.Services
          EncryptedBox encryptedBox = SecretBox.Create(newMasterKey, credentialKey);
          byte[] recoveryProof = CryptoLib.SodiumLib.Random.RandomBytes(16);
 
-         string encodedEncryptedKey = Convert.ToBase64String(encryptedBox.Contents);
-         string encodedNonce = Convert.ToBase64String(encryptedBox.Nonce);
-         string encodedRecoveryProof = Convert.ToBase64String(recoveryProof);
-
-         return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, password, encodedEncryptedKey, encodedNonce, encodedRecoveryProof))
+         return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, password, encryptedBox.Contents, encryptedBox.Nonce, recoveryProof))
             .ToMaybeTask()
             .BindAsync(x => newMasterKey);
       }
