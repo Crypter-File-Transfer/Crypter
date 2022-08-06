@@ -29,6 +29,7 @@ using Crypter.CryptoLib.Models;
 using Sodium;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 

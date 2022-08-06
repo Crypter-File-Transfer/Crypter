@@ -31,7 +31,6 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
-using Crypter.CryptoLib.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -46,8 +45,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
       private readonly ICompressionService _compressionService;
       private readonly FileTransferSettings _fileTransferSettings;
 
-      public DownloadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, IUserSessionService userSessionService, ICompressionService compressionService, FileTransferSettings fileTransferSettings)
-         : base(crypterApiService, simpleEncryptionService, userSessionService)
+      public DownloadFileHandler(ICrypterApiService crypterApiService, IUserSessionService userSessionService, ICompressionService compressionService, FileTransferSettings fileTransferSettings)
+         : base(crypterApiService, userSessionService)
       {
          _compressionService = compressionService;
          _fileTransferSettings = fileTransferSettings;

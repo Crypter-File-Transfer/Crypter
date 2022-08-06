@@ -33,8 +33,8 @@ namespace Crypter.Core.Entities.Interfaces
    {
       public Guid Id { get; set; }
       public int Size { get; set; }
-      public string DiffieHellmanPublicKey { get; set; }
-      public string RecipientProof { get; set; }
+      public byte[] PublicKey { get; set; }
+      public byte[] ServerProof { get; set; }
       public CompressionType CompressionType { get; set; }
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }

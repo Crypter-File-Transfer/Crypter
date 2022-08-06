@@ -24,34 +24,32 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
 using Crypter.CryptoLib.Models;
-using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.Transfer
+namespace Crypter.CryptoLib.SodiumLib
 {
-   public class UploadFileTransferRequest : IUploadTransferRequest
+   public static class SecretBox
    {
-      public string Filename { get; init; }
-      public string ContentType { get; init; }
-      public EncryptedBox Box { get; init; }
-      public byte[] ServerProof { get; init; }
-      public byte[] PublicKey { get; init; }
-      public byte[] KdfNonce { get; init; }
-      public int LifetimeHours { get; init; }
-      public CompressionType CompressionType { get; init; }
-
-      [JsonConstructor]
-      public UploadFileTransferRequest(string filename, string contentType, EncryptedBox box, byte[] serverProof, byte[] publicKey, byte[] kdfNonce, int lifetimeHours, CompressionType compressionType)
+      public static byte[] GenerateKey()
       {
-         Filename = filename;
-         ContentType = contentType;
-         Box = box;
-         ServerProof = serverProof;
-         PublicKey = publicKey;
-         KdfNonce = kdfNonce;
-         LifetimeHours = lifetimeHours;
-         CompressionType = compressionType;
+         return Sodium.SecretBox.GenerateKey();
+      }
+
+      public static byte[] GenerateNonce()
+      {
+         return Sodium.SecretBox.GenerateNonce();
+      }
+
+      public static EncryptedBox Create(byte[] data, byte[] key)
+      {
+         byte[] nonce = GenerateNonce();
+         byte[] ciphertext = Sodium.SecretBox.Create(data, nonce, key);
+         return new EncryptedBox(ciphertext, nonce);
+      }
+
+      public static byte[] Open(EncryptedBox box, byte[] key)
+      {
+         return Sodium.SecretBox.Open(box.Contents, box.Contents, key);
       }
    }
 }

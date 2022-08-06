@@ -25,7 +25,7 @@
  */
 
 using Crypter.Common.Enums;
-using System.Collections.Generic;
+using Crypter.CryptoLib.Models;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Transfer
@@ -33,22 +33,22 @@ namespace Crypter.Contracts.Features.Transfer
    public class UploadMessageTransferRequest : IUploadTransferRequest
    {
       public string Subject { get; init; }
-      public string InitializationVector { get; init; }
-      public List<string> Ciphertext { get; init; }
-      public string DiffieHellmanPublicKey { get; init; }
-      public string RecipientProof { get; init; }
+      public EncryptedBox Box { get; init; }
+      public byte[] ServerProof { get; init; }
+      public byte[] PublicKey { get; init; }
+      public byte[] KdfNonce { get; init; }
       public int LifetimeHours { get; init; }
       public CompressionType CompressionType { get; init; }
 
       [JsonConstructor]
-      public UploadMessageTransferRequest(string subject, string initializationVector, List<string> ciphertext, string diffieHellmanPublicKey, string recipientProof, int lifetimeHours, CompressionType compressionType)
+      public UploadMessageTransferRequest(string subject, EncryptedBox box, byte[] serverProof, byte[] publicKey, byte[] kdfNonce, int lifetimeHouse, CompressionType compressionType)
       {
          Subject = subject;
-         InitializationVector = initializationVector;
-         Ciphertext = ciphertext;
-         DiffieHellmanPublicKey = diffieHellmanPublicKey;
-         RecipientProof = recipientProof;
-         LifetimeHours = lifetimeHours;
+         Box = box;
+         ServerProof = serverProof;
+         PublicKey = publicKey;
+         KdfNonce = kdfNonce;
+         LifetimeHours = lifetimeHouse;
          CompressionType = compressionType;
       }
    }

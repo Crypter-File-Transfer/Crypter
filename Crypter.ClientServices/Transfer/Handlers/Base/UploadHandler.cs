@@ -43,8 +43,7 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
 
       protected bool _senderDefined = false;
 
-      protected Maybe<byte[]> _senderPrivateKey = Maybe<byte[]>.None;
-      protected Maybe<byte[]> _senderPublicKey = Maybe<byte[]>.None;
+      protected Maybe<AsymmetricKeyPair> _senderKeyPair = Maybe<AsymmetricKeyPair>.None;
 
       protected Maybe<Username> _recipientUsername = Maybe<Username>.None;
 
@@ -62,8 +61,8 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
          _senderDefined = true;
          _transferUserType = TransferUserType.User;
 
-         _senderPrivateKey = privateKey;
-         _senderPublicKey = ScalarMult.GetPublicKey(privateKey);
+         byte[] publicKey  = ScalarMult.GetPublicKey(privateKey);
+         _senderKeyPair = new AsymmetricKeyPair(privateKey, publicKey);
       }
 
       public void SetRecipientInfo(Username username, byte[] publicKey)
@@ -75,9 +74,7 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
 
       protected void CreateEphemeralSenderKeys()
       {
-         AsymmetricKeyPair senderKeyPair = PublicKeyAuth.GenerateKeyPair();
-         _senderPrivateKey = senderKeyPair.PrivateKey;
-         _senderPublicKey = senderKeyPair.PublicKey;
+         _senderKeyPair = PublicKeyAuth.GenerateKeyPair();
       }
 
       protected void CreateEphemeralRecipientKeys()

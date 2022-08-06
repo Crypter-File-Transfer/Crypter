@@ -23,7 +23,7 @@
  * 
  * Contact the current copyright holder to discuss commercial license options.
  */
-
+/*
 using Crypter.CryptoLib.Models;
 using System.Text;
 
@@ -63,3 +63,4 @@ namespace Crypter.CryptoLib.SodiumLib
       }
    }
 }
+*/

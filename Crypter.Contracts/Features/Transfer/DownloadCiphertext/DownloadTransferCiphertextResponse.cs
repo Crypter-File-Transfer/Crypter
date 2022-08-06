@@ -25,22 +25,22 @@
  */
 
 using Crypter.Common.Enums;
-using System.Collections.Generic;
+using Crypter.CryptoLib.Models;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Transfer
 {
    public class DownloadTransferCiphertextResponse
    {
-      public List<string> Ciphertext { get; init; }
-      public string InitializationVector { get; init; }
+      public EncryptedBox Box { get; init; }
+      public byte[] Nonce { get; init; }
       public CompressionType CompressionType { get; init; }
 
       [JsonConstructor]
-      public DownloadTransferCiphertextResponse(List<string> ciphertext, string initializationVector, CompressionType compressionType)
+      public DownloadTransferCiphertextResponse(EncryptedBox box, byte[] nonce, CompressionType compressionType)
       {
-         Ciphertext = ciphertext;
-         InitializationVector = initializationVector;
+         Box = box;
+         Nonce = nonce;
          CompressionType = compressionType;
       }
    }

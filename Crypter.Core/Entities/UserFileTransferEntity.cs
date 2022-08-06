@@ -34,8 +34,8 @@ namespace Crypter.Core.Entities
    {
       public Guid Id { get; set; }
       public int Size { get; set; }
-      public string DiffieHellmanPublicKey { get; set; }
-      public string RecipientProof { get; set; }
+      public byte[] PublicKey { get; set; }
+      public byte[] ServerProof { get; set; }
       public CompressionType CompressionType { get; set; }
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
@@ -51,12 +51,12 @@ namespace Crypter.Core.Entities
       public string FileName { get; set; }
       public string ContentType { get; set; }
 
-      public UserFileTransferEntity(Guid id, int size, string diffieHellmanPublicKey, string recipientProof, CompressionType compressionType, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType)
+      public UserFileTransferEntity(Guid id, int size, byte[] publicKey, byte[] serverProof, CompressionType compressionType, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType)
       {
          Id = id;
          Size = size;
-         DiffieHellmanPublicKey = diffieHellmanPublicKey;
-         RecipientProof = recipientProof;
+         PublicKey = publicKey;
+         ServerProof = serverProof;
          CompressionType = compressionType;
          Created = created;
          Expiration = expiration;

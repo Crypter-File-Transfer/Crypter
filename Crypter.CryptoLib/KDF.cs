@@ -47,7 +47,12 @@ namespace Crypter.CryptoLib
          return new TransmissionKeyRing(sendKey, receiveKey, serverProof);
       }
 
-      public static byte[] DeriveServerProof(byte[] receiveKey, byte[] sendKey, byte[] nonce)
+      public static byte[] GenerateNonce()
+      {
+         return Random.RandomBytes(16);
+      }
+
+      private static byte[] DeriveServerProof(byte[] receiveKey, byte[] sendKey, byte[] nonce)
       {
          byte[] firstKey = receiveKey;
          byte[] secondKey = sendKey;

@@ -33,9 +33,8 @@ using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication;
 using Crypter.Contracts.Features.Keys;
 using Crypter.CryptoLib.Models;
-using Crypter.CryptoLib.Sodium;
+using Crypter.CryptoLib.SodiumLib;
 using System;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Services
@@ -140,9 +139,10 @@ namespace Crypter.ClientServices.Services
       {
          byte[] encryptedKey = Convert.FromBase64String(encryptedKeyInfo.EncryptedKey);
          byte[] nonce = Convert.FromBase64String(encryptedKeyInfo.Nonce);
+         EncryptedBox encryptedBox = new EncryptedBox(encryptedKey, nonce);
          try
          {
-            return StreamEncryption.Decrypt(encryptedKey, nonce, userSymmetricKey);
+            return SecretBox.Open(encryptedBox, userSymmetricKey);
          }
          catch (Exception)
          {
@@ -153,7 +153,7 @@ namespace Crypter.ClientServices.Services
       private Task<Maybe<byte[]>> UploadNewUserKeyPairAsync(byte[] masterKey)
       {
          AsymmetricKeyPair keyPair = PublicKeyBox.GenerateKeyPair();
-         EncryptedBox encryptionInfo = StreamEncryption.Encrypt(keyPair.PrivateKey, masterKey);
+         EncryptedBox encryptionInfo = SecretBox.Create(keyPair.PrivateKey, masterKey);
 
          return UploadKeyPairAsync(encryptionInfo.Contents, keyPair.PublicKey, encryptionInfo.Nonce)
             .ToMaybeTask()
@@ -162,9 +162,9 @@ namespace Crypter.ClientServices.Services
 
       private Task<Maybe<byte[]>> UploadNewMasterKeyAsync(byte[] credentialKey, Username username, AuthenticationPassword password)
       {
-         byte[] newMasterKey = StreamEncryption.GenerateKey();
-         EncryptedBox encryptedBox = StreamEncryption.Encrypt(newMasterKey, credentialKey);
-         byte[] recoveryProof = CryptoLib.Sodium.Random.RandomBytes(16);
+         byte[] newMasterKey = SecretBox.GenerateKey();
+         EncryptedBox encryptedBox = SecretBox.Create(newMasterKey, credentialKey);
+         byte[] recoveryProof = CryptoLib.SodiumLib.Random.RandomBytes(16);
 
          string encodedEncryptedKey = Convert.ToBase64String(encryptedBox.Contents);
          string encodedNonce = Convert.ToBase64String(encryptedBox.Nonce);
@@ -179,9 +179,10 @@ namespace Crypter.ClientServices.Services
       {
          byte[] decodedPrivateKey = Convert.FromBase64String(encryptedPrivateKey);
          byte[] decodedNonce = Convert.FromBase64String(nonce);
+         EncryptedBox encryptedBox = new EncryptedBox(decodedPrivateKey, decodedNonce);
          try
          {
-            return StreamEncryption.Decrypt(decodedPrivateKey, decodedNonce, decryptionKey);
+            return SecretBox.Open(encryptedBox, decryptionKey);
          }
          catch (Exception)
          {

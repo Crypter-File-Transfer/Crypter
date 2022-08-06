@@ -285,11 +285,11 @@ namespace Crypter.Core
             .HasColumnName("Recipient");
 
          builder.Entity<UserMessageTransferEntity>()
-            .Property(x => x.DiffieHellmanPublicKey)
+            .Property(x => x.PublicKey)
             .IsRequired();
 
          builder.Entity<UserMessageTransferEntity>()
-            .Property(x => x.RecipientProof)
+            .Property(x => x.ServerProof)
             .IsRequired();
 
          builder.Entity<UserMessageTransferEntity>()
@@ -314,11 +314,11 @@ namespace Crypter.Core
             .HasColumnName("Recipient");
 
          builder.Entity<UserFileTransferEntity>()
-            .Property(x => x.DiffieHellmanPublicKey)
+            .Property(x => x.PublicKey)
             .IsRequired();
 
          builder.Entity<UserFileTransferEntity>()
-            .Property(x => x.RecipientProof)
+            .Property(x => x.ServerProof)
             .IsRequired();
 
          builder.Entity<UserFileTransferEntity>()
@@ -339,11 +339,11 @@ namespace Crypter.Core
             .HasKey(x => x.Id);
 
          builder.Entity<AnonymousMessageTransferEntity>()
-            .Property(x => x.DiffieHellmanPublicKey)
+            .Property(x => x.PublicKey)
             .IsRequired();
 
          builder.Entity<AnonymousMessageTransferEntity>()
-            .Property(x => x.RecipientProof)
+            .Property(x => x.ServerProof)
             .IsRequired();
 
          builder.Entity<AnonymousMessageTransferEntity>()
@@ -360,11 +360,11 @@ namespace Crypter.Core
             .HasKey(x => x.Id);
 
          builder.Entity<AnonymousFileTransferEntity>()
-            .Property(x => x.DiffieHellmanPublicKey)
+            .Property(x => x.PublicKey)
             .IsRequired();
 
          builder.Entity<AnonymousFileTransferEntity>()
-            .Property(x => x.RecipientProof)
+            .Property(x => x.ServerProof)
             .IsRequired();
 
          builder.Entity<AnonymousFileTransferEntity>()

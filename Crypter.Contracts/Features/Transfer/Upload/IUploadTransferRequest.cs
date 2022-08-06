@@ -25,16 +25,16 @@
  */
 
 using Crypter.Common.Enums;
-using System.Collections.Generic;
+using Crypter.CryptoLib.Models;
 
 namespace Crypter.Contracts.Features.Transfer
 {
    public interface IUploadTransferRequest
    {
-      string InitializationVector { get; init; }
-      List<string> Ciphertext { get; init; }
-      string DiffieHellmanPublicKey { get; init; }
-      string RecipientProof { get; init; }
+      EncryptedBox Box { get; init; }
+      byte[] ServerProof { get; init; }
+      byte[] PublicKey { get; init; }
+      byte[] KdfNonce { get; init; }
       int LifetimeHours { get; init; }
       CompressionType CompressionType { get; init; }
    }

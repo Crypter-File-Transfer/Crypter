@@ -36,19 +36,21 @@ namespace Crypter.Contracts.Features.Transfer
       public string Sender { get; set; }
       public string SenderAlias { get; set; }
       public string Recipient { get; set; }
-      public string DiffieHellmanPublicKey { get; set; }
+      public byte[] PublicKey { get; set; }
+      public byte[] Nonce { get; set; }
       public DateTime CreationUTC { get; set; }
       public DateTime ExpirationUTC { get; set; }
 
       [JsonConstructor]
-      public DownloadTransferMessagePreviewResponse(string subject, int size, string sender, string senderAlias, string recipient, string diffieHellmanPublicKey, DateTime creationUTC, DateTime expirationUTC)
+      public DownloadTransferMessagePreviewResponse(string subject, int size, string sender, string senderAlias, string recipient, byte[] publicKey, byte[] nonce, DateTime creationUTC, DateTime expirationUTC)
       {
          Subject = subject;
          Size = size;
          Sender = sender;
          SenderAlias = senderAlias;
          Recipient = recipient;
-         DiffieHellmanPublicKey = diffieHellmanPublicKey;
+         PublicKey = publicKey;
+         Nonce = nonce;
          CreationUTC = creationUTC;
          ExpirationUTC = expirationUTC;
       }

@@ -6,5 +6,6 @@
   
   <ItemGroup>
     <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
+    <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
   </ItemGroup>
 </Project>

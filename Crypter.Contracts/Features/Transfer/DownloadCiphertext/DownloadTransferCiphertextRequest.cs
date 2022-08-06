@@ -31,12 +31,12 @@ namespace Crypter.Contracts.Features.Transfer
 {
    public class DownloadTransferCiphertextRequest
    {
-      public string RecipientProof { get; set; }
+      public string ServerProof { get; set; }
 
       [JsonConstructor]
-      public DownloadTransferCiphertextRequest(string recipientProof)
+      public DownloadTransferCiphertextRequest(string serverProof)
       {
-         RecipientProof = recipientProof;
+         ServerProof = serverProof;
       }
    }
 }

@@ -88,7 +88,7 @@ namespace Crypter.Core.Services
                await ciphertextStream.WriteAsync(partBytes, cancellationToken); // here
             }
 
-            byte[] ivBytes = Convert.FromBase64String(data.InitializationVector);
+            byte[] ivBytes = Convert.FromBase64String(data.Nonce);
             using FileStream ivStream = File.OpenWrite(ivPath);
             await ivStream.WriteAsync(ivBytes, cancellationToken); // here
          }

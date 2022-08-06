@@ -31,6 +31,6 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
    public interface IUserUploadHandler
    {
       void SetSenderInfo(byte[] privateKey);
-      void SetRecipientInfo(string username, byte[] publicKey);
+      void SetRecipientInfo(Username username, byte[] publicKey);
    }
 }

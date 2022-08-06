@@ -25,7 +25,7 @@
  */
 
 using BenchmarkDotNet.Attributes;
-using Crypter.CryptoLib.Sodium;
+using Crypter.CryptoLib.SodiumLib;
 using System.Text;
 
 namespace Crypter.Benchmarks.CryptoLib_Benchmarks
@@ -37,7 +37,7 @@ namespace Crypter.Benchmarks.CryptoLib_Benchmarks
    {
       private byte[] _passwordBytes;
       private byte[] _saltBytes;
-      private int _hashLength = 32;
+      private const int _hashLength = 32;
 
       [Params(PasswordHash.Strength.Interactive, PasswordHash.Strength.Medium, PasswordHash.Strength.Moderate, PasswordHash.Strength.Sensitive)]
       public PasswordHash.Strength HashStrength;

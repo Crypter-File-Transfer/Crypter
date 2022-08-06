@@ -134,8 +134,7 @@ namespace Crypter.Core.Services
 
       private async Task<Either<UploadTransferError, int>> GetRequiredDiskSpaceAsync(IUploadTransferRequest request, CancellationToken cancellationToken)
       {
-         int ciphertextLength = request.Ciphertext.Sum(x => x.Length);
-         int requiredDiskSpace = request.InitializationVector.Length + ciphertextLength;
+         int requiredDiskSpace = request.Box.Contents.Length + request.Box.Nonce.Length;
 
          bool serverHasDiskSpace = await IsDiskSpaceForTransferAsync(requiredDiskSpace, cancellationToken);
          return serverHasDiskSpace
@@ -170,7 +169,7 @@ namespace Crypter.Core.Services
 
       private async Task<Maybe<UploadTransferError>> SaveTransferToDiskAsync(TransferItemType itemType, TransferUserType userType, Guid id, IUploadTransferRequest request, CancellationToken cancellationToken)
       {
-         var storageParameters = new TransferStorageParameters(id, itemType, userType, request.InitializationVector, request.Ciphertext);
+         var storageParameters = new TransferStorageParameters(id, itemType, userType, request.Box.Nonce, request.Box.Contents);
          var storageSuccess = await _transferStorageService.SaveTransferAsync(storageParameters, cancellationToken);
          return storageSuccess
             ? Maybe<UploadTransferError>.None
@@ -181,7 +180,7 @@ namespace Crypter.Core.Services
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
-         var newTransferEntity = new AnonymousMessageTransferEntity(id, requiredDiskSpace, request.DiffieHellmanPublicKey, request.RecipientProof, request.CompressionType, now, expiration, request.Subject);
+         var newTransferEntity = new AnonymousMessageTransferEntity(id, requiredDiskSpace, request.PublicKey, request.ServerProof, request.CompressionType, now, expiration, request.Subject);
          _context.AnonymousMessageTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
@@ -201,7 +200,7 @@ namespace Crypter.Core.Services
             () => null,
             x => x);
 
-         var newTransferEntity = new UserMessageTransferEntity(id, requiredDiskSpace, request.DiffieHellmanPublicKey, request.RecipientProof, request.CompressionType, now, expiration, nullableSenderId, nullableRecipientId, request.Subject);
+         var newTransferEntity = new UserMessageTransferEntity(id, requiredDiskSpace, request.PublicKey, request.ServerProof, request.CompressionType, now, expiration, nullableSenderId, nullableRecipientId, request.Subject);
          _context.UserMessageTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
@@ -212,7 +211,7 @@ namespace Crypter.Core.Services
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
-         var newTransferEntity = new AnonymousFileTransferEntity(id, requiredDiskSpace, request.DiffieHellmanPublicKey, request.RecipientProof, request.CompressionType, now, expiration, request.Filename, request.ContentType);
+         var newTransferEntity = new AnonymousFileTransferEntity(id, requiredDiskSpace, request.PublicKey, request.ServerProof, request.CompressionType, now, expiration, request.Filename, request.ContentType);
          _context.AnonymousFileTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
@@ -232,7 +231,7 @@ namespace Crypter.Core.Services
             () => null,
             x => x);
 
-         var newTransferEntity = new UserFileTransferEntity(id, requiredDiskSpace, request.DiffieHellmanPublicKey, request.RecipientProof, request.CompressionType, now, expiration, nullableSenderId, nullableRecipientId, request.Filename, request.ContentType);
+         var newTransferEntity = new UserFileTransferEntity(id, requiredDiskSpace, request.PublicKey, request.ServerProof, request.CompressionType, now, expiration, nullableSenderId, nullableRecipientId, request.Filename, request.ContentType);
          _context.UserFileTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
