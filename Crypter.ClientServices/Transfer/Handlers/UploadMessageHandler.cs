@@ -29,10 +29,10 @@ using Crypter.ClientServices.Transfer.Handlers.Base;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
-using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Services;
+using Crypter.CryptoLib;
+using Crypter.CryptoLib.Models;
+using Crypter.CryptoLib.SodiumLib;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -46,8 +46,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
       private string _messageBody;
       private int _expirationHours;
 
-      public UploadMessageHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, FileTransferSettings uploadSettings)
-         : base(crypterApiService, simpleEncryptionService, uploadSettings)
+      public UploadMessageHandler(ICrypterApiService crypterApiService, FileTransferSettings uploadSettings)
+         : base(crypterApiService, uploadSettings)
       { }
 
       internal void SetTransferInfo(string messageSubject, string messageBody, int expirationHours)
@@ -69,38 +69,24 @@ namespace Crypter.ClientServices.Transfer.Handlers
             CreateEphemeralSenderKeys();
          }
 
-         PEMString senderDiffieHellmanPrivateKey = _senderPrivateKey.Match(
-            () => throw new Exception("Missing sender Diffie Hellman private key"),
+         AsymmetricKeyPair senderKeyPair = _senderKeyPair.Match(
+            () => throw new Exception("Missing sender private key"),
             x => x);
 
-         PEMString recipientDiffieHellmanPublicKey = _recipientPublicKey.Match(
-            () => throw new Exception("Missing recipient Diffie Hellman private key"),
+         byte[] recipientPublicKey = _recipientPublicKey.Match(
+            () => throw new Exception("Missing recipient public key"),
             x => x);
 
-         (byte[] sendKey, byte[] serverKey) = DeriveSymmetricKeys(senderDiffieHellmanPrivateKey, recipientDiffieHellmanPublicKey);
-         byte[] initializationVector = AES.GenerateIV();
+         byte[] nonce = KDF.GenerateNonce();
+         TransmissionKeyRing txKeyRing = KDF.CreateTransmissionKeys(senderKeyPair, recipientPublicKey, nonce);
 
-         byte[] ciphertext = _simpleEncryptionService.Encrypt(sendKey, initializationVector, _messageBody);
+         EncryptedBox box = SecretBox.Create(_messageBody, txKeyRing.SendKey);
          await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
 
-         string encodedInitializationVector = Convert.ToBase64String(initializationVector);
-
-         List<string> encodedCipherText = new List<string> { Convert.ToBase64String(ciphertext) };
-
-         string encodedECDHSenderKey = _senderPublicKey.Match(
-            () => throw new Exception("Missing sender Diffie Hellman public key"),
-            x =>
-            {
-               return Convert.ToBase64String(
-                  Encoding.UTF8.GetBytes(x.Value));
-            });
-
-         string encodedServerKey = Convert.ToBase64String(serverKey);
-
-         var request = new UploadMessageTransferRequest(_messageSubject, encodedInitializationVector, encodedCipherText, encodedECDHSenderKey, encodedServerKey, _expirationHours, CompressionType.None);
+         var request = new UploadMessageTransferRequest(_messageSubject, box, txKeyRing.ServerProof, senderKeyPair.PublicKey, nonce, _expirationHours, CompressionType.None);
          var response = await _recipientUsername.Match(
             () => _crypterApiService.UploadMessageTransferAsync(request, _senderDefined),
-            x => _crypterApiService.SendUserMessageTransferAsync(x, request, _senderDefined));
+            x => _crypterApiService.SendUserMessageTransferAsync(x.Value, request, _senderDefined));
 
          return response.Map(x => new UploadHandlerResponse(x.Id, _expirationHours, TransferItemType.Message, x.UserType, _recipientPrivateKey));
       }

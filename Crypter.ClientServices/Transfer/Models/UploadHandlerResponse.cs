@@ -37,9 +37,9 @@ namespace Crypter.ClientServices.Transfer.Models
       public int ExpirationHours { get; init; }
       public TransferItemType ItemType { get; init; }
       public TransferUserType UserType { get; init; }
-      public Maybe<PEMString> RecipientDecryptionKey { get; init; }
+      public Maybe<byte[]> RecipientDecryptionKey { get; init; }
 
-      public UploadHandlerResponse(Guid transferId, int expirationHours, TransferItemType itemType, TransferUserType userType, Maybe<PEMString> recipientDecryptionKey)
+      public UploadHandlerResponse(Guid transferId, int expirationHours, TransferItemType itemType, TransferUserType userType, Maybe<byte[]> recipientDecryptionKey)
       {
          TransferId = transferId;
          ExpirationHours = expirationHours;

@@ -57,7 +57,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
          response.DoRight(x => {
             byte[] decodedPublicKey = Convert.FromBase64String(x.PublicKey);
             string pemFormattedKey = Encoding.UTF8.GetString(decodedPublicKey);
-            SetSenderDiffieHellmanPublicKey(PEMString.From(pemFormattedKey));
+            SetSenderPublicKey(PEMString.From(pemFormattedKey));
          });
          return response;
       }

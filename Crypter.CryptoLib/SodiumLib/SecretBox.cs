@@ -25,6 +25,7 @@
  */
 
 using Crypter.CryptoLib.Models;
+using System.Text;
 
 namespace Crypter.CryptoLib.SodiumLib
 {
@@ -45,6 +46,12 @@ namespace Crypter.CryptoLib.SodiumLib
          byte[] nonce = GenerateNonce();
          byte[] ciphertext = Sodium.SecretBox.Create(data, nonce, key);
          return new EncryptedBox(ciphertext, nonce);
+      }
+
+      public static EncryptedBox Create(string message, byte[] key)
+      {
+         byte[] data = Encoding.UTF8.GetBytes(message);
+         return Create(data, key);
       }
 
       public static byte[] Open(EncryptedBox box, byte[] key)

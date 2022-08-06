@@ -32,14 +32,14 @@ namespace Crypter.CryptoLib
 {
    public static class KDF
    {
-      public static TransmissionKeyRing CreateTransmissionKeys(AsymmetricKeyPair senderKeys, byte[] recipientPublicKey, byte[] nonce)
+      public static TransmissionKeyRing CreateTransmissionKeys(AsymmetricKeyPair keyPair, byte[] publicKey, byte[] nonce)
       {
-         byte[] sharedKey = ScalarMult.GetSharedKey(senderKeys.PrivateKey, recipientPublicKey);
+         byte[] sharedKey = ScalarMult.GetSharedKey(keyPair.PrivateKey, publicKey);
 
-         List<byte[]> receiveKeySeed = new List<byte[]> { sharedKey, senderKeys.PublicKey, recipientPublicKey, nonce };
+         List<byte[]> receiveKeySeed = new List<byte[]> { sharedKey, keyPair.PublicKey, publicKey, nonce };
          byte[] receiveKey = CryptoHash.Sha256(receiveKeySeed);
 
-         List<byte[]> sendKeySeed = new List<byte[]> { sharedKey, recipientPublicKey, senderKeys.PublicKey, nonce };
+         List<byte[]> sendKeySeed = new List<byte[]> { sharedKey, publicKey, keyPair.PublicKey, nonce };
          byte[] sendKey = CryptoHash.Sha256(sendKeySeed);
 
          byte[] serverProof = DeriveServerProof(receiveKey, sendKey, nonce);

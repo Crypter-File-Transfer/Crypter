@@ -27,7 +27,9 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
+using Crypter.CryptoLib;
+using Crypter.CryptoLib.Models;
+using Crypter.CryptoLib.SodiumLib;
 using System;
 
 namespace Crypter.ClientServices.Transfer.Handlers.Base
@@ -40,12 +42,11 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       protected Guid _transferId;
       protected TransferUserType _transferUserType = TransferUserType.Anonymous;
 
-      protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
+      protected Maybe<AsymmetricKeyPair> _recipientKeyPair = Maybe<AsymmetricKeyPair>.None;
+      protected Maybe<byte[]> _senderPublicKey = Maybe<byte[]>.None;
+      protected Maybe<byte[]> _nonce = Maybe<byte[]>.None;
 
-      protected Maybe<PEMString> _senderDiffieHellmanPublicKey = Maybe<PEMString>.None;
-
-      protected Maybe<byte[]> _symmetricKey = Maybe<byte[]>.None;
-      protected Maybe<string> _serverKey = Maybe<string>.None;
+      protected Maybe<TransmissionKeyRing> _txKeyRing = Maybe<TransmissionKeyRing>.None;
 
       public DownloadHandler(ICrypterApiService crypterApiService, IUserSessionService userSessionService)
       {
@@ -59,41 +60,32 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
          _transferUserType = userType;
       }
 
-      public void SetRecipientInfo(PEMString recipientDiffieHellmanPrivateKey)
+      public void SetRecipientInfo(byte[] recipientPrivateKey)
       {
-         _recipientDiffieHellmanPrivateKey = recipientDiffieHellmanPrivateKey;
+         byte[] publicKey = ScalarMult.GetPublicKey(recipientPrivateKey);
+         _recipientKeyPair = new AsymmetricKeyPair(recipientPrivateKey, publicKey);
          TryDeriveSymmetricKeys();
       }
 
-      protected void SetSenderDiffieHellmanPublicKey(PEMString senderDiffieHellmanPublicKey)
+      protected void SetKdfValuesFromApi(byte[] senderPublicKey, byte[] nonce)
       {
-         _senderDiffieHellmanPublicKey = senderDiffieHellmanPublicKey;
+         _senderPublicKey = senderPublicKey;
+         _nonce = nonce;
          TryDeriveSymmetricKeys();
       }
 
       private void TryDeriveSymmetricKeys()
       {
-         _recipientDiffieHellmanPrivateKey.IfSome(recipientKey =>
+         _recipientKeyPair.IfSome(recipientKeyPair =>
          {
-            _senderDiffieHellmanPublicKey.IfSome(senderKey =>
+            _senderPublicKey.IfSome(senderKey =>
             {
-               (_symmetricKey, byte[] serverKey) = DeriveSymmetricKeys(recipientKey, senderKey);
-               _serverKey = Convert.ToBase64String(serverKey);
+               _nonce.IfSome(nonce =>
+               {
+                  _txKeyRing = KDF.CreateTransmissionKeys(recipientKeyPair, senderKey, nonce);
+               });
             });
          });
-      }
-
-      protected static (byte[] ReceiveKey, byte[] ServerKey) DeriveSymmetricKeys(PEMString recipientX25519PrivateKey, PEMString senderX25519PublicKey)
-      {
-         var recipientX25519Private = KeyConversion.ConvertX25519PrivateKeyFromPEM(recipientX25519PrivateKey);
-         var recipientX25519Public = recipientX25519Private.GeneratePublicKey();
-         var recipientKeyPair = new AsymmetricCipherKeyPair(recipientX25519Public, recipientX25519Private);
-
-         var senderX25519Public = KeyConversion.ConvertX25519PublicKeyFromPEM(senderX25519PublicKey);
-         (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(recipientKeyPair, senderX25519Public);
-         var serverKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
-
-         return (receiveKey, serverKey);
       }
    }
 }

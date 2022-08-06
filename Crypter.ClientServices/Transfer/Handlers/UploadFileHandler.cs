@@ -29,22 +29,18 @@ using Crypter.ClientServices.Transfer.Handlers.Base;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
-using Crypter.Common.Streams;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Models;
 using Crypter.CryptoLib.SodiumLib;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Transfer.Handlers
 {
-   public class UploadFileHandler : UploadHandler, IDisposable
+   public class UploadFileHandler : UploadHandler
    {
       private byte[] _fileBytes;
       private string _fileName;
@@ -117,10 +113,10 @@ namespace Crypter.ClientServices.Transfer.Handlers
          EncryptedBox box = SecretBox.Create(_fileBytes, txKeyRing.SendKey);
          await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
 
-         var request = new UploadFileTransferRequest(_fileName, _fileContentType, encodedInitializationVector, encodedCipherText, encodedECDHSenderKey, encodedServerKey, _expirationHours, _usedCompressionType);
+         var request = new UploadFileTransferRequest(_fileName, _fileContentType, box, txKeyRing.ServerProof, senderKeyPair.PublicKey, nonce, _expirationHours, _usedCompressionType);
          var response = await _recipientUsername.Match(
             () => _crypterApiService.UploadFileTransferAsync(request, _senderDefined),
-            x => _crypterApiService.SendUserFileTransferAsync(x, request, _senderDefined));
+            x => _crypterApiService.SendUserFileTransferAsync(x.Value, request, _senderDefined));
  
          return response.Map(x => new UploadHandlerResponse(x.Id, _expirationHours, TransferItemType.File, x.UserType, _recipientPrivateKey));
       }
@@ -132,13 +128,6 @@ namespace Crypter.ClientServices.Transfer.Handlers
             : string.Empty;
 
          return _useCompression && !_fileExtensionCompressionBlacklist.Contains(fileExtension);
-      }
-
-      public void Dispose()
-      {
-         _fileStream?.Dispose();
-         _preparedStream?.Dispose();
-         GC.SuppressFinalize(this);
       }
    }
 }
