@@ -43,7 +43,7 @@ namespace Crypter.Web.Shared.Modal
       public string InstanceId { get; set; }
 
       [Parameter]
-      public Maybe<string> RecipientUsername { get; set; }
+      public Maybe<Username> RecipientUsername { get; set; }
 
       [Parameter]
       public Maybe<byte[]> RecipientPublicKey { get; set; }

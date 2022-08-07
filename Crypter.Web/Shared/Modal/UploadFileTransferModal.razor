@@ -46,7 +46,7 @@
             <div class="tab-content">
                <div class="tab-pane fade show active" id="file-modal-file-tab-@InstanceId" role="tabpanel" aria-labelledby="file-tab">
                   <h2 class="card-title mt-0">Upload a file</h2>
-                  <UploadFileTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientDiffieHellmanPublicKey="RecipientX25519PublicKey" ExpirationHours="RequestedExpirationHours" UseCompression="UseCompression" UploadCompletedEvent="CloseAsync" />
+                  <UploadFileTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientPublicKey="RecipientPublicKey" ExpirationHours="RequestedExpirationHours" UseCompression="UseCompression" UploadCompletedEvent="CloseAsync" />
                </div>
 
                <div class="tab-pane fade" id="file-modal-settings-tab-@InstanceId" role="tabpanel" aria-labelledby="settings-tab">

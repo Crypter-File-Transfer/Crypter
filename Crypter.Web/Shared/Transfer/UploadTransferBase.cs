@@ -57,7 +57,7 @@ namespace Crypter.Web.Shared.Transfer
       protected TransferHandlerFactory TransferHandlerFactory { get; set; }
 
       [Parameter]
-      public Maybe<string> RecipientUsername { get; set; }
+      public Maybe<Username> RecipientUsername { get; set; }
 
       [Parameter]
       public Maybe<byte[]> RecipientPublicKey { get; set; }
@@ -106,7 +106,7 @@ namespace Crypter.Web.Shared.Transfer
                () => throw new Exception("Missing recipient public key"),
                x => x);
 
-            handler.SetRecipientInfo(Username.From(x), recipientPublicKey);
+            handler.SetRecipientInfo(x, recipientPublicKey);
          });
       }
 

@@ -80,6 +80,7 @@ builder.Services
    .AddSingleton<ICompressionService, CompressionService>()
    .AddSingleton<IUserContactsService, UserContactsService>()
    .AddSingleton<IBrowserDownloadFileService, BrowserDownloadFileService>()
+   .AddSingleton<IUserPasswordService, UserPasswordService>()
    .AddSingleton<TransferHandlerFactory>()
    .AddSingleton<Func<ICrypterApiService>>(sp => () => sp.GetService<ICrypterApiService>());
 

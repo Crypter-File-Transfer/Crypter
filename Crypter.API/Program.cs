@@ -96,7 +96,6 @@ builder.Services.AddScoped<IHangfireBackgroundService, HangfireBackgroundService
 builder.Services.AddScoped<IServerMetricsService, ServerMetricsService>();
 builder.Services.AddScoped<ITransferDownloadService, TransferDownloadService>();
 builder.Services.AddScoped<ITransferUploadService, TransferUploadService>();
-builder.Services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
 builder.Services.AddScoped<IUserContactsService, UserContactsService>();
 builder.Services.AddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
 builder.Services.AddScoped<IUserKeysService, UserKeysService>();

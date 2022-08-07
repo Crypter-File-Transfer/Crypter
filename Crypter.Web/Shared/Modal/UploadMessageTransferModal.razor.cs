@@ -26,6 +26,7 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using Crypter.Web.Shared.Modal.Template;
 using Crypter.Web.Shared.Transfer;
 using Microsoft.AspNetCore.Components;
@@ -42,7 +43,7 @@ namespace Crypter.Web.Shared.Modal
       public string InstanceId { get; set; }
 
       [Parameter]
-      public Maybe<string> RecipientUsername { get; set; }
+      public Maybe<Username> RecipientUsername { get; set; }
 
       [Parameter]
       public Maybe<byte[]> RecipientPublicKey { get; set; }

@@ -37,6 +37,7 @@ using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,7 +67,7 @@ namespace Crypter.Core.Services
          }
 
          services.Configure(settings);
-         services.TryAddSingleton<IUserAuthenticationService, UserAuthenticationService>();
+         services.TryAddScoped<IUserAuthenticationService, UserAuthenticationService>();
       }
    }
 
@@ -84,17 +85,17 @@ namespace Crypter.Core.Services
       private readonly int _latestServerPasswordVersion;
       private const int _maximumFailedLoginAttempts = 3;
 
-      public UserAuthenticationService(DataContext context, IPasswordHashService passwordHashService, ITokenService tokenService, IBackgroundJobClient backgroundJobClient, IHangfireBackgroundService hangfireBackgroundService, ServerPasswordSettings passwordSettings)
+      public UserAuthenticationService(DataContext context, IPasswordHashService passwordHashService, ITokenService tokenService, IBackgroundJobClient backgroundJobClient, IHangfireBackgroundService hangfireBackgroundService, IOptions<ServerPasswordSettings> passwordSettings)
       {
          _context = context;
          _passwordHashService = passwordHashService;
          _tokenService = tokenService;
          _backgroundJobClient = backgroundJobClient;
          _hangfireBackgroundService = hangfireBackgroundService;
-         _serverPasswordVersions = passwordSettings.ServerVersions.ToDictionary(x => x.Version);
+         _serverPasswordVersions = passwordSettings.Value.ServerVersions.ToDictionary(x => x.Version);
 
-         _clientPasswordVersion = passwordSettings.ClientVersion;
-         _latestServerPasswordVersion = passwordSettings.ServerVersions.Max(x => x.Version);
+         _clientPasswordVersion = passwordSettings.Value.ClientVersion;
+         _latestServerPasswordVersion = passwordSettings.Value.ServerVersions.Max(x => x.Version);
          _refreshTokenProviderMap = new Dictionary<TokenType, Func<Guid, RefreshTokenData>>
          {
             { TokenType.Session, _tokenService.NewSessionToken },

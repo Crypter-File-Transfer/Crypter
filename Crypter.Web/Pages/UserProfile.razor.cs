@@ -52,7 +52,7 @@ namespace Crypter.Web.Pages
       protected bool IsProfileAvailable;
       protected string Alias;
       protected string About;
-      protected string ProperUsername;
+      protected Username ProperUsername;
       protected bool AllowsFiles;
       protected bool AllowsMessages;
       protected byte[] PublicKey;
@@ -72,7 +72,7 @@ namespace Crypter.Web.Pages
          {
             Alias = x.Alias;
             About = x.About;
-            ProperUsername = x.Username;
+            ProperUsername = Common.Primitives.Username.From(x.Username);
             AllowsFiles = x.ReceivesFiles;
             AllowsMessages = x.ReceivesMessages;
             PublicKey = x.PublicKey;
