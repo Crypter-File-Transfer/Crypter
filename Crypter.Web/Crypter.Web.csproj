@@ -7,6 +7,7 @@
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
     <RunAOTCompilation>false</RunAOTCompilation>
+    <WasmBuildNative>true</WasmBuildNative>
     <StartupObject />
   </PropertyGroup>
 
@@ -25,7 +26,7 @@
   </ItemGroup>
 
    <ItemGroup>
-      <NativeFileReference Include="Native\libsodium.a" />
+      <NativeFileReference Include="Native\libsodium-wasm32-wasi\lib\libsodium.a" />
    </ItemGroup>
 
 </Project>

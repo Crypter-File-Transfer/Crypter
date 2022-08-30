@@ -32,11 +32,9 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication;
-using Crypter.CryptoLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
