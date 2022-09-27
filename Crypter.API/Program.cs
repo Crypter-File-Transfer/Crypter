@@ -39,16 +39,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-var builder = WebApplication.CreateBuilder(args);
-var tokenSettings = builder.Configuration
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+TokenSettings tokenSettings = builder.Configuration
    .GetSection("TokenSettings")
    .Get<TokenSettings>();
 
 builder.Services.AddEmailService(options =>
 {
-   var settings = builder.Configuration
-   .GetSection("EmailSettings")
-   .Get<EmailSettings>();
+   EmailSettings settings = builder.Configuration
+      .GetSection("EmailSettings")
+      .Get<EmailSettings>();
 
    options.Enabled = settings.Enabled;
    options.From = settings.From;
@@ -70,12 +70,21 @@ builder.Services.AddTokenService(options =>
 
 builder.Services.AddTransferStorageService(options =>
 {
-   var settings = builder.Configuration
+   TransferStorageSettings settings = builder.Configuration
       .GetSection("TransferStorageSettings")
       .Get<TransferStorageSettings>();
 
    options.AllocatedGB = settings.AllocatedGB;
    options.Location = settings.Location;
+});
+
+builder.Services.AddHashIdService(options =>
+{
+   HashIdSettings settings = builder.Configuration
+      .GetSection("HashIdSettings")
+      .Get<HashIdSettings>();
+
+   options.Salt = settings.Salt;
 });
 
 builder.Services.AddDbContext<DataContext>();
@@ -102,7 +111,7 @@ builder.Services.AddHangfire(config => config
 
 builder.Services.AddHangfireServer(options =>
 {
-   var hangfireSettings = builder.Configuration
+   HangfireSettings hangfireSettings = builder.Configuration
       .GetSection("HangfireSettings")
       .Get<HangfireSettings>();
 
@@ -127,7 +136,7 @@ builder.WebHost.UseKestrel(options =>
    options.Limits.MaxRequestBodySize = null;
 });
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
@@ -142,8 +151,8 @@ if (app.Environment.IsDevelopment())
    app.UseSwagger();
    app.UseSwaggerUI();
 
-   using var serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope();
-   var context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+   using IServiceScope serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope();
+   DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
    context.Database.EnsureCreated();
 }
 

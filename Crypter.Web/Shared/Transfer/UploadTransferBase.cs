@@ -138,16 +138,9 @@ namespace Crypter.Web.Shared.Transfer
 
             response.RecipientDecryptionKey.IfSome(x =>
             {
-               StringBuilder urlBuilder = new StringBuilder(NavigationManager.BaseUri);
-               urlBuilder.Append($"decrypt/{itemType}/?id=");
-               urlBuilder.Append(response.TransferId);
-
-               if (response.UserType == TransferUserType.User)
-               {
-                  urlBuilder.Append("&user=true");
-               }
-
-               ModalForAnonymousRecipient.Open(urlBuilder.ToString(), x, response.ExpirationHours, UploadCompletedEvent);
+               string decryptionKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(x.Value));
+               string downloadUrl = $"{NavigationManager.BaseUri}decrypt/{itemType}/{(int)response.UserType}/{response.TransferId}#{decryptionKey}";
+               ModalForAnonymousRecipient.Open(downloadUrl, response.ExpirationHours, UploadCompletedEvent);
             });
          });
       }

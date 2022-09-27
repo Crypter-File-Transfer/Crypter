@@ -26,20 +26,20 @@
 
 using System;
 
-namespace Crypter.Contracts.Features.Transfer
+namespace Crypter.Contracts.Features.Users.GetSentTransfers
 {
-   public class UserSentFileDTO
+   public class UserSentMessageDTO
    {
-      public Guid Id { get; set; }
-      public string FileName { get; set; }
+      public string HashId { get; set; }
+      public string Subject { get; set; }
       public string RecipientUsername { get; set; }
       public string RecipientAlias { get; set; }
       public DateTime ExpirationUTC { get; set; }
 
-      public UserSentFileDTO(Guid id, string fileName, string recipientUsername, string recipientAlias, DateTime expirationUTC)
+      public UserSentMessageDTO(string hashId, string subject, string recipientUsername, string recipientAlias, DateTime expirationUTC)
       {
-         Id = id;
-         FileName = fileName;
+         HashId = hashId;
+         Subject = subject;
          RecipientUsername = recipientUsername;
          RecipientAlias = recipientAlias;
          ExpirationUTC = expirationUTC;

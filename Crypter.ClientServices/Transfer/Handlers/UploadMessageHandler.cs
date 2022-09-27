@@ -118,7 +118,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
             () => _crypterApiService.UploadMessageTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserMessageTransferAsync(x, request, _senderDefined));
 
-         return response.Map(x => new UploadHandlerResponse(x.Id, _expirationHours, TransferItemType.Message, x.UserType, _recipientDiffieHellmanPrivateKey));
+         return response.Map(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.Message, x.UserType, _recipientDiffieHellmanPrivateKey));
       }
    }
 }

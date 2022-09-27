@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@page "/decrypt/message"
+@page "/decrypt/message/{userType:int}/{transferHashId}"
 
 @inherits DecryptMessageBase
 
@@ -34,6 +34,6 @@
    <h1>Decrypt Message</h1>
    @if (!Loading)
    {
-      <DownloadMessageTransfer TransferId="TransferId" IsUserTransfer="IsUserTransfer" />
+      <DownloadMessageTransfer TransferHashId="@TransferHashId" UserType="(TransferUserType)UserType" />
    }
 </div>

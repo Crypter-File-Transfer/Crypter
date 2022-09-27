@@ -31,7 +31,7 @@ namespace Crypter.Web.Models
 {
    public class UserSentItem
    {
-      public Guid Id { get; set; }
+      public string HashId { get; set; }
       public string Name { get; set; }
       public string RecipientUsername { get; set; }
       public string RecipientAlias { get; set; }

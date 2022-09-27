@@ -32,18 +32,15 @@
       <div class="modal-dialog" role="document">
          <div class="modal-content">
             <div class="modal-header">
-               <h3 class="my-0">Upload Successful</h3>
+               <h3 class="my-0">Share via link</h3>
             </div>
             <div class="modal-body justify-content-center">
-               <p>Your encrypted upload will expire in @ExpirationHours hours and will automatically be deleted once downloaded or expired.</p>
-               <p>You must share the download link and decryption key with the receiving party.</p>
-               <p>Download Link: <a href=@DownloadUrl>@DownloadUrl</a></p>
-               <h4>Decryption Key</h4>
+               <p>This shareable link will expire in @ExpirationHours hours</p>
                <div class="copiedTooltip">
                   <div class="input-group mb-3">
-                     <input class="form-control" value="@DecryptionKey.Value" type="text" name="privateKey" id="privateKey" readonly @onclick="CopyToClipboardAsync" />
+                     <input class="form-control" value="@DownloadUrl" type="text" name="downloadUrl" id="downloadUrl" readonly @onclick="CopyToClipboardAsync" />
                      <div class="input-group-append">
-                        <button class="btn btn-secondary" type="button" @onclick="CopyToClipboardAsync">Copy</button>
+                        <button class="btn btn-secondary" type="button" @onclick="CopyToClipboardAsync">Copy link</button>
                      </div>
                   </div>
 

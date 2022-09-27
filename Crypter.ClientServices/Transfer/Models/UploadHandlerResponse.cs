@@ -27,19 +27,18 @@
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using System;
 
 namespace Crypter.ClientServices.Transfer.Models
 {
    public class UploadHandlerResponse
    {
-      public Guid TransferId { get; init; }
+      public string TransferId { get; init; }
       public int ExpirationHours { get; init; }
       public TransferItemType ItemType { get; init; }
       public TransferUserType UserType { get; init; }
       public Maybe<PEMString> RecipientDecryptionKey { get; init; }
 
-      public UploadHandlerResponse(Guid transferId, int expirationHours, TransferItemType itemType, TransferUserType userType, Maybe<PEMString> recipientDecryptionKey)
+      public UploadHandlerResponse(string transferId, int expirationHours, TransferItemType itemType, TransferUserType userType, Maybe<PEMString> recipientDecryptionKey)
       {
          TransferId = transferId;
          ExpirationHours = expirationHours;

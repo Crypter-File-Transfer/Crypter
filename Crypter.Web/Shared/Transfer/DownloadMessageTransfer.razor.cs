@@ -26,7 +26,6 @@
 
 using Crypter.ClientServices.Transfer;
 using Crypter.ClientServices.Transfer.Handlers;
-using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
@@ -51,11 +50,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected async Task PrepareMessagePreviewAsync()
       {
-         TransferUserType transferUserType = IsUserTransfer
-            ? TransferUserType.User
-            : TransferUserType.Anonymous;
-
-         _downloadHandler = TransferHandlerFactory.CreateDownloadMessageHandler(TransferId, transferUserType);
+         _downloadHandler = TransferHandlerFactory.CreateDownloadMessageHandler(TransferHashId, UserType);
          var previewResponse = await _downloadHandler.DownloadPreviewAsync();
          previewResponse.DoRight(x =>
          {
@@ -78,7 +73,7 @@ namespace Crypter.Web.Shared.Transfer
 
          Maybe<PEMString> recipientPrivateKey = SpecificRecipient
             ? UserKeysService.X25519PrivateKey
-            : ValidateAndDecodeUserProvidedDecryptionKey(UserProvidedDecryptionKey);
+            : ValidateAndDecodeUserProvidedDecryptionKey();
 
          recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key.");
          await recipientPrivateKey.IfSomeAsync(async x =>

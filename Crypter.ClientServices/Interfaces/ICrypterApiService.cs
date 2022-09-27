@@ -33,6 +33,8 @@ using Crypter.Contracts.Features.Metrics;
 using Crypter.Contracts.Features.Settings;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Contracts.Features.Users;
+using Crypter.Contracts.Features.Users.GetReceivedTransfers;
+using Crypter.Contracts.Features.Users.GetSentTransfers;
 using System;
 using System.Threading.Tasks;
 
@@ -57,12 +59,10 @@ namespace Crypter.ClientServices.Interfaces
 
       #region File Transfer
       Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, bool withAuthentication);
-      Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadAnonymousFilePreviewAsync(Guid id);
-      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadAnonymousFileCiphertextAsync(Guid id, DownloadTransferCiphertextRequest downloadRequest);
-      Task<Either<DummyError, UserSentFilesResponse>> GetSentFilesAsync();
-      Task<Either<DummyError, UserReceivedFilesResponse>> GetReceivedFilesAsync();
-      Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadUserFilePreviewAsync(Guid id, bool withAuthentication);
-      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadUserFileCiphertextAsync(Guid id, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
+      Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadAnonymousFilePreviewAsync(string hashId);
+      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadAnonymousFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
+      Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadUserFilePreviewAsync(string hashId, bool withAuthentication);
+      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadUserFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
       #endregion
 
       #region Keys
@@ -74,12 +74,10 @@ namespace Crypter.ClientServices.Interfaces
 
       #region Message Transfer
       Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, bool withAuthentication);
-      Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadAnonymousMessagePreviewAsync(Guid id);
-      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadAnonymousMessageCiphertextAsync(Guid id, DownloadTransferCiphertextRequest downloadRequest);
-      Task<Either<DummyError, UserSentMessagesResponse>> GetSentMessagesAsync();
-      Task<Either<DummyError, UserReceivedMessagesResponse>> GetReceivedMessagesAsync();
-      Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadUserMessagePreviewAsync(Guid id, bool withAuthentication);
-      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadUserMessageCiphertextAsync(Guid id, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
+      Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadAnonymousMessagePreviewAsync(string hashId);
+      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadAnonymousMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
+      Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadUserMessagePreviewAsync(string hashId, bool withAuthentication);
+      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadUserMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
       #endregion
 
       #region Metrics
@@ -101,6 +99,10 @@ namespace Crypter.ClientServices.Interfaces
 
       #region User
       Task<Either<GetUserProfileError, GetUserProfileResponse>> GetUserProfileAsync(string username, bool withAuthentication);
+      Task<Either<DummyError, UserReceivedFilesResponse>> GetReceivedFilesAsync();
+      Task<Either<DummyError, UserSentFilesResponse>> GetSentFilesAsync();
+      Task<Either<DummyError, UserReceivedMessagesResponse>> GetReceivedMessagesAsync();
+      Task<Either<DummyError, UserSentMessagesResponse>> GetSentMessagesAsync();
       Task<Either<UploadTransferError, UploadTransferResponse>> SendUserFileTransferAsync(string username, UploadFileTransferRequest request, bool withAuthentication);
       Task<Either<UploadTransferError, UploadTransferResponse>> SendUserMessageTransferAsync(string username, UploadMessageTransferRequest request, bool withAuthentication);
       #endregion

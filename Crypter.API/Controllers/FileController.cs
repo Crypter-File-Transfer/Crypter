@@ -29,10 +29,8 @@ using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Core.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -45,14 +43,12 @@ namespace Crypter.API.Controllers
       private readonly ITransferDownloadService _transferDownloadService;
       private readonly ITransferUploadService _transferUploadService;
       private readonly ITokenService _tokenService;
-      private readonly IUserTransferService _userTransferService;
 
-      public FileController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService, IUserTransferService userTransferService)
+      public FileController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
       {
          _transferDownloadService = transferDownloadService;
          _transferUploadService = transferUploadService;
          _tokenService = tokenService;
-         _userTransferService = userTransferService;
       }
 
       [HttpPost]
@@ -75,7 +71,7 @@ namespace Crypter.API.Controllers
       [HttpGet("preview")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetAnonymousFilePreviewAsync([FromQuery] Guid id, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetAnonymousFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
       {
          var previewResult = await _transferDownloadService.GetAnonymousFilePreviewAsync(id, cancellationToken);
          return previewResult.Match(
@@ -88,7 +84,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferCiphertextResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetAnonymousFileCiphertextAsync([FromQuery] Guid id, [FromBody] DownloadTransferCiphertextRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetAnonymousFileCiphertextAsync([FromQuery] string id, [FromBody] DownloadTransferCiphertextRequest request, CancellationToken cancellationToken)
       {
          var ciphertextResult = await _transferDownloadService.GetAnonymousFileCiphertextAsync(id, request, true, cancellationToken);
          return ciphertextResult.Match(
@@ -97,33 +93,11 @@ namespace Crypter.API.Controllers
             MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
       }
 
-      [HttpGet("user/sent")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSentFilesResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetSentFilesAsync(CancellationToken cancellationToken)
-      {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userTransferService.GetUserSentFilesAsync(userId, cancellationToken);
-         return Ok(result);
-      }
-
-      [HttpGet("user/received")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserReceivedFilesResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetReceivedFilesAsync(CancellationToken cancellationToken)
-      {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userTransferService.GetUserReceivedFilesAsync(userId, cancellationToken);
-         return Ok(result);
-      }
-
       [HttpGet("user/preview")]
       [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserFilePreviewAsync([FromQuery] Guid id, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetUserFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
       {
          var userId = _tokenService.TryParseUserId(User);
          var previewResult = await _transferDownloadService.GetUserFilePreviewAsync(id, userId, cancellationToken);
@@ -138,7 +112,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferCiphertextResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserFileCiphertextAsync([FromQuery] Guid id, [FromBody] DownloadTransferCiphertextRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetUserFileCiphertextAsync([FromQuery] string id, [FromBody] DownloadTransferCiphertextRequest request, CancellationToken cancellationToken)
       {
          var userId = _tokenService.TryParseUserId(User);
          var ciphertextResult = await _transferDownloadService.GetUserFileCiphertextAsync(id, request, userId, cancellationToken);

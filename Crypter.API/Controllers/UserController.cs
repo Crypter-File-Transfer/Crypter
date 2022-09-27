@@ -29,7 +29,10 @@ using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Contracts.Features.Users;
+using Crypter.Contracts.Features.Users.GetReceivedTransfers;
+using Crypter.Contracts.Features.Users.GetSentTransfers;
 using Crypter.Core.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -45,12 +48,14 @@ namespace Crypter.API.Controllers
       private readonly ITransferUploadService _transferUploadService;
       private readonly ITokenService _tokenService;
       private readonly IUserService _userService;
+      private readonly IUserTransferService _userTransferService;
 
-      public UserController(ITransferUploadService transferUploadService, ITokenService tokenService, IUserService userService)
+      public UserController(ITransferUploadService transferUploadService, ITokenService tokenService, IUserService userService, IUserTransferService userTransferService)
       {
          _transferUploadService = transferUploadService;
          _tokenService = tokenService;
          _userService = userService;
+         _userTransferService = userTransferService;
       }
 
       [HttpGet("{username}/profile")]
@@ -75,6 +80,50 @@ namespace Crypter.API.Controllers
          return result.Match(
             () => MakeErrorResponse(GetUserProfileError.NotFound),
             Ok);
+      }
+
+      [HttpGet("self/file/received")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserReceivedFilesResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> GetReceivedFilesAsync(CancellationToken cancellationToken)
+      {
+         var userId = _tokenService.ParseUserId(User);
+         var result = await _userTransferService.GetUserReceivedFilesAsync(userId, cancellationToken);
+         return Ok(result);
+      }
+
+      [HttpGet("self/file/sent")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSentFilesResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> GetSentFilesAsync(CancellationToken cancellationToken)
+      {
+         var userId = _tokenService.ParseUserId(User);
+         var result = await _userTransferService.GetUserSentFilesAsync(userId, cancellationToken);
+         return Ok(result);
+      }
+
+      [HttpGet("self/message/received")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserReceivedMessagesResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> GetReceivedMessagesAsync(CancellationToken cancellationToken)
+      {
+         var userId = _tokenService.ParseUserId(User);
+         var result = await _userTransferService.GetUserReceivedMessagesAsync(userId, cancellationToken);
+         return Ok(result);
+      }
+
+      [HttpGet("self/message/sent")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSentMessagesResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> GetSentMessagesAsync(CancellationToken cancellationToken)
+      {
+         var userId = _tokenService.ParseUserId(User);
+         var result = await _userTransferService.GetUserSentMessagesAsync(userId, cancellationToken);
+         return Ok(result);
       }
 
       [HttpPost("{username}/file")]

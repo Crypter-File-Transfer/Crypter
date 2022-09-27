@@ -26,6 +26,7 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer;
+using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Microsoft.AspNetCore.Components;
@@ -37,16 +38,19 @@ namespace Crypter.Web.Shared.Transfer
    public partial class DownloadTransferBase : ComponentBase
    {
       [Inject]
+      private NavigationManager NavigationManager { get; set; }
+
+      [Inject]
       protected IUserKeysService UserKeysService { get; set; }
 
       [Inject]
       protected TransferHandlerFactory TransferHandlerFactory { get; set; }
 
       [Parameter]
-      public Guid TransferId { get; set; }
+      public string TransferHashId { get; set; }
 
       [Parameter]
-      public bool IsUserTransfer { get; set; }
+      public TransferUserType UserType { get; set; }
 
       protected bool FinishedLoading = false;
       protected bool ItemFound = false;
@@ -60,15 +64,17 @@ namespace Crypter.Web.Shared.Transfer
       protected DateTime Created = DateTime.MinValue;
       protected DateTime Expiration = DateTime.MinValue;
 
-      protected string UserProvidedDecryptionKey = string.Empty;
-
       protected const string _downloadingLiteral = "Downloading";
       protected const string _decompressingLiteral = "Decompressing";
       protected const string _decryptingLiteral = "Decrypting";
       protected const string _verifyingLiteral = "Verifying";
 
-      protected static Maybe<PEMString> ValidateAndDecodeUserProvidedDecryptionKey(string decryptionKey)
+      protected Maybe<PEMString> ValidateAndDecodeUserProvidedDecryptionKey()
       {
+         int hashLocation = NavigationManager.Uri.IndexOf('#');
+         string decryptionKey = NavigationManager.Uri.Substring(hashLocation + 1);
+         Console.WriteLine(decryptionKey);
+
          if (Base64String.TryFrom(decryptionKey, out Base64String validatedBase64EncryptionKey))
          {
             byte[] decodedKey = Convert.FromBase64String(validatedBase64EncryptionKey.Value);
