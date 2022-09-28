@@ -29,6 +29,7 @@ namespace Crypter.Contracts.Features.Transfer
    public enum DownloadTransferCiphertextError
    {
       UnknownError,
-      NotFound
+      NotFound,
+      InvalidRecipientProof
    }
 }

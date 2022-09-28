@@ -58,8 +58,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
 #pragma warning disable CS8524
          var response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFilePreviewAsync(_transferId),
-            TransferUserType.User => await _crypterApiService.DownloadUserFilePreviewAsync(_transferId, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFilePreviewAsync(_transferHashId),
+            TransferUserType.User => await _crypterApiService.DownloadUserFilePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
 
@@ -80,8 +80,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
 #pragma warning disable CS8524
          var response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFileCiphertextAsync(_transferId, request),
-            TransferUserType.User => await _crypterApiService.DownloadUserFileCiphertextAsync(_transferId, request, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFileCiphertextAsync(_transferHashId, request),
+            TransferUserType.User => await _crypterApiService.DownloadUserFileCiphertextAsync(_transferHashId, request, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
          return await response.MatchAsync<Either<DownloadTransferCiphertextError, byte[]>>(

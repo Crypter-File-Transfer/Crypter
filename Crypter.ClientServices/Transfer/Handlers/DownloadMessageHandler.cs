@@ -50,8 +50,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
 #pragma warning disable CS8524
          var response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousMessagePreviewAsync(_transferId),
-            TransferUserType.User => await _crypterApiService.DownloadUserMessagePreviewAsync(_transferId, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousMessagePreviewAsync(_transferHashId),
+            TransferUserType.User => await _crypterApiService.DownloadUserMessagePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
 
@@ -72,16 +72,17 @@ namespace Crypter.ClientServices.Transfer.Handlers
 #pragma warning disable CS8524
          var response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousMessageCiphertextAsync(_transferId, request),
-            TransferUserType.User => await _crypterApiService.DownloadUserMessageCiphertextAsync(_transferId, request, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousMessageCiphertextAsync(_transferHashId, request),
+            TransferUserType.User => await _crypterApiService.DownloadUserMessageCiphertextAsync(_transferHashId, request, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
-         await invokeAfterDownloading.IfSomeAsync(async x => await x.Invoke());
 
          return await response.MatchAsync<Either<DownloadTransferCiphertextError, string>>(
             left => left,
             async right =>
             {
+               await invokeAfterDownloading.IfSomeAsync(async x => await x.Invoke());
+
                string digitalSignaturePublicKeyPEM = Encoding.UTF8.GetString(
                   Convert.FromBase64String(right.DigitalSignaturePublicKey));
 

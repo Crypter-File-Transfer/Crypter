@@ -44,7 +44,7 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       protected readonly ISimpleSignatureService _simpleSignatureService;
       protected readonly IUserSessionService _userSessionService;
 
-      protected Guid _transferId;
+      protected string _transferHashId;
       protected TransferUserType _transferUserType = TransferUserType.Anonymous;
 
       protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
@@ -63,9 +63,9 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
          _userSessionService = userSessionService;
       }
 
-      internal void SetTransferInfo(Guid id, TransferUserType userType)
+      internal void SetTransferInfo(string transferHashId, TransferUserType userType)
       {
-         _transferId = id;
+         _transferHashId = transferHashId;
          _transferUserType = userType;
       }
 

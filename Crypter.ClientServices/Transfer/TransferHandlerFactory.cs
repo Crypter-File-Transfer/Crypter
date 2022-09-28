@@ -29,7 +29,6 @@ using Crypter.ClientServices.Transfer.Handlers;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.CryptoLib.Services;
-using System;
 using System.IO;
 
 namespace Crypter.ClientServices.Transfer
@@ -68,17 +67,17 @@ namespace Crypter.ClientServices.Transfer
          return handler;
       }
 
-      public DownloadFileHandler CreateDownloadFileHandler(Guid id, TransferUserType userType)
+      public DownloadFileHandler CreateDownloadFileHandler(string hashId, TransferUserType userType)
       {
          var handler = new DownloadFileHandler(_crypterApiService, _simpleEncryptionService, _simpleSignatureService, _userSessionService, _compressionService, _fileTransferSettings);
-         handler.SetTransferInfo(id, userType);
+         handler.SetTransferInfo(hashId, userType);
          return handler;
       }
 
-      public DownloadMessageHandler CreateDownloadMessageHandler(Guid id, TransferUserType userType)
+      public DownloadMessageHandler CreateDownloadMessageHandler(string hashId, TransferUserType userType)
       {
          var handler = new DownloadMessageHandler(_crypterApiService, _simpleEncryptionService, _simpleSignatureService, _userSessionService);
-         handler.SetTransferInfo(id, userType);
+         handler.SetTransferInfo(hashId, userType);
          return handler;
       }
    }

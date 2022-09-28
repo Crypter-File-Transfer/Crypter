@@ -24,25 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.Transfer
+namespace Crypter.Contracts.Features.Users.GetSentTransfers
 {
-   public class UserReceivedMessageDTO
+   public class UserSentMessagesResponse
    {
-      public Guid Id { get; set; }
-      public string Subject { get; set; }
-      public string SenderUsername { get; set; }
-      public string SenderAlias { get; set; }
-      public DateTime ExpirationUTC { get; set; }
+      public IEnumerable<UserSentMessageDTO> Messages { get; set; }
 
-      public UserReceivedMessageDTO(Guid id, string subject, string senderUsername, string senderAlias, DateTime expirationUTC)
+      [JsonConstructor]
+      public UserSentMessagesResponse(IEnumerable<UserSentMessageDTO> messages)
       {
-         Id = id;
-         Subject = subject;
-         SenderUsername = senderUsername;
-         SenderAlias = senderAlias;
-         ExpirationUTC = expirationUTC;
+         Messages = messages;
       }
    }
 }

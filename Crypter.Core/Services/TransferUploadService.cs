@@ -53,15 +53,17 @@ namespace Crypter.Core.Services
       private readonly IServerMetricsService _serverMetricsService;
       private readonly ITransferStorageService _transferStorageService;
       private readonly IHangfireBackgroundService _hangfireBackgroundService;
+      private readonly IHashIdService _hashIdService;
       private const int _maxLifetimeHours = 24;
       private const int _minLifetimeHours = 1;
 
-      public TransferUploadService(DataContext context, IServerMetricsService serverMetricsService, ITransferStorageService transferStorageService, IHangfireBackgroundService hangfireBackgroundService)
+      public TransferUploadService(DataContext context, IServerMetricsService serverMetricsService, ITransferStorageService transferStorageService, IHangfireBackgroundService hangfireBackgroundService, IHashIdService hashIdService)
       {
          _context = context;
          _serverMetricsService = serverMetricsService;
          _transferStorageService = transferStorageService;
          _hangfireBackgroundService = hangfireBackgroundService;
+         _hashIdService = hashIdService;
       }
 
       public Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousMessageAsync(UploadMessageTransferRequest request, CancellationToken cancellationToken)
@@ -185,7 +187,8 @@ namespace Crypter.Core.Services
          _context.AnonymousMessageTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
-         return new UploadTransferResponse(id, expiration, TransferUserType.Anonymous);
+         string hashId = _hashIdService.Encode(id);
+         return new UploadTransferResponse(hashId, expiration, TransferUserType.Anonymous);
       }
 
       private async Task<UploadTransferResponse> SaveUserMessageTransferToDatabaseAsync(Guid id, int requiredDiskSpace, Maybe<Guid> sender, Maybe<Guid> recipient, UploadMessageTransferRequest request, CancellationToken cancellationToken)
@@ -205,7 +208,8 @@ namespace Crypter.Core.Services
          _context.UserMessageTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
-         return new UploadTransferResponse(id, expiration, TransferUserType.User);
+         string hashId = _hashIdService.Encode(id);
+         return new UploadTransferResponse(hashId, expiration, TransferUserType.User);
       }
 
       private async Task<UploadTransferResponse> SaveAnonymousFileTransferToDatabaseAsync(Guid id, int requiredDiskSpace, UploadFileTransferRequest request, CancellationToken cancellationToken)
@@ -216,7 +220,8 @@ namespace Crypter.Core.Services
          _context.AnonymousFileTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
-         return new UploadTransferResponse(id, expiration, TransferUserType.Anonymous);
+         string hashId = _hashIdService.Encode(id);
+         return new UploadTransferResponse(hashId, expiration, TransferUserType.Anonymous);
       }
 
       private async Task<UploadTransferResponse> SaveUserFileTransferToDatabaseAsync(Guid id, int requiredDiskSpace, Maybe<Guid> sender, Maybe<Guid> recipient, UploadFileTransferRequest request, CancellationToken cancellationToken)
@@ -236,7 +241,8 @@ namespace Crypter.Core.Services
          _context.UserFileTransfers.Add(newTransferEntity);
          await _context.SaveChangesAsync(cancellationToken);
 
-         return new UploadTransferResponse(id, expiration, TransferUserType.User);
+         string hashId = _hashIdService.Encode(id);
+         return new UploadTransferResponse(hashId, expiration, TransferUserType.User);
       }
 
       private async Task<bool> IsDiskSpaceForTransferAsync(int transferSize, CancellationToken cancellationToken)

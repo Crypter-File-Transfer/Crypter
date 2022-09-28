@@ -43,10 +43,26 @@ namespace Crypter.CryptoLib.Crypto
    {
       public static AsymmetricCipherKeyPair GenerateKeys()
       {
-         SecureRandom random = new();
+         SecureRandom random = new SecureRandom();
          IAsymmetricCipherKeyPairGenerator kpGen = new X25519KeyPairGenerator();
          kpGen.Init(new X25519KeyGenerationParameters(random));
          return kpGen.GenerateKeyPair();
+      }
+
+      public static AsymmetricCipherKeyPair GenerateKeys(byte[] seed)
+      {
+         SecureRandom random = SecureRandom.GetInstance("SHA256PRNG", false);
+         random.SetSeed(seed);
+
+         IAsymmetricCipherKeyPairGenerator kpGen = new X25519KeyPairGenerator();
+         kpGen.Init(new X25519KeyGenerationParameters(random));
+         return kpGen.GenerateKeyPair();
+      }
+
+      public static byte[] GenerateKeySeed()
+      {
+         SecureRandom random = new SecureRandom();
+         return random.GenerateSeed(32);
       }
 
       /// <summary>
