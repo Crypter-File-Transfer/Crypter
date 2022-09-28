@@ -200,13 +200,17 @@ namespace Crypter.Core.Services
          var databaseData = await _context.UserMessageTransfers
             .Where(x => x.Id == id)
             .Where(x => x.RecipientId == null || x.RecipientId == nullableUserId)
-            .Where(x => x.RecipientProof == request.RecipientProof)
-            .Select(x => new { x.DigitalSignature, x.DigitalSignaturePublicKey, x.CompressionType })
+            .Select(x => new { x.DigitalSignature, x.DigitalSignaturePublicKey, x.CompressionType, x.RecipientProof })
             .FirstOrDefaultAsync(cancellationToken);
 
          if (databaseData is null)
          {
             return DownloadTransferCiphertextError.NotFound;
+         }
+
+         if (databaseData.RecipientProof != request.RecipientProof)
+         {
+            return DownloadTransferCiphertextError.InvalidRecipientProof;
          }
 
          var ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.Message, TransferUserType.User, cancellationToken);
@@ -225,13 +229,17 @@ namespace Crypter.Core.Services
          var databaseData = await _context.UserFileTransfers
             .Where(x => x.Id == id)
             .Where(x => x.RecipientId == null || x.RecipientId == nullableUserId)
-            .Where(x => x.RecipientProof == request.RecipientProof)
-            .Select(x => new { x.DigitalSignature, x.DigitalSignaturePublicKey, x.CompressionType })
+            .Select(x => new { x.DigitalSignature, x.DigitalSignaturePublicKey, x.CompressionType, x.RecipientProof })
             .FirstOrDefaultAsync(cancellationToken);
 
          if (databaseData is null)
          {
             return DownloadTransferCiphertextError.NotFound;
+         }
+
+         if (databaseData.RecipientProof != request.RecipientProof)
+         {
+            return DownloadTransferCiphertextError.InvalidRecipientProof;
          }
 
          var ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.File, TransferUserType.User, cancellationToken);

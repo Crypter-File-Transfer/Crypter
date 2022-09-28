@@ -74,7 +74,7 @@ namespace Crypter.Web.Shared.Transfer
       protected Maybe<PEMString> DeriveRecipientPrivateKeyFromUrlSeed()
       {
          int hashLocation = NavigationManager.Uri.IndexOf('#');
-         string encodedSeed = NavigationManager.Uri.Substring(hashLocation + 1);
+         string encodedSeed = NavigationManager.Uri[(hashLocation + 1)..];
 
          try
          {
@@ -85,8 +85,6 @@ namespace Crypter.Web.Shared.Transfer
          {
             return Maybe<PEMString>.None;
          }
-
-         return Maybe<PEMString>.None;
       }
    }
 }

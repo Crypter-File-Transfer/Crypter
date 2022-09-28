@@ -116,6 +116,9 @@ namespace Crypter.Web.Shared.Transfer
             case DownloadTransferCiphertextError.UnknownError:
                ErrorMessage = "An error occurred";
                break;
+            case DownloadTransferCiphertextError.InvalidRecipientProof:
+               ErrorMessage = "Invalid decryption key";
+               break;
          }
       }
    }

@@ -83,7 +83,7 @@ namespace Crypter.Web.Shared.Transfer
             ? UserKeysService.X25519PrivateKey
             : DeriveRecipientPrivateKeyFromUrlSeed();
 
-         recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key.");
+         recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key");
          await recipientPrivateKey.IfSomeAsync(async x =>
          {
             _downloadHandler.SetRecipientInfo(x);
@@ -137,6 +137,9 @@ namespace Crypter.Web.Shared.Transfer
                break;
             case DownloadTransferCiphertextError.UnknownError:
                ErrorMessage = "An error occurred";
+               break;
+            case DownloadTransferCiphertextError.InvalidRecipientProof:
+               ErrorMessage = "Invalid decryption key";
                break;
          }
       }
