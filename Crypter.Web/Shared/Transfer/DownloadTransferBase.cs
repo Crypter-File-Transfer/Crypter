@@ -26,16 +26,22 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer;
+using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using Crypter.CryptoLib;
+using Crypter.CryptoLib.Crypto;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
-using System.Text;
 
 namespace Crypter.Web.Shared.Transfer
 {
    public partial class DownloadTransferBase : ComponentBase
    {
+      [Inject]
+      private NavigationManager NavigationManager { get; set; }
+
       [Inject]
       protected IUserKeysService UserKeysService { get; set; }
 
@@ -43,10 +49,10 @@ namespace Crypter.Web.Shared.Transfer
       protected TransferHandlerFactory TransferHandlerFactory { get; set; }
 
       [Parameter]
-      public Guid TransferId { get; set; }
+      public string TransferHashId { get; set; }
 
       [Parameter]
-      public bool IsUserTransfer { get; set; }
+      public TransferUserType UserType { get; set; }
 
       protected bool FinishedLoading = false;
       protected bool ItemFound = false;
@@ -60,26 +66,25 @@ namespace Crypter.Web.Shared.Transfer
       protected DateTime Created = DateTime.MinValue;
       protected DateTime Expiration = DateTime.MinValue;
 
-      protected string UserProvidedDecryptionKey = string.Empty;
-
       protected const string _downloadingLiteral = "Downloading";
       protected const string _decompressingLiteral = "Decompressing";
       protected const string _decryptingLiteral = "Decrypting";
       protected const string _verifyingLiteral = "Verifying";
 
-      protected static Maybe<PEMString> ValidateAndDecodeUserProvidedDecryptionKey(string decryptionKey)
+      protected Maybe<PEMString> DeriveRecipientPrivateKeyFromUrlSeed()
       {
-         if (Base64String.TryFrom(decryptionKey, out Base64String validatedBase64EncryptionKey))
-         {
-            byte[] decodedKey = Convert.FromBase64String(validatedBase64EncryptionKey.Value);
-            string pemFormattedKey = Encoding.UTF8.GetString(decodedKey);
-            if (PEMString.TryFrom(pemFormattedKey, out PEMString validDecryptionKey))
-            {
-               return validDecryptionKey;
-            }
-         }
+         int hashLocation = NavigationManager.Uri.IndexOf('#');
+         string encodedSeed = NavigationManager.Uri[(hashLocation + 1)..];
 
-         return Maybe<PEMString>.None;
+         try
+         {
+            byte[] seed = Base64UrlTextEncoder.Decode(encodedSeed);
+            return ECDH.GenerateKeys(seed).Private.ConvertToPEM();
+         }
+         catch (Exception)
+         {
+            return Maybe<PEMString>.None;
+         }
       }
    }
 }

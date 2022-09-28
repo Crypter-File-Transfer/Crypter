@@ -26,7 +26,8 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Enums;
-using Crypter.Contracts.Features.Transfer;
+using Crypter.Contracts.Features.Users.GetReceivedTransfers;
+using Crypter.Contracts.Features.Users.GetSentTransfers;
 using Crypter.Web.Models;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
@@ -75,7 +76,7 @@ namespace Crypter.Web.Pages
          return sentMessages
             .Select(x => new UserSentItem
             {
-               Id = x.Id,
+               HashId = x.HashId,
                Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
                RecipientUsername = x.RecipientUsername,
                RecipientAlias = x.RecipientAlias,
@@ -85,7 +86,7 @@ namespace Crypter.Web.Pages
             .Concat(sentFiles
                .Select(x => new UserSentItem
                {
-                  Id = x.Id,
+                  HashId = x.HashId,
                   Name = x.FileName,
                   RecipientUsername = x.RecipientUsername,
                   RecipientAlias = x.RecipientAlias,
@@ -110,7 +111,7 @@ namespace Crypter.Web.Pages
          return receivedMessages
             .Select(x => new UserReceivedItem
             {
-               Id = x.Id,
+               HashId = x.HashId,
                Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
                SenderUsername = x.SenderUsername,
                SenderAlias = x.SenderAlias,
@@ -120,7 +121,7 @@ namespace Crypter.Web.Pages
             .Concat(receivedFiles
                .Select(x => new UserReceivedItem
                {
-                  Id = x.Id,
+                  HashId = x.HashId,
                   Name = x.FileName,
                   SenderUsername = x.SenderUsername,
                   SenderAlias = x.SenderAlias,

@@ -52,33 +52,15 @@
 
                   @if (item.ItemType == TransferItemType.File)
                   {
-                     @if (string.IsNullOrEmpty(item.RecipientUsername))
-                     {
-                        <h6 class="card-subtitle my-2">
-                           Filename: <a class="text-decoration-none" href="@($"/decrypt/file/?id={item.Id}&user=true")">@item.Name</a>
-                        </h6>
-                     }
-                     else
-                     {
-                        <h6 class="card-subtitle my-2">
-                           Filename: @item.Name
-                        </h6>
-                     }
+                     <h6 class="card-subtitle my-2">
+                        Filename: @item.Name
+                     </h6>
                   }
                   else
                   {
-                     @if (string.IsNullOrEmpty(item.RecipientUsername))
-                     {
-                        <h6 class="card-subtitle my-2">
-                           Subject: <a class="text-decoration-none" href="@($"/decrypt/message/?id={item.Id}&user=true")">@item.Name</a>
-                        </h6>
-                     }
-                     else
-                     {
-                        <h6 class="card-subtitle my-2">
-                           Subject: @item.Name
-                        </h6>
-                     }
+                     <h6 class="card-subtitle my-2">
+                        Subject: @item.Name
+                     </h6>
                   }
                   <div class="row">
                      <div class="col-12">

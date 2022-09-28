@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-/*
 using Crypter.Core.Settings;
 using HashidsNet;
 using Microsoft.Extensions.DependencyInjection;
@@ -86,4 +85,3 @@ namespace Crypter.Core.Services
       }
    }
 }
-*/

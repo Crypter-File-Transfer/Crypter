@@ -27,14 +27,14 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Contracts.Features.Transfer
+namespace Crypter.Contracts.Features.Users.GetReceivedTransfers
 {
-   public class UserSentFilesResponse
+   public class UserReceivedFilesResponse
    {
-      public IEnumerable<UserSentFileDTO> Files { get; set; }
+      public IEnumerable<UserReceivedFileDTO> Files { get; set; }
 
       [JsonConstructor]
-      public UserSentFilesResponse(IEnumerable<UserSentFileDTO> files)
+      public UserReceivedFilesResponse(IEnumerable<UserReceivedFileDTO> files)
       {
          Files = files;
       }

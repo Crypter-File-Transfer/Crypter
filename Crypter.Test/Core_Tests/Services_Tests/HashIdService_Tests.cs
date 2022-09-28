@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-/*
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Microsoft.Extensions.Options;
@@ -62,4 +61,3 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       }
    }
 }
-*/

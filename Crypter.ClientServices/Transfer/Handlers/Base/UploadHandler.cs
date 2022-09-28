@@ -55,6 +55,7 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       protected Maybe<PEMString> _senderDigitalSignaturePublicKey = Maybe<PEMString>.None;
 
       protected Maybe<string> _recipientUsername = Maybe<string>.None;
+      protected Maybe<byte[]> _recipientKeySeed = Maybe<byte[]>.None;
 
       protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
       protected Maybe<PEMString> _recipientDiffieHellmanPublicKey = Maybe<PEMString>.None;
@@ -105,7 +106,9 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
 
       protected void CreateEphemeralRecipientKeys()
       {
-         var recipientX25519KeyPair = ECDH.GenerateKeys();
+         byte[] seed = ECDH.GenerateKeySeed();
+         _recipientKeySeed = seed;
+         var recipientX25519KeyPair = ECDH.GenerateKeys(seed);
          _recipientDiffieHellmanPrivateKey = recipientX25519KeyPair.Private.ConvertToPEM();
          _recipientDiffieHellmanPublicKey = recipientX25519KeyPair.Public.ConvertToPEM();
       }

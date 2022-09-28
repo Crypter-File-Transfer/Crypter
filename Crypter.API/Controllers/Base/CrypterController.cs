@@ -69,7 +69,8 @@ namespace Crypter.API.Controllers
          return error switch
          {
             DownloadTransferCiphertextError.UnknownError => ServerError(errorResponse),
-            DownloadTransferCiphertextError.NotFound => NotFound(errorResponse)
+            DownloadTransferCiphertextError.NotFound => NotFound(errorResponse),
+            DownloadTransferCiphertextError.InvalidRecipientProof => BadRequest(errorResponse)
          };
 #pragma warning restore CS8524
       }

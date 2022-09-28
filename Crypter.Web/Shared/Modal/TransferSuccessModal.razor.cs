@@ -25,11 +25,8 @@
  */
 
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using System;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Modal
@@ -41,8 +38,6 @@ namespace Crypter.Web.Shared.Modal
 
       protected string DownloadUrl { get; set; }
 
-      protected Base64String DecryptionKey { get; set; }
-
       protected int ExpirationHours { get; set; }
 
       protected Maybe<EventCallback> ModalClosedCallback { get; set; }
@@ -51,11 +46,9 @@ namespace Crypter.Web.Shared.Modal
       protected string ModalDisplay = "none;";
       protected string ModalClass = "";
 
-      public void Open(string downloadUrl, PEMString recipientX25519PrivateKey, int expirationHours, Maybe<EventCallback> modalClosedCallback)
+      public void Open(string downloadUrl, int expirationHours, Maybe<EventCallback> modalClosedCallback)
       {
          DownloadUrl = downloadUrl;
-         DecryptionKey = Base64String.From(Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(recipientX25519PrivateKey.Value)));
          ExpirationHours = expirationHours;
          ModalClosedCallback = modalClosedCallback;
 
@@ -77,7 +70,7 @@ namespace Crypter.Web.Shared.Modal
 
       protected async Task CopyToClipboardAsync()
       {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", DecryptionKey.Value);
+         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", DownloadUrl);
       }
    }
 }

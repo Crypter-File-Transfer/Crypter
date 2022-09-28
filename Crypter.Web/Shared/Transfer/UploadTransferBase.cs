@@ -34,7 +34,9 @@ using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
+using System.Buffers.Text;
 using System.Text;
 
 namespace Crypter.Web.Shared.Transfer
@@ -131,23 +133,16 @@ namespace Crypter.Web.Shared.Transfer
             };
 #pragma warning restore CS8524
 
-            response.RecipientDecryptionKey.IfNone(() =>
+            response.RecipientKeySeed.IfNone(() =>
             {
                ModalForUserRecipient.Open("Sent", $"Your {itemType} has been sent.", "Ok", Maybe<string>.None, Maybe<EventCallback<bool>>.None);
             });
 
-            response.RecipientDecryptionKey.IfSome(x =>
+            response.RecipientKeySeed.IfSome(x =>
             {
-               StringBuilder urlBuilder = new StringBuilder(NavigationManager.BaseUri);
-               urlBuilder.Append($"decrypt/{itemType}/?id=");
-               urlBuilder.Append(response.TransferId);
-
-               if (response.UserType == TransferUserType.User)
-               {
-                  urlBuilder.Append("&user=true");
-               }
-
-               ModalForAnonymousRecipient.Open(urlBuilder.ToString(), x, response.ExpirationHours, UploadCompletedEvent);
+               string recipientKeySeed = Base64UrlTextEncoder.Encode(x);
+               string downloadUrl = $"{NavigationManager.BaseUri}decrypt/{itemType}/{(int)response.UserType}/{response.TransferId}#{recipientKeySeed}";
+               ModalForAnonymousRecipient.Open(downloadUrl, response.ExpirationHours, UploadCompletedEvent);
             });
          });
       }

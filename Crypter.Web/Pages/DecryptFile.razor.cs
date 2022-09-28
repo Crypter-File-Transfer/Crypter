@@ -26,7 +26,6 @@
 
 using Crypter.ClientServices.Interfaces;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -34,12 +33,10 @@ namespace Crypter.Web.Pages
    public partial class DecryptFileBase : ComponentBase
    {
       [Parameter]
-      [SupplyParameterFromQuery(Name = "id")]
-      public Guid TransferId { get; set; }
+      public string TransferHashId { get; set; }
 
       [Parameter]
-      [SupplyParameterFromQuery(Name = "user")]
-      public bool IsUserTransfer { get; set; }
+      public int UserType { get; set; }
 
       [Inject]
       protected IUserSessionService UserSessionService { get; set; }
