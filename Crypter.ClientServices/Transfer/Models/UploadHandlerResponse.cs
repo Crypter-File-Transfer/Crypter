@@ -36,15 +36,15 @@ namespace Crypter.ClientServices.Transfer.Models
       public int ExpirationHours { get; init; }
       public TransferItemType ItemType { get; init; }
       public TransferUserType UserType { get; init; }
-      public Maybe<PEMString> RecipientDecryptionKey { get; init; }
+      public Maybe<byte[]> RecipientKeySeed { get; init; }
 
-      public UploadHandlerResponse(string transferId, int expirationHours, TransferItemType itemType, TransferUserType userType, Maybe<PEMString> recipientDecryptionKey)
+      public UploadHandlerResponse(string transferId, int expirationHours, TransferItemType itemType, TransferUserType userType, Maybe<byte[]> recipientKeySeed)
       {
          TransferId = transferId;
          ExpirationHours = expirationHours;
          ItemType = itemType;
          UserType = userType;
-         RecipientDecryptionKey = recipientDecryptionKey;
+         RecipientKeySeed = recipientKeySeed;
       }
    }
 }

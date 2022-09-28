@@ -172,7 +172,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
             () => _crypterApiService.UploadFileTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserFileTransferAsync(x, request, _senderDefined));
  
-         return response.Map(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.File, x.UserType, _recipientDiffieHellmanPrivateKey));
+         return response.Map(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.File, x.UserType, _recipientKeySeed));
       }
 
       private bool UseCompressionOnFile()

@@ -29,9 +29,11 @@ using Crypter.ClientServices.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using Crypter.CryptoLib;
+using Crypter.CryptoLib.Crypto;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
-using System.Text;
 
 namespace Crypter.Web.Shared.Transfer
 {
@@ -69,20 +71,19 @@ namespace Crypter.Web.Shared.Transfer
       protected const string _decryptingLiteral = "Decrypting";
       protected const string _verifyingLiteral = "Verifying";
 
-      protected Maybe<PEMString> ValidateAndDecodeUserProvidedDecryptionKey()
+      protected Maybe<PEMString> DeriveRecipientPrivateKeyFromUrlSeed()
       {
          int hashLocation = NavigationManager.Uri.IndexOf('#');
-         string decryptionKey = NavigationManager.Uri.Substring(hashLocation + 1);
-         Console.WriteLine(decryptionKey);
+         string encodedSeed = NavigationManager.Uri.Substring(hashLocation + 1);
 
-         if (Base64String.TryFrom(decryptionKey, out Base64String validatedBase64EncryptionKey))
+         try
          {
-            byte[] decodedKey = Convert.FromBase64String(validatedBase64EncryptionKey.Value);
-            string pemFormattedKey = Encoding.UTF8.GetString(decodedKey);
-            if (PEMString.TryFrom(pemFormattedKey, out PEMString validDecryptionKey))
-            {
-               return validDecryptionKey;
-            }
+            byte[] seed = Base64UrlTextEncoder.Decode(encodedSeed);
+            return ECDH.GenerateKeys(seed).Private.ConvertToPEM();
+         }
+         catch (Exception)
+         {
+            return Maybe<PEMString>.None;
          }
 
          return Maybe<PEMString>.None;

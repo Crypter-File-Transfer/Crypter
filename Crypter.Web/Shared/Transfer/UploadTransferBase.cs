@@ -34,7 +34,9 @@ using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
+using System.Buffers.Text;
 using System.Text;
 
 namespace Crypter.Web.Shared.Transfer
@@ -131,15 +133,15 @@ namespace Crypter.Web.Shared.Transfer
             };
 #pragma warning restore CS8524
 
-            response.RecipientDecryptionKey.IfNone(() =>
+            response.RecipientKeySeed.IfNone(() =>
             {
                ModalForUserRecipient.Open("Sent", $"Your {itemType} has been sent.", "Ok", Maybe<string>.None, Maybe<EventCallback<bool>>.None);
             });
 
-            response.RecipientDecryptionKey.IfSome(x =>
+            response.RecipientKeySeed.IfSome(x =>
             {
-               string decryptionKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(x.Value));
-               string downloadUrl = $"{NavigationManager.BaseUri}decrypt/{itemType}/{(int)response.UserType}/{response.TransferId}#{decryptionKey}";
+               string recipientKeySeed = Base64UrlTextEncoder.Encode(x);
+               string downloadUrl = $"{NavigationManager.BaseUri}decrypt/{itemType}/{(int)response.UserType}/{response.TransferId}#{recipientKeySeed}";
                ModalForAnonymousRecipient.Open(downloadUrl, response.ExpirationHours, UploadCompletedEvent);
             });
          });

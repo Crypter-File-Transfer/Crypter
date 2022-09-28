@@ -73,7 +73,7 @@ namespace Crypter.Web.Shared.Transfer
 
          Maybe<PEMString> recipientPrivateKey = SpecificRecipient
             ? UserKeysService.X25519PrivateKey
-            : ValidateAndDecodeUserProvidedDecryptionKey();
+            : DeriveRecipientPrivateKeyFromUrlSeed();
 
          recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key.");
          await recipientPrivateKey.IfSomeAsync(async x =>
