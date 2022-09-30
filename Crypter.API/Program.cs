@@ -155,6 +155,16 @@ if (app.Environment.IsDevelopment())
    DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
    context.Database.EnsureCreated();
 }
+else
+{
+   app.UseCors(x =>
+   {
+      x.AllowAnyMethod();
+      x.AllowAnyHeader();
+      x.WithOrigins("https://*.crypter.dev")
+         .SetIsOriginAllowedToAllowWildcardSubdomains();
+   });
+}
 
 app.UseHttpsRedirection();
 app.UseRouting();
