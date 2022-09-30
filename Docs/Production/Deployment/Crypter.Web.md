@@ -24,9 +24,9 @@ Steps:
 
 ## Copy the published output to the server
 
-Take the published output from `.\Crypter.Web\bin\Release\net6.0\publish` from your development machine.
+Take the published output from `.\Crypter.Web\bin\Release\net6.0\publish\browser-wasm\{desktop | mobile}` from your development machine.
 
-Copy the output to `/var/www/Crypter.Web` on the web server.
+Copy the output to `/var/www/Crypter.Web.{Desktop | Mobile}` on the web server.
 
 ## Configure Nginx
 
@@ -34,7 +34,7 @@ The production server currently uses Nginx to serve Crypter.Web as a **static** 
 
 The primary Nginx configuration for the web server is checked in to source control at [..\Configurations\nginx.conf](..\Configurations\nginx.conf).
 
-The Nginx configuration for the Crypter web app is checked in at [..\Configurations\nginx_crypter__config](..\Configurations\nginx_crypter_config).
+The Nginx configuration for the Crypter web app is checked in at [..\Configurations\nginx_crypter_config](..\Configurations\nginx_crypter_config).
 This includes configuration for both Crypter.API and Crypter.Web.
 
 Steps for the primary Nginx configuration:
@@ -63,10 +63,12 @@ Steps for the primary Nginx configuration:
 
 Steps for configuring Nginx for Crypter:
 
-1. Place the `nginx_crypter_config` file in `/etc/nginx/sites-available`
+1. Place the `nginx_crypter_config` and `nginx_crypter_mobile_config` files in `/etc/nginx/sites-available`
 2. Rename the `nginx_crypter_config` file to `crypter`
-3. Create a symlink to `/etc/nginx/sites-enabled`
+3. Rename the `nginx_crypter_mobile_config` file  to `crypter_mobile`
+3. Create symlinks to `/etc/nginx/sites-enabled`
    * `sudo ln -s /etc/nginx/sites-available/crypter /etc/nginx/sites-enabled/crypter`
+   * `sudo ln -s /etc/nginx/sites-available/crypter_mobile /etc/nginx/sites-enabled/crypter_mobile`
 4. Remove the `default` config from `sites-enabled`, if it exists. This is usually just a symlink to a file in `sites-available`
    * `sudo rm /etc/nginx/sites-enabled/default`
 5. Test the configuration
