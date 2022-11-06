@@ -36,6 +36,7 @@ namespace Crypter.CryptoLib.Services
 {
    public interface ISimpleEncryptionService
    {
+      byte[] GenerateKey();
       byte[] Encrypt(byte[] key, byte[] iv, byte[] plaintext);
       byte[] Encrypt(byte[] key, byte[] iv, string plaintext);
       Task<List<byte[]>> EncryptStreamAsync(byte[] key, byte[] iv, Stream stream, long streamLength, int partSize, Maybe<Func<double, Task>> progressFunc);
@@ -47,6 +48,11 @@ namespace Crypter.CryptoLib.Services
 
    public class SimpleEncryptionService : ISimpleEncryptionService
    {
+      public byte[] GenerateKey()
+      {
+         return AES.GenerateKey(Enums.AesKeySize._256).GetKey();
+      }
+
       public byte[] Encrypt(byte[] key, byte[] iv, byte[] plaintext)
       {
          var encrypter = new AES();

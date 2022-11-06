@@ -30,7 +30,6 @@ using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.CryptoLib;
 using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Enums;
 using Crypter.CryptoLib.Services;
 using Org.BouncyCastle.Crypto;
 using System;
@@ -41,7 +40,6 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
    {
       protected readonly ICrypterApiService _crypterApiService;
       protected readonly ISimpleEncryptionService _simpleEncryptionService;
-      protected readonly ISimpleSignatureService _simpleSignatureService;
       protected readonly IUserSessionService _userSessionService;
 
       protected string _transferHashId;
@@ -50,16 +48,14 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
 
       protected Maybe<PEMString> _senderDiffieHellmanPublicKey = Maybe<PEMString>.None;
-      protected Maybe<PEMString> _senderDigitalSignaturePublicKey = Maybe<PEMString>.None;
 
       protected Maybe<byte[]> _symmetricKey = Maybe<byte[]>.None;
       protected Maybe<string> _serverKey = Maybe<string>.None;
 
-      public DownloadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, IUserSessionService userSessionService)
+      public DownloadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, IUserSessionService userSessionService)
       {
          _crypterApiService = crypterApiService;
          _simpleEncryptionService = simpleEncryptionService;
-         _simpleSignatureService = simpleSignatureService;
          _userSessionService = userSessionService;
       }
 
@@ -79,11 +75,6 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       {
          _senderDiffieHellmanPublicKey = senderDiffieHellmanPublicKey;
          TryDeriveSymmetricKeys();
-      }
-
-      protected void SetSenderDigitalSignaturePublicKey(PEMString senderDigitalSignaturePublicKey)
-      {
-         _senderDigitalSignaturePublicKey = senderDigitalSignaturePublicKey;
       }
 
       private void TryDeriveSymmetricKeys()
@@ -106,8 +97,6 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
 
          var senderX25519Public = KeyConversion.ConvertX25519PublicKeyFromPEM(senderX25519PublicKey);
          (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(recipientKeyPair, senderX25519Public);
-         var digestor = new SHA(SHAFunction.SHA256);
-         digestor.BlockUpdate(sendKey);
          var serverKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
 
          return (receiveKey, serverKey);

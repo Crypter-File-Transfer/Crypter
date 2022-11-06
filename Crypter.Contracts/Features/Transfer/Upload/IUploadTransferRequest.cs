@@ -33,8 +33,6 @@ namespace Crypter.Contracts.Features.Transfer
    {
       string InitializationVector { get; init; }
       List<string> Ciphertext { get; init; }
-      string DigitalSignature { get; init; }
-      string DigitalSignaturePublicKey { get; init; }
       string DiffieHellmanPublicKey { get; init; }
       string RecipientProof { get; init; }
       int LifetimeHours { get; init; }

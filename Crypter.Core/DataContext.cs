@@ -47,7 +47,6 @@ namespace Crypter.Core
 
       public DbSet<UserEntity> Users { get; set; }
       public DbSet<UserProfileEntity> UserProfiles { get; set; }
-      public DbSet<UserEd25519KeyPairEntity> UserEd25519KeyPairs { get; set; }
       public DbSet<UserX25519KeyPairEntity> UserX25519KeyPairs { get; set; }
       public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; set; }
       public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; set; }
@@ -59,7 +58,8 @@ namespace Crypter.Core
       public DbSet<UserFileTransferEntity> UserFileTransfers { get; set; }
       public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; set; }
       public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; set; }
-      public DbSet<SchemaEntity> Schema { get; set; }
+      public DbSet<UserMasterKeyEntity> UserMasterKeys { get; set; }
+      public DbSet<UserConsentEntity> UserConsents { get; set; }
 
       protected override void OnModelCreating(ModelBuilder builder)
       {
@@ -67,7 +67,6 @@ namespace Crypter.Core
 
          ConfigureUserEntity(builder);
          ConfigureUserProfileEntity(builder);
-         ConfigureUserEd25519KeyPairEntity(builder);
          ConfigureUserX25519KeyPairEntity(builder);
          ConfigureUserPrivacySettingEntity(builder);
          ConfigureUserEmailVerificationEntity(builder);
@@ -79,7 +78,8 @@ namespace Crypter.Core
          ConfigureAnonymousMessageTransferEntity(builder);
          ConfigureAnonymousFileTransferEntity(builder);
          ConfigureUserFailedLoginEntity(builder);
-         ConfigureSchemaEntity(builder);
+         ConfigureUserMasterKeyEntity(builder);
+         ConfigureUserConsentEntity(builder);
       }
 
       private static void ConfigureUserEntity(ModelBuilder builder)
@@ -97,6 +97,16 @@ namespace Crypter.Core
          builder.Entity<UserEntity>()
             .Property(x => x.EmailAddress)
             .HasColumnType("citext");
+
+         builder.Entity<UserEntity>()
+            .Property(x => x.ServerPasswordVersion)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+         builder.Entity<UserEntity>()
+            .Property(x => x.ClientPasswordVersion)
+            .IsRequired()
+            .HasDefaultValue(0);
 
          builder.Entity<UserEntity>()
             .HasMany(x => x.Contacts)
@@ -144,22 +154,6 @@ namespace Crypter.Core
             .WithOne(x => x.Profile)
             .HasForeignKey<UserProfileEntity>(x => x.Owner)
             .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
-      }
-
-      private static void ConfigureUserEd25519KeyPairEntity(ModelBuilder builder)
-      {
-         builder.Entity<UserEd25519KeyPairEntity>()
-            .ToTable("UserEd25519KeyPair");
-
-         builder.Entity<UserEd25519KeyPairEntity>()
-            .HasKey(x => x.Owner);
-
-         builder.Entity<UserEd25519KeyPairEntity>()
-            .HasOne(x => x.User)
-            .WithOne(x => x.Ed25519KeyPair)
-            .HasForeignKey<UserEd25519KeyPairEntity>(x => x.Owner)
-            .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
       }
 
@@ -291,14 +285,6 @@ namespace Crypter.Core
             .HasColumnName("Recipient");
 
          builder.Entity<UserMessageTransferEntity>()
-            .Property(x => x.DigitalSignature)
-            .IsRequired();
-
-         builder.Entity<UserMessageTransferEntity>()
-            .Property(x => x.DigitalSignaturePublicKey)
-            .IsRequired();
-
-         builder.Entity<UserMessageTransferEntity>()
             .Property(x => x.DiffieHellmanPublicKey)
             .IsRequired();
 
@@ -328,14 +314,6 @@ namespace Crypter.Core
             .HasColumnName("Recipient");
 
          builder.Entity<UserFileTransferEntity>()
-            .Property(x => x.DigitalSignature)
-            .IsRequired();
-
-         builder.Entity<UserFileTransferEntity>()
-            .Property(x => x.DigitalSignaturePublicKey)
-            .IsRequired();
-
-         builder.Entity<UserFileTransferEntity>()
             .Property(x => x.DiffieHellmanPublicKey)
             .IsRequired();
 
@@ -361,14 +339,6 @@ namespace Crypter.Core
             .HasKey(x => x.Id);
 
          builder.Entity<AnonymousMessageTransferEntity>()
-            .Property(x => x.DigitalSignature)
-            .IsRequired();
-
-         builder.Entity<AnonymousMessageTransferEntity>()
-            .Property(x => x.DigitalSignaturePublicKey)
-            .IsRequired();
-
-         builder.Entity<AnonymousMessageTransferEntity>()
             .Property(x => x.DiffieHellmanPublicKey)
             .IsRequired();
 
@@ -388,14 +358,6 @@ namespace Crypter.Core
 
          builder.Entity<AnonymousFileTransferEntity>()
             .HasKey(x => x.Id);
-
-         builder.Entity<AnonymousFileTransferEntity>()
-            .Property(x => x.DigitalSignature)
-            .IsRequired();
-
-         builder.Entity<AnonymousFileTransferEntity>()
-            .Property(x => x.DigitalSignaturePublicKey)
-            .IsRequired();
 
          builder.Entity<AnonymousFileTransferEntity>()
             .Property(x => x.DiffieHellmanPublicKey)
@@ -430,13 +392,49 @@ namespace Crypter.Core
             .OnDelete(DeleteBehavior.Cascade);
       }
 
-      private static void ConfigureSchemaEntity(ModelBuilder builder)
+      private static void ConfigureUserMasterKeyEntity(ModelBuilder builder)
       {
-         builder.Entity<SchemaEntity>()
-            .ToTable("Schema");
+         builder.Entity<UserMasterKeyEntity>()
+            .ToTable("UserMasterKey");
 
-         builder.Entity<SchemaEntity>()
-            .HasNoKey();
+         builder.Entity<UserMasterKeyEntity>()
+            .HasKey(x => x.Owner);
+
+         builder.Entity<UserMasterKeyEntity>()
+            .Property(x => x.Key)
+            .IsRequired();
+
+         builder.Entity<UserMasterKeyEntity>()
+            .Property(x => x.ClientIV)
+            .IsRequired();
+
+         builder.Entity<UserMasterKeyEntity>()
+            .HasOne(x => x.User)
+            .WithOne(x => x.MasterKey)
+            .HasForeignKey<UserMasterKeyEntity>(x => x.Owner)
+            .OnDelete(DeleteBehavior.Cascade);
+      }
+
+      private static void ConfigureUserConsentEntity(ModelBuilder builder)
+      {
+         builder.Entity<UserConsentEntity>()
+            .ToTable("UserConsent");
+
+         builder.Entity<UserConsentEntity>()
+            .HasKey(x => x.Id);
+
+         builder.Entity<UserConsentEntity>()
+            .Property(x => x.Id)
+            .UseIdentityAlwaysColumn();
+
+         builder.Entity<UserConsentEntity>()
+            .HasIndex(x => x.Owner);
+
+         builder.Entity<UserConsentEntity>()
+            .HasOne(x => x.User)
+            .WithMany(x => x.Consents)
+            .HasForeignKey(x => x.Owner)
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }

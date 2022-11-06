@@ -43,16 +43,13 @@
                         <button class="btn btn-secondary" type="button" @onclick="CopyToClipboardAsync">Copy link</button>
                      </div>
                   </div>
-
-                  <span class="copiedToolTip toolTipText">Copied</span>
                </div>
-            </div>
-            <div class="modal-footer">
-               <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => CloseAsync()">Okay</button>
+               <span id="transferSuccessCopyTooltip" class="copiedToolTip toolTipText">Copied</span>
             </div>
          </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => CloseAsync()">Okay</button>
+         </div>
       </div>
-   </div>
-
-   <div class="modal-backdrop fade show"></div>
-}
+   </Content>
+</ModalBehavior>

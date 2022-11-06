@@ -25,9 +25,8 @@
  */
 
 using Crypter.Common.Primitives;
-using Crypter.Core.Services;
 using Crypter.Core.Settings;
-using Microsoft.Extensions.Options;
+using Crypter.Test.Core_Tests.Services_Tests.Helpers;
 using NUnit.Framework;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,19 +36,15 @@ namespace Crypter.Test.Core_Tests.Services_Tests
    [TestFixture]
    public class EmailService_Tests
    {
-      private IOptions<EmailSettings> _defaultEmailSettings;
-
-      [OneTimeSetUp]
-      public void OneTimeSetup()
-      {
-         EmailSettings settings = new EmailSettings();
-         _defaultEmailSettings = Options.Create(settings);
-      }
-
       [Test]
       public async Task ServiceDisabled_SendAsync_ReturnsFalse()
       {
-         var sut = new EmailService(_defaultEmailSettings);
+         EmailSettings settings = new EmailSettings()
+         {
+            Enabled = false
+         };
+
+         var sut = ServiceTestFactory.GetEmailService(settings);
 
          var emailAddress = EmailAddress.From("jack@crypter.dev");
          var result = await sut.SendAsync("foo", "bar", emailAddress, CancellationToken.None);

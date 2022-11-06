@@ -25,9 +25,9 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Contracts.Features.Authentication;
 using Crypter.Contracts.Features.Settings;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.UserSettings
@@ -36,6 +36,9 @@ namespace Crypter.Web.Shared.UserSettings
    {
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
+
+      [Inject]
+      protected IUserPasswordService UserPasswordService { get; set; }
 
       [Parameter]
       public string Username { get; set; }
@@ -105,10 +108,8 @@ namespace Crypter.Web.Shared.UserSettings
 
          Common.Primitives.Username username = Common.Primitives.Username.From(Username);
 
-         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
-         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
-
-         var request = new UpdateContactInfoRequest(EmailAddressEdit, digestedPasswordBase64);
+         VersionedPassword versionedPassword = UserPasswordService.DeriveUserAuthenticationPassword(username, password, UserPasswordService.CurrentPasswordVersion);
+         var request = new UpdateContactInfoRequest(EmailAddressEdit, versionedPassword.Password);
          var maybeUpdate = await CrypterApiService.UpdateContactInfoAsync(request);
 
          maybeUpdate.DoLeftOrNeither(HandleContactInfoUpdateError, () => HandleContactInfoUpdateError());

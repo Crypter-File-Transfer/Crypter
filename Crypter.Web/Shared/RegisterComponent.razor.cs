@@ -31,7 +31,7 @@ using Crypter.Common.Primitives.Enums;
 using Crypter.Contracts.Features.Authentication;
 using Crypter.Web.Models.Forms;
 using Microsoft.AspNetCore.Components;
-using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
@@ -40,6 +40,9 @@ namespace Crypter.Web.Shared
    {
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
+
+      [Inject]
+      protected IUserPasswordService UserPasswordService { get; set; }
 
       protected const string _invalidClassName = "is-invalid";
 
@@ -178,10 +181,8 @@ namespace Crypter.Web.Shared
                                 from password in ValidatePassword().ToEither(RegistrationError.InvalidPassword).AsTask()
                                 from emailAddress in ValidateEmailAddress().MapLeft(_ => RegistrationError.InvalidEmailAddress).AsTask()
                                 where ValidatePasswordConfirmation()
-                                let authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password)
-                                let authPasswordEncoded = Convert.ToBase64String(authPasswordBytes)
-                                let authenticationPassword = AuthenticationPassword.From(authPasswordEncoded)
-                                let requestBody = new RegistrationRequest(username, authenticationPassword, emailAddress)
+                                let versionedPassword = UserPasswordService.DeriveUserAuthenticationPassword(username, password, UserPasswordService.CurrentPasswordVersion)
+                                let requestBody = new RegistrationRequest(username, versionedPassword, emailAddress)
                                 from registrationResponse in CrypterApiService.RegisterUserAsync(requestBody)
                                 let _ = UserProvidedEmailAddress = emailAddress.IsSome
                                 select registrationResponse;

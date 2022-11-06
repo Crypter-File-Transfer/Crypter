@@ -46,8 +46,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
       private readonly ICompressionService _compressionService;
       private readonly FileTransferSettings _fileTransferSettings;
 
-      public DownloadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, IUserSessionService userSessionService, ICompressionService compressionService, FileTransferSettings fileTransferSettings)
-         : base(crypterApiService, simpleEncryptionService, simpleSignatureService, userSessionService)
+      public DownloadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, IUserSessionService userSessionService, ICompressionService compressionService, FileTransferSettings fileTransferSettings)
+         : base(crypterApiService, simpleEncryptionService, userSessionService)
       {
          _compressionService = compressionService;
          _fileTransferSettings = fileTransferSettings;
@@ -71,7 +71,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
          return response;
       }
 
-      public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeBeforeDecryption, Maybe<Func<Task>> invokeBeforeVerification, Maybe<Func<Task>> invokeBeforeDecompression)
+      public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeBeforeDecryption, Maybe<Func<Task>> invokeBeforeDecompression)
       {
          var request = _serverKey.Match(
             () => throw new Exception("Missing server key"),
@@ -88,35 +88,22 @@ namespace Crypter.ClientServices.Transfer.Handlers
             left => left,
             async right =>
             {
-               string digitalSignaturePublicKeyPEM = Encoding.UTF8.GetString(
-                  Convert.FromBase64String(right.DigitalSignaturePublicKey));
-
-               SetSenderDigitalSignaturePublicKey(PEMString.From(digitalSignaturePublicKeyPEM));
-
                await invokeBeforeDecryption.IfSomeAsync(async x => await x.Invoke());
 
                byte[] plaintext = DecryptFile(right.Ciphertext, right.InitializationVector);
-               await invokeBeforeVerification.IfSomeAsync(async x => await x.Invoke());
 
-               bool verifiedFile = VerifyFile(plaintext, Convert.FromBase64String(right.DigitalSignature));
-
-               if (verifiedFile)
+               if (right.CompressionType == CompressionType.GZip)
                {
-                  if (right.CompressionType == CompressionType.GZip)
-                  {
-                     await invokeBeforeDecompression.IfSomeAsync(async x => await x.Invoke());
+                  await invokeBeforeDecompression.IfSomeAsync(async x => await x.Invoke());
 
-                     using MemoryStream compressedStream = new MemoryStream(plaintext);
-                     using MemoryStream decompressedPlaintext = await _compressionService.DecompressStreamAsync(compressedStream, compressedStream.Length, _fileTransferSettings.PartSizeBytes, Maybe<Func<double, Task>>.None);
-                     return decompressedPlaintext.ToArray();
-                  }
-                  else
-                  {
-                     return plaintext;
-                  }
+                  using MemoryStream compressedStream = new MemoryStream(plaintext);
+                  using MemoryStream decompressedPlaintext = await _compressionService.DecompressStreamAsync(compressedStream, compressedStream.Length, _fileTransferSettings.PartSizeBytes, Maybe<Func<double, Task>>.None);
+                  return decompressedPlaintext.ToArray();
                }
-
-               return DownloadTransferCiphertextError.UnknownError;
+               else
+               {
+                  return plaintext;
+               }
             },
             DownloadTransferCiphertextError.UnknownError);
       }
@@ -132,15 +119,6 @@ namespace Crypter.ClientServices.Transfer.Handlers
          return _symmetricKey.Match(
             () => throw new Exception("Missing symmetric key"),
             x => _simpleEncryptionService.Decrypt(x, iv, ciphertext));
-      }
-
-      private bool VerifyFile(byte[] file, byte[] signature)
-      {
-         PEMString verificationKey = _senderDigitalSignaturePublicKey.Match(
-            () => throw new Exception("Missing digital signature public key"),
-            x => x);
-
-         return _simpleSignatureService.Verify(verificationKey, file, signature);
       }
    }
 }

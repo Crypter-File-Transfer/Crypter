@@ -43,41 +43,6 @@
        the encrypted information with the correct decryption key.
     </p>
 
-    <h2>Explain the cryptography</h2>
-    <p>
-       Crypter uses elliptical curve cryptography to encrypt and digitally sign every upload.
-    </p>
-
-    <h3>Encryption</h3>
-    <p>
-       The first step to the whole process is creating several sets of Curve25519 key-pairs. These sets of key-pairs are labelled the "sender" keys and "recipient" keys.
-       Within each key-pair is a "private" key and a "public" key. As their names suggest, the private key is designed to be kept private, while the public key is designed to be made public.
-       The sender's private key is disposed of as soon as the upload completes, while the recipient's private key is provided back to the sender to give to whomever they want.
-    </p>
-    <p>
-       After these keys are created, a form of key exchange occurs that mixes the sender's private key with the recipient's public key to derive a shared secret.
-       This same secret can be derived by combining the recipient's private key with the sender's public key. Crypter uses this shared secret as the actual encryption key.
-    </p>
-    <p>
-       After encryption is completed, Crypter will digitally sign the sender's original data. More on this later.
-    </p>
-    <p>
-       Finally, the Crypter will upload the encrypted data, the sender's public key, and the digital signature to the Crypter server. At this point
-       it is up to the sender to share the download link and the recipient's private key with whoever they want. The only way for anyone to download and decrypt
-       this content is by having the correct download link and private key.
-    </p>
-
-    <h3>Decryption</h3>
-    <p>
-       Assuming someone does have the correct download link and private key, Crypter will then download the encrypted content to the browser where it will be decrypted and verified.
-       In order to decrypt, the same form of key exchange that occurred during encryption must occur again. This time, the key exchange occurs with the recipient's private key and
-       the sender's public key that was uploaded to the Crypter server. This key exchange will derive the same shared secret that was used encrypt, but this time it will be used to decrypt.
-    </p>
-    <p>
-       After decryption is completed, Crypter will verify the decrypted information against the digital signature that was provided by the sender. If the decrypted information matches the
-       digital signature, then Crypter has proven the decrypted information is authentic and has not been tampered with.
-    </p>
-
     <h2>How can I trust this is real?</h2>
     <p>
        Trust is a tricky thing. All I can do is reiterate that Crypter is 100% open-source. Everything from the web client to the database schema are hosted publicly on GitHub.

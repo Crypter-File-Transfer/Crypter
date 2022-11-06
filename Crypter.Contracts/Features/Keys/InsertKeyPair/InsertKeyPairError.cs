@@ -29,6 +29,6 @@ namespace Crypter.Contracts.Features.Keys
    public enum InsertKeyPairError
    {
       UnknownError,
-      KeyPairAlreadyExists
+      Conflict
    }
 }

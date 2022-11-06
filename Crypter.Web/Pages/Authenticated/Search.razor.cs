@@ -37,7 +37,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class SearchBase : AuthenticatedPageBase
+   public partial class SearchBase : AuthenticatedPageBase, IDisposable
    {
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }

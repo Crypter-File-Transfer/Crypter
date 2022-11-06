@@ -31,6 +31,7 @@ using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,10 +42,12 @@ namespace Crypter.API.Controllers
    public class AuthenticationController : CrypterController
    {
       private readonly IUserAuthenticationService _userAuthenticationService;
+      private readonly ITokenService _tokenService;
 
-      public AuthenticationController(IUserAuthenticationService userAuthenticationService)
+      public AuthenticationController(IUserAuthenticationService userAuthenticationService, ITokenService tokenService)
       {
          _userAuthenticationService = userAuthenticationService;
+         _tokenService = tokenService;
       }
 
       /// <summary>
@@ -69,7 +72,8 @@ namespace Crypter.API.Controllers
                RegistrationError.UnknownError => ServerError(errorResponse),
                RegistrationError.InvalidUsername
                   or RegistrationError.InvalidPassword
-                  or RegistrationError.InvalidEmailAddress => BadRequest(errorResponse),
+                  or RegistrationError.InvalidEmailAddress
+                  or RegistrationError.OldPasswordVersion => BadRequest(errorResponse),
                RegistrationError.UsernameTaken
                   or RegistrationError.EmailAddressTaken => Conflict(errorResponse)
             };
@@ -77,7 +81,6 @@ namespace Crypter.API.Controllers
          }
 
          var registrationResult = await _userAuthenticationService.RegisterAsync(request, cancellationToken);
-
          return registrationResult.Match(
             MakeErrorResponse,
             Ok,
@@ -106,7 +109,8 @@ namespace Crypter.API.Controllers
                LoginError.InvalidUsername
                   or LoginError.InvalidPassword
                   or LoginError.InvalidTokenTypeRequested
-                  or LoginError.ExcessiveFailedLoginAttempts => BadRequest(errorResponse)
+                  or LoginError.ExcessiveFailedLoginAttempts
+                  or LoginError.InvalidPasswordVersion => BadRequest(errorResponse)
             };
 #pragma warning restore CS8524
          }
@@ -154,7 +158,6 @@ namespace Crypter.API.Controllers
 
          var requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
          var refreshResult = await _userAuthenticationService.RefreshAsync(User, requestUserAgent, cancellationToken);
-
          return refreshResult.Match(
             MakeErrorResponse,
             Ok,
@@ -176,7 +179,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+      public async Task<IActionResult> LogoutAsync(CancellationToken cancellationToken)
       {
          IActionResult MakeErrorResponse(LogoutError error)
          {
@@ -191,11 +194,44 @@ namespace Crypter.API.Controllers
          }
 
          var logoutResult = await _userAuthenticationService.LogoutAsync(User, cancellationToken);
-
          return logoutResult.Match(
             MakeErrorResponse,
             Ok,
             MakeErrorResponse(LogoutError.UnknownError));
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="request"></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      [HttpPost("password/test")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TestPasswordResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> TestPasswordAsync([FromBody] TestPasswordRequest request, CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(TestPasswordError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+#pragma warning disable CS8524
+            return error switch
+            {
+               TestPasswordError.UnknownError => ServerError(errorResponse),
+               TestPasswordError.InvalidPassword
+                  or TestPasswordError.PasswordNeedsMigration => BadRequest(errorResponse)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, request, cancellationToken);
+         return testPasswordResult.Match(
+            MakeErrorResponse,
+            Ok,
+            MakeErrorResponse(TestPasswordError.UnknownError));
       }
    }
 }

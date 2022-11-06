@@ -25,7 +25,7 @@
  */
 
 using BenchmarkDotNet.Running;
-using Crypter.Benchmarks.ClientServices_Benchmarks;
+using Crypter.Benchmarks.CryptoLib_Benchmarks;
 
 namespace Crypter.Benchmarks
 {
@@ -33,7 +33,7 @@ namespace Crypter.Benchmarks
    {
       static void Main(string[] args)
       {
-         BenchmarkRunner.Run<CompressionService_CompressionBufferBenchmark>();
+         BenchmarkRunner.Run<PasswordHash_StrengthBenchmark>();
       }
    }
 }

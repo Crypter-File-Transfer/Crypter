@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.Authentication;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Settings
@@ -31,13 +33,19 @@ namespace Crypter.Contracts.Features.Settings
    public class UpdateContactInfoRequest
    {
       public string EmailAddress { get; set; }
-      public string CurrentPassword { get; set; }
+      public string Password { get; set; }
 
       [JsonConstructor]
-      public UpdateContactInfoRequest(string emailAddress, string currentPassword)
+      public UpdateContactInfoRequest(string emailAddress, string password)
       {
          EmailAddress = emailAddress;
-         CurrentPassword = currentPassword;
+         Password = password;
+      }
+
+      public UpdateContactInfoRequest(string emailAddress, AuthenticationPassword password)
+      {
+         EmailAddress = emailAddress;
+         Password = password.Value;
       }
    }
 }

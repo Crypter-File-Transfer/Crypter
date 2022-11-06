@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Monads;
+using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -42,9 +43,7 @@ namespace Crypter.Web.Shared.Modal
 
       protected Maybe<EventCallback<bool>> ModalClosedCallback { get; set; }
 
-      protected bool Show = false;
-      protected string ModalDisplay = "none;";
-      protected string ModalClass = "";
+      protected ModalBehavior ModalBehaviorRef { get; set; }
 
       public void Open(string subject, string message, string primaryButtonText, Maybe<string> secondaryButtonText, Maybe<EventCallback<bool>> modalClosedCallback)
       {
@@ -56,20 +55,13 @@ namespace Crypter.Web.Shared.Modal
             x => x);
          ModalClosedCallback = modalClosedCallback;
 
-         ModalDisplay = "block;";
-         ModalClass = "Show";
-         Show = true;
-         StateHasChanged();
+         ModalBehaviorRef.Open();
       }
 
       public async Task CloseAsync(bool modalClosedInTheAffirmative)
       {
-         ModalDisplay = "none";
-         ModalClass = "";
-         Show = false;
-         StateHasChanged();
-
          await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync(modalClosedInTheAffirmative));
+         ModalBehaviorRef.Close();
       }
    }
 }

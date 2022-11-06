@@ -34,17 +34,13 @@ namespace Crypter.Contracts.Features.Transfer
    {
       public List<string> Ciphertext { get; init; }
       public string InitializationVector { get; init; }
-      public string DigitalSignature { get; init; }
-      public string DigitalSignaturePublicKey { get; init; }
       public CompressionType CompressionType { get; init; }
 
       [JsonConstructor]
-      public DownloadTransferCiphertextResponse(List<string> ciphertext, string initializationVector, string digitalSignature, string digitalSignaturePublicKey, CompressionType compressionType)
+      public DownloadTransferCiphertextResponse(List<string> ciphertext, string initializationVector, CompressionType compressionType)
       {
          Ciphertext = ciphertext;
          InitializationVector = initializationVector;
-         DigitalSignature = digitalSignature;
-         DigitalSignaturePublicKey = digitalSignaturePublicKey;
          CompressionType = compressionType;
       }
    }

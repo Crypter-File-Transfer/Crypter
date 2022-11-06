@@ -34,12 +34,14 @@ namespace Crypter.ClientServices.Interfaces.Events
       public Username Username { get; init; }
       public Password Password { get; init; }
       public bool RememberUser { get; init; }
+      public bool ShowRecoveryKeyModal { get; init; }
 
-      public UserLoggedInEventArgs(Username username, Password password, bool rememberUser)
+      public UserLoggedInEventArgs(Username username, Password password, bool rememberUser, bool showRecoveryKeyModal)
       {
          Username = username;
          Password = password;
          RememberUser = rememberUser;
+         ShowRecoveryKeyModal = showRecoveryKeyModal;
       }
    }
 }

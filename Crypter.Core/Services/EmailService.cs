@@ -75,9 +75,8 @@ namespace Crypter.Core.Services
       /// <param name="subject"></param>
       /// <param name="message"></param>
       /// <param name="recipient"></param>
-      /// <remarks>This method is 'virtual' to enable some unit tests.</remarks>
       /// <returns></returns>
-      public virtual async Task<bool> SendAsync(string subject, string message, EmailAddress recipient, CancellationToken cancellationToken)
+      public async Task<bool> SendAsync(string subject, string message, EmailAddress recipient, CancellationToken cancellationToken)
       {
          if (!Settings.Enabled)
          {
@@ -116,9 +115,8 @@ namespace Crypter.Core.Services
       /// <summary>
       /// Send a verification email to the provided recipient.
       /// </summary>
-      /// <param name="emailAddress"></param>
-      /// <param name="verificationCode"></param>
-      /// <param name="ecdsaPrivateKey"></param>
+      /// <param name="parameters"></param>
+      /// <param name="cancellationToken"></param>
       /// <remarks>This method is 'virtual' to enable some unit tests.</remarks>
       /// <returns></returns>
       public virtual async Task<bool> SendEmailVerificationAsync(UserEmailAddressVerificationParameters parameters, CancellationToken cancellationToken)

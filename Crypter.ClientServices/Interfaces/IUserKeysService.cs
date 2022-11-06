@@ -24,17 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Models;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Interfaces
 {
    public interface IUserKeysService
    {
       Maybe<PEMString> X25519PrivateKey { get; }
-      Maybe<PEMString> Ed25519PrivateKey { get; }
 
       (PEMString PrivateKey, PEMString PublicKey) CreateX25519KeyPair();
-      (PEMString PrivateKey, PEMString PublicKey) CreateEd25519KeyPair();
+      Task<Maybe<byte[]>> GetUserMasterKeyAsync(Username username, Password password);
+      Task<Maybe<RecoveryKey>> GetUserRecoveryKeyAsync(Username username, Password password);
    }
 }

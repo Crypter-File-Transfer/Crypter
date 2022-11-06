@@ -25,28 +25,51 @@
  */
 
 using Crypter.ClientServices.DeviceStorage.Enums;
+using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Events;
 using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
+using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
 {
-   public partial class MainLayoutBase : LayoutComponentBase
+   public partial class MainLayoutBase : LayoutComponentBase, IDisposable
    {
       [Inject]
       private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
+
+      [Inject]
+      private IUserSessionService UserSessionService { get; set; }
 
       public BasicModal BasicModal { get; protected set; }
 
       public TransferSuccessModal TransferSuccessModal { get; protected set; }
 
+      public RecoveryKeyModal RecoveryKeyModal { get; protected set; }
+
       protected bool ServicesInitialized { get; set; }
 
       protected override async Task OnInitializedAsync()
       {
+         UserSessionService.UserLoggedInEventHandler += ShowRecoveryKeyModalAsync;
          await BrowserRepository.InitializeAsync();
          ServicesInitialized = true;
+      }
+
+      private async void ShowRecoveryKeyModalAsync(object sender, UserLoggedInEventArgs args)
+      {
+         if (args.ShowRecoveryKeyModal)
+         {
+            await RecoveryKeyModal.OpenAsync(args.Username, args.Password);
+         }
+      }
+
+      public void Dispose()
+      {
+         UserSessionService.UserLoggedInEventHandler -= ShowRecoveryKeyModalAsync;
+         GC.SuppressFinalize(this);
       }
    }
 }

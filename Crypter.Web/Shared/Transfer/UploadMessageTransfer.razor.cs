@@ -46,9 +46,8 @@ namespace Crypter.Web.Shared.Transfer
          SetHandlerUserInfo(messageUploader);
 
          await SetProgressMessage(_encryptingLiteral);
-         var showSigningMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_signingLiteral));
          var showUploadingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_uploadingLiteral));
-         var uploadResponse = await messageUploader.UploadAsync(showSigningMessage, showUploadingMessage);
+         var uploadResponse = await messageUploader.UploadAsync(showUploadingMessage);
          HandleUploadResponse(uploadResponse);
 
          Recycle();

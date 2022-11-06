@@ -41,8 +41,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
 {
    public class DownloadMessageHandler : DownloadHandler
    {
-      public DownloadMessageHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, IUserSessionService userSessionService)
-         : base(crypterApiService, simpleEncryptionService, simpleSignatureService, userSessionService)
+      public DownloadMessageHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, IUserSessionService userSessionService)
+         : base(crypterApiService, simpleEncryptionService, userSessionService)
       { }
 
       public async Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadPreviewAsync()
@@ -63,7 +63,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
          return response;
       }
 
-      public async Task<Either<DownloadTransferCiphertextError, string>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeAfterDownloading, Maybe<Func<Task>> invokeAfterDecryption)
+      public async Task<Either<DownloadTransferCiphertextError, string>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeAfterDownloading)
       {
          var request = _serverKey.Match(
             () => throw new Exception("Missing server key"),
@@ -77,23 +77,9 @@ namespace Crypter.ClientServices.Transfer.Handlers
          };
 #pragma warning restore CS8524
 
-         return await response.MatchAsync<Either<DownloadTransferCiphertextError, string>>(
+         return response.Match<Either<DownloadTransferCiphertextError, string>>(
             left => left,
-            async right =>
-            {
-               await invokeAfterDownloading.IfSomeAsync(async x => await x.Invoke());
-
-               string digitalSignaturePublicKeyPEM = Encoding.UTF8.GetString(
-                  Convert.FromBase64String(right.DigitalSignaturePublicKey));
-
-               SetSenderDigitalSignaturePublicKey(PEMString.From(digitalSignaturePublicKeyPEM));
-               string plaintext = DecryptMessage(right.Ciphertext, right.InitializationVector);
-               await invokeAfterDecryption.IfSomeAsync(async x => await x.Invoke());
-
-               return VerifyMessage(plaintext, Convert.FromBase64String(right.DigitalSignature))
-                  ? plaintext
-                  : DownloadTransferCiphertextError.UnknownError;
-            },
+            right => DecryptMessage(right.Ciphertext, right.InitializationVector),
             DownloadTransferCiphertextError.UnknownError);
       }
 
@@ -108,17 +94,6 @@ namespace Crypter.ClientServices.Transfer.Handlers
          return _symmetricKey.Match(
             () => throw new Exception("Missing symmetric key"),
             x => _simpleEncryptionService.DecryptToString(x, iv, ciphertext));
-      }
-
-      private bool VerifyMessage(string message, byte[] signature)
-      {
-         byte[] plaintext = Encoding.UTF8.GetBytes(message);
-
-         PEMString verificationKey = _senderDigitalSignaturePublicKey.Match(
-            () => throw new Exception("Missing digital signature public key"),
-            x => x);
-
-         return _simpleSignatureService.Verify(verificationKey, plaintext, signature);
       }
    }
 }

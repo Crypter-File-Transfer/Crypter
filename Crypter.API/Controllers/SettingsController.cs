@@ -83,7 +83,8 @@ namespace Crypter.API.Controllers
                UpdateContactInfoError.UserNotFound => NotFound(errorResponse),
                UpdateContactInfoError.EmailAddressUnavailable => Conflict(errorResponse),
                UpdateContactInfoError.InvalidEmailAddress
-                  or UpdateContactInfoError.InvalidPassword => BadRequest(errorResponse)
+                  or UpdateContactInfoError.InvalidPassword
+                  or UpdateContactInfoError.PasswordNeedsMigration => BadRequest(errorResponse),
             };
 #pragma warning restore CS8524
          }
