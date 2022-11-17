@@ -22,10 +22,10 @@ jobs:
         sudo -u postgres psql --command="ALTER USER postgres PASSWORD 'password';" --command="\du"
 
     - uses: actions/checkout@v3
-    - name: Setup .NET 6.0
-      uses: actions/setup-dotnet@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: 7.0.x
 
     - name: Restore dependencies
       run: dotnet restore
