@@ -29,6 +29,8 @@ using Crypter.Core;
 using Crypter.Core.Identity;
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.DefaultProvider;
 using Crypter.CryptoLib.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -93,6 +95,7 @@ builder.Services.AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>
 builder.Services.AddSingleton<ISimpleHashService, SimpleHashService>();
 builder.Services.AddSingleton<ISimpleSignatureService, SimpleSignatureService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
+builder.Services.AddSingleton<ICryptoProvider, DefaultCryptoProvider>();
 
 builder.Services.AddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
 builder.Services.AddScoped<IServerMetricsService, ServerMetricsService>();

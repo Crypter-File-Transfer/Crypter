@@ -35,9 +35,9 @@ namespace Crypter.Core.Models
       public EmailAddress EmailAddress { get; init; }
       public Guid VerificationCode { get; init; }
       public byte[] Signature { get; init; }
-      public PEMString VerificationKey { get; init; }
+      public byte[] VerificationKey { get; init; }
 
-      public UserEmailAddressVerificationParameters(Guid userId, EmailAddress emailAddress, Guid verificationCode, byte[] signature, PEMString verificationKey)
+      public UserEmailAddressVerificationParameters(Guid userId, EmailAddress emailAddress, Guid verificationCode, byte[] signature, byte[] verificationKey)
       {
          UserId = userId;
          EmailAddress = emailAddress;

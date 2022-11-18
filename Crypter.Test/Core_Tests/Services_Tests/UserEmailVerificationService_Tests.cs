@@ -33,12 +33,15 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.CryptoLib;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.DefaultProvider;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {
    [TestFixture]
    public class UserEmailVerificationService_Tests
    {
+      private ICryptoProvider _cryptoProvider;
       private UserEmailVerificationService _sut;
       private TestDataContext _testContext;
 
@@ -47,7 +50,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       {
          _testContext = new TestDataContext(GetType().Name);
          _testContext.EnsureCreated();
-         _sut = new UserEmailVerificationService(_testContext);
+         _cryptoProvider = new DefaultCryptoProvider();
+         _sut = new UserEmailVerificationService(_testContext, _cryptoProvider);
       }
 
       [TearDown]
@@ -114,12 +118,9 @@ namespace Crypter.Test.Core_Tests.Services_Tests
             Assert.AreEqual(newUser.Id, x.UserId);
             Assert.AreEqual(newUser.EmailAddress, x.EmailAddress.Value);
 
-            var verifier = new ECDSA();
-            verifier.InitializeVerifier(KeyConversion.ConvertEd25519PublicKeyFromPEM(x.VerificationKey));
-            verifier.VerifierDigestPart(x.VerificationCode.ToByteArray());
-            bool verificatioCodeVerified = verifier.VerifySignature(x.Signature);
-
-            Assert.IsTrue(verificatioCodeVerified);
+            Span<byte> verificationCode = x.VerificationCode.ToByteArray();
+            bool verificationCodeVerified = _cryptoProvider.DigitalSignature.VerifySignature(x.VerificationKey, verificationCode, x.Signature);
+            Assert.IsTrue(verificationCodeVerified);
          });
       }
    }
