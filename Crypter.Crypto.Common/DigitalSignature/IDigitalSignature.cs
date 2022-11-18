@@ -24,31 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Microsoft.IdentityModel.Tokens;
 using System;
 
-namespace Crypter.Core.Services
+namespace Crypter.Crypto.Common.DigitalSignature
 {
-   public class EmailVerificationEncoder
+   public interface IDigitalSignature
    {
-      public static string EncodeVerificationCodeUrlSafe(Guid verificationCode)
-      {
-         return Base64UrlEncoder.Encode(verificationCode.ToByteArray());
-      }
-
-      public static Guid DecodeVerificationCodeFromUrlSafe(string verificationCode)
-      {
-         return new Guid(Base64UrlEncoder.DecodeBytes(verificationCode));
-      }
-
-      public static string EncodeSignatureUrlSafe(byte[] signature)
-      {
-         return Base64UrlEncoder.Encode(signature);
-      }
-
-      public static byte[] DecodeSignatureFromUrlSafe(string signature)
-      {
-         return Base64UrlEncoder.DecodeBytes(signature);
-      }
+      Ed25519KeyPair GenerateKeyPair();
+      byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message);
+      bool VerifySignature(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> message, ReadOnlySpan<byte> signature);
    }
 }

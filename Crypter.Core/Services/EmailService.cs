@@ -81,7 +81,7 @@ namespace Crypter.Core.Services
       {
          if (!Settings.Enabled)
          {
-            return false;
+            return true;
          }
 
          var mailMessage = new MimeMessage();
