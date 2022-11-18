@@ -29,12 +29,10 @@ using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Settings;
 using Crypter.Core.Entities;
 using Crypter.Core.Models;
-using Crypter.CryptoLib;
-using Crypter.CryptoLib.Crypto;
+using Crypter.Crypto.Common;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -50,10 +48,12 @@ namespace Crypter.Core.Services
    public class UserEmailVerificationService : IUserEmailVerificationService
    {
       private readonly DataContext _context;
+      private readonly ICryptoProvider _cryptoProvider;
 
-      public UserEmailVerificationService(DataContext context)
+      public UserEmailVerificationService(DataContext context, ICryptoProvider cryptoProvider)
       {
          _context = context;
+         _cryptoProvider = cryptoProvider;
       }
 
       public Task<Maybe<UserEmailVerificationEntity>> GetEntityAsync(Guid userId, CancellationToken cancellationToken)
@@ -74,36 +74,37 @@ namespace Crypter.Core.Services
             .Select(x => new { x.Id, x.EmailAddress })
             .FirstOrDefaultAsync(cancellationToken);
 
-         if (user is null
-            || !EmailAddress.TryFrom(user.EmailAddress, out var validEmailAddress))
+         if (user is null || !EmailAddress.TryFrom(user.EmailAddress, out var validEmailAddress))
          {
             return Maybe<UserEmailAddressVerificationParameters>.None;
          }
 
          var verificationCode = Guid.NewGuid();
-         var keys = ECDSA.GenerateKeys();
+         var keys = _cryptoProvider.DigitalSignature.GenerateKeyPair();
 
-         var codeBytes = verificationCode.ToByteArray();
+         byte[] signature = _cryptoProvider.DigitalSignature.GenerateSignature(keys.PrivateKey, verificationCode.ToByteArray());
 
-         var signer = new ECDSA();
-         signer.InitializeSigner(keys.Private);
-         signer.SignerDigestPart(codeBytes);
-         var signature = signer.GenerateSignature();
-
-         return new UserEmailAddressVerificationParameters(userId, validEmailAddress, verificationCode, signature, keys.Public.ConvertToPEM());
+         return new UserEmailAddressVerificationParameters(userId, validEmailAddress, verificationCode, signature, keys.PublicKey);
       }
 
       public async Task<int> SaveSentVerificationParametersAsync(UserEmailAddressVerificationParameters parameters, CancellationToken cancellationToken)
       {
-         byte[] verificationKey = Encoding.UTF8.GetBytes(parameters.VerificationKey.Value);
-         var newEntity = new UserEmailVerificationEntity(parameters.UserId, parameters.VerificationCode, verificationKey, DateTime.UtcNow);
+         var newEntity = new UserEmailVerificationEntity(parameters.UserId, parameters.VerificationCode, parameters.VerificationKey, DateTime.UtcNow);
          _context.UserEmailVerifications.Add(newEntity);
          return await _context.SaveChangesAsync(cancellationToken);
       }
 
       public async Task<Maybe<VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request, CancellationToken cancellationToken)
       {
-         var verificationCode = EmailVerificationEncoder.DecodeVerificationCodeFromUrlSafe(request.Code);
+         Guid verificationCode;
+         try
+         {
+            verificationCode = EmailVerificationEncoder.DecodeVerificationCodeFromUrlSafe(request.Code);
+         }
+         catch (Exception)
+         {
+            return Maybe<VerifyEmailAddressResponse>.None;
+         }
 
          var verificationEntity = await _context.UserEmailVerifications
             .FirstOrDefaultAsync(x => x.Code == verificationCode, cancellationToken);
@@ -113,15 +114,8 @@ namespace Crypter.Core.Services
             return Maybe<VerifyEmailAddressResponse>.None;
          }
 
-         var signature = EmailVerificationEncoder.DecodeSignatureFromUrlSafe(request.Signature);
-
-         var verificationKeyPem = PEMString.From(Encoding.UTF8.GetString(verificationEntity.VerificationKey));
-         var verificationKey = KeyConversion.ConvertEd25519PublicKeyFromPEM(verificationKeyPem);
-
-         var verifier = new ECDSA();
-         verifier.InitializeVerifier(verificationKey);
-         verifier.VerifierDigestPart(verificationCode.ToByteArray());
-         if (!verifier.VerifySignature(signature))
+         byte[] signature = EmailVerificationEncoder.DecodeSignatureFromUrlSafe(request.Signature);
+         if (!_cryptoProvider.DigitalSignature.VerifySignature(verificationEntity.VerificationKey, verificationCode.ToByteArray(), signature))
          {
             return Maybe<VerifyEmailAddressResponse>.None;
          }

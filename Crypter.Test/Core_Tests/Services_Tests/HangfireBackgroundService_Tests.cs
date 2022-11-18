@@ -94,11 +94,14 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [Test]
       public async Task Verification_Email_Is_Sent_When_Given_Verification_Parameters()
       {
-         string publicKey = @"-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VuAyEAj5qskz931xpwHXrN40pnxXSEz08Hxuhw2wABl+GG9yA=
------END PUBLIC KEY-----
-".ReplaceLineEndings();
-         var parameters = new UserEmailAddressVerificationParameters(Guid.NewGuid(), EmailAddress.From("test@test.com"), Guid.NewGuid(), new byte[] { 0x00 }, PEMString.From(publicKey));
+         byte[] publicKey = new byte[]
+         {
+            0xf4, 0x5b, 0x53, 0x77, 0x36, 0x6a, 0x0d, 0x4d,
+            0x46, 0x46, 0xd7, 0x55, 0x55, 0x5c, 0xef, 0xa4,
+            0xda, 0xa5, 0xae, 0x2b, 0xec, 0xc3, 0xbd, 0x5f,
+            0x2d, 0x0a, 0x6c, 0x98, 0x33, 0x8e, 0x13, 0x56
+         };
+         var parameters = new UserEmailAddressVerificationParameters(Guid.NewGuid(), EmailAddress.From("test@test.com"), Guid.NewGuid(), new byte[] { 0x00 }, publicKey);
 
          _userEmailVerificationMock
             .Setup(x => x.CreateNewVerificationParametersAsync(

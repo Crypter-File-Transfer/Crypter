@@ -24,31 +24,31 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Microsoft.IdentityModel.Tokens;
+using Crypter.Crypto.Common.DigitalSignature;
 using System;
 
-namespace Crypter.Core.Services
+namespace Crypter.Crypto.DefaultProvider.Wrappers
 {
-   public class EmailVerificationEncoder
+   public class DigitalSignature : IDigitalSignature
    {
-      public static string EncodeVerificationCodeUrlSafe(Guid verificationCode)
+      public Ed25519KeyPair GenerateKeyPair()
       {
-         return Base64UrlEncoder.Encode(verificationCode.ToByteArray());
+         byte[] privateKey = new byte[Geralt.Ed25519.PrivateKeySize];
+         byte[] publicKey = new byte[Geralt.Ed25519.PublicKeySize];
+         Geralt.Ed25519.GenerateKeyPair(publicKey, privateKey);
+         return new Ed25519KeyPair(privateKey, publicKey);
       }
 
-      public static Guid DecodeVerificationCodeFromUrlSafe(string verificationCode)
+      public byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message)
       {
-         return new Guid(Base64UrlEncoder.DecodeBytes(verificationCode));
+         byte[] signature = new byte[Geralt.Ed25519.SignatureSize];
+         Geralt.Ed25519.Sign(signature, message, privateKey);
+         return signature;
       }
 
-      public static string EncodeSignatureUrlSafe(byte[] signature)
+      public bool VerifySignature(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> message, ReadOnlySpan<byte> signature)
       {
-         return Base64UrlEncoder.Encode(signature);
-      }
-
-      public static byte[] DecodeSignatureFromUrlSafe(string signature)
-      {
-         return Base64UrlEncoder.DecodeBytes(signature);
+         return Geralt.Ed25519.Verify(signature, message, publicKey);
       }
    }
 }
