@@ -70,19 +70,5 @@ namespace Crypter.CryptoLib
          var pemReader = new PemReader(stringReader);
          return (X25519PublicKeyParameters)pemReader.ReadObject();
       }
-
-      public static Ed25519PrivateKeyParameters ConvertEd25519PrivateKeyFromPEM(PEMString pemKey)
-      {
-         var stringReader = new StringReader(pemKey.Value);
-         var pemReader = new PemReader(stringReader);
-         return (Ed25519PrivateKeyParameters)pemReader.ReadObject();
-      }
-
-      public static Ed25519PublicKeyParameters ConvertEd25519PublicKeyFromPEM(PEMString pemKey)
-      {
-         var stringReader = new StringReader(pemKey.Value);
-         var pemReader = new PemReader(stringReader);
-         return (Ed25519PublicKeyParameters)pemReader.ReadObject();
-      }
    }
 }

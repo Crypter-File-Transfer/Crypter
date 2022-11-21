@@ -47,7 +47,6 @@ namespace Crypter.Core
 
       public DbSet<UserEntity> Users { get; set; }
       public DbSet<UserProfileEntity> UserProfiles { get; set; }
-      public DbSet<UserEd25519KeyPairEntity> UserEd25519KeyPairs { get; set; }
       public DbSet<UserX25519KeyPairEntity> UserX25519KeyPairs { get; set; }
       public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; set; }
       public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; set; }
@@ -67,7 +66,6 @@ namespace Crypter.Core
 
          ConfigureUserEntity(builder);
          ConfigureUserProfileEntity(builder);
-         ConfigureUserEd25519KeyPairEntity(builder);
          ConfigureUserX25519KeyPairEntity(builder);
          ConfigureUserPrivacySettingEntity(builder);
          ConfigureUserEmailVerificationEntity(builder);
@@ -144,22 +142,6 @@ namespace Crypter.Core
             .WithOne(x => x.Profile)
             .HasForeignKey<UserProfileEntity>(x => x.Owner)
             .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
-      }
-
-      private static void ConfigureUserEd25519KeyPairEntity(ModelBuilder builder)
-      {
-         builder.Entity<UserEd25519KeyPairEntity>()
-            .ToTable("UserEd25519KeyPair");
-
-         builder.Entity<UserEd25519KeyPairEntity>()
-            .HasKey(x => x.Owner);
-
-         builder.Entity<UserEd25519KeyPairEntity>()
-            .HasOne(x => x.User)
-            .WithOne(x => x.Ed25519KeyPair)
-            .HasForeignKey<UserEd25519KeyPairEntity>(x => x.Owner)
-            .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
       }
 
@@ -291,14 +273,6 @@ namespace Crypter.Core
             .HasColumnName("Recipient");
 
          builder.Entity<UserMessageTransferEntity>()
-            .Property(x => x.DigitalSignature)
-            .IsRequired();
-
-         builder.Entity<UserMessageTransferEntity>()
-            .Property(x => x.DigitalSignaturePublicKey)
-            .IsRequired();
-
-         builder.Entity<UserMessageTransferEntity>()
             .Property(x => x.DiffieHellmanPublicKey)
             .IsRequired();
 
@@ -328,14 +302,6 @@ namespace Crypter.Core
             .HasColumnName("Recipient");
 
          builder.Entity<UserFileTransferEntity>()
-            .Property(x => x.DigitalSignature)
-            .IsRequired();
-
-         builder.Entity<UserFileTransferEntity>()
-            .Property(x => x.DigitalSignaturePublicKey)
-            .IsRequired();
-
-         builder.Entity<UserFileTransferEntity>()
             .Property(x => x.DiffieHellmanPublicKey)
             .IsRequired();
 
@@ -361,14 +327,6 @@ namespace Crypter.Core
             .HasKey(x => x.Id);
 
          builder.Entity<AnonymousMessageTransferEntity>()
-            .Property(x => x.DigitalSignature)
-            .IsRequired();
-
-         builder.Entity<AnonymousMessageTransferEntity>()
-            .Property(x => x.DigitalSignaturePublicKey)
-            .IsRequired();
-
-         builder.Entity<AnonymousMessageTransferEntity>()
             .Property(x => x.DiffieHellmanPublicKey)
             .IsRequired();
 
@@ -388,14 +346,6 @@ namespace Crypter.Core
 
          builder.Entity<AnonymousFileTransferEntity>()
             .HasKey(x => x.Id);
-
-         builder.Entity<AnonymousFileTransferEntity>()
-            .Property(x => x.DigitalSignature)
-            .IsRequired();
-
-         builder.Entity<AnonymousFileTransferEntity>()
-            .Property(x => x.DigitalSignaturePublicKey)
-            .IsRequired();
 
          builder.Entity<AnonymousFileTransferEntity>()
             .Property(x => x.DiffieHellmanPublicKey)

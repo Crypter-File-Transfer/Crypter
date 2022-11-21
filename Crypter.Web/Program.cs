@@ -90,7 +90,6 @@ builder.Services
    .AddSingleton<ICrypterApiService, CrypterApiService>()
    .AddSingleton<IUserKeysService, UserKeysService>()
    .AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>()
-   .AddSingleton<ISimpleSignatureService, SimpleSignatureService>()
    .AddSingleton<ICompressionService, CompressionService>()
    .AddSingleton<IUserContactsService, UserContactsService>()
    .AddSingleton<IBrowserDownloadFileService, BrowserDownloadFileService>()

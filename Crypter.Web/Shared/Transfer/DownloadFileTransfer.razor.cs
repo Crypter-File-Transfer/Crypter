@@ -90,9 +90,8 @@ namespace Crypter.Web.Shared.Transfer
 
             await SetProgressMessage(_downloadingLiteral);
             var showDecryptingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_decryptingLiteral));
-            var showVerifyingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_verifyingLiteral));
             var showDecompressingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_decompressingLiteral));
-            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync(showDecryptingMessage, showVerifyingMessage, showDecompressingMessage);
+            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync(showDecryptingMessage, showDecompressingMessage);
 
             decryptionResponse.DoLeftOrNeither(
             x => HandleDownloadError(x),

@@ -38,9 +38,7 @@ namespace Crypter.Core.Services
    public interface IUserKeysService
    {
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
       Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken);
-      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken);
    }
 
    public class UserKeysService : IUserKeysService
@@ -61,15 +59,6 @@ namespace Crypter.Core.Services
                .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
       }
 
-      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync(Guid userId, CancellationToken cancellationToken)
-      {
-         return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
-            _context.UserEd25519KeyPairs
-               .Where(x => x.Owner == userId)
-               .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.ClientIV))
-               .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
-      }
-
       public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken)
       {
          var keyPairEntity = await _context.UserX25519KeyPairs
@@ -79,23 +68,6 @@ namespace Crypter.Core.Services
          {
             var newEntity = new UserX25519KeyPairEntity(userId, request.EncryptedPrivateKeyBase64, request.PublicKeyBase64, request.ClientIVBase64, DateTime.UtcNow);
             _context.UserX25519KeyPairs.Add(newEntity);
-            await _context.SaveChangesAsync(cancellationToken);
-         }
-
-         return keyPairEntity is null
-            ? new InsertKeyPairResponse()
-            : InsertKeyPairError.KeyPairAlreadyExists;
-      }
-
-      public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken)
-      {
-         var keyPairEntity = await _context.UserEd25519KeyPairs
-            .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
-
-         if (keyPairEntity is null)
-         {
-            var newEntity = new UserEd25519KeyPairEntity(userId, request.EncryptedPrivateKeyBase64, request.PublicKeyBase64, request.ClientIVBase64, DateTime.UtcNow);
-            _context.UserEd25519KeyPairs.Add(newEntity);
             await _context.SaveChangesAsync(cancellationToken);
          }
 

@@ -24,11 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Enums
+namespace Crypter.Crypto.Common.StreamEncryption
 {
-   public enum UserKeyType
+   public interface IStreamDecrypt
    {
-      Ed25519,
-      X25519
    }
 }

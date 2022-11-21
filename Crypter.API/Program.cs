@@ -93,7 +93,6 @@ builder.Services.AddDbContext<DataContext>();
 
 builder.Services.AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>();
 builder.Services.AddSingleton<ISimpleHashService, SimpleHashService>();
-builder.Services.AddSingleton<ISimpleSignatureService, SimpleSignatureService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
 builder.Services.AddSingleton<ICryptoProvider, DefaultCryptoProvider>();
 

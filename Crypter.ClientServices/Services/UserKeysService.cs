@@ -45,7 +45,6 @@ namespace Crypter.ClientServices.Services
       private readonly IUserKeysRepository _userKeysRepository;
       private readonly IUserSessionService _userSessionService;
 
-      public Maybe<PEMString> Ed25519PrivateKey { get; protected set; }
       public Maybe<PEMString> X25519PrivateKey { get; protected set; }
 
       public UserKeysService(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService)
@@ -62,16 +61,16 @@ namespace Crypter.ClientServices.Services
 
       private async Task PrepareUserKeysOnUserLoginAsync(Username username, Password password, bool rememberUser)
       {
-         Task<Maybe<PEMString>> HandleDownloadErrorAsync(GetPrivateKeyError error, UserKeyType keyType, byte[] userSymmetricKey, bool rememberUser)
+         Task<Maybe<PEMString>> HandleDownloadErrorAsync(GetPrivateKeyError error, byte[] userSymmetricKey, bool rememberUser)
          {
             return error switch
             {
-               GetPrivateKeyError.NotFound => UploadNewUserKeyAsync(keyType, userSymmetricKey, rememberUser),
+               GetPrivateKeyError.NotFound => UploadNewUserKeyAsync(userSymmetricKey, rememberUser),
                _ => Maybe<PEMString>.None.AsTask()
             };
          }
 
-         Maybe<PEMString> HandleDownloadSuccess(GetPrivateKeyResponse encryptedKeyInfo, UserKeyType keyType, byte[] userSymmetricKey)
+         Maybe<PEMString> HandleDownloadSuccess(GetPrivateKeyResponse encryptedKeyInfo, byte[] userSymmetricKey)
          {
             Base64String encryptedKey = Base64String.From(encryptedKeyInfo.EncryptedKey);
             Base64String iv = Base64String.From(encryptedKeyInfo.IV);
@@ -79,21 +78,13 @@ namespace Crypter.ClientServices.Services
          }
 
          var symmetricKey = DeriveUserSymmetricKey(username, password);
-
-         var ed25519DownloadResult = await DownloadPrivateKeyAsync(UserKeyType.Ed25519);
-         var x25519DownloadResult = await DownloadPrivateKeyAsync(UserKeyType.X25519);
-
-         Ed25519PrivateKey = await ed25519DownloadResult.MatchAsync(
-            async downloadError => await HandleDownloadErrorAsync(downloadError, UserKeyType.Ed25519, symmetricKey, rememberUser),
-            encryptedKeyInfo => HandleDownloadSuccess(encryptedKeyInfo, UserKeyType.Ed25519, symmetricKey),
-            Maybe<PEMString>.None);
+         var x25519DownloadResult = await _crypterApiService.GetDiffieHellmanPrivateKeyAsync();
 
          X25519PrivateKey = await x25519DownloadResult.MatchAsync(
-            async downloadError => await HandleDownloadErrorAsync(downloadError, UserKeyType.X25519, symmetricKey, rememberUser),
-            encryptedKeyInfo => HandleDownloadSuccess(encryptedKeyInfo, UserKeyType.X25519, symmetricKey),
+            async downloadError => await HandleDownloadErrorAsync(downloadError, symmetricKey, rememberUser),
+            encryptedKeyInfo => HandleDownloadSuccess(encryptedKeyInfo, symmetricKey),
             Maybe<PEMString>.None);
 
-         await Ed25519PrivateKey.IfSomeAsync(async x => await _userKeysRepository.StoreEd25519PrivateKeyAsync(x, rememberUser));
          await X25519PrivateKey.IfSomeAsync(async x => await _userKeysRepository.StoreX25519PrivateKeyAsync(x, rememberUser));
       }
 
@@ -106,28 +97,13 @@ namespace Crypter.ClientServices.Services
          return (privateKey, publicKey);
       }
 
-      public (PEMString PrivateKey, PEMString PublicKey) CreateEd25519KeyPair()
+      private async Task<Maybe<PEMString>> UploadNewUserKeyAsync(byte[] userSymmetricKey, bool rememberUser)
       {
-         var keyPair = CryptoLib.Crypto.ECDSA.GenerateKeys();
-         var privateKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Private);
-         var publicKey = CryptoLib.KeyConversion.ConvertToPEM(keyPair.Public);
-
-         return (privateKey, publicKey);
-      }
-
-      private async Task<Maybe<PEMString>> UploadNewUserKeyAsync(UserKeyType keyType, byte[] userSymmetricKey, bool rememberUser)
-      {
-         var (privateKey, publicKey) = keyType switch
-         {
-            UserKeyType.Ed25519 => CreateEd25519KeyPair(),
-            UserKeyType.X25519 => CreateX25519KeyPair(),
-            _ => throw new NotImplementedException("Unknown key type.")
-         };
-
+         var (privateKey, publicKey) = CreateX25519KeyPair();
          var (encryptedPrivateKey, iv) = _simpleEncryptionService.Encrypt(userSymmetricKey, privateKey.Value);
 
-         var uploadResult = from uploadResponse in UploadKeyPairAsync(encryptedPrivateKey, publicKey, iv, keyType)
-                            from unit0 in Either<InsertKeyPairError, Unit>.FromRightAsync(StorePrivateKeyAsync(keyType, privateKey, rememberUser))
+         var uploadResult = from uploadResponse in UploadKeyPairAsync(encryptedPrivateKey, publicKey, iv)
+                            from unit0 in Either<InsertKeyPairError, Unit>.FromRightAsync(StorePrivateKeyAsync(privateKey, rememberUser))
                             select uploadResponse;
 
          return await uploadResult
@@ -135,32 +111,11 @@ namespace Crypter.ClientServices.Services
             .BindAsync(x => Maybe<PEMString>.From(privateKey).AsTask());
       }
 
-      private async Task<Unit> StorePrivateKeyAsync(UserKeyType keyType, PEMString privateKey, bool rememberUser)
+      private async Task<Unit> StorePrivateKeyAsync(PEMString privateKey, bool rememberUser)
       {
-         switch (keyType)
-         {
-            case UserKeyType.Ed25519:
-               Ed25519PrivateKey = privateKey;
-               await _userKeysRepository.StoreEd25519PrivateKeyAsync(privateKey, rememberUser);
-               break;
-            case UserKeyType.X25519:
-               X25519PrivateKey = privateKey;
-               await _userKeysRepository.StoreX25519PrivateKeyAsync(privateKey, rememberUser);
-               break;
-            default:
-               throw new NotImplementedException("Unknown key type.");
-         }
+         X25519PrivateKey = privateKey;
+         await _userKeysRepository.StoreX25519PrivateKeyAsync(privateKey, rememberUser);
          return Unit.Default;
-      }
-
-      private Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> DownloadPrivateKeyAsync(UserKeyType keyType)
-      {
-         return keyType switch
-         {
-            UserKeyType.Ed25519 => _crypterApiService.GetDigitalSignaturePrivateKeyAsync(),
-            UserKeyType.X25519 => _crypterApiService.GetDiffieHellmanPrivateKeyAsync(),
-            _ => throw new NotImplementedException("Unknown key type.")
-         };
       }
 
       private Maybe<PEMString> DecryptUserPrivateKey(Base64String encryptedPrivateKey, Base64String iv, byte[] userSymmetricKey)
@@ -183,26 +138,20 @@ namespace Crypter.ClientServices.Services
          return CryptoLib.UserFunctions.DeriveSymmetricKeyFromUserCredentials(username, password);
       }
 
-      private Task<Either<InsertKeyPairError, InsertKeyPairResponse>> UploadKeyPairAsync(byte[] encryptedPrivateKey, PEMString publicKey, byte[] iv, UserKeyType keyType)
+      private Task<Either<InsertKeyPairError, InsertKeyPairResponse>> UploadKeyPairAsync(byte[] encryptedPrivateKey, PEMString publicKey, byte[] iv)
       {
          var base64PublicKey = Convert.ToBase64String(Encoding.UTF8.GetBytes(publicKey.Value));
          var base64EncryptedPrivateKey = Convert.ToBase64String(encryptedPrivateKey);
          var base64IV = Convert.ToBase64String(iv);
 
          var request = new InsertKeyPairRequest(base64EncryptedPrivateKey, base64PublicKey, base64IV);
-         return keyType switch
-         {
-            UserKeyType.Ed25519 => _crypterApiService.InsertDigitalSignatureKeysAsync(request),
-            UserKeyType.X25519 => _crypterApiService.InsertDiffieHellmanKeysAsync(request),
-            _ => throw new NotImplementedException("Unknown key type.")
-         };
+         return _crypterApiService.InsertDiffieHellmanKeysAsync(request);
       }
 
       private async void OnUserSessionServiceInitialized(object sender, UserSessionServiceInitializedEventArgs args)
       {
          if (args.IsLoggedIn)
          {
-            Ed25519PrivateKey = await _userKeysRepository.GetEd25519PrivateKeyAsync();
             X25519PrivateKey = await _userKeysRepository.GetX25519PrivateKeyAsync();
          }
       }
@@ -214,7 +163,6 @@ namespace Crypter.ClientServices.Services
 
       private void OnUserLoggedOut(object sender, EventArgs _)
       {
-         Ed25519PrivateKey = Maybe<PEMString>.None;
          X25519PrivateKey = Maybe<PEMString>.None;
       }
 

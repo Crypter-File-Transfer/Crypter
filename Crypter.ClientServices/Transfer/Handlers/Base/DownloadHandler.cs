@@ -41,25 +41,21 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
    {
       protected readonly ICrypterApiService _crypterApiService;
       protected readonly ISimpleEncryptionService _simpleEncryptionService;
-      protected readonly ISimpleSignatureService _simpleSignatureService;
       protected readonly IUserSessionService _userSessionService;
 
       protected string _transferHashId;
       protected TransferUserType _transferUserType = TransferUserType.Anonymous;
 
       protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
-
       protected Maybe<PEMString> _senderDiffieHellmanPublicKey = Maybe<PEMString>.None;
-      protected Maybe<PEMString> _senderDigitalSignaturePublicKey = Maybe<PEMString>.None;
 
       protected Maybe<byte[]> _symmetricKey = Maybe<byte[]>.None;
       protected Maybe<string> _serverKey = Maybe<string>.None;
 
-      public DownloadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, IUserSessionService userSessionService)
+      public DownloadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, IUserSessionService userSessionService)
       {
          _crypterApiService = crypterApiService;
          _simpleEncryptionService = simpleEncryptionService;
-         _simpleSignatureService = simpleSignatureService;
          _userSessionService = userSessionService;
       }
 
@@ -79,11 +75,6 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
       {
          _senderDiffieHellmanPublicKey = senderDiffieHellmanPublicKey;
          TryDeriveSymmetricKeys();
-      }
-
-      protected void SetSenderDigitalSignaturePublicKey(PEMString senderDigitalSignaturePublicKey)
-      {
-         _senderDigitalSignaturePublicKey = senderDigitalSignaturePublicKey;
       }
 
       private void TryDeriveSymmetricKeys()

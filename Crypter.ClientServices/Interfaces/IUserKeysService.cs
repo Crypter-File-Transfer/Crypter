@@ -32,9 +32,7 @@ namespace Crypter.ClientServices.Interfaces
    public interface IUserKeysService
    {
       Maybe<PEMString> X25519PrivateKey { get; }
-      Maybe<PEMString> Ed25519PrivateKey { get; }
 
       (PEMString PrivateKey, PEMString PublicKey) CreateX25519KeyPair();
-      (PEMString PrivateKey, PEMString PublicKey) CreateEd25519KeyPair();
    }
 }

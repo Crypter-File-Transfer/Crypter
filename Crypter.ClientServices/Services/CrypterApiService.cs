@@ -228,24 +228,6 @@ namespace Crypter.ClientServices.Services
                 select errorableResponse;
       }
 
-      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync()
-      {
-         string url = $"{_baseApiUrl}/keys/digital-signature/private";
-         return from response in Either<GetPrivateKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetPrivateKeyResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpService.GetAsync<GetPrivateKeyResponse>(url))
-                from errorableResponse in ExtractErrorCode<GetPrivateKeyError, GetPrivateKeyResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeysAsync(InsertKeyPairRequest request)
-      {
-         string url = $"{_baseApiUrl}/keys/digital-signature";
-         return from response in Either<InsertKeyPairError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertKeyPairResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpService.PutAsync<InsertKeyPairRequest, InsertKeyPairResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<InsertKeyPairError, InsertKeyPairResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
       #endregion
 
       #region User
