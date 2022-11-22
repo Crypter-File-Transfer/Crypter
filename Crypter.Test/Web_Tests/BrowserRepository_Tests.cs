@@ -68,7 +68,6 @@ namespace Crypter.Test.Web_Tests
          var storedUserSession = new UserSession("foo", true, UserSession.LATEST_SCHEMA);
          var authenticationToken = "authentication";
          var refreshToken = "refresh";
-         var ed25519PrivateKey = "plaintextEd25519";
          var x25519PrivateKey = "plaintextX25519";
          var jsRuntime = new Mock<IJSRuntime>();
 
@@ -92,13 +91,6 @@ namespace Crypter.Test.Web_Tests
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.RefreshToken.ToString())))
             .ReturnsAsync((string commands, object[] args) => JsonSerializer.Serialize(refreshToken));
-
-         // Ed25519PrivateKey
-         jsRuntime
-            .Setup(x => x.InvokeAsync<string>(
-               It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.Ed25519PrivateKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(ed25519PrivateKey));
 
          // X25519PrivateKey
          jsRuntime
@@ -130,10 +122,6 @@ namespace Crypter.Test.Web_Tests
          var fetchedRefreshToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.RefreshToken);
          fetchedRefreshToken.IfNone(Assert.Fail);
          fetchedRefreshToken.IfSome(x => Assert.AreEqual(refreshToken, x));
-
-         var fetchedPlaintextEd25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.Ed25519PrivateKey);
-         fetchedPlaintextEd25519PrivateKey.IfNone(Assert.Fail);
-         fetchedPlaintextEd25519PrivateKey.IfSome(x => Assert.AreEqual(ed25519PrivateKey, x));
 
          var fetchedPlaintextX25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.X25519PrivateKey);
          fetchedPlaintextX25519PrivateKey.IfNone(Assert.Fail);

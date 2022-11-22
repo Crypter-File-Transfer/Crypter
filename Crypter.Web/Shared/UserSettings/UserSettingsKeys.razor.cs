@@ -34,15 +34,10 @@ namespace Crypter.Web.Shared.UserSettings
       [Inject]
       private IUserKeysService UserKeysService { get; set; }
 
-      protected string Ed25519PrivateKey;
       protected string X25519PrivateKey;
 
       protected override void OnInitialized()
       {
-         Ed25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
-            () => "",
-            some => some.Value);
-
          X25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
             () => "",
             some => some.Value);

@@ -54,7 +54,6 @@ namespace Crypter.Web.Shared.Modal
 
       protected bool IsSenderDefined = false;
       protected string SenderX25519PrivateKey;
-      protected string SenderEd25519PrivateKey;
       protected int RequestedExpirationHours;
       protected bool UseCompression;
 
@@ -64,11 +63,7 @@ namespace Crypter.Web.Shared.Modal
 
       public void Open()
       {
-         IsSenderDefined = UserKeysService.Ed25519PrivateKey.IsSome && UserKeysService.X25519PrivateKey.IsSome;
-         SenderEd25519PrivateKey = UserKeysService.Ed25519PrivateKey.Match(
-            () => default,
-            key => key.Value);
-
+         IsSenderDefined = UserKeysService.X25519PrivateKey.IsSome;
          SenderX25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
             () => default,
             key => key.Value);

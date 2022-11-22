@@ -102,7 +102,7 @@ namespace Crypter.Core.Services
          var databaseData = await _context.AnonymousMessageTransfers
             .Where(x => x.Id == id)
             .Where(x => x.RecipientProof == request.RecipientProof)
-            .Select(x => new { x.DigitalSignature, x.DigitalSignaturePublicKey, x.CompressionType })
+            .Select(x => new { x.CompressionType })
             .FirstOrDefaultAsync(cancellationToken);
 
          if (databaseData is null)
@@ -119,7 +119,7 @@ namespace Crypter.Core.Services
 
          return ciphertextData.Match<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>>(
             () => DownloadTransferCiphertextError.NotFound,
-            x => new DownloadTransferCiphertextResponse(x.Ciphertext, x.InitializationVector, databaseData.DigitalSignature, databaseData.DigitalSignaturePublicKey, databaseData.CompressionType));
+            x => new DownloadTransferCiphertextResponse(x.Ciphertext, x.InitializationVector, databaseData.CompressionType));
       }
 
       public async Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> GetAnonymousFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest request, bool deleteOnRead, CancellationToken cancellationToken)
@@ -128,7 +128,7 @@ namespace Crypter.Core.Services
          var databaseData = await _context.AnonymousFileTransfers
             .Where(x => x.Id == id)
             .Where(x => x.RecipientProof == request.RecipientProof)
-            .Select(x => new { x.DigitalSignature, x.DigitalSignaturePublicKey, x.CompressionType })
+            .Select(x => new { x.CompressionType })
             .FirstOrDefaultAsync(cancellationToken);
 
          if (databaseData is null)
@@ -145,7 +145,7 @@ namespace Crypter.Core.Services
 
          return ciphertextData.Match<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>>(
             () => DownloadTransferCiphertextError.NotFound,
-            x => new DownloadTransferCiphertextResponse(x.Ciphertext, x.InitializationVector, databaseData.DigitalSignature, databaseData.DigitalSignaturePublicKey, databaseData.CompressionType));
+            x => new DownloadTransferCiphertextResponse(x.Ciphertext, x.InitializationVector, databaseData.CompressionType));
       }
 
       public async Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> GetUserMessagePreviewAsync(string hashId, Maybe<Guid> userId, CancellationToken cancellationToken)
@@ -200,7 +200,7 @@ namespace Crypter.Core.Services
          var databaseData = await _context.UserMessageTransfers
             .Where(x => x.Id == id)
             .Where(x => x.RecipientId == null || x.RecipientId == nullableUserId)
-            .Select(x => new { x.DigitalSignature, x.DigitalSignaturePublicKey, x.CompressionType, x.RecipientProof })
+            .Select(x => new { x.CompressionType, x.RecipientProof })
             .FirstOrDefaultAsync(cancellationToken);
 
          if (databaseData is null)
@@ -216,7 +216,7 @@ namespace Crypter.Core.Services
          var ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.Message, TransferUserType.User, cancellationToken);
          return ciphertextData.Match<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>>(
             () => DownloadTransferCiphertextError.NotFound,
-            x => new DownloadTransferCiphertextResponse(x.Ciphertext, x.InitializationVector, databaseData.DigitalSignature, databaseData.DigitalSignaturePublicKey, databaseData.CompressionType));
+            x => new DownloadTransferCiphertextResponse(x.Ciphertext, x.InitializationVector, databaseData.CompressionType));
       }
 
       public async Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> GetUserFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest request, Maybe<Guid> userId, CancellationToken cancellationToken)
@@ -229,7 +229,7 @@ namespace Crypter.Core.Services
          var databaseData = await _context.UserFileTransfers
             .Where(x => x.Id == id)
             .Where(x => x.RecipientId == null || x.RecipientId == nullableUserId)
-            .Select(x => new { x.DigitalSignature, x.DigitalSignaturePublicKey, x.CompressionType, x.RecipientProof })
+            .Select(x => new { x.CompressionType, x.RecipientProof })
             .FirstOrDefaultAsync(cancellationToken);
 
          if (databaseData is null)
@@ -245,7 +245,7 @@ namespace Crypter.Core.Services
          var ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.File, TransferUserType.User, cancellationToken);
          return ciphertextData.Match<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>>(
             () => DownloadTransferCiphertextError.NotFound,
-            x => new DownloadTransferCiphertextResponse(x.Ciphertext, x.InitializationVector, databaseData.DigitalSignature, databaseData.DigitalSignaturePublicKey, databaseData.CompressionType));
+            x => new DownloadTransferCiphertextResponse(x.Ciphertext, x.InitializationVector, databaseData.CompressionType));
       }
    }
 }

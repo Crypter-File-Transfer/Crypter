@@ -24,28 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Entities.Interfaces;
-using System;
-
-namespace Crypter.Core.Entities
+namespace Crypter.Crypto.Common.StreamEncryption
 {
-   public class UserEd25519KeyPairEntity : IUserPublicKeyPair
+   public interface IStreamEncryptionFactory
    {
-      public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
-      public DateTime Created { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserEd25519KeyPairEntity(Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
-      {
-         Owner = owner;
-         PrivateKey = privateKey;
-         PublicKey = publicKey;
-         ClientIV = clientIV;
-         Created = created;
-      }
+      IStreamEncrypt InitializeEncryptionStream();
+      IStreamDecrypt InitializeDecryptionStream();
    }
 }
