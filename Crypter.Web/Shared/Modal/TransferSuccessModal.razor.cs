@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Monads;
+using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Threading.Tasks;
@@ -36,36 +37,24 @@ namespace Crypter.Web.Shared.Modal
       [Inject]
       private IJSRuntime JSRuntime { get; set; }
 
-      protected string DownloadUrl { get; set; }
-
-      protected int ExpirationHours { get; set; }
+      protected string DownloadUrl;
+      protected int ExpirationHours;
 
       protected Maybe<EventCallback> ModalClosedCallback { get; set; }
-
-      protected bool Show = false;
-      protected string ModalDisplay = "none;";
-      protected string ModalClass = "";
+      protected ModalBehavior ModalBehaviorRef { get; set; }
 
       public void Open(string downloadUrl, int expirationHours, Maybe<EventCallback> modalClosedCallback)
       {
          DownloadUrl = downloadUrl;
          ExpirationHours = expirationHours;
          ModalClosedCallback = modalClosedCallback;
-
-         ModalDisplay = "block;";
-         ModalClass = "Show";
-         Show = true;
-         StateHasChanged();
+         ModalBehaviorRef.Open();
       }
 
       public async Task CloseAsync()
       {
-         ModalDisplay = "none";
-         ModalClass = "";
-         Show = false;
-         StateHasChanged();
-
          await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
+         ModalBehaviorRef.Close();
       }
 
       protected async Task CopyToClipboardAsync()

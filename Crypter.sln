@@ -27,7 +27,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Benchmarks", "Crypt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Crypto.Common", "Crypter.Crypto.Common\Crypter.Crypto.Common.csproj", "{98C5C8F6-7E87-48FD-B34A-1D40698249D2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypter.Crypto.DefaultProvider", "Crypter.Crypto.DefaultProvider\Crypter.Crypto.DefaultProvider.csproj", "{48082763-F72D-4ECF-A61B-9501DE57CB58}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Crypto.DefaultProvider", "Crypter.Crypto.DefaultProvider\Crypter.Crypto.DefaultProvider.csproj", "{48082763-F72D-4ECF-A61B-9501DE57CB58}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

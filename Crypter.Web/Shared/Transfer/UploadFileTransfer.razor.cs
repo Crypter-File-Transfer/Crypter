@@ -34,7 +34,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
 {
-   public partial class UploadFileTransferBase : UploadTransferBase
+   public partial class UploadFileTransferBase : UploadTransferBase, IDisposable
    {
       protected IBrowserFile SelectedFile;
 
@@ -44,7 +44,7 @@ namespace Crypter.Web.Shared.Transfer
 
       // UI
       protected bool ShowProgressBar = false;
-      protected double ProgressPercent = 0.0;
+      protected double ProgressPercent = 0;
       protected string DropClass = string.Empty;
 
       // Strings
@@ -116,8 +116,7 @@ namespace Crypter.Web.Shared.Transfer
 
          HandleUploadResponse(uploadResponse);
 
-         Recycle();
-         EncryptionInProgress = false;
+         Dispose();
       }
 
       protected async Task SetCompressionProgress(double percentComplete)
@@ -160,9 +159,14 @@ namespace Crypter.Web.Shared.Transfer
          await Task.Delay(400);
       }
 
-      public void Recycle()
+      public void Dispose()
       {
          SelectedFile = null;
+         EncryptionInProgress = false;
+         ProgressPercent = 0;
+         ShowProgressBar = false;
+         DropClass = string.Empty;
+         GC.SuppressFinalize(this);
       }
    }
 }
