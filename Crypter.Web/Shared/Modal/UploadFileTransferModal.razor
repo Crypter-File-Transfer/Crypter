@@ -26,8 +26,8 @@
 
 @inherits UploadFileTransferModalBase
 
-<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
-   <div class="modal-dialog" role="document">
+<ModalBehavior @ref="ModalBehaviorRef">
+   <Content>
       <div class="modal-content card">
          <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs" role="tablist">
@@ -60,7 +60,5 @@
             <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="CloseAsync">Close</button>
          </div>
       </div>
-   </div>
-</div>
-
-<div hidden="@(!ShowBackdrop)" class="modal-backdrop fade show"></div>
+   </Content>
+</ModalBehavior>
