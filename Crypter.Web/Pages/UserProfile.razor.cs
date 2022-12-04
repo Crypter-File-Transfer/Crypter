@@ -25,10 +25,8 @@
  */
 
 using Crypter.ClientServices.Interfaces;
-using Crypter.Common.Primitives;
 using Microsoft.AspNetCore.Components;
 using System;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -54,7 +52,7 @@ namespace Crypter.Web.Pages
       protected string ProperUsername;
       protected bool AllowsFiles;
       protected bool AllowsMessages;
-      protected PEMString UserX25519PublicKey;
+      protected string UserPublicKey;
 
       protected override async Task OnInitializedAsync()
       {
@@ -74,13 +72,12 @@ namespace Crypter.Web.Pages
             ProperUsername = x.Result.Username;
             AllowsFiles = x.Result.ReceivesFiles;
             AllowsMessages = x.Result.ReceivesMessages;
-            UserX25519PublicKey = PEMString.From(
-               Encoding.UTF8.GetString(Convert.FromBase64String(x.Result.PublicDHKey)));
+            UserPublicKey = Convert.ToHexString(x.Result.PublicKey);
          });
 
          IsProfileAvailable = response.Match(
             false,
-            right => !string.IsNullOrEmpty(right.Result.PublicDHKey));
+            right => right.Result.PublicKey is not null);
       }
    }
 }

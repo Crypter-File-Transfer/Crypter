@@ -40,6 +40,7 @@ namespace Crypter.ClientServices.Interfaces
 
       Task<bool> IsLoggedInAsync();
       Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser);
+      Maybe<byte[]> DeriveAuthenticationPassword(Username username, Password password);
       Task<Unit> LogoutAsync();
 
       event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler;

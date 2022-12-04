@@ -32,19 +32,19 @@ namespace Crypter.Core.Entities
    public class UserX25519KeyPairEntity : IUserPublicKeyPair
    {
       public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
+      public byte[] PrivateKey { get; set; }
+      public byte[] PublicKey { get; set; }
+      public byte[] Nonce { get; set; }
       public DateTime Created { get; set; }
 
       public UserEntity User { get; set; }
 
-      public UserX25519KeyPairEntity(Guid owner, string privateKey, string publicKey, string clientIV, DateTime created)
+      public UserX25519KeyPairEntity(Guid owner, byte[] privateKey, byte[] publicKey, byte[] nonce, DateTime created)
       {
          Owner = owner;
          PrivateKey = privateKey;
          PublicKey = publicKey;
-         ClientIV = clientIV;
+         Nonce = nonce;
          Created = created;
       }
    }

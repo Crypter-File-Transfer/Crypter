@@ -33,21 +33,21 @@ namespace Crypter.Contracts.Features.Authentication
    public class LoginRequest
    {
       public string Username { get; set; }
-      public string Password { get; set; }
+      public byte[] Password { get; set; }
       public TokenType RefreshTokenType { get; set; }
 
       [JsonConstructor]
-      public LoginRequest(string username, string password, TokenType refreshTokenType)
+      public LoginRequest(string username, byte[] password, TokenType refreshTokenType)
       {
          Username = username;
          Password = password;
          RefreshTokenType = refreshTokenType;
       }
 
-      public LoginRequest(Username username, AuthenticationPassword password, TokenType refreshTokenType)
+      public LoginRequest(Username username, byte[] password, TokenType refreshTokenType)
       {
          Username = username.Value;
-         Password = password.Value;
+         Password = password;
          RefreshTokenType = refreshTokenType;
       }
    }

@@ -25,14 +25,11 @@
  */
 
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 
 namespace Crypter.ClientServices.Interfaces
 {
    public interface IUserKeysService
    {
-      Maybe<PEMString> X25519PrivateKey { get; }
-
-      (PEMString PrivateKey, PEMString PublicKey) CreateX25519KeyPair();
+      Maybe<byte[]> PrivateKey { get; }
    }
 }

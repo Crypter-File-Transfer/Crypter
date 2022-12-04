@@ -24,10 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+
 namespace Crypter.Crypto.Common.StreamEncryption
 {
    public interface IStreamEncrypt
    {
-
+      byte[] GenerateHeader(ReadOnlySpan<byte> key);
+      byte[] Push(byte[] plaintext, bool final);
    }
 }

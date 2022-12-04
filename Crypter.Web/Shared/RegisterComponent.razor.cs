@@ -41,6 +41,9 @@ namespace Crypter.Web.Shared
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
 
+      [Inject]
+      protected IUserSessionService UserSessionService { get; set; }
+
       protected const string _invalidClassName = "is-invalid";
 
       protected UserRegistrationForm RegistrationModel;
@@ -178,10 +181,8 @@ namespace Crypter.Web.Shared
                                 from password in ValidatePassword().ToEither(RegistrationError.InvalidPassword).AsTask()
                                 from emailAddress in ValidateEmailAddress().MapLeft(_ => RegistrationError.InvalidEmailAddress).AsTask()
                                 where ValidatePasswordConfirmation()
-                                let authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password)
-                                let authPasswordEncoded = Convert.ToBase64String(authPasswordBytes)
-                                let authenticationPassword = AuthenticationPassword.From(authPasswordEncoded)
-                                let requestBody = new RegistrationRequest(username, authenticationPassword, emailAddress)
+                                from authPassword in UserSessionService.DeriveAuthenticationPassword(username, password).ToEither(RegistrationError.ClientCryptographicError).AsTask()
+                                let requestBody = new RegistrationRequest(username, authPassword, emailAddress)
                                 from registrationResponse in CrypterApiService.RegisterUserAsync(requestBody)
                                 let _ = UserProvidedEmailAddress = emailAddress.IsSome
                                 select registrationResponse;
@@ -194,6 +195,7 @@ namespace Crypter.Web.Shared
       private void HandleRegistrationFailure(RegistrationError error)
       {
          RegistrationAttemptFailed = true;
+#pragma warning disable CS8524
          RegistrationAttemptErrorMessage = error switch
          {
             RegistrationError.InvalidUsername => "Invalid username",
@@ -201,8 +203,10 @@ namespace Crypter.Web.Shared
             RegistrationError.InvalidEmailAddress => "Invalid email address",
             RegistrationError.UsernameTaken => "Username is already taken",
             RegistrationError.EmailAddressTaken => "Email address is associated with an existing account",
-            _ => "???"
+            RegistrationError.ClientCryptographicError => "A cryptographic error occurred. This device or browser may not be supported.",
+            RegistrationError.UnknownError => "An unknown error ocurred."
          };
+#pragma warning restore CS8524
       }
 
       private void HandleUnknownRegistrationFailure()

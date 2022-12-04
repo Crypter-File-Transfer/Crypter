@@ -71,8 +71,8 @@ namespace Crypter.Web.Shared.Transfer
       {
          DecryptionInProgress = true;
 
-         Maybe<PEMString> recipientPrivateKey = SpecificRecipient
-            ? UserKeysService.X25519PrivateKey
+         Maybe<byte[]> recipientPrivateKey = SpecificRecipient
+            ? UserKeysService.PrivateKey
             : DeriveRecipientPrivateKeyFromUrlSeed();
 
          recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key.");

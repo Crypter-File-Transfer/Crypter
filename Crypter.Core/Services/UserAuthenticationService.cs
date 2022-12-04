@@ -187,7 +187,7 @@ namespace Crypter.Core.Services
             return LoginError.InvalidUsername;
          }
 
-         if (!AuthenticationPassword.TryFrom(request.Password, out var validAuthenticationPassword))
+         if (request.Password is null || request.Password.Length == 0)
          {
             return LoginError.InvalidPassword;
          }
@@ -197,7 +197,7 @@ namespace Crypter.Core.Services
             return LoginError.InvalidTokenTypeRequested;
          }
 
-         return new ValidLoginRequest(validUsername, validAuthenticationPassword, request.RefreshTokenType);
+         return new ValidLoginRequest(validUsername, request.Password, request.RefreshTokenType);
       }
 
       private static Either<RegistrationError, ValidRegistrationRequest> ValidateRegistrationRequest(RegistrationRequest request)
@@ -207,7 +207,7 @@ namespace Crypter.Core.Services
             return RegistrationError.InvalidUsername;
          }
 
-         if (!AuthenticationPassword.TryFrom(request.Password, out var validAuthenticationPassword))
+         if (request.Password is null || request.Password.Length == 0)
          {
             return RegistrationError.InvalidPassword;
          }
@@ -222,13 +222,13 @@ namespace Crypter.Core.Services
             return RegistrationError.InvalidEmailAddress;
          }
 
-         return new ValidRegistrationRequest(validUsername, validAuthenticationPassword, validatedEmailAddress);
+         return new ValidRegistrationRequest(validUsername, request.Password, validatedEmailAddress);
       }
 
-      private static Either<T, AuthenticationPassword> ValidateRequestPassword<T>(string password, T error)
+      private static Either<T, byte[]> ValidateRequestPassword<T>(byte[] password, T error)
       {
-         return AuthenticationPassword.TryFrom(password, out var validPassword)
-            ? validPassword
+         return password is not null && password.Length > 0
+            ? password
             : error;
       }
 
@@ -305,7 +305,7 @@ namespace Crypter.Core.Services
             error);
       }
 
-      private bool VerifyPassword(AuthenticationPassword password, byte[] existingPasswordHash, byte[] passwordSalt)
+      private bool VerifyPassword(byte[] password, byte[] existingPasswordHash, byte[] passwordSalt)
       {
          return _passwordHashService.VerifySecurePasswordHash(password, existingPasswordHash, passwordSalt);
       }
@@ -422,10 +422,10 @@ namespace Crypter.Core.Services
       private record ValidLoginRequest
       {
          public Username Username { get; init; }
-         public AuthenticationPassword Password { get; init; }
+         public byte[] Password { get; init; }
          public TokenType RefreshTokenType { get; init; }
 
-         public ValidLoginRequest(Username username, AuthenticationPassword password, TokenType refreshTokenType)
+         public ValidLoginRequest(Username username, byte[] password, TokenType refreshTokenType)
          {
             Username = username;
             Password = password;
@@ -436,10 +436,10 @@ namespace Crypter.Core.Services
       private record ValidRegistrationRequest
       {
          public Username Username { get; init; }
-         public AuthenticationPassword Password { get; init; }
+         public byte[] Password { get; init; }
          public Maybe<EmailAddress> EmailAddress { get; init; }
 
-         public ValidRegistrationRequest(Username username, AuthenticationPassword password, Maybe<EmailAddress> emailAddress)
+         public ValidRegistrationRequest(Username username, byte[] password, Maybe<EmailAddress> emailAddress)
          {
             Username = username;
             Password = password;

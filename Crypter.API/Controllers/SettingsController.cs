@@ -79,7 +79,8 @@ namespace Crypter.API.Controllers
 #pragma warning disable CS8524
             return error switch
             {
-               UpdateContactInfoError.UnknownError => ServerError(errorResponse),
+               UpdateContactInfoError.UnknownError
+                  or UpdateContactInfoError.ClientCryptographicError => ServerError(errorResponse),
                UpdateContactInfoError.UserNotFound => NotFound(errorResponse),
                UpdateContactInfoError.EmailAddressUnavailable => Conflict(errorResponse),
                UpdateContactInfoError.InvalidEmailAddress

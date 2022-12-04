@@ -24,12 +24,30 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Crypto.Common.ConstantTime;
 using Crypter.Crypto.Common.DigitalSignature;
+using Crypter.Crypto.Common.Encryption;
+using Crypter.Crypto.Common.GenericHash;
+using Crypter.Crypto.Common.KeyExchange;
+using Crypter.Crypto.Common.Padding;
+using Crypter.Crypto.Common.PasswordHash;
+using Crypter.Crypto.Common.Random;
+using Crypter.Crypto.Common.StreamEncryption;
+using Crypter.Crypto.Common.StreamGenericHash;
 
 namespace Crypter.Crypto.Common
 {
    public interface ICryptoProvider
    {
+      IConstantTime ConstantTime { get; }
       IDigitalSignature DigitalSignature { get; }
+      IEncryption Encryption { get; }
+      IGenericHash GenericHash { get; }
+      IKeyExchange KeyExchange { get; }
+      IPadding Padding { get; }
+      IPasswordHash PasswordHash { get; }
+      IRandom Random { get; }
+      IStreamEncryptionFactory StreamEncryptionFactory { get; }
+      IStreamGenericHashFactory StreamGenericHashFactory { get; }
    }
 }

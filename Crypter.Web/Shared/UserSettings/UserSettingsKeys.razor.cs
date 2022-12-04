@@ -26,6 +26,7 @@
 
 using Crypter.ClientServices.Interfaces;
 using Microsoft.AspNetCore.Components;
+using System;
 
 namespace Crypter.Web.Shared.UserSettings
 {
@@ -34,13 +35,13 @@ namespace Crypter.Web.Shared.UserSettings
       [Inject]
       private IUserKeysService UserKeysService { get; set; }
 
-      protected string X25519PrivateKey;
+      protected string PrivateKey;
 
       protected override void OnInitialized()
       {
-         X25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
+         PrivateKey = UserKeysService.PrivateKey.Match(
             () => "",
-            some => some.Value);
+            Convert.ToHexString);
       }
    }
 }

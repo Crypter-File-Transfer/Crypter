@@ -25,7 +25,6 @@
  */
 
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Interfaces.Repositories
@@ -35,7 +34,7 @@ namespace Crypter.ClientServices.Interfaces.Repositories
    /// </summary>
    public interface IUserKeysRepository
    {
-      Task<Maybe<PEMString>> GetX25519PrivateKeyAsync();
-      Task StoreX25519PrivateKeyAsync(PEMString privateKey, bool trustDevice);
+      Task<Maybe<byte[]>> GetPrivateKeyAsync();
+      Task StorePrivateKeyAsync(byte[] privateKey, bool trustDevice);
    }
 }

@@ -6,7 +6,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
-    <RunAOTCompilation>false</RunAOTCompilation>
+    <RunAOTCompilation>true</RunAOTCompilation>
     <StartupObject />
   </PropertyGroup>
 
@@ -21,7 +21,8 @@
     <ProjectReference Include="..\Crypter.ClientServices\Crypter.ClientServices.csproj" />
     <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
     <ProjectReference Include="..\Crypter.Contracts\Crypter.Contracts.csproj" />
-    <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
+    <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
+    <ProjectReference Include="..\Crypter.Crypto.Providers.Browser\Crypter.Crypto.Providers.Browser.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,8 +4,6 @@ VisualStudioVersion = 17.0.31919.166
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.API", "Crypter.API\Crypter.API.csproj", "{F9208A53-1847-4B7E-A867-C5D17F52410C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.CryptoLib", "Crypter.CryptoLib\Crypter.CryptoLib.csproj", "{EB459FFC-205F-48DF-A3C1-31916BFED392}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Web", "Crypter.Web\Crypter.Web.csproj", "{4CF78490-FDFA-47EE-A1BE-7AE5534ECFAF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Contracts", "Crypter.Contracts\Crypter.Contracts.csproj", "{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}"
@@ -27,7 +25,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Benchmarks", "Crypt
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Crypto.Common", "Crypter.Crypto.Common\Crypter.Crypto.Common.csproj", "{98C5C8F6-7E87-48FD-B34A-1D40698249D2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Crypto.DefaultProvider", "Crypter.Crypto.DefaultProvider\Crypter.Crypto.DefaultProvider.csproj", "{48082763-F72D-4ECF-A61B-9501DE57CB58}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Crypto.Providers.Default", "Crypter.Crypto.Providers.Default\Crypter.Crypto.Providers.Default.csproj", "{48082763-F72D-4ECF-A61B-9501DE57CB58}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Crypto.Providers.Browser", "Crypter.Crypto.Providers.Browser\Crypter.Crypto.Providers.Browser.csproj", "{85B0E967-A4BC-4781-AD9C-AD12FA531DB7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,10 +39,6 @@ Global
 		{F9208A53-1847-4B7E-A867-C5D17F52410C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9208A53-1847-4B7E-A867-C5D17F52410C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9208A53-1847-4B7E-A867-C5D17F52410C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EB459FFC-205F-48DF-A3C1-31916BFED392}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EB459FFC-205F-48DF-A3C1-31916BFED392}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EB459FFC-205F-48DF-A3C1-31916BFED392}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EB459FFC-205F-48DF-A3C1-31916BFED392}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4CF78490-FDFA-47EE-A1BE-7AE5534ECFAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4CF78490-FDFA-47EE-A1BE-7AE5534ECFAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4CF78490-FDFA-47EE-A1BE-7AE5534ECFAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -79,6 +75,10 @@ Global
 		{48082763-F72D-4ECF-A61B-9501DE57CB58}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48082763-F72D-4ECF-A61B-9501DE57CB58}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48082763-F72D-4ECF-A61B-9501DE57CB58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{85B0E967-A4BC-4781-AD9C-AD12FA531DB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85B0E967-A4BC-4781-AD9C-AD12FA531DB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85B0E967-A4BC-4781-AD9C-AD12FA531DB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85B0E967-A4BC-4781-AD9C-AD12FA531DB7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

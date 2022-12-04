@@ -24,13 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using BlazorSodium.Extensions;
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.ClientServices.Services;
 using Crypter.ClientServices.Transfer;
 using Crypter.ClientServices.Transfer.Models;
-using Crypter.CryptoLib.Services;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.Providers.Browser;
 using Crypter.Web;
 using Crypter.Web.Models.Settings;
 using Crypter.Web.Repositories;
@@ -60,7 +62,7 @@ builder.Services.AddSingleton<IClientApiSettings>(sp =>
 builder.Services.AddSingleton(sp =>
 {
    var config = sp.GetService<IConfiguration>();
-   return config.GetSection("FileTransferSettings").Get<FileTransferSettings>();
+   return config.GetSection("TransferSettings").Get<TransferSettings>();
 });
 
 builder.Services.AddHttpClient<ICrypterHttpService, CrypterHttpService>(httpClient =>
@@ -89,16 +91,22 @@ builder.Services
    .AddSingleton<IUserSessionService, UserSessionService<BrowserStorageLocation>>()
    .AddSingleton<ICrypterApiService, CrypterApiService>()
    .AddSingleton<IUserKeysService, UserKeysService>()
-   .AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>()
-   .AddSingleton<ICompressionService, CompressionService>()
    .AddSingleton<IUserContactsService, UserContactsService>()
    .AddSingleton<IBrowserDownloadFileService, BrowserDownloadFileService>()
    .AddSingleton<TransferHandlerFactory>()
    .AddSingleton<Func<ICrypterApiService>>(sp => () => sp.GetService<ICrypterApiService>());
 
-var host = builder.Build();
-var contactsService = host.Services.GetRequiredService<IUserContactsService>();
-var userKeysService = host.Services.GetRequiredService<IUserKeysService>();
-var userSessionService = host.Services.GetRequiredService<IUserSessionService>();
+if (OperatingSystem.IsBrowser())
+{
+   builder.Services.AddBlazorSodium();
+   builder.Services.AddSingleton<ICryptoProvider, BrowserCryptoProvider>();
+}
+
+WebAssemblyHost host = builder.Build();
+
+// Resolve services so they can initialize
+IUserContactsService contactsService = host.Services.GetRequiredService<IUserContactsService>();
+IUserKeysService userKeysService = host.Services.GetRequiredService<IUserKeysService>();
+IUserSessionService userSessionService = host.Services.GetRequiredService<IUserSessionService>();
 
 await host.RunAsync();

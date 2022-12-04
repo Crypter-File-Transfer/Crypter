@@ -55,7 +55,7 @@ namespace Crypter.Core.Services
          return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
             _context.UserX25519KeyPairs
                .Where(x => x.Owner == userId)
-               .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.ClientIV))
+               .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.Nonce))
                .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
       }
 
@@ -66,7 +66,7 @@ namespace Crypter.Core.Services
 
          if (keyPairEntity is null)
          {
-            var newEntity = new UserX25519KeyPairEntity(userId, request.EncryptedPrivateKeyBase64, request.PublicKeyBase64, request.ClientIVBase64, DateTime.UtcNow);
+            var newEntity = new UserX25519KeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.Nonce, DateTime.UtcNow);
             _context.UserX25519KeyPairs.Add(newEntity);
             await _context.SaveChangesAsync(cancellationToken);
          }

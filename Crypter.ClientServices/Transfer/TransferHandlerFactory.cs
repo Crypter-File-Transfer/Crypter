@@ -28,7 +28,7 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer.Handlers;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
-using Crypter.CryptoLib.Services;
+using Crypter.Crypto.Common;
 using System.IO;
 
 namespace Crypter.ClientServices.Transfer
@@ -36,45 +36,43 @@ namespace Crypter.ClientServices.Transfer
    public class TransferHandlerFactory
    {
       private readonly ICrypterApiService _crypterApiService;
-      private readonly ISimpleEncryptionService _simpleEncryptionService;
+      private readonly ICryptoProvider _cryptoProvider;
       private readonly IUserSessionService _userSessionService;
-      private readonly ICompressionService _compressionService;
-      private readonly FileTransferSettings _fileTransferSettings;
+      private readonly TransferSettings _transferSettings;
 
-      public TransferHandlerFactory(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService,
-         IUserSessionService userSessionService, ICompressionService compressionService, FileTransferSettings fileTransferSettings)
+      public TransferHandlerFactory(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider,
+         IUserSessionService userSessionService, TransferSettings transferSettings)
       {
          _crypterApiService = crypterApiService;
-         _simpleEncryptionService = simpleEncryptionService;
+         _cryptoProvider = cryptoProvider;
          _userSessionService = userSessionService;
-         _compressionService = compressionService;
-         _fileTransferSettings = fileTransferSettings;
+         _transferSettings = transferSettings;
       }
 
-      public UploadFileHandler CreateUploadFileHandler(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours, bool useCompression)
+      public UploadFileHandler CreateUploadFileHandler(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours)
       {
-         var handler = new UploadFileHandler(_crypterApiService, _simpleEncryptionService, _fileTransferSettings, _compressionService);
-         handler.SetTransferInfo(fileStream, fileName, fileSize, fileContentType, expirationHours, useCompression);
+         var handler = new UploadFileHandler(_crypterApiService, _cryptoProvider, _transferSettings);
+         handler.SetTransferInfo(fileStream, fileName, fileSize, fileContentType, expirationHours);
          return handler;
       }
 
       public UploadMessageHandler CreateUploadMessageHandler(string messageSubject, string messageBody, int expirationHours)
       {
-         var handler = new UploadMessageHandler(_crypterApiService, _simpleEncryptionService, _fileTransferSettings);
+         var handler = new UploadMessageHandler(_crypterApiService, _cryptoProvider, _transferSettings);
          handler.SetTransferInfo(messageSubject, messageBody, expirationHours);
          return handler;
       }
 
       public DownloadFileHandler CreateDownloadFileHandler(string hashId, TransferUserType userType)
       {
-         var handler = new DownloadFileHandler(_crypterApiService, _simpleEncryptionService, _userSessionService, _compressionService, _fileTransferSettings);
+         var handler = new DownloadFileHandler(_crypterApiService, _cryptoProvider, _userSessionService, _transferSettings);
          handler.SetTransferInfo(hashId, userType);
          return handler;
       }
 
       public DownloadMessageHandler CreateDownloadMessageHandler(string hashId, TransferUserType userType)
       {
-         var handler = new DownloadMessageHandler(_crypterApiService, _simpleEncryptionService, _userSessionService);
+         var handler = new DownloadMessageHandler(_crypterApiService, _cryptoProvider, _userSessionService, _transferSettings);
          handler.SetTransferInfo(hashId, userType);
          return handler;
       }

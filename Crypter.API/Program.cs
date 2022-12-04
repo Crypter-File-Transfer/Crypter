@@ -30,8 +30,7 @@ using Crypter.Core.Identity;
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Crypter.Crypto.Common;
-using Crypter.Crypto.DefaultProvider;
-using Crypter.CryptoLib.Services;
+using Crypter.Crypto.Providers.Default;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -91,8 +90,6 @@ builder.Services.AddHashIdService(options =>
 
 builder.Services.AddDbContext<DataContext>();
 
-builder.Services.AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>();
-builder.Services.AddSingleton<ISimpleHashService, SimpleHashService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
 builder.Services.AddSingleton<ICryptoProvider, DefaultCryptoProvider>();
 

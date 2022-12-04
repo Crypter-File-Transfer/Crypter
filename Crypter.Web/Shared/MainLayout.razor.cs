@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using BlazorSodium.Services;
 using Crypter.ClientServices.DeviceStorage.Enums;
 using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Web.Shared.Modal;
@@ -35,6 +36,9 @@ namespace Crypter.Web.Shared
    public partial class MainLayoutBase : LayoutComponentBase
    {
       [Inject]
+      private IBlazorSodiumService BlazorSodiumService { get; set; }
+
+      [Inject]
       private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
 
       public BasicModal BasicModal { get; protected set; }
@@ -45,6 +49,7 @@ namespace Crypter.Web.Shared
 
       protected override async Task OnInitializedAsync()
       {
+         await BlazorSodiumService.InitializeAsync();
          await BrowserRepository.InitializeAsync();
          ServicesInitialized = true;
       }

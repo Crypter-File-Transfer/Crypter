@@ -33,21 +33,21 @@ namespace Crypter.Contracts.Features.Authentication
    public class RegistrationRequest
    {
       public string Username { get; set; }
-      public string Password { get; set; }
+      public byte[] Password { get; set; }
       public string EmailAddress { get; set; }
 
       [JsonConstructor]
-      public RegistrationRequest(string username, string password, string emailAddress = null)
+      public RegistrationRequest(string username, byte[] password, string emailAddress = null)
       {
          Username = username;
          Password = password;
          EmailAddress = emailAddress;
       }
 
-      public RegistrationRequest(Username username, AuthenticationPassword password, Maybe<EmailAddress> emailAddress)
+      public RegistrationRequest(Username username, byte[] password, Maybe<EmailAddress> emailAddress)
       {
          Username = username.Value;
-         Password = password.Value;
+         Password = password;
          EmailAddress = emailAddress.Match(
             () => null,
             some => some.Value);

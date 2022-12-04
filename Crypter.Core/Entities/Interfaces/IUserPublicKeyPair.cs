@@ -31,9 +31,9 @@ namespace Crypter.Core.Entities.Interfaces
    public interface IUserPublicKeyPair
    {
       public Guid Owner { get; set; }
-      public string PrivateKey { get; set; }
-      public string PublicKey { get; set; }
-      public string ClientIV { get; set; }
+      public byte[] PrivateKey { get; set; }
+      public byte[] PublicKey { get; set; }
+      public byte[] Nonce { get; set; }
       public DateTime Created { get; set; }
    }
 }

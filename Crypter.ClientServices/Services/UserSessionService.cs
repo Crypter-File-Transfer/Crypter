@@ -32,8 +32,11 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Authentication;
+using Crypter.Crypto.Common.PasswordHash;
+using Crypter.Crypto.Common;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -43,6 +46,7 @@ namespace Crypter.ClientServices.Services
       where TStorageLocation : Enum
    {
       private readonly ICrypterApiService _crypterApiService;
+      private readonly ICryptoProvider _cryptoProvider;
 
       // Repositories
       private readonly IDeviceRepository<TStorageLocation> _deviceRepository;
@@ -68,12 +72,14 @@ namespace Crypter.ClientServices.Services
          ICrypterApiService crypterApiService,
          IUserSessionRepository userSessionRepository,
          ITokenRepository tokenRepository,
-         IDeviceRepository<TStorageLocation> deviceRepository)
+         IDeviceRepository<TStorageLocation> deviceRepository,
+         ICryptoProvider cryptoProvider)
       {
          _crypterApiService = crypterApiService;
          _userSessionRepository = userSessionRepository;
          _tokenRepository = tokenRepository;
          _deviceRepository = deviceRepository;
+         _cryptoProvider = cryptoProvider;
 
          _trustDeviceRefreshTokenTypeMap = new Dictionary<bool, TokenType>
          {
@@ -190,11 +196,26 @@ namespace Crypter.ClientServices.Services
 
       private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, Password password, TokenType refreshTokenType)
       {
-         byte[] authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
-         AuthenticationPassword authPassword = AuthenticationPassword.From(Convert.ToBase64String(authPasswordBytes));
+         return DeriveAuthenticationPassword(username, password).Match(
+            () => Either<LoginError, LoginResponse>.FromLeft(LoginError.ClientCryptographicError).AsTask(),
+            x =>
+            {
+               LoginRequest loginRequest = new LoginRequest(username, x, refreshTokenType);
+               return _crypterApiService.LoginAsync(loginRequest);
+            });
+      }
 
-         LoginRequest loginRequest = new(username, authPassword, refreshTokenType);
-         return _crypterApiService.LoginAsync(loginRequest);
+      public Maybe<byte[]> DeriveAuthenticationPassword(Username username, Password password)
+      {
+         uint hashKeySize = _cryptoProvider.GenericHash.KeySize;
+         byte[] hashedUsername = _cryptoProvider.GenericHash.GenerateHash(hashKeySize, username.Value.ToLower());
+
+         uint saltSize = _cryptoProvider.PasswordHash.SaltSize;
+         byte[] salt = _cryptoProvider.GenericHash.GenerateHash(saltSize, password.Value, hashedUsername);
+
+         uint keySize = _cryptoProvider.Encryption.KeySize * 2;
+         return _cryptoProvider.PasswordHash.GenerateKey(password.Value, salt, keySize, OpsLimit.Sensitive, MemLimit.Sensitive)
+            .ToMaybe();
       }
 
       private Task<Unit> OnSuccessfulLoginAsync(LoginResponse response, bool rememberUser)

@@ -66,7 +66,8 @@ namespace Crypter.API.Controllers
 #pragma warning disable CS8524
             return error switch
             {
-               RegistrationError.UnknownError => ServerError(errorResponse),
+               RegistrationError.UnknownError
+                  or RegistrationError.ClientCryptographicError => ServerError(errorResponse),
                RegistrationError.InvalidUsername
                   or RegistrationError.InvalidPassword
                   or RegistrationError.InvalidEmailAddress => BadRequest(errorResponse),
@@ -102,7 +103,8 @@ namespace Crypter.API.Controllers
 #pragma warning disable CS8524
             return error switch
             {
-               LoginError.UnknownError => ServerError(errorResponse),
+               LoginError.UnknownError 
+                  or LoginError.ClientCryptographicError => ServerError(errorResponse),
                LoginError.InvalidUsername
                   or LoginError.InvalidPassword
                   or LoginError.InvalidTokenTypeRequested

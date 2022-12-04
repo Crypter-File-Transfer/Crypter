@@ -27,14 +27,12 @@
 using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
 using Crypter.Core.Services;
-using Crypter.CryptoLib.Crypto;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.Providers.Default;
 using NUnit.Framework;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Crypter.CryptoLib;
-using Crypter.Crypto.Common;
-using Crypter.Crypto.DefaultProvider;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {

@@ -10,14 +10,11 @@
    </ItemGroup>
    <ItemGroup>
       <ProjectReference Include="..\Crypter.Contracts\Crypter.Contracts.csproj" />
-      <ProjectReference Include="..\Crypter.Crypto.DefaultProvider\Crypter.Crypto.DefaultProvider.csproj" />
-      <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj">
-         <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
-      </ProjectReference>
+      <ProjectReference Include="..\Crypter.Crypto.Providers.Default\Crypter.Crypto.Providers.Default.csproj" />
       <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
    </ItemGroup>
    <ItemGroup>
-      <PackageReference Include="Hangfire.AspNetCore" Version="1.7.31" />
+      <PackageReference Include="Hangfire.AspNetCore" Version="1.7.32" />
       <PackageReference Include="Hangfire.PostgreSql" Version="1.9.9" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0">
         <PrivateAssets>all</PrivateAssets>

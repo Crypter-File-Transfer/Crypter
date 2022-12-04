@@ -25,38 +25,36 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
-using Crypter.CryptoLib;
-using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Enums;
-using Crypter.CryptoLib.Services;
-using Org.BouncyCastle.Crypto;
-using System;
+using Crypter.Crypto.Common;
 
 namespace Crypter.ClientServices.Transfer.Handlers.Base
 {
    public class DownloadHandler : IUserDownloadHandler
    {
       protected readonly ICrypterApiService _crypterApiService;
-      protected readonly ISimpleEncryptionService _simpleEncryptionService;
+      protected readonly ICryptoProvider _cryptoProvider;
       protected readonly IUserSessionService _userSessionService;
+      protected readonly TransferSettings _transferSettings;
 
       protected string _transferHashId;
       protected TransferUserType _transferUserType = TransferUserType.Anonymous;
 
-      protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
-      protected Maybe<PEMString> _senderDiffieHellmanPublicKey = Maybe<PEMString>.None;
+      protected Maybe<byte[]> _recipientPrivateKey = Maybe<byte[]>.None;
+      protected Maybe<byte[]> _senderPublicKey = Maybe<byte[]>.None;
 
       protected Maybe<byte[]> _symmetricKey = Maybe<byte[]>.None;
-      protected Maybe<string> _serverKey = Maybe<string>.None;
+      protected Maybe<byte[]> _serverProof = Maybe<byte[]>.None;
+      protected Maybe<byte[]> _keyExchangeNonce = Maybe<byte[]>.None;
 
-      public DownloadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, IUserSessionService userSessionService)
+      public DownloadHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
       {
          _crypterApiService = crypterApiService;
-         _simpleEncryptionService = simpleEncryptionService;
+         _cryptoProvider = cryptoProvider;
          _userSessionService = userSessionService;
+         _transferSettings = transferSettings;
       }
 
       internal void SetTransferInfo(string transferHashId, TransferUserType userType)
@@ -65,43 +63,32 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
          _transferUserType = userType;
       }
 
-      public void SetRecipientInfo(PEMString recipientDiffieHellmanPrivateKey)
+      public void SetRecipientInfo(byte[] recipientPrivateKey)
       {
-         _recipientDiffieHellmanPrivateKey = recipientDiffieHellmanPrivateKey;
+         _recipientPrivateKey = recipientPrivateKey;
          TryDeriveSymmetricKeys();
       }
 
-      protected void SetSenderDiffieHellmanPublicKey(PEMString senderDiffieHellmanPublicKey)
+      protected void SetSenderPublicKey(byte[] senderPublicKey, byte[] keyExchangeNonce)
       {
-         _senderDiffieHellmanPublicKey = senderDiffieHellmanPublicKey;
+         _senderPublicKey = senderPublicKey;
+         _keyExchangeNonce = keyExchangeNonce;
          TryDeriveSymmetricKeys();
       }
 
       private void TryDeriveSymmetricKeys()
       {
-         _recipientDiffieHellmanPrivateKey.IfSome(recipientKey =>
+         _recipientPrivateKey.IfSome(privateKey =>
          {
-            _senderDiffieHellmanPublicKey.IfSome(senderKey =>
+            _senderPublicKey.IfSome(publicKey =>
             {
-               (_symmetricKey, byte[] serverKey) = DeriveSymmetricKeys(recipientKey, senderKey);
-               _serverKey = Convert.ToBase64String(serverKey);
+               _keyExchangeNonce.IfSome(keyExchangeNonce =>
+               {
+                  uint keySize = _cryptoProvider.StreamEncryptionFactory.KeySize;
+                  (_symmetricKey, _serverProof) = _cryptoProvider.KeyExchange.GenerateDecryptionKey(keySize, privateKey, publicKey, keyExchangeNonce);
+               });
             });
          });
-      }
-
-      protected static (byte[] ReceiveKey, byte[] ServerKey) DeriveSymmetricKeys(PEMString recipientX25519PrivateKey, PEMString senderX25519PublicKey)
-      {
-         var recipientX25519Private = KeyConversion.ConvertX25519PrivateKeyFromPEM(recipientX25519PrivateKey);
-         var recipientX25519Public = recipientX25519Private.GeneratePublicKey();
-         var recipientKeyPair = new AsymmetricCipherKeyPair(recipientX25519Public, recipientX25519Private);
-
-         var senderX25519Public = KeyConversion.ConvertX25519PublicKeyFromPEM(senderX25519PublicKey);
-         (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(recipientKeyPair, senderX25519Public);
-         var digestor = new SHA(SHAFunction.SHA256);
-         digestor.BlockUpdate(sendKey);
-         var serverKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
-
-         return (receiveKey, serverKey);
       }
    }
 }

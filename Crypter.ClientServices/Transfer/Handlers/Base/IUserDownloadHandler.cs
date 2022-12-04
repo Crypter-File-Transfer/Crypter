@@ -24,12 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
-
 namespace Crypter.ClientServices.Transfer.Handlers.Base
 {
    public interface IUserDownloadHandler
    {
-      void SetRecipientInfo(PEMString recipientDiffieHellmanPrivateKey);
+      void SetRecipientInfo(byte[] recipientPrivateKey);
    }
 }
