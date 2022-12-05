@@ -29,7 +29,7 @@ using System;
 
 namespace Crypter.Core.Entities
 {
-   public class UserX25519KeyPairEntity : IUserPublicKeyPair
+   public class UserKeyPairEntity : IUserPublicKeyPair
    {
       public Guid Owner { get; set; }
       public byte[] PrivateKey { get; set; }
@@ -39,7 +39,7 @@ namespace Crypter.Core.Entities
 
       public UserEntity User { get; set; }
 
-      public UserX25519KeyPairEntity(Guid owner, byte[] privateKey, byte[] publicKey, byte[] nonce, DateTime created)
+      public UserKeyPairEntity(Guid owner, byte[] privateKey, byte[] publicKey, byte[] nonce, DateTime created)
       {
          Owner = owner;
          PrivateKey = privateKey;

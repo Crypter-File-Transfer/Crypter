@@ -83,7 +83,10 @@ namespace Crypter.ClientServices.Transfer.Handlers
          (byte[] header, byte[] ciphertext) = EncryptMessage(encryptionKey, _messageBody);
          await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
 
-         UploadMessageTransferRequest request = new UploadMessageTransferRequest(_messageSubject, header, new List<byte[]>(1) { ciphertext }, senderPublicKey, kxNonce, proof, _expirationHours);
+         UploadMessageTransferRequest request = _senderDefined
+            ? new UploadMessageTransferRequest(_messageSubject, header, new List<byte[]>(1) { ciphertext }, null, kxNonce, proof, _expirationHours)
+            : new UploadMessageTransferRequest(_messageSubject, header, new List<byte[]>(1) { ciphertext }, senderPublicKey, kxNonce, proof, _expirationHours);
+
          Either<UploadTransferError, UploadTransferResponse> response = await _recipientUsername.Match(
             () => _crypterApiService.UploadMessageTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserMessageTransferAsync(x, request, _senderDefined));

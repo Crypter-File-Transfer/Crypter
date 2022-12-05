@@ -53,7 +53,7 @@ namespace Crypter.Core.Services
       public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync(Guid userId, CancellationToken cancellationToken)
       {
          return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
-            _context.UserX25519KeyPairs
+            _context.UserKeyPairs
                .Where(x => x.Owner == userId)
                .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.Nonce))
                .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
@@ -61,13 +61,13 @@ namespace Crypter.Core.Services
 
       public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken)
       {
-         var keyPairEntity = await _context.UserX25519KeyPairs
+         var keyPairEntity = await _context.UserKeyPairs
             .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
 
          if (keyPairEntity is null)
          {
-            var newEntity = new UserX25519KeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.Nonce, DateTime.UtcNow);
-            _context.UserX25519KeyPairs.Add(newEntity);
+            var newEntity = new UserKeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.Nonce, DateTime.UtcNow);
+            _context.UserKeyPairs.Add(newEntity);
             await _context.SaveChangesAsync(cancellationToken);
          }
 

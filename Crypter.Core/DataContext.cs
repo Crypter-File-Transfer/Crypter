@@ -47,7 +47,7 @@ namespace Crypter.Core
 
       public DbSet<UserEntity> Users { get; set; }
       public DbSet<UserProfileEntity> UserProfiles { get; set; }
-      public DbSet<UserX25519KeyPairEntity> UserX25519KeyPairs { get; set; }
+      public DbSet<UserKeyPairEntity> UserKeyPairs { get; set; }
       public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; set; }
       public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; set; }
       public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; set; }
@@ -66,7 +66,7 @@ namespace Crypter.Core
 
          ConfigureUserEntity(builder);
          ConfigureUserProfileEntity(builder);
-         ConfigureUserX25519KeyPairEntity(builder);
+         ConfigureUserKeyPairEntity(builder);
          ConfigureUserPrivacySettingEntity(builder);
          ConfigureUserEmailVerificationEntity(builder);
          ConfigureUserNotificationSettingsEntity(builder);
@@ -145,18 +145,18 @@ namespace Crypter.Core
             .OnDelete(DeleteBehavior.Cascade);
       }
 
-      private static void ConfigureUserX25519KeyPairEntity(ModelBuilder builder)
+      private static void ConfigureUserKeyPairEntity(ModelBuilder builder)
       {
-         builder.Entity<UserX25519KeyPairEntity>()
-            .ToTable("UserX25519KeyPair");
+         builder.Entity<UserKeyPairEntity>()
+            .ToTable("UserKeyPair");
 
-         builder.Entity<UserX25519KeyPairEntity>()
+         builder.Entity<UserKeyPairEntity>()
             .HasKey(x => x.Owner);
 
-         builder.Entity<UserX25519KeyPairEntity>()
+         builder.Entity<UserKeyPairEntity>()
             .HasOne(x => x.User)
-            .WithOne(x => x.X25519KeyPair)
-            .HasForeignKey<UserX25519KeyPairEntity>(x => x.Owner)
+            .WithOne(x => x.KeyPair)
+            .HasForeignKey<UserKeyPairEntity>(x => x.Owner)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
       }
@@ -274,7 +274,7 @@ namespace Crypter.Core
 
          builder.Entity<UserMessageTransferEntity>()
             .Property(x => x.PublicKey)
-            .IsRequired();
+            .IsRequired(false);
 
          builder.Entity<UserMessageTransferEntity>()
             .Property(x => x.Proof)
@@ -303,7 +303,7 @@ namespace Crypter.Core
 
          builder.Entity<UserFileTransferEntity>()
             .Property(x => x.PublicKey)
-            .IsRequired();
+            .IsRequired(false);
 
          builder.Entity<UserFileTransferEntity>()
             .Property(x => x.Proof)

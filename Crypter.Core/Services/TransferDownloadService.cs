@@ -27,6 +27,7 @@
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Transfer;
+using Crypter.Core.Entities;
 using Crypter.Crypto.Common;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
@@ -166,11 +167,20 @@ namespace Crypter.Core.Services
             x => x);
 
          Guid id = _hashIdService.Decode(hashId);
-         var messagePreview = await _context.UserMessageTransfers
+
+         IQueryable<UserMessageTransferEntity> baseQuery = _context.UserMessageTransfers
             .Where(x => x.Id == id)
-            .Where(x => x.RecipientId == null || x.RecipientId == nullableUserId)
-            .Select(x => new DownloadTransferMessagePreviewResponse(x.Subject, x.Size, x.Sender.Username, x.Sender.Profile.Alias, x.Recipient.Username, x.PublicKey, x.KeyExchangeNonce, x.Created, x.Expiration))
-            .FirstOrDefaultAsync(cancellationToken);
+            .Where(x => x.RecipientId == null || x.RecipientId == nullableUserId);
+
+         bool sentAnonymously = await baseQuery
+            .Where(x => x.SenderId == null)
+            .AnyAsync(cancellationToken);
+
+         IQueryable<DownloadTransferMessagePreviewResponse> branchedQuery = sentAnonymously
+            ? baseQuery.Select(x => new DownloadTransferMessagePreviewResponse(x.Subject, x.Size, x.Sender.Username, x.Sender.Profile.Alias, x.Recipient.Username, x.PublicKey, x.KeyExchangeNonce, x.Created, x.Expiration))
+            : baseQuery.Select(x => new DownloadTransferMessagePreviewResponse(x.Subject, x.Size, x.Sender.Username, x.Sender.Profile.Alias, x.Recipient.Username, x.Sender.KeyPair.PublicKey, x.KeyExchangeNonce, x.Created, x.Expiration));
+
+         DownloadTransferMessagePreviewResponse messagePreview = await branchedQuery.FirstOrDefaultAsync(cancellationToken);
 
          if (messagePreview is null)
          {
@@ -187,11 +197,20 @@ namespace Crypter.Core.Services
             x => x);
 
          Guid id = _hashIdService.Decode(hashId);
-         var filePreview = await _context.UserFileTransfers
+
+         IQueryable<UserFileTransferEntity> baseQuery = _context.UserFileTransfers
             .Where(x => x.Id == id)
-            .Where(x => x.RecipientId == null || x.RecipientId == nullableUserId)
-            .Select(x => new DownloadTransferFilePreviewResponse(x.FileName, x.ContentType, x.Size, x.Sender.Username, x.Sender.Profile.Alias, x.Recipient.Username, x.PublicKey, x.KeyExchangeNonce, x.Created, x.Expiration))
-            .FirstOrDefaultAsync(cancellationToken);
+            .Where(x => x.RecipientId == null || x.RecipientId == nullableUserId);
+
+         bool sentAnonymously = await baseQuery
+            .Where(x => x.SenderId == null)
+            .AnyAsync(cancellationToken);
+
+         IQueryable<DownloadTransferFilePreviewResponse> branchedQuery = sentAnonymously
+            ? baseQuery.Select(x => new DownloadTransferFilePreviewResponse(x.FileName, x.ContentType, x.Size, x.Sender.Username, x.Sender.Profile.Alias, x.Recipient.Username, x.PublicKey, x.KeyExchangeNonce, x.Created, x.Expiration))
+            : baseQuery.Select(x => new DownloadTransferFilePreviewResponse(x.FileName, x.ContentType, x.Size, x.Sender.Username, x.Sender.Profile.Alias, x.Recipient.Username, x.Sender.KeyPair.PublicKey, x.KeyExchangeNonce, x.Created, x.Expiration));
+
+         DownloadTransferFilePreviewResponse filePreview = await branchedQuery.FirstOrDefaultAsync(cancellationToken);
 
          if (filePreview is null)
          {
