@@ -25,6 +25,8 @@
  */
 
 using Crypter.Core.Services;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.Providers.Default;
 using NUnit.Framework;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
@@ -37,7 +39,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [OneTimeSetUp]
       public void SetupOnce()
       {
-         _sut = new PasswordHashService();
+         ICryptoProvider cryptoProvider = new DefaultCryptoProvider();
+         _sut = new PasswordHashService(cryptoProvider);
       }
 
       [Test]

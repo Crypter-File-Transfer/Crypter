@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Crypto.Common;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace Crypter.Core.Services
 {
@@ -44,9 +44,16 @@ namespace Crypter.Core.Services
       private static readonly int HashByteLength = 64; // 512 bits
       private static readonly int SaltByteLength = 16; // 128 bits
 
+      private readonly ICryptoProvider _cryptoProvider;
+
+      public PasswordHashService(ICryptoProvider cryptoProvider)
+      {
+         _cryptoProvider = cryptoProvider;
+      }
+
       public (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(byte[] password)
       {
-         var salt = RandomNumberGenerator.GetBytes(SaltByteLength);
+         var salt = _cryptoProvider.Random.GenerateRandomBytes(SaltByteLength);
          var hash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), salt, KeyDerivationAlgorithm, Iterations, HashByteLength);
          return (salt, hash);
       }
@@ -65,15 +72,7 @@ namespace Crypter.Core.Services
 
          var computedHash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), existingSalt, KeyDerivationAlgorithm, Iterations, HashByteLength);
 
-         for (int i = 0; i < computedHash.Length; i++)
-         {
-            if (computedHash[i] != existingHash[i])
-            {
-               return false;
-            }
-         }
-
-         return true;
+         return _cryptoProvider.ConstantTime.Equals(computedHash, existingHash);
       }
    }
 }
