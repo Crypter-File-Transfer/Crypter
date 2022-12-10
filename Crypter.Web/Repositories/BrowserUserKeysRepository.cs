@@ -47,9 +47,19 @@ namespace Crypter.Web.Repositories
          };
       }
 
+      public Task<Maybe<byte[]>> GetMasterKeyAsync()
+      {
+         return _browserRepository.GetItemAsync<byte[]>(DeviceStorageObjectType.MasterKey);
+      }
+
       public Task<Maybe<byte[]>> GetPrivateKeyAsync()
       {
          return _browserRepository.GetItemAsync<byte[]>(DeviceStorageObjectType.PrivateKey);
+      }
+
+      public Task<Unit> StoreMasterKeyAsync(byte[] masterKey, bool trustDevice)
+      {
+         return _browserRepository.SetItemAsync(DeviceStorageObjectType.MasterKey, masterKey, _trustDeviceStorageMap[trustDevice]);
       }
 
       public Task<Unit> StorePrivateKeyAsync(byte[] privateKey, bool trustDevice)

@@ -66,6 +66,7 @@ namespace Crypter.ClientServices.Services
       {
          if (args.IsLoggedIn)
          {
+            MasterKey = await _userKeysRepository.GetMasterKeyAsync();
             PrivateKey = await _userKeysRepository.GetPrivateKeyAsync();
          }
       }
@@ -161,11 +162,13 @@ namespace Crypter.ClientServices.Services
             });
       }
 
-      private Task<Unit> StoreSecretKeys(byte[] masterKey, byte[] privateKey, bool trustDevice)
+      private async Task<Unit> StoreSecretKeys(byte[] masterKey, byte[] privateKey, bool trustDevice)
       {
          MasterKey = masterKey;
          PrivateKey = privateKey;
-         return _userKeysRepository.StorePrivateKeyAsync(privateKey, trustDevice);
+         await _userKeysRepository.StoreMasterKeyAsync(masterKey, trustDevice);
+         await _userKeysRepository.StorePrivateKeyAsync(privateKey, trustDevice);
+         return Unit.Default;
       }
 
       private void Recycle(object sender, EventArgs _)

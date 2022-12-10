@@ -34,7 +34,9 @@ namespace Crypter.ClientServices.Interfaces.Repositories
    /// </summary>
    public interface IUserKeysRepository
    {
+      Task<Maybe<byte[]>> GetMasterKeyAsync();
       Task<Maybe<byte[]>> GetPrivateKeyAsync();
       Task<Unit> StorePrivateKeyAsync(byte[] privateKey, bool trustDevice);
+      Task<Unit> StoreMasterKeyAsync(byte[] masterKey, bool trustDevice);
    }
 }
