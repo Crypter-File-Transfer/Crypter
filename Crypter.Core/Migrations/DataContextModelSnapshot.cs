@@ -29,19 +29,12 @@ namespace Crypter.Core.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("CompressionType")
-                        .HasColumnType("integer");
-
                     b.Property<string>("ContentType")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DiffieHellmanPublicKey")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("Expiration")
                         .HasColumnType("timestamp with time zone");
@@ -50,9 +43,16 @@ namespace Crypter.Core.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("RecipientProof")
+                    b.Property<byte[]>("KeyExchangeNonce")
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("Proof")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("PublicKey")
+                        .IsRequired()
+                        .HasColumnType("bytea");
 
                     b.Property<int>("Size")
                         .HasColumnType("integer");
@@ -68,22 +68,22 @@ namespace Crypter.Core.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("CompressionType")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DiffieHellmanPublicKey")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("Expiration")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("RecipientProof")
+                    b.Property<byte[]>("KeyExchangeNonce")
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("Proof")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("PublicKey")
+                        .IsRequired()
+                        .HasColumnType("bytea");
 
                     b.Property<int>("Size")
                         .HasColumnType("integer");
@@ -97,15 +97,28 @@ namespace Crypter.Core.Migrations
                     b.ToTable("AnonymousMessageTransfer", (string)null);
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.SchemaEntity", b =>
+            modelBuilder.Entity("Crypter.Core.Entities.UserConsentEntity", b =>
                 {
-                    b.Property<DateTime>("Updated")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
 
-                    b.Property<int>("Version")
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("ConsentType")
                         .HasColumnType("integer");
 
-                    b.ToTable("Schema", (string)null);
+                    b.Property<Guid>("Owner")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Owner");
+
+                    b.ToTable("UserConsent", (string)null);
                 });
 
             modelBuilder.Entity("Crypter.Core.Entities.UserContactEntity", b =>
@@ -150,6 +163,11 @@ namespace Crypter.Core.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<short>("ClientPasswordVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint")
+                        .HasDefaultValue((short)0);
+
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
@@ -167,6 +185,11 @@ namespace Crypter.Core.Migrations
 
                     b.Property<byte[]>("PasswordSalt")
                         .HasColumnType("bytea");
+
+                    b.Property<short>("ServerPasswordVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint")
+                        .HasDefaultValue((short)0);
 
                     b.Property<string>("Username")
                         .HasColumnType("citext");
@@ -207,19 +230,12 @@ namespace Crypter.Core.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("CompressionType")
-                        .HasColumnType("integer");
-
                     b.Property<string>("ContentType")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DiffieHellmanPublicKey")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("Expiration")
                         .HasColumnType("timestamp with time zone");
@@ -228,13 +244,19 @@ namespace Crypter.Core.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<byte[]>("KeyExchangeNonce")
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("Proof")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("PublicKey")
+                        .HasColumnType("bytea");
+
                     b.Property<Guid?>("RecipientId")
                         .HasColumnType("uuid")
                         .HasColumnName("Recipient");
-
-                    b.Property<string>("RecipientProof")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<Guid?>("SenderId")
                         .HasColumnType("uuid")
@@ -252,32 +274,80 @@ namespace Crypter.Core.Migrations
                     b.ToTable("UserFileTransfer", (string)null);
                 });
 
+            modelBuilder.Entity("Crypter.Core.Entities.UserKeyPairEntity", b =>
+                {
+                    b.Property<Guid>("Owner")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("Nonce")
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("PrivateKey")
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("PublicKey")
+                        .HasColumnType("bytea");
+
+                    b.HasKey("Owner");
+
+                    b.ToTable("UserKeyPair", (string)null);
+                });
+
+            modelBuilder.Entity("Crypter.Core.Entities.UserMasterKeyEntity", b =>
+                {
+                    b.Property<Guid>("Owner")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("EncryptedKey")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("Nonce")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("RecoveryProof")
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Owner");
+
+                    b.ToTable("UserMasterKey", (string)null);
+                });
+
             modelBuilder.Entity("Crypter.Core.Entities.UserMessageTransferEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int>("CompressionType")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DiffieHellmanPublicKey")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateTime>("Expiration")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<byte[]>("KeyExchangeNonce")
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("Proof")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("PublicKey")
+                        .HasColumnType("bytea");
+
                     b.Property<Guid?>("RecipientId")
                         .HasColumnType("uuid")
                         .HasColumnName("Recipient");
-
-                    b.Property<string>("RecipientProof")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<Guid?>("SenderId")
                         .HasColumnType("uuid")
@@ -384,26 +454,15 @@ namespace Crypter.Core.Migrations
                     b.ToTable("UserToken", (string)null);
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserX25519KeyPairEntity", b =>
+            modelBuilder.Entity("Crypter.Core.Entities.UserConsentEntity", b =>
                 {
-                    b.Property<Guid>("Owner")
-                        .HasColumnType("uuid");
+                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                        .WithMany("Consents")
+                        .HasForeignKey("Owner")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Property<string>("ClientIV")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("PrivateKey")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PublicKey")
-                        .HasColumnType("text");
-
-                    b.HasKey("Owner");
-
-                    b.ToTable("UserX25519KeyPair", (string)null);
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Crypter.Core.Entities.UserContactEntity", b =>
@@ -459,6 +518,27 @@ namespace Crypter.Core.Migrations
                     b.Navigation("Recipient");
 
                     b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("Crypter.Core.Entities.UserKeyPairEntity", b =>
+                {
+                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                        .WithOne("KeyPair")
+                        .HasForeignKey("Crypter.Core.Entities.UserKeyPairEntity", "Owner")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Crypter.Core.Entities.UserMasterKeyEntity", b =>
+                {
+                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                        .WithOne("MasterKey")
+                        .HasForeignKey("Crypter.Core.Entities.UserMasterKeyEntity", "Owner")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Crypter.Core.Entities.UserMessageTransferEntity", b =>
@@ -520,18 +600,10 @@ namespace Crypter.Core.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserX25519KeyPairEntity", b =>
-                {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
-                        .WithOne("X25519KeyPair")
-                        .HasForeignKey("Crypter.Core.Entities.UserX25519KeyPairEntity", "Owner")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Crypter.Core.Entities.UserEntity", b =>
                 {
+                    b.Navigation("Consents");
+
                     b.Navigation("Contactors");
 
                     b.Navigation("Contacts");
@@ -539,6 +611,10 @@ namespace Crypter.Core.Migrations
                     b.Navigation("EmailVerification");
 
                     b.Navigation("FailedLoginAttempts");
+
+                    b.Navigation("KeyPair");
+
+                    b.Navigation("MasterKey");
 
                     b.Navigation("NotificationSetting");
 
@@ -555,8 +631,6 @@ namespace Crypter.Core.Migrations
                     b.Navigation("SentMessageTransfers");
 
                     b.Navigation("Tokens");
-
-                    b.Navigation("X25519KeyPair");
                 });
 #pragma warning restore 612, 618
         }
