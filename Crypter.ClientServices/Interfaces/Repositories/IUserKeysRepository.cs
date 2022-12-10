@@ -35,6 +35,6 @@ namespace Crypter.ClientServices.Interfaces.Repositories
    public interface IUserKeysRepository
    {
       Task<Maybe<byte[]>> GetPrivateKeyAsync();
-      Task StorePrivateKeyAsync(byte[] privateKey, bool trustDevice);
+      Task<Unit> StorePrivateKeyAsync(byte[] privateKey, bool trustDevice);
    }
 }

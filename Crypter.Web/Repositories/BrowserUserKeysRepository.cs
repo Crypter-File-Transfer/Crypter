@@ -52,7 +52,7 @@ namespace Crypter.Web.Repositories
          return _browserRepository.GetItemAsync<byte[]>(DeviceStorageObjectType.PrivateKey);
       }
 
-      public Task StorePrivateKeyAsync(byte[] privateKey, bool trustDevice)
+      public Task<Unit> StorePrivateKeyAsync(byte[] privateKey, bool trustDevice)
       {
          return _browserRepository.SetItemAsync(DeviceStorageObjectType.PrivateKey, privateKey, _trustDeviceStorageMap[trustDevice]);
       }

@@ -25,6 +25,7 @@
  */
 
 using Crypter.Crypto.Common.ConstantTime;
+using Crypter.Crypto.Common.CryptoHash;
 using Crypter.Crypto.Common.DigitalSignature;
 using Crypter.Crypto.Common.Encryption;
 using Crypter.Crypto.Common.GenericHash;
@@ -40,6 +41,7 @@ namespace Crypter.Crypto.Common
    public interface ICryptoProvider
    {
       IConstantTime ConstantTime { get; }
+      ICryptoHash CryptoHash { get; }
       IDigitalSignature DigitalSignature { get; }
       IEncryption Encryption { get; }
       IGenericHash GenericHash { get; }

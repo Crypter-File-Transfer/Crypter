@@ -38,7 +38,7 @@ namespace Crypter.Crypto.Providers.Browser.Wrappers
    {
       private readonly IPadding _padding;
       private readonly short _blockSize;
-      private StateAddress _stateAddress;
+      private readonly StateAddress _stateAddress;
 
       public StreamDecrypt(IPadding padding, ReadOnlySpan<byte> key, ReadOnlySpan<byte> header, short blockSize)
       {

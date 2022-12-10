@@ -33,6 +33,7 @@ namespace Crypter.Contracts.Features.Settings
       EmailAddressUnavailable,
       InvalidEmailAddress,
       InvalidPassword,
-      ClientCryptographicError
+      PasswordHashFailure,
+      PasswordNeedsMigration
    }
 }

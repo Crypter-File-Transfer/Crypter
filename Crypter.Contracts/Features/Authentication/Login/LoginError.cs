@@ -33,6 +33,7 @@ namespace Crypter.Contracts.Features.Authentication
       InvalidPassword,
       InvalidTokenTypeRequested,
       ExcessiveFailedLoginAttempts,
-      ClientCryptographicError
+      InvalidPasswordVersion,
+      PasswordHashFailure
    }
 }

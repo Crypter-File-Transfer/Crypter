@@ -41,6 +41,9 @@ namespace Crypter.Web.Shared.Transfer
       private NavigationManager NavigationManager { get; set; }
 
       [Inject]
+      protected IUserSessionService UserSessionService { get; set; }
+
+      [Inject]
       protected IUserKeysService UserKeysService { get; set; }
 
       [Inject]

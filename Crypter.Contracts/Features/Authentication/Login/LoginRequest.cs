@@ -26,6 +26,7 @@
 
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Authentication
@@ -33,21 +34,21 @@ namespace Crypter.Contracts.Features.Authentication
    public class LoginRequest
    {
       public string Username { get; set; }
-      public byte[] Password { get; set; }
+      public List<VersionedPassword> VersionedPasswords { get; set; }
       public TokenType RefreshTokenType { get; set; }
 
       [JsonConstructor]
-      public LoginRequest(string username, byte[] password, TokenType refreshTokenType)
+      public LoginRequest(string username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
       {
          Username = username;
-         Password = password;
+         VersionedPasswords = versionedPasswords;
          RefreshTokenType = refreshTokenType;
       }
 
-      public LoginRequest(Username username, byte[] password, TokenType refreshTokenType)
+      public LoginRequest(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
       {
          Username = username.Value;
-         Password = password;
+         VersionedPasswords = versionedPasswords;
          RefreshTokenType = refreshTokenType;
       }
    }

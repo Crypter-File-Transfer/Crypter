@@ -27,6 +27,7 @@
 using Crypter.API.Configuration;
 using Crypter.Core;
 using Crypter.Core.Identity;
+using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Crypter.Crypto.Common;
@@ -87,6 +88,17 @@ builder.Services.AddHashIdService(options =>
 
    options.Salt = settings.Salt;
 });
+
+builder.Services.AddUserAuthenticationService(options =>
+{
+   var settings = builder.Configuration
+      .GetSection("PasswordSettings")
+      .Get<ServerPasswordSettings>();
+
+   options.ClientVersion = settings.ClientVersion;
+   options.ServerVersions = settings.ServerVersions;
+});
+
 
 builder.Services.AddDbContext<DataContext>();
 

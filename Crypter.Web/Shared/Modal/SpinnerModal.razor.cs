@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
 using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
@@ -32,31 +33,24 @@ namespace Crypter.Web.Shared.Modal
 {
    public partial class SpinnerModalBase : ComponentBase
    {
-      [Parameter]
-      public string Subject { get; set; }
+      protected string Subject;
+      protected string Message;
 
-      [Parameter]
-      public string Message { get; set; }
-
-      [Parameter]
-      public bool ShowPrimaryButton { get; set; }
-
-      [Parameter]
-      public string PrimaryButtonText { get; set; }
-
-      [Parameter]
-      public EventCallback<bool> ModalClosedCallback { get; set; }
-
+      protected Maybe<EventCallback> ModalClosedCallback { get; set; }
       protected ModalBehavior ModalBehaviorRef;
 
-      public void Open()
+      public void Open(string subject, string message, Maybe<EventCallback> modalClosedCallback)
       {
+         Subject = subject;
+         Message = message;
+         ModalClosedCallback = modalClosedCallback;
+
          ModalBehaviorRef.Open();
       }
 
       public async Task CloseAsync()
       {
-         await ModalClosedCallback.InvokeAsync();
+         await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
          ModalBehaviorRef.Close();
       }
    }

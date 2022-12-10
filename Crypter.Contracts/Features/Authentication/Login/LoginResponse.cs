@@ -24,23 +24,26 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Authentication
 {
    public class LoginResponse
    {
-      public string Username { get; set; }
-      public string AuthenticationToken { get; set; }
-      public string RefreshToken { get; set; }
+      public string Username { get; init; }
+      public string AuthenticationToken { get; init; }
+      public string RefreshToken { get; init; }
+      public bool UploadNewKeys { get; init; }
+      public bool ShowRecoveryKey { get; init; }
 
       [JsonConstructor]
-      public LoginResponse(string username, string authenticationToken, string refreshToken)
+      public LoginResponse(string username, string authenticationToken, string refreshToken, bool uploadNewKeys, bool showRecoveryKey)
       {
          Username = username;
          AuthenticationToken = authenticationToken;
          RefreshToken = refreshToken;
+         UploadNewKeys = uploadNewKeys;
+         ShowRecoveryKey = showRecoveryKey;
       }
    }
 }

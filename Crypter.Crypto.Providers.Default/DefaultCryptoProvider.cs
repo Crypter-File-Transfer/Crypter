@@ -26,6 +26,7 @@
 
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.ConstantTime;
+using Crypter.Crypto.Common.CryptoHash;
 using Crypter.Crypto.Common.DigitalSignature;
 using Crypter.Crypto.Common.Encryption;
 using Crypter.Crypto.Common.GenericHash;
@@ -43,6 +44,7 @@ namespace Crypter.Crypto.Providers.Default
    public class DefaultCryptoProvider : ICryptoProvider
    {
       public IConstantTime ConstantTime { get; init; }
+      public ICryptoHash CryptoHash { get; init; }
       public IDigitalSignature DigitalSignature { get; init; }
       public IEncryption Encryption => throw new System.NotImplementedException();
       public IGenericHash GenericHash => throw new System.NotImplementedException();
@@ -56,6 +58,7 @@ namespace Crypter.Crypto.Providers.Default
       public DefaultCryptoProvider()
       {
          ConstantTime = new Wrappers.ConstantTime();
+         CryptoHash = new CryptoHash();
          DigitalSignature = new Wrappers.DigitalSignature();
          Random = new Wrappers.Random();
          StreamEncryptionFactory = new Wrappers.StreamEncryptionFactory();

@@ -24,22 +24,21 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Identity;
 using Crypter.Crypto.Common;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System;
-using System.Security.Cryptography;
 
 namespace Crypter.Core.Services
 {
    public interface IPasswordHashService
    {
-      (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(byte[] password);
-      bool VerifySecurePasswordHash(byte[] password, byte[] existingHash, byte[] existingSalt);
+      SecurePasswordHashOutput MakeSecurePasswordHash(byte[] password, int iterations);
+      bool VerifySecurePasswordHash(byte[] password, byte[] existingHash, byte[] existingSalt, int iterations);
    }
 
    public class PasswordHashService : IPasswordHashService
    {
-      private static readonly int Iterations = 100001;
       private static readonly KeyDerivationPrf KeyDerivationAlgorithm = KeyDerivationPrf.HMACSHA512;
       private static readonly int HashByteLength = 64; // 512 bits
       private static readonly int SaltByteLength = 16; // 128 bits
@@ -51,27 +50,16 @@ namespace Crypter.Core.Services
          _cryptoProvider = cryptoProvider;
       }
 
-      public (byte[] Salt, byte[] Hash) MakeSecurePasswordHash(byte[] password)
+      public SecurePasswordHashOutput MakeSecurePasswordHash(byte[] password, int iterations)
       {
          var salt = _cryptoProvider.Random.GenerateRandomBytes(SaltByteLength);
-         var hash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), salt, KeyDerivationAlgorithm, Iterations, HashByteLength);
-         return (salt, hash);
+         var hash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), salt, KeyDerivationAlgorithm, iterations, HashByteLength);
+         return new SecurePasswordHashOutput { Hash = hash, Salt = salt };
       }
 
-      public bool VerifySecurePasswordHash(byte[] password, byte[] existingHash, byte[] existingSalt)
+      public bool VerifySecurePasswordHash(byte[] password, byte[] existingHash, byte[] existingSalt, int iterations)
       {
-         if (existingHash.Length != HashByteLength)
-         {
-            throw new ArgumentException("Invalid length of password hash (64 bytes expected).");
-         }
-
-         if (existingSalt.Length != SaltByteLength)
-         {
-            throw new ArgumentException("Invalid length of password salt (16 bytes expected).");
-         }
-
-         var computedHash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), existingSalt, KeyDerivationAlgorithm, Iterations, HashByteLength);
-
+         var computedHash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), existingSalt, KeyDerivationAlgorithm, iterations, HashByteLength);
          return _cryptoProvider.ConstantTime.Equals(computedHash, existingHash);
       }
    }

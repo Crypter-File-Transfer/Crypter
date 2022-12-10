@@ -26,9 +26,9 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
+using Crypter.Contracts.Features.Authentication;
 using Crypter.Contracts.Features.Settings;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.UserSettings
@@ -39,7 +39,7 @@ namespace Crypter.Web.Shared.UserSettings
       protected ICrypterApiService CrypterApiService { get; set; }
 
       [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
+      protected IUserPasswordService UserPasswordService { get; set; }
 
       [Parameter]
       public string Username { get; set; }
@@ -109,12 +109,12 @@ namespace Crypter.Web.Shared.UserSettings
 
          Common.Primitives.Username username = Common.Primitives.Username.From(Username);
 
-         Maybe<byte[]> authPasswordResult = UserSessionService.DeriveAuthenticationPassword(username, password);
-         authPasswordResult.IfNone(() => HandleContactInfoUpdateError(UpdateContactInfoError.ClientCryptographicError));
+         Maybe<VersionedPassword> authPasswordResult = await UserPasswordService.DeriveUserAuthenticationPasswordAsync(username, password, UserPasswordService.CurrentPasswordVersion);
+         authPasswordResult.IfNone(() => HandleContactInfoUpdateError(UpdateContactInfoError.PasswordHashFailure));
 
          await authPasswordResult.IfSomeAsync(async authPassword =>
          {
-            var request = new UpdateContactInfoRequest(EmailAddressEdit, authPassword);
+            var request = new UpdateContactInfoRequest(EmailAddressEdit, authPassword.Password);
             var maybeUpdate = await CrypterApiService.UpdateContactInfoAsync(request);
 
             maybeUpdate.DoLeftOrNeither(HandleContactInfoUpdateError, () => HandleContactInfoUpdateError());
@@ -146,7 +146,7 @@ namespace Crypter.Web.Shared.UserSettings
             case UpdateContactInfoError.InvalidPassword:
                PasswordError = "Incorrect password";
                break;
-            case UpdateContactInfoError.ClientCryptographicError:
+            case UpdateContactInfoError.PasswordHashFailure:
                PasswordError = "A cryptographic error occured. This device or browser may not be supported.";
                break;
          }

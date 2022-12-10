@@ -89,7 +89,7 @@ namespace Crypter.Web.Shared.Transfer
          if (UserSessionService.Session.IsSome)
          {
             byte[] senderPrivateKey = UserKeysService.PrivateKey.Match(
-               () => throw new Exception("Missing sender X25519 private key"),
+               () => throw new Exception("Missing sender private key"),
                x => x);
 
             handler.SetSenderInfo(senderPrivateKey);
@@ -98,7 +98,7 @@ namespace Crypter.Web.Shared.Transfer
          RecipientUsername.IfSome(x =>
          {
             byte[] recipientX25519PublicKey = RecipientPublicKey.Match(
-               () => throw new Exception("Missing recipient X25519 public key"),
+               () => throw new Exception("Missing recipient public key"),
                x => x);
 
             handler.SetRecipientInfo(x, recipientX25519PublicKey);

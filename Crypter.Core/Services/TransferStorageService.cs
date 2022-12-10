@@ -107,7 +107,6 @@ namespace Crypter.Core.Services
       public async Task<Maybe<TransferStorageParameters>> ReadTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, CancellationToken cancellationToken)
       {
          string itemDirectory = GetItemDirectory(id, itemType, userType);
-         string ciphertextPath = Path.Join(itemDirectory, _ciphertextFilenamePrefix);
          string headerPath = Path.Join(itemDirectory, _headerFilename);
 
          DirectoryInfo directoryInfo = new DirectoryInfo(itemDirectory);

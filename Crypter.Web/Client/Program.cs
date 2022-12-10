@@ -90,9 +90,10 @@ builder.Services
    .AddSingleton<IUserSessionRepository, BrowserUserSessionRepository>()
    .AddSingleton<IUserSessionService, UserSessionService<BrowserStorageLocation>>()
    .AddSingleton<ICrypterApiService, CrypterApiService>()
-   .AddSingleton<IUserKeysService, UserKeysService>()
    .AddSingleton<IUserContactsService, UserContactsService>()
    .AddSingleton<IBrowserDownloadFileService, BrowserDownloadFileService>()
+   .AddSingleton<IUserPasswordService, UserPasswordService>()
+   .AddSingleton<IUserKeysService, UserKeysService>()
    .AddSingleton<TransferHandlerFactory>()
    .AddSingleton<Func<ICrypterApiService>>(sp => () => sp.GetService<ICrypterApiService>());
 
@@ -106,7 +107,6 @@ WebAssemblyHost host = builder.Build();
 
 // Resolve services so they can initialize
 IUserContactsService contactsService = host.Services.GetRequiredService<IUserContactsService>();
-IUserKeysService userKeysService = host.Services.GetRequiredService<IUserKeysService>();
 IUserSessionService userSessionService = host.Services.GetRequiredService<IUserSessionService>();
 
 await host.RunAsync();

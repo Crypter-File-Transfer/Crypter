@@ -26,6 +26,7 @@
 
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.ConstantTime;
+using Crypter.Crypto.Common.CryptoHash;
 using Crypter.Crypto.Common.DigitalSignature;
 using Crypter.Crypto.Common.Encryption;
 using Crypter.Crypto.Common.GenericHash;
@@ -43,6 +44,7 @@ namespace Crypter.Crypto.Providers.Browser
    public class BrowserCryptoProvider : ICryptoProvider
    {
       public IConstantTime ConstantTime => throw new System.NotImplementedException();
+      public ICryptoHash CryptoHash { get; init; }
       public IDigitalSignature DigitalSignature { get; init; }
       public IEncryption Encryption { get; init; }
       public IGenericHash GenericHash { get; init; }
@@ -55,6 +57,7 @@ namespace Crypter.Crypto.Providers.Browser
 
       public BrowserCryptoProvider()
       {
+         CryptoHash = new CryptoHash();
          DigitalSignature = new Wrappers.DigitalSignature();
          Encryption = new Wrappers.Encryption();
          GenericHash = new Wrappers.GenericHash();

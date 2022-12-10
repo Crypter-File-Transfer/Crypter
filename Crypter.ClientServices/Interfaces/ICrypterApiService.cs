@@ -27,6 +27,7 @@
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Authentication;
+using Crypter.Contracts.Features.Consent;
 using Crypter.Contracts.Features.Contacts;
 using Crypter.Contracts.Features.Keys;
 using Crypter.Contracts.Features.Metrics;
@@ -47,8 +48,13 @@ namespace Crypter.ClientServices.Interfaces
       #region Authentication
       Task<Either<RegistrationError, RegistrationResponse>> RegisterUserAsync(RegistrationRequest registerRequest);
       Task<Either<LoginError, LoginResponse>>LoginAsync(LoginRequest loginRequest);
+      Task<Either<TestPasswordError, TestPasswordResponse>> TestPasswordAsync(TestPasswordRequest testPasswordRequest);
       Task<Either<RefreshError, RefreshResponse>>RefreshAsync();
       Task<Either<LogoutError, LogoutResponse>>LogoutAsync();
+      #endregion
+
+      #region Consent
+      Task<Either<DummyError, ConsentToRecoveryKeyRisksResponse>> ConsentToRecoveryKeyRisksAsync();
       #endregion
 
       #region Contacts
@@ -66,6 +72,9 @@ namespace Crypter.ClientServices.Interfaces
       #endregion
 
       #region Keys
+      Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
+      Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
+      Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync();
       Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request);
       #endregion

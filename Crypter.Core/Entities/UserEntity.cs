@@ -38,6 +38,8 @@ namespace Crypter.Core.Entities
       public string EmailAddress { get; set; }
       public byte[] PasswordHash { get; set; }
       public byte[] PasswordSalt { get; set; }
+      public short ServerPasswordVersion { get; set; }
+      public short ClientPasswordVersion { get; set; }
       public bool EmailVerified { get; set; }
       public DateTime Created { get; set; }
       public DateTime LastLogin { get; set; }
@@ -47,6 +49,7 @@ namespace Crypter.Core.Entities
       public UserEmailVerificationEntity EmailVerification { get; set; }
       public UserNotificationSettingEntity NotificationSetting { get; set; }
       public UserKeyPairEntity KeyPair { get; set; }
+      public UserMasterKeyEntity MasterKey { get; set; }
       public List<UserTokenEntity> Tokens { get; set; }
       public List<UserContactEntity> Contacts { get; set; }
       public List<UserContactEntity> Contactors { get; set; }
@@ -55,24 +58,27 @@ namespace Crypter.Core.Entities
       public List<UserMessageTransferEntity> SentMessageTransfers { get; set; }
       public List<UserMessageTransferEntity> ReceivedMessageTransfers { get; set; }
       public List<UserFailedLoginEntity> FailedLoginAttempts { get; set; }
+      public List<UserConsentEntity> Consents { get; set; }
 
       /// <summary>
       /// Please avoid using this.
       /// This is only intended to be used by Entity Framework.
       /// </summary>
-      public UserEntity(Guid id, string username, string emailAddress, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
+      public UserEntity(Guid id, string username, string emailAddress, byte[] passwordHash, byte[] passwordSalt, short serverPasswordVersion, short clientPasswordVersion, bool emailVerified, DateTime created, DateTime lastLogin)
       {
          Id = id;
          Username = username;
          EmailAddress = emailAddress;
          PasswordHash = passwordHash;
          PasswordSalt = passwordSalt;
+         ServerPasswordVersion = serverPasswordVersion;
+         ClientPasswordVersion = clientPasswordVersion;
          EmailVerified = emailVerified;
          Created = created;
          LastLogin = lastLogin;
       }
 
-      public UserEntity(Guid id, Username username, Maybe<EmailAddress> emailAddress, byte[] passwordHash, byte[] passwordSalt, bool emailVerified, DateTime created, DateTime lastLogin)
+      public UserEntity(Guid id, Username username, Maybe<EmailAddress> emailAddress, byte[] passwordHash, byte[] passwordSalt, short serverPasswordVersion, short clientPasswordVersion, bool emailVerified, DateTime created, DateTime lastLogin)
       {
          Id = id;
          Username = username.Value;
@@ -81,6 +87,8 @@ namespace Crypter.Core.Entities
             some => some.Value);
          PasswordHash = passwordHash;
          PasswordSalt = passwordSalt;
+         ServerPasswordVersion = serverPasswordVersion;
+         ClientPasswordVersion = clientPasswordVersion;
          EmailVerified = emailVerified;
          Created = created;
          LastLogin = lastLogin;
