@@ -8,6 +8,7 @@ Although we may want to document various deployment methods as time goes on, the
 
 The `appsettings.json` file for Crypter.Web exists under `wwwroot`.
 This file is sent to the browser with every request.
+Thie file must be updated prior to publishing the web app in order to get GZip and Brotli compressed versions of the file with the correct configuration.
 
 ## Publish the project
 
