@@ -26,8 +26,8 @@
 
 @inherits UploadFileTransferModalBase
 
-<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
-   <div class="modal-dialog" role="document">
+<ModalBehavior @ref="ModalBehaviorRef">
+   <Content>
       <div class="modal-content card">
          <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs" role="tablist">
@@ -46,12 +46,12 @@
             <div class="tab-content">
                <div class="tab-pane fade show active" id="file-modal-file-tab-@InstanceId" role="tabpanel" aria-labelledby="file-tab">
                   <h2 class="card-title mt-0">Upload a file</h2>
-                  <UploadFileTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientDiffieHellmanPublicKey="RecipientX25519PublicKey" ExpirationHours="RequestedExpirationHours" UseCompression="UseCompression" UploadCompletedEvent="CloseAsync" />
+                  <UploadFileTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientPublicKey="RecipientPublicKey" ExpirationHours="RequestedExpirationHours" UploadCompletedEvent="CloseAsync" />
                </div>
 
                <div class="tab-pane fade" id="file-modal-settings-tab-@InstanceId" role="tabpanel" aria-labelledby="settings-tab">
                   <h2 class="card-title mt-0 mb-0">Configuration</h2>
-                  <TransferSettings @bind-RequestedExpirationHours=RequestedExpirationHours @bind-UseCompression=UseCompression />
+                  <TransferSettings @bind-RequestedExpirationHours=RequestedExpirationHours />
                </div>
             </div>
          </div>
@@ -60,7 +60,5 @@
             <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="CloseAsync">Close</button>
          </div>
       </div>
-   </div>
-</div>
-
-<div hidden="@(!ShowBackdrop)" class="modal-backdrop fade show"></div>
+   </Content>
+</ModalBehavior>

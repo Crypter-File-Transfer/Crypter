@@ -29,16 +29,12 @@ using Crypter.ClientServices.Transfer.Handlers.Base;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
-using Crypter.Common.Streams;
 using Crypter.Contracts.Features.Transfer;
-using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Services;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Transfer.Handlers
@@ -50,66 +46,25 @@ namespace Crypter.ClientServices.Transfer.Handlers
       private long _fileSize;
       private string _fileContentType;
       private int _expirationHours;
-      private bool _useCompression;
-      private CompressionType _usedCompressionType;
-
-      private MemoryStream _preparedStream;
-
-      private readonly ICompressionService _compressionService;
-      private readonly HashSet<string> _fileExtensionCompressionBlacklist;
 
       public readonly int BufferSize;
 
-      public UploadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, FileTransferSettings fileTransferSettings, ICompressionService compressionService)
-         : base(crypterApiService, simpleEncryptionService, simpleSignatureService, fileTransferSettings)
+      public UploadFileHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
+         : base(crypterApiService, cryptoProvider, transferSettings)
       {
-         _compressionService = compressionService;
-         BufferSize = fileTransferSettings.PartSizeBytes;
-
-         _fileExtensionCompressionBlacklist = new HashSet<string>
-         {
-            "7z",
-            "arj",
-            "deb",
-            "gz",
-            "pkg",
-            "rar",
-            "rpm",
-            "z",
-            "zip"
-         };
-
-         _usedCompressionType = CompressionType.None;
+         BufferSize = _transferSettings.StreamEncryptionChunkSizeKiB * (int)Math.Pow(2, 10);
       }
 
-      internal void SetTransferInfo(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours, bool useCompression)
+      internal void SetTransferInfo(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours)
       {
          _fileStream = fileStream;
          _fileName = fileName;
          _fileSize = fileSize;
          _fileContentType = fileContentType;
          _expirationHours = expirationHours;
-         _useCompression = useCompression;
       }
 
-      public async Task PrepareMemoryStream(Maybe<Func<double, Task>> compressionProgress)
-      {
-         MemoryStream stream = await StreamCopy.StreamToMemoryStream(_fileStream, _fileSize, BufferSize, Maybe<Func<double, Task>>.None);
-
-         if (UseCompressionOnFile())
-         {
-            _usedCompressionType = CompressionType.GZip; 
-            _preparedStream = await compressionProgress.MatchAsync(
-               async () => await _compressionService.CompressStreamAsync(stream),
-               async func => await _compressionService.CompressStreamAsync(stream, _fileSize, BufferSize, func));
-         }
-         else
-         {
-            _preparedStream = stream;
-         }
-      }
-
-      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<double, Task>> encryptionProgress, Maybe<Func<double, Task>> signatureProgress, Maybe<Func<Task>> invokeBeforeUploading)
+      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<Task>> invokeBeforeUploading)
       {
          if (_recipientUsername.IsNone)
          {
@@ -121,73 +76,63 @@ namespace Crypter.ClientServices.Transfer.Handlers
             CreateEphemeralSenderKeys();
          }
 
-         PEMString senderDiffieHellmanPrivateKey = _senderDiffieHellmanPrivateKey.Match(
-            () => throw new Exception("Missing sender Diffie Hellman private key"),
+         byte[] senderPrivateKey = _senderPrivateKey.Match(
+            () => throw new Exception("Missing sender private key"),
             x => x);
 
-         PEMString recipientDiffieHellmanPublicKey = _recipientDiffieHellmanPublicKey.Match(
-            () => throw new Exception("Missing recipient Diffie Hellman private key"),
+         byte[] recipientPublicKey = _recipientPublicKey.Match(
+            () => throw new Exception("Missing recipient public key"),
             x => x);
 
-         PEMString senderDigitalSignaturePrivateKey = _senderDigitalSignaturePrivateKey.Match(
-            () => throw new Exception("Missing recipient Digital Signature private key"),
-            x => x);
+         byte[] kxNonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.KeyExchange.NonceSize);
+         byte[] senderPublicKey = _cryptoProvider.KeyExchange.GeneratePublicKey(senderPrivateKey);
+         (byte[] encryptionKey, byte[] proof) = _cryptoProvider.KeyExchange.GenerateEncryptionKey(_cryptoProvider.StreamEncryptionFactory.KeySize, senderPrivateKey, recipientPublicKey, kxNonce);
 
-         (byte[] sendKey, byte[] serverKey) = DeriveSymmetricKeys(senderDiffieHellmanPrivateKey, recipientDiffieHellmanPublicKey);
-         byte[] initializationVector = AES.GenerateIV();
-
-         List<byte[]> partitionedCiphertext = await _simpleEncryptionService.EncryptStreamAsync(sendKey, initializationVector, _preparedStream, _preparedStream.Length, BufferSize, encryptionProgress);
-         _preparedStream.Position = 0;
-         byte[] signature = await _simpleSignatureService.SignStreamAsync(senderDigitalSignaturePrivateKey, _preparedStream, _preparedStream.Length, BufferSize, signatureProgress);
+         (byte[] header, List<byte[]> ciphertext) = await EncryptStreamAsync(encryptionKey, _fileStream, _fileSize, BufferSize);
          await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
 
-         string encodedInitializationVector = Convert.ToBase64String(initializationVector);
+         UploadFileTransferRequest request = _senderDefined
+            ? new UploadFileTransferRequest(_fileName, _fileContentType, header, ciphertext, null, kxNonce, proof, _expirationHours)
+            : new UploadFileTransferRequest(_fileName, _fileContentType, header, ciphertext, senderPublicKey, kxNonce, proof, _expirationHours);
 
-         List<string> encodedCipherText = partitionedCiphertext
-            .Select(x => Convert.ToBase64String(x))
-            .ToList();
-
-         string encodedSignature = Convert.ToBase64String(signature);
-
-         string encodedECDSASenderKey = _senderDigitalSignaturePublicKey.Match(
-            () => throw new Exception("Missing sender Digital Signature public key"),
-            x =>
-            {
-               return Convert.ToBase64String(
-                  Encoding.UTF8.GetBytes(x.Value));
-            });
-
-         string encodedECDHSenderKey = _senderDiffieHellmanPublicKey.Match(
-            () => throw new Exception("Missing sender Diffie Hellman public key"),
-            x =>
-            {
-               return Convert.ToBase64String(
-                  Encoding.UTF8.GetBytes(x.Value));
-            });
-
-         string encodedServerKey = Convert.ToBase64String(serverKey);
-
-         var request = new UploadFileTransferRequest(_fileName, _fileContentType, encodedInitializationVector, encodedCipherText, encodedSignature, encodedECDSASenderKey, encodedECDHSenderKey, encodedServerKey, _expirationHours, _usedCompressionType);
-         var response = await _recipientUsername.Match(
+         Either<UploadTransferError, UploadTransferResponse> response = await _recipientUsername.Match(
             () => _crypterApiService.UploadFileTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserFileTransferAsync(x, request, _senderDefined));
  
          return response.Map(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.File, x.UserType, _recipientKeySeed));
       }
 
-      private bool UseCompressionOnFile()
+      private async Task<(byte[] header, List<byte[]> ciphertext)> EncryptStreamAsync(byte[] key, Stream stream, long streamLength, int chunkSize)
       {
-         string fileExtension = _fileName.Contains('.')
-            ? _fileName.Split('.').Last()
-            : string.Empty;
+         IStreamEncrypt streamEncryptor = _cryptoProvider.StreamEncryptionFactory.NewEncryptionStream(_transferSettings.PaddingBlockSize);
+         byte[] header = streamEncryptor.GenerateHeader(key);
 
-         return _useCompression && !_fileExtensionCompressionBlacklist.Contains(fileExtension);
+         int partCount = Convert.ToInt32(Math.Ceiling(streamLength / (double)chunkSize));
+         List<byte[]> encryptedParts = new(partCount);
+
+         int bytesRead = 0;
+         while (bytesRead + chunkSize < streamLength)
+         {
+            byte[] readBuffer = new byte[chunkSize];
+            bytesRead += await stream.ReadAsync(readBuffer.AsMemory(0, chunkSize));
+
+            byte[] encryptedPart = streamEncryptor.Push(readBuffer, false);
+            encryptedParts.Add(encryptedPart);
+         }
+
+         int finalPlaintextLength = Convert.ToInt32(streamLength) - bytesRead;
+         byte[] finalReadBuffer = new byte[finalPlaintextLength];
+         await stream.ReadAsync(finalReadBuffer.AsMemory(0, finalPlaintextLength));
+
+         byte[] finalEncryptedPart = streamEncryptor.Push(finalReadBuffer, true);
+         encryptedParts.Add(finalEncryptedPart);
+
+         return (header, encryptedParts);
       }
 
       public void Dispose()
       {
          _fileStream?.Dispose();
-         _preparedStream?.Dispose();
          GC.SuppressFinalize(this);
       }
    }

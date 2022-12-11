@@ -28,6 +28,7 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Authentication;
+using Crypter.Contracts.Features.Consent;
 using Crypter.Contracts.Features.Contacts;
 using Crypter.Contracts.Features.Keys;
 using Crypter.Contracts.Features.Metrics;
@@ -92,6 +93,15 @@ namespace Crypter.ClientServices.Services
                 select errorableResponse;
       }
 
+      public Task<Either<TestPasswordError, TestPasswordResponse>> TestPasswordAsync(TestPasswordRequest testPasswordRequest)
+      {
+         string url = $"{_baseApiUrl}/authentication/password/test";
+         return from response in Either<TestPasswordError, (HttpStatusCode httpStatus, Either<ErrorResponse, TestPasswordResponse> data)>.FromRightAsync(
+                     _crypterAuthenticatedHttpService.PostAsync<TestPasswordRequest, TestPasswordResponse>(url, testPasswordRequest))
+                from errorableResponse in ExtractErrorCode<TestPasswordError, TestPasswordResponse>(response.data).AsTask()
+                select errorableResponse;
+      }
+
       public async Task<Either<RefreshError, RefreshResponse>> RefreshAsync()
       {
          string url = $"{_baseApiUrl}/authentication/refresh";
@@ -111,6 +121,19 @@ namespace Crypter.ClientServices.Services
          return from response in Either<LogoutError, (HttpStatusCode httpStatus, Either<ErrorResponse, LogoutResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<LogoutResponse>(url, true))
                 from errorableResponse in ExtractErrorCode<LogoutError, LogoutResponse>(response.data).AsTask()
+                select errorableResponse;
+      }
+
+      #endregion
+
+      #region Consent
+
+      public Task<Either<DummyError, ConsentToRecoveryKeyRisksResponse>> ConsentToRecoveryKeyRisksAsync()
+      {
+         string url = $"{_baseApiUrl}/consent/recovery-key";
+         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, ConsentToRecoveryKeyRisksResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.PostAsync<ConsentToRecoveryKeyRisksResponse>(url, true))
+                from errorableResponse in ExtractErrorCode<DummyError, ConsentToRecoveryKeyRisksResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 
@@ -210,36 +233,45 @@ namespace Crypter.ClientServices.Services
 
       #region Keys
 
-      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDiffieHellmanPrivateKeyAsync()
+      public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync()
       {
-         string url = $"{_baseApiUrl}/keys/diffie-hellman/private";
+         string url = $"{_baseApiUrl}/keys/master";
+         return from response in Either<GetMasterKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetMasterKeyResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.GetAsync<GetMasterKeyResponse>(url))
+                from errorableResponse in ExtractErrorCode<GetMasterKeyError, GetMasterKeyResponse>(response.data).AsTask()
+                select errorableResponse;
+      }
+
+      public Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(InsertMasterKeyRequest request)
+      {
+         string url = $"{_baseApiUrl}/keys/master";
+         return from response in Either<InsertMasterKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertMasterKeyResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.PutAsync<InsertMasterKeyRequest, InsertMasterKeyResponse>(url, request))
+                from errorableResponse in ExtractErrorCode<InsertMasterKeyError, InsertMasterKeyResponse>(response.data).AsTask()
+                select errorableResponse;
+      }
+
+      public Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
+      {
+         string url = $"{_baseApiUrl}/keys/master/recovery-proof";
+         return from response in Either<GetMasterKeyRecoveryProofError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetMasterKeyRecoveryProofResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.PostAsync<GetMasterKeyRecoveryProofRequest, GetMasterKeyRecoveryProofResponse>(url, request))
+                from errorableResponse in ExtractErrorCode<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>(response.data).AsTask()
+                select errorableResponse;
+      }
+
+      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync()
+      {
+         string url = $"{_baseApiUrl}/keys/private";
          return from response in Either<GetPrivateKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetPrivateKeyResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.GetAsync<GetPrivateKeyResponse>(url))
                 from errorableResponse in ExtractErrorCode<GetPrivateKeyError, GetPrivateKeyResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 
-      public Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDiffieHellmanKeysAsync(InsertKeyPairRequest request)
+      public Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request)
       {
-         string url = $"{_baseApiUrl}/keys/diffie-hellman";
-         return from response in Either<InsertKeyPairError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertKeyPairResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpService.PutAsync<InsertKeyPairRequest, InsertKeyPairResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<InsertKeyPairError, InsertKeyPairResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetDigitalSignaturePrivateKeyAsync()
-      {
-         string url = $"{_baseApiUrl}/keys/digital-signature/private";
-         return from response in Either<GetPrivateKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetPrivateKeyResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpService.GetAsync<GetPrivateKeyResponse>(url))
-                from errorableResponse in ExtractErrorCode<GetPrivateKeyError, GetPrivateKeyResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertDigitalSignatureKeysAsync(InsertKeyPairRequest request)
-      {
-         string url = $"{_baseApiUrl}/keys/digital-signature";
+         string url = $"{_baseApiUrl}/keys/private";
          return from response in Either<InsertKeyPairError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertKeyPairResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PutAsync<InsertKeyPairRequest, InsertKeyPairResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<InsertKeyPairError, InsertKeyPairResponse>(response.data).AsTask()

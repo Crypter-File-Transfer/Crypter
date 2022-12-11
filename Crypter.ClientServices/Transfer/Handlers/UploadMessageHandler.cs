@@ -29,10 +29,9 @@ using Crypter.ClientServices.Transfer.Handlers.Base;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
-using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Services;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -46,8 +45,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
       private string _messageBody;
       private int _expirationHours;
 
-      public UploadMessageHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, FileTransferSettings uploadSettings)
-         : base(crypterApiService, simpleEncryptionService, simpleSignatureService, uploadSettings)
+      public UploadMessageHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
+         : base(crypterApiService, cryptoProvider, transferSettings)
       { }
 
       internal void SetTransferInfo(string messageSubject, string messageBody, int expirationHours)
@@ -57,7 +56,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
          _expirationHours = expirationHours;
       }
 
-      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<Task>> invokeBeforeSigning, Maybe<Func<Task>> invokeBeforeUploading)
+      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<Task>> invokeBeforeUploading)
       {
          if (_recipientUsername.IsNone)
          {
@@ -69,56 +68,38 @@ namespace Crypter.ClientServices.Transfer.Handlers
             CreateEphemeralSenderKeys();
          }
 
-         PEMString senderDiffieHellmanPrivateKey = _senderDiffieHellmanPrivateKey.Match(
-            () => throw new Exception("Missing sender Diffie Hellman private key"),
+         byte[] senderPrivateKey = _senderPrivateKey.Match(
+            () => throw new Exception("Missing sender private key"),
             x => x);
 
-         PEMString recipientDiffieHellmanPublicKey = _recipientDiffieHellmanPublicKey.Match(
-            () => throw new Exception("Missing recipient Diffie Hellman private key"),
+         byte[] recipientPublicKey = _recipientPublicKey.Match(
+            () => throw new Exception("Missing recipient public key"),
             x => x);
 
-         PEMString senderDigitalSignaturePrivateKey = _senderDigitalSignaturePrivateKey.Match(
-            () => throw new Exception("Missing recipient Digital Signature private key"),
-            x => x);
+         byte[] kxNonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.KeyExchange.NonceSize);
+         byte[] senderPublicKey = _cryptoProvider.KeyExchange.GeneratePublicKey(senderPrivateKey);
+         (byte[] encryptionKey, byte[] proof) = _cryptoProvider.KeyExchange.GenerateEncryptionKey(_cryptoProvider.StreamEncryptionFactory.KeySize, senderPrivateKey, recipientPublicKey, kxNonce);
 
-         (byte[] sendKey, byte[] serverKey) = DeriveSymmetricKeys(senderDiffieHellmanPrivateKey, recipientDiffieHellmanPublicKey);
-         byte[] initializationVector = AES.GenerateIV();
-
-         byte[] ciphertext = _simpleEncryptionService.Encrypt(sendKey, initializationVector, _messageBody);
-         await invokeBeforeSigning.IfSomeAsync(async x => await x.Invoke());
-         byte[] signature = _simpleSignatureService.Sign(senderDigitalSignaturePrivateKey, _messageBody);
+         (byte[] header, byte[] ciphertext) = EncryptMessage(encryptionKey, _messageBody);
          await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
 
-         string encodedInitializationVector = Convert.ToBase64String(initializationVector);
+         UploadMessageTransferRequest request = _senderDefined
+            ? new UploadMessageTransferRequest(_messageSubject, header, new List<byte[]>(1) { ciphertext }, null, kxNonce, proof, _expirationHours)
+            : new UploadMessageTransferRequest(_messageSubject, header, new List<byte[]>(1) { ciphertext }, senderPublicKey, kxNonce, proof, _expirationHours);
 
-         List<string> encodedCipherText = new List<string> { Convert.ToBase64String(ciphertext) };
-
-         string encodedSignature = Convert.ToBase64String(signature);
-
-         string encodedECDSASenderKey = _senderDigitalSignaturePublicKey.Match(
-            () => throw new Exception("Missing sender Digital Signature public key"),
-            x =>
-            {
-               return Convert.ToBase64String(
-                  Encoding.UTF8.GetBytes(x.Value));
-            });
-
-         string encodedECDHSenderKey = _senderDiffieHellmanPublicKey.Match(
-            () => throw new Exception("Missing sender Diffie Hellman public key"),
-            x =>
-            {
-               return Convert.ToBase64String(
-                  Encoding.UTF8.GetBytes(x.Value));
-            });
-
-         string encodedServerKey = Convert.ToBase64String(serverKey);
-
-         var request = new UploadMessageTransferRequest(_messageSubject, encodedInitializationVector, encodedCipherText, encodedSignature, encodedECDSASenderKey, encodedECDHSenderKey, encodedServerKey, _expirationHours, CompressionType.None);
-         var response = await _recipientUsername.Match(
+         Either<UploadTransferError, UploadTransferResponse> response = await _recipientUsername.Match(
             () => _crypterApiService.UploadMessageTransferAsync(request, _senderDefined),
             x => _crypterApiService.SendUserMessageTransferAsync(x, request, _senderDefined));
 
          return response.Map(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.Message, x.UserType, _recipientKeySeed));
+      }
+
+      private (byte[] header, byte[] ciphertext) EncryptMessage(ReadOnlySpan<byte> key, string message)
+      {
+         IStreamEncrypt streamEncryptor = _cryptoProvider.StreamEncryptionFactory.NewEncryptionStream(_transferSettings.PaddingBlockSize);
+         byte[] header = streamEncryptor.GenerateHeader(key);
+         byte[] ciphertext = streamEncryptor.Push(Encoding.UTF8.GetBytes(message), true);
+         return (header, ciphertext);
       }
    }
 }

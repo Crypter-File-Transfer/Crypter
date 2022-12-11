@@ -27,7 +27,6 @@
 using Crypter.ClientServices.Transfer;
 using Crypter.ClientServices.Transfer.Handlers;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
 using System;
 using System.Threading.Tasks;
@@ -71,8 +70,8 @@ namespace Crypter.Web.Shared.Transfer
       {
          DecryptionInProgress = true;
 
-         Maybe<PEMString> recipientPrivateKey = SpecificRecipient
-            ? UserKeysService.X25519PrivateKey
+         Maybe<byte[]> recipientPrivateKey = SpecificRecipient
+            ? UserKeysService.PrivateKey
             : DeriveRecipientPrivateKeyFromUrlSeed();
 
          recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key.");
@@ -82,8 +81,7 @@ namespace Crypter.Web.Shared.Transfer
 
             await SetProgressMessage(_downloadingLiteral);
             var showDecryptingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_decryptingLiteral));
-            var showVerifyingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_verifyingLiteral));
-            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync(showDecryptingMessage, showVerifyingMessage);
+            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync(showDecryptingMessage);
 
             decryptionResponse.DoLeftOrNeither(
             x => HandleDownloadError(x),

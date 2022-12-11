@@ -31,7 +31,7 @@ namespace Crypter.ClientServices.DeviceStorage.Enums
       UserSession,
       AuthenticationToken,
       RefreshToken,
-      Ed25519PrivateKey,
-      X25519PrivateKey
+      PrivateKey,
+      MasterKey
    }
 }

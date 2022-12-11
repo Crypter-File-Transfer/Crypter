@@ -24,13 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
+using System;
 
 namespace Crypter.ClientServices.Transfer.Handlers.Base
 {
    public interface IUserUploadHandler
    {
-      void SetSenderInfo(PEMString diffieHellmanPrivateKey, PEMString digitalSignaturePrivateKey);
-      void SetRecipientInfo(string username, PEMString diffieHellmanPublicKey);
+      void SetSenderInfo(ReadOnlySpan<byte> privateKey);
+      void SetRecipientInfo(string username, ReadOnlySpan<byte> publicKey);
    }
 }

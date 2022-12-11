@@ -32,7 +32,10 @@ namespace Crypter.Contracts.Features.Authentication
       InvalidUsername,
       InvalidPassword,
       InvalidEmailAddress,
+      InvalidPasswordConfirm,
       UsernameTaken,
-      EmailAddressTaken
+      EmailAddressTaken,
+      OldPasswordVersion,
+      PasswordHashFailure
    }
 }

@@ -36,11 +36,10 @@ namespace Crypter.Contracts.Features.Users
       public bool AllowKeyExchangeRequests { get; set; }
       public bool ReceivesMessages { get; set; }
       public bool ReceivesFiles { get; set; }
-      public string PublicDHKey { get; set; }
-      public string PublicDSAKey { get; set; }
+      public byte[] PublicKey { get; set; }
 
       [JsonConstructor]
-      public UserProfileDTO(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, string publicDHKey, string publicDSAKey)
+      public UserProfileDTO(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, byte[] publicKey)
       {
          Username = username;
          Alias = alias;
@@ -48,8 +47,7 @@ namespace Crypter.Contracts.Features.Users
          AllowKeyExchangeRequests = allowKeyExchangeRequests;
          ReceivesMessages = receivesMessages;
          ReceivesFiles = receivesFiles;
-         PublicDHKey = publicDHKey;
-         PublicDSAKey = publicDSAKey;
+         PublicKey = publicKey;
       }
    }
 }

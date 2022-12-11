@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Monads;
+using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -32,44 +33,28 @@ namespace Crypter.Web.Shared.Modal
 {
    public partial class BasicModalBase : ComponentBase
    {
-      protected string Subject { get; set; }
+      protected string Subject;
+      protected string Message;
+      protected string PrimaryButtonText;
+      protected string SecondaryButtonText;
 
-      protected string Message { get; set; }
-
-      protected string PrimaryButtonText { get; set; }
-
-      protected string SecondaryButtonText { get; set; }
-
-      protected Maybe<EventCallback<bool>> ModalClosedCallback { get; set; }
-
-      protected bool Show = false;
-      protected string ModalDisplay = "none;";
-      protected string ModalClass = "";
+      protected Maybe<EventCallback<bool>> ModalClosedCallback;
+      protected ModalBehavior ModalBehaviorRef;
 
       public void Open(string subject, string message, string primaryButtonText, Maybe<string> secondaryButtonText, Maybe<EventCallback<bool>> modalClosedCallback)
       {
          Subject = subject;
          Message = message;
          PrimaryButtonText = primaryButtonText;
-         SecondaryButtonText = secondaryButtonText.Match(
-            () => string.Empty,
-            x => x);
          ModalClosedCallback = modalClosedCallback;
 
-         ModalDisplay = "block;";
-         ModalClass = "Show";
-         Show = true;
-         StateHasChanged();
+         ModalBehaviorRef.Open();
       }
 
       public async Task CloseAsync(bool modalClosedInTheAffirmative)
       {
-         ModalDisplay = "none";
-         ModalClass = "";
-         Show = false;
-         StateHasChanged();
-
          await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync(modalClosedInTheAffirmative));
+         ModalBehaviorRef.Close();
       }
    }
 }

@@ -28,103 +28,64 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
-using Crypter.CryptoLib;
-using Crypter.CryptoLib.Crypto;
-using Crypter.CryptoLib.Enums;
-using Crypter.CryptoLib.Services;
-using Org.BouncyCastle.Crypto;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.Common.KeyExchange;
+using System;
 
 namespace Crypter.ClientServices.Transfer.Handlers.Base
 {
    public class UploadHandler : IUserUploadHandler
    {
       protected readonly ICrypterApiService _crypterApiService;
-      protected readonly ISimpleEncryptionService _simpleEncryptionService;
-      protected readonly ISimpleSignatureService _simpleSignatureService;
-      protected readonly FileTransferSettings _fileTransferSettings;
+      protected readonly ICryptoProvider _cryptoProvider;
+      protected readonly TransferSettings _transferSettings;
 
       protected TransferUserType _transferUserType = TransferUserType.Anonymous;
 
       protected bool _senderDefined = false;
 
-      protected Maybe<PEMString> _senderDiffieHellmanPrivateKey = Maybe<PEMString>.None;
-      protected Maybe<PEMString> _senderDiffieHellmanPublicKey = Maybe<PEMString>.None;
-
-      protected Maybe<PEMString> _senderDigitalSignaturePrivateKey = Maybe<PEMString>.None;
-      protected Maybe<PEMString> _senderDigitalSignaturePublicKey = Maybe<PEMString>.None;
+      protected Maybe<byte[]> _senderPrivateKey = Maybe<byte[]>.None;
 
       protected Maybe<string> _recipientUsername = Maybe<string>.None;
       protected Maybe<byte[]> _recipientKeySeed = Maybe<byte[]>.None;
 
-      protected Maybe<PEMString> _recipientDiffieHellmanPrivateKey = Maybe<PEMString>.None;
-      protected Maybe<PEMString> _recipientDiffieHellmanPublicKey = Maybe<PEMString>.None;
+      protected Maybe<byte[]> _recipientPrivateKey = Maybe<byte[]>.None;
+      protected Maybe<byte[]> _recipientPublicKey = Maybe<byte[]>.None;
 
-      public UploadHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, FileTransferSettings fileTransferSettings)
+      public UploadHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
       {
          _crypterApiService = crypterApiService;
-         _simpleEncryptionService = simpleEncryptionService;
-         _simpleSignatureService = simpleSignatureService;
-         _fileTransferSettings = fileTransferSettings;
+         _cryptoProvider = cryptoProvider;
+         _transferSettings = transferSettings;
       }
 
-      public void SetSenderInfo(PEMString diffieHellmanPrivateKey, PEMString digitalSignaturePrivateKey)
+      public void SetSenderInfo(ReadOnlySpan<byte> privateKey)
       {
          _senderDefined = true;
          _transferUserType = TransferUserType.User;
-
-         var senderX25519PrivateKeyDecoded = KeyConversion.ConvertX25519PrivateKeyFromPEM(diffieHellmanPrivateKey);
-         var senderX25519PublicKeyDecoded = senderX25519PrivateKeyDecoded.GeneratePublicKey();
-
-         _senderDiffieHellmanPrivateKey = diffieHellmanPrivateKey;
-         _senderDiffieHellmanPublicKey = senderX25519PublicKeyDecoded.ConvertToPEM();
-
-         var senderEd25519PrivateKeyDecoded = KeyConversion.ConvertEd25519PrivateKeyFromPEM(digitalSignaturePrivateKey);
-         var senderEd25519PublicKeyDecoded = senderEd25519PrivateKeyDecoded.GeneratePublicKey();
-
-         _senderDigitalSignaturePrivateKey = digitalSignaturePrivateKey;
-         _senderDigitalSignaturePublicKey = senderEd25519PublicKeyDecoded.ConvertToPEM();
+         _senderPrivateKey = privateKey.ToArray();
       }
 
-      public void SetRecipientInfo(string username, PEMString diffieHellmanPublicKey)
+      public void SetRecipientInfo(string username, ReadOnlySpan<byte> publicKey)
       {
          _transferUserType = TransferUserType.User;
          _recipientUsername = username;
-         _recipientDiffieHellmanPublicKey = diffieHellmanPublicKey;
+         _recipientPublicKey = publicKey.ToArray();
       }
 
       protected void CreateEphemeralSenderKeys()
       {
-         var senderX25519KeyPair = ECDH.GenerateKeys();
-         _senderDiffieHellmanPrivateKey = senderX25519KeyPair.Private.ConvertToPEM();
-         _senderDiffieHellmanPublicKey = senderX25519KeyPair.Public.ConvertToPEM();
-
-         var senderEd25519KeyPair = ECDSA.GenerateKeys();
-         _senderDigitalSignaturePrivateKey = senderEd25519KeyPair.Private.ConvertToPEM();
-         _senderDigitalSignaturePublicKey = senderEd25519KeyPair.Public.ConvertToPEM();
+         X25519KeyPair senderX25519KeyPair = _cryptoProvider.KeyExchange.GenerateKeyPair();
+         _senderPrivateKey = senderX25519KeyPair.PrivateKey;
       }
 
       protected void CreateEphemeralRecipientKeys()
       {
-         byte[] seed = ECDH.GenerateKeySeed();
-         _recipientKeySeed = seed;
-         var recipientX25519KeyPair = ECDH.GenerateKeys(seed);
-         _recipientDiffieHellmanPrivateKey = recipientX25519KeyPair.Private.ConvertToPEM();
-         _recipientDiffieHellmanPublicKey = recipientX25519KeyPair.Public.ConvertToPEM();
-      }
-
-      protected static (byte[] SendKey, byte[] ServerKey) DeriveSymmetricKeys(PEMString senderX25519PrivateKey, PEMString recipientX25519PublicKey)
-      {
-         var senderX25519PrivateDecoded = KeyConversion.ConvertX25519PrivateKeyFromPEM(senderX25519PrivateKey);
-         var senderX25519PublicDecoded = senderX25519PrivateDecoded.GeneratePublicKey();
-         var senderKeyPair = new AsymmetricCipherKeyPair(senderX25519PublicDecoded, senderX25519PrivateDecoded);
-         var recipientX25519PublicDecoded = KeyConversion.ConvertX25519PublicKeyFromPEM(recipientX25519PublicKey);
-         (var receiveKey, var sendKey) = ECDH.DeriveSharedKeys(senderKeyPair, recipientX25519PublicDecoded);
-         var digestor = new SHA(SHAFunction.SHA256);
-         digestor.BlockUpdate(sendKey);
-         var serverKey = ECDH.DeriveKeyFromECDHDerivedKeys(receiveKey, sendKey);
-
-         return (sendKey, serverKey);
+         Span<byte> seed = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.KeyExchange.SeedSize);
+         _recipientKeySeed = seed.ToArray();
+         X25519KeyPair recipientKeyPair = _cryptoProvider.KeyExchange.GenerateKeyPairDeterministic(seed);
+         _recipientPrivateKey = recipientKeyPair.PrivateKey;
+         _recipientPublicKey = recipientKeyPair.PublicKey;
       }
    }
 }

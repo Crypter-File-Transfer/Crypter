@@ -29,7 +29,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Common.Monads
 {
-   public struct Either<TLeft, TRight>
+   public readonly struct Either<TLeft, TRight>
    {
       private readonly TLeft _left;
       private readonly TRight _right;

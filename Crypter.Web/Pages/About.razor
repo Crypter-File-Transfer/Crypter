@@ -37,45 +37,12 @@
 
     <h2>How does it work?</h2>
     <p>
-       While Crypter does offer real end-to-end encryption, be aware that Crypter does store your encrypted information for up to 24 hours.
-       This is how the application makes transfers possible between you and someone else.
-       In addition to Crypter deleting all encrypted information after 24 hours, encrypted information is also deleted as soon as someone downloads
-       the encrypted information with the correct decryption key.
-    </p>
+       Crypter uses libsodium to encrypt every message and file before uploading them to the Crypter cloud server.
+       There are only two ways to download the encrypted content again. The first way is to be given a shareable link.
+       The second way is to login to a Crypter account, in order to access items which have been sent directly to that account.
+       All your secrets are encrypted and decrypted right in the browser.
 
-    <h2>Explain the cryptography</h2>
-    <p>
-       Crypter uses elliptical curve cryptography to encrypt and digitally sign every upload.
-    </p>
-
-    <h3>Encryption</h3>
-    <p>
-       The first step to the whole process is creating several sets of Curve25519 key-pairs. These sets of key-pairs are labelled the "sender" keys and "recipient" keys.
-       Within each key-pair is a "private" key and a "public" key. As their names suggest, the private key is designed to be kept private, while the public key is designed to be made public.
-       The sender's private key is disposed of as soon as the upload completes, while the recipient's private key is provided back to the sender to give to whomever they want.
-    </p>
-    <p>
-       After these keys are created, a form of key exchange occurs that mixes the sender's private key with the recipient's public key to derive a shared secret.
-       This same secret can be derived by combining the recipient's private key with the sender's public key. Crypter uses this shared secret as the actual encryption key.
-    </p>
-    <p>
-       After encryption is completed, Crypter will digitally sign the sender's original data. More on this later.
-    </p>
-    <p>
-       Finally, the Crypter will upload the encrypted data, the sender's public key, and the digital signature to the Crypter server. At this point
-       it is up to the sender to share the download link and the recipient's private key with whoever they want. The only way for anyone to download and decrypt
-       this content is by having the correct download link and private key.
-    </p>
-
-    <h3>Decryption</h3>
-    <p>
-       Assuming someone does have the correct download link and private key, Crypter will then download the encrypted content to the browser where it will be decrypted and verified.
-       In order to decrypt, the same form of key exchange that occurred during encryption must occur again. This time, the key exchange occurs with the recipient's private key and
-       the sender's public key that was uploaded to the Crypter server. This key exchange will derive the same shared secret that was used encrypt, but this time it will be used to decrypt.
-    </p>
-    <p>
-       After decryption is completed, Crypter will verify the decrypted information against the digital signature that was provided by the sender. If the decrypted information matches the
-       digital signature, then Crypter has proven the decrypted information is authentic and has not been tampered with.
+       Encrypted uploads are deleted from the Crypter cloud server after they are downloaded, or after 24 hours.  Whichever comes first.
     </p>
 
     <h2>How can I trust this is real?</h2>
@@ -103,7 +70,7 @@
 
     <h2>How is this funded?</h2>
     <p>
-       Mostly out of my own pocket. Check out the Patreon link in the site footer if you are interested in helping out.
+       Mostly out of my own pocket. Check out the Ko-fi link in the site footer if you are interested in helping out.
     </p>
 
     <p>

@@ -65,12 +65,12 @@ namespace Crypter.Test.Web_Tests
       [TestCase(BrowserRepository.LocalStorageLiteral, BrowserStorageLocation.LocalStorage)]
       public async Task Repository_Initializes_Values_From_Browser_Storage(string storageLiteral, BrowserStorageLocation storageLocation)
       {
-         var storedUserSession = new UserSession("foo", true, UserSession.LATEST_SCHEMA);
-         var authenticationToken = "authentication";
-         var refreshToken = "refresh";
-         var ed25519PrivateKey = "plaintextEd25519";
-         var x25519PrivateKey = "plaintextX25519";
-         var jsRuntime = new Mock<IJSRuntime>();
+         UserSession storedUserSession = new UserSession("foo", true, UserSession.LATEST_SCHEMA);
+         string authenticationToken = "authentication";
+         string refreshToken = "refresh";
+         byte[] privateKey = "privateKey"u8.ToArray();
+         byte[] masterKey = "masterKey"u8.ToArray();
+         Mock<IJSRuntime> jsRuntime = new Mock<IJSRuntime>();
 
          // UserSession
          jsRuntime
@@ -93,19 +93,19 @@ namespace Crypter.Test.Web_Tests
                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.RefreshToken.ToString())))
             .ReturnsAsync((string commands, object[] args) => JsonSerializer.Serialize(refreshToken));
 
-         // Ed25519PrivateKey
+         // PrivateKey
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.Ed25519PrivateKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(ed25519PrivateKey));
+               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.PrivateKey.ToString())))
+            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(privateKey));
 
-         // X25519PrivateKey
+         // MasterKey
          jsRuntime
             .Setup(x => x.InvokeAsync<string>(
                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.X25519PrivateKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(x25519PrivateKey));
+               It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.MasterKey.ToString())))
+            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(privateKey));
 
          var sut = new BrowserRepository(jsRuntime.Object);
          await sut.InitializeAsync();
@@ -131,13 +131,13 @@ namespace Crypter.Test.Web_Tests
          fetchedRefreshToken.IfNone(Assert.Fail);
          fetchedRefreshToken.IfSome(x => Assert.AreEqual(refreshToken, x));
 
-         var fetchedPlaintextEd25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.Ed25519PrivateKey);
-         fetchedPlaintextEd25519PrivateKey.IfNone(Assert.Fail);
-         fetchedPlaintextEd25519PrivateKey.IfSome(x => Assert.AreEqual(ed25519PrivateKey, x));
+         var fetchedPrivateKey = await sut.GetItemAsync<byte[]>(DeviceStorageObjectType.PrivateKey);
+         fetchedPrivateKey.IfNone(Assert.Fail);
+         fetchedPrivateKey.IfSome(x => Assert.AreEqual(privateKey, x));
 
-         var fetchedPlaintextX25519PrivateKey = await sut.GetItemAsync<string>(DeviceStorageObjectType.X25519PrivateKey);
-         fetchedPlaintextX25519PrivateKey.IfNone(Assert.Fail);
-         fetchedPlaintextX25519PrivateKey.IfSome(x => Assert.AreEqual(x25519PrivateKey, x));
+         var fetchedMasterKeyKey = await sut.GetItemAsync<byte[]>(DeviceStorageObjectType.MasterKey);
+         fetchedMasterKeyKey.IfNone(Assert.Fail);
+         fetchedMasterKeyKey.IfSome(x => Assert.AreEqual(privateKey, x));
       }
    }
 }

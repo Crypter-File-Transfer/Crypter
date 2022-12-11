@@ -34,7 +34,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
 {
-   public partial class UploadFileTransferBase : UploadTransferBase
+   public partial class UploadFileTransferBase : UploadTransferBase, IDisposable
    {
       protected IBrowserFile SelectedFile;
 
@@ -43,8 +43,6 @@ namespace Crypter.Web.Shared.Transfer
       protected long MaxFileSizeBytes = 0;
 
       // UI
-      protected bool ShowProgressBar = false;
-      protected double ProgressPercent = 0.0;
       protected string DropClass = string.Empty;
 
       // Strings
@@ -53,7 +51,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected override void OnInitialized()
       {
-         MaxFileSizeBytes = UploadSettings.MaxUploadSizeMB * (long)Math.Pow(2, 20);
+         MaxFileSizeBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
       }
 
       protected void HandleDragEnter()
@@ -81,7 +79,7 @@ namespace Crypter.Web.Shared.Transfer
 
          if (file.Size > MaxFileSizeBytes)
          {
-            ErrorMessage = $"The max file size is {UploadSettings.MaxUploadSizeMB} MB.";
+            ErrorMessage = $"The max file size is {UploadSettings.MaximumTransferSizeMiB} MB.";
             return;
          }
 
@@ -99,69 +97,18 @@ namespace Crypter.Web.Shared.Transfer
          EncryptionInProgress = true;
          ErrorMessage = string.Empty;
 
-         await SetProgressMessage("Reading file");
+         await SetProgressMessage("Encrypting file");
          using Stream fileStream = SelectedFile.OpenReadStream(SelectedFile.Size);
-         using UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(fileStream, SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours, UseCompression);
+         using UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(fileStream, SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours);
 
          SetHandlerUserInfo(fileUploader);
 
-         var compressionProgressTask = Maybe<Func<double, Task>>.From(SetCompressionProgress);
-         var encryptionProgressTask = Maybe<Func<double, Task>>.From(SetEncryptionProgress);
-         var signingProgressTask = Maybe<Func<double, Task>>.From(SetSigningProgress);
-         var showUploadingMessage = Maybe<Func<Task>>.From(async () => {
-            ShowProgressBar = false;
-            await SetProgressMessage(_uploadingLiteral);
-         });
-         await fileUploader.PrepareMemoryStream(compressionProgressTask);
-         var uploadResponse = await fileUploader.UploadAsync(encryptionProgressTask, signingProgressTask, showUploadingMessage);
+         var showUploadingMessage = Maybe<Func<Task>>.From(async () => await SetProgressMessage(_uploadingLiteral));
+         var uploadResponse = await fileUploader.UploadAsync(showUploadingMessage);
 
          HandleUploadResponse(uploadResponse);
 
-         Recycle();
-         EncryptionInProgress = false;
-      }
-
-      protected async Task SetCompressionProgress(double percentComplete)
-      {
-         if (UploadStatusMessage != _compressingLiteral)
-         {
-            UploadStatusMessage = _compressingLiteral;
-         }
-
-         await SetProgressBar(percentComplete);
-      }
-
-      protected async Task SetEncryptionProgress(double percentComplete)
-      {
-         if (UploadStatusMessage != _encryptingLiteral)
-         {
-            UploadStatusMessage = _encryptingLiteral;
-         }
-
-         await SetProgressBar(percentComplete);
-      }
-
-      protected async Task SetSigningProgress(double percentComplete)
-      {
-         if (UploadStatusMessage != _signingLiteral)
-         {
-            UploadStatusMessage = _signingLiteral;
-         }
-
-         await SetProgressBar(percentComplete);
-      }
-
-      protected async Task SetProgressBar(double percentComplete)
-      {
-         ShowProgressBar = true;
-         ProgressPercent = percentComplete;
-         StateHasChanged();
-
-         int delay = percentComplete == 1.0
-            ? 400
-            : 5;
-
-         await Task.Delay(delay);
+         Dispose();
       }
 
       protected async Task SetProgressMessage(string message)
@@ -171,9 +118,12 @@ namespace Crypter.Web.Shared.Transfer
          await Task.Delay(400);
       }
 
-      public void Recycle()
+      public void Dispose()
       {
          SelectedFile = null;
+         EncryptionInProgress = false;
+         DropClass = string.Empty;
+         GC.SuppressFinalize(this);
       }
    }
 }

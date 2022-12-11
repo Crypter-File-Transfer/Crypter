@@ -24,9 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
+using Crypter.Core.Identity;
 using Crypter.Core.Services;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.Providers.Default;
 using NUnit.Framework;
+using System;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {
@@ -38,107 +41,118 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [OneTimeSetUp]
       public void SetupOnce()
       {
-         _sut = new PasswordHashService();
+         ICryptoProvider cryptoProvider = new DefaultCryptoProvider();
+         _sut = new PasswordHashService(cryptoProvider);
       }
 
       [Test]
       public void Service_Exists_In_Crypter_Core()
       {
-         var assembly = typeof(PasswordHashService);
+         Type assembly = typeof(PasswordHashService);
          Assert.AreEqual("Crypter.Core.Services.PasswordHashService", assembly.FullName);
       }
 
       [Test]
       public void Salt_Is_16_Bytes()
       {
-         var password = AuthenticationPassword.From("foo");
-         (var salt, _) = _sut.MakeSecurePasswordHash(password);
-         Assert.True(salt.Length == 16);
+         byte[] password = "foo"u8.ToArray();
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
+         Assert.True(hashOutput.Salt.Length == 16);
       }
 
       [Test]
       public void Hash_Is_64_Bytes()
       {
-         var password = AuthenticationPassword.From("foo");
-         (_, var hash) = _sut.MakeSecurePasswordHash(password);
-         Assert.True(hash.Length == 64);
+         byte[] password = "foo"u8.ToArray();
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
+         Assert.True(hashOutput.Hash.Length == 64);
       }
 
       [Test]
       public void Salts_Are_Unique()
       {
-         var password = AuthenticationPassword.From("foo");
-         (var salt1, _) = _sut.MakeSecurePasswordHash(password);
-         (var salt2, _) = _sut.MakeSecurePasswordHash(password);
-         Assert.AreNotEqual(salt1, salt2);
+         byte[] password = "foo"u8.ToArray();
+         SecurePasswordHashOutput hashOutput1 = _sut.MakeSecurePasswordHash(password, 1);
+         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 1);
+         Assert.AreNotEqual(hashOutput1.Salt, hashOutput2.Salt);
       }
 
       [Test]
       public void Hashes_With_Unique_Salts_Are_Unique()
       {
-         var password = AuthenticationPassword.From("foo");
-         (_, var hash1) = _sut.MakeSecurePasswordHash(password);
-         (_, var hash2) = _sut.MakeSecurePasswordHash(password);
-         Assert.AreNotEqual(hash1, hash2);
+         byte[] password = "foo"u8.ToArray();
+         SecurePasswordHashOutput hashOutput1 = _sut.MakeSecurePasswordHash(password, 1);
+         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 1);
+         Assert.AreNotEqual(hashOutput1.Hash, hashOutput2.Hash);
       }
 
       [Test]
       public void Hash_Verification_Can_Succeed()
       {
-         var password = AuthenticationPassword.From("foo");
-         (var salt, var hash) = _sut.MakeSecurePasswordHash(password);
-         var hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt);
+         byte[] password = "foo"u8.ToArray();
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
+         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 1);
          Assert.True(hashesMatch);
       }
 
       [Test]
       public void Hash_Verification_Fails_With_Bad_Password()
       {
-         var password = AuthenticationPassword.From("foo");
-         var notPassword = AuthenticationPassword.From("not foo");
-         (var salt, var hash) = _sut.MakeSecurePasswordHash(password);
-         var hashesMatch = _sut.VerifySecurePasswordHash(notPassword, hash, salt);
+         byte[] password = "foo"u8.ToArray();
+         byte[] notPassword = "not foo"u8.ToArray();
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
+         bool hashesMatch = _sut.VerifySecurePasswordHash(notPassword, hashOutput.Hash, hashOutput.Salt, 1);
          Assert.False(hashesMatch);
       }
 
       [Test]
       public void Hash_Verification_Fails_With_Bad_Salt()
       {
-         var password = AuthenticationPassword.From("foo");
-         (var salt, var hash) = _sut.MakeSecurePasswordHash(password);
+         byte[] password = "foo"u8.ToArray();
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
 
          // Modify the first byte in the salt to make it "bad"
-         salt[0] = salt[0] == 0x01
-            ? salt[0] = 0x02
-            : salt[0] = 0x01;
+         hashOutput.Salt[0] = hashOutput.Salt[0] == 0x01
+            ? hashOutput.Salt[0] = 0x02
+            : hashOutput.Salt[0] = 0x01;
 
-         var hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt);
+         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 1);
          Assert.False(hashesMatch);
       }
 
       [Test]
-      public void Hash_Verification_Works_With_Known_Values()
+      public void Hash_Verification_Fails_With_Different_Iterations()
       {
-         var password = AuthenticationPassword.From("foo");
-         var salt = new byte[]
+         byte[] password = "foo"u8.ToArray();
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
+
+         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 2);
+         Assert.False(hashesMatch);
+      }
+
+      [Test]
+      public void Hash_Verification_Is_Stable()
+      {
+         byte[] password = "foo"u8.ToArray();
+         byte[] salt = new byte[]
          {
             0xa1, 0xb8, 0x4d, 0x9b, 0x83, 0xf6, 0xb3, 0x46,
             0xa1, 0x85, 0x2a, 0xc6, 0xee, 0x28, 0x77, 0xe8
          };
 
-         var hash = new byte[]
+         byte[] hash = new byte[]
          {
-            0xf8, 0xcd, 0x14, 0x54, 0x7c, 0x79, 0xae, 0x29,
-            0x45, 0xc4, 0xe4, 0xb6, 0xf7, 0xf9, 0x0f, 0x00,
-            0x5f, 0xd3, 0xac, 0x7b, 0x04, 0x01, 0x51, 0x53,
-            0x94, 0x41, 0xd3, 0xf3, 0x42, 0x7e, 0x86, 0xd6,
-            0x04, 0x46, 0x77, 0x3a, 0x8b, 0x72, 0x27, 0xe4,
-            0xb9, 0x16, 0xb0, 0xc9, 0xbf, 0x6c, 0x49, 0xdd,
-            0xd1, 0x30, 0xed, 0x54, 0x5e, 0x2c, 0x22, 0x22,
-            0xa1, 0xc7, 0xd8, 0x9d, 0x65, 0xd7, 0x2a, 0x95
+            0x6b, 0x8a, 0x8f, 0x2e, 0x8d, 0xa5, 0x50, 0x4e,
+            0x86, 0xca, 0x8e, 0x62, 0x23, 0x47, 0x15, 0xb0,
+            0x36, 0xdb, 0x34, 0xc1, 0xa7, 0x93, 0x1d, 0x47,
+            0x3b, 0xc6, 0xca, 0xfa, 0x99, 0x88, 0xf8, 0xfb,
+            0x96, 0x6c, 0x82, 0xa4, 0x6f, 0xd7, 0xc6, 0x03,
+            0xf7, 0x52, 0xc5, 0xf4, 0x37, 0x5d, 0x34, 0x19,
+            0x52, 0x7a, 0xf3, 0x2c, 0xe2, 0x52, 0x47, 0x06,
+            0x90, 0xe8, 0x6b, 0x19, 0x70, 0x27, 0xa5, 0xc6
          };
 
-         var hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt);
+         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt, 100001);
          Assert.True(hashesMatch);
       }
    }

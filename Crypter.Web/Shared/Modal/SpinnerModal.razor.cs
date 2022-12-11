@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
+using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -31,52 +33,25 @@ namespace Crypter.Web.Shared.Modal
 {
    public partial class SpinnerModalBase : ComponentBase
    {
-      [Parameter]
-      public string Subject { get; set; }
+      protected string Subject;
+      protected string Message;
 
-      [Parameter]
-      public string Message { get; set; }
+      protected Maybe<EventCallback> ModalClosedCallback { get; set; }
+      protected ModalBehavior ModalBehaviorRef;
 
-      [Parameter]
-      public bool ShowPrimaryButton { get; set; }
-
-      [Parameter]
-      public string PrimaryButtonText { get; set; }
-
-      [Parameter]
-      public EventCallback<string> SubjectChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> MessageChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<bool> ShowPrimaryButtonChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<string> PrimaryButtonTextChanged { get; set; }
-
-      [Parameter]
-      public EventCallback<bool> ModalClosedCallback { get; set; }
-
-      protected string ModalDisplay = "none;";
-      protected string ModalClass = "";
-      protected bool ShowBackdrop = false;
-
-      public void Open()
+      public void Open(string subject, string message, Maybe<EventCallback> modalClosedCallback)
       {
-         ModalDisplay = "block;";
-         ModalClass = "Show";
-         ShowBackdrop = true;
-         StateHasChanged();
+         Subject = subject;
+         Message = message;
+         ModalClosedCallback = modalClosedCallback;
+
+         ModalBehaviorRef.Open();
       }
 
       public async Task CloseAsync()
       {
-         ModalDisplay = "none";
-         ModalClass = "";
-         ShowBackdrop = false;
-         StateHasChanged();
-         await ModalClosedCallback.InvokeAsync();
+         await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
+         ModalBehaviorRef.Close();
       }
    }
 }

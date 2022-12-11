@@ -31,24 +31,26 @@ namespace Crypter.Contracts.Features.Transfer
 {
    public class DownloadTransferMessagePreviewResponse
    {
-      public string Subject { get; set; }
-      public int Size { get; set; }
-      public string Sender { get; set; }
-      public string SenderAlias { get; set; }
-      public string Recipient { get; set; }
-      public string DiffieHellmanPublicKey { get; set; }
-      public DateTime CreationUTC { get; set; }
-      public DateTime ExpirationUTC { get; set; }
+      public string Subject { get; init; }
+      public int Size { get; init; }
+      public string Sender { get; init; }
+      public string SenderAlias { get; init; }
+      public string Recipient { get; init; }
+      public byte[] PublicKey { get; init; }
+      public byte[] KeyExchangeNonce { get; init; }
+      public DateTime CreationUTC { get; init; }
+      public DateTime ExpirationUTC { get; init; }
 
       [JsonConstructor]
-      public DownloadTransferMessagePreviewResponse(string subject, int size, string sender, string senderAlias, string recipient, string diffieHellmanPublicKey, DateTime creationUTC, DateTime expirationUTC)
+      public DownloadTransferMessagePreviewResponse(string subject, int size, string sender, string senderAlias, string recipient, byte[] publicKey, byte[] keyExchangeNonce, DateTime creationUTC, DateTime expirationUTC)
       {
          Subject = subject;
          Size = size;
          Sender = sender;
          SenderAlias = senderAlias;
          Recipient = recipient;
-         DiffieHellmanPublicKey = diffieHellmanPublicKey;
+         PublicKey = publicKey;
+         KeyExchangeNonce = keyExchangeNonce;
          CreationUTC = creationUTC;
          ExpirationUTC = expirationUTC;
       }

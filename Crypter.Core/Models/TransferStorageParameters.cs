@@ -35,15 +35,15 @@ namespace Crypter.Core.Models
       public Guid Id { get; init; }
       public TransferItemType ItemType { get; set; }
       public TransferUserType UserType { get; set; }
-      public string InitializationVector { get; init; }
-      public List<string> Ciphertext { get; init; }
+      public byte[] Header { get; init; }
+      public List<byte[]> Ciphertext { get; init; }
 
-      public TransferStorageParameters(Guid id, TransferItemType itemType, TransferUserType userType, string initializationVector, List<string> ciphertext)
+      public TransferStorageParameters(Guid id, TransferItemType itemType, TransferUserType userType, byte[] header, List<byte[]> ciphertext)
       {
          Id = id;
          ItemType = itemType;
          UserType = userType;
-         InitializationVector = initializationVector;
+         Header = header;
          Ciphertext = ciphertext;
       }
    }

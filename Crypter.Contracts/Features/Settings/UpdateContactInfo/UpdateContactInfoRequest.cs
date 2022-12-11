@@ -31,10 +31,10 @@ namespace Crypter.Contracts.Features.Settings
    public class UpdateContactInfoRequest
    {
       public string EmailAddress { get; set; }
-      public string CurrentPassword { get; set; }
+      public byte[] CurrentPassword { get; set; }
 
       [JsonConstructor]
-      public UpdateContactInfoRequest(string emailAddress, string currentPassword)
+      public UpdateContactInfoRequest(string emailAddress, byte[] currentPassword)
       {
          EmailAddress = emailAddress;
          CurrentPassword = currentPassword;

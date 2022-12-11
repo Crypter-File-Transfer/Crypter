@@ -26,11 +26,30 @@
 
 @inherits UserSettingsKeysBase
 
-<div class="mb-3">
-   <label for="ed25519PrivateKey" class="form-label">Ed25519 - Private Key</label>
-   <textarea @bind="Ed25519PrivateKey" class="form-control" id="ed25519PrivateKey" disabled />
+<h3>Recovery</h3>
+<div class="copiedTooltip mb-3">
+   @if (string.IsNullOrEmpty(RecoveryKey))
+   {
+      <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="() => PasswordModal.Open()">Generate Recovery Key</button>
+   }
+   else
+   {
+      <label for="recoveryKey" class="form-label">Recovery Key</label>
+      <div class="input-group mb-3">
+         <input class="form-control" value="@RecoveryKey" type="text" id="recoveryKey" readonly />
+         <div class="input-group-append">
+            <button class="btn btn-secondary" type="button" @onclick="CopyRecoveryKeyToClipboardAsync">Copy</button>
+         </div>
+      </div>
+
+      <span id="recoveryKeyCopyTooltip" class="copiedToolTip toolTipText">Copied</span>
+   }
 </div>
+
+<h3>Transfer</h3>
 <div class="mb-3">
-   <label for="x25519PrivateKey" class="form-label">X25519 - Private Key</label>
-   <textarea @bind="X25519PrivateKey" class="form-control" id="x25519PrivateKey" disabled />
+   <label for="privateKey" class="form-label">Private Key</label>
+   <textarea @bind="PrivateKey" class="form-control" id="privateKey" disabled />
 </div>
+
+<PasswordModal @ref="PasswordModal" />

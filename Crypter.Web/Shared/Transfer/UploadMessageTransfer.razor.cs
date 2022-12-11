@@ -30,7 +30,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
 {
-   public partial class UploadMessageTransferBase : UploadTransferBase
+   public partial class UploadMessageTransferBase : UploadTransferBase, IDisposable
    {
       protected string MessageSubject = string.Empty;
       protected string MessageBody = string.Empty;
@@ -46,13 +46,11 @@ namespace Crypter.Web.Shared.Transfer
          SetHandlerUserInfo(messageUploader);
 
          await SetProgressMessage(_encryptingLiteral);
-         var showSigningMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_signingLiteral));
          var showUploadingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_uploadingLiteral));
-         var uploadResponse = await messageUploader.UploadAsync(showSigningMessage, showUploadingMessage);
+         var uploadResponse = await messageUploader.UploadAsync(showUploadingMessage);
          HandleUploadResponse(uploadResponse);
 
-         Recycle();
-         EncryptionInProgress = false;
+         Dispose();
       }
 
       protected async Task SetProgressMessage(string message)
@@ -62,10 +60,12 @@ namespace Crypter.Web.Shared.Transfer
          await Task.Delay(400);
       }
 
-      public void Recycle()
+      public void Dispose()
       {
          MessageSubject = string.Empty;
          MessageBody = string.Empty;
+         EncryptionInProgress = false;
+         GC.SuppressFinalize(this);
       }
    }
 }

@@ -29,29 +29,22 @@ using Crypter.ClientServices.Transfer.Handlers.Base;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
-using Crypter.CryptoLib.Services;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Transfer.Handlers
 {
    public class DownloadFileHandler : DownloadHandler
    {
-      private readonly ICompressionService _compressionService;
-      private readonly FileTransferSettings _fileTransferSettings;
-
-      public DownloadFileHandler(ICrypterApiService crypterApiService, ISimpleEncryptionService simpleEncryptionService, ISimpleSignatureService simpleSignatureService, IUserSessionService userSessionService, ICompressionService compressionService, FileTransferSettings fileTransferSettings)
-         : base(crypterApiService, simpleEncryptionService, simpleSignatureService, userSessionService)
-      {
-         _compressionService = compressionService;
-         _fileTransferSettings = fileTransferSettings;
-      }
+      public DownloadFileHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
+         : base(crypterApiService, cryptoProvider, userSessionService, transferSettings)
+      { }
 
       public async Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadPreviewAsync()
       {
@@ -63,17 +56,17 @@ namespace Crypter.ClientServices.Transfer.Handlers
          };
 #pragma warning restore CS8524
 
-         response.DoRight(x => {
-            byte[] decodedPublicKey = Convert.FromBase64String(x.DiffieHellmanPublicKey);
-            string pemFormattedKey = Encoding.UTF8.GetString(decodedPublicKey);
-            SetSenderDiffieHellmanPublicKey(PEMString.From(pemFormattedKey));
-         });
+         response.DoRight(x => SetSenderPublicKey(x.PublicKey, x.KeyExchangeNonce));
          return response;
       }
 
-      public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeBeforeDecryption, Maybe<Func<Task>> invokeBeforeVerification, Maybe<Func<Task>> invokeBeforeDecompression)
+      public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeBeforeDecryption)
       {
-         var request = _serverKey.Match(
+         byte[] symmetricKey = _symmetricKey.Match(
+            () => throw new Exception("missing symmetric key"),
+            x => x);
+
+         DownloadTransferCiphertextRequest request = _serverProof.Match(
             () => throw new Exception("Missing server key"),
             x => new DownloadTransferCiphertextRequest(x));
 
@@ -88,59 +81,36 @@ namespace Crypter.ClientServices.Transfer.Handlers
             left => left,
             async right =>
             {
-               string digitalSignaturePublicKeyPEM = Encoding.UTF8.GetString(
-                  Convert.FromBase64String(right.DigitalSignaturePublicKey));
-
-               SetSenderDigitalSignaturePublicKey(PEMString.From(digitalSignaturePublicKeyPEM));
-
                await invokeBeforeDecryption.IfSomeAsync(async x => await x.Invoke());
-
-               byte[] plaintext = DecryptFile(right.Ciphertext, right.InitializationVector);
-               await invokeBeforeVerification.IfSomeAsync(async x => await x.Invoke());
-
-               bool verifiedFile = VerifyFile(plaintext, Convert.FromBase64String(right.DigitalSignature));
-
-               if (verifiedFile)
-               {
-                  if (right.CompressionType == CompressionType.GZip)
-                  {
-                     await invokeBeforeDecompression.IfSomeAsync(async x => await x.Invoke());
-
-                     using MemoryStream compressedStream = new MemoryStream(plaintext);
-                     using MemoryStream decompressedPlaintext = await _compressionService.DecompressStreamAsync(compressedStream, compressedStream.Length, _fileTransferSettings.PartSizeBytes, Maybe<Func<double, Task>>.None);
-                     return decompressedPlaintext.ToArray();
-                  }
-                  else
-                  {
-                     return plaintext;
-                  }
-               }
-
-               return DownloadTransferCiphertextError.UnknownError;
+               return DecryptFile(symmetricKey, right.Header, right.Ciphertext);
             },
             DownloadTransferCiphertextError.UnknownError);
       }
 
-      private byte[] DecryptFile(List<string> partionedCiphertext, string initializationVector)
+      private byte[] DecryptFile(byte[] key, byte[] header, List<byte[]> partionedCiphertext)
       {
-         byte[] ciphertext = partionedCiphertext
-               .SelectMany(x => Convert.FromBase64String(x))
-               .ToArray();
+         List<byte[]> plaintextParts = new List<byte[]>(partionedCiphertext.Count);
+         IStreamDecrypt decryptionStream = _cryptoProvider.StreamEncryptionFactory.NewDecryptionStream(key, header, _transferSettings.PaddingBlockSize);
 
-         byte[] iv = Convert.FromBase64String(initializationVector);
+         bool final;
+         for (int i = 0; i < partionedCiphertext.Count - 1; i++)
+         {
+            plaintextParts.Add(decryptionStream.Pull(partionedCiphertext[i], out final));
+            if (final)
+            {
+               throw new CryptographicException("Unexpected 'final' chunk.");
+            }
+         }
 
-         return _symmetricKey.Match(
-            () => throw new Exception("Missing symmetric key"),
-            x => _simpleEncryptionService.Decrypt(x, iv, ciphertext));
-      }
+         plaintextParts.Add(decryptionStream.Pull(partionedCiphertext.Last(), out final));
+         if (!final)
+         {
+            throw new CryptographicException("Missing 'final' chunk.");
+         }
 
-      private bool VerifyFile(byte[] file, byte[] signature)
-      {
-         PEMString verificationKey = _senderDigitalSignaturePublicKey.Match(
-            () => throw new Exception("Missing digital signature public key"),
-            x => x);
-
-         return _simpleSignatureService.Verify(verificationKey, file, signature);
+         return plaintextParts
+            .SelectMany(x => x)
+            .ToArray();
       }
    }
 }

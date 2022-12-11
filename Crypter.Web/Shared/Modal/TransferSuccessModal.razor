@@ -26,33 +26,28 @@
 
 @inherits TranferSuccessModalBase
 
-@if (Show)
-{
-   <div class="modal @ModalClass" tabindex="-1" role="dialog" style="display:@ModalDisplay">
-      <div class="modal-dialog" role="document">
-         <div class="modal-content">
-            <div class="modal-header">
-               <h3 class="my-0">Share via link</h3>
-            </div>
-            <div class="modal-body justify-content-center">
-               <p>This shareable link will expire in @ExpirationHours hours</p>
-               <div class="copiedTooltip">
-                  <div class="input-group mb-3">
-                     <input class="form-control" value="@DownloadUrl" type="text" name="downloadUrl" id="downloadUrl" readonly @onclick="CopyToClipboardAsync" />
-                     <div class="input-group-append">
-                        <button class="btn btn-secondary" type="button" @onclick="CopyToClipboardAsync">Copy link</button>
-                     </div>
+<ModalBehavior @ref="ModalBehaviorRef">
+   <Content>
+      <div class="modal-content">
+         <div class="modal-header">
+            <h3 class="my-0">Upload Successful</h3>
+         </div>
+         <div class="modal-body justify-content-center">
+            <p>This shareable link will expire in @ExpirationHours hours</p>
+            <div class="copiedTooltip">
+               <div class="input-group mb-3">
+                  <input class="form-control" value="@DownloadUrl" type="text" name="downloadUrl" id="downloadUrl" readonly @onclick="CopyToClipboardAsync" />
+                  <div class="input-group-append">
+                     <button class="btn btn-secondary" type="button" @onclick="CopyToClipboardAsync">Copy link</button>
                   </div>
-
-                  <span class="copiedToolTip toolTipText">Copied</span>
                </div>
+
+               <span class="copiedToolTip toolTipText">Copied</span>
             </div>
             <div class="modal-footer">
-               <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => CloseAsync()">Okay</button>
-            </div>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => CloseAsync()">Okay</button>
+         </div>
          </div>
       </div>
-   </div>
-
-   <div class="modal-backdrop fade show"></div>
-}
+   </Content>
+</ModalBehavior>
