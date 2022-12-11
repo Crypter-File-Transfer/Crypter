@@ -23,7 +23,7 @@ server {
 
   client_max_body_size           5M;
 
-  root                           /var/www/Crypter.Web.Desktop/wwwroot;
+  root                           /var/www/Crypter.Web/wwwroot;
 
   location / {
     index index.html;
