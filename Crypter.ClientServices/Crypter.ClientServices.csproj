@@ -7,14 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SharpZipLib" Version="1.4.1" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
     <ProjectReference Include="..\Crypter.Contracts\Crypter.Contracts.csproj" />
-    <ProjectReference Include="..\Crypter.CryptoLib\Crypter.CryptoLib.csproj" />
+    <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
   </ItemGroup>
 
 </Project>

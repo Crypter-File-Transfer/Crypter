@@ -32,7 +32,7 @@ namespace Crypter.Test.Common_Tests.Monad_Tests
 {
    [TestFixture]
    [Parallelizable]
-   public class Either_Tests
+   internal class Either_Tests
    {
       [Test]
       public void Default_Constructor_Returns_Neither()

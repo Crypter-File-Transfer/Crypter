@@ -31,7 +31,6 @@ namespace Crypter.Web.Shared.Transfer
    public partial class TransferSettingsBase : ComponentBase
    {
       private int _requestedExpirationHours;
-      private bool _useCompression;
 
       [Parameter]
       public int RequestedExpirationHours
@@ -51,25 +50,9 @@ namespace Crypter.Web.Shared.Transfer
       [Parameter]
       public EventCallback<int> RequestedExpirationHoursChanged { get; set; }
 
-      [Parameter]
-      public bool UseCompression
-      {
-         get => _useCompression;
-         set
-         {
-            if (_useCompression == value) return;
-            _useCompression = value;
-            UseCompressionChanged.InvokeAsync(value);
-         }
-      }
-
-      [Parameter]
-      public EventCallback<bool> UseCompressionChanged { get; set; }
-
       protected override void OnInitialized()
       {
          RequestedExpirationHours = 24;
-         UseCompression = true;
       }
    }
 }

@@ -27,11 +27,11 @@
 using Crypter.API.Configuration;
 using Crypter.Core;
 using Crypter.Core.Identity;
+using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Crypter.Crypto.Common;
-using Crypter.Crypto.DefaultProvider;
-using Crypter.CryptoLib.Services;
+using Crypter.Crypto.Providers.Default;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -89,10 +89,19 @@ builder.Services.AddHashIdService(options =>
    options.Salt = settings.Salt;
 });
 
+builder.Services.AddUserAuthenticationService(options =>
+{
+   var settings = builder.Configuration
+      .GetSection("PasswordSettings")
+      .Get<ServerPasswordSettings>();
+
+   options.ClientVersion = settings.ClientVersion;
+   options.ServerVersions = settings.ServerVersions;
+});
+
+
 builder.Services.AddDbContext<DataContext>();
 
-builder.Services.AddSingleton<ISimpleEncryptionService, SimpleEncryptionService>();
-builder.Services.AddSingleton<ISimpleHashService, SimpleHashService>();
 builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
 builder.Services.AddSingleton<ICryptoProvider, DefaultCryptoProvider>();
 

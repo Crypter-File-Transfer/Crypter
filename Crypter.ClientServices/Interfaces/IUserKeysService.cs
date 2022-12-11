@@ -24,15 +24,26 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.ClientServices.Interfaces.Models;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.Authentication;
+using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Interfaces
 {
    public interface IUserKeysService
    {
-      Maybe<PEMString> X25519PrivateKey { get; }
+      Maybe<byte[]> MasterKey { get; }
+      Maybe<byte[]> PrivateKey { get; }
 
-      (PEMString PrivateKey, PEMString PublicKey) CreateX25519KeyPair();
+      Task DownloadExistingKeysAsync(Username username, Password password, bool trustDevice);
+      Task DownloadExistingKeysAsync(byte[] credentialKey, bool trustDevice);
+
+      Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, Password password, VersionedPassword versionedPassword, bool trustDevice);
+      Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, VersionedPassword versionedPassword, byte[] credentialKey, bool trustDevice);
+
+      Task<Maybe<RecoveryKey>> GetExistingRecoveryKeyAsync(Username username, Password password);
+      Task<Maybe<RecoveryKey>> GetExistingRecoveryKeyAsync(Username username, VersionedPassword versionedPassword);
    }
 }

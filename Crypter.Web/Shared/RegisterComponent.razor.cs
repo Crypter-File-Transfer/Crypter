@@ -31,7 +31,6 @@ using Crypter.Common.Primitives.Enums;
 using Crypter.Contracts.Features.Authentication;
 using Crypter.Web.Models.Forms;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
@@ -40,6 +39,12 @@ namespace Crypter.Web.Shared
    {
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
+
+      [Inject]
+      protected IUserSessionService UserSessionService { get; set; }
+
+      [Inject]
+      protected IUserPasswordService UserPasswordService { get; set; }
 
       protected const string _invalidClassName = "is-invalid";
 
@@ -174,26 +179,38 @@ namespace Crypter.Web.Shared
 
       protected async Task SubmitRegistrationAsync()
       {
-         var registrationTask = from username in ValidateUsername().ToEither(RegistrationError.InvalidUsername).AsTask()
-                                from password in ValidatePassword().ToEither(RegistrationError.InvalidPassword).AsTask()
-                                from emailAddress in ValidateEmailAddress().MapLeft(_ => RegistrationError.InvalidEmailAddress).AsTask()
-                                where ValidatePasswordConfirmation()
-                                let authPasswordBytes = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password)
-                                let authPasswordEncoded = Convert.ToBase64String(authPasswordBytes)
-                                let authenticationPassword = AuthenticationPassword.From(authPasswordEncoded)
-                                let requestBody = new RegistrationRequest(username, authenticationPassword, emailAddress)
-                                from registrationResponse in CrypterApiService.RegisterUserAsync(requestBody)
-                                let _ = UserProvidedEmailAddress = emailAddress.IsSome
-                                select registrationResponse;
+         var registrationResult = await ValidateUsername()
+            .BindAsync(username => ValidatePassword()
+            .MapAsync(password => ValidateEmailAddress().MapLeft(_ => RegistrationError.InvalidEmailAddress)
+            .BindAsync(async emailAddress =>
+            {
+               UserProvidedEmailAddress = emailAddress.IsSome;
 
-         var registrationResult = await registrationTask;
-         registrationResult.DoLeftOrNeither(HandleRegistrationFailure, HandleUnknownRegistrationFailure);
-         RegistrationAttemptSucceeded = registrationResult.IsRight;
+               if (!ValidatePasswordConfirmation())
+               {
+                  return RegistrationError.InvalidPasswordConfirm;
+               }
+
+               return await UserPasswordService.DeriveUserAuthenticationPasswordAsync(username, password, UserPasswordService.CurrentPasswordVersion)
+                  .ToEitherAsync(RegistrationError.PasswordHashFailure)
+                  .BindAsync(async versionedPassword =>
+                  {
+                     RegistrationRequest request = new RegistrationRequest(username, versionedPassword, emailAddress);
+                     return await CrypterApiService.RegisterUserAsync(request);
+                  });
+            })));
+
+         registrationResult.IfSome(x => x.DoLeftOrNeither(HandleRegistrationFailure, HandleUnknownRegistrationFailure));
+         RegistrationAttemptSucceeded = registrationResult.Match(
+            () => false,
+            x => x.IsRight
+         );
       }
 
       private void HandleRegistrationFailure(RegistrationError error)
       {
-         RegistrationAttemptFailed = true;
+         RegistrationAttemptFailed = error != RegistrationError.InvalidPasswordConfirm;
+#pragma warning disable CS8524
          RegistrationAttemptErrorMessage = error switch
          {
             RegistrationError.InvalidUsername => "Invalid username",
@@ -201,8 +218,12 @@ namespace Crypter.Web.Shared
             RegistrationError.InvalidEmailAddress => "Invalid email address",
             RegistrationError.UsernameTaken => "Username is already taken",
             RegistrationError.EmailAddressTaken => "Email address is associated with an existing account",
-            _ => "???"
+            RegistrationError.PasswordHashFailure => "A cryptographic error occurred. This device or browser may not be supported.",
+            RegistrationError.OldPasswordVersion
+               or RegistrationError.UnknownError => "An unknown error ocurred.",
+            RegistrationError.InvalidPasswordConfirm => string.Empty
          };
+#pragma warning restore CS8524
       }
 
       private void HandleUnknownRegistrationFailure()

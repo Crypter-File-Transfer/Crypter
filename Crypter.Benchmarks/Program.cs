@@ -24,16 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using BenchmarkDotNet.Running;
-using Crypter.Benchmarks.ClientServices_Benchmarks;
-
 namespace Crypter.Benchmarks
 {
    internal class Program
    {
       static void Main(string[] args)
       {
-         BenchmarkRunner.Run<CompressionService_CompressionBufferBenchmark>();
+
       }
    }
 }

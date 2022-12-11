@@ -67,6 +67,14 @@ namespace Crypter.Common.Monads
          return await eitherResult.DoRightAsync(rightAsync);
       }
 
+      public static Task<Either<TLeft, TResult>> MapAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Either<TLeft, TResult>> map)
+      {
+         return either.MatchAsync(
+            left: left => Either<TLeft, TResult>.FromLeft(left),
+            right: right => map(right),
+            neither: Either<TLeft, TResult>.Neither);
+      }
+
       public static Task<Either<TLeft, TResult>> MapAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Task<Either<TLeft, TResult>>> map)
       {
          return either.MatchAsync(
@@ -82,6 +90,16 @@ namespace Crypter.Common.Monads
                     await Either<TLeft, TRight>.FromRight(right).MatchAsync(
                        left => Either<TLeft, TResult>.FromLeft(left),
                        async right2 => await bind(right2),
+                       Either<TLeft, TResult>.Neither));
+      }
+
+      public static Task<Either<TLeft, TResult>> BindAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Either<TLeft, TResult>> bind)
+      {
+         return either.MapAsync(
+                right =>
+                    Either<TLeft, TRight>.FromRight(right).Match(
+                       left => Either<TLeft, TResult>.FromLeft(left),
+                       right2 => bind(right2),
                        Either<TLeft, TResult>.Neither));
       }
 

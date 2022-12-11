@@ -31,6 +31,7 @@ using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -40,10 +41,12 @@ namespace Crypter.API.Controllers
    [Route("api/authentication")]
    public class AuthenticationController : CrypterController
    {
+      private readonly ITokenService _tokenService;
       private readonly IUserAuthenticationService _userAuthenticationService;
 
-      public AuthenticationController(IUserAuthenticationService userAuthenticationService)
+      public AuthenticationController(ITokenService tokenService, IUserAuthenticationService userAuthenticationService)
       {
+         _tokenService = tokenService;
          _userAuthenticationService = userAuthenticationService;
       }
 
@@ -66,10 +69,13 @@ namespace Crypter.API.Controllers
 #pragma warning disable CS8524
             return error switch
             {
-               RegistrationError.UnknownError => ServerError(errorResponse),
+               RegistrationError.UnknownError
+                  or RegistrationError.PasswordHashFailure
+                  or RegistrationError.InvalidPasswordConfirm => ServerError(errorResponse),
                RegistrationError.InvalidUsername
                   or RegistrationError.InvalidPassword
-                  or RegistrationError.InvalidEmailAddress => BadRequest(errorResponse),
+                  or RegistrationError.InvalidEmailAddress
+                  or RegistrationError.OldPasswordVersion => BadRequest(errorResponse),
                RegistrationError.UsernameTaken
                   or RegistrationError.EmailAddressTaken => Conflict(errorResponse)
             };
@@ -102,11 +108,13 @@ namespace Crypter.API.Controllers
 #pragma warning disable CS8524
             return error switch
             {
-               LoginError.UnknownError => ServerError(errorResponse),
+               LoginError.UnknownError
+                  or LoginError.PasswordHashFailure => ServerError(errorResponse),
                LoginError.InvalidUsername
                   or LoginError.InvalidPassword
                   or LoginError.InvalidTokenTypeRequested
-                  or LoginError.ExcessiveFailedLoginAttempts => BadRequest(errorResponse)
+                  or LoginError.ExcessiveFailedLoginAttempts
+                  or LoginError.InvalidPasswordVersion => BadRequest(errorResponse)
             };
 #pragma warning restore CS8524
          }
@@ -196,6 +204,35 @@ namespace Crypter.API.Controllers
             MakeErrorResponse,
             Ok,
             MakeErrorResponse(LogoutError.UnknownError));
+      }
+
+      [HttpPost("password/test")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TestPasswordResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> TestPasswordAsync([FromBody] TestPasswordRequest request, CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(TestPasswordError error)
+         {
+            var errorResponse = new ErrorResponse(error);
+#pragma warning disable CS8524
+            return error switch
+            {
+               TestPasswordError.UnknownError
+                  or TestPasswordError.PasswordHashFailure => ServerError(errorResponse),
+               TestPasswordError.InvalidPassword
+                  or TestPasswordError.PasswordNeedsMigration => BadRequest(errorResponse)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, request, cancellationToken);
+         return testPasswordResult.Match(
+            MakeErrorResponse,
+            Ok,
+            MakeErrorResponse(TestPasswordError.UnknownError));
       }
    }
 }

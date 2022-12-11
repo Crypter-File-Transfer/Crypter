@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -34,24 +33,24 @@ namespace Crypter.Contracts.Features.Transfer
    {
       public string Filename { get; init; }
       public string ContentType { get; init; }
-      public string InitializationVector { get; init; }
-      public List<string> Ciphertext { get; init; }
-      public string RecipientProof { get; init; }
-      public string DiffieHellmanPublicKey { get; init; }
+      public byte[] Header { get; init; }
+      public List<byte[]> Ciphertext { get; init; }
+      public byte[] PublicKey { get; init; }
+      public byte[] KeyExchangeNonce { get; init; }
+      public byte[] Proof { get; init; }
       public int LifetimeHours { get; init; }
-      public CompressionType CompressionType { get; init; }
 
       [JsonConstructor]
-      public UploadFileTransferRequest(string fileName, string contentType, string initializationVector, List<string> ciphertext, string diffieHellmanPublicKey, string recipientProof, int lifetimeHours, CompressionType compressionType)
+      public UploadFileTransferRequest(string fileName, string contentType, byte[] header, List<byte[]> ciphertext, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, int lifetimeHours)
       {
          Filename = fileName;
          ContentType = contentType;
-         InitializationVector = initializationVector;
+         Header = header;
          Ciphertext = ciphertext;
-         DiffieHellmanPublicKey = diffieHellmanPublicKey;
-         RecipientProof = recipientProof;
+         PublicKey = publicKey;
+         KeyExchangeNonce = keyExchangeNonce;
+         Proof = proof;
          LifetimeHours = lifetimeHours;
-         CompressionType = compressionType;
       }
    }
 }

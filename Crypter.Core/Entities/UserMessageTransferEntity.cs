@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
 using Crypter.Core.Entities.Interfaces;
 using System;
 
@@ -34,9 +33,9 @@ namespace Crypter.Core.Entities
    {
       public Guid Id { get; set; }
       public int Size { get; set; }
-      public string DiffieHellmanPublicKey { get; set; }
-      public string RecipientProof { get; set; }
-      public CompressionType CompressionType { get; set; }
+      public byte[] PublicKey { get; set; }
+      public byte[] KeyExchangeNonce { get; set; }
+      public byte[] Proof { get; set; }
       public DateTime Created { get; set; }
       public DateTime Expiration { get; set; }
 
@@ -50,13 +49,13 @@ namespace Crypter.Core.Entities
       // IMessageTransfer
       public string Subject { get; set; }
 
-      public UserMessageTransferEntity(Guid id, int size, string diffieHellmanPublicKey, string recipientProof, CompressionType compressionType, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string subject = "")
+      public UserMessageTransferEntity(Guid id, int size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string subject = "")
       {
          Id = id;
          Size = size;
-         DiffieHellmanPublicKey = diffieHellmanPublicKey;
-         RecipientProof = recipientProof;
-         CompressionType = compressionType;
+         PublicKey = publicKey;
+         KeyExchangeNonce = keyExchangeNonce;
+         Proof = proof;
          Created = created;
          Expiration = expiration;
          SenderId = senderId;

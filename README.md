@@ -29,6 +29,10 @@ I would love to hear from you.
 
 A RESTful API written using ASP.NET.
 
+### Crypter.Benchmarks
+
+A sandbox for benchmarking various things.
+
 ### Crypter.ClientServices
 
 A class library containing various interfaces and most of their implementations for use in client applications.
@@ -50,10 +54,19 @@ For example, if Crypter.Web needs to POST some data to Crypter.API, there should
 A class library containing code to interact with the PostgreSQL database.
 Most of the back-end business logic should be located here.
 
-### Crypter.CryptoLib
+### Crypter.Crypto.Common
 
-A class library that mostly acts as a wrapper around the BouncyCastle cryptography library.
-Most of the project's code related to cryptography is located here.
+A class library containing interfaces and portable implementations of various cryptographic primitives.
+
+### Crypter.Crypto.Providers.Browser
+
+An implementation of the `Crypter.Crypto.Common` interfaces for use in browsers.
+This uses libsodium through the [BlazorSodium](https://github.com/Jack-Edwards/BlazorSodium) nuget package.
+
+### Crypter.Crypto.Providers.Default
+
+An implementation of the `Crypter.Crypto.Common` interfaces for use in non-browser platforms.
+This uses libsodium through the [Geralt](https://github.com/samuel-lucas6/Geralt) nuget package, as well as `System.Security.Cryptography` for random number generation.
 
 ### Crypter.Test
 
@@ -62,3 +75,14 @@ A project containing NUnit unit tests.
 ### Crypter.Web
 
 A web application written using ASP.NET Blazor web-assembly.
+
+## Acknowledgements
+
+Thank you to the following people and organizations for helping make this project possible:
+
+* [Santiago Escalante](https://github.com/saescalante) and [Steve Peters-Luciani](https://github.com/spetersluciani) for helping create Crypter as a final project for school.
+* [Legion of the Bouncy Castle](https://bouncycastle.org/) for writing the [BouncyCastle](https://github.com/bcgit/bc-csharp) cryptographic library.
+* [Frank Denis](https://github.com/jedisct1) et al. for writing the [libsodium](https://doc.libsodium.org/) cryptographic library.
+* [Samuel Lucas](https://github.com/samuel-lucas6) for writing the [Geralt](https://github.com/samuel-lucas6/Geralt) C# language binding for libsodium.
+
+And special thanks to the **C#** and **Web Dev Buddies** Discord servers for answering all my questions and providing motivation to continue working on this project.

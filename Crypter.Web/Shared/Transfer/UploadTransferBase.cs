@@ -30,7 +30,6 @@ using Crypter.ClientServices.Transfer.Handlers.Base;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
@@ -51,7 +50,7 @@ namespace Crypter.Web.Shared.Transfer
       protected NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected FileTransferSettings UploadSettings { get; set; }
+      protected ClientServices.Transfer.Models.TransferSettings UploadSettings { get; set; }
 
       [Inject]
       protected TransferHandlerFactory TransferHandlerFactory { get; set; }
@@ -60,13 +59,10 @@ namespace Crypter.Web.Shared.Transfer
       public Maybe<string> RecipientUsername { get; set; }
 
       [Parameter]
-      public Maybe<PEMString> RecipientDiffieHellmanPublicKey { get; set; }
+      public Maybe<byte[]> RecipientPublicKey { get; set; }
 
       [Parameter]
       public int ExpirationHours { get; set; }
-
-      [Parameter]
-      public bool UseCompression { get; set; }
 
       [Parameter]
       public EventCallback UploadCompletedEvent { get; set; }
@@ -85,7 +81,6 @@ namespace Crypter.Web.Shared.Transfer
       private const string _serverOutOfSpace = "Server is out of space. Try again later.";
       private const string _userNotFound = "User not found.";
       private const string _expirationRange = "Expiration must be between 1 and 24 hours.";
-      protected const string _compressingLiteral = "Compressing";
       protected const string _encryptingLiteral = "Encrypting";
       protected const string _uploadingLiteral = "Uploading";
 
@@ -93,17 +88,17 @@ namespace Crypter.Web.Shared.Transfer
       {
          if (UserSessionService.Session.IsSome)
          {
-            PEMString senderX25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
-               () => throw new Exception("Missing sender X25519 private key"),
+            byte[] senderPrivateKey = UserKeysService.PrivateKey.Match(
+               () => throw new Exception("Missing sender private key"),
                x => x);
 
-            handler.SetSenderInfo(senderX25519PrivateKey);
+            handler.SetSenderInfo(senderPrivateKey);
          }
 
          RecipientUsername.IfSome(x =>
          {
-            PEMString recipientX25519PublicKey = RecipientDiffieHellmanPublicKey.Match(
-               () => throw new Exception("Missing recipient X25519 public key"),
+            byte[] recipientX25519PublicKey = RecipientPublicKey.Match(
+               () => throw new Exception("Missing recipient public key"),
                x => x);
 
             handler.SetRecipientInfo(x, recipientX25519PublicKey);

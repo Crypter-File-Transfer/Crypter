@@ -25,9 +25,10 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Monads;
+using Crypter.Contracts.Features.Authentication;
 using Crypter.Contracts.Features.Settings;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.UserSettings
@@ -36,6 +37,9 @@ namespace Crypter.Web.Shared.UserSettings
    {
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }
+
+      [Inject]
+      protected IUserPasswordService UserPasswordService { get; set; }
 
       [Parameter]
       public string Username { get; set; }
@@ -105,19 +109,23 @@ namespace Crypter.Web.Shared.UserSettings
 
          Common.Primitives.Username username = Common.Primitives.Username.From(Username);
 
-         byte[] digestedPassword = CryptoLib.UserFunctions.DeriveAuthenticationPasswordFromUserCredentials(username, password);
-         string digestedPasswordBase64 = Convert.ToBase64String(digestedPassword);
+         Maybe<VersionedPassword> authPasswordResult = await UserPasswordService.DeriveUserAuthenticationPasswordAsync(username, password, UserPasswordService.CurrentPasswordVersion);
+         authPasswordResult.IfNone(() => HandleContactInfoUpdateError(UpdateContactInfoError.PasswordHashFailure));
 
-         var request = new UpdateContactInfoRequest(EmailAddressEdit, digestedPasswordBase64);
-         var maybeUpdate = await CrypterApiService.UpdateContactInfoAsync(request);
-
-         maybeUpdate.DoLeftOrNeither(HandleContactInfoUpdateError, () => HandleContactInfoUpdateError());
-         maybeUpdate.DoRight(right =>
+         await authPasswordResult.IfSomeAsync(async authPassword =>
          {
-            EmailAddress = EmailAddressEdit;
-            Password = "";
-            EmailAddressVerified = false;
-            IsEditing = false;
+            var request = new UpdateContactInfoRequest(EmailAddressEdit, authPassword.Password);
+            var maybeUpdate = await CrypterApiService.UpdateContactInfoAsync(request);
+
+            maybeUpdate.DoLeftOrNeither(HandleContactInfoUpdateError, () => HandleContactInfoUpdateError());
+            maybeUpdate.DoRight(right =>
+            {
+               EmailAddress = EmailAddressEdit;
+               Password = "";
+               EmailAddressVerified = false;
+               IsEditing = false;
+            });
+
          });
       }
 
@@ -137,6 +145,9 @@ namespace Crypter.Web.Shared.UserSettings
                break;
             case UpdateContactInfoError.InvalidPassword:
                PasswordError = "Incorrect password";
+               break;
+            case UpdateContactInfoError.PasswordHashFailure:
+               PasswordError = "A cryptographic error occured. This device or browser may not be supported.";
                break;
          }
       }

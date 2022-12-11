@@ -25,22 +25,62 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.ClientServices.Interfaces.Events;
+using Crypter.Common.Monads;
+using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using System;
+using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.UserSettings
 {
-   public partial class UserSettingsKeysBase : ComponentBase
+   public partial class UserSettingsKeysBase : ComponentBase, IDisposable
    {
+      [Inject]
+      private IUserSessionService UserSessionService { get; set; }
+
       [Inject]
       private IUserKeysService UserKeysService { get; set; }
 
-      protected string X25519PrivateKey;
+      [Inject]
+      protected IJSRuntime JSRuntime { get; set; }
+
+      protected PasswordModal PasswordModal { get; set; }
+
+      protected string PrivateKey;
+      protected string RecoveryKey;
 
       protected override void OnInitialized()
       {
-         X25519PrivateKey = UserKeysService.X25519PrivateKey.Match(
+         PrivateKey = UserKeysService.PrivateKey.Match(
             () => "",
-            some => some.Value);
+            Convert.ToHexString);
+
+         RecoveryKey = string.Empty;
+
+         UserSessionService.UserPasswordTestSuccessEventHandler += OnPasswordTestSuccess;
+      }
+
+      private async void OnPasswordTestSuccess(object sender, UserPasswordTestSuccessEventArgs args)
+      {
+         RecoveryKey = await UserKeysService.GetExistingRecoveryKeyAsync(args.Username, args.Password)
+            .MatchAsync(
+            () => "An error occurred",
+            x => x.ToBase64String());
+
+         await InvokeAsync(() => StateHasChanged());
+      }
+
+      protected async Task CopyRecoveryKeyToClipboardAsync()
+      {
+         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyCopyTooltip" });
+      }
+
+      public void Dispose()
+      {
+         UserSessionService.UserPasswordTestSuccessEventHandler -= OnPasswordTestSuccess;
+         GC.SuppressFinalize(this);
       }
    }
 }

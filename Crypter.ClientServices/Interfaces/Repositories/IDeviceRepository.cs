@@ -36,7 +36,7 @@ namespace Crypter.ClientServices.Interfaces.Repositories
    /// </summary>
    /// <typeparam name="TLocation"></typeparam>
    public interface IDeviceRepository<TLocation>
-      where TLocation : Enum
+      where TLocation : System.Enum
    {
       Task InitializeAsync();
       Task<Maybe<TValue>> GetItemAsync<TValue>(DeviceStorageObjectType itemType);

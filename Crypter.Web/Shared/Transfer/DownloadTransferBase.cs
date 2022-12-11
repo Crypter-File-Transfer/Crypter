@@ -28,9 +28,7 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
-using Crypter.CryptoLib;
-using Crypter.CryptoLib.Crypto;
+using Crypter.Crypto.Common;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
@@ -43,10 +41,16 @@ namespace Crypter.Web.Shared.Transfer
       private NavigationManager NavigationManager { get; set; }
 
       [Inject]
+      protected IUserSessionService UserSessionService { get; set; }
+
+      [Inject]
       protected IUserKeysService UserKeysService { get; set; }
 
       [Inject]
       protected TransferHandlerFactory TransferHandlerFactory { get; set; }
+
+      [Inject]
+      protected ICryptoProvider CryptoProvider { get; set; }
 
       [Parameter]
       public string TransferHashId { get; set; }
@@ -67,10 +71,9 @@ namespace Crypter.Web.Shared.Transfer
       protected DateTime Expiration = DateTime.MinValue;
 
       protected const string _downloadingLiteral = "Downloading";
-      protected const string _decompressingLiteral = "Decompressing";
       protected const string _decryptingLiteral = "Decrypting";
 
-      protected Maybe<PEMString> DeriveRecipientPrivateKeyFromUrlSeed()
+      protected Maybe<byte[]> DeriveRecipientPrivateKeyFromUrlSeed()
       {
          int hashLocation = NavigationManager.Uri.IndexOf('#');
          string encodedSeed = NavigationManager.Uri[(hashLocation + 1)..];
@@ -78,11 +81,11 @@ namespace Crypter.Web.Shared.Transfer
          try
          {
             byte[] seed = Base64UrlTextEncoder.Decode(encodedSeed);
-            return ECDH.GenerateKeys(seed).Private.ConvertToPEM();
+            return CryptoProvider.KeyExchange.GenerateKeyPairDeterministic(seed).PrivateKey;
          }
          catch (Exception)
          {
-            return Maybe<PEMString>.None;
+            return Maybe<byte[]>.None;
          }
       }
    }

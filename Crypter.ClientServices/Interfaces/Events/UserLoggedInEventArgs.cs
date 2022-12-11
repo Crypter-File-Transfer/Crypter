@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Primitives;
+using Crypter.Contracts.Features.Authentication;
 using System;
 
 namespace Crypter.ClientServices.Interfaces.Events
@@ -33,13 +34,19 @@ namespace Crypter.ClientServices.Interfaces.Events
    {
       public Username Username { get; init; }
       public Password Password { get; init; }
+      public VersionedPassword VersionedPassword { get; init; }
       public bool RememberUser { get; init; }
+      public bool UploadNewKeys { get; init; }
+      public bool ShowRecoveryKeyModal { get; init; }
 
-      public UserLoggedInEventArgs(Username username, Password password, bool rememberUser)
+      public UserLoggedInEventArgs(Username username, Password password, VersionedPassword versionedPassword, bool rememberUser, bool uploadNewKeys, bool showRecoveryKeyModal)
       {
          Username = username;
          Password = password;
+         VersionedPassword = versionedPassword;
          RememberUser = rememberUser;
+         UploadNewKeys = uploadNewKeys;
+         ShowRecoveryKeyModal = showRecoveryKeyModal;
       }
    }
 }

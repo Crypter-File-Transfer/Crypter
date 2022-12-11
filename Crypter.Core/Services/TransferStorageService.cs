@@ -63,8 +63,8 @@ namespace Crypter.Core.Services
    public class TransferStorageService : ITransferStorageService
    {
       private readonly TransferStorageSettings _transferStorageSettings;
-      private const string _ciphertextFileName = "ciphertext";
-      private const string _ivFileName = "iv";
+      private const string _ciphertextFilenamePrefix = "ciphertext-";
+      private const string _headerFilename = "header";
 
       public TransferStorageService(IOptions<TransferStorageSettings> transferStorageSettings)
       {
@@ -74,23 +74,20 @@ namespace Crypter.Core.Services
       public async Task<bool> SaveTransferAsync(TransferStorageParameters data, CancellationToken cancellationToken)
       {
          string itemDirectory = GetItemDirectory(data.Id, data.ItemType, data.UserType);
-         string ciphertextPath = Path.Join(itemDirectory, _ciphertextFileName);
-         string ivPath = Path.Join(itemDirectory, _ivFileName);
+         string headerPath = Path.Join(itemDirectory, _headerFilename);
 
          try
          {
             Directory.CreateDirectory(itemDirectory);
-
-            using FileStream ciphertextStream = File.OpenWrite(ciphertextPath);
-            foreach (var part in data.Ciphertext)
+            for (int i = 0; i < data.Ciphertext.Count; i++)
             {
-               byte[] partBytes = Convert.FromBase64String(part);
-               await ciphertextStream.WriteAsync(partBytes, cancellationToken); // here
+               string partPath = Path.Join(itemDirectory, $"{_ciphertextFilenamePrefix}{i}");
+               using FileStream ciphertextStream = File.OpenWrite(partPath);
+               await ciphertextStream.WriteAsync(data.Ciphertext[i], cancellationToken);
             }
 
-            byte[] ivBytes = Convert.FromBase64String(data.InitializationVector);
-            using FileStream ivStream = File.OpenWrite(ivPath);
-            await ivStream.WriteAsync(ivBytes, cancellationToken); // here
+            using FileStream headerStream = File.OpenWrite(headerPath);
+            await headerStream.WriteAsync(data.Header, cancellationToken);
          }
          catch (OperationCanceledException)
          {
@@ -109,21 +106,27 @@ namespace Crypter.Core.Services
 
       public async Task<Maybe<TransferStorageParameters>> ReadTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, CancellationToken cancellationToken)
       {
-         var itemDirectory = GetItemDirectory(id, itemType, userType);
-         var ciphertextPath = Path.Join(itemDirectory, _ciphertextFileName);
-         var ivPath = Path.Join(itemDirectory, _ivFileName);
+         string itemDirectory = GetItemDirectory(id, itemType, userType);
+         string headerPath = Path.Join(itemDirectory, _headerFilename);
 
-         byte[] ciphertextBytes = await File.ReadAllBytesAsync(ciphertextPath, cancellationToken);
-         string ciphertextBase64 = Convert.ToBase64String(ciphertextBytes);
-         List<string> ciphertextParts = new List<string>
+         DirectoryInfo directoryInfo = new DirectoryInfo(itemDirectory);
+         FileInfo[] ciphertextFiles = directoryInfo.GetFiles($"{_ciphertextFilenamePrefix}*");
+         int[] ciphertextFilesSortedPositions = new int[ciphertextFiles.Length];
+         for (int i = 0; i < ciphertextFiles.Length; i++)
          {
-            ciphertextBase64
-         };
+            int fileIndex = int.Parse(ciphertextFiles[i].Name.AsSpan()[_ciphertextFilenamePrefix.Length..]);
+            ciphertextFilesSortedPositions[fileIndex] = i;
+         }
 
-         byte[] ivBytes = await File.ReadAllBytesAsync(ivPath, cancellationToken);
-         string ivBase64 = Convert.ToBase64String(ivBytes);
+         List<byte[]> ciphertextParts = new List<byte[]>(ciphertextFiles.Length);
+         foreach (int position in ciphertextFilesSortedPositions)
+         {
+            byte[] partBytes = await File.ReadAllBytesAsync(ciphertextFiles[position].FullName, cancellationToken);
+            ciphertextParts.Add(partBytes);
+         }
 
-         return new TransferStorageParameters(id, itemType, userType, ivBase64, ciphertextParts);
+         byte[] header = await File.ReadAllBytesAsync(headerPath, cancellationToken);
+         return new TransferStorageParameters(id, itemType, userType, header, ciphertextParts);
       }
 
       public void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType)

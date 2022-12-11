@@ -46,9 +46,6 @@ namespace Crypter.Web.Shared.Modal
          Subject = subject;
          Message = message;
          PrimaryButtonText = primaryButtonText;
-         SecondaryButtonText = secondaryButtonText.Match(
-            () => string.Empty,
-            x => x);
          ModalClosedCallback = modalClosedCallback;
 
          ModalBehaviorRef.Open();

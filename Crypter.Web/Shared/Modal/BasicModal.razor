@@ -40,7 +40,11 @@
             {
                <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="async () => await CloseAsync(false)">@SecondaryButtonText</button>
             }
-            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="async () => await CloseAsync(true)">@PrimaryButtonText</button>
+
+            @if (!string.IsNullOrEmpty(PrimaryButtonText))
+            {
+               <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="async () => await CloseAsync(true)">@PrimaryButtonText</button>
+            }
          </div>
       </div>
    </Content>

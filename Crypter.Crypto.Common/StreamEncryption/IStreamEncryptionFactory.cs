@@ -24,11 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+
 namespace Crypter.Crypto.Common.StreamEncryption
 {
    public interface IStreamEncryptionFactory
    {
-      IStreamEncrypt InitializeEncryptionStream();
-      IStreamDecrypt InitializeDecryptionStream();
+      uint KeySize { get; }
+      IStreamEncrypt NewEncryptionStream(short blockSize);
+      IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header, short blockSize);
    }
 }
