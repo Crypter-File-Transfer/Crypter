@@ -84,5 +84,6 @@ Thank you to the following people and organizations for helping make this projec
 * [Legion of the Bouncy Castle](https://bouncycastle.org/) for writing the [BouncyCastle](https://github.com/bcgit/bc-csharp) cryptographic library.
 * [Frank Denis](https://github.com/jedisct1) et al. for writing the [libsodium](https://doc.libsodium.org/) cryptographic library.
 * [Samuel Lucas](https://github.com/samuel-lucas6) for writing the [Geralt](https://github.com/samuel-lucas6/Geralt) C# language binding for libsodium.
+* [Marek Fisera](https://github.com/maraf) and [Pavel Savara](https://github.com/pavelsavara) for all the help with BlazorSodium and Blazor in general.
 
 And special thanks to the **C#** and **Web Dev Buddies** Discord servers for answering all my questions and providing motivation to continue working on this project.
