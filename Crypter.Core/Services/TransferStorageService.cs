@@ -34,6 +34,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -79,15 +80,15 @@ namespace Crypter.Core.Services
          try
          {
             Directory.CreateDirectory(itemDirectory);
+            List<Task> writeTasks = new List<Task>(data.Ciphertext.Count + 1);
             for (int i = 0; i < data.Ciphertext.Count; i++)
             {
                string partPath = Path.Join(itemDirectory, $"{_ciphertextFilenamePrefix}{i}");
-               using FileStream ciphertextStream = File.OpenWrite(partPath);
-               await ciphertextStream.WriteAsync(data.Ciphertext[i], cancellationToken);
+               writeTasks.Add(File.WriteAllBytesAsync(partPath, data.Ciphertext[i], cancellationToken));
             }
+            writeTasks.Add(File.WriteAllBytesAsync(headerPath, data.Header, cancellationToken));
 
-            using FileStream headerStream = File.OpenWrite(headerPath);
-            await headerStream.WriteAsync(data.Header, cancellationToken);
+            await Task.WhenAll(writeTasks);
          }
          catch (OperationCanceledException)
          {
@@ -111,22 +112,22 @@ namespace Crypter.Core.Services
 
          DirectoryInfo directoryInfo = new DirectoryInfo(itemDirectory);
          FileInfo[] ciphertextFiles = directoryInfo.GetFiles($"{_ciphertextFilenamePrefix}*");
-         int[] ciphertextFilesSortedPositions = new int[ciphertextFiles.Length];
+
+         Task<byte[]>[] readTasks = new Task<byte[]>[ciphertextFiles.Length + 1];
          for (int i = 0; i < ciphertextFiles.Length; i++)
          {
             int fileIndex = int.Parse(ciphertextFiles[i].Name.AsSpan()[_ciphertextFilenamePrefix.Length..]);
-            ciphertextFilesSortedPositions[fileIndex] = i;
+            readTasks[fileIndex] = File.ReadAllBytesAsync(ciphertextFiles[i].FullName, cancellationToken);
          }
+         readTasks[^1] = File.ReadAllBytesAsync(headerPath, cancellationToken);
+         await Task.WhenAll(readTasks);
 
-         List<byte[]> ciphertextParts = new List<byte[]>(ciphertextFiles.Length);
-         foreach (int position in ciphertextFilesSortedPositions)
-         {
-            byte[] partBytes = await File.ReadAllBytesAsync(ciphertextFiles[position].FullName, cancellationToken);
-            ciphertextParts.Add(partBytes);
-         }
+         List<byte[]> ciphertextChunks = readTasks
+            .Take(ciphertextFiles.Length)
+            .Select(x => x.Result)
+            .ToList();
 
-         byte[] header = await File.ReadAllBytesAsync(headerPath, cancellationToken);
-         return new TransferStorageParameters(id, itemType, userType, header, ciphertextParts);
+         return new TransferStorageParameters(id, itemType, userType, readTasks[^1].Result, ciphertextChunks);
       }
 
       public void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType)
