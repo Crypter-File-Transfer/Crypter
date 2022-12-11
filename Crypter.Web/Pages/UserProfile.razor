@@ -68,7 +68,7 @@
                         <UploadFileTransferModal @ref="FileModal"
                                         InstanceId="user-profile"
                                         RecipientUsername="@ProperUsername"
-                                        RecipientX25519PublicKey="@UserPublicKey" />
+                                        RecipientPublicKey="@UserPublicKey" />
                      }
                      @if (AllowsMessages)
                      {
@@ -76,7 +76,7 @@
                         <UploadMessageTransferModal @ref="MessageModal"
                                            InstanceId="user-profile"
                                            RecipientUsername="@ProperUsername"
-                                           RecipientX25519PublicKey="@UserPublicKey" />
+                                           RecipientPublicKey="@UserPublicKey" />
                      }
                   </div>
                </div>

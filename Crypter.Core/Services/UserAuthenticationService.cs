@@ -151,6 +151,13 @@ namespace Crypter.Core.Services
                   return LoginError.ExcessiveFailedLoginAttempts;
                }
 
+               bool requestContainsRequiredPasswordVersions = validatedLoginRequest.VersionedPasswords.ContainsKey(user.ClientPasswordVersion)
+                  && validatedLoginRequest.VersionedPasswords.ContainsKey(_clientPasswordVersion);
+               if (!requestContainsRequiredPasswordVersions)
+               {
+                  return LoginError.InvalidPasswordVersion;
+               }
+
                byte[] currentClientPassword = validatedLoginRequest.VersionedPasswords[user.ClientPasswordVersion];
                bool isMatchingPassword = _passwordHashService.VerifySecurePasswordHash(currentClientPassword, user.PasswordHash, user.PasswordSalt, _serverPasswordVersions[user.ServerPasswordVersion].Iterations);
                if (!isMatchingPassword)

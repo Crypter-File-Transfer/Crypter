@@ -52,7 +52,7 @@ namespace Crypter.Web.Pages
       protected string ProperUsername;
       protected bool AllowsFiles;
       protected bool AllowsMessages;
-      protected string UserPublicKey;
+      protected byte[] UserPublicKey;
 
       protected override async Task OnInitializedAsync()
       {
@@ -72,7 +72,7 @@ namespace Crypter.Web.Pages
             ProperUsername = x.Result.Username;
             AllowsFiles = x.Result.ReceivesFiles;
             AllowsMessages = x.Result.ReceivesMessages;
-            UserPublicKey = Convert.ToHexString(x.Result.PublicKey);
+            UserPublicKey = x.Result.PublicKey;
          });
 
          IsProfileAvailable = response.Match(
