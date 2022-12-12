@@ -51,7 +51,6 @@ namespace Crypter.Crypto.Providers.Browser.Wrappers
 
       public override byte[] GeneratePublicKey(ReadOnlySpan<byte> privateKey)
       {
-         Console.WriteLine($"Generating public key for private key of length: {privateKey.Length}");
          return BlazorSodium.Sodium.ScalarMultiplication.Crypto_ScalarMult_Base(privateKey.ToArray());
       }
 

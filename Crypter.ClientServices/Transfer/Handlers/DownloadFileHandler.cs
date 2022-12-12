@@ -89,28 +89,30 @@ namespace Crypter.ClientServices.Transfer.Handlers
 
       private byte[] DecryptFile(byte[] key, byte[] header, List<byte[]> partionedCiphertext)
       {
-         List<byte[]> plaintextParts = new List<byte[]>(partionedCiphertext.Count);
+         List<byte[]> plaintextChunks = new List<byte[]>(partionedCiphertext.Count);
          IStreamDecrypt decryptionStream = _cryptoProvider.StreamEncryptionFactory.NewDecryptionStream(key, header, _transferSettings.PaddingBlockSize);
-
-         bool final;
-         for (int i = 0; i < partionedCiphertext.Count - 1; i++)
+         for (int i = 0; i < partionedCiphertext.Count; i++)
          {
-            plaintextParts.Add(decryptionStream.Pull(partionedCiphertext[i], out final));
-            if (final)
+            plaintextChunks.Add(decryptionStream.Pull(partionedCiphertext[i], out bool final));
+            if (final && i != partionedCiphertext.Count -1)
             {
                throw new CryptographicException("Unexpected 'final' chunk.");
             }
+            else if (i == partionedCiphertext.Count - 1 && !final)
+            {
+               throw new CryptographicException("Missing 'final' chunk.");
+            }
          }
 
-         plaintextParts.Add(decryptionStream.Pull(partionedCiphertext.Last(), out final));
-         if (!final)
+         int plaintextSize = plaintextChunks.Sum(x => x.Length);
+         byte[] plaintextWhole = new byte[plaintextSize];
+         int plaintextPosition = 0;
+         foreach (byte[] plaintextChunk in plaintextChunks)
          {
-            throw new CryptographicException("Missing 'final' chunk.");
+            plaintextChunk.CopyTo(plaintextWhole, plaintextPosition);
+            plaintextPosition += plaintextChunk.Length;
          }
-
-         return plaintextParts
-            .SelectMany(x => x)
-            .ToArray();
+         return plaintextWhole;
       }
    }
 }
