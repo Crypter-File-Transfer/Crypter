@@ -24,13 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using BenchmarkDotNet.Running;
+using Crypter.Benchmarks.Core_Benchmarks;
+
 namespace Crypter.Benchmarks
 {
    internal class Program
    {
-      static void Main(string[] args)
+      internal static void Main(string[] args)
       {
-
+         BenchmarkRunner.Run<TransferStorageService_Benchmarks>();
       }
    }
 }

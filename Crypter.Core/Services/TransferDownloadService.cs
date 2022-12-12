@@ -28,6 +28,7 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Core.Entities;
+using Crypter.Core.Models;
 using Crypter.Crypto.Common;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
@@ -118,7 +119,7 @@ namespace Crypter.Core.Services
             return DownloadTransferCiphertextError.InvalidRecipientProof;
          }
 
-         var ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.Message, TransferUserType.Anonymous, cancellationToken);
+         Maybe<TransferStorageParameters> ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.Message, TransferUserType.Anonymous, cancellationToken);
 
          if (deleteOnRead)
          {
@@ -148,7 +149,7 @@ namespace Crypter.Core.Services
             return DownloadTransferCiphertextError.InvalidRecipientProof;
          }
 
-         var ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.File, TransferUserType.Anonymous, cancellationToken);
+         Maybe<TransferStorageParameters> ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.File, TransferUserType.Anonymous, cancellationToken);
 
          if (deleteOnRead)
          {
@@ -243,7 +244,7 @@ namespace Crypter.Core.Services
             return DownloadTransferCiphertextError.InvalidRecipientProof;
          }
 
-         var ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.Message, TransferUserType.User, cancellationToken);
+         Maybe<TransferStorageParameters> ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.Message, TransferUserType.User, cancellationToken);
          return ciphertextData.Match<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>>(
             () => DownloadTransferCiphertextError.NotFound,
             x => new DownloadTransferCiphertextResponse(x.Ciphertext, x.Header));
@@ -272,7 +273,7 @@ namespace Crypter.Core.Services
             return DownloadTransferCiphertextError.InvalidRecipientProof;
          }
 
-         var ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.File, TransferUserType.User, cancellationToken);
+         Maybe<TransferStorageParameters> ciphertextData = await _transferStorageService.ReadTransferAsync(id, TransferItemType.File, TransferUserType.User, cancellationToken);
          return ciphertextData.Match<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>>(
             () => DownloadTransferCiphertextError.NotFound,
             x => new DownloadTransferCiphertextResponse(x.Ciphertext, x.Header));
