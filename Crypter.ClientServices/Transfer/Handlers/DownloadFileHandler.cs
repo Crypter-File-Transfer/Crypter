@@ -63,7 +63,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
       public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeBeforeDecryption)
       {
          byte[] symmetricKey = _symmetricKey.Match(
-            () => throw new Exception("missing symmetric key"),
+            () => throw new Exception("Missing symmetric key"),
             x => x);
 
          DownloadTransferCiphertextRequest request = _serverProof.Match(
@@ -71,7 +71,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
             x => new DownloadTransferCiphertextRequest(x));
 
 #pragma warning disable CS8524
-         var response = _transferUserType switch
+         Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse> response = _transferUserType switch
          {
             TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFileCiphertextAsync(_transferHashId, request),
             TransferUserType.User => await _crypterApiService.DownloadUserFileCiphertextAsync(_transferHashId, request, _userSessionService.Session.IsSome)

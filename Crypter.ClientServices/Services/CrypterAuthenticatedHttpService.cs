@@ -37,6 +37,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,6 +48,7 @@ namespace Crypter.ClientServices.Services
       private readonly HttpClient _httpClient;
       private readonly Func<ICrypterApiService> _crypterApiFactory;
       private readonly ITokenRepository _tokenRepository;
+      private readonly JsonSerializerOptions _jsonSerializerOptions;
 
       private readonly SemaphoreSlim _requestSemaphore = new(1);
       private readonly Dictionary<bool, Func<Task<Maybe<TokenObject>>>> _tokenProviderMap;
@@ -56,6 +58,10 @@ namespace Crypter.ClientServices.Services
          _httpClient = httpClient;
          _tokenRepository = tokenRepository;
          _crypterApiFactory = crypterApiFactory;
+         _jsonSerializerOptions = new JsonSerializerOptions
+         {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+         };
 
          _tokenProviderMap = new()
          {
@@ -181,21 +187,23 @@ namespace Crypter.ClientServices.Services
 
       private async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> SendRequestAsync<TResponse>(HttpRequestMessage request)
       {
-         using HttpResponseMessage response = await _httpClient.SendAsync(request);
-
-         if (response.StatusCode == HttpStatusCode.Unauthorized)
+         using (HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false))
          {
-            return (response.StatusCode, Either<ErrorResponse, TResponse>.Neither);
-         }
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+               return (response.StatusCode, Either<ErrorResponse, TResponse>.Neither);
+            }
 
-         if (response.StatusCode != HttpStatusCode.OK)
-         {
-            ErrorResponse error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-            return (response.StatusCode, error);
-         }
+            Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+               ErrorResponse error = await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+               return (response.StatusCode, error);
+            }
 
-         TResponse content = await response.Content.ReadFromJsonAsync<TResponse>();
-         return (response.StatusCode, content);
+            TResponse content = await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+            return (response.StatusCode, content);
+         }
       }
 
       private async Task<Unit> AttachTokenAsync(HttpRequestMessage request, bool useRefreshToken = false)
