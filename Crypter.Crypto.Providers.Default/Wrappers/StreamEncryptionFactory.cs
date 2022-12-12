@@ -31,7 +31,7 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
 {
    public class StreamEncryptionFactory : IStreamEncryptionFactory
    {
-      public uint KeySize => throw new NotImplementedException();
+      public uint KeySize { get => Geralt.IncrementalXChaCha20Poly1305.KeySize; }
 
       public IStreamEncrypt NewEncryptionStream(short blockSize)
       {
