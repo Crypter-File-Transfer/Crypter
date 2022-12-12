@@ -20,13 +20,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ClientServices_Tests\Assets\Saturn.jpg">
+    <None Update="Assets\Saturn.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="ClientServices_Tests\Assets\Saturn.jpg.gz">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="ClientServices_Tests\Assets\WindowsCodecsRaw.dll">
+    <None Update="Assets\WindowsCodecsRaw.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

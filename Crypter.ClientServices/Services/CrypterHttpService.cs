@@ -27,9 +27,11 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Services
@@ -37,10 +39,15 @@ namespace Crypter.ClientServices.Services
    public class CrypterHttpService : ICrypterHttpService
    {
       private readonly HttpClient _httpClient;
+      private readonly JsonSerializerOptions _jsonSerializerOptions;
 
       public CrypterHttpService(HttpClient httpClient)
       {
          _httpClient = httpClient;
+         _jsonSerializerOptions = new JsonSerializerOptions
+         {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+         };
       }
 
       public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri)
@@ -88,16 +95,18 @@ namespace Crypter.ClientServices.Services
       private async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> SendRequestAsync<TResponse>(HttpRequestMessage request)
          where TResponse : class
       {
-         using HttpResponseMessage response = await _httpClient.SendAsync(request);
-
-         if (response.StatusCode != HttpStatusCode.OK)
+         using (HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false))
          {
-            ErrorResponse error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-            return (response.StatusCode, error);
-         }
+            Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            if (response.StatusCode != HttpStatusCode.OK)
+            {
+               ErrorResponse error = await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+               return (response.StatusCode, error);
+            }
 
-         TResponse content = await response.Content.ReadFromJsonAsync<TResponse>();
-         return (response.StatusCode, content);
+            TResponse content = await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+            return (response.StatusCode, content);
+         }
       }
    }
 }

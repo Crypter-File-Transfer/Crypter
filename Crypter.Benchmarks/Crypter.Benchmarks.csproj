@@ -8,21 +8,24 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ClientServices_Benchmarks\**" />
+    <EmbeddedResource Remove="ClientServices_Benchmarks\**" />
+    <None Remove="ClientServices_Benchmarks\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Crypter.ClientServices\Crypter.ClientServices.csproj" />
+    <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Assets\WindowsCodecsRaw.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ClientServices_Benchmarks\" />
   </ItemGroup>
 
 </Project>
