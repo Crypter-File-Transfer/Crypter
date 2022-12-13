@@ -27,6 +27,7 @@
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Interfaces.Events;
 using Crypter.Common.Monads;
+using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Contacts;
 using System;
 using System.Collections.Generic;
@@ -101,7 +102,7 @@ namespace Crypter.ClientServices.Services
 
       private async Task<IDictionary<string, UserContactDTO>> FetchContactsAsync()
       {
-         var response = await _crypterApiService.GetUserContactsAsync();
+         Either<DummyError, GetUserContactsResponse> response = await _crypterApiService.GetUserContactsAsync();
          return response.Match(
             new Dictionary<string, UserContactDTO>(),
             right => right.Contacts.ToDictionary(x => x.Username.ToLower()));

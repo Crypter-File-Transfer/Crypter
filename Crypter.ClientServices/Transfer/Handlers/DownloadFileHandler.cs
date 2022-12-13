@@ -63,7 +63,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
       public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeBeforeDecryption)
       {
          byte[] symmetricKey = _symmetricKey.Match(
-            () => throw new Exception("missing symmetric key"),
+            () => throw new Exception("Missing symmetric key"),
             x => x);
 
          DownloadTransferCiphertextRequest request = _serverProof.Match(
@@ -71,7 +71,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
             x => new DownloadTransferCiphertextRequest(x));
 
 #pragma warning disable CS8524
-         var response = _transferUserType switch
+         Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse> response = _transferUserType switch
          {
             TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFileCiphertextAsync(_transferHashId, request),
             TransferUserType.User => await _crypterApiService.DownloadUserFileCiphertextAsync(_transferHashId, request, _userSessionService.Session.IsSome)
@@ -89,28 +89,30 @@ namespace Crypter.ClientServices.Transfer.Handlers
 
       private byte[] DecryptFile(byte[] key, byte[] header, List<byte[]> partionedCiphertext)
       {
-         List<byte[]> plaintextParts = new List<byte[]>(partionedCiphertext.Count);
+         List<byte[]> plaintextChunks = new List<byte[]>(partionedCiphertext.Count);
          IStreamDecrypt decryptionStream = _cryptoProvider.StreamEncryptionFactory.NewDecryptionStream(key, header, _transferSettings.PaddingBlockSize);
-
-         bool final;
-         for (int i = 0; i < partionedCiphertext.Count - 1; i++)
+         for (int i = 0; i < partionedCiphertext.Count; i++)
          {
-            plaintextParts.Add(decryptionStream.Pull(partionedCiphertext[i], out final));
-            if (final)
+            plaintextChunks.Add(decryptionStream.Pull(partionedCiphertext[i], out bool final));
+            if (final && i != partionedCiphertext.Count -1)
             {
                throw new CryptographicException("Unexpected 'final' chunk.");
             }
+            else if (i == partionedCiphertext.Count - 1 && !final)
+            {
+               throw new CryptographicException("Missing 'final' chunk.");
+            }
          }
 
-         plaintextParts.Add(decryptionStream.Pull(partionedCiphertext.Last(), out final));
-         if (!final)
+         int plaintextSize = plaintextChunks.Sum(x => x.Length);
+         byte[] plaintextWhole = new byte[plaintextSize];
+         int plaintextPosition = 0;
+         foreach (byte[] plaintextChunk in plaintextChunks)
          {
-            throw new CryptographicException("Missing 'final' chunk.");
+            plaintextChunk.CopyTo(plaintextWhole, plaintextPosition);
+            plaintextPosition += plaintextChunk.Length;
          }
-
-         return plaintextParts
-            .SelectMany(x => x)
-            .ToArray();
+         return plaintextWhole;
       }
    }
 }

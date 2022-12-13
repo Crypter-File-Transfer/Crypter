@@ -13,16 +13,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Crypter.ClientServices\Crypter.ClientServices.csproj" />
+    <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Assets\WindowsCodecsRaw.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ClientServices_Benchmarks\" />
   </ItemGroup>
 
 </Project>

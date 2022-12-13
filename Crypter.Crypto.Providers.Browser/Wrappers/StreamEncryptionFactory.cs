@@ -28,7 +28,6 @@ using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Runtime.Versioning;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers
 {
