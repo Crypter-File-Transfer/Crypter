@@ -26,13 +26,11 @@
 
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,7 +44,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       private string _storageLocation;
 
       [OneTimeSetUp]
-      public async Task OneTimeSetupAsync()
+      public void OneTimeSetup()
       {
          SetupService();
       }
@@ -81,7 +79,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
          MemoryStream memoryStream = new MemoryStream(buffer);
          bool saveSuccess = await _sut.SaveTransferAsync(itemGuid, TransferItemType.File, userType, memoryStream, CancellationToken.None);
          Assert.IsTrue(saveSuccess);
-
+         memoryStream.Dispose();
 
          Maybe<FileStream> fileStream = _sut.GetTransfer(itemGuid, TransferItemType.File, userType, true);
          Assert.IsTrue(fileStream.IsSome);
@@ -89,7 +87,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
          {
             byte[] readBuffer = new byte[4];
             int bytesRead = await x.ReadAsync(readBuffer);
-            Assert.AreEqual(buffer, bytesRead);
+            Assert.AreEqual(4, bytesRead);
+            Assert.AreEqual(buffer, readBuffer);
             x.Dispose();
          });
       }
