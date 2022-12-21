@@ -31,9 +31,7 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Crypto.Common;
-using Crypter.Crypto.Common.StreamEncryption;
-using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -41,9 +39,8 @@ namespace Crypter.ClientServices.Transfer.Handlers
 {
    public class UploadMessageHandler : UploadHandler
    {
+      private MemoryStream _messageStream;
       private string _messageSubject;
-      private string _messageBody;
-      private int _expirationHours;
 
       public UploadMessageHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
          : base(crypterApiService, cryptoProvider, transferSettings)
@@ -52,54 +49,20 @@ namespace Crypter.ClientServices.Transfer.Handlers
       internal void SetTransferInfo(string messageSubject, string messageBody, int expirationHours)
       {
          _messageSubject = messageSubject;
-         _messageBody = messageBody;
+         byte[] messageBytes = Encoding.UTF8.GetBytes(messageBody);
+         _messageStream = new MemoryStream(messageBytes);
          _expirationHours = expirationHours;
       }
 
-      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<Task>> invokeBeforeUploading)
+      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
       {
-         if (_recipientUsername.IsNone)
-         {
-            CreateEphemeralRecipientKeys();
-         }
-
-         if (!_senderDefined)
-         {
-            CreateEphemeralSenderKeys();
-         }
-
-         byte[] senderPrivateKey = _senderPrivateKey.Match(
-            () => throw new Exception("Missing sender private key"),
-            x => x);
-
-         byte[] recipientPublicKey = _recipientPublicKey.Match(
-            () => throw new Exception("Missing recipient public key"),
-            x => x);
-
-         byte[] kxNonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.KeyExchange.NonceSize);
-         byte[] senderPublicKey = _cryptoProvider.KeyExchange.GeneratePublicKey(senderPrivateKey);
-         (byte[] encryptionKey, byte[] proof) = _cryptoProvider.KeyExchange.GenerateEncryptionKey(_cryptoProvider.StreamEncryptionFactory.KeySize, senderPrivateKey, recipientPublicKey, kxNonce);
-
-         (byte[] header, byte[] ciphertext) = EncryptMessage(encryptionKey, _messageBody);
-         await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
-
-         UploadMessageTransferRequest request = _senderDefined
-            ? new UploadMessageTransferRequest(_messageSubject, header, new List<byte[]>(1) { ciphertext }, null, kxNonce, proof, _expirationHours)
-            : new UploadMessageTransferRequest(_messageSubject, header, new List<byte[]>(1) { ciphertext }, senderPublicKey, kxNonce, proof, _expirationHours);
-
+         var (encryptionStream, senderPublicKey, proof) = GetEncryptionInfo(_messageStream, _messageStream.Length);
+         UploadMessageTransferRequest request = new UploadMessageTransferRequest(_messageSubject, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
          Either<UploadTransferError, UploadTransferResponse> response = await _recipientUsername.Match(
-            () => _crypterApiService.UploadMessageTransferAsync(request, _senderDefined),
-            x => _crypterApiService.SendUserMessageTransferAsync(x, request, _senderDefined));
+            () => _crypterApiService.UploadMessageTransferAsync(request, encryptionStream, _senderDefined),
+            x => _crypterApiService.SendUserMessageTransferAsync(x, request, encryptionStream, _senderDefined));
 
          return response.Map(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.Message, x.UserType, _recipientKeySeed));
-      }
-
-      private (byte[] header, byte[] ciphertext) EncryptMessage(ReadOnlySpan<byte> key, string message)
-      {
-         IStreamEncrypt streamEncryptor = _cryptoProvider.StreamEncryptionFactory.NewEncryptionStream(_transferSettings.PaddingBlockSize);
-         byte[] header = streamEncryptor.GenerateHeader(key);
-         byte[] ciphertext = streamEncryptor.Push(Encoding.UTF8.GetBytes(message), true);
-         return (header, ciphertext);
       }
    }
 }

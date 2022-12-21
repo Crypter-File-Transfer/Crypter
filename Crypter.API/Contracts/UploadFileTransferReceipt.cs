@@ -24,16 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
+using Crypter.API.Contracts.ModelBinders;
+using Crypter.Contracts.Features.Transfer;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.Contracts.Features.Transfer
+namespace Crypter.API.Contracts
 {
-   public interface IUploadTransferRequest
+   public class UploadFileTransferReceipt
    {
-      byte[] Header { get; init; }
-      List<byte[]> Ciphertext { get; init; }
-      byte[] PublicKey { get; init; }
-      byte[] Proof { get; init; }
-      int LifetimeHours { get; init; }
+      [ModelBinder(BinderType = typeof(FormDataJsonBinder))]
+      public UploadFileTransferRequest Data { get; set; }
+      public IFormFile Ciphertext { get; set; }
    }
 }

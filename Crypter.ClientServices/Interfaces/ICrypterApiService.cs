@@ -36,6 +36,7 @@ using Crypter.Contracts.Features.Transfer;
 using Crypter.Contracts.Features.Users;
 using Crypter.Contracts.Features.Users.GetReceivedTransfers;
 using Crypter.Contracts.Features.Users.GetSentTransfers;
+using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Threading.Tasks;
 
@@ -64,11 +65,11 @@ namespace Crypter.ClientServices.Interfaces
       #endregion
 
       #region File Transfer
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, bool withAuthentication);
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication);
       Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadAnonymousFilePreviewAsync(string hashId);
-      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadAnonymousFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
+      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
       Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadUserFilePreviewAsync(string hashId, bool withAuthentication);
-      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadUserFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
+      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
       #endregion
 
       #region Keys
@@ -80,11 +81,11 @@ namespace Crypter.ClientServices.Interfaces
       #endregion
 
       #region Message Transfer
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, bool withAuthentication);
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication);
       Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadAnonymousMessagePreviewAsync(string hashId);
-      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadAnonymousMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
+      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
       Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadUserMessagePreviewAsync(string hashId, bool withAuthentication);
-      Task<Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse>> DownloadUserMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
+      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
       #endregion
 
       #region Metrics
@@ -110,8 +111,8 @@ namespace Crypter.ClientServices.Interfaces
       Task<Either<DummyError, UserSentFilesResponse>> GetSentFilesAsync();
       Task<Either<DummyError, UserReceivedMessagesResponse>> GetReceivedMessagesAsync();
       Task<Either<DummyError, UserSentMessagesResponse>> GetSentMessagesAsync();
-      Task<Either<UploadTransferError, UploadTransferResponse>> SendUserFileTransferAsync(string username, UploadFileTransferRequest request, bool withAuthentication);
-      Task<Either<UploadTransferError, UploadTransferResponse>> SendUserMessageTransferAsync(string username, UploadMessageTransferRequest request, bool withAuthentication);
+      Task<Either<UploadTransferError, UploadTransferResponse>> SendUserFileTransferAsync(string username, UploadFileTransferRequest request, EncryptionStream encryptionStream, bool withAuthentication);
+      Task<Either<UploadTransferError, UploadTransferResponse>> SendUserMessageTransferAsync(string username, UploadMessageTransferRequest request, EncryptionStream encryptionStream, bool withAuthentication);
       #endregion
    }
 }

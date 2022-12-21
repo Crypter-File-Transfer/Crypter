@@ -37,7 +37,7 @@ namespace Crypter.Web.Shared.Transfer
    {
       protected string Subject = string.Empty;
       protected string PlaintextMessage = string.Empty;
-      protected int MessageSize = 0;
+      protected long MessageSize = 0;
 
       private DownloadMessageHandler _downloadHandler;
 
@@ -79,9 +79,8 @@ namespace Crypter.Web.Shared.Transfer
          {
             _downloadHandler.SetRecipientInfo(x);
 
-            await SetProgressMessage(_downloadingLiteral);
-            var showDecryptingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_decryptingLiteral));
-            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync(showDecryptingMessage);
+            await SetProgressMessage(_decryptingLiteral);
+            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
 
             decryptionResponse.DoLeftOrNeither(
             x => HandleDownloadError(x),

@@ -30,6 +30,8 @@ namespace Crypter.Crypto.Common.StreamEncryption
 {
    public interface IStreamEncrypt
    {
+      uint KeySize { get; }
+      uint TagSize { get; }
       byte[] GenerateHeader(ReadOnlySpan<byte> key);
       byte[] Push(byte[] plaintext, bool final);
    }

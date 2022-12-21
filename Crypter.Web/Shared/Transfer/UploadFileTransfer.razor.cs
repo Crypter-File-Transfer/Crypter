@@ -26,7 +26,6 @@
 
 using Crypter.ClientServices.Transfer;
 using Crypter.ClientServices.Transfer.Handlers;
-using Crypter.Common.Monads;
 using Microsoft.AspNetCore.Components.Forms;
 using System;
 using System.IO;
@@ -102,12 +101,8 @@ namespace Crypter.Web.Shared.Transfer
          using UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(fileStream, SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours);
 
          SetHandlerUserInfo(fileUploader);
-
-         var showUploadingMessage = Maybe<Func<Task>>.From(async () => await SetProgressMessage(_uploadingLiteral));
-         var uploadResponse = await fileUploader.UploadAsync(showUploadingMessage);
-
+         var uploadResponse = await fileUploader.UploadAsync();
          HandleUploadResponse(uploadResponse);
-
          Dispose();
       }
 

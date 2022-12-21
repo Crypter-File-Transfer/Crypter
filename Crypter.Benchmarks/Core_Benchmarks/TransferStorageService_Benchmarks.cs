@@ -40,6 +40,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Benchmarks.Core_Benchmarks
 {
+   /*
    [MemoryDiagnoser]
    [Orderer(BenchmarkDotNet.Order.SummaryOrderPolicy.FastestToSlowest)]
    [RankColumn]
@@ -143,4 +144,5 @@ namespace Crypter.Benchmarks.Core_Benchmarks
          await _sutSingleFileAlternative.ReadTransferAsync(_persistentItemId, TransferItemType.File, TransferUserType.Anonymous, CancellationToken.None);
       }
    }
+   */
 }

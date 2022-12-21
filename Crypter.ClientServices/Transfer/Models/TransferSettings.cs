@@ -29,7 +29,7 @@ namespace Crypter.ClientServices.Transfer.Models
    public class TransferSettings
    {
       public short MaximumTransferSizeMiB { get; set; }
-      public short PaddingBlockSize { get; set; }
-      public short StreamEncryptionChunkSizeKiB { get; set; }
+      public int MaxReadSize { get; set; }
+      public int PadSize { get; set; }
    }
 }

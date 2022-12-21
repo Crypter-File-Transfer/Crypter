@@ -29,13 +29,10 @@ using Crypter.ClientServices.Transfer.Handlers.Base;
 using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
+using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Crypto.Common;
-using Crypter.Crypto.Common.StreamEncryption;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Transfer.Handlers
@@ -60,7 +57,7 @@ namespace Crypter.ClientServices.Transfer.Handlers
          return response;
       }
 
-      public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync(Maybe<Func<Task>> invokeBeforeDecryption)
+      public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync()
       {
          byte[] symmetricKey = _symmetricKey.Match(
             () => throw new Exception("Missing symmetric key"),
@@ -71,48 +68,17 @@ namespace Crypter.ClientServices.Transfer.Handlers
             x => new DownloadTransferCiphertextRequest(x));
 
 #pragma warning disable CS8524
-         Either<DownloadTransferCiphertextError, DownloadTransferCiphertextResponse> response = _transferUserType switch
+         Either<DownloadTransferCiphertextError, StreamDownloadResponse> response = _transferUserType switch
          {
             TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFileCiphertextAsync(_transferHashId, request),
             TransferUserType.User => await _crypterApiService.DownloadUserFileCiphertextAsync(_transferHashId, request, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
-         return await response.MatchAsync<Either<DownloadTransferCiphertextError, byte[]>>(
+
+         return response.Match<Either<DownloadTransferCiphertextError, byte[]>>(
             left => left,
-            async right =>
-            {
-               await invokeBeforeDecryption.IfSomeAsync(async x => await x.Invoke());
-               return DecryptFile(symmetricKey, right.Header, right.Ciphertext);
-            },
+            right => Decrypt(symmetricKey, right.Stream, right.StreamSize),
             DownloadTransferCiphertextError.UnknownError);
-      }
-
-      private byte[] DecryptFile(byte[] key, byte[] header, List<byte[]> partionedCiphertext)
-      {
-         List<byte[]> plaintextChunks = new List<byte[]>(partionedCiphertext.Count);
-         IStreamDecrypt decryptionStream = _cryptoProvider.StreamEncryptionFactory.NewDecryptionStream(key, header, _transferSettings.PaddingBlockSize);
-         for (int i = 0; i < partionedCiphertext.Count; i++)
-         {
-            plaintextChunks.Add(decryptionStream.Pull(partionedCiphertext[i], out bool final));
-            if (final && i != partionedCiphertext.Count -1)
-            {
-               throw new CryptographicException("Unexpected 'final' chunk.");
-            }
-            else if (i == partionedCiphertext.Count - 1 && !final)
-            {
-               throw new CryptographicException("Missing 'final' chunk.");
-            }
-         }
-
-         int plaintextSize = plaintextChunks.Sum(x => x.Length);
-         byte[] plaintextWhole = new byte[plaintextSize];
-         int plaintextPosition = 0;
-         foreach (byte[] plaintextChunk in plaintextChunks)
-         {
-            plaintextChunk.CopyTo(plaintextWhole, plaintextPosition);
-            plaintextPosition += plaintextChunk.Length;
-         }
-         return plaintextWhole;
       }
    }
 }

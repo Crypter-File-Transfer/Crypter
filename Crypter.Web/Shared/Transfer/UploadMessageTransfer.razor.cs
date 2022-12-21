@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
 using System;
 using System.Threading.Tasks;
 
@@ -41,15 +40,12 @@ namespace Crypter.Web.Shared.Transfer
          EncryptionInProgress = true;
          ErrorMessage = string.Empty;
 
+         await SetProgressMessage("Encrypting message");
          var messageUploader = TransferHandlerFactory.CreateUploadMessageHandler(MessageSubject, MessageBody, ExpirationHours);
 
          SetHandlerUserInfo(messageUploader);
-
-         await SetProgressMessage(_encryptingLiteral);
-         var showUploadingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_uploadingLiteral));
-         var uploadResponse = await messageUploader.UploadAsync(showUploadingMessage);
+         var uploadResponse = await messageUploader.UploadAsync();
          HandleUploadResponse(uploadResponse);
-
          Dispose();
       }
 

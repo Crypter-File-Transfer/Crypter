@@ -43,16 +43,12 @@ namespace Crypter.Test.Core_Tests.Services_Tests
    internal class TransferStorageService_Tests
    {
       private TransferStorageService _sut;
-      private byte[] _header;
-      private List<byte[]> _fileChunks;
-      private const int _chunkSize = 65536;
       private string _storageLocation;
 
       [OneTimeSetUp]
       public async Task OneTimeSetupAsync()
       {
          SetupService();
-         await SetupDataAsync();
       }
 
       private void SetupService()
@@ -70,26 +66,6 @@ namespace Crypter.Test.Core_Tests.Services_Tests
          _sut = new TransferStorageService(options);
       }
 
-      private async Task SetupDataAsync()
-      {
-         _header = new byte[] { 0x01, 0x02, 0x03, 0x04 };
-         string directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-         string fileLocation = Path.Combine(directory, "Assets", "WindowsCodecsRaw.dll");
-
-         _fileChunks = new List<byte[]>();
-         FileStream stream = File.OpenRead(fileLocation);
-         while (stream.Position < stream.Length)
-         {
-            byte[] buffer = new byte[_chunkSize];
-            int bytesRead = await stream.ReadAsync(buffer.AsMemory(0, _chunkSize));
-
-            if (bytesRead > 0)
-            {
-               _fileChunks.Add(buffer[..^bytesRead]);
-            }
-         }
-      }
-
       [OneTimeTearDown]
       public void OneTimeTearDown()
       {
@@ -100,20 +76,21 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [TestCase(TransferUserType.User)]
       public async Task Files_Can_Be_Saved_And_Read_Async(TransferUserType userType)
       {
-         TransferStorageParameters inParameters = new TransferStorageParameters(Guid.NewGuid(), TransferItemType.File, userType, _header, _fileChunks);
-         bool saveSuccess = await _sut.SaveTransferAsync(inParameters, CancellationToken.None);
+         byte[] buffer = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+         Guid itemGuid = Guid.NewGuid();
+         MemoryStream memoryStream = new MemoryStream(buffer);
+         bool saveSuccess = await _sut.SaveTransferAsync(itemGuid, TransferItemType.File, userType, memoryStream, CancellationToken.None);
          Assert.IsTrue(saveSuccess);
 
-         Maybe<TransferStorageParameters> outParameters = await _sut.ReadTransferAsync(inParameters.Id, inParameters.ItemType, inParameters.UserType, CancellationToken.None);
-         Assert.IsTrue(outParameters.IsSome);
-         outParameters.IfSome(x =>
+
+         Maybe<FileStream> fileStream = _sut.GetTransfer(itemGuid, TransferItemType.File, userType, true);
+         Assert.IsTrue(fileStream.IsSome);
+         fileStream.IfSome(async x =>
          {
-            Assert.AreEqual(_header, x.Header);
-            Assert.AreEqual(_fileChunks.Count, x.Ciphertext.Count);
-            for (int i = 0; i < _fileChunks.Count; i++)
-            {
-               Assert.AreEqual(_fileChunks[i], x.Ciphertext[i]);
-            }
+            byte[] readBuffer = new byte[4];
+            int bytesRead = await x.ReadAsync(readBuffer);
+            Assert.AreEqual(buffer, bytesRead);
+            x.Dispose();
          });
       }
    }

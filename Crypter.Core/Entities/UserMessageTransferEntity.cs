@@ -32,7 +32,7 @@ namespace Crypter.Core.Entities
    public class UserMessageTransferEntity : IUserTransfer, IMessageTransfer
    {
       public Guid Id { get; set; }
-      public int Size { get; set; }
+      public long Size { get; set; }
       public byte[] PublicKey { get; set; }
       public byte[] KeyExchangeNonce { get; set; }
       public byte[] Proof { get; set; }
@@ -49,7 +49,7 @@ namespace Crypter.Core.Entities
       // IMessageTransfer
       public string Subject { get; set; }
 
-      public UserMessageTransferEntity(Guid id, int size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string subject = "")
+      public UserMessageTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string subject = "")
       {
          Id = id;
          Size = size;

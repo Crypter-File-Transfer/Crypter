@@ -26,13 +26,11 @@
 
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Core.Models;
 using Crypter.Core.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,8 +39,9 @@ namespace Crypter.Core.Services
 {
    public interface ITransferStorageService
    {
-      Task<bool> SaveTransferAsync(TransferStorageParameters data, CancellationToken cancellationToken);
-      Task<Maybe<TransferStorageParameters>> ReadTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, CancellationToken cancellationToken);
+      bool TransferExists(Guid id, TransferItemType itemType, TransferUserType userType);
+      Maybe<FileStream> GetTransfer(Guid id, TransferItemType itemType, TransferUserType userType, bool deleteOnReadCompletion);
+      Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream stream, CancellationToken cancellationToken);
       void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType);
    }
 
@@ -63,97 +62,85 @@ namespace Crypter.Core.Services
    public class TransferStorageService : ITransferStorageService
    {
       private readonly TransferStorageSettings _transferStorageSettings;
-      private const string _ciphertextFilenamePrefix = "ciphertext-";
-      private const string _headerFilename = "header";
 
       public TransferStorageService(IOptions<TransferStorageSettings> transferStorageSettings)
       {
          _transferStorageSettings = transferStorageSettings.Value;
       }
 
-      public async Task<bool> SaveTransferAsync(TransferStorageParameters data, CancellationToken cancellationToken)
+      public bool TransferExists(Guid id, TransferItemType itemType, TransferUserType userType)
       {
-         string itemDirectory = GetItemDirectory(data.Id, data.ItemType, data.UserType);
-         string headerPath = Path.Join(itemDirectory, _headerFilename);
+         string directory = GetTransferDirectory(itemType, userType);
+         string filepath = Path.Join(directory, id.ToString());
+         return File.Exists(filepath);
+      }
+
+      public Maybe<FileStream> GetTransfer(Guid id, TransferItemType itemType, TransferUserType userType, bool deleteOnReadCompletion)
+      {
+         string directory = GetTransferDirectory(itemType, userType);
+         string filepath = Path.Join(directory, id.ToString());
+
+         FileOptions fileOption = deleteOnReadCompletion
+            ? FileOptions.DeleteOnClose
+            : FileOptions.None;
+
+         return File.Exists(filepath)
+            ? new FileStream(filepath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, fileOption)
+            : Maybe<FileStream>.None;
+      }
+
+      public async Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream stream, CancellationToken cancellationToken)
+      {
+         string directory = GetTransferDirectory(itemType, userType);
+         string filepath = Path.Join(directory, id.ToString());
 
          try
          {
-            Directory.CreateDirectory(itemDirectory);
-            Task[] writeTasks = new Task[data.Ciphertext.Count + 1];
-            for (int i = 0; i < data.Ciphertext.Count; i++)
+            if (!Directory.Exists(directory))
             {
-               string partPath = Path.Join(itemDirectory, $"{_ciphertextFilenamePrefix}{i}");
-               writeTasks[i] = File.WriteAllBytesAsync(partPath, data.Ciphertext[i], cancellationToken);
+               Directory.CreateDirectory(directory);
             }
 
-            writeTasks[^1] = File.WriteAllBytesAsync(headerPath, data.Header, cancellationToken);
-            await Task.WhenAll(writeTasks);
+            using FileStream ciphertextStream = File.OpenWrite(filepath);
+            await stream.CopyToAsync(ciphertextStream, cancellationToken);
+            await ciphertextStream.FlushAsync(cancellationToken);
+            ciphertextStream.Dispose();
          }
          catch (OperationCanceledException)
          {
-            DeleteDirectoryIfExists(itemDirectory);
+            DeleteTransfer(id, TransferItemType.Message, userType);
             throw;
          }
          catch (Exception)
          {
             // todo - log something
-            DeleteDirectoryIfExists(itemDirectory);
+            DeleteTransfer(id, TransferItemType.Message, userType);
             return false;
          }
 
          return true;
       }
 
-      public async Task<Maybe<TransferStorageParameters>> ReadTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, CancellationToken cancellationToken)
-      {
-         string itemDirectory = GetItemDirectory(id, itemType, userType);
-         string headerPath = Path.Join(itemDirectory, _headerFilename);
-
-         DirectoryInfo directoryInfo = new DirectoryInfo(itemDirectory);
-         FileInfo[] ciphertextFiles = directoryInfo.GetFiles($"{_ciphertextFilenamePrefix}*");
-         int[] ciphertextFilesSortedPositions = new int[ciphertextFiles.Length];
-         for (int i = 0; i < ciphertextFiles.Length; i++)
-         {
-            int fileIndex = int.Parse(ciphertextFiles[i].Name.AsSpan()[_ciphertextFilenamePrefix.Length..]);
-            ciphertextFilesSortedPositions[fileIndex] = i;
-         }
-
-         List<byte[]> ciphertextParts = new List<byte[]>(ciphertextFiles.Length);
-         foreach (int position in ciphertextFilesSortedPositions)
-         {
-            byte[] partBytes = await File.ReadAllBytesAsync(ciphertextFiles[position].FullName, cancellationToken);
-            ciphertextParts.Add(partBytes);
-         }
-
-         byte[] header = await File.ReadAllBytesAsync(headerPath, cancellationToken);
-         return new TransferStorageParameters(id, itemType, userType, header, ciphertextParts);
-      }
-
       public void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType)
       {
-         var itemDirectory = GetItemDirectory(id, itemType, userType);
-         DeleteDirectoryIfExists(itemDirectory);
+         string directory = GetTransferDirectory(itemType, userType);
+         string filepath = Path.Join(directory, id.ToString());
+         if (File.Exists(filepath))
+         {
+            File.Delete(filepath);
+         }
       }
 
-      private string GetItemDirectory(Guid id, TransferItemType itemType, TransferUserType userType)
+      private string GetTransferDirectory(TransferItemType itemType, TransferUserType userType)
       {
-         string[] pathParts = new string[]
+         string[] directoryParts = new string[]
          {
             _transferStorageSettings.Location,
             userType.ToString().ToLower(),
-            itemType.ToString().ToLower(),
-            id.ToString()
+            itemType.ToString().ToLower()
          };
 
-         return Path.Join(pathParts);
-      }
-
-      private static void DeleteDirectoryIfExists(string path)
-      {
-         if (Directory.Exists(path))
-         {
-            Directory.Delete(path, true);
-         }
+         return Path.Join(directoryParts);
       }
    }
 }

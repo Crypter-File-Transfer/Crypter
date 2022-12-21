@@ -30,7 +30,7 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
 {
    public interface IUserUploadHandler
    {
-      void SetSenderInfo(ReadOnlySpan<byte> privateKey);
-      void SetRecipientInfo(string username, ReadOnlySpan<byte> publicKey);
+      void SetSenderInfo(byte[] privateKey);
+      void SetRecipientInfo(string username, byte[] publicKey);
    }
 }
