@@ -26,7 +26,6 @@
 
 using Crypter.ClientServices.Interfaces;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -48,7 +47,6 @@ namespace Crypter.Web.Pages
          if (await UserSessionService.IsLoggedInAsync())
          {
             NavigationManager.NavigateTo(_userLandingPage);
-            Console.WriteLine("login foo");
             return;
          }
 

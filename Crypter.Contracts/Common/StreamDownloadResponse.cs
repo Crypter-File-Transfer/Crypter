@@ -24,32 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.Padding;
-using Crypter.Crypto.Common.StreamEncryption;
-using System;
+using System.IO;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
+namespace Crypter.Contracts.Common
 {
-   public class StreamEncryptionFactory : IStreamEncryptionFactory
+   public class StreamDownloadResponse
    {
-      private readonly IPadding _padding;
+      public Stream Stream { get; init; }
+      public long StreamSize { get; init; }
 
-      public uint KeySize { get => Geralt.IncrementalXChaCha20Poly1305.KeySize; }
-      public uint TagSize { get => Geralt.IncrementalXChaCha20Poly1305.TagSize; }
-
-      public StreamEncryptionFactory(IPadding padding)
+      public StreamDownloadResponse(Stream stream, long size)
       {
-         _padding = padding;
-      }
-
-      public IStreamEncrypt NewEncryptionStream(int padSize)
-      {
-         return new StreamEncrypt(_padding, padSize);
-      }
-
-      public IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
-      {
-         return new StreamDecrypt(_padding, key, header);
+         Stream = stream;
+         StreamSize = size;
       }
    }
 }

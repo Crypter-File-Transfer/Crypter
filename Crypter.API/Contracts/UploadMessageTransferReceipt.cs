@@ -24,27 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
-using System;
-using System.Collections.Generic;
+using Crypter.API.Contracts.ModelBinders;
+using Crypter.Contracts.Features.Transfer;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.Core.Models
+namespace Crypter.API.Contracts
 {
-   public class TransferStorageParameters
+   public class UploadMessageTransferReceipt
    {
-      public Guid Id { get; init; }
-      public TransferItemType ItemType { get; set; }
-      public TransferUserType UserType { get; set; }
-      public byte[] Header { get; init; }
-      public List<byte[]> Ciphertext { get; init; }
-
-      public TransferStorageParameters(Guid id, TransferItemType itemType, TransferUserType userType, byte[] header, List<byte[]> ciphertext)
-      {
-         Id = id;
-         ItemType = itemType;
-         UserType = userType;
-         Header = header;
-         Ciphertext = ciphertext;
-      }
+      [ModelBinder(BinderType = typeof(FormDataJsonBinder))]
+      public UploadMessageTransferRequest Data { get; set; }
+      public IFormFile Ciphertext { get; set; }
    }
 }

@@ -31,9 +31,7 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Crypto.Common;
-using Crypter.Crypto.Common.StreamEncryption;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -45,15 +43,10 @@ namespace Crypter.ClientServices.Transfer.Handlers
       private string _fileName;
       private long _fileSize;
       private string _fileContentType;
-      private int _expirationHours;
-
-      public readonly int BufferSize;
 
       public UploadFileHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
          : base(crypterApiService, cryptoProvider, transferSettings)
-      {
-         BufferSize = _transferSettings.StreamEncryptionChunkSizeKiB * (int)Math.Pow(2, 10);
-      }
+      { }
 
       internal void SetTransferInfo(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours)
       {
@@ -64,70 +57,15 @@ namespace Crypter.ClientServices.Transfer.Handlers
          _expirationHours = expirationHours;
       }
 
-      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Maybe<Func<Task>> invokeBeforeUploading)
+      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
       {
-         if (_recipientUsername.IsNone)
-         {
-            CreateEphemeralRecipientKeys();
-         }
-
-         if (!_senderDefined)
-         {
-            CreateEphemeralSenderKeys();
-         }
-
-         byte[] senderPrivateKey = _senderPrivateKey.Match(
-            () => throw new Exception("Missing sender private key"),
-            x => x);
-
-         byte[] recipientPublicKey = _recipientPublicKey.Match(
-            () => throw new Exception("Missing recipient public key"),
-            x => x);
-
-         byte[] kxNonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.KeyExchange.NonceSize);
-         byte[] senderPublicKey = _cryptoProvider.KeyExchange.GeneratePublicKey(senderPrivateKey);
-         (byte[] encryptionKey, byte[] proof) = _cryptoProvider.KeyExchange.GenerateEncryptionKey(_cryptoProvider.StreamEncryptionFactory.KeySize, senderPrivateKey, recipientPublicKey, kxNonce);
-
-         (byte[] header, List<byte[]> ciphertext) = await EncryptStreamAsync(encryptionKey, _fileStream, _fileSize, BufferSize);
-         await invokeBeforeUploading.IfSomeAsync(async x => await x.Invoke());
-
-         UploadFileTransferRequest request = _senderDefined
-            ? new UploadFileTransferRequest(_fileName, _fileContentType, header, ciphertext, null, kxNonce, proof, _expirationHours)
-            : new UploadFileTransferRequest(_fileName, _fileContentType, header, ciphertext, senderPublicKey, kxNonce, proof, _expirationHours);
-
+         var (encryptionStream, senderPublicKey, proof) = GetEncryptionInfo(_fileStream, _fileSize);
+         UploadFileTransferRequest request = new UploadFileTransferRequest(_fileName, _fileContentType, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
          Either<UploadTransferError, UploadTransferResponse> response = await _recipientUsername.Match(
-            () => _crypterApiService.UploadFileTransferAsync(request, _senderDefined),
-            x => _crypterApiService.SendUserFileTransferAsync(x, request, _senderDefined));
+            () => _crypterApiService.UploadFileTransferAsync(request, encryptionStream, _senderDefined),
+            x => _crypterApiService.SendUserFileTransferAsync(x, request, encryptionStream, _senderDefined));
  
          return response.Map(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.File, x.UserType, _recipientKeySeed));
-      }
-
-      private async Task<(byte[] header, List<byte[]> ciphertext)> EncryptStreamAsync(byte[] key, Stream stream, long streamLength, int chunkSize)
-      {
-         IStreamEncrypt streamEncryptor = _cryptoProvider.StreamEncryptionFactory.NewEncryptionStream(_transferSettings.PaddingBlockSize);
-         byte[] header = streamEncryptor.GenerateHeader(key);
-
-         int partCount = Convert.ToInt32(Math.Ceiling(streamLength / (double)chunkSize));
-         List<byte[]> encryptedParts = new(partCount);
-
-         int bytesRead = 0;
-         while (bytesRead + chunkSize < streamLength)
-         {
-            byte[] readBuffer = new byte[chunkSize];
-            bytesRead += await stream.ReadAsync(readBuffer.AsMemory(0, chunkSize));
-
-            byte[] encryptedPart = streamEncryptor.Push(readBuffer, false);
-            encryptedParts.Add(encryptedPart);
-         }
-
-         int finalPlaintextLength = Convert.ToInt32(streamLength) - bytesRead;
-         byte[] finalReadBuffer = new byte[finalPlaintextLength];
-         await stream.ReadAsync(finalReadBuffer.AsMemory(0, finalPlaintextLength));
-
-         byte[] finalEncryptedPart = streamEncryptor.Push(finalReadBuffer, true);
-         encryptedParts.Add(finalEncryptedPart);
-
-         return (header, encryptedParts);
       }
 
       public void Dispose()

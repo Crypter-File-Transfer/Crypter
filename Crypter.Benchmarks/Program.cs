@@ -25,7 +25,6 @@
  */
 
 using BenchmarkDotNet.Running;
-using Crypter.Benchmarks.Core_Benchmarks;
 
 namespace Crypter.Benchmarks
 {
@@ -33,7 +32,7 @@ namespace Crypter.Benchmarks
    {
       internal static void Main(string[] args)
       {
-         BenchmarkRunner.Run<TransferStorageService_Benchmarks>();
+         //BenchmarkRunner.Run<TransferStorageService_Benchmarks>();
       }
    }
 }

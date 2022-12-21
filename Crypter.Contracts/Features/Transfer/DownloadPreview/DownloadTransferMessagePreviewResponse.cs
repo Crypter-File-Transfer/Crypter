@@ -32,7 +32,7 @@ namespace Crypter.Contracts.Features.Transfer
    public class DownloadTransferMessagePreviewResponse
    {
       public string Subject { get; init; }
-      public int Size { get; init; }
+      public long Size { get; init; }
       public string Sender { get; init; }
       public string SenderAlias { get; init; }
       public string Recipient { get; init; }
@@ -42,7 +42,7 @@ namespace Crypter.Contracts.Features.Transfer
       public DateTime ExpirationUTC { get; init; }
 
       [JsonConstructor]
-      public DownloadTransferMessagePreviewResponse(string subject, int size, string sender, string senderAlias, string recipient, byte[] publicKey, byte[] keyExchangeNonce, DateTime creationUTC, DateTime expirationUTC)
+      public DownloadTransferMessagePreviewResponse(string subject, long size, string sender, string senderAlias, string recipient, byte[] publicKey, byte[] keyExchangeNonce, DateTime creationUTC, DateTime expirationUTC)
       {
          Subject = subject;
          Size = size;

@@ -25,6 +25,7 @@
  */
 
 using Crypter.API.Attributes;
+using Crypter.API.Contracts;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Transfer;
@@ -36,6 +37,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -130,12 +132,13 @@ namespace Crypter.API.Controllers
       [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadUserFileTransferAsync([FromBody] UploadFileTransferRequest request, string username, CancellationToken cancellationToken)
+      public async Task<IActionResult> UploadUserFileTransferAsync([FromForm] UploadFileTransferReceipt request, string username, CancellationToken cancellationToken)
       {
+         using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
          var uploadResult = await _tokenService.TryParseUserId(User)
             .MatchAsync(
-            async () => await _transferUploadService.UploadUserFileAsync(Maybe<Guid>.None, username, request, cancellationToken),
-            async x => await _transferUploadService.UploadUserFileAsync(x, username, request, cancellationToken));
+            async () => await _transferUploadService.UploadUserFileAsync(Maybe<Guid>.None, username, request.Data, ciphertextStream, cancellationToken),
+            async x => await _transferUploadService.UploadUserFileAsync(x, username, request.Data, ciphertextStream, cancellationToken));
 
          return uploadResult.Match(
             MakeErrorResponse,
@@ -147,12 +150,13 @@ namespace Crypter.API.Controllers
       [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadUserMessageTransferAsync([FromBody] UploadMessageTransferRequest request, string username, CancellationToken cancellationToken)
+      public async Task<IActionResult> UploadUserMessageTransferAsync([FromForm] UploadMessageTransferReceipt request, string username, CancellationToken cancellationToken)
       {
+         using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
          var uploadResult = await _tokenService.TryParseUserId(User)
             .MatchAsync(
-            async () => await _transferUploadService.UploadUserMessageAsync(Maybe<Guid>.None, username, request, cancellationToken),
-            async x => await _transferUploadService.UploadUserMessageAsync(x, username, request, cancellationToken));
+            async () => await _transferUploadService.UploadUserMessageAsync(Maybe<Guid>.None, username, request.Data, ciphertextStream, cancellationToken),
+            async x => await _transferUploadService.UploadUserMessageAsync(x, username, request.Data, ciphertextStream, cancellationToken));
 
          return uploadResult.Match(
             MakeErrorResponse,

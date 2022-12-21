@@ -29,6 +29,9 @@ using Crypter.ClientServices.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Crypto.Common;
+using Crypter.Crypto.Common.StreamEncryption;
+using System;
+using System.IO;
 
 namespace Crypter.ClientServices.Transfer.Handlers.Base
 {
@@ -89,6 +92,22 @@ namespace Crypter.ClientServices.Transfer.Handlers.Base
                });
             });
          });
+      }
+
+      protected byte[] Decrypt(byte[] key, Stream ciphertext, long streamSize)
+      {
+         DecryptionStream decryptionStream = new DecryptionStream(ciphertext, streamSize, key, _cryptoProvider.StreamEncryptionFactory);
+         byte[] plaintextBuffer = new byte[checked((int)streamSize)];
+         int plaintextPosition = 0;
+         int bytesRead;
+         do
+         {
+            bytesRead = decryptionStream.Read(plaintextBuffer.AsSpan(plaintextPosition));
+            plaintextPosition += bytesRead;
+         }
+         while (bytesRead > 0);
+         ciphertext.Dispose();
+         return plaintextBuffer[..plaintextPosition];
       }
    }
 }

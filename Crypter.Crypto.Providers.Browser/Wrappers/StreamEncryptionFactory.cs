@@ -37,20 +37,21 @@ namespace Crypter.Crypto.Providers.Browser.Wrappers
       private readonly IPadding _padding;
 
       public uint KeySize { get => 32; }
+      public uint TagSize { get => 17; }
 
       public StreamEncryptionFactory(IPadding padding)
       {
          _padding = padding;
       }
 
-      public IStreamEncrypt NewEncryptionStream(short blockSize)
+      public IStreamEncrypt NewEncryptionStream(int padSize)
       {
-         return new StreamEncrypt(_padding, blockSize);
+         return new StreamEncrypt(_padding, padSize);
       }
 
-      public IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header, short blockSize)
+      public IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
       {
-         return new StreamDecrypt(_padding, key, header, blockSize);
+         return new StreamDecrypt(_padding, key, header);
       }
    }
 }

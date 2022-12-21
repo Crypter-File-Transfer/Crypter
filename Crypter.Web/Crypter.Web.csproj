@@ -8,6 +8,8 @@
     <OutputType>Exe</OutputType>
     <RunAOTCompilation>false</RunAOTCompilation>
     <StartupObject />
+
+    <EmccInitialHeapSize>134217728</EmccInitialHeapSize>
   </PropertyGroup>
 
   <ItemGroup>

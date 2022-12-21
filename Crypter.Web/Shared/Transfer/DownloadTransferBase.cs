@@ -70,7 +70,6 @@ namespace Crypter.Web.Shared.Transfer
       protected DateTime Created = DateTime.MinValue;
       protected DateTime Expiration = DateTime.MinValue;
 
-      protected const string _downloadingLiteral = "Downloading";
       protected const string _decryptingLiteral = "Decrypting";
 
       protected Maybe<byte[]> DeriveRecipientPrivateKeyFromUrlSeed()

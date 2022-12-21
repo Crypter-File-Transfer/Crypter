@@ -24,27 +24,22 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Features.Transfer
 {
-   public class UploadMessageTransferRequest : IUploadTransferRequest
+   public class UploadMessageTransferRequest
    {
       public string Subject { get; init; }
-      public byte[] Header { get; init; }
-      public List<byte[]> Ciphertext { get; init; }
       public byte[] PublicKey { get; init; }
       public byte[] KeyExchangeNonce { get; init; }
       public byte[] Proof { get; init; }
       public int LifetimeHours { get; init; }
 
       [JsonConstructor]
-      public UploadMessageTransferRequest(string subject, byte[] header, List<byte[]> ciphertext, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, int lifetimeHours)
+      public UploadMessageTransferRequest(string subject, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, int lifetimeHours)
       {
          Subject = subject;
-         Header = header;
-         Ciphertext = ciphertext;
          PublicKey = publicKey;
          KeyExchangeNonce = keyExchangeNonce;
          Proof = proof;

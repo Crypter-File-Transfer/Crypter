@@ -29,7 +29,6 @@ using BlazorSodium.Sodium.Models;
 using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
 using System;
-using System.Linq;
 using System.Runtime.Versioning;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers
@@ -38,13 +37,16 @@ namespace Crypter.Crypto.Providers.Browser.Wrappers
    public class StreamEncrypt : IStreamEncrypt
    {
       private readonly IPadding _padding;
-      private readonly short _blockSize;
+      private readonly int _padSize;
       private StateAddress _stateAddress;
 
-      public StreamEncrypt(IPadding padding, short blockSize)
+      public uint KeySize { get => SecretStream.KEY_BYTES; }
+      public uint TagSize { get => SecretStream.A_BYTES; }
+
+      public StreamEncrypt(IPadding padding, int padSize)
       {
          _padding = padding;
-         _blockSize = blockSize;
+         _padSize = padSize;
       }
 
       public byte[] GenerateHeader(ReadOnlySpan<byte> key)
@@ -57,15 +59,7 @@ namespace Crypter.Crypto.Providers.Browser.Wrappers
       public byte[] Push(byte[] plaintext, bool final)
       {
          uint tag = final ? SecretStream.TAG_FINAL : SecretStream.TAG_MESSAGE;
-         bool meetsBlockSize = plaintext.Length % _blockSize == 0;
-         if (!(final || meetsBlockSize))
-         {
-            throw new ArgumentOutOfRangeException(nameof(plaintext), plaintext.Length, $"{nameof(plaintext)} length must be divisible by {_blockSize}");
-         }
-
-         byte[] paddedPlaintext = final
-            ? _padding.Pad(plaintext, _blockSize)
-            : plaintext.ToArray();
+         byte[] paddedPlaintext = _padding.Pad(plaintext, _padSize);
          return SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Push(_stateAddress, paddedPlaintext, tag);
       }
    }

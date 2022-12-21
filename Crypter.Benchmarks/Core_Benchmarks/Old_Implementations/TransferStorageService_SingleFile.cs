@@ -39,6 +39,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Benchmarks.Core_Benchmarks.Old_Implementations
 {
+   /*
    public class TransferStorageService_SingleFile : ITransferStorageService
    {
       private readonly TransferStorageSettings _transferStorageSettings;
@@ -145,4 +146,5 @@ namespace Crypter.Benchmarks.Core_Benchmarks.Old_Implementations
          }
       }
    }
+   */
 }

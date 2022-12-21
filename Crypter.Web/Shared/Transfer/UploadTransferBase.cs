@@ -82,7 +82,6 @@ namespace Crypter.Web.Shared.Transfer
       private const string _userNotFound = "User not found.";
       private const string _expirationRange = "Expiration must be between 1 and 24 hours.";
       protected const string _encryptingLiteral = "Encrypting";
-      protected const string _uploadingLiteral = "Uploading";
 
       protected void SetHandlerUserInfo(IUserUploadHandler handler)
       {

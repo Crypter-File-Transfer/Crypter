@@ -32,7 +32,7 @@ namespace Crypter.Core.Entities
    public class UserFileTransferEntity : IUserTransfer, IFileTransfer
    {
       public Guid Id { get; set; }
-      public int Size { get; set; }
+      public long Size { get; set; }
       public byte[] PublicKey { get; set; }
       public byte[] KeyExchangeNonce { get; set; }
       public byte[] Proof { get; set; }
@@ -50,7 +50,7 @@ namespace Crypter.Core.Entities
       public string FileName { get; set; }
       public string ContentType { get; set; }
 
-      public UserFileTransferEntity(Guid id, int size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType)
+      public UserFileTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType)
       {
          Id = id;
          Size = size;

@@ -73,12 +73,25 @@ namespace Crypter.ClientServices.Services
          return SendRequestAsync<TResponse>(request);
       }
 
+      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, Maybe<TRequest> body)
+         where TRequest : class
+      {
+         var request = MakeRequestMessage(HttpMethod.Post, uri, body);
+         return GetStreamAsync(request);
+      }
+
       public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
          where TResponse : class
          where TRequest : class
       {
          var request = MakeRequestMessage(HttpMethod.Delete, uri, body);
          return SendRequestAsync<TResponse>(request);
+      }
+
+      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> SendAsync<TResponse>(HttpRequestMessage requestMessage)
+         where TResponse : class
+      {
+         return SendRequestAsync<TResponse>(requestMessage);
       }
 
       private static HttpRequestMessage MakeRequestMessage<TRequest>(HttpMethod method, string uri, Maybe<TRequest> body)
@@ -107,6 +120,21 @@ namespace Crypter.ClientServices.Services
             TResponse content = await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
             return (response.StatusCode, content);
          }
+      }
+
+      private async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> GetStreamAsync(HttpRequestMessage request)
+      {
+         HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+         Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+
+         if (response.StatusCode != HttpStatusCode.OK)
+         {
+            ErrorResponse error = await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+            return (response.StatusCode, error);
+         }
+
+         StreamDownloadResponse responseData = new StreamDownloadResponse(stream, response.Content.Headers.ContentLength!.Value);
+         return (response.StatusCode, responseData);
       }
    }
 }

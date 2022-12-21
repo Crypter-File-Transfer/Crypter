@@ -61,7 +61,7 @@ namespace Crypter.Crypto.Providers.Default
          CryptoHash = new CryptoHash();
          DigitalSignature = new Wrappers.DigitalSignature();
          Random = new Wrappers.Random();
-         StreamEncryptionFactory = new Wrappers.StreamEncryptionFactory();
+         //StreamEncryptionFactory = new Wrappers.StreamEncryptionFactory(Padding);
          StreamGenericHashFactory = new Wrappers.StreamGenericHashFactory();
 
          KeyExchange = new Wrappers.KeyExchange(StreamGenericHashFactory);

@@ -32,7 +32,7 @@ namespace Crypter.Core.Entities
    public class AnonymousFileTransferEntity : IFileTransfer
    {
       public Guid Id { get; set; }
-      public int Size { get; set; }
+      public long Size { get; set; }
       public byte[] PublicKey { get; set; }
       public byte[] KeyExchangeNonce { get; set; }
       public byte[] Proof { get; set; }
@@ -43,7 +43,7 @@ namespace Crypter.Core.Entities
       public string FileName { get; set; }
       public string ContentType { get; set; }
 
-      public AnonymousFileTransferEntity(Guid id, int size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, string fileName, string contentType)
+      public AnonymousFileTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, string fileName, string contentType)
       {
          Id = id;
          Size = size;
