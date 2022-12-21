@@ -36,7 +36,6 @@ using Crypter.Crypto.Providers.Browser;
 using Crypter.Web;
 using Crypter.Web.Models.Settings;
 using Crypter.Web.Repositories;
-using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -91,7 +90,6 @@ builder.Services
    .AddSingleton<IUserSessionService, UserSessionService<BrowserStorageLocation>>()
    .AddSingleton<ICrypterApiService, CrypterApiService>()
    .AddSingleton<IUserContactsService, UserContactsService>()
-   .AddSingleton<IBrowserDownloadFileService, BrowserDownloadFileService>()
    .AddSingleton<IUserPasswordService, UserPasswordService>()
    .AddSingleton<IUserKeysService, UserKeysService>()
    .AddSingleton<TransferHandlerFactory>()

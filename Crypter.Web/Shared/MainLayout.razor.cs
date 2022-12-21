@@ -31,13 +31,16 @@ using Crypter.ClientServices.Interfaces.Enum;
 using Crypter.ClientServices.Interfaces.Events;
 using Crypter.ClientServices.Interfaces.Repositories;
 using Crypter.Common.Monads;
+using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using System;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
 {
+   [SupportedOSPlatform("browser")]
    public partial class MainLayoutBase : LayoutComponentBase, IDisposable
    {
       [Inject]
@@ -69,6 +72,7 @@ namespace Crypter.Web.Shared
          UserPasswordService.PasswordHashEndEventHandler += ClosePasswordHashingModal;
          await BlazorSodiumService.InitializeAsync();
          await BrowserRepository.InitializeAsync();
+         await BrowserDownloadFileService.InitializeAsync();
          ServicesInitialized = true;
       }
 

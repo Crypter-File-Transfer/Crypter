@@ -28,19 +28,17 @@ using Crypter.ClientServices.Transfer.Handlers;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Services;
-using Microsoft.AspNetCore.Components;
+using System;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
 {
-   public partial class DownloadFileTransferBase : DownloadTransferBase
+   [SupportedOSPlatform("browser")]
+   public partial class DownloadFileTransferBase : DownloadTransferBase, IDisposable
    {
-      [Inject]
-      protected IBrowserDownloadFileService BrowserDownloadFileService { get; set; }
-
       protected string FileName = string.Empty;
       protected string ContentType = string.Empty;
-      protected byte[] PlaintextBytes = null;
       protected long FileSize = 0;
       protected bool LocalDownloadInProgress { get; set; }
 
@@ -74,6 +72,7 @@ namespace Crypter.Web.Shared.Transfer
 
       protected async Task OnDecryptClickedAsync()
       {
+         BrowserDownloadFileService.Reset();
          DecryptionInProgress = true;
 
          Maybe<byte[]> recipientPrivateKey = SpecificRecipient
@@ -94,7 +93,7 @@ namespace Crypter.Web.Shared.Transfer
 
             decryptionResponse.DoRight(x =>
             {
-               PlaintextBytes = x;
+               BrowserDownloadFileService.CopyBufferToJavaScript(FileName, ContentType, x);
                DecryptionComplete = true;
             });
          });
@@ -108,10 +107,7 @@ namespace Crypter.Web.Shared.Transfer
          StateHasChanged();
          await Task.Delay(400);
 
-         await BrowserDownloadFileService.ResetDownloadAsync();
-         await BrowserDownloadFileService.DownloadFileAsync(FileName, ContentType, PlaintextBytes);
-         PlaintextBytes = null;
-
+         BrowserDownloadFileService.Download();
          LocalDownloadInProgress = false;
          StateHasChanged();
       }
@@ -137,6 +133,12 @@ namespace Crypter.Web.Shared.Transfer
                ErrorMessage = "Invalid decryption key";
                break;
          }
+      }
+
+      public void Dispose()
+      {
+         BrowserDownloadFileService.Reset();
+         GC.SuppressFinalize(this);
       }
    }
 }
