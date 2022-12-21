@@ -27,6 +27,7 @@
 using Crypter.Common.Monads;
 using Crypter.Contracts.Common;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Crypter.ClientServices.Interfaces
@@ -44,8 +45,14 @@ namespace Crypter.ClientServices.Interfaces
          where TRequest : class
          where TResponse : class;
 
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, Maybe<TRequest> body)
+         where TRequest : class;
+
       Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
          where TRequest : class
+         where TResponse : class;
+
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> SendAsync<TResponse>(HttpRequestMessage request)
          where TResponse : class;
    }
 }

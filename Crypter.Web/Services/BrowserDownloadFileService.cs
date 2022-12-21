@@ -25,14 +25,13 @@
  */
 
 using Microsoft.JSInterop;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Services
 {
    public interface IBrowserDownloadFileService
    {
-      Task DownloadFileAsync(string fileName, string contentType, List<byte[]> fileByteParts);
+      Task DownloadFileAsync(string fileName, string contentType, byte[] fileBytes);
       Task ResetDownloadAsync();
    }
 
@@ -50,16 +49,11 @@ namespace Crypter.Web.Services
          _jsRuntime = jsRuntime;
       }
 
-      public async Task DownloadFileAsync(string fileName, string contentType, List<byte[]> fileByteParts)
+      public async Task DownloadFileAsync(string fileName, string contentType, byte[] fileBytes)
       {
          await _jsRuntime.InvokeVoidAsync(_resetDownloadFunctionName);
-         await _jsRuntime.InvokeVoidAsync(_initializeBufferFunctionName, fileByteParts.Count);
-
-         foreach (var part in fileByteParts)
-         {
-            await _jsRuntime.InvokeVoidAsync(_insertBufferFunctionName, part);
-         }
-
+         await _jsRuntime.InvokeVoidAsync(_initializeBufferFunctionName, 1);
+         await _jsRuntime.InvokeVoidAsync(_insertBufferFunctionName, fileBytes);
          await _jsRuntime.InvokeVoidAsync(_downloadFunctionName, fileName, contentType);
       }
 

@@ -29,10 +29,10 @@ using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
-using Crypter.Core.Models;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,10 +41,10 @@ namespace Crypter.Core.Services
 {
    public interface ITransferUploadService
    {
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousMessageAsync(UploadMessageTransferRequest request, CancellationToken cancellationToken);
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserMessageAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadMessageTransferRequest request, CancellationToken cancellationToken);
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousFileAsync(UploadFileTransferRequest request, CancellationToken cancellationToken);
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserFileAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadFileTransferRequest request, CancellationToken cancellationToken);
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousMessageAsync(UploadMessageTransferRequest request, Stream ciphertext, CancellationToken cancellationToken);
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserMessageAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadMessageTransferRequest request, Stream ciphertext, CancellationToken cancellationToken);
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousFileAsync(UploadFileTransferRequest request, Stream ciphertext, CancellationToken cancellationToken);
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserFileAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadFileTransferRequest request, Stream ciphertext, CancellationToken cancellationToken);
    }
 
    public class TransferUploadService : ITransferUploadService
@@ -66,18 +66,18 @@ namespace Crypter.Core.Services
          _hashIdService = hashIdService;
       }
 
-      public Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousMessageAsync(UploadMessageTransferRequest request, CancellationToken cancellationToken)
+      public Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousMessageAsync(UploadMessageTransferRequest request, Stream ciphertext, CancellationToken cancellationToken)
       {
-         return from diskSpace in GetRequiredDiskSpaceAsync(request, cancellationToken)
-                from lifetimeHours in GetValidLifetimeHours(request).AsTask()
+         return from diskSpace in GetRequiredDiskSpaceAsync(ciphertext.Length, cancellationToken)
+                from lifetimeHours in GetValidLifetimeHours(request.LifetimeHours).AsTask()
                 let transferId = Guid.NewGuid()
-                from savedToDisk in SaveTransferToDiskAsync(TransferItemType.Message, TransferUserType.Anonymous, transferId, request, cancellationToken).ToLeftEitherAsync(Unit.Default)
+                from savedToDisk in SaveMessageToDiskAsync(TransferUserType.Anonymous, transferId, ciphertext, cancellationToken).ToLeftEitherAsync(Unit.Default)
                 from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveAnonymousMessageTransferToDatabaseAsync(transferId, diskSpace, request, cancellationToken))
                 let jobId = ScheduleTransferDeletion(transferId, TransferItemType.Message, TransferUserType.Anonymous, savedToDatabase.ExpirationUTC)
                 select savedToDatabase;
       }
 
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserMessageAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadMessageTransferRequest request, CancellationToken cancellationToken)
+      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserMessageAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadMessageTransferRequest request, Stream ciphertext, CancellationToken cancellationToken)
       {
          Maybe<Guid> recipientId = await recipientUsername.MatchAsync(
             () => Maybe<Guid>.None,
@@ -88,10 +88,10 @@ namespace Crypter.Core.Services
             return UploadTransferError.RecipientNotFound;
          }
 
-         var task = from diskSpace in GetRequiredDiskSpaceAsync(request, cancellationToken)
-                    from lifetimeHours in GetValidLifetimeHours(request).AsTask()
+         var task = from diskSpace in GetRequiredDiskSpaceAsync(ciphertext.Length, cancellationToken)
+                    from lifetimeHours in GetValidLifetimeHours(request.LifetimeHours).AsTask()
                     let transferId = Guid.NewGuid()
-                    from savedToDisk in SaveTransferToDiskAsync(TransferItemType.Message, TransferUserType.User, transferId, request, cancellationToken).ToLeftEitherAsync(Unit.Default)
+                    from savedToDisk in SaveMessageToDiskAsync(TransferUserType.User, transferId, ciphertext, cancellationToken).ToLeftEitherAsync(Unit.Default)
                     from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveUserMessageTransferToDatabaseAsync(transferId, diskSpace, sender, recipientId, request, cancellationToken))
                     from emailJobId in Either<UploadTransferError, string>.FromRightAsync(QueueTransferNotificationAsync(transferId, TransferItemType.Message, recipientId))
                     let deletionJobId = ScheduleTransferDeletion(transferId, TransferItemType.Message, TransferUserType.User, savedToDatabase.ExpirationUTC)
@@ -100,18 +100,18 @@ namespace Crypter.Core.Services
          return await task;
       }
 
-      public Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousFileAsync(UploadFileTransferRequest request, CancellationToken cancellationToken)
+      public Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousFileAsync(UploadFileTransferRequest request, Stream ciphertext, CancellationToken cancellationToken)
       {
-         return from diskSpace in GetRequiredDiskSpaceAsync(request, cancellationToken)
-                from lifetimeHours in GetValidLifetimeHours(request).AsTask()
+         return from diskSpace in GetRequiredDiskSpaceAsync(ciphertext.Length, cancellationToken)
+                from lifetimeHours in GetValidLifetimeHours(request.LifetimeHours).AsTask()
                 let transferId = Guid.NewGuid()
-                from savedToDisk in SaveTransferToDiskAsync(TransferItemType.File, TransferUserType.Anonymous, transferId, request, cancellationToken).ToLeftEitherAsync(Unit.Default)
+                from savedToDisk in SaveFileToDiskAsync(TransferUserType.Anonymous, transferId, ciphertext, cancellationToken).ToLeftEitherAsync(Unit.Default)
                 from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveAnonymousFileTransferToDatabaseAsync(transferId, diskSpace, request, cancellationToken))
                 let jobId = ScheduleTransferDeletion(transferId, TransferItemType.File, TransferUserType.Anonymous, savedToDatabase.ExpirationUTC)
                 select savedToDatabase;
       }
 
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserFileAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadFileTransferRequest request, CancellationToken cancellationToken)
+      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserFileAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadFileTransferRequest request, Stream ciphertext, CancellationToken cancellationToken)
       {
          Maybe<Guid> recipientId = await recipientUsername.MatchAsync(
             () => Maybe<Guid>.None,
@@ -122,10 +122,10 @@ namespace Crypter.Core.Services
             return UploadTransferError.RecipientNotFound;
          }
 
-         var task = from diskSpace in GetRequiredDiskSpaceAsync(request, cancellationToken)
-                    from lifetimeHours in GetValidLifetimeHours(request).AsTask()
+         var task = from diskSpace in GetRequiredDiskSpaceAsync(ciphertext.Length, cancellationToken)
+                    from lifetimeHours in GetValidLifetimeHours(request.LifetimeHours).AsTask()
                     let transferId = Guid.NewGuid()
-                    from savedToDisk in SaveTransferToDiskAsync(TransferItemType.File, TransferUserType.User, transferId, request, cancellationToken).ToLeftEitherAsync(Unit.Default)
+                    from savedToDisk in SaveFileToDiskAsync(TransferUserType.User, transferId, ciphertext, cancellationToken).ToLeftEitherAsync(Unit.Default)
                     from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveUserFileTransferToDatabaseAsync(transferId, diskSpace, sender, recipientId, request, cancellationToken))
                     from emailJobId in Either<UploadTransferError, string>.FromRightAsync(QueueTransferNotificationAsync(transferId, TransferItemType.File, recipientId))
                     let deletionJobId = ScheduleTransferDeletion(transferId, TransferItemType.File, TransferUserType.User, savedToDatabase.ExpirationUTC)
@@ -134,22 +134,19 @@ namespace Crypter.Core.Services
          return await task;
       }
 
-      private async Task<Either<UploadTransferError, int>> GetRequiredDiskSpaceAsync(IUploadTransferRequest request, CancellationToken cancellationToken)
+      private async Task<Either<UploadTransferError, long>> GetRequiredDiskSpaceAsync(long ciphertextSize, CancellationToken cancellationToken)
       {
-         int ciphertextLength = request.Ciphertext.Sum(x => x.Length);
-         int requiredDiskSpace = request.Header.Length + ciphertextLength;
-
-         bool serverHasDiskSpace = await IsDiskSpaceForTransferAsync(requiredDiskSpace, cancellationToken);
+         bool serverHasDiskSpace = await IsDiskSpaceForTransferAsync(ciphertextSize, cancellationToken);
          return serverHasDiskSpace
-            ? requiredDiskSpace
+            ? ciphertextSize
             : UploadTransferError.OutOfSpace;
       }
 
-      private static Either<UploadTransferError, int> GetValidLifetimeHours(IUploadTransferRequest request)
+      private static Either<UploadTransferError, int> GetValidLifetimeHours(int lifetimeHours)
       {
-         bool inRange = request.LifetimeHours <= _maxLifetimeHours || request.LifetimeHours >= _minLifetimeHours;
+         bool inRange = lifetimeHours <= _maxLifetimeHours || lifetimeHours >= _minLifetimeHours;
          return inRange
-            ? request.LifetimeHours
+            ? lifetimeHours
             : UploadTransferError.InvalidRequestedLifetimeHours;
       }
 
@@ -170,16 +167,23 @@ namespace Crypter.Core.Services
             : recipientId;
       }
 
-      private async Task<Maybe<UploadTransferError>> SaveTransferToDiskAsync(TransferItemType itemType, TransferUserType userType, Guid id, IUploadTransferRequest request, CancellationToken cancellationToken)
+      private async Task<Maybe<UploadTransferError>> SaveMessageToDiskAsync(TransferUserType userType, Guid id, Stream ciphertext, CancellationToken cancellationToken)
       {
-         var storageParameters = new TransferStorageParameters(id, itemType, userType, request.Header, request.Ciphertext);
-         var storageSuccess = await _transferStorageService.SaveTransferAsync(storageParameters, cancellationToken);
+         var storageSuccess = await _transferStorageService.SaveTransferAsync(id, TransferItemType.Message, userType, ciphertext, cancellationToken);
          return storageSuccess
             ? Maybe<UploadTransferError>.None
             : UploadTransferError.UnknownError;
       }
 
-      private async Task<UploadTransferResponse> SaveAnonymousMessageTransferToDatabaseAsync(Guid id, int requiredDiskSpace, UploadMessageTransferRequest request, CancellationToken cancellationToken)
+      private async Task<Maybe<UploadTransferError>> SaveFileToDiskAsync(TransferUserType userType, Guid id, Stream ciphertext, CancellationToken cancellationToken)
+      {
+         var storageSuccess = await _transferStorageService.SaveTransferAsync(id, TransferItemType.File, userType, ciphertext, cancellationToken);
+         return storageSuccess
+            ? Maybe<UploadTransferError>.None
+            : UploadTransferError.UnknownError;
+      }
+
+      private async Task<UploadTransferResponse> SaveAnonymousMessageTransferToDatabaseAsync(Guid id, long requiredDiskSpace, UploadMessageTransferRequest request, CancellationToken cancellationToken)
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
@@ -191,7 +195,7 @@ namespace Crypter.Core.Services
          return new UploadTransferResponse(hashId, expiration, TransferUserType.Anonymous);
       }
 
-      private async Task<UploadTransferResponse> SaveUserMessageTransferToDatabaseAsync(Guid id, int requiredDiskSpace, Maybe<Guid> sender, Maybe<Guid> recipient, UploadMessageTransferRequest request, CancellationToken cancellationToken)
+      private async Task<UploadTransferResponse> SaveUserMessageTransferToDatabaseAsync(Guid id, long requiredDiskSpace, Maybe<Guid> sender, Maybe<Guid> recipient, UploadMessageTransferRequest request, CancellationToken cancellationToken)
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
@@ -212,7 +216,7 @@ namespace Crypter.Core.Services
          return new UploadTransferResponse(hashId, expiration, TransferUserType.User);
       }
 
-      private async Task<UploadTransferResponse> SaveAnonymousFileTransferToDatabaseAsync(Guid id, int requiredDiskSpace, UploadFileTransferRequest request, CancellationToken cancellationToken)
+      private async Task<UploadTransferResponse> SaveAnonymousFileTransferToDatabaseAsync(Guid id, long requiredDiskSpace, UploadFileTransferRequest request, CancellationToken cancellationToken)
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
@@ -224,7 +228,7 @@ namespace Crypter.Core.Services
          return new UploadTransferResponse(hashId, expiration, TransferUserType.Anonymous);
       }
 
-      private async Task<UploadTransferResponse> SaveUserFileTransferToDatabaseAsync(Guid id, int requiredDiskSpace, Maybe<Guid> sender, Maybe<Guid> recipient, UploadFileTransferRequest request, CancellationToken cancellationToken)
+      private async Task<UploadTransferResponse> SaveUserFileTransferToDatabaseAsync(Guid id, long requiredDiskSpace, Maybe<Guid> sender, Maybe<Guid> recipient, UploadFileTransferRequest request, CancellationToken cancellationToken)
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
@@ -245,7 +249,7 @@ namespace Crypter.Core.Services
          return new UploadTransferResponse(hashId, expiration, TransferUserType.User);
       }
 
-      private async Task<bool> IsDiskSpaceForTransferAsync(int transferSize, CancellationToken cancellationToken)
+      private async Task<bool> IsDiskSpaceForTransferAsync(long transferSize, CancellationToken cancellationToken)
       {
          var diskMetrics = await _serverMetricsService.GetAggregateDiskMetricsAsync(cancellationToken);
          return transferSize <= diskMetrics.Available;

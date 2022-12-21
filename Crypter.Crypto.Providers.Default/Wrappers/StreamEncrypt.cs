@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Runtime.Versioning;
@@ -33,6 +34,18 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
    [UnsupportedOSPlatform("browser")]
    public class StreamEncrypt : IStreamEncrypt
    {
+      private readonly IPadding _padding;
+      private readonly int _blockSize;
+
+      public uint KeySize { get => Geralt.IncrementalXChaCha20Poly1305.KeySize; }
+      public uint TagSize { get => Geralt.IncrementalXChaCha20Poly1305.TagSize; }
+
+      public StreamEncrypt(IPadding padding, int blockSize)
+      {
+         _padding = padding;
+         _blockSize = blockSize;
+      }
+
       public byte[] GenerateHeader(ReadOnlySpan<byte> key)
       {
          throw new NotImplementedException();

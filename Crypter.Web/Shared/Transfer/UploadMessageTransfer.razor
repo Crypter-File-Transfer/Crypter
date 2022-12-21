@@ -47,7 +47,7 @@
    </div>
    <div class="row">
       <div class="col-12 p-0">
-         <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(e => OnEncryptClicked())">Encrypt</button>
+         <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(async e => await OnEncryptClicked())">Encrypt</button>
       </div>
    </div>
 </div>

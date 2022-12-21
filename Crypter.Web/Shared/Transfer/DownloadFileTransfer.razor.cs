@@ -29,8 +29,6 @@ using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components;
-using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
@@ -42,8 +40,8 @@ namespace Crypter.Web.Shared.Transfer
 
       protected string FileName = string.Empty;
       protected string ContentType = string.Empty;
-      protected List<byte[]> PlaintextBytes = null;
-      protected int FileSize = 0;
+      protected byte[] PlaintextBytes = null;
+      protected long FileSize = 0;
       protected bool LocalDownloadInProgress { get; set; }
 
       private DownloadFileHandler _downloadHandler;
@@ -87,9 +85,8 @@ namespace Crypter.Web.Shared.Transfer
          {
             _downloadHandler.SetRecipientInfo(x);
 
-            await SetProgressMessage(_downloadingLiteral);
-            var showDecryptingMessage = Maybe<Func<Task>>.From(() => SetProgressMessage(_decryptingLiteral));
-            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync(showDecryptingMessage);
+            await SetProgressMessage(_decryptingLiteral);
+            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
 
             decryptionResponse.DoLeftOrNeither(
             x => HandleDownloadError(x),
@@ -97,7 +94,7 @@ namespace Crypter.Web.Shared.Transfer
 
             decryptionResponse.DoRight(x =>
             {
-               PlaintextBytes = new List<byte[]> { x };
+               PlaintextBytes = x;
                DecryptionComplete = true;
             });
          });
@@ -113,6 +110,7 @@ namespace Crypter.Web.Shared.Transfer
 
          await BrowserDownloadFileService.ResetDownloadAsync();
          await BrowserDownloadFileService.DownloadFileAsync(FileName, ContentType, PlaintextBytes);
+         PlaintextBytes = null;
 
          LocalDownloadInProgress = false;
          StateHasChanged();

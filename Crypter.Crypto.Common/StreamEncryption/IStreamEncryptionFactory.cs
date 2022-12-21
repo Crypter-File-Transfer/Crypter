@@ -31,7 +31,8 @@ namespace Crypter.Crypto.Common.StreamEncryption
    public interface IStreamEncryptionFactory
    {
       uint KeySize { get; }
-      IStreamEncrypt NewEncryptionStream(short blockSize);
-      IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header, short blockSize);
+      uint TagSize { get; }
+      IStreamEncrypt NewEncryptionStream(int padSize);
+      IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header);
    }
 }

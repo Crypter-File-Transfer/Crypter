@@ -36,6 +36,6 @@ namespace Crypter.Web.Models.Settings
    public class ClientSettings
    {
       public ClientApiSettings ApiSettings { get; set; }
-      public TransferSettings UploadSettings { get; set; }
+      public TransferSettings TransferSettings { get; set; }
    }
 }

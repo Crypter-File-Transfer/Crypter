@@ -37,24 +37,23 @@ namespace Crypter.Crypto.Providers.Browser.Wrappers
    public class StreamDecrypt : IStreamDecrypt
    {
       private readonly IPadding _padding;
-      private readonly short _blockSize;
       private readonly StateAddress _stateAddress;
 
-      public StreamDecrypt(IPadding padding, ReadOnlySpan<byte> key, ReadOnlySpan<byte> header, short blockSize)
+      public StreamDecrypt(IPadding padding, ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
       {
          _padding = padding;
-         _blockSize = blockSize;
          _stateAddress = SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Init_Pull(header.ToArray(), key.ToArray());
       }
 
-      public byte[] Pull(ReadOnlySpan<byte> ciphertext, out bool final)
+      public uint KeySize => SecretStream.KEY_BYTES;
+
+      public uint TagSize => SecretStream.A_BYTES;
+
+      public byte[] Pull(ReadOnlySpan<byte> ciphertext, int paddingBlockSize, out bool final)
       {
          SecretStreamPullData pullData = SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Pull(_stateAddress, ciphertext.ToArray());
          final = pullData.Tag == SecretStream.TAG_FINAL;
-
-         return final
-            ? _padding.Unpad(pullData.Message.AsSpan(), _blockSize)
-            : pullData.Message;
+         return _padding.Unpad(pullData.Message.AsSpan(), paddingBlockSize);
       }
    }
 }

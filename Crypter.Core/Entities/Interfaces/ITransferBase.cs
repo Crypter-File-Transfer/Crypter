@@ -31,7 +31,7 @@ namespace Crypter.Core.Entities.Interfaces
    public interface ITransferBase
    {
       public Guid Id { get; set; }
-      public int Size { get; set; }
+      public long Size { get; set; }
       public byte[] PublicKey { get; set; }
       public byte[] KeyExchangeNonce { get; set; }
       public byte[] Proof { get; set; }

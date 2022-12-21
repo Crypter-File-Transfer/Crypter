@@ -32,7 +32,7 @@ namespace Crypter.Core.Entities
    public class AnonymousMessageTransferEntity : IMessageTransfer
    {
       public Guid Id { get; set; }
-      public int Size { get; set; }
+      public long Size { get; set; }
       public byte[] PublicKey { get; set; }
       public byte[] KeyExchangeNonce { get; set; }
       public byte[] Proof { get; set; }
@@ -42,7 +42,7 @@ namespace Crypter.Core.Entities
       // IMessageTransfer
       public string Subject { get; set; }
 
-      public AnonymousMessageTransferEntity(Guid id, int size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, string subject = "")
+      public AnonymousMessageTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, string subject = "")
       {
          Id = id;
          Size = size;
