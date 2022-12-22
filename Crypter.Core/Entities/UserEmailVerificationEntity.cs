@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -43,6 +45,22 @@ namespace Crypter.Core.Entities
          Code = code;
          VerificationKey = verificationKey;
          Created = created;
+      }
+   }
+
+   public class UserEmailVerificationEntityConfiguration : IEntityTypeConfiguration<UserEmailVerificationEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserEmailVerificationEntity> builder)
+      {
+         builder.ToTable("UserEmailVerification");
+
+         builder.HasKey(x => x.Owner);
+
+         builder.HasOne(x => x.User)
+            .WithOne(x => x.EmailVerification)
+            .HasForeignKey<UserEmailVerificationEntity>(x => x.Owner)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }

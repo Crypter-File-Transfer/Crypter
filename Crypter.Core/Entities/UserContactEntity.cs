@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -40,6 +42,34 @@ namespace Crypter.Core.Entities
       {
          OwnerId = ownerId;
          ContactId = contactId;
+      }
+   }
+
+   public class UserContactEntityConfiguration : IEntityTypeConfiguration<UserContactEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserContactEntity> builder)
+      {
+         builder.ToTable("UserContact");
+
+         builder.HasKey(x => new { x.OwnerId, x.ContactId });
+
+         builder.Property(x => x.OwnerId)
+            .HasColumnName("Owner");
+
+         builder.Property(x => x.ContactId)
+            .HasColumnName("Contact");
+
+         builder.HasOne(x => x.Owner)
+            .WithMany(x => x.Contacts)
+            .HasForeignKey(x => x.OwnerId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
+
+         builder.HasOne(x => x.Contact)
+            .WithMany(x => x.Contactors)
+            .HasForeignKey(x => x.ContactId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }
