@@ -26,6 +26,8 @@
 
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 
@@ -92,6 +94,55 @@ namespace Crypter.Core.Entities
          EmailVerified = emailVerified;
          Created = created;
          LastLogin = lastLogin;
+      }
+   }
+
+   public class UserEntityConfiguration : IEntityTypeConfiguration<UserEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserEntity> builder)
+      {
+         builder.ToTable("User");
+
+         builder.HasKey(x => x.Id);
+
+         builder.Property(x => x.Username)
+            .HasColumnType("citext");
+
+         builder.Property(x => x.EmailAddress)
+            .HasColumnType("citext");
+
+         builder.Property(x => x.ServerPasswordVersion)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+         builder.Property(x => x.ClientPasswordVersion)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+         builder.HasMany(x => x.Contacts)
+            .WithOne(x => x.Owner);
+
+         builder.HasMany(x => x.SentFileTransfers)
+            .WithOne(x => x.Sender)
+            .HasForeignKey(x => x.SenderId);
+
+         builder.HasMany(x => x.ReceivedFileTransfers)
+            .WithOne(x => x.Recipient)
+            .HasForeignKey(x => x.RecipientId);
+
+         builder.HasMany(x => x.SentMessageTransfers)
+            .WithOne(x => x.Sender)
+            .HasForeignKey(x => x.SenderId);
+
+         builder.HasMany(x => x.ReceivedMessageTransfers)
+            .WithOne(x => x.Recipient)
+            .HasForeignKey(x => x.RecipientId);
+
+         builder.HasIndex(x => x.Username)
+            .IsUnique();
+
+         builder.HasIndex(x => x.EmailAddress)
+            .IsUnique();
       }
    }
 }

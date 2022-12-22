@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -41,6 +43,22 @@ namespace Crypter.Core.Entities
          Id = id;
          Owner = owner;
          Date = date;
+      }
+   }
+
+   public class UserFailedLoginEntityConfiguration : IEntityTypeConfiguration<UserFailedLoginEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserFailedLoginEntity> builder)
+      {
+         builder.ToTable("UserFailedLogin");
+
+         builder.HasKey(x => x.Id);
+
+         builder.HasOne(x => x.User)
+            .WithMany(x => x.FailedLoginAttempts)
+            .HasForeignKey(x => x.Owner)
+            .IsRequired(true)
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }

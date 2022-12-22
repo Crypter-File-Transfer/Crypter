@@ -25,6 +25,8 @@
  */
 
 using Crypter.Core.Entities.Interfaces;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -52,6 +54,25 @@ namespace Crypter.Core.Entities
          Created = created;
          Expiration = expiration;
          Subject = subject;
+      }
+   }
+
+   public class AnonymousMessageTransferEntityConfiguration : IEntityTypeConfiguration<AnonymousMessageTransferEntity>
+   {
+      public void Configure(EntityTypeBuilder<AnonymousMessageTransferEntity> builder)
+      {
+         builder.ToTable("AnonymousMessageTransfer");
+
+         builder.HasKey(x => x.Id);
+
+         builder.Property(x => x.PublicKey)
+            .IsRequired();
+
+         builder.Property(x => x.Proof)
+            .IsRequired();
+
+         builder.Property(x => x.Subject)
+            .IsRequired();
       }
    }
 }

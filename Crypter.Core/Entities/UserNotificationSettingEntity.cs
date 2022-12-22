@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -41,6 +43,22 @@ namespace Crypter.Core.Entities
          Owner = owner;
          EnableTransferNotifications = enableTransferNotifications;
          EmailNotifications = emailNotifications;
+      }
+   }
+
+   public class UserNotificationSettingEntityConfiguration : IEntityTypeConfiguration<UserNotificationSettingEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserNotificationSettingEntity> builder)
+      {
+         builder.ToTable("UserNotificationSetting");
+
+         builder.HasKey(x => x.Owner);
+
+         builder.HasOne(x => x.User)
+            .WithOne(x => x.NotificationSetting)
+            .HasForeignKey<UserNotificationSettingEntity>(x => x.Owner)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }

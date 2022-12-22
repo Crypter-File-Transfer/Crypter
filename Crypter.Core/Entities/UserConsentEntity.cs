@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -61,5 +63,25 @@ namespace Crypter.Core.Entities
       TermsOfService,
       PrivacyPolicy,
       RecoveryKeyRisks
+   }
+
+   public class UserConsentEntityConfiguration : IEntityTypeConfiguration<UserConsentEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserConsentEntity> builder)
+      {
+         builder.ToTable("UserConsent");
+
+         builder.HasKey(x => x.Id);
+
+         builder.Property(x => x.Id)
+            .UseIdentityAlwaysColumn();
+
+         builder.HasIndex(x => x.Owner);
+
+         builder.HasOne(x => x.User)
+            .WithMany(x => x.Consents)
+            .HasForeignKey(x => x.Owner)
+            .OnDelete(DeleteBehavior.Cascade);
+      }
    }
 }

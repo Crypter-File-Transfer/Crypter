@@ -25,6 +25,8 @@
  */
 
 using Crypter.Core.Entities.Interfaces;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -46,6 +48,22 @@ namespace Crypter.Core.Entities
          PublicKey = publicKey;
          Nonce = nonce;
          Created = created;
+      }
+   }
+
+   public class UserKeyPairEntityConfiguration : IEntityTypeConfiguration<UserKeyPairEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserKeyPairEntity> builder)
+      {
+         builder.ToTable("UserKeyPair");
+
+         builder.HasKey(x => x.Owner);
+
+         builder.HasOne(x => x.User)
+            .WithOne(x => x.KeyPair)
+            .HasForeignKey<UserKeyPairEntity>(x => x.Owner)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }
