@@ -119,7 +119,7 @@ namespace Crypter.Core.Services
          }
 
          Maybe<FileStream> ciphertextStream = _transferStorageService.GetTransfer(id, TransferItemType.Message, TransferUserType.Anonymous, true);
-         ciphertextStream.IfSome(_ => _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteTransferAsync(id, TransferItemType.Message, TransferUserType.Anonymous, CancellationToken.None), DateTime.UtcNow.AddMinutes(1)));
+         ciphertextStream.IfSome(_ => QueueTransferForDeletion(id, TransferItemType.Message, TransferUserType.Anonymous));
          return ciphertextStream.ToEither(DownloadTransferCiphertextError.NotFound);
       }
 
@@ -143,7 +143,7 @@ namespace Crypter.Core.Services
          }
 
          Maybe<FileStream> ciphertextStream = _transferStorageService.GetTransfer(id, TransferItemType.File, TransferUserType.Anonymous, true);
-         ciphertextStream.IfSome(_ => _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteTransferAsync(id, TransferItemType.File, TransferUserType.Anonymous, CancellationToken.None), DateTime.UtcNow.AddMinutes(1)));
+         ciphertextStream.IfSome(_ => QueueTransferForDeletion(id, TransferItemType.File, TransferUserType.Anonymous));
          return ciphertextStream.ToEither(DownloadTransferCiphertextError.NotFound);
       }
 
@@ -233,7 +233,7 @@ namespace Crypter.Core.Services
          {
             if (deleteOnReadCompletion)
             {
-               _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteTransferAsync(id, TransferItemType.Message, TransferUserType.User, CancellationToken.None), DateTime.UtcNow.AddMinutes(1));
+               QueueTransferForDeletion(id, TransferItemType.Message, TransferUserType.User);
             }
          });
          return ciphertextStream.ToEither(DownloadTransferCiphertextError.NotFound);
@@ -269,10 +269,13 @@ namespace Crypter.Core.Services
          {
             if (deleteOnReadCompletion)
             {
-               _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteTransferAsync(id, TransferItemType.File, TransferUserType.User, CancellationToken.None), DateTime.UtcNow.AddMinutes(1));
+               QueueTransferForDeletion(id, TransferItemType.File, TransferUserType.User);
             }
          });
          return ciphertextStream.ToEither(DownloadTransferCiphertextError.NotFound);
       }
+
+      private void QueueTransferForDeletion(Guid itemId, TransferItemType itemType, TransferUserType userType)
+         => _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.DeleteTransferAsync(itemId, itemType, userType, false, CancellationToken.None));
    }
 }
