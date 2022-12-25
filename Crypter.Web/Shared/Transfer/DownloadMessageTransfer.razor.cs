@@ -28,6 +28,7 @@ using Crypter.ClientServices.Transfer;
 using Crypter.ClientServices.Transfer.Handlers;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Transfer;
+using Microsoft.AspNetCore.Components.Web;
 using System;
 using System.Threading.Tasks;
 
@@ -53,9 +54,7 @@ namespace Crypter.Web.Shared.Transfer
          var previewResponse = await _downloadHandler.DownloadPreviewAsync();
          previewResponse.DoRight(x =>
          {
-            Subject = string.IsNullOrEmpty(x.Subject)
-               ? "{ no subject }"
-               : x.Subject;
+            Subject = x.Subject;
             Created = x.CreationUTC.ToLocalTime();
             Expiration = x.ExpirationUTC.ToLocalTime();
             MessageSize = x.Size;
@@ -66,7 +65,7 @@ namespace Crypter.Web.Shared.Transfer
          ItemFound = previewResponse.IsRight;
       }
 
-      protected async Task OnDecryptClickedAsync()
+      protected async void OnDecryptClickedAsync(MouseEventArgs _)
       {
          DecryptionInProgress = true;
 
@@ -94,6 +93,7 @@ namespace Crypter.Web.Shared.Transfer
          });
 
          DecryptionInProgress = false;
+         StateHasChanged();
       }
 
       protected async Task SetProgressMessage(string message)
