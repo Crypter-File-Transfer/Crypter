@@ -28,6 +28,7 @@ using Crypter.ClientServices.Transfer.Handlers;
 using Crypter.Common.Monads;
 using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Services;
+using Microsoft.AspNetCore.Components.Web;
 using System;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
@@ -56,9 +57,7 @@ namespace Crypter.Web.Shared.Transfer
          var previewResponse = await _downloadHandler.DownloadPreviewAsync();
          previewResponse.DoRight(x =>
          {
-            FileName = string.IsNullOrEmpty(x.FileName)
-               ? "{ no file name }"
-               : x.FileName;
+            FileName = x.FileName;
             ContentType = x.ContentType;
             Created = x.CreationUTC.ToLocalTime();
             Expiration = x.ExpirationUTC.ToLocalTime();
@@ -70,7 +69,7 @@ namespace Crypter.Web.Shared.Transfer
          ItemFound = previewResponse.IsRight;
       }
 
-      protected async Task OnDecryptClickedAsync()
+      protected async void OnDecryptClickedAsync(MouseEventArgs _)
       {
          BrowserDownloadFileService.Reset();
          DecryptionInProgress = true;
@@ -99,6 +98,7 @@ namespace Crypter.Web.Shared.Transfer
          });
 
          DecryptionInProgress = false;
+         StateHasChanged();
       }
 
       protected async Task DownloadFileAsync()
