@@ -102,7 +102,7 @@ namespace Crypter.Web.Shared.Transfer
 
          SetHandlerUserInfo(fileUploader);
          var uploadResponse = await fileUploader.UploadAsync();
-         HandleUploadResponse(uploadResponse);
+         await HandleUploadResponse(uploadResponse);
          Dispose();
       }
 

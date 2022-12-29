@@ -77,7 +77,7 @@ namespace Crypter.Web.Shared.Modal
          await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyModalCopyTooltip" });
       }
 
-      public async void OnAcknowledgedClickedAsync()
+      public async Task OnAcknowledgedClickedAsync()
       {
          await CrypterApiService.ConsentToRecoveryKeyRisksAsync();
          ModalBehaviorRef.Close();

@@ -35,6 +35,7 @@ using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
+using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
 {
@@ -104,7 +105,7 @@ namespace Crypter.Web.Shared.Transfer
          });
       }
 
-      protected async void HandleUploadResponse(Either<UploadTransferError, UploadHandlerResponse> uploadResponse)
+      protected async Task HandleUploadResponse(Either<UploadTransferError, UploadHandlerResponse> uploadResponse)
       {
          uploadResponse.DoLeftOrNeither(HandleUploadError, () => HandleUploadError());
 

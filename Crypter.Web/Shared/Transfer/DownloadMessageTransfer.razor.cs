@@ -65,7 +65,7 @@ namespace Crypter.Web.Shared.Transfer
          ItemFound = previewResponse.IsRight;
       }
 
-      protected async void OnDecryptClickedAsync(MouseEventArgs _)
+      protected async Task OnDecryptClickedAsync(MouseEventArgs _)
       {
          DecryptionInProgress = true;
 
