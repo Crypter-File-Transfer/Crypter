@@ -45,7 +45,7 @@ namespace Crypter.Web.Shared.Transfer
 
          SetHandlerUserInfo(messageUploader);
          var uploadResponse = await messageUploader.UploadAsync();
-         HandleUploadResponse(uploadResponse);
+         await HandleUploadResponse(uploadResponse);
          Dispose();
       }
 
