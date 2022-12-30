@@ -24,9 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.ClientServices.Transfer.Models
+using System;
+
+namespace Crypter.Common.Infrastructure
 {
-   public class DownloadHandlerResponse
+   public class InvalidEnumValueException : ApplicationException
    {
+      public InvalidEnumValueException(string value, Type enumType)
+         : base($"'{value}' is not a valid value for {enumType.Name}")
+      { }
    }
 }

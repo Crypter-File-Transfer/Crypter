@@ -25,14 +25,39 @@
  */
 
 using Crypter.Common.Infrastructure;
-using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
 
-namespace Crypter.Contracts.Features.Keys
+namespace Crypter.API.Middleware
 {
-   [JsonConverter(typeof(JsonEnumConverter<InsertKeyPairError>))]
-   public enum InsertKeyPairError
+   public class ExceptionHandlerMiddleware
    {
-      UnknownError,
-      KeyPairAlreadyExists
+      private readonly RequestDelegate _next;
+
+      public ExceptionHandlerMiddleware(RequestDelegate next)
+      {
+         _next = next;
+      }
+
+      public async Task Invoke(HttpContext context)
+      {
+         try
+         {
+            await _next(context);
+         }
+         catch (InvalidEnumValueException ex)
+         {
+            HttpResponse response = context.Response;
+            response.ContentType = "text/plain";
+            response.StatusCode = StatusCodes.Status400BadRequest;
+
+            await response.WriteAsync(ex.Message);
+         }
+         catch (TaskCanceledException)
+         {
+            context.Response.StatusCode = StatusCodes.Status408RequestTimeout;
+            await context.Response.CompleteAsync();
+         }
+      }
    }
 }

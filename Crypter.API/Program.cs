@@ -25,6 +25,7 @@
  */
 
 using Crypter.API.Configuration;
+using Crypter.API.Middleware;
 using Crypter.Core;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
@@ -181,7 +182,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.UseEndpoints(endpoints =>
 {
    endpoints.MapControllers();
