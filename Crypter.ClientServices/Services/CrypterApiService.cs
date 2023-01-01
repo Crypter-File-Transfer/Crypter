@@ -39,7 +39,7 @@ using Crypter.Contracts.Features.Users.GetReceivedTransfers;
 using Crypter.Contracts.Features.Users.GetSentTransfers;
 using Crypter.Crypto.Common.StreamEncryption;
 using System;
-using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -66,7 +66,7 @@ namespace Crypter.ClientServices.Services
       private static Either<TErrorCode, TResponse> ExtractErrorCode<TErrorCode, TResponse>(Either<ErrorResponse, TResponse> response)
       {
          return response.Match(
-            left: left => (TErrorCode)(object)left.ErrorCode,
+            left: left => (TErrorCode)(object)left.Error.ErrorCode,
             right: right => right,
             neither: Either<TErrorCode, TResponse>.Neither);
       }

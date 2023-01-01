@@ -24,54 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-using System.Text.Json.Serialization;
-
 namespace Crypter.Contracts.Common
 {
-   public class ErrorResponse
+   public static class InfrastructureErrorCodes
    {
-      public string Message { get; } = "An error occurred.";
-      public int Status { get; }
-      public ErrorResponseItem Error { get; }
-
-      public ErrorResponse(int status, ErrorResponseItem error)
-      {
-         Status = status;
-         Error = error;
-      }
-
-      public ErrorResponse(int status, Enum errorCode)
-      {
-         Status = status;
-         Error = new ErrorResponseItem(errorCode);
-      }
-
-      [JsonConstructor]
-      public ErrorResponse(string message, int status, ErrorResponseItem error)
-      {
-         Message = message;
-         Status = status;
-         Error = error;
-      }
-   }
-
-   public class ErrorResponseItem
-   {
-      public int ErrorCode { get; }
-      public string ErrorMessage { get; }
-
-      public ErrorResponseItem(Enum errorCode)
-      {
-         ErrorCode = Convert.ToInt32(errorCode);
-         ErrorMessage = errorCode.ToString();
-      }
-
-      [JsonConstructor]
-      public ErrorResponseItem(int errorCode, string errorMessage)
-      {
-         ErrorCode = errorCode;
-         ErrorMessage = errorMessage;
-      }
+      public const int UnknownErrorCode = 100;
+      public const int InvalidModelStateErrorCode = 101;
+      public const int InvalidEnumValueErrorCode = 102;
    }
 }

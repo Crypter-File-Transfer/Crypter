@@ -26,6 +26,7 @@
 
 using Crypter.API.Configuration;
 using Crypter.API.Middleware;
+using Crypter.Contracts.Common;
 using Crypter.Core;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
@@ -38,9 +39,12 @@ using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Linq;
+using System.Net;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 TokenSettings tokenSettings = builder.Configuration
@@ -138,6 +142,17 @@ builder.Services.AddControllers()
    .ConfigureApiBehaviorOptions(options =>
    {
       options.SuppressMapClientErrors = true;
+      options.InvalidModelStateResponseFactory = actionContext =>
+      {
+         ErrorResponseItem error = actionContext.ModelState.Values
+            .Where(x => x.Errors.Count > 0)
+            .SelectMany(x => x.Errors)
+            .Select(x => new ErrorResponseItem(InfrastructureErrorCodes.InvalidModelStateErrorCode, x.ErrorMessage))
+            .First();
+
+         ErrorResponse errorResponse = new ErrorResponse((int)HttpStatusCode.BadRequest, error);
+         return new BadRequestObjectResult(errorResponse);
+      };
    });
 
 builder.Services.AddEndpointsApiExplorer();

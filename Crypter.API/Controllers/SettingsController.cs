@@ -30,6 +30,7 @@ using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -75,17 +76,16 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(UpdateContactInfoError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
                UpdateContactInfoError.UnknownError
-                  or UpdateContactInfoError.PasswordHashFailure => ServerError(errorResponse),
-               UpdateContactInfoError.UserNotFound => NotFound(errorResponse),
-               UpdateContactInfoError.EmailAddressUnavailable => Conflict(errorResponse),
+                  or UpdateContactInfoError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               UpdateContactInfoError.UserNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+               UpdateContactInfoError.EmailAddressUnavailable => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
                UpdateContactInfoError.InvalidEmailAddress
                   or UpdateContactInfoError.InvalidPassword
-                  or UpdateContactInfoError.PasswordNeedsMigration => BadRequest(errorResponse)
+                  or UpdateContactInfoError.PasswordNeedsMigration => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }
@@ -119,12 +119,11 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(UpdateNotificationSettingsError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               UpdateNotificationSettingsError.UnknownError => ServerError(errorResponse),
-               UpdateNotificationSettingsError.EmailAddressNotVerified => BadRequest(errorResponse)
+               UpdateNotificationSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               UpdateNotificationSettingsError.EmailAddressNotVerified => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }
@@ -155,8 +154,8 @@ namespace Crypter.API.Controllers
       public async Task<IActionResult> VerifyUserEmailAddressAsync([FromBody] VerifyEmailAddressRequest request, CancellationToken cancellationToken)
       {
          var result = await _userEmailVerificationService.VerifyUserEmailAddressAsync(request, cancellationToken);
-         return result.Match<IActionResult>(
-            () => NotFound(new ErrorResponse(VerifyEmailAddressError.NotFound)),
+         return result.Match(
+            () => MakeErrorResponseBase(HttpStatusCode.NotFound, VerifyEmailAddressError.NotFound),
             x => Ok(new VerifyEmailAddressResponse()));
       }
    }

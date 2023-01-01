@@ -30,6 +30,7 @@ using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -70,13 +71,12 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(AddUserContactError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               AddUserContactError.UnknownError => ServerError(errorResponse),
-               AddUserContactError.NotFound => NotFound(errorResponse),
-               AddUserContactError.InvalidUser => BadRequest(errorResponse)
+               AddUserContactError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               AddUserContactError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+               AddUserContactError.InvalidUser => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }

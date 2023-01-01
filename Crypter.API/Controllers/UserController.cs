@@ -38,6 +38,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -68,11 +69,10 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(GetUserProfileError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               GetUserProfileError.NotFound => NotFound(errorResponse)
+               GetUserProfileError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
             };
 #pragma warning restore CS8524
          }

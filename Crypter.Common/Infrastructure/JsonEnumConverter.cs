@@ -64,7 +64,7 @@ namespace Crypter.Common.Infrastructure
       {
          if (value is not null && value is Enum sourceEnum)
          {
-            writer.WriteStringValue(sourceEnum.ToString());
+            writer.WriteNumberValue((int)(object)sourceEnum);
          }
       }
    }

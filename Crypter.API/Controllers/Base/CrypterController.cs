@@ -27,50 +27,51 @@
 using Crypter.Contracts.Common;
 using Crypter.Contracts.Features.Transfer;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Net;
 
 namespace Crypter.API.Controllers
 {
    public abstract class CrypterController : ControllerBase
    {
-      protected IActionResult ServerError(ErrorResponse error) =>
-         StatusCode((int)HttpStatusCode.InternalServerError, error);
+      protected IActionResult MakeErrorResponseBase(HttpStatusCode httpStatus, Enum errorCode)
+      {
+         ErrorResponse errorResponse = new ErrorResponse((int)httpStatus, errorCode);
+         return StatusCode((int)httpStatus, errorResponse);
+      }
 
       protected IActionResult MakeErrorResponse(UploadTransferError error)
       {
-         var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
          return error switch
          {
-            UploadTransferError.UnknownError => ServerError(errorResponse),
+            UploadTransferError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
             UploadTransferError.InvalidRequestedLifetimeHours
-               or UploadTransferError.OutOfSpace => BadRequest(errorResponse),
-            UploadTransferError.RecipientNotFound => NotFound(errorResponse)
+               or UploadTransferError.OutOfSpace => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
+            UploadTransferError.RecipientNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
          };
 #pragma warning restore CS8524
       }
 
       protected IActionResult MakeErrorResponse(DownloadTransferPreviewError error)
       {
-         var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
          return error switch
          {
-            DownloadTransferPreviewError.UnknownError => ServerError(errorResponse),
-            DownloadTransferPreviewError.NotFound => NotFound(errorResponse)
+            DownloadTransferPreviewError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+            DownloadTransferPreviewError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
          };
 #pragma warning restore CS8524
       }
 
       protected IActionResult MakeErrorResponse(DownloadTransferCiphertextError error)
       {
-         var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
          return error switch
          {
-            DownloadTransferCiphertextError.UnknownError => ServerError(errorResponse),
-            DownloadTransferCiphertextError.NotFound => NotFound(errorResponse),
-            DownloadTransferCiphertextError.InvalidRecipientProof => BadRequest(errorResponse)
+            DownloadTransferCiphertextError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+            DownloadTransferCiphertextError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+            DownloadTransferCiphertextError.InvalidRecipientProof => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
          };
 #pragma warning restore CS8524
       }

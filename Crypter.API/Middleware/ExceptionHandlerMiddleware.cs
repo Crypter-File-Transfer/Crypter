@@ -25,7 +25,9 @@
  */
 
 using Crypter.Common.Infrastructure;
+using Crypter.Contracts.Common;
 using Microsoft.AspNetCore.Http;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.API.Middleware
@@ -48,10 +50,12 @@ namespace Crypter.API.Middleware
          catch (InvalidEnumValueException ex)
          {
             HttpResponse response = context.Response;
-            response.ContentType = "text/plain";
+            response.ContentType = "application/json";
             response.StatusCode = StatusCodes.Status400BadRequest;
 
-            await response.WriteAsync(ex.Message);
+            ErrorResponseItem errorItem = new ErrorResponseItem(InfrastructureErrorCodes.InvalidEnumValueErrorCode, ex.Message);
+            ErrorResponse errorResponse = new ErrorResponse((int)HttpStatusCode.BadRequest, errorItem);
+            await response.WriteAsJsonAsync(errorResponse);
          }
          catch (TaskCanceledException)
          {
