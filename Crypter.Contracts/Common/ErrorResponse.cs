@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Crypter.Contracts.Common
@@ -33,26 +34,26 @@ namespace Crypter.Contracts.Common
    {
       public string Message { get; } = "An error occurred.";
       public int Status { get; }
-      public ErrorResponseItem Error { get; }
+      public List<ErrorResponseItem> Errors { get; }
 
-      public ErrorResponse(int status, ErrorResponseItem error)
+      public ErrorResponse(int status, List<ErrorResponseItem> errors)
       {
          Status = status;
-         Error = error;
+         Errors = errors;
       }
 
       public ErrorResponse(int status, Enum errorCode)
       {
          Status = status;
-         Error = new ErrorResponseItem(errorCode);
+         Errors = new List<ErrorResponseItem> { new ErrorResponseItem(errorCode) };
       }
 
       [JsonConstructor]
-      public ErrorResponse(string message, int status, ErrorResponseItem error)
+      public ErrorResponse(string message, int status, List<ErrorResponseItem> errors)
       {
          Message = message;
          Status = status;
-         Error = error;
+         Errors = errors;
       }
    }
 

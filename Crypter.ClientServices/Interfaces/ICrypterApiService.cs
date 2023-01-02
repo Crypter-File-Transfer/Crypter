@@ -24,18 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Contracts.Features.Consent;
+using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Keys;
+using Crypter.Common.Contracts.Features.Metrics;
+using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Authentication;
-using Crypter.Contracts.Features.Consent;
-using Crypter.Contracts.Features.Contacts;
-using Crypter.Contracts.Features.Keys;
-using Crypter.Contracts.Features.Metrics;
-using Crypter.Contracts.Features.Settings;
-using Crypter.Contracts.Features.Transfer;
-using Crypter.Contracts.Features.Users;
-using Crypter.Contracts.Features.Users.GetReceivedTransfers;
-using Crypter.Contracts.Features.Users.GetSentTransfers;
 using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Threading.Tasks;
@@ -61,7 +59,7 @@ namespace Crypter.ClientServices.Interfaces
       #region Contacts
       Task<Either<DummyError, GetUserContactsResponse>> GetUserContactsAsync();
       Task<Either<AddUserContactError, AddUserContactResponse>> AddUserContactAsync(AddUserContactRequest request);
-      Task<Either<DummyError, RemoveUserContactResponse>> RemoveUserContactAsync(RemoveUserContactRequest request);
+      Task<Either<DummyError, RemoveContactResponse>> RemoveUserContactAsync(RemoveContactRequest request);
       #endregion
 
       #region File Transfer

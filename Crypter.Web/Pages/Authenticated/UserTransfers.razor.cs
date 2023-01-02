@@ -25,9 +25,8 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Enums;
-using Crypter.Contracts.Features.Users.GetReceivedTransfers;
-using Crypter.Contracts.Features.Users.GetSentTransfers;
 using Crypter.Web.Models;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;

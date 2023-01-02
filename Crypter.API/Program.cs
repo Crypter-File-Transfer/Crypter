@@ -26,7 +26,7 @@
 
 using Crypter.API.Configuration;
 using Crypter.API.Middleware;
-using Crypter.Contracts.Common;
+using Crypter.Common.Contracts;
 using Crypter.Core;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
@@ -43,6 +43,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 
@@ -144,13 +145,13 @@ builder.Services.AddControllers()
       options.SuppressMapClientErrors = true;
       options.InvalidModelStateResponseFactory = actionContext =>
       {
-         ErrorResponseItem error = actionContext.ModelState.Values
+         List<ErrorResponseItem> errors = actionContext.ModelState.Values
             .Where(x => x.Errors.Count > 0)
             .SelectMany(x => x.Errors)
-            .Select(x => new ErrorResponseItem(InfrastructureErrorCodes.InvalidModelStateErrorCode, x.ErrorMessage))
-            .First();
+            .Select(x => new ErrorResponseItem((int)InfrastructureErrorCode.InvalidModelStateErrorCode, x.ErrorMessage))
+            .ToList();
 
-         ErrorResponse errorResponse = new ErrorResponse((int)HttpStatusCode.BadRequest, error);
+         ErrorResponse errorResponse = new ErrorResponse((int)HttpStatusCode.BadRequest, errors);
          return new BadRequestObjectResult(errorResponse);
       };
    });

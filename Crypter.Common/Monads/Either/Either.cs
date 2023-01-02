@@ -282,6 +282,17 @@ namespace Crypter.Common.Monads
                : Either<TLeft, TResult>.Neither;
       }
 
+      public Either<TResult, TRight> BindLeft<TResult>(Func<TLeft, Either<TResult, TRight>> bind)
+      {
+         ValidateFunction(bind);
+
+         return IsLeft
+            ? bind(_left)
+            : IsRight
+               ? Either<TResult, TRight>.FromRight(_right)
+               : Either<TResult, TRight>.Neither;
+      }
+
       public async Task<Either<TLeft, TResult>> BindAsync<TResult>(Func<TRight, Task<Either<TLeft, TResult>>> bindAsync)
       {
          ValidateFunction(bindAsync);

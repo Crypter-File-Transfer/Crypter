@@ -25,8 +25,8 @@
  */
 
 using Crypter.ClientServices.Transfer.Handlers;
+using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
 using System;

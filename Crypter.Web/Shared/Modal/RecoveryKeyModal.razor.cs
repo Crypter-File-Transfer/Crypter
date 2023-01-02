@@ -27,9 +27,9 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Interfaces.Models;
+using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
 using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;

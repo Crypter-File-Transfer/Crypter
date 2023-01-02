@@ -25,8 +25,8 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Users;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
@@ -37,7 +37,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class SearchBase : AuthenticatedPageBase
+   public partial class SearchBase : AuthenticatedPageBase, IDisposable
    {
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }

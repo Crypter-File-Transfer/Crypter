@@ -25,8 +25,8 @@
  */
 
 using Crypter.API.Methods;
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Authentication;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

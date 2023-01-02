@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Contacts;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -91,9 +91,9 @@ namespace Crypter.API.Controllers
 
       [HttpDelete]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RemoveUserContactResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RemoveContactResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> RemoveUserContactAsync([FromBody] RemoveUserContactRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> RemoveUserContactAsync([FromBody] RemoveContactRequest request, CancellationToken cancellationToken)
       {
          var userId = _tokenService.ParseUserId(User);
          var result = await _userContactsService.RemoveUserContactAsync(userId, request, cancellationToken);

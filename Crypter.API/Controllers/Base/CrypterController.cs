@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Transfer;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Transfer;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net;

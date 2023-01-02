@@ -26,9 +26,9 @@
 
 using Crypter.ClientServices.DeviceStorage.Models;
 using Crypter.ClientServices.Interfaces.Events;
+using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
 using System;
 using System.Threading.Tasks;
 

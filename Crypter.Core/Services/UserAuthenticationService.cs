@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
-using Crypter.Contracts.Features.Settings;
 using Crypter.Core.DataContextExtensions;
 using Crypter.Core.Entities;
 using Crypter.Core.Identity;

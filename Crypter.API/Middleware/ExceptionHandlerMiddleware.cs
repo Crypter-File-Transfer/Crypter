@@ -24,9 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts;
 using Crypter.Common.Infrastructure;
-using Crypter.Contracts.Common;
 using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -53,8 +54,8 @@ namespace Crypter.API.Middleware
             response.ContentType = "application/json";
             response.StatusCode = StatusCodes.Status400BadRequest;
 
-            ErrorResponseItem errorItem = new ErrorResponseItem(InfrastructureErrorCodes.InvalidEnumValueErrorCode, ex.Message);
-            ErrorResponse errorResponse = new ErrorResponse((int)HttpStatusCode.BadRequest, errorItem);
+            ErrorResponseItem errorItem = new ErrorResponseItem((int)InfrastructureErrorCode.InvalidEnumValueErrorCode, ex.Message);
+            ErrorResponse errorResponse = new ErrorResponse((int)HttpStatusCode.BadRequest, new List<ErrorResponseItem> { errorItem });
             await response.WriteAsJsonAsync(errorResponse);
          }
          catch (TaskCanceledException)

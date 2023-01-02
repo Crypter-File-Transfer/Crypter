@@ -1,4 +1,4 @@
-﻿using Crypter.Contracts.Features.Users;
+﻿using Crypter.Common.Contracts.Features.Users;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
