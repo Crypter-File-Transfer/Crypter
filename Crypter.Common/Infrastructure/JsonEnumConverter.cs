@@ -45,7 +45,9 @@ namespace Crypter.Common.Infrastructure
          {
             if (reader.TryGetInt32(out int intValue))
             {
-               return (T)(object)intValue;
+               return Enum.IsDefined(typeToConvert, intValue)
+                  ? (T)(object)intValue
+                  : throw new InvalidEnumValueException(intValue.ToString(), typeof(T));
             }
          }
          catch (InvalidOperationException)
