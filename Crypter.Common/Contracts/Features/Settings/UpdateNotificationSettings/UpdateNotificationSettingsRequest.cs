@@ -24,9 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.ClientServices.Transfer.Models
+using System.Text.Json.Serialization;
+
+namespace Crypter.Common.Contracts.Features.Settings
 {
-   public class DownloadHandlerResponse
+   public class UpdateNotificationSettingsRequest
    {
+      public bool EnableTransferNotifications { get; set; }
+      public bool EmailNotifications { get; set; }
+
+      [JsonConstructor]
+      public UpdateNotificationSettingsRequest(bool enableTransferNotifications, bool emailNotifications)
+      {
+         EnableTransferNotifications = enableTransferNotifications;
+         EmailNotifications = emailNotifications;
+      }
    }
 }

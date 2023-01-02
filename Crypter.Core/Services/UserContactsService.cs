@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Contacts;
 using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +41,7 @@ namespace Crypter.Core.Services
    {
       Task<GetUserContactsResponse> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken);
       Task<Either<AddUserContactError, AddUserContactResponse>> UpsertUserContactAsync(Guid userId, AddUserContactRequest request, CancellationToken cancellationToken);
-      Task<RemoveUserContactResponse> RemoveUserContactAsync(Guid userId, RemoveUserContactRequest request, CancellationToken cancellationToken);
+      Task<RemoveContactResponse> RemoveUserContactAsync(Guid userId, RemoveContactRequest request, CancellationToken cancellationToken);
    }
 
    public class UserContactsService : IUserContactsService
@@ -87,7 +87,7 @@ namespace Crypter.Core.Services
 
       public async Task<GetUserContactsResponse> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken)
       {
-         var contacts = await _context.UserContacts
+         List<UserContactDTO> contacts = await _context.UserContacts
             .Where(x => x.OwnerId == userId)
             .Select(x => x.Contact)
             .Select(LinqUserExpressions.ToUserContactDTO(userId))
@@ -96,7 +96,7 @@ namespace Crypter.Core.Services
          return new GetUserContactsResponse(contacts);
       }
 
-      public async Task<RemoveUserContactResponse> RemoveUserContactAsync(Guid userId, RemoveUserContactRequest request, CancellationToken cancellationToken)
+      public async Task<RemoveContactResponse> RemoveUserContactAsync(Guid userId, RemoveContactRequest request, CancellationToken cancellationToken)
       {
          var contactEntity = await _context.UserContacts
             .FirstOrDefaultAsync(x => x.OwnerId == userId && x.Contact.Username == request.ContactUsername, cancellationToken);
@@ -107,7 +107,7 @@ namespace Crypter.Core.Services
             await _context.SaveChangesAsync(cancellationToken);
          }
 
-         return new RemoveUserContactResponse();
+         return new RemoveContactResponse();
       }
    }
 }

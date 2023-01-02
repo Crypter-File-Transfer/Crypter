@@ -24,8 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Features.Users.GetReceivedTransfers;
-using Crypter.Contracts.Features.Users.GetSentTransfers;
+using Crypter.Common.Contracts.Features.Users;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

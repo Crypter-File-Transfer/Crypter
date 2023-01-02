@@ -6,8 +6,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.API", "Crypter.API\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Web", "Crypter.Web\Crypter.Web.csproj", "{4CF78490-FDFA-47EE-A1BE-7AE5534ECFAF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Contracts", "Crypter.Contracts\Crypter.Contracts.csproj", "{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Core", "Crypter.Core\Crypter.Core.csproj", "{AB46BF28-CCD0-4D85-9769-405A9FD87C3E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypter.Test", "Crypter.Test\Crypter.Test.csproj", "{29F529FE-52A2-43C8-BC5D-A0F7DD3CC99A}"
@@ -43,10 +41,6 @@ Global
 		{4CF78490-FDFA-47EE-A1BE-7AE5534ECFAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4CF78490-FDFA-47EE-A1BE-7AE5534ECFAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CF78490-FDFA-47EE-A1BE-7AE5534ECFAF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5353DB18-12CA-46EF-96CD-A4CFFAA76EBA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AB46BF28-CCD0-4D85-9769-405A9FD87C3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AB46BF28-CCD0-4D85-9769-405A9FD87C3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB46BF28-CCD0-4D85-9769-405A9FD87C3E}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -24,6 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Infrastructure;
+using System.Text.Json.Serialization;
+
 namespace Crypter.ClientServices.Interfaces.Enum
 {
    public enum PasswordHashType

@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Contacts;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

@@ -24,12 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Contacts;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -70,13 +71,12 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(AddUserContactError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               AddUserContactError.UnknownError => ServerError(errorResponse),
-               AddUserContactError.NotFound => NotFound(errorResponse),
-               AddUserContactError.InvalidUser => BadRequest(errorResponse)
+               AddUserContactError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               AddUserContactError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+               AddUserContactError.InvalidUser => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }
@@ -91,9 +91,9 @@ namespace Crypter.API.Controllers
 
       [HttpDelete]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RemoveUserContactResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RemoveContactResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> RemoveUserContactAsync([FromBody] RemoveUserContactRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> RemoveUserContactAsync([FromBody] RemoveContactRequest request, CancellationToken cancellationToken)
       {
          var userId = _tokenService.ParseUserId(User);
          var result = await _userContactsService.RemoveUserContactAsync(userId, request, cancellationToken);

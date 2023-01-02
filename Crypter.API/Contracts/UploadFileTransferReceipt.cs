@@ -25,7 +25,7 @@
  */
 
 using Crypter.API.Contracts.ModelBinders;
-using Crypter.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.Transfer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

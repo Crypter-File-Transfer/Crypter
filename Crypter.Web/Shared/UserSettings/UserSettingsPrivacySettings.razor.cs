@@ -25,8 +25,8 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Enums;
-using Crypter.Contracts.Features.Settings;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 

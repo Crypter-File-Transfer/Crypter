@@ -25,8 +25,8 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Contracts;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Common;
 using System.IO;
 using System.Net;
 using System.Net.Http;

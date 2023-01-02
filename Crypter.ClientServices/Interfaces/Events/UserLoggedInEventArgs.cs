@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
 using System;
 
 namespace Crypter.ClientServices.Interfaces.Events

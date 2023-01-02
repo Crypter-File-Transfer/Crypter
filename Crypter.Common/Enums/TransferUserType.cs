@@ -23,8 +23,12 @@
  * 
  * Contact the current copyright holder to discuss commercial license options.
  */
+using Crypter.Common.Infrastructure;
+using System.Text.Json.Serialization;
+
 namespace Crypter.Common.Enums
 {
+   [JsonConverter(typeof(JsonEnumConverter<TransferUserType>))]
    public enum TransferUserType
    {
       Anonymous,

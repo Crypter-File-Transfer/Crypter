@@ -24,13 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Keys;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -59,12 +60,11 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(GetMasterKeyError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               GetMasterKeyError.UnknownError => ServerError(errorResponse),
-               GetMasterKeyError.NotFound => NotFound(errorResponse)
+               GetMasterKeyError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               GetMasterKeyError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
             };
 #pragma warning restore CS8524
          }
@@ -88,13 +88,12 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(InsertMasterKeyError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               InsertMasterKeyError.UnknownError => ServerError(errorResponse),
-               InsertMasterKeyError.Conflict => Conflict(errorResponse),
-               InsertMasterKeyError.InvalidCredentials => BadRequest(errorResponse)
+               InsertMasterKeyError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               InsertMasterKeyError.Conflict => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
+               InsertMasterKeyError.InvalidCredentials => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }
@@ -118,13 +117,12 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(GetMasterKeyRecoveryProofError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               GetMasterKeyRecoveryProofError.UnknownError => ServerError(errorResponse),
-               GetMasterKeyRecoveryProofError.NotFound => NotFound(errorResponse),
-               GetMasterKeyRecoveryProofError.InvalidCredentials => BadRequest(errorResponse)
+               GetMasterKeyRecoveryProofError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               GetMasterKeyRecoveryProofError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+               GetMasterKeyRecoveryProofError.InvalidCredentials => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }
@@ -147,12 +145,11 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(GetPrivateKeyError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               GetPrivateKeyError.UnkownError => ServerError(errorResponse),
-               GetPrivateKeyError.NotFound => NotFound(errorResponse)
+               GetPrivateKeyError.UnkownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               GetPrivateKeyError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
             };
 #pragma warning restore CS8524
          }
@@ -175,12 +172,11 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(InsertKeyPairError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               InsertKeyPairError.UnknownError => ServerError(errorResponse),
-               InsertKeyPairError.KeyPairAlreadyExists => Conflict(errorResponse),
+               InsertKeyPairError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               InsertKeyPairError.KeyPairAlreadyExists => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
             };
 #pragma warning restore CS8524
          }

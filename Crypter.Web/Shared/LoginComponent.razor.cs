@@ -25,10 +25,10 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;
-using Crypter.Contracts.Features.Authentication;
 using Crypter.Web.Helpers;
 using Crypter.Web.Models.Forms;
 using Microsoft.AspNetCore.Components;

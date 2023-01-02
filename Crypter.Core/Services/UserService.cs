@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Consent;
+using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Consent;
-using Crypter.Contracts.Features.Settings;
-using Crypter.Contracts.Features.Users;
 using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
 using Microsoft.EntityFrameworkCore;

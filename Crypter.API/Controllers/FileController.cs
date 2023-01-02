@@ -26,9 +26,9 @@
 
 using Crypter.API.Attributes;
 using Crypter.API.Contracts;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Transfer;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
