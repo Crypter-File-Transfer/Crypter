@@ -29,7 +29,6 @@ using System.Text.Json.Serialization;
 
 namespace Crypter.ClientServices.Interfaces.Enum
 {
-   [JsonConverter(typeof(JsonEnumConverter<PasswordHashType>))]
    public enum PasswordHashType
    {
       AuthenticationKey,
