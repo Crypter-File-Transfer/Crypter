@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -45,7 +45,7 @@ namespace Crypter.Web.Shared.Transfer
 
          SetHandlerUserInfo(messageUploader);
          var uploadResponse = await messageUploader.UploadAsync();
-         HandleUploadResponse(uploadResponse);
+         await HandleUploadResponse(uploadResponse);
          Dispose();
       }
 

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -25,6 +25,8 @@
  */
 
 using Crypter.Common.Enums;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -48,6 +50,22 @@ namespace Crypter.Core.Entities
          Type = type;
          Created = created;
          Expiration = expiration;
+      }
+   }
+
+   public class UserTokenEntityConfiguration : IEntityTypeConfiguration<UserTokenEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserTokenEntity> builder)
+      {
+         builder.ToTable("UserToken");
+
+         builder.HasKey(x => x.Id);
+
+         builder.HasOne(x => x.User)
+            .WithMany(x => x.Tokens)
+            .HasForeignKey(x => x.Owner)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }

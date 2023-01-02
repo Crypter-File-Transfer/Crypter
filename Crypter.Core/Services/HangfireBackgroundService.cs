@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -40,7 +40,21 @@ namespace Crypter.Core.Services
    {
       Task SendEmailVerificationAsync(Guid userId, CancellationToken cancellationToken);
       Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType, CancellationToken cancellationToken);
-      Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, CancellationToken cancellationToken);
+
+      /// <summary>
+      /// Delete a transfer from transfer storage and the database.
+      /// </summary>
+      /// <param name="itemId"></param>
+      /// <param name="itemType"></param>
+      /// <param name="userType"></param>
+      /// <param name="deleteFromTransferStorage">
+      /// Transfers are streamed from transfer storage to the client.
+      /// These streams are sometimes configured to "DeleteOnClose".
+      /// The background service should not delete from transfer storage when "DeleteOnClose" is configured.
+      /// </param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferStorage, CancellationToken cancellationToken);
       Task DeleteUserTokenAsync(Guid tokenId, CancellationToken cancellationToken);
       Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId, CancellationToken cancellationToken);
    }
@@ -113,7 +127,7 @@ namespace Crypter.Core.Services
          await _emailService.SendTransferNotificationAsync(emailAddress, cancellationToken);
       }
 
-      public async Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, CancellationToken cancellationToken)
+      public async Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferStorage, CancellationToken cancellationToken)
       {
          bool entityFound = false;
 
@@ -163,7 +177,10 @@ namespace Crypter.Core.Services
             await _context.SaveChangesAsync(cancellationToken);
          }
 
-         _transferStorageService.DeleteTransfer(itemId, itemType, userType);
+         if (deleteFromTransferStorage)
+         {
+            _transferStorageService.DeleteTransfer(itemId, itemType, userType);
+         }
       }
 
       public async Task DeleteUserTokenAsync(Guid tokenId, CancellationToken cancellationToken)

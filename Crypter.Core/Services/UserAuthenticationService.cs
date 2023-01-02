@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
-using Crypter.Contracts.Features.Settings;
 using Crypter.Core.DataContextExtensions;
 using Crypter.Core.Entities;
 using Crypter.Core.Identity;

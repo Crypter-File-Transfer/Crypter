@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -26,9 +26,9 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Interfaces.Events;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Contacts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -95,7 +95,7 @@ namespace Crypter.ClientServices.Services
       public async Task RemoveContactAsync(string contactUsername)
       {
          string lowerContactUsername = contactUsername.ToLower();
-         var request = new RemoveUserContactRequest(lowerContactUsername);
+         var request = new RemoveContactRequest(lowerContactUsername);
          var response = await _crypterApiService.RemoveUserContactAsync(request);
          response.DoRight(x => _contacts.Remove(lowerContactUsername));
       }

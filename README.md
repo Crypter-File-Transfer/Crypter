@@ -44,11 +44,6 @@ These decisions and locations are device-specific.  For example, storing data in
 
 A small class library containing domain models and data types that may be used in any project.
 
-### Crypter.Contracts
-
-A class library containing classes and enumerations to help facilitate communcation between different projects.
-For example, if Crypter.Web needs to POST some data to Crypter.API, there should be a class defining what that data looks like.
-
 ### Crypter.Core
 
 A class library containing code to interact with the PostgreSQL database.

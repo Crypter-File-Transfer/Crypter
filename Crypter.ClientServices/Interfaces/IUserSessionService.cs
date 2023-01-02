@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -26,9 +26,9 @@
 
 using Crypter.ClientServices.DeviceStorage.Models;
 using Crypter.ClientServices.Interfaces.Events;
+using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
 using System;
 using System.Threading.Tasks;
 

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -28,10 +28,10 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Interfaces.Events;
 using Crypter.ClientServices.Interfaces.Models;
 using Crypter.ClientServices.Interfaces.Repositories;
+using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
-using Crypter.Contracts.Features.Keys;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.KeyExchange;
 using System;

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -25,13 +25,14 @@
  */
 
 using Crypter.API.Methods;
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Authentication;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -65,19 +66,18 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(RegistrationError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
                RegistrationError.UnknownError
                   or RegistrationError.PasswordHashFailure
-                  or RegistrationError.InvalidPasswordConfirm => ServerError(errorResponse),
+                  or RegistrationError.InvalidPasswordConfirm => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
                RegistrationError.InvalidUsername
                   or RegistrationError.InvalidPassword
                   or RegistrationError.InvalidEmailAddress
-                  or RegistrationError.OldPasswordVersion => BadRequest(errorResponse),
+                  or RegistrationError.OldPasswordVersion => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
                RegistrationError.UsernameTaken
-                  or RegistrationError.EmailAddressTaken => Conflict(errorResponse)
+                  or RegistrationError.EmailAddressTaken => MakeErrorResponseBase(HttpStatusCode.Conflict, error)
             };
 #pragma warning restore CS8524
          }
@@ -104,17 +104,16 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(LoginError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
                LoginError.UnknownError
-                  or LoginError.PasswordHashFailure => ServerError(errorResponse),
+                  or LoginError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
                LoginError.InvalidUsername
                   or LoginError.InvalidPassword
                   or LoginError.InvalidTokenTypeRequested
                   or LoginError.ExcessiveFailedLoginAttempts
-                  or LoginError.InvalidPasswordVersion => BadRequest(errorResponse)
+                  or LoginError.InvalidPasswordVersion => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }
@@ -149,13 +148,12 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(RefreshError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               RefreshError.UnknownError => ServerError(errorResponse),
-               RefreshError.UserNotFound => NotFound(errorResponse),
-               RefreshError.InvalidToken => BadRequest(errorResponse)
+               RefreshError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               RefreshError.UserNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+               RefreshError.InvalidToken => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }
@@ -188,12 +186,11 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(LogoutError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               LogoutError.UnknownError => ServerError(errorResponse),
-               LogoutError.InvalidToken => BadRequest(errorResponse)
+               LogoutError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               LogoutError.InvalidToken => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }
@@ -215,14 +212,13 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(TestPasswordError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
                TestPasswordError.UnknownError
-                  or TestPasswordError.PasswordHashFailure => ServerError(errorResponse),
+                  or TestPasswordError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
                TestPasswordError.InvalidPassword
-                  or TestPasswordError.PasswordNeedsMigration => BadRequest(errorResponse)
+                  or TestPasswordError.PasswordNeedsMigration => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }

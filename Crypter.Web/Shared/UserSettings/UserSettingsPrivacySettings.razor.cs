@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -25,8 +25,8 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Enums;
-using Crypter.Contracts.Features.Settings;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 

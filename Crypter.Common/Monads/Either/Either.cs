@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -280,6 +280,17 @@ namespace Crypter.Common.Monads
             : IsLeft
                ? Either<TLeft, TResult>.FromLeft(_left)
                : Either<TLeft, TResult>.Neither;
+      }
+
+      public Either<TResult, TRight> BindLeft<TResult>(Func<TLeft, Either<TResult, TRight>> bind)
+      {
+         ValidateFunction(bind);
+
+         return IsLeft
+            ? bind(_left)
+            : IsRight
+               ? Either<TResult, TRight>.FromRight(_right)
+               : Either<TResult, TRight>.Neither;
       }
 
       public async Task<Either<TLeft, TResult>> BindAsync<TResult>(Func<TRight, Task<Either<TLeft, TResult>>> bindAsync)

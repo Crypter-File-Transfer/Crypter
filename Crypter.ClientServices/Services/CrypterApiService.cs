@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -25,21 +25,19 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Contracts.Features.Consent;
+using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Keys;
+using Crypter.Common.Contracts.Features.Metrics;
+using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Authentication;
-using Crypter.Contracts.Features.Consent;
-using Crypter.Contracts.Features.Contacts;
-using Crypter.Contracts.Features.Keys;
-using Crypter.Contracts.Features.Metrics;
-using Crypter.Contracts.Features.Settings;
-using Crypter.Contracts.Features.Transfer;
-using Crypter.Contracts.Features.Users;
-using Crypter.Contracts.Features.Users.GetReceivedTransfers;
-using Crypter.Contracts.Features.Users.GetSentTransfers;
 using Crypter.Crypto.Common.StreamEncryption;
 using System;
-using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -63,12 +61,20 @@ namespace Crypter.ClientServices.Services
          _baseApiUrl = clientApiSettings.ApiBaseUrl;
       }
 
+      /// <summary>
+      /// Lift the first error code out of the API error response.
+      /// </summary>
+      /// <typeparam name="TErrorCode"></typeparam>
+      /// <typeparam name="TResponse"></typeparam>
+      /// <param name="response"></param>
+      /// <returns></returns>
+      /// <remarks>
+      /// Need to refactor Crypter.Web and other client services to handle multiple error codes.
+      /// </remarks>
       private static Either<TErrorCode, TResponse> ExtractErrorCode<TErrorCode, TResponse>(Either<ErrorResponse, TResponse> response)
       {
-         return response.Match(
-            left: left => (TErrorCode)(object)left.ErrorCode,
-            right: right => right,
-            neither: Either<TErrorCode, TResponse>.Neither);
+         return response
+            .BindLeft<TErrorCode>(x => x.Errors.Select(x => (TErrorCode)(object)x.ErrorCode).First());
       }
 
       public event EventHandler RefreshTokenRejectedEventHandler
@@ -163,12 +169,12 @@ namespace Crypter.ClientServices.Services
                 select errorableResponse;
       }
 
-      public Task<Either<DummyError, RemoveUserContactResponse>> RemoveUserContactAsync(RemoveUserContactRequest request)
+      public Task<Either<DummyError, RemoveContactResponse>> RemoveUserContactAsync(RemoveContactRequest request)
       {
          string url = $"{_baseApiUrl}/contacts";
-         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, RemoveUserContactResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpService.DeleteAsync<RemoveUserContactRequest, RemoveUserContactResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<DummyError, RemoveUserContactResponse>(response.data).AsTask()
+         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, RemoveContactResponse> data)>.FromRightAsync(
+                  _crypterAuthenticatedHttpService.DeleteAsync<RemoveContactRequest, RemoveContactResponse>(url, request))
+                from errorableResponse in ExtractErrorCode<DummyError, RemoveContactResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 

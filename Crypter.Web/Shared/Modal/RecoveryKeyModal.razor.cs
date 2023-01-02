@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -27,9 +27,9 @@
 
 using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Interfaces.Models;
+using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Crypter.Contracts.Features.Authentication;
 using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -77,7 +77,7 @@ namespace Crypter.Web.Shared.Modal
          await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyModalCopyTooltip" });
       }
 
-      public async void OnAcknowledgedClickedAsync()
+      public async Task OnAcknowledgedClickedAsync()
       {
          await CrypterApiService.ConsentToRecoveryKeyRisksAsync();
          ModalBehaviorRef.Close();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -25,6 +25,8 @@
  */
 
 using Crypter.API.Configuration;
+using Crypter.API.Middleware;
+using Crypter.Common.Contracts;
 using Crypter.Core;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
@@ -37,9 +39,13 @@ using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 TokenSettings tokenSettings = builder.Configuration
@@ -137,6 +143,17 @@ builder.Services.AddControllers()
    .ConfigureApiBehaviorOptions(options =>
    {
       options.SuppressMapClientErrors = true;
+      options.InvalidModelStateResponseFactory = actionContext =>
+      {
+         List<ErrorResponseItem> errors = actionContext.ModelState.Values
+            .Where(x => x.Errors.Count > 0)
+            .SelectMany(x => x.Errors)
+            .Select(x => new ErrorResponseItem((int)InfrastructureErrorCode.InvalidModelStateErrorCode, x.ErrorMessage))
+            .ToList();
+
+         ErrorResponse errorResponse = new ErrorResponse((int)HttpStatusCode.BadRequest, errors);
+         return new BadRequestObjectResult(errorResponse);
+      };
    });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -181,7 +198,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.UseEndpoints(endpoints =>
 {
    endpoints.MapControllers();

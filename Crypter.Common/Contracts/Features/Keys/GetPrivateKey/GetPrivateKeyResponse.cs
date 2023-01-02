@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -24,9 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.ClientServices.Transfer.Models
+using System.Text.Json.Serialization;
+
+namespace Crypter.Common.Contracts.Features.Keys
 {
-   public class DownloadHandlerResponse
+   public class GetPrivateKeyResponse
    {
+      public byte[] EncryptedKey { get; private set; }
+      public byte[] Nonce { get; private set; }
+
+      [JsonConstructor]
+      public GetPrivateKeyResponse(byte[] encryptedKey, byte[] nonce)
+      {
+         EncryptedKey = encryptedKey;
+         Nonce = nonce;
+      }
    }
 }

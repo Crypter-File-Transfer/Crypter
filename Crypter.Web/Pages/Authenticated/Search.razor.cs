@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -25,8 +25,8 @@
  */
 
 using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Users;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
@@ -37,7 +37,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
-   public partial class SearchBase : AuthenticatedPageBase
+   public partial class SearchBase : AuthenticatedPageBase, IDisposable
    {
       [Inject]
       protected ICrypterApiService CrypterApiService { get; set; }

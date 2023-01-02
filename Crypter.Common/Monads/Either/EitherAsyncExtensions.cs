@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -75,6 +75,14 @@ namespace Crypter.Common.Monads
             neither: Either<TLeft, TResult>.Neither);
       }
 
+      public static Task<Either<TResult, TRight>> MapLeftAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TLeft, Either<TResult, TRight>> map)
+      {
+         return either.MatchAsync(
+            left: left => map(left),
+            right: right => Either<TResult, TRight>.FromRight(right),
+            neither: Either<TResult, TRight>.Neither);
+      }
+
       public static Task<Either<TLeft, TResult>> MapAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Task<Either<TLeft, TResult>>> map)
       {
          return either.MatchAsync(
@@ -83,24 +91,34 @@ namespace Crypter.Common.Monads
             neither: Either<TLeft, TResult>.Neither);
       }
 
-      public static Task<Either<TLeft, TResult>> BindAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Task<Either<TLeft, TResult>>> bind)
+      public static Task<Either<TLeft, TResult>> BindAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Task<Either<TLeft, TResult>>> bindAsync)
       {
          return either.MapAsync(
-                async right =>
-                    await Either<TLeft, TRight>.FromRight(right).MatchAsync(
-                       left => Either<TLeft, TResult>.FromLeft(left),
-                       async right2 => await bind(right2),
-                       Either<TLeft, TResult>.Neither));
+               async right =>
+                  await Either<TLeft, TRight>.FromRight(right).MatchAsync(
+                     left => Either<TLeft, TResult>.FromLeft(left),
+                     async right2 => await bindAsync(right2),
+                     Either<TLeft, TResult>.Neither));
       }
 
       public static Task<Either<TLeft, TResult>> BindAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Either<TLeft, TResult>> bind)
       {
          return either.MapAsync(
-                right =>
-                    Either<TLeft, TRight>.FromRight(right).Match(
-                       left => Either<TLeft, TResult>.FromLeft(left),
-                       right2 => bind(right2),
-                       Either<TLeft, TResult>.Neither));
+               right =>
+                  Either<TLeft, TRight>.FromRight(right).Match(
+                     left => Either<TLeft, TResult>.FromLeft(left),
+                     right2 => bind(right2),
+                     Either<TLeft, TResult>.Neither));
+      }
+
+      public static Task<Either<TResult, TRight>> BindLeftAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TLeft, Either<TResult, TRight>> bind)
+      {
+         return either.MapLeftAsync(
+               left =>
+                  Either<TLeft, TRight>.FromLeft(left).Match(
+                     left2 => bind(left2),
+                     right => Either<TResult, TRight>.FromRight(right),
+                     Either<TResult, TRight>.Neither));
       }
 
       public static Task<Maybe<TRight>> ToMaybeTask<TLeft, TRight>(this Task<Either<TLeft, TRight>> either)

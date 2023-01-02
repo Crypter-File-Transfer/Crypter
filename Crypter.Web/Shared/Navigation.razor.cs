@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -99,13 +99,13 @@ namespace Crypter.Web.Shared
          HandleUserSessionStateChanged();
       }
 
-      protected async void OnEncryptFileClicked()
+      protected async Task OnEncryptFileClicked()
       {
          FileTransferModal.Open();
          await CollapseNavigationMenuAsync();
       }
 
-      protected async void OnEncryptMessageClicked()
+      protected async Task OnEncryptMessageClicked()
       {
          MessageTransferModal.Open();
          await CollapseNavigationMenuAsync();

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -25,6 +25,8 @@
  */
 
 using Crypter.Core.Entities.Interfaces;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -54,6 +56,28 @@ namespace Crypter.Core.Entities
          Expiration = expiration;
          FileName = fileName;
          ContentType = contentType;
+      }
+   }
+
+   public class AnonymousFileTransferEntityConfiguration : IEntityTypeConfiguration<AnonymousFileTransferEntity>
+   {
+      public void Configure(EntityTypeBuilder<AnonymousFileTransferEntity> builder)
+      {
+         builder.ToTable("AnonymousFileTransfer");
+
+         builder.HasKey(x => x.Id);
+
+         builder.Property(x => x.PublicKey)
+            .IsRequired();
+
+         builder.Property(x => x.Proof)
+            .IsRequired();
+
+         builder.Property(x => x.FileName)
+            .IsRequired();
+
+         builder.Property(x => x.ContentType)
+            .IsRequired();
       }
    }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -25,7 +25,7 @@
  */
 
 using Crypter.API.Contracts.ModelBinders;
-using Crypter.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.Transfer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

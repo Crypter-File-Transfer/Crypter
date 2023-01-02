@@ -24,8 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Infrastructure;
+using System.Text.Json.Serialization;
+
 namespace Crypter.Contracts.Features.Keys
 {
+   [JsonConverter(typeof(JsonEnumConverter<GetPrivateKeyError>))]
    public enum GetPrivateKeyError
    {
       UnkownError,

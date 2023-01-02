@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -26,18 +26,17 @@
 
 using Crypter.API.Attributes;
 using Crypter.API.Contracts;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Common;
-using Crypter.Contracts.Features.Transfer;
-using Crypter.Contracts.Features.Users;
-using Crypter.Contracts.Features.Users.GetReceivedTransfers;
-using Crypter.Contracts.Features.Users.GetSentTransfers;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -68,11 +67,10 @@ namespace Crypter.API.Controllers
       {
          IActionResult MakeErrorResponse(GetUserProfileError error)
          {
-            var errorResponse = new ErrorResponse(error);
 #pragma warning disable CS8524
             return error switch
             {
-               GetUserProfileError.NotFound => NotFound(errorResponse)
+               GetUserProfileError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
             };
 #pragma warning restore CS8524
          }

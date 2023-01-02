@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -28,13 +28,14 @@ using Crypter.ClientServices.Interfaces;
 using Crypter.ClientServices.Transfer;
 using Crypter.ClientServices.Transfer.Handlers.Base;
 using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
+using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
 {
@@ -104,7 +105,7 @@ namespace Crypter.Web.Shared.Transfer
          });
       }
 
-      protected async void HandleUploadResponse(Either<UploadTransferError, UploadHandlerResponse> uploadResponse)
+      protected async Task HandleUploadResponse(Either<UploadTransferError, UploadHandlerResponse> uploadResponse)
       {
          uploadResponse.DoLeftOrNeither(HandleUploadError, () => HandleUploadError());
 

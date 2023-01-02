@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -35,7 +35,7 @@
             <div class="card">
                <h5 class="card-header">Details</h5>
                <ul class="list-group list-group-flush">
-                  <li class="list-group-item"><span class="fw-bold">File name: </span>@FileName</li>
+                  <li class="list-group-item"><span class="fw-bold">File name: </span>@(string.IsNullOrEmpty(FileName) ? "{ no file name }" : FileName)</li>
                   <li class="list-group-item">
                      <span class="fw-bold">Sender: </span>
                      @if (string.IsNullOrEmpty(SenderUsername))
@@ -47,7 +47,7 @@
                         <a href=@($"/user/profile/{SenderUsername}")>@($"@{SenderUsername}")</a>
                      }
                   </li>
-                  <li class="list-group-item"><span class="fw-bold">Type: </span>@ContentType</li>
+                  <li class="list-group-item"><span class="fw-bold">Type: </span>@(string.IsNullOrEmpty(ContentType) ? "{ unknown }" : ContentType)</li>
                   <li class="list-group-item"><span class="fw-bold">Encrypted Size: </span>@FileSize bytes</li>
                   <li class="list-group-item"><span class="fw-bold">Created: </span>@Created</li>
                   <li class="list-group-item"><span class="fw-bold">Expiration: </span>@Expiration</li>
@@ -93,7 +93,7 @@
                      @if (!DecryptionInProgress)
                      {
                         <div class="mb-3">
-                           <button type="button" class="btn btn-primary" @onclick="@(async () => await OnDecryptClickedAsync())">Decrypt</button>
+                           <button type="button" class="btn btn-primary" @onclick="OnDecryptClickedAsync">Decrypt</button>
                         </div>
                      }
 

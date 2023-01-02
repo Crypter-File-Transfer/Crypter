@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -24,8 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Infrastructure;
+using System.Text.Json.Serialization;
+
 namespace Crypter.Common.Enums
 {
+   [JsonConverter(typeof(JsonEnumConverter<UserItemTransferPermission>))]
    public enum UserItemTransferPermission
    {
       None,

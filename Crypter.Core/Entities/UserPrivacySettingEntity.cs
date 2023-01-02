@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -25,6 +25,8 @@
  */
 
 using Crypter.Common.Enums;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -46,6 +48,22 @@ namespace Crypter.Core.Entities
          Visibility = visibility;
          ReceiveFiles = receiveFiles;
          ReceiveMessages = receiveMessages;
+      }
+   }
+
+   public class UserPrivacySettingEntityConfiguration : IEntityTypeConfiguration<UserPrivacySettingEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserPrivacySettingEntity> builder)
+      {
+         builder.ToTable("UserPrivacySetting");
+
+         builder.HasKey(x => x.Owner);
+
+         builder.HasOne(x => x.User)
+            .WithOne(x => x.PrivacySetting)
+            .HasForeignKey<UserPrivacySettingEntity>(x => x.Owner)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }

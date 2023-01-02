@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -24,42 +24,28 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Microsoft.JSInterop;
+using System;
+using System.Runtime.InteropServices.JavaScript;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Services
 {
-   public interface IBrowserDownloadFileService
+   [SupportedOSPlatform("browser")]
+   public static partial class BrowserDownloadFileService
    {
-      Task DownloadFileAsync(string fileName, string contentType, byte[] fileBytes);
-      Task ResetDownloadAsync();
-   }
-
-   public class BrowserDownloadFileService : IBrowserDownloadFileService
-   {
-      private readonly IJSRuntime _jsRuntime;
-
-      private const string _initializeBufferFunctionName = "window.Crypter.DownloadFile.InitializeBuffer";
-      private const string _insertBufferFunctionName = "window.Crypter.DownloadFile.InsertBuffer";
-      private const string _downloadFunctionName = "window.Crypter.DownloadFile.Download";
-      private const string _resetDownloadFunctionName = "window.Crypter.DownloadFile.ResetDownload";
-
-      public BrowserDownloadFileService(IJSRuntime jsRuntime)
+      public static async Task InitializeAsync()
       {
-         _jsRuntime = jsRuntime;
+         await JSHost.ImportAsync("downloadFileModule", "../js/downloadFileModule.js");
       }
 
-      public async Task DownloadFileAsync(string fileName, string contentType, byte[] fileBytes)
-      {
-         await _jsRuntime.InvokeVoidAsync(_resetDownloadFunctionName);
-         await _jsRuntime.InvokeVoidAsync(_initializeBufferFunctionName, 1);
-         await _jsRuntime.InvokeVoidAsync(_insertBufferFunctionName, fileBytes);
-         await _jsRuntime.InvokeVoidAsync(_downloadFunctionName, fileName, contentType);
-      }
+      [JSImport("createBlob", "downloadFileModule")]
+      public static partial void CopyBufferToJavaScript(string fileName, string contentType, [JSMarshalAs<JSType.MemoryView>] Span<byte> fileBytes);
 
-      public async Task ResetDownloadAsync()
-      {
-         await _jsRuntime.InvokeVoidAsync(_resetDownloadFunctionName);
-      }
+      [JSImport("download", "downloadFileModule")]
+      public static partial void Download();
+
+      [JSImport("reset", "downloadFileModule")]
+      public static partial void Reset();
    }
 }

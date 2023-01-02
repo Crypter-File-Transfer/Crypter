@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -25,22 +25,21 @@
  */
 
 using Crypter.ClientServices.Transfer.Handlers;
+using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Transfer;
 using Crypter.Web.Services;
-using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
+using System;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
 {
-   public partial class DownloadFileTransferBase : DownloadTransferBase
+   [SupportedOSPlatform("browser")]
+   public partial class DownloadFileTransferBase : DownloadTransferBase, IDisposable
    {
-      [Inject]
-      protected IBrowserDownloadFileService BrowserDownloadFileService { get; set; }
-
       protected string FileName = string.Empty;
       protected string ContentType = string.Empty;
-      protected byte[] PlaintextBytes = null;
       protected long FileSize = 0;
       protected bool LocalDownloadInProgress { get; set; }
 
@@ -58,9 +57,7 @@ namespace Crypter.Web.Shared.Transfer
          var previewResponse = await _downloadHandler.DownloadPreviewAsync();
          previewResponse.DoRight(x =>
          {
-            FileName = string.IsNullOrEmpty(x.FileName)
-               ? "{ no file name }"
-               : x.FileName;
+            FileName = x.FileName;
             ContentType = x.ContentType;
             Created = x.CreationUTC.ToLocalTime();
             Expiration = x.ExpirationUTC.ToLocalTime();
@@ -72,8 +69,9 @@ namespace Crypter.Web.Shared.Transfer
          ItemFound = previewResponse.IsRight;
       }
 
-      protected async Task OnDecryptClickedAsync()
+      protected async Task OnDecryptClickedAsync(MouseEventArgs _)
       {
+         BrowserDownloadFileService.Reset();
          DecryptionInProgress = true;
 
          Maybe<byte[]> recipientPrivateKey = SpecificRecipient
@@ -94,12 +92,13 @@ namespace Crypter.Web.Shared.Transfer
 
             decryptionResponse.DoRight(x =>
             {
-               PlaintextBytes = x;
+               BrowserDownloadFileService.CopyBufferToJavaScript(FileName, ContentType, x);
                DecryptionComplete = true;
             });
          });
 
          DecryptionInProgress = false;
+         StateHasChanged();
       }
 
       protected async Task DownloadFileAsync()
@@ -108,10 +107,7 @@ namespace Crypter.Web.Shared.Transfer
          StateHasChanged();
          await Task.Delay(400);
 
-         await BrowserDownloadFileService.ResetDownloadAsync();
-         await BrowserDownloadFileService.DownloadFileAsync(FileName, ContentType, PlaintextBytes);
-         PlaintextBytes = null;
-
+         BrowserDownloadFileService.Download();
          LocalDownloadInProgress = false;
          StateHasChanged();
       }
@@ -137,6 +133,12 @@ namespace Crypter.Web.Shared.Transfer
                ErrorMessage = "Invalid decryption key";
                break;
          }
+      }
+
+      public void Dispose()
+      {
+         BrowserDownloadFileService.Reset();
+         GC.SuppressFinalize(this);
       }
    }
 }

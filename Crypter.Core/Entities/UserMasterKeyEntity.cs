@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -47,6 +49,27 @@ namespace Crypter.Core.Entities
          RecoveryProof = recoveryProof;
          Updated = updated;
          Created = created;
+      }
+   }
+
+   public class UserMasterKeyEntityConfiguration : IEntityTypeConfiguration<UserMasterKeyEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserMasterKeyEntity> builder)
+      {
+         builder.ToTable("UserMasterKey");
+
+         builder.HasKey(x => x.Owner);
+
+         builder.Property(x => x.EncryptedKey)
+            .IsRequired();
+
+         builder.Property(x => x.Nonce)
+            .IsRequired();
+
+         builder.HasOne(x => x.User)
+            .WithOne(x => x.MasterKey)
+            .HasForeignKey<UserMasterKeyEntity>(x => x.Owner)
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }

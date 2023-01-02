@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace Crypter.Core.Entities
@@ -43,6 +45,22 @@ namespace Crypter.Core.Entities
          Alias = alias;
          About = about;
          Image = image;
+      }
+   }
+
+   public class UserProfileEntityConfiguration : IEntityTypeConfiguration<UserProfileEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserProfileEntity> builder)
+      {
+         builder.ToTable("UserProfile");
+
+         builder.HasKey(x => x.Owner);
+
+         builder.HasOne(x => x.User)
+            .WithOne(x => x.Profile)
+            .HasForeignKey<UserProfileEntity>(x => x.Owner)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
       }
    }
 }

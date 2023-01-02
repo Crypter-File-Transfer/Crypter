@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2022 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Contracts.Features.Transfer;
 using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
 using Hangfire;
@@ -53,16 +53,18 @@ namespace Crypter.Core.Services
       private readonly IServerMetricsService _serverMetricsService;
       private readonly ITransferStorageService _transferStorageService;
       private readonly IHangfireBackgroundService _hangfireBackgroundService;
+      private readonly IBackgroundJobClient _backgroundJobClient;
       private readonly IHashIdService _hashIdService;
       private const int _maxLifetimeHours = 24;
       private const int _minLifetimeHours = 1;
 
-      public TransferUploadService(DataContext context, IServerMetricsService serverMetricsService, ITransferStorageService transferStorageService, IHangfireBackgroundService hangfireBackgroundService, IHashIdService hashIdService)
+      public TransferUploadService(DataContext context, IServerMetricsService serverMetricsService, ITransferStorageService transferStorageService, IHangfireBackgroundService hangfireBackgroundService, IBackgroundJobClient backgroundJobClient, IHashIdService hashIdService)
       {
          _context = context;
          _serverMetricsService = serverMetricsService;
          _transferStorageService = transferStorageService;
          _hangfireBackgroundService = hangfireBackgroundService;
+         _backgroundJobClient = backgroundJobClient;
          _hashIdService = hashIdService;
       }
 
@@ -268,11 +270,11 @@ namespace Crypter.Core.Services
                      && x.NotificationSetting.EmailNotifications)
                   .FirstOrDefaultAsync();
 
-               return BackgroundJob.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType, CancellationToken.None));
+               return _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType, CancellationToken.None));
             });
       }
 
       private string ScheduleTransferDeletion(Guid itemId, TransferItemType itemType, TransferUserType userType, DateTime itemExpiration)
-         => BackgroundJob.Schedule(() => _hangfireBackgroundService.DeleteTransferAsync(itemId, itemType, userType, CancellationToken.None), itemExpiration);
+         => _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteTransferAsync(itemId, itemType, userType, true, CancellationToken.None), itemExpiration);
    }
 }
