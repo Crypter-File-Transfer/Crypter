@@ -54,7 +54,12 @@ namespace Crypter.Web.Pages
       protected bool AllowsMessages;
       protected byte[] UserPublicKey;
 
-      protected override async Task OnInitializedAsync()
+      protected override void OnInitialized()
+      {
+         Loading = true;
+      }
+
+      protected override async Task OnParametersSetAsync()
       {
          Loading = true;
          await PrepareUserProfileAsync();
