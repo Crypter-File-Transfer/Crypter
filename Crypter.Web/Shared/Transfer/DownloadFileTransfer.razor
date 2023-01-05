@@ -48,7 +48,7 @@
                      }
                   </li>
                   <li class="list-group-item"><span class="fw-bold">Type: </span>@(string.IsNullOrEmpty(ContentType) ? "{ unknown }" : ContentType)</li>
-                  <li class="list-group-item"><span class="fw-bold">Encrypted Size: </span>@FileSize bytes</li>
+                  <li class="list-group-item"><span class="fw-bold">Encrypted Size: </span>@(ByteSizeLib.ByteSize.FromBytes(FileSize).ToBinaryString())</li>
                   <li class="list-group-item"><span class="fw-bold">Created: </span>@Created</li>
                   <li class="list-group-item"><span class="fw-bold">Expiration: </span>@Expiration</li>
                </ul>
