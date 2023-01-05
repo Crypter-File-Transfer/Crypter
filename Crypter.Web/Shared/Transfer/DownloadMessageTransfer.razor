@@ -49,7 +49,7 @@
                      <a href=@($"/user/profile/{SenderUsername}")>@($"@{SenderUsername}")</a>
                   }
                </li>
-               <li class="list-group-item"><span class="fw-bold">Encrypted Size: </span>@MessageSize bytes</li>
+               <li class="list-group-item"><span class="fw-bold">Encrypted Size: </span>@(ByteSizeLib.ByteSize.FromBytes(MessageSize).ToBinaryString())</li>
                <li class="list-group-item"><span class="fw-bold">Created: </span>@Created.ToString("MM/dd/yyyy h:mm tt")</li>
                <li class="list-group-item"><span class="fw-bold">Expiration: </span>@Expiration.ToString("MM/dd/yyyy h:mm tt")</li>
             </ul>
