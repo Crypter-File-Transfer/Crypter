@@ -51,14 +51,32 @@
                   <h3>@Alias</h3>
                   <h4>@($"@{ProperUsername}")</h4>
                }
+
+               @if (EmailVerified)
+               {
+                  <p class="text-primary">
+                     <i class="bi-envelope-check" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                     Verified
+                  </p>
+               }
+               else
+               {
+                  <p class="text-secondary">
+                     <i class="bi-envelope-x" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                     Not Verified
+                  </p>
+               }
             </div>
 
-            <div class="mx-2 mt-auto">
-               <div class="row">
-                  <h3>About</h3>
-                  <p>@About</p>
-               </div>
-               
+            <div class="mx-2">
+               @if (!string.IsNullOrWhiteSpace(About))
+               {
+                  <div class="row">
+                     <h3>About</h3>
+                     <p>@About</p>
+                  </div>
+               }
+
                <div class="row">
                   <h3>Transfer</h3>
                   <div class="col-12">

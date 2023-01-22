@@ -76,7 +76,8 @@ namespace Crypter.Core.Extensions
                || x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Everyone
                || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Authenticated && visitorId != null)
                || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Contacts && x.Contacts.Any(y => y.ContactId == visitorId)),
-            x.KeyPair.PublicKey);
+            x.KeyPair.PublicKey,
+            x.EmailVerified);
       }
 
       public static Expression<Func<UserEntity, bool>> UserReceivesEmailNotifications()

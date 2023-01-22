@@ -53,6 +53,7 @@ namespace Crypter.Web.Pages
       protected bool AllowsFiles;
       protected bool AllowsMessages;
       protected byte[] UserPublicKey;
+      protected bool EmailVerified;
 
       protected override void OnInitialized()
       {
@@ -78,6 +79,7 @@ namespace Crypter.Web.Pages
             AllowsFiles = x.Result.ReceivesFiles;
             AllowsMessages = x.Result.ReceivesMessages;
             UserPublicKey = x.Result.PublicKey;
+            EmailVerified = x.Result.EmailVerified;
          });
 
          IsProfileAvailable = response.Match(
