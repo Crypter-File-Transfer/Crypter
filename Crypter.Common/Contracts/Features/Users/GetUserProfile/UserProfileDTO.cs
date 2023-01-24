@@ -37,9 +37,10 @@ namespace Crypter.Common.Contracts.Features.Users
       public bool ReceivesMessages { get; set; }
       public bool ReceivesFiles { get; set; }
       public byte[] PublicKey { get; set; }
+      public bool EmailVerified { get; set; }
 
       [JsonConstructor]
-      public UserProfileDTO(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, byte[] publicKey)
+      public UserProfileDTO(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, byte[] publicKey, bool emailVerified)
       {
          Username = username;
          Alias = alias;
@@ -48,6 +49,7 @@ namespace Crypter.Common.Contracts.Features.Users
          ReceivesMessages = receivesMessages;
          ReceivesFiles = receivesFiles;
          PublicKey = publicKey;
+         EmailVerified = emailVerified;
       }
    }
 }
