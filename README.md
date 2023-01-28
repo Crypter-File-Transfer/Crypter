@@ -33,16 +33,16 @@ A RESTful API written using ASP.NET.
 
 A sandbox for benchmarking various things.
 
-### Crypter.ClientServices
+### Crypter.Common
+
+A small class library containing domain models and data types that may be used in any project.
+
+### Crypter.Common.Client
 
 A class library containing various interfaces and most of their implementations for use in client applications.
 
 The "Repository" interfaces must be implemented per-environment, since these implementations must decide where and how to store data on the client device.
 These decisions and locations are device-specific.  For example, storing data in a browser is likely to be different than storing data on a mobile phone.
-
-### Crypter.Common
-
-A small class library containing domain models and data types that may be used in any project.
 
 ### Crypter.Core
 

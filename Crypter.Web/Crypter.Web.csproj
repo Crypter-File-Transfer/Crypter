@@ -22,8 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Crypter.ClientServices\Crypter.ClientServices.csproj" />
     <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
+    <ProjectReference Include="..\Crypter.Common.Client\Crypter.Common.Client.csproj" />
     <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
     <ProjectReference Include="..\Crypter.Crypto.Providers.Browser\Crypter.Crypto.Providers.Browser.csproj" />
   </ItemGroup>
