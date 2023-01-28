@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Crypter.ClientServices\Crypter.ClientServices.csproj" />
+    <ProjectReference Include="..\Crypter.Common.Client\Crypter.Common.Client.csproj" />
     <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
   </ItemGroup>
 
