@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.DeviceStorage.Enums;
+using Crypter.Common.Client.DeviceStorage.Enums;
 using Crypter.Common.Monads;
 using System;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Interfaces.Repositories
+namespace Crypter.Common.Client.Interfaces.Repositories
 {
    /// <summary>
    /// An interface for storing all types of data on the client device.

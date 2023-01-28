@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.ClientServices.DeviceStorage.Enums
+namespace Crypter.Common.Client.DeviceStorage.Enums
 {
    public enum BrowserStorageLocation
    {

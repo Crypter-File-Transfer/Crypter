@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Transfer.Handlers.Base;
-using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Transfer.Handlers.Base;
+using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
@@ -36,7 +36,7 @@ using System;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Transfer.Handlers
+namespace Crypter.Common.Client.Transfer.Handlers
 {
    public class DownloadMessageHandler : DownloadHandler
    {

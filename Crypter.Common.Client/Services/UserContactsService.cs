@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Events;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Events;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Monads;
@@ -35,7 +35,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Services
+namespace Crypter.Common.Client.Services
 {
    public class UserContactsService : IUserContactsService, IDisposable
    {

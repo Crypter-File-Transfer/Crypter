@@ -38,7 +38,7 @@ using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.Common.Client.Interfaces
 {
    public interface ICrypterApiService
    {

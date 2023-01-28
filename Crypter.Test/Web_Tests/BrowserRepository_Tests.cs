@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.DeviceStorage.Enums;
-using Crypter.ClientServices.DeviceStorage.Models;
+using Crypter.Common.Client.DeviceStorage.Enums;
+using Crypter.Common.Client.DeviceStorage.Models;
 using Crypter.Web.Repositories;
 using Microsoft.JSInterop;
 using Moq;

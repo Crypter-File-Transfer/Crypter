@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Services;
-using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Client.Services;
+using Crypter.Common.Client.Transfer.Models;
 
 namespace Crypter.Web.Models.Settings
 {

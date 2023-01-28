@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.DeviceStorage.Models;
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Events;
-using Crypter.ClientServices.Interfaces.Repositories;
+using Crypter.Common.Client.DeviceStorage.Models;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Events;
+using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
@@ -38,7 +38,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Services
+namespace Crypter.Common.Client.Services
 {
    public class UserSessionService<TStorageLocation> : IUserSessionService, IDisposable
       where TStorageLocation : Enum

@@ -26,7 +26,7 @@
 
 using System;
 
-namespace Crypter.ClientServices.Transfer.Handlers.Base
+namespace Crypter.Common.Client.Transfer.Handlers.Base
 {
    public interface IUserUploadHandler
    {

@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.DeviceStorage.Enums;
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Repositories;
+using Crypter.Common.Client.DeviceStorage.Enums;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;

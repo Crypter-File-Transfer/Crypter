@@ -24,13 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces.Models;
+using Crypter.Common.Client.Interfaces.Models;
 using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.Common.Client.Interfaces
 {
    public interface IUserKeysService
    {

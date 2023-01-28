@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.ClientServices.Transfer.Models
+namespace Crypter.Common.Client.Transfer.Models
 {
    public class TransferSettings
    {

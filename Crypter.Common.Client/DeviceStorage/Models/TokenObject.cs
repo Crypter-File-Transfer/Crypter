@@ -26,7 +26,7 @@
 
 using Crypter.Common.Enums;
 
-namespace Crypter.ClientServices.DeviceStorage.Models
+namespace Crypter.Common.Client.DeviceStorage.Models
 {
    public class TokenObject
    {

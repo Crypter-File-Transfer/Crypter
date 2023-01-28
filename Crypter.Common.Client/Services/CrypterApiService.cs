@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Contracts.Features.Consent;
@@ -44,7 +44,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Services
+namespace Crypter.Common.Client.Services
 {
    public class CrypterApiService : ICrypterApiService
    {

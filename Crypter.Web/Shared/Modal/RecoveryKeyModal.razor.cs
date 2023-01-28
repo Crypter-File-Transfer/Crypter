@@ -25,8 +25,8 @@
  */
 
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Models;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Models;
 using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;

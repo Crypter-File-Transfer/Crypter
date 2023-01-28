@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.DeviceStorage.Models;
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Repositories;
+using Crypter.Common.Client.DeviceStorage.Models;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Monads;
@@ -41,7 +41,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Services
+namespace Crypter.Common.Client.Services
 {
    public class CrypterAuthenticatedHttpService : ICrypterAuthenticatedHttpService
    {

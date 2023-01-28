@@ -27,7 +27,7 @@
 using Crypter.Common.Primitives;
 using System.Text.Json.Serialization;
 
-namespace Crypter.ClientServices.DeviceStorage.Models
+namespace Crypter.Common.Client.DeviceStorage.Models
 {
    public class UserSession
    {

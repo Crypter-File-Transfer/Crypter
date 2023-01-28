@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.DeviceStorage.Models;
+using Crypter.Common.Client.DeviceStorage.Models;
 using Crypter.Common.Monads;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Interfaces.Repositories
+namespace Crypter.Common.Client.Interfaces.Repositories
 {
    /// <summary>
    /// Simple abstraction over IDeviceRepository

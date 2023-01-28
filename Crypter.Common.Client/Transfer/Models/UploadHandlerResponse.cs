@@ -28,7 +28,7 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 
-namespace Crypter.ClientServices.Transfer.Models
+namespace Crypter.Common.Client.Transfer.Models
 {
    public class UploadHandlerResponse
    {
