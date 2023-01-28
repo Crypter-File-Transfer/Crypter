@@ -27,7 +27,7 @@
 using Crypter.Common.Infrastructure;
 using System.Text.Json.Serialization;
 
-namespace Crypter.ClientServices.Interfaces.Enum
+namespace Crypter.Common.Client.Interfaces.Enum
 {
    public enum PasswordHashType
    {

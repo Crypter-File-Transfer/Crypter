@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.Common.Client.Interfaces
 {
    public interface IClientApiSettings
    {

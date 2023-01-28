@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.ClientServices.DeviceStorage.Models
+namespace Crypter.Common.Client.DeviceStorage.Models
 {
    public class EncryptedPrivateKey
    {

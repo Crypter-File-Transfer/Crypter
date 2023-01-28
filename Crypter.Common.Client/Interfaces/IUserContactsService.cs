@@ -29,7 +29,7 @@ using Crypter.Common.Monads;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Interfaces
+namespace Crypter.Common.Client.Interfaces
 {
    public interface IUserContactsService
    {

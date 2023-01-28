@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces.Enum;
+using Crypter.Common.Client.Interfaces.Enum;
 
-namespace Crypter.ClientServices.Interfaces.Events
+namespace Crypter.Common.Client.Interfaces.Events
 {
    public class PasswordHashBeginEventArgs
    {

@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Transfer.Models;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;

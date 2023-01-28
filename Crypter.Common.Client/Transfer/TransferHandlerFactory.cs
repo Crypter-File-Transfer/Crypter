@@ -24,14 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Transfer.Handlers;
-using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Transfer.Handlers;
+using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Common;
 using System.IO;
 
-namespace Crypter.ClientServices.Transfer
+namespace Crypter.Common.Client.Transfer
 {
    public class TransferHandlerFactory
    {

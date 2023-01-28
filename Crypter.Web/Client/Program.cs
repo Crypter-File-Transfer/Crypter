@@ -25,12 +25,12 @@
  */
 
 using BlazorSodium.Extensions;
-using Crypter.ClientServices.DeviceStorage.Enums;
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Repositories;
-using Crypter.ClientServices.Services;
-using Crypter.ClientServices.Transfer;
-using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Client.DeviceStorage.Enums;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Services;
+using Crypter.Common.Client.Transfer;
+using Crypter.Common.Client.Transfer.Models;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Browser;
 using Crypter.Web;

@@ -28,7 +28,7 @@ using System;
 using System.Text;
 using System.Text.Json;
 
-namespace Crypter.ClientServices.Interfaces.Models
+namespace Crypter.Common.Client.Interfaces.Models
 {
    public class RecoveryKey
    {

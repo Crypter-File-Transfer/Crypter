@@ -28,7 +28,7 @@ using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Primitives;
 using System;
 
-namespace Crypter.ClientServices.Interfaces.Events
+namespace Crypter.Common.Client.Interfaces.Events
 {
    public class UserLoggedInEventArgs : EventArgs
    {

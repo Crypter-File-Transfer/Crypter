@@ -26,7 +26,7 @@
 
 using Crypter.Common.Primitives;
 
-namespace Crypter.ClientServices.Interfaces.Events
+namespace Crypter.Common.Client.Interfaces.Events
 {
    public class UserPasswordTestSuccessEventArgs
    {

@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Enum;
-using Crypter.ClientServices.Interfaces.Events;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Enum;
+using Crypter.Common.Client.Interfaces.Events;
 using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
@@ -38,7 +38,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypter.ClientServices.Services
+namespace Crypter.Common.Client.Services
 {
    public class UserPasswordService : IUserPasswordService
    {
