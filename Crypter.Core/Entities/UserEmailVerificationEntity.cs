@@ -56,6 +56,9 @@ namespace Crypter.Core.Entities
 
          builder.HasKey(x => x.Owner);
 
+         builder.HasIndex(x => x.Code)
+            .IsUnique();
+
          builder.HasOne(x => x.User)
             .WithOne(x => x.EmailVerification)
             .HasForeignKey<UserEmailVerificationEntity>(x => x.Owner)
