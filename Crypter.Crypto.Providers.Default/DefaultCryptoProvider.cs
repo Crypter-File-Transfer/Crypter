@@ -47,9 +47,9 @@ namespace Crypter.Crypto.Providers.Default
       public ICryptoHash CryptoHash { get; init; }
       public IDigitalSignature DigitalSignature { get; init; }
       public IEncryption Encryption => throw new System.NotImplementedException();
-      public IGenericHash GenericHash => throw new System.NotImplementedException();
+      public IGenericHash GenericHash { get; init; }
       public IKeyExchange KeyExchange { get; init; }
-      public IPadding Padding => throw new System.NotImplementedException();
+      public IPadding Padding { get; init; }
       public IPasswordHash PasswordHash => throw new System.NotImplementedException();
       public IRandom Random { get; init; }
       public IStreamEncryptionFactory StreamEncryptionFactory { get; init; }
@@ -60,8 +60,10 @@ namespace Crypter.Crypto.Providers.Default
          ConstantTime = new Wrappers.ConstantTime();
          CryptoHash = new CryptoHash();
          DigitalSignature = new Wrappers.DigitalSignature();
+         GenericHash = new Wrappers.GenericHash();
+         Padding = new Wrappers.Padding();
          Random = new Wrappers.Random();
-         //StreamEncryptionFactory = new Wrappers.StreamEncryptionFactory(Padding);
+         StreamEncryptionFactory = new Wrappers.StreamEncryptionFactory(Padding);
          StreamGenericHashFactory = new Wrappers.StreamGenericHashFactory();
 
          KeyExchange = new Wrappers.KeyExchange(StreamGenericHashFactory);

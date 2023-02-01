@@ -25,17 +25,34 @@
  */
 
 using Crypter.Crypto.Common.StreamGenericHash;
+using Geralt;
 using System;
+using System.Runtime.Versioning;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {
-   public class StreamGenericHashFactory : IStreamGenericHashFactory
+   [UnsupportedOSPlatform("browser")]
+   public class StreamGenericHash : IStreamGenericHash
    {
-      public uint KeySize => throw new NotImplementedException();
+      private readonly uint _hashLength;
+      private readonly IncrementalBLAKE2b _state;
 
-      public IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default)
+      public StreamGenericHash(uint hashLength, ReadOnlySpan<byte> key = default)
       {
-         return new StreamGenericHash(hashLength, key);
+         _hashLength = hashLength;
+         _state = new IncrementalBLAKE2b(checked((int)hashLength), key);
+      }
+
+      public byte[] Finalize()
+      {
+         byte[] buffer = new byte[_hashLength];
+         _state.Finalize(buffer);
+         return buffer;
+      }
+
+      public void Update(ReadOnlySpan<byte> data)
+      {
+         _state.Update(data);
       }
    }
 }

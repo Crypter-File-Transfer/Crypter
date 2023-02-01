@@ -24,18 +24,32 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.StreamGenericHash;
+using Crypter.Crypto.Common.GenericHash;
+using System.Runtime.Versioning;
+using Geralt;
 using System;
+using System.Text;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {
-   public class StreamGenericHashFactory : IStreamGenericHashFactory
+   [UnsupportedOSPlatform("browser")]
+   public class GenericHash : IGenericHash
    {
-      public uint KeySize => throw new NotImplementedException();
+      public uint KeySize { get => BLAKE2b.KeySize; }
 
-      public IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default)
+      public byte[] GenerateHash(uint size, ReadOnlySpan<byte> data, ReadOnlySpan<byte> key = default)
       {
-         return new StreamGenericHash(hashLength, key);
+         byte[] buffer = new byte[size];
+         BLAKE2b.ComputeTag(buffer, data, key);
+         return buffer;
+      }
+
+      public byte[] GenerateHash(uint size, string data, ReadOnlySpan<byte> key = default)
+      {
+         byte[] buffer = new byte[size];
+         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+         BLAKE2b.ComputeTag(buffer, dataBytes, key);
+         return buffer;
       }
    }
 }

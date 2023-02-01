@@ -24,18 +24,27 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.StreamGenericHash;
+using Crypter.Crypto.Common.Padding;
 using System;
+using System.Runtime.Versioning;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {
-   public class StreamGenericHashFactory : IStreamGenericHashFactory
+   [UnsupportedOSPlatform("browser")]
+   public class Padding : IPadding
    {
-      public uint KeySize => throw new NotImplementedException();
-
-      public IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default)
+      public byte[] Pad(ReadOnlySpan<byte> block, int blockSize)
       {
-         return new StreamGenericHash(hashLength, key);
+         int bufferSize = Geralt.Padding.GetPaddedLength(block.Length, blockSize);
+         byte[] buffer = new byte[bufferSize];
+         Geralt.Padding.Pad(buffer, block, blockSize);
+         return buffer;
+      }
+
+      public byte[] Unpad(ReadOnlySpan<byte> block, int blockSize)
+      {
+         int unpaddedLength = Geralt.Padding.GetUnpaddedLength(block, blockSize);
+         return block[..unpaddedLength].ToArray();
       }
    }
 }
