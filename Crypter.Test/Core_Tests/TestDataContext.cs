@@ -48,7 +48,7 @@ namespace Crypter.Test.Core_Tests
       }
 
       protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-         => optionsBuilder.UseNpgsql($"Host=localhost;Database={_databaseName};Username=postgres;Password=password");
+         => optionsBuilder.UseNpgsql($"Host=localhost;Database={_databaseName};Username=postgres;Password=UNIT_TESTING_PASSWORD");
 
       public void EnsureCreated()
          => Database.EnsureCreated();

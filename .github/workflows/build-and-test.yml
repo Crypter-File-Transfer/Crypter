@@ -1,0 +1,66 @@
+name: Build and Test
+
+on:
+  pull_request:
+    branches: [ main, dev, stable ]
+
+jobs:
+  build-and-test:
+
+    runs-on: ubuntu-latest
+
+    services:
+      postgres-crypter:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: UNIT_TESTING_PASSWORD
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      postgres-hangfire:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: UNIT_TESTING_PASSWORD
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5433:5432
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 7.0.x
+
+    - name: Install wasm-tools
+      run: dotnet workload install wasm-tools
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Migrate Crypter database
+      run: |
+         dotnet tool install --global dotnet-ef
+         dotnet tool restore
+         dotnet ef database update -c DataContext -p Crypter.Core -s Crypter.API --connection "host=127.0.0.1:5432;database=crypter;user id=postgres;pwd=UNIT_TESTING_PASSWORD;"
+
+    - name: Create Hangfire database
+      run: |
+          sudo apt-get install --yes --no-install-recommends postgresql-client
+          export PGPASSWORD=UNIT_TESTING_PASSWORD
+          psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE crypter_hangfire;'
+
+    - name: Test
+      run: dotnet test --configuration Release --no-build --verbosity normal
