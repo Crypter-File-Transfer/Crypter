@@ -13,7 +13,7 @@
       <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
    </ItemGroup>
    <ItemGroup>
-      <PackageReference Include="Hangfire.AspNetCore" Version="1.7.32" />
+      <PackageReference Include="Hangfire.AspNetCore" Version="1.7.33" />
       <PackageReference Include="Hangfire.PostgreSql" Version="1.9.9" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.1">
         <PrivateAssets>all</PrivateAssets>
