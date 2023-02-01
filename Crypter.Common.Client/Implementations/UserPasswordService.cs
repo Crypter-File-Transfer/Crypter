@@ -38,7 +38,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Services
+namespace Crypter.Common.Client.Implementations
 {
    public class UserPasswordService : IUserPasswordService
    {

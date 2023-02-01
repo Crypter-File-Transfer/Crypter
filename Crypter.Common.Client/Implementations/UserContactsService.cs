@@ -35,7 +35,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Services
+namespace Crypter.Common.Client.Implementations
 {
    public class UserContactsService : IUserContactsService, IDisposable
    {

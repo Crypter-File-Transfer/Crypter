@@ -35,11 +35,11 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers.Old
 {
    [ApiController]
    [Route("api/keys")]
-   public class KeyController : CrypterController
+   public class KeyController : CrypterControllerBase
    {
       private readonly IUserKeysService _userKeysService;
       private readonly ITokenService _tokenService;

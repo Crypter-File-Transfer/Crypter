@@ -26,6 +26,7 @@
 
 using Crypter.API.Attributes;
 using Crypter.API.Contracts;
+using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.Users;
@@ -40,11 +41,11 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers.Old
 {
    [ApiController]
    [Route("api/user")]
-   public class UserController : CrypterController
+   public class UserController : TransferControllerBase
    {
       private readonly ITransferUploadService _transferUploadService;
       private readonly ITokenService _tokenService;

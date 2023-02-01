@@ -24,22 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Net;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers.Base
 {
-   public abstract class CrypterController : ControllerBase
+   public abstract class TransferControllerBase : CrypterControllerBase
    {
-      protected IActionResult MakeErrorResponseBase(HttpStatusCode httpStatus, Enum errorCode)
-      {
-         ErrorResponse errorResponse = new ErrorResponse((int)httpStatus, errorCode);
-         return StatusCode((int)httpStatus, errorResponse);
-      }
-
       protected IActionResult MakeErrorResponse(UploadTransferError error)
       {
 #pragma warning disable CS8524

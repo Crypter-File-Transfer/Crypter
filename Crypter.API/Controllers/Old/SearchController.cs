@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers.Old
 {
    [ApiController]
    [Route("api/search")]
-   public class SearchController : CrypterController
+   public class SearchController : CrypterControllerBase
    {
       private readonly IUserService _userService;
       private readonly ITokenService _tokenService;

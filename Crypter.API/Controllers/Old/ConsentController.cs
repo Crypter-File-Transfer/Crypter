@@ -24,12 +24,37 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Contracts.Features.Consent;
+using Crypter.Core.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Services
+namespace Crypter.API.Controllers.Old
 {
-   public class ClientApiSettings : IClientApiSettings
+   [ApiController]
+   [Route("api/consent")]
+   public class ConsentController : CrypterControllerBase
    {
-      public string ApiBaseUrl { get; set; }
+      private readonly ITokenService _tokenService;
+      private readonly IUserService _userService;
+
+      public ConsentController(ITokenService tokenService, IUserService userService)
+      {
+         _tokenService = tokenService;
+         _userService = userService;
+      }
+
+      [HttpPost("recovery-key")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ConsentToRecoveryKeyRisksResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> ConsentToRecoveryKeyRisksAsync()
+      {
+         var userId = _tokenService.ParseUserId(User);
+         var result = await _userService.SaveUserAcknowledgementOfRecoveryKeyRisksAsync(userId);
+         return Ok(result);
+      }
    }
 }

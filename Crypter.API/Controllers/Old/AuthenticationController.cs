@@ -36,11 +36,11 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers.Old
 {
    [ApiController]
    [Route("api/authentication")]
-   public class AuthenticationController : CrypterController
+   public class AuthenticationController : CrypterControllerBase
    {
       private readonly ITokenService _tokenService;
       private readonly IUserAuthenticationService _userAuthenticationService;

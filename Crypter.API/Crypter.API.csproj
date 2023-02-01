@@ -9,6 +9,9 @@
      <None Include="..\.editorconfig" Link=".editorconfig" />
    </ItemGroup>
    <ItemGroup>
+      <InternalsVisibleTo Include="Crypter.Test" />
+   </ItemGroup>
+   <ItemGroup>
       <ProjectReference Include="..\Crypter.Crypto.Providers.Default\Crypter.Crypto.Providers.Default.csproj" />
       <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
    </ItemGroup>

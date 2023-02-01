@@ -41,7 +41,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Services
+namespace Crypter.Common.Client.Implementations
 {
    public class CrypterAuthenticatedHttpService : ICrypterAuthenticatedHttpService
    {

@@ -34,11 +34,11 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers.Old
 {
    [ApiController]
    [Route("api/contacts")]
-   public class ContactsController : CrypterController
+   public class ContactsController : CrypterControllerBase
    {
       private readonly IUserContactsService _userContactsService;
       private readonly ITokenService _tokenService;

@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Contracts.Features.Consent;
@@ -43,6 +44,8 @@ namespace Crypter.Common.Client.Interfaces
    public interface ICrypterApiService
    {
       event EventHandler RefreshTokenRejectedEventHandler;
+
+      IFileTransferRequests FileTransfer { get; }
 
       #region Authentication
       Task<Either<RegistrationError, RegistrationResponse>> RegisterUserAsync(RegistrationRequest registerRequest);

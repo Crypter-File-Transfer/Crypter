@@ -24,7 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Client.Implementations.Requests;
 using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Contracts.Features.Consent;
@@ -44,21 +46,23 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Services
+namespace Crypter.Common.Client.Implementations
 {
    public class CrypterApiService : ICrypterApiService
    {
       private readonly ICrypterHttpService _crypterHttpService;
       private readonly ICrypterAuthenticatedHttpService _crypterAuthenticatedHttpService;
 
-      private readonly string _baseApiUrl;
       private EventHandler _refreshTokenRejectedHandler;
 
-      public CrypterApiService(ICrypterHttpService crypterHttpService, ICrypterAuthenticatedHttpService crypterAuthenticatedHttpService, IClientApiSettings clientApiSettings)
+      public IFileTransferRequests FileTransfer { get; init; }
+
+      public CrypterApiService(ICrypterHttpService crypterHttpService, ICrypterAuthenticatedHttpService crypterAuthenticatedHttpService)
       {
          _crypterHttpService = crypterHttpService;
          _crypterAuthenticatedHttpService = crypterAuthenticatedHttpService;
-         _baseApiUrl = clientApiSettings.ApiBaseUrl;
+
+         FileTransfer = new FileTransferRequests(_crypterHttpService, _crypterAuthenticatedHttpService);
       }
 
       /// <summary>
@@ -87,7 +91,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<RegistrationError, RegistrationResponse>> RegisterUserAsync(RegistrationRequest registerRequest)
       {
-         string url = $"{_baseApiUrl}/authentication/register";
+         string url = "/authentication/register";
          return from response in Either<RegistrationError, (HttpStatusCode httpStatus, Either<ErrorResponse, RegistrationResponse> data)>.FromRightAsync(
                      _crypterHttpService.PostAsync<RegistrationRequest, RegistrationResponse>(url, registerRequest))
                 from errorableResponse in ExtractErrorCode<RegistrationError, RegistrationResponse>(response.data).AsTask()
@@ -96,7 +100,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest)
       {
-         string url = $"{_baseApiUrl}/authentication/login";
+         string url = "/authentication/login";
          return from response in Either<LoginError, (HttpStatusCode httpStatus, Either<ErrorResponse, LoginResponse> data)>.FromRightAsync(
                      _crypterHttpService.PostAsync<LoginRequest, LoginResponse>(url, loginRequest))
                 from errorableResponse in ExtractErrorCode<LoginError, LoginResponse>(response.data).AsTask()
@@ -105,7 +109,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<TestPasswordError, TestPasswordResponse>> TestPasswordAsync(TestPasswordRequest testPasswordRequest)
       {
-         string url = $"{_baseApiUrl}/authentication/password/test";
+         string url = "/authentication/password/test";
          return from response in Either<TestPasswordError, (HttpStatusCode httpStatus, Either<ErrorResponse, TestPasswordResponse> data)>.FromRightAsync(
                      _crypterAuthenticatedHttpService.PostAsync<TestPasswordRequest, TestPasswordResponse>(url, testPasswordRequest))
                 from errorableResponse in ExtractErrorCode<TestPasswordError, TestPasswordResponse>(response.data).AsTask()
@@ -114,7 +118,7 @@ namespace Crypter.Common.Client.Services
 
       public async Task<Either<RefreshError, RefreshResponse>> RefreshAsync()
       {
-         string url = $"{_baseApiUrl}/authentication/refresh";
+         string url = "/authentication/refresh";
          var task = from response in Either<RefreshError, (HttpStatusCode httpStatus, Either<ErrorResponse, RefreshResponse> data)>.FromRightAsync(
                         _crypterAuthenticatedHttpService.GetAsync<RefreshResponse>(url, true))
                     from errorableResponse in ExtractErrorCode<RefreshError, RefreshResponse>(response.data).AsTask()
@@ -127,7 +131,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<LogoutError, LogoutResponse>> LogoutAsync()
       {
-         string url = $"{_baseApiUrl}/authentication/logout";
+         string url = "/authentication/logout";
          return from response in Either<LogoutError, (HttpStatusCode httpStatus, Either<ErrorResponse, LogoutResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<LogoutResponse>(url, true))
                 from errorableResponse in ExtractErrorCode<LogoutError, LogoutResponse>(response.data).AsTask()
@@ -140,7 +144,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DummyError, ConsentToRecoveryKeyRisksResponse>> ConsentToRecoveryKeyRisksAsync()
       {
-         string url = $"{_baseApiUrl}/consent/recovery-key";
+         string url = "/consent/recovery-key";
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, ConsentToRecoveryKeyRisksResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<ConsentToRecoveryKeyRisksResponse>(url, true))
                 from errorableResponse in ExtractErrorCode<DummyError, ConsentToRecoveryKeyRisksResponse>(response.data).AsTask()
@@ -153,7 +157,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DummyError, GetUserContactsResponse>> GetUserContactsAsync()
       {
-         string url = $"{_baseApiUrl}/contacts";
+         string url = "/contacts";
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetUserContactsResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.GetAsync<GetUserContactsResponse>(url))
                 from errorableResponse in ExtractErrorCode<DummyError, GetUserContactsResponse>(response.data).AsTask()
@@ -162,7 +166,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<AddUserContactError, AddUserContactResponse>> AddUserContactAsync(AddUserContactRequest request)
       {
-         string url = $"{_baseApiUrl}/contacts";
+         string url = "/contacts";
          return from response in Either<AddUserContactError, (HttpStatusCode httpStatus, Either<ErrorResponse, AddUserContactResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<AddUserContactRequest, AddUserContactResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<AddUserContactError, AddUserContactResponse>(response.data).AsTask()
@@ -171,7 +175,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DummyError, RemoveContactResponse>> RemoveUserContactAsync(RemoveContactRequest request)
       {
-         string url = $"{_baseApiUrl}/contacts";
+         string url = "/contacts";
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, RemoveContactResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.DeleteAsync<RemoveContactRequest, RemoveContactResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<DummyError, RemoveContactResponse>(response.data).AsTask()
@@ -184,7 +188,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)
       {
-         string url = $"{_baseApiUrl}/file";
+         string url = "/file";
          ICrypterHttpService service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
@@ -205,7 +209,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadAnonymousFilePreviewAsync(string hashId)
       {
-         string url = $"{_baseApiUrl}/file/preview/?id={hashId}";
+         string url = "/file/preview/?id={hashId}";
          return from response in Either<DownloadTransferPreviewError, (HttpStatusCode httpStatus, Either<ErrorResponse, DownloadTransferFilePreviewResponse> data)>.FromRightAsync(
                   _crypterHttpService.GetAsync<DownloadTransferFilePreviewResponse>(url))
                 from errorableResponse in ExtractErrorCode<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>(response.data).AsTask()
@@ -214,7 +218,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest)
       {
-         string url = $"{_baseApiUrl}/file/ciphertext/?id={hashId}";
+         string url = "/file/ciphertext/?id={hashId}";
          return from response in Either<DownloadTransferCiphertextError, (HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> data)>.FromRightAsync(
                   _crypterHttpService.PostWithStreamResponseAsync<DownloadTransferCiphertextRequest>(url, downloadRequest))
                 from errorableResponse in ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>(response.data).AsTask()
@@ -223,7 +227,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadUserFilePreviewAsync(string hashId, bool withAuthentication)
       {
-         string url = $"{_baseApiUrl}/file/user/preview/?id={hashId}";
+         string url = "/file/user/preview/?id={hashId}";
          ICrypterHttpService service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
@@ -236,7 +240,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication)
       {
-         string url = $"{_baseApiUrl}/file/user/ciphertext/?id={hashId}";
+         string url = "/file/user/ciphertext/?id={hashId}";
          ICrypterHttpService service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
@@ -253,7 +257,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync()
       {
-         string url = $"{_baseApiUrl}/keys/master";
+         string url = "/keys/master";
          return from response in Either<GetMasterKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetMasterKeyResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.GetAsync<GetMasterKeyResponse>(url))
                 from errorableResponse in ExtractErrorCode<GetMasterKeyError, GetMasterKeyResponse>(response.data).AsTask()
@@ -262,7 +266,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(InsertMasterKeyRequest request)
       {
-         string url = $"{_baseApiUrl}/keys/master";
+         string url = "/keys/master";
          return from response in Either<InsertMasterKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertMasterKeyResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PutAsync<InsertMasterKeyRequest, InsertMasterKeyResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<InsertMasterKeyError, InsertMasterKeyResponse>(response.data).AsTask()
@@ -271,7 +275,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
       {
-         string url = $"{_baseApiUrl}/keys/master/recovery-proof";
+         string url = "/keys/master/recovery-proof";
          return from response in Either<GetMasterKeyRecoveryProofError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetMasterKeyRecoveryProofResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<GetMasterKeyRecoveryProofRequest, GetMasterKeyRecoveryProofResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>(response.data).AsTask()
@@ -280,7 +284,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync()
       {
-         string url = $"{_baseApiUrl}/keys/private";
+         string url = "/keys/private";
          return from response in Either<GetPrivateKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetPrivateKeyResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.GetAsync<GetPrivateKeyResponse>(url))
                 from errorableResponse in ExtractErrorCode<GetPrivateKeyError, GetPrivateKeyResponse>(response.data).AsTask()
@@ -289,7 +293,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request)
       {
-         string url = $"{_baseApiUrl}/keys/private";
+         string url = "/keys/private";
          return from response in Either<InsertKeyPairError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertKeyPairResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PutAsync<InsertKeyPairRequest, InsertKeyPairResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<InsertKeyPairError, InsertKeyPairResponse>(response.data).AsTask()
@@ -302,7 +306,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<GetUserProfileError, GetUserProfileResponse>> GetUserProfileAsync(string username, bool withAuthentication)
       {
-         string url = $"{_baseApiUrl}/user/{username}/profile";
+         string url = "/user/{username}/profile";
          ICrypterHttpService service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
@@ -315,7 +319,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DummyError, UserReceivedFilesResponse>> GetReceivedFilesAsync()
       {
-         string url = $"{_baseApiUrl}/user/self/file/received";
+         string url = "/user/self/file/received";
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserReceivedFilesResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.GetAsync<UserReceivedFilesResponse>(url))
                 from errorableResponse in ExtractErrorCode<DummyError, UserReceivedFilesResponse>(response.data).AsTask()
@@ -324,7 +328,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DummyError, UserSentFilesResponse>> GetSentFilesAsync()
       {
-         string url = $"{_baseApiUrl}/user/self/file/sent";
+         string url = "/user/self/file/sent";
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserSentFilesResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.GetAsync<UserSentFilesResponse>(url))
                 from errorableResponse in ExtractErrorCode<DummyError, UserSentFilesResponse>(response.data).AsTask()
@@ -333,7 +337,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DummyError, UserReceivedMessagesResponse>> GetReceivedMessagesAsync()
       {
-         string url = $"{_baseApiUrl}/user/self/message/received";
+         string url = "/user/self/message/received";
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserReceivedMessagesResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.GetAsync<UserReceivedMessagesResponse>(url))
                 from errorableResponse in ExtractErrorCode<DummyError, UserReceivedMessagesResponse>(response.data).AsTask()
@@ -342,7 +346,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DummyError, UserSentMessagesResponse>> GetSentMessagesAsync()
       {
-         string url = $"{_baseApiUrl}/user/self/message/sent";
+         string url = "/user/self/message/sent";
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserSentMessagesResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.GetAsync<UserSentMessagesResponse>(url))
                 from errorableResponse in ExtractErrorCode<DummyError, UserSentMessagesResponse>(response.data).AsTask()
@@ -351,7 +355,7 @@ namespace Crypter.Common.Client.Services
 
       public async Task<Either<UploadTransferError, UploadTransferResponse>> SendUserFileTransferAsync(string username, UploadFileTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)
       {
-         string url = $"{_baseApiUrl}/user/{username}/file";
+         string url = "/user/{username}/file";
          ICrypterHttpService service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
@@ -378,7 +382,7 @@ namespace Crypter.Common.Client.Services
 
       public async Task<Either<UploadTransferError, UploadTransferResponse>> SendUserMessageTransferAsync(string username, UploadMessageTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)
       {
-         string url = $"{_baseApiUrl}/user/{username}/message";
+         string url = "/user/{username}/message";
          ICrypterHttpService service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
@@ -409,7 +413,7 @@ namespace Crypter.Common.Client.Services
 
       public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)
       {
-         string url = $"{_baseApiUrl}/message";
+         string url = "/message";
          ICrypterHttpService service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
@@ -436,7 +440,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadAnonymousMessagePreviewAsync(string hashId)
       {
-         string url = $"{_baseApiUrl}/message/preview/?id={hashId}";
+         string url = "/message/preview/?id={hashId}";
          return from response in Either<DownloadTransferPreviewError, (HttpStatusCode httpStatus, Either<ErrorResponse, DownloadTransferMessagePreviewResponse> data)>.FromRightAsync(
                   _crypterHttpService.GetAsync<DownloadTransferMessagePreviewResponse>(url))
                 from errorableResponse in ExtractErrorCode<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>(response.data).AsTask()
@@ -445,7 +449,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest)
       {
-         string url = $"{_baseApiUrl}/message/ciphertext/?id={hashId}";
+         string url = "/message/ciphertext/?id={hashId}";
          return from response in Either<DownloadTransferCiphertextError, (HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> data)>.FromRightAsync(
                   _crypterHttpService.PostWithStreamResponseAsync<DownloadTransferCiphertextRequest>(url, downloadRequest))
                 from errorableResponse in ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>(response.data).AsTask()
@@ -454,7 +458,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadUserMessagePreviewAsync(string hashId, bool withAuthentication)
       {
-         string url = $"{_baseApiUrl}/message/user/preview/?id={hashId}";
+         string url = "/message/user/preview/?id={hashId}";
          ICrypterHttpService service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
@@ -467,7 +471,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication)
       {
-         string url = $"{_baseApiUrl}/message/user/ciphertext/?id={hashId}";
+         string url = "/message/user/ciphertext/?id={hashId}";
          ICrypterHttpService service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
@@ -484,7 +488,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DummyError, DiskMetricsResponse>> GetDiskMetricsAsync()
       {
-         string url = $"{_baseApiUrl}/metrics/disk";
+         string url = "/metrics/disk";
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, DiskMetricsResponse> data)>.FromRightAsync(
                      _crypterHttpService.GetAsync<DiskMetricsResponse>(url))
                 from errorableResponse in ExtractErrorCode<DummyError, DiskMetricsResponse>(response.data).AsTask()
@@ -497,7 +501,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DummyError, UserSearchResponse>> GetUserSearchResultsAsync(UserSearchParameters searchInfo)
       {
-         StringBuilder urlBuilder = new StringBuilder($"{_baseApiUrl}/search/user?value=");
+         StringBuilder urlBuilder = new StringBuilder("/search/user?value=");
          urlBuilder.Append(searchInfo.Keyword);
          urlBuilder.Append("&index=");
          urlBuilder.Append(searchInfo.Index);
@@ -518,7 +522,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<DummyError, UserSettingsResponse>> GetUserSettingsAsync()
       {
-         string url = $"{_baseApiUrl}/settings";
+         string url = "/settings";
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserSettingsResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.GetAsync<UserSettingsResponse>(url))
                 from errorableResponse in ExtractErrorCode<DummyError, UserSettingsResponse>(response.data).AsTask()
@@ -527,7 +531,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateContactInfoAsync(UpdateContactInfoRequest request)
       {
-         string url = $"{_baseApiUrl}/settings/contact-info";
+         string url = "/settings/contact-info";
          return from response in Either<UpdateContactInfoError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpdateContactInfoResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<UpdateContactInfoRequest, UpdateContactInfoResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<UpdateContactInfoError, UpdateContactInfoResponse>(response.data).AsTask()
@@ -536,7 +540,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<UpdateProfileError, UpdateProfileResponse>> UpdateProfileInfoAsync(UpdateProfileRequest request)
       {
-         string url = $"{_baseApiUrl}/settings/profile";
+         string url = "/settings/profile";
          return from response in Either<UpdateProfileError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpdateProfileResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<UpdateProfileRequest, UpdateProfileResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<UpdateProfileError, UpdateProfileResponse>(response.data).AsTask()
@@ -545,7 +549,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request)
       {
-         string url = $"{_baseApiUrl}/settings/notification";
+         string url = "/settings/notification";
          return from response in Either<UpdateNotificationSettingsError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpdateNotificationSettingsResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<UpdateNotificationSettingsRequest, UpdateNotificationSettingsResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>(response.data).AsTask()
@@ -554,7 +558,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request)
       {
-         string url = $"{_baseApiUrl}/settings/privacy";
+         string url = "/settings/privacy";
          return from response in Either<UpdatePrivacySettingsError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpdatePrivacySettingsResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<UpdatePrivacySettingsRequest, UpdatePrivacySettingsResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>(response.data).AsTask()
@@ -563,7 +567,7 @@ namespace Crypter.Common.Client.Services
 
       public Task<Either<VerifyEmailAddressError, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo)
       {
-         string url = $"{_baseApiUrl}/settings/verify";
+         string url = "/settings/verify";
          return from response in Either<VerifyEmailAddressError, (HttpStatusCode httpStatus, Either<ErrorResponse, VerifyEmailAddressResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpService.PostAsync<VerifyEmailAddressRequest, VerifyEmailAddressResponse>(url, verificationInfo))
                 from errorableResponse in ExtractErrorCode<VerifyEmailAddressError, VerifyEmailAddressResponse>(response.data).AsTask()

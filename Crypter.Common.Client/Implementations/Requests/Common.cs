@@ -24,28 +24,28 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Services;
-using Microsoft.AspNetCore.Mvc;
-using System.Threading;
-using System.Threading.Tasks;
+using Crypter.Common.Contracts;
+using Crypter.Common.Monads;
+using System.Linq;
 
-namespace Crypter.API.Controllers
+namespace Crypter.Common.Client.Implementations.Requests
 {
-   [Route("api/metrics")]
-   public class MetricsController : CrypterController
+   internal static class Common
    {
-      private readonly IServerMetricsService _serverMetricsService;
-
-      public MetricsController(IServerMetricsService serverMetricsService)
+      /// <summary>
+      /// Lift the first error code out of the API error response.
+      /// </summary>
+      /// <typeparam name="TErrorCode"></typeparam>
+      /// <typeparam name="TResponse"></typeparam>
+      /// <param name="response"></param>
+      /// <returns></returns>
+      /// <remarks>
+      /// Need to refactor Crypter.Web and other client services to handle multiple error codes.
+      /// </remarks>
+      internal static Either<TErrorCode, TResponse> ExtractErrorCode<TErrorCode, TResponse>(Either<ErrorResponse, TResponse> response)
       {
-         _serverMetricsService = serverMetricsService;
-      }
-
-      [HttpGet("disk")]
-      public async Task<IActionResult> GetDiskMetrics(CancellationToken cancellationToken)
-      {
-         var result = await _serverMetricsService.GetAggregateDiskMetricsAsync(cancellationToken);
-         return Ok(result);
+         return response
+            .BindLeft<TErrorCode>(x => x.Errors.Select(x => (TErrorCode)(object)x.ErrorCode).First());
       }
    }
 }

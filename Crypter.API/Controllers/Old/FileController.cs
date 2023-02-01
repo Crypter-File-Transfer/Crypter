@@ -26,6 +26,7 @@
 
 using Crypter.API.Attributes;
 using Crypter.API.Contracts;
+using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
@@ -36,17 +37,17 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers.Old
 {
    [ApiController]
-   [Route("api/message")]
-   public class MessageController : CrypterController
+   [Route("api/file")]
+   public class FileController : TransferControllerBase
    {
       private readonly ITransferDownloadService _transferDownloadService;
       private readonly ITransferUploadService _transferUploadService;
       private readonly ITokenService _tokenService;
 
-      public MessageController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
+      public FileController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
       {
          _transferDownloadService = transferDownloadService;
          _transferUploadService = transferUploadService;
@@ -57,13 +58,13 @@ namespace Crypter.API.Controllers
       [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadMessageTransferAsync([FromForm] UploadMessageTransferReceipt request, CancellationToken cancellationToken)
+      public async Task<IActionResult> UploadFileTransferAsync([FromForm] UploadFileTransferReceipt request, CancellationToken cancellationToken)
       {
          using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
          var uploadResult = await _tokenService.TryParseUserId(User)
             .MatchAsync(
-            async () => await _transferUploadService.UploadAnonymousMessageAsync(request.Data, ciphertextStream, cancellationToken),
-            async x => await _transferUploadService.UploadUserMessageAsync(x, Maybe<string>.None, request.Data, ciphertextStream, cancellationToken));
+            async () => await _transferUploadService.UploadAnonymousFileAsync(request.Data, ciphertextStream, cancellationToken),
+            async x => await _transferUploadService.UploadUserFileAsync(x, Maybe<string>.None, request.Data, ciphertextStream, cancellationToken));
 
          return uploadResult.Match(
             MakeErrorResponse,
@@ -74,9 +75,9 @@ namespace Crypter.API.Controllers
       [HttpGet("preview")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetAnonymousMessagePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetAnonymousFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
       {
-         var previewResult = await _transferDownloadService.GetAnonymousMessagePreviewAsync(id, cancellationToken);
+         var previewResult = await _transferDownloadService.GetAnonymousFilePreviewAsync(id, cancellationToken);
          return previewResult.Match(
             MakeErrorResponse,
             Ok,
@@ -87,9 +88,9 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetAnonymousMessageCiphertextAsync([FromQuery] string id, [FromBody] DownloadTransferCiphertextRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetAnonymousFileCiphertextAsync([FromQuery] string id, [FromBody] DownloadTransferCiphertextRequest request, CancellationToken cancellationToken)
       {
-         var ciphertextResult = await _transferDownloadService.GetAnonymousMessageCiphertextAsync(id, request, cancellationToken);
+         var ciphertextResult = await _transferDownloadService.GetAnonymousFileCiphertextAsync(id, request, cancellationToken);
          return ciphertextResult.Match(
             MakeErrorResponse,
             x => new FileStreamResult(x, "application/octet-stream"),
@@ -100,10 +101,10 @@ namespace Crypter.API.Controllers
       [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserMessagePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetUserFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
       {
          var userId = _tokenService.TryParseUserId(User);
-         var previewResult = await _transferDownloadService.GetUserMessagePreviewAsync(id, userId, cancellationToken);
+         var previewResult = await _transferDownloadService.GetUserFilePreviewAsync(id, userId, cancellationToken);
          return previewResult.Match(
             MakeErrorResponse,
             Ok,
@@ -115,10 +116,10 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserMessageCiphertextAsync([FromQuery] string id, [FromBody] DownloadTransferCiphertextRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetUserFileCiphertextAsync([FromQuery] string id, [FromBody] DownloadTransferCiphertextRequest request, CancellationToken cancellationToken)
       {
          var userId = _tokenService.TryParseUserId(User);
-         var ciphertextResult = await _transferDownloadService.GetUserMessageCiphertextAsync(id, request, userId, cancellationToken);
+         var ciphertextResult = await _transferDownloadService.GetUserFileCiphertextAsync(id, request, userId, cancellationToken);
          return ciphertextResult.Match(
             MakeErrorResponse,
             x => new FileStreamResult(x, "application/octet-stream"),
