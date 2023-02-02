@@ -90,6 +90,7 @@ namespace Crypter.Test.Integration_Tests
       {
          (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+
          Assert.ThrowsAsync<InvalidOperationException>(async () => await _client.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, request, encryptionStream, true));
       }
    }

@@ -54,24 +54,6 @@ namespace Crypter.API.Controllers.Old
          _tokenService = tokenService;
       }
 
-      [HttpPost]
-      [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadFileTransferAsync([FromForm] UploadFileTransferReceipt request, CancellationToken cancellationToken)
-      {
-         using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
-         var uploadResult = await _tokenService.TryParseUserId(User)
-            .MatchAsync(
-            async () => await _transferUploadService.UploadAnonymousFileAsync(request.Data, ciphertextStream, cancellationToken),
-            async x => await _transferUploadService.UploadUserFileAsync(x, Maybe<string>.None, request.Data, ciphertextStream, cancellationToken));
-
-         return uploadResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(UploadTransferError.UnknownError));
-      }
-
       [HttpGet("preview")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]

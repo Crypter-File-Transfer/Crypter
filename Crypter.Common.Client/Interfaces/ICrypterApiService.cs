@@ -66,7 +66,6 @@ namespace Crypter.Common.Client.Interfaces
       #endregion
 
       #region File Transfer
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication);
       Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadAnonymousFilePreviewAsync(string hashId);
       Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
       Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadUserFilePreviewAsync(string hashId, bool withAuthentication);
@@ -112,7 +111,6 @@ namespace Crypter.Common.Client.Interfaces
       Task<Either<DummyError, UserSentFilesResponse>> GetSentFilesAsync();
       Task<Either<DummyError, UserReceivedMessagesResponse>> GetReceivedMessagesAsync();
       Task<Either<DummyError, UserSentMessagesResponse>> GetSentMessagesAsync();
-      Task<Either<UploadTransferError, UploadTransferResponse>> SendUserFileTransferAsync(string username, UploadFileTransferRequest request, EncryptionStream encryptionStream, bool withAuthentication);
       Task<Either<UploadTransferError, UploadTransferResponse>> SendUserMessageTransferAsync(string username, UploadMessageTransferRequest request, EncryptionStream encryptionStream, bool withAuthentication);
       #endregion
    }

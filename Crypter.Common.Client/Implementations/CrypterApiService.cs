@@ -186,27 +186,6 @@ namespace Crypter.Common.Client.Implementations
 
       #region File Transfer
 
-      public Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(UploadFileTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)
-      {
-         string url = "/file";
-         ICrypterHttpService service = withAuthentication
-            ? _crypterAuthenticatedHttpService
-            : _crypterHttpService;
-
-         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
-         using var content = new MultipartFormDataContent
-         {
-            { new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"), "Data" },
-            { new StreamContent(encryptionStream), "Ciphertext", "Ciphertext" }
-         };
-         request.Content = content;
-
-         return from response in Either<UploadTransferError, (HttpStatusCode httpStatus, Either<ErrorResponse, UploadTransferResponse> data)>.FromRightAsync(
-                     service.SendAsync<UploadTransferResponse>(request))
-                from errorableResponse in ExtractErrorCode<UploadTransferError, UploadTransferResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
       public Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadAnonymousFilePreviewAsync(string hashId)
       {
          string url = "/file/preview/?id={hashId}";
@@ -351,33 +330,6 @@ namespace Crypter.Common.Client.Implementations
                   _crypterAuthenticatedHttpService.GetAsync<UserSentMessagesResponse>(url))
                 from errorableResponse in ExtractErrorCode<DummyError, UserSentMessagesResponse>(response.data).AsTask()
                 select errorableResponse;
-      }
-
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> SendUserFileTransferAsync(string username, UploadFileTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)
-      {
-         string url = "/user/{username}/file";
-         ICrypterHttpService service = withAuthentication
-            ? _crypterAuthenticatedHttpService
-            : _crypterHttpService;
-
-         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
-         var content = new MultipartFormDataContent
-         {
-            { new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"), "Data" },
-            { new StreamContent(encryptionStream), "Ciphertext", "Ciphertext" }
-         };
-         request.Content = content;
-
-         var result = from response in Either<UploadTransferError, (HttpStatusCode httpStatus, Either<ErrorResponse, UploadTransferResponse> data)>.FromRightAsync(
-                        service.SendAsync<UploadTransferResponse>(request))
-                      from errorableResponse in ExtractErrorCode<UploadTransferError, UploadTransferResponse>(response.data).AsTask()
-                      select errorableResponse;
-         await result;
-
-         request.Dispose();
-         content.Dispose();
-
-         return result.Result;
       }
 
       public async Task<Either<UploadTransferError, UploadTransferResponse>> SendUserMessageTransferAsync(string username, UploadMessageTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)

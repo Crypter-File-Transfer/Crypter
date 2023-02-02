@@ -57,15 +57,12 @@ namespace Crypter.Common.Client.Transfer.Handlers
          _expirationHours = expirationHours;
       }
 
-      public async Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
+      public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
       {
          var (encryptionStream, senderPublicKey, proof) = GetEncryptionInfo(_fileStream, _fileSize);
          UploadFileTransferRequest request = new UploadFileTransferRequest(_fileName, _fileContentType, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
-         Either<UploadTransferError, UploadTransferResponse> response = await _recipientUsername.Match(
-            () => _crypterApiService.UploadFileTransferAsync(request, encryptionStream, _senderDefined),
-            x => _crypterApiService.SendUserFileTransferAsync(x, request, encryptionStream, _senderDefined));
- 
-         return response.Map(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.File, x.UserType, _recipientKeySeed));
+         return _crypterApiService.FileTransfer.UploadFileTransferAsync(_recipientUsername, request, encryptionStream, _senderDefined)
+            .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.File, x.UserType, _recipientKeySeed));
       }
 
       public void Dispose()
