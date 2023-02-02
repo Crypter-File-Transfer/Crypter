@@ -49,11 +49,11 @@ namespace Crypter.Test.Integration_Tests.Common
       private readonly string HangfireConnectionString;
       private readonly string FileStorageLocation;
 
+      private Respawner _crypterRespawner;
       private NpgsqlConnection _defaultConnection;
-      private NpgsqlConnection _hangfireConnection;
 
-      internal Respawner CrypterRespawner { get; private set; }
-      internal Respawner HangfireRespawner { get; private set; }
+      private Respawner _hangfireRespawner;
+      private NpgsqlConnection _hangfireConnection;
 
       public Setup()
       {
@@ -78,13 +78,8 @@ namespace Crypter.Test.Integration_Tests.Common
             DbAdapter = DbAdapter.Postgres
          };
 
-         _defaultConnection.Open();
-         CrypterRespawner = await Respawner.CreateAsync(_defaultConnection, respawnOptions);
-         _defaultConnection.Close();
-
-         _hangfireConnection.Open();
-         HangfireRespawner = await Respawner.CreateAsync(_hangfireConnection, respawnOptions);
-         _hangfireConnection.Close();
+         _crypterRespawner = await InitializeRespawnerAsync(_defaultConnection, respawnOptions);
+         _hangfireRespawner = await InitializeRespawnerAsync(_defaultConnection, respawnOptions);
       }
 
       public async Task ResetBetweenTestRunsAsync()
@@ -96,35 +91,8 @@ namespace Crypter.Test.Integration_Tests.Common
          catch (Exception)
          { }
          
-         try
-         {
-            _defaultConnection.Open();
-            await CrypterRespawner.ResetAsync(_defaultConnection);
-         }
-         catch (Exception)
-         { }
-         finally
-         {
-            if (_defaultConnection.State == ConnectionState.Open)
-            {
-               _defaultConnection.Close();
-            }
-         }
-
-         try
-         {
-            _hangfireConnection.Open();
-            await HangfireRespawner.ResetAsync(_hangfireConnection);
-         }
-         catch (Exception)
-         { }
-         finally
-         {
-            if (_hangfireConnection.State == ConnectionState.Open)
-            {
-               _hangfireConnection.Close();
-            }
-         }
+         await ResetDatabaseAsync(_crypterRespawner, _defaultConnection);
+         await ResetDatabaseAsync(_hangfireRespawner, _hangfireConnection);
       }
 
       internal static ICrypterApiService SetupCrypterApiService(HttpClient webApplicationHttpClient)
@@ -163,6 +131,33 @@ namespace Crypter.Test.Integration_Tests.Common
       {
          string assemblyLocation = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
          return Path.Combine(assemblyLocation, "Integration_Tests", "Configuration", "appsettings.integration.json");
+      }
+
+      private static async Task<Respawner> InitializeRespawnerAsync(NpgsqlConnection connection, RespawnerOptions options)
+      {
+         connection.Open();
+         Respawner respawner = await Respawner.CreateAsync(connection, options);
+         connection.Close();
+
+         return respawner;
+      }
+
+      private static async Task ResetDatabaseAsync(Respawner respawner, NpgsqlConnection connection)
+      {
+         try
+         {
+            connection.Open();
+            await respawner.ResetAsync(connection);
+         }
+         catch (Exception)
+         { }
+         finally
+         {
+            if (connection.State == ConnectionState.Open)
+            {
+               connection.Close();
+            }
+         }
       }
    }
 }

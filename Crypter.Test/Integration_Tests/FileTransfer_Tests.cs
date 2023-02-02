@@ -31,6 +31,7 @@ using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
+using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests
@@ -72,6 +73,24 @@ namespace Crypter.Test.Integration_Tests
          var result = await _client.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, request, encryptionStream, false);
 
          Assert.True(result.IsRight);
+      }
+
+      [Test]
+      public async Task Upload_User_File_Transfer_Fails_When_Recipient_Does_Not_Exist()
+      {
+         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+         var result = await _client.FileTransfer.UploadFileTransferAsync("John Smith", request, encryptionStream, false);
+
+         Assert.True(result.IsLeft);
+      }
+
+      [Test]
+      public void Upload_Authenticated_File_Transfer_Throws_When_Not_Authenticated()
+      {
+         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+         Assert.ThrowsAsync<InvalidOperationException>(async () => await _client.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, request, encryptionStream, true));
       }
    }
 }

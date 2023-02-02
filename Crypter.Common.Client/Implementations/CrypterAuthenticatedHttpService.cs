@@ -245,7 +245,7 @@ namespace Crypter.Common.Client.Implementations
       {
          Maybe<TokenObject> tokenData = await _tokenProviderMap[useRefreshToken]();
          request.Headers.Authorization = tokenData.Match(
-            () => null,
+            () => throw new InvalidOperationException("Token repository does not contain a matching token."),
             x => new AuthenticationHeaderValue("Bearer", x.Token));
          return Unit.Default;
       }
