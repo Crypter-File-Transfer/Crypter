@@ -25,15 +25,12 @@
  */
 
 using Crypter.API.Attributes;
-using Crypter.API.Contracts;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Monads;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -43,34 +40,8 @@ namespace Crypter.API.Controllers.Old
    [Route("api/message")]
    public class MessageController : TransferControllerBase
    {
-      private readonly ITransferDownloadService _transferDownloadService;
-      private readonly ITransferUploadService _transferUploadService;
-      private readonly ITokenService _tokenService;
-
       public MessageController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
-      {
-         _transferDownloadService = transferDownloadService;
-         _transferUploadService = transferUploadService;
-         _tokenService = tokenService;
-      }
-
-      [HttpPost]
-      [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadMessageTransferAsync([FromForm] UploadMessageTransferReceipt request, CancellationToken cancellationToken)
-      {
-         using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
-         var uploadResult = await _tokenService.TryParseUserId(User)
-            .MatchAsync(
-            async () => await _transferUploadService.UploadAnonymousMessageAsync(request.Data, ciphertextStream, cancellationToken),
-            async x => await _transferUploadService.UploadUserMessageAsync(x, Maybe<string>.None, request.Data, ciphertextStream, cancellationToken));
-
-         return uploadResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(UploadTransferError.UnknownError));
-      }
+         : base(transferDownloadService, transferUploadService, tokenService) { }
 
       [HttpGet("preview")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]

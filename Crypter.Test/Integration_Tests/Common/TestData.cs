@@ -99,12 +99,13 @@ namespace Crypter.Test.Integration_Tests.Common
 
       internal const string DefaultTransferFileName = "unit testing.txt";
       internal const string DefaultTransferFileContentType = "text/plain";
-      internal static byte[] DefaultTransferFileBytes => "unit testing is great"u8.ToArray();
+      internal const string DefaultTransferMessageSubject = "hello there";
+      internal static byte[] DefaultTransferBytes => "unit testing is great"u8.ToArray();
       internal const int DefaultTransferLifetimeHours = 24;
 
       internal static (EncryptionStream encryptionStream, byte[] proof) GetDefaultEncryptionStream()
       {
-         MemoryStream plaintextStream = new MemoryStream(DefaultTransferFileBytes);
+         MemoryStream plaintextStream = new MemoryStream(DefaultTransferBytes);
          DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
          (byte[] encryptionKey, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(cryptoProvider.StreamEncryptionFactory.KeySize, DefaultPrivateKey, AlternatePublicKey, DefaultKeyExchangeNonce);
 

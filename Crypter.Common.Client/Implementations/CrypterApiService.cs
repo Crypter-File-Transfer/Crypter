@@ -56,6 +56,7 @@ namespace Crypter.Common.Client.Implementations
       private EventHandler _refreshTokenRejectedHandler;
 
       public IFileTransferRequests FileTransfer { get; init; }
+      public IMessageTransferRequests MessageTransfer { get; init; }
 
       public CrypterApiService(ICrypterHttpService crypterHttpService, ICrypterAuthenticatedHttpService crypterAuthenticatedHttpService)
       {
@@ -63,6 +64,7 @@ namespace Crypter.Common.Client.Implementations
          _crypterAuthenticatedHttpService = crypterAuthenticatedHttpService;
 
          FileTransfer = new FileTransferRequests(_crypterHttpService, _crypterAuthenticatedHttpService);
+         MessageTransfer = new MessageTransferRequests(_crypterHttpService, _crypterAuthenticatedHttpService);
       }
 
       /// <summary>
@@ -332,63 +334,9 @@ namespace Crypter.Common.Client.Implementations
                 select errorableResponse;
       }
 
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> SendUserMessageTransferAsync(string username, UploadMessageTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)
-      {
-         string url = "/user/{username}/message";
-         ICrypterHttpService service = withAuthentication
-            ? _crypterAuthenticatedHttpService
-            : _crypterHttpService;
-
-         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
-         var content = new MultipartFormDataContent
-         {
-            { new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"), "Data" },
-            { new StreamContent(encryptionStream), "Ciphertext", "Ciphertext" }
-         };
-         request.Content = content;
-
-         var result = from response in Either<UploadTransferError, (HttpStatusCode httpStatus, Either<ErrorResponse, UploadTransferResponse> data)>.FromRightAsync(
-                        service.SendAsync<UploadTransferResponse>(request))
-                      from errorableResponse in ExtractErrorCode<UploadTransferError, UploadTransferResponse>(response.data).AsTask()
-                      select errorableResponse;
-         await result;
-
-         request.Dispose();
-         content.Dispose();
-
-         return result.Result;
-      }
-
       #endregion
 
       #region Message Transfer
-
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)
-      {
-         string url = "/message";
-         ICrypterHttpService service = withAuthentication
-            ? _crypterAuthenticatedHttpService
-            : _crypterHttpService;
-
-         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
-         var content = new MultipartFormDataContent
-         {
-            { new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"), "Data" },
-            { new StreamContent(encryptionStream), "Ciphertext", "Ciphertext" }
-         };
-         request.Content = content;
-
-         var result = from response in Either<UploadTransferError, (HttpStatusCode httpStatus, Either<ErrorResponse, UploadTransferResponse> data)>.FromRightAsync(
-                        service.SendAsync<UploadTransferResponse>(request))
-                      from errorableResponse in ExtractErrorCode<UploadTransferError, UploadTransferResponse>(response.data).AsTask()
-                      select errorableResponse;
-         await result;
-
-         request.Dispose();
-         content.Dispose();
-
-         return result.Result;
-      }
 
       public Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadAnonymousMessagePreviewAsync(string hashId)
       {

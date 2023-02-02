@@ -24,19 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.API.Attributes;
-using Crypter.API.Contracts;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.Users;
-using Crypter.Common.Monads;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,16 +39,14 @@ namespace Crypter.API.Controllers.Old
 {
    [ApiController]
    [Route("api/user")]
-   public class UserController : TransferControllerBase
+   public class UserController : CrypterControllerBase
    {
-      private readonly ITransferUploadService _transferUploadService;
       private readonly ITokenService _tokenService;
       private readonly IUserService _userService;
       private readonly IUserTransferService _userTransferService;
 
-      public UserController(ITransferUploadService transferUploadService, ITokenService tokenService, IUserService userService, IUserTransferService userTransferService)
+      public UserController(ITokenService tokenService, IUserService userService, IUserTransferService userTransferService)
       {
-         _transferUploadService = transferUploadService;
          _tokenService = tokenService;
          _userService = userService;
          _userTransferService = userTransferService;
@@ -125,42 +117,6 @@ namespace Crypter.API.Controllers.Old
          var userId = _tokenService.ParseUserId(User);
          var result = await _userTransferService.GetUserSentMessagesAsync(userId, cancellationToken);
          return Ok(result);
-      }
-
-      [HttpPost("{username}/file")]
-      [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadUserFileTransferAsync([FromForm] UploadFileTransferReceipt request, string username, CancellationToken cancellationToken)
-      {
-         using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
-         var uploadResult = await _tokenService.TryParseUserId(User)
-            .MatchAsync(
-            async () => await _transferUploadService.UploadUserFileAsync(Maybe<Guid>.None, username, request.Data, ciphertextStream, cancellationToken),
-            async x => await _transferUploadService.UploadUserFileAsync(x, username, request.Data, ciphertextStream, cancellationToken));
-
-         return uploadResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(UploadTransferError.UnknownError));
-      }
-
-      [HttpPost("{username}/message")]
-      [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadUserMessageTransferAsync([FromForm] UploadMessageTransferReceipt request, string username, CancellationToken cancellationToken)
-      {
-         using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
-         var uploadResult = await _tokenService.TryParseUserId(User)
-            .MatchAsync(
-            async () => await _transferUploadService.UploadUserMessageAsync(Maybe<Guid>.None, username, request.Data, ciphertextStream, cancellationToken),
-            async x => await _transferUploadService.UploadUserMessageAsync(x, username, request.Data, ciphertextStream, cancellationToken));
-
-         return uploadResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(UploadTransferError.UnknownError));
       }
    }
 }

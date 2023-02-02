@@ -25,15 +25,12 @@
  */
 
 using Crypter.API.Attributes;
-using Crypter.API.Contracts;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Monads;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -43,16 +40,8 @@ namespace Crypter.API.Controllers.Old
    [Route("api/file")]
    public class FileController : TransferControllerBase
    {
-      private readonly ITransferDownloadService _transferDownloadService;
-      private readonly ITransferUploadService _transferUploadService;
-      private readonly ITokenService _tokenService;
-
       public FileController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
-      {
-         _transferDownloadService = transferDownloadService;
-         _transferUploadService = transferUploadService;
-         _tokenService = tokenService;
-      }
+         : base(transferDownloadService, transferUploadService, tokenService) { }
 
       [HttpGet("preview")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]

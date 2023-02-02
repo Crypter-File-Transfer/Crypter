@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -32,6 +33,17 @@ namespace Crypter.API.Controllers.Base
 {
    public abstract class TransferControllerBase : CrypterControllerBase
    {
+      protected readonly ITransferDownloadService _transferDownloadService;
+      protected readonly ITransferUploadService _transferUploadService;
+      protected readonly ITokenService _tokenService;
+
+      public TransferControllerBase(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
+      {
+         _transferDownloadService = transferDownloadService;
+         _transferUploadService = transferUploadService;
+         _tokenService = tokenService;
+      }
+
       protected IActionResult MakeErrorResponse(UploadTransferError error)
       {
 #pragma warning disable CS8524

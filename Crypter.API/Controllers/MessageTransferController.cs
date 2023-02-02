@@ -40,17 +40,17 @@ using System.Threading.Tasks;
 namespace Crypter.API.Controllers
 {
    [ApiController]
-   [Route("api/file/transfer")]
-   public class FileTransferController : TransferControllerBase
+   [Route("api/message/transfer")]
+   public class MessageTransferController : TransferControllerBase
    {
-      public FileTransferController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
+      public MessageTransferController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
          : base(transferDownloadService, transferUploadService, tokenService) { }
 
       [HttpPost]
       [MaybeAuthorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadFileTransferAsync([FromQuery] string username, [FromForm] UploadFileTransferReceipt request)
+      public async Task<IActionResult> UploadMessageTransferAsync([FromQuery] string username, [FromForm] UploadMessageTransferReceipt request)
       {
          Maybe<Guid> senderId = _tokenService.TryParseUserId(User);
          Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
@@ -58,18 +58,11 @@ namespace Crypter.API.Controllers
             : username;
          using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
 
-         return await _transferUploadService.UploadFileTransferAsync(senderId, maybeUsername, request.Data, ciphertextStream)
+         return await _transferUploadService.UploadMessageTransferAsync(senderId, maybeUsername, request.Data, ciphertextStream)
             .MatchAsync(
-               left: MakeErrorResponse,
-               right: Ok,
-               neither: MakeErrorResponse(UploadTransferError.UnknownError));
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(UploadTransferError.UnknownError));
       }
-      /*
-       *  - POST /api/file?username
-          - GET /api/file/sent
-          - GET /api/file/received
-          - GET /api/file/preview?id
-          - GET /api/file/cipher?id&proof
-       */
    }
 }

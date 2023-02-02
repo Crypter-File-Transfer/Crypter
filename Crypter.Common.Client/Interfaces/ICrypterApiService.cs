@@ -35,7 +35,6 @@ using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
-using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Threading.Tasks;
 
@@ -46,6 +45,7 @@ namespace Crypter.Common.Client.Interfaces
       event EventHandler RefreshTokenRejectedEventHandler;
 
       IFileTransferRequests FileTransfer { get; }
+      IMessageTransferRequests MessageTransfer { get; }
 
       #region Authentication
       Task<Either<RegistrationError, RegistrationResponse>> RegisterUserAsync(RegistrationRequest registerRequest);
@@ -81,7 +81,6 @@ namespace Crypter.Common.Client.Interfaces
       #endregion
 
       #region Message Transfer
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(UploadMessageTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication);
       Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadAnonymousMessagePreviewAsync(string hashId);
       Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
       Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadUserMessagePreviewAsync(string hashId, bool withAuthentication);
@@ -111,7 +110,6 @@ namespace Crypter.Common.Client.Interfaces
       Task<Either<DummyError, UserSentFilesResponse>> GetSentFilesAsync();
       Task<Either<DummyError, UserReceivedMessagesResponse>> GetReceivedMessagesAsync();
       Task<Either<DummyError, UserSentMessagesResponse>> GetSentMessagesAsync();
-      Task<Either<UploadTransferError, UploadTransferResponse>> SendUserMessageTransferAsync(string username, UploadMessageTransferRequest request, EncryptionStream encryptionStream, bool withAuthentication);
       #endregion
    }
 }
