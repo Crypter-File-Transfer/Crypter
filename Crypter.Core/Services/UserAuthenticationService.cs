@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
@@ -49,7 +49,7 @@ namespace Crypter.Core.Services
 {
    public interface IUserAuthenticationService
    {
-      Task<Either<RegistrationError, RegistrationResponse>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken);
+      Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken);
       Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription, CancellationToken cancellationToken);
       Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription, CancellationToken cancellationToken);
       Task<Either<LogoutError, LogoutResponse>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
@@ -103,7 +103,7 @@ namespace Crypter.Core.Services
          };
       }
 
-      public Task<Either<RegistrationError, RegistrationResponse>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken)
+      public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken)
       {
          return from validRegistrationRequest in ValidateRegistrationRequest(request).AsTask()
                 from usernameAvailable in VerifyUsernameIsAvailableAsync(validRegistrationRequest.Username, RegistrationError.UsernameTaken, cancellationToken)
@@ -112,7 +112,7 @@ namespace Crypter.Core.Services
                 from newUserEntity in Either<RegistrationError, UserEntity>.FromRight(InsertNewUserInContext(validRegistrationRequest.Username, validRegistrationRequest.EmailAddress, securePasswordData.Salt, securePasswordData.Hash, _latestServerPasswordVersion, _clientPasswordVersion)).AsTask()
                 from entriesModified in Either<RegistrationError, int>.FromRightAsync(SaveContextChangesAsync(cancellationToken))
                 let jobId = EnqueueEmailAddressVerificationEmailDelivery(newUserEntity.Id)
-                select new RegistrationResponse();
+                select Unit.Default;
       }
 
       /// <summary>

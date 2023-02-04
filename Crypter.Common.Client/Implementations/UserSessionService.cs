@@ -28,7 +28,7 @@ using Crypter.Common.Client.DeviceStorage.Models;
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Events;
 using Crypter.Common.Client.Interfaces.Repositories;
-using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;

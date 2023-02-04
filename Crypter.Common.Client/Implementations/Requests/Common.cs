@@ -27,6 +27,7 @@
 using Crypter.Common.Contracts;
 using Crypter.Common.Monads;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Implementations.Requests
 {
@@ -45,7 +46,23 @@ namespace Crypter.Common.Client.Implementations.Requests
       internal static Either<TErrorCode, TResponse> ExtractErrorCode<TErrorCode, TResponse>(Either<ErrorResponse, TResponse> response)
       {
          return response
-            .BindLeft<TErrorCode>(x => x.Errors.Select(x => (TErrorCode)(object)x.ErrorCode).First());
+            .BindLeft<TErrorCode>(x => x.Errors.Select(y => (TErrorCode)(object)y.ErrorCode).First());
+      }
+
+      /// <summary>
+      /// Lift the first error code out of the API error response.
+      /// </summary>
+      /// <typeparam name="TErrorCode"></typeparam>
+      /// <typeparam name="TResponse"></typeparam>
+      /// <param name="response"></param>
+      /// <returns></returns>
+      /// <remarks>
+      /// Need to refactor Crypter.Web and other client services to handle multiple error codes.
+      /// </remarks>
+      internal static Task<Either<TErrorCode, TResponse>> ExtractErrorCode<TErrorCode, TResponse>(this Task<Either<ErrorResponse, TResponse>> response)
+      {
+         return response
+            .BindLeftAsync<ErrorResponse, TResponse, TErrorCode>(x => x.Errors.Select(y => (TErrorCode)(object)y.ErrorCode).First());
       }
    }
 }

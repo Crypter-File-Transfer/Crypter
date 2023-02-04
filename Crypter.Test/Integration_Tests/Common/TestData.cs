@@ -24,6 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Crypto.Providers.Default;
 using System.IO;
@@ -111,6 +114,17 @@ namespace Crypter.Test.Integration_Tests.Common
 
          EncryptionStream encryptionStream = new EncryptionStream(plaintextStream, plaintextStream.Length, encryptionKey, cryptoProvider.StreamEncryptionFactory, 128, 64);
          return (encryptionStream, proof);
+      }
+
+      internal static RegistrationRequest GetDefaultRegistrationRequest(bool withEmailAddress)
+      {
+         Username username = Username.From("Frodo");
+         VersionedPassword versionedPassword = new VersionedPassword("The Precious"u8.ToArray(), 1);
+         Maybe<EmailAddress> emailAddress = withEmailAddress
+            ? EmailAddress.From("f.baggins@theshire.org")
+            : Maybe<EmailAddress>.None;
+
+         return new RegistrationRequest(username, versionedPassword, emailAddress);
       }
    }
 }

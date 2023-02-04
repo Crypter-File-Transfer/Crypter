@@ -24,24 +24,27 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.Events;
-using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using System;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Client.Interfaces
+namespace Crypter.Common.Contracts.Features.UserAuthentication
 {
-   public interface IUserPasswordService
+   public class TestPasswordRequest
    {
-      int CurrentPasswordVersion { get; }
-      int CredentialKeySize { get; }
-      int AuthenticationPasswordSize { get; }
-      Task<Maybe<VersionedPassword>> DeriveUserAuthenticationPasswordAsync(Username username, Password password, int passwordVersion);
-      Task<Maybe<byte[]>> DeriveUserCredentialKeyAsync(Username username, Password password, int passwordVersion);
+      public string Username { get; init; }
+      public byte[] Password { get; init; }
 
-      event EventHandler<PasswordHashBeginEventArgs> PasswordHashBeginEventHandler;
-      event EventHandler<PasswordHashEndEventArgs> PasswordHashEndEventHandler;
+      [JsonConstructor]
+      public TestPasswordRequest(string username, byte[] password)
+      {
+         Username = username;
+         Password = password;
+      }
+
+      public TestPasswordRequest(Username username, byte[] password)
+      {
+         Username = username.Value;
+         Password = password;
+      }
    }
 }

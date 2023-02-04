@@ -24,27 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
-using System.Text.Json.Serialization;
-
-namespace Crypter.Common.Contracts.Features.Authentication
+namespace Crypter.Common.Contracts.Features.UserAuthentication
 {
-   public class TestPasswordRequest
+   public enum LogoutError
    {
-      public string Username { get; init; }
-      public byte[] Password { get; init; }
-
-      [JsonConstructor]
-      public TestPasswordRequest(string username, byte[] password)
-      {
-         Username = username;
-         Password = password;
-      }
-
-      public TestPasswordRequest(Username username, byte[] password)
-      {
-         Username = username.Value;
-         Password = password;
-      }
+      UnknownError,
+      InvalidToken
    }
 }

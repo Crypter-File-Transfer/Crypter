@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Contracts.Features.Keys;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;

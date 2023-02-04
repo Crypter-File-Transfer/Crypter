@@ -24,9 +24,33 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Authentication
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
+using System.Text.Json.Serialization;
+
+namespace Crypter.Common.Contracts.Features.UserAuthentication
 {
-   public class RegistrationResponse
+   public class RegistrationRequest
    {
+      public string Username { get; set; }
+      public VersionedPassword VersionedPassword { get; set; }
+      public string EmailAddress { get; set; }
+
+      [JsonConstructor]
+      public RegistrationRequest(string username, VersionedPassword versionedPassword, string emailAddress = null)
+      {
+         Username = username;
+         VersionedPassword = versionedPassword;
+         EmailAddress = emailAddress;
+      }
+
+      public RegistrationRequest(Username username, VersionedPassword versionedPassword, Maybe<EmailAddress> emailAddress)
+      {
+         Username = username.Value;
+         VersionedPassword = versionedPassword;
+         EmailAddress = emailAddress.Match(
+            () => null,
+            some => some.Value);
+      }
    }
 }

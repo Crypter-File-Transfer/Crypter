@@ -24,12 +24,23 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Authentication
+using Crypter.Common.Enums;
+using System.Text.Json.Serialization;
+
+namespace Crypter.Common.Contracts.Features.UserAuthentication
 {
-   public enum RefreshError
+   public class RefreshResponse
    {
-      UnknownError,
-      UserNotFound,
-      InvalidToken
+      public string AuthenticationToken { get; set; }
+      public string RefreshToken { get; set; }
+      public TokenType RefreshTokenType { get; set; }
+
+      [JsonConstructor]
+      public RefreshResponse(string authenticationToken, string refreshToken, TokenType refreshTokenType)
+      {
+         AuthenticationToken = authenticationToken;
+         RefreshToken = refreshToken;
+         RefreshTokenType = refreshTokenType;
+      }
    }
 }

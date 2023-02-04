@@ -26,7 +26,7 @@
 
 using Crypter.API.Methods;
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -49,45 +49,6 @@ namespace Crypter.API.Controllers.Old
       {
          _tokenService = tokenService;
          _userAuthenticationService = userAuthenticationService;
-      }
-
-      /// <summary>
-      /// Handle a user registration request.
-      /// </summary>
-      /// <param name="request"></param>
-      /// <param name="cancellationToken"></param>
-      /// <returns></returns>
-      [HttpPost("register")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RegistrationResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> RegisterAsync([FromBody] RegistrationRequest request, CancellationToken cancellationToken)
-      {
-         IActionResult MakeErrorResponse(RegistrationError error)
-         {
-#pragma warning disable CS8524
-            return error switch
-            {
-               RegistrationError.UnknownError
-                  or RegistrationError.PasswordHashFailure
-                  or RegistrationError.InvalidPasswordConfirm => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               RegistrationError.InvalidUsername
-                  or RegistrationError.InvalidPassword
-                  or RegistrationError.InvalidEmailAddress
-                  or RegistrationError.OldPasswordVersion => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
-               RegistrationError.UsernameTaken
-                  or RegistrationError.EmailAddressTaken => MakeErrorResponseBase(HttpStatusCode.Conflict, error)
-            };
-#pragma warning restore CS8524
-         }
-
-         var registrationResult = await _userAuthenticationService.RegisterAsync(request, cancellationToken);
-
-         return registrationResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(RegistrationError.UnknownError));
       }
 
       /// <summary>

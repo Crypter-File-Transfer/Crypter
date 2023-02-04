@@ -24,9 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Authentication
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Monads;
+using System.Threading.Tasks;
+
+namespace Crypter.Common.Client.Interfaces.Requests
 {
-   public class TestPasswordResponse
+   public interface IUserAuthenticationRequests
    {
+      Task<Either<RegistrationError, Unit>> SendUserRegistrationRequest(RegistrationRequest registerRequest);
    }
 }

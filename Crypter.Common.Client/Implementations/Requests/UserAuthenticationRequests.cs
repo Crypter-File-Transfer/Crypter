@@ -24,24 +24,30 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.Events;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
-using System;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Interfaces
+namespace Crypter.Common.Client.Implementations.Requests
 {
-   public interface IUserPasswordService
+   public class UserAuthenticationRequests : IUserAuthenticationRequests
    {
-      int CurrentPasswordVersion { get; }
-      int CredentialKeySize { get; }
-      int AuthenticationPasswordSize { get; }
-      Task<Maybe<VersionedPassword>> DeriveUserAuthenticationPasswordAsync(Username username, Password password, int passwordVersion);
-      Task<Maybe<byte[]>> DeriveUserCredentialKeyAsync(Username username, Password password, int passwordVersion);
+      private readonly ICrypterHttpService _crypterHttpService;
+      private readonly ICrypterAuthenticatedHttpService _crypterAuthenticatedHttpService;
 
-      event EventHandler<PasswordHashBeginEventArgs> PasswordHashBeginEventHandler;
-      event EventHandler<PasswordHashEndEventArgs> PasswordHashEndEventHandler;
+      public UserAuthenticationRequests(ICrypterHttpService crypterHttpService, ICrypterAuthenticatedHttpService crypterAuthenticatedHttpService)
+      {
+         _crypterHttpService = crypterHttpService;
+         _crypterAuthenticatedHttpService = crypterAuthenticatedHttpService;
+      }
+
+      public async Task<Either<RegistrationError, Unit>> SendUserRegistrationRequest(RegistrationRequest registerRequest)
+      {
+         string url = "api/user/authentication/register";
+         return await _crypterHttpService.PostUnitResponseAsync<RegistrationRequest>(url, registerRequest)
+            .ExtractErrorCode<RegistrationError, Unit>();
+      }
    }
 }

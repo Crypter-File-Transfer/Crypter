@@ -24,26 +24,32 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Enums;
+using Crypter.Common.Primitives;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.Authentication
+namespace Crypter.Common.Contracts.Features.UserAuthentication
 {
-   public class LoginResponse
+   public class LoginRequest
    {
-      public string Username { get; init; }
-      public string AuthenticationToken { get; init; }
-      public string RefreshToken { get; init; }
-      public bool UploadNewKeys { get; init; }
-      public bool ShowRecoveryKey { get; init; }
+      public string Username { get; set; }
+      public List<VersionedPassword> VersionedPasswords { get; set; }
+      public TokenType RefreshTokenType { get; set; }
 
       [JsonConstructor]
-      public LoginResponse(string username, string authenticationToken, string refreshToken, bool uploadNewKeys, bool showRecoveryKey)
+      public LoginRequest(string username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
       {
          Username = username;
-         AuthenticationToken = authenticationToken;
-         RefreshToken = refreshToken;
-         UploadNewKeys = uploadNewKeys;
-         ShowRecoveryKey = showRecoveryKey;
+         VersionedPasswords = versionedPasswords;
+         RefreshTokenType = refreshTokenType;
+      }
+
+      public LoginRequest(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+      {
+         Username = username.Value;
+         VersionedPasswords = versionedPasswords;
+         RefreshTokenType = refreshTokenType;
       }
    }
 }

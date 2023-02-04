@@ -25,16 +25,14 @@
  */
 
 using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Contracts;
 using Crypter.Common.Monads;
 using Crypter.Crypto.Common.StreamEncryption;
 using System.Net.Http;
-using System.Net;
-using System.Text.Json;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using Crypter.Common.Client.Interfaces.Requests;
 
 namespace Crypter.Common.Client.Implementations.Requests
 {
@@ -68,10 +66,8 @@ namespace Crypter.Common.Client.Implementations.Requests
             }
          };
 
-         return await (from response in Either<UploadTransferError, (HttpStatusCode httpStatus, Either<ErrorResponse, UploadTransferResponse> data)>.FromRightAsync(
-                        service.SendAsync<UploadTransferResponse>(request))
-                      from errorableResponse in Common.ExtractErrorCode<UploadTransferError, UploadTransferResponse>(response.data).AsTask()
-                      select errorableResponse);
+         return await service.SendAsync<UploadTransferResponse>(request)
+            .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
       }
    }
 }

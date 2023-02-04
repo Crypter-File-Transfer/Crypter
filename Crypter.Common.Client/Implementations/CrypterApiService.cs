@@ -28,22 +28,19 @@ using Crypter.Common.Client.Implementations.Requests;
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Contracts.Features.Consent;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
-using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Implementations
@@ -57,6 +54,7 @@ namespace Crypter.Common.Client.Implementations
 
       public IFileTransferRequests FileTransfer { get; init; }
       public IMessageTransferRequests MessageTransfer { get; init; }
+      public IUserAuthenticationRequests UserAuthentication { get; init; }
 
       public CrypterApiService(ICrypterHttpService crypterHttpService, ICrypterAuthenticatedHttpService crypterAuthenticatedHttpService)
       {
@@ -65,6 +63,7 @@ namespace Crypter.Common.Client.Implementations
 
          FileTransfer = new FileTransferRequests(_crypterHttpService, _crypterAuthenticatedHttpService);
          MessageTransfer = new MessageTransferRequests(_crypterHttpService, _crypterAuthenticatedHttpService);
+         UserAuthentication = new UserAuthenticationRequests(_crypterHttpService, crypterAuthenticatedHttpService);
       }
 
       /// <summary>
@@ -90,15 +89,6 @@ namespace Crypter.Common.Client.Implementations
       }
 
       #region Authentication
-
-      public Task<Either<RegistrationError, RegistrationResponse>> RegisterUserAsync(RegistrationRequest registerRequest)
-      {
-         string url = "/authentication/register";
-         return from response in Either<RegistrationError, (HttpStatusCode httpStatus, Either<ErrorResponse, RegistrationResponse> data)>.FromRightAsync(
-                     _crypterHttpService.PostAsync<RegistrationRequest, RegistrationResponse>(url, registerRequest))
-                from errorableResponse in ExtractErrorCode<RegistrationError, RegistrationResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
 
       public Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest)
       {

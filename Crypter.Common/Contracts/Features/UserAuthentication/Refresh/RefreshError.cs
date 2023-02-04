@@ -24,20 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
-
-namespace Crypter.Common.Contracts.Features.Authentication
+namespace Crypter.Common.Contracts.Features.UserAuthentication
 {
-   public class VersionedPassword
+   public enum RefreshError
    {
-      public byte[] Password { get; init; }
-      public short Version { get; init; }
-
-      [JsonConstructor]
-      public VersionedPassword(byte[] password, short version)
-      {
-         Password = password;
-         Version = version;
-      }
+      UnknownError,
+      UserNotFound,
+      InvalidToken
    }
 }

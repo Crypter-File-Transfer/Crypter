@@ -25,7 +25,7 @@
  */
 
 using Crypter.Common.Client.Interfaces;
-using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;

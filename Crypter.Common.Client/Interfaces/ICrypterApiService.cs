@@ -26,13 +26,13 @@
 
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Contracts.Features.Consent;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using System;
@@ -46,9 +46,9 @@ namespace Crypter.Common.Client.Interfaces
 
       IFileTransferRequests FileTransfer { get; }
       IMessageTransferRequests MessageTransfer { get; }
+      IUserAuthenticationRequests UserAuthentication { get; }
 
       #region Authentication
-      Task<Either<RegistrationError, RegistrationResponse>> RegisterUserAsync(RegistrationRequest registerRequest);
       Task<Either<LoginError, LoginResponse>>LoginAsync(LoginRequest loginRequest);
       Task<Either<TestPasswordError, TestPasswordResponse>> TestPasswordAsync(TestPasswordRequest testPasswordRequest);
       Task<Either<RefreshError, RefreshResponse>>RefreshAsync();

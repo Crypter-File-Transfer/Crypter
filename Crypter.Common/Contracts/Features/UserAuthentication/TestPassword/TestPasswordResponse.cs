@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Authentication
+namespace Crypter.Common.Contracts.Features.UserAuthentication
 {
-   public class LogoutResponse
+   public class TestPasswordResponse
    {
    }
 }

@@ -24,23 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
-using System.Text.Json.Serialization;
-
-namespace Crypter.Common.Contracts.Features.Authentication
+namespace Crypter.Common.Contracts.Features.UserAuthentication
 {
-   public class RefreshResponse
+   public class LogoutResponse
    {
-      public string AuthenticationToken { get; set; }
-      public string RefreshToken { get; set; }
-      public TokenType RefreshTokenType { get; set; }
-
-      [JsonConstructor]
-      public RefreshResponse(string authenticationToken, string refreshToken, TokenType refreshTokenType)
-      {
-         AuthenticationToken = authenticationToken;
-         RefreshToken = refreshToken;
-         RefreshTokenType = refreshTokenType;
-      }
    }
 }
