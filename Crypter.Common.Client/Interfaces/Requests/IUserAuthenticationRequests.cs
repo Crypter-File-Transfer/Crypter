@@ -33,5 +33,6 @@ namespace Crypter.Common.Client.Interfaces.Requests
    public interface IUserAuthenticationRequests
    {
       Task<Either<RegistrationError, Unit>> SendUserRegistrationRequest(RegistrationRequest registerRequest);
+      Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(LoginRequest loginRequest);
    }
 }

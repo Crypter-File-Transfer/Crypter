@@ -65,7 +65,15 @@ namespace Crypter.Common.Client.Implementations
          return SendRequestWithStatusCodeAsync<TResponse>(request);
       }
 
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
+      public Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
+         where TResponse : class
+         where TRequest : class
+      {
+         var request = MakeRequestMessage(HttpMethod.Post, uri, body);
+         return SendRequestAsync<TResponse>(request);
+      }
+
+      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
          where TResponse : class
          where TRequest : class
       {

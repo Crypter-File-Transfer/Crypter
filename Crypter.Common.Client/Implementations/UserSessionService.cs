@@ -236,7 +236,7 @@ namespace Crypter.Common.Client.Implementations
       private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
       {
          LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType);
-         return _crypterApiService.LoginAsync(loginRequest);
+         return _crypterApiService.UserAuthentication.SendLoginRequestAsync(loginRequest);
       }
 
       private Task<Either<TestPasswordError, TestPasswordResponse>> SendTestPasswordRequestAsync(Username username, Password password)

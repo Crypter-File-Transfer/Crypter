@@ -90,15 +90,6 @@ namespace Crypter.Common.Client.Implementations
 
       #region Authentication
 
-      public Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest)
-      {
-         string url = "/authentication/login";
-         return from response in Either<LoginError, (HttpStatusCode httpStatus, Either<ErrorResponse, LoginResponse> data)>.FromRightAsync(
-                     _crypterHttpService.PostAsync<LoginRequest, LoginResponse>(url, loginRequest))
-                from errorableResponse in ExtractErrorCode<LoginError, LoginResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
       public Task<Either<TestPasswordError, TestPasswordResponse>> TestPasswordAsync(TestPasswordRequest testPasswordRequest)
       {
          string url = "/authentication/password/test";

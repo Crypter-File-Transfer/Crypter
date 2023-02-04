@@ -52,42 +52,6 @@ namespace Crypter.API.Controllers.Old
       }
 
       /// <summary>
-      /// Handle a login request.
-      /// </summary>
-      /// <param name="request"></param>
-      /// <param name="cancellationToken"></param>
-      /// <returns></returns>
-      [HttpPost("login")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
-      {
-         IActionResult MakeErrorResponse(LoginError error)
-         {
-#pragma warning disable CS8524
-            return error switch
-            {
-               LoginError.UnknownError
-                  or LoginError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               LoginError.InvalidUsername
-                  or LoginError.InvalidPassword
-                  or LoginError.InvalidTokenTypeRequested
-                  or LoginError.ExcessiveFailedLoginAttempts
-                  or LoginError.InvalidPasswordVersion => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
-            };
-#pragma warning restore CS8524
-         }
-
-         var requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-         var loginResult = await _userAuthenticationService.LoginAsync(request, requestUserAgent, cancellationToken);
-         return loginResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(LoginError.UnknownError));
-      }
-
-      /// <summary>
       /// Trade in a valid refresh token for a new authentication token and refresh token.
       /// </summary>
       /// <param name="cancellationToken"></param>

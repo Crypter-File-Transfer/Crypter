@@ -49,7 +49,6 @@ namespace Crypter.Common.Client.Interfaces
       IUserAuthenticationRequests UserAuthentication { get; }
 
       #region Authentication
-      Task<Either<LoginError, LoginResponse>>LoginAsync(LoginRequest loginRequest);
       Task<Either<TestPasswordError, TestPasswordResponse>> TestPasswordAsync(TestPasswordRequest testPasswordRequest);
       Task<Either<RefreshError, RefreshResponse>>RefreshAsync();
       Task<Either<LogoutError, LogoutResponse>>LogoutAsync();

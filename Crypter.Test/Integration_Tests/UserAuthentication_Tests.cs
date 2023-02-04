@@ -29,6 +29,8 @@ using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests
@@ -102,6 +104,59 @@ namespace Crypter.Test.Integration_Tests
 
          Assert.True(initialResult.IsRight);
          Assert.True(secondResult.IsLeft);
+      }
+
+      [Test]
+      public async Task Login_Works()
+      {
+         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
+         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
+
+         LoginRequest loginRequest = TestData.GetDefaultLoginRequest();
+         var result = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
+
+         Assert.True(registrationResult.IsRight);
+         Assert.True(result.IsRight);
+      }
+
+      [Test]
+      public async Task Login_Fails_Invalid_Username()
+      {
+         LoginRequest request = TestData.GetDefaultLoginRequest();
+         var result = await _client.UserAuthentication.SendLoginRequestAsync(request);
+
+         Assert.True(result.IsLeft);
+      }
+
+      [Test]
+      public async Task Login_Fails_Invalid_Password()
+      {
+         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
+         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
+
+         LoginRequest loginRequest = TestData.GetDefaultLoginRequest();
+         VersionedPassword invalidPassword = new VersionedPassword("invalid"u8.ToArray(), 1);
+         loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
+         var result = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
+
+         Assert.True(registrationResult.IsRight);
+         Assert.True(result.IsLeft);
+      }
+
+      [Test]
+      public async Task Login_Fails_Invalid_Password_Version()
+      {
+         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
+         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
+
+         LoginRequest loginRequest = TestData.GetDefaultLoginRequest();
+         VersionedPassword correctPassword = loginRequest.VersionedPasswords.First();
+         VersionedPassword invalidPassword = new VersionedPassword(correctPassword.Password, (short)(correctPassword.Version - 1));
+         loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
+         var result = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
+
+         Assert.True(registrationResult.IsRight);
+         Assert.True(result.IsLeft);
       }
    }
 }

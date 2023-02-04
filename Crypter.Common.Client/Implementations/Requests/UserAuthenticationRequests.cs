@@ -49,5 +49,12 @@ namespace Crypter.Common.Client.Implementations.Requests
          return await _crypterHttpService.PostUnitResponseAsync<RegistrationRequest>(url, registerRequest)
             .ExtractErrorCode<RegistrationError, Unit>();
       }
+
+      public async Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(LoginRequest loginRequest)
+      {
+         string url = "api/user/authentication/login";
+         return await _crypterHttpService.PostAsync<LoginRequest, LoginResponse>(url, loginRequest)
+            .ExtractErrorCode<LoginError, LoginResponse>();
+      }
    }
 }
