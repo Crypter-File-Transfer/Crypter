@@ -16,8 +16,6 @@
       <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
    </ItemGroup>
    <ItemGroup>
-      <PackageReference Include="Hangfire.AspNetCore" Version="1.7.32" />
-      <PackageReference Include="Hangfire.PostgreSql" Version="1.9.9" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.1">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -26,7 +24,7 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.12" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.13" />
    </ItemGroup>
 </Project>

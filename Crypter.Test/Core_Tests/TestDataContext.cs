@@ -26,7 +26,6 @@
 
 using Crypter.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,12 +36,8 @@ namespace Crypter.Test.Core_Tests
    {
       private readonly string _databaseName;
 
-      public TestDataContext(IConfiguration configuration = null)
-         : base(configuration)
-      { }
-
       public TestDataContext(string databaseName)
-         : base(null)
+         : base()
       {
          _databaseName = databaseName;
       }

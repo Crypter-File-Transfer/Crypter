@@ -26,24 +26,23 @@
 
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace Crypter.Core
 {
    public class DataContext : DbContext
    {
-      protected readonly IConfiguration Configuration;
+      /// <summary>
+      /// This constructor is used by the TestDataContext.
+      /// </summary>
+      public DataContext()
+      { }
 
-      public DataContext(IConfiguration configuration)
-      {
-         Configuration = configuration;
-      }
-
-      protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-      {
-         string connectionString = Configuration.GetConnectionString("DefaultConnection");
-         optionsBuilder.UseNpgsql(connectionString);
-      }
+      /// <summary>
+      /// This constructor is used during migrations.
+      /// </summary>
+      /// <param name="options"></param>
+      public DataContext(DbContextOptions<DataContext> options)
+         : base(options) { }
 
       public DbSet<UserEntity> Users { get; set; }
       public DbSet<UserProfileEntity> UserProfiles { get; set; }

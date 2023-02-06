@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Castle.Core.Configuration;
 using Crypter.Common.Client.Implementations;
 using Crypter.Common.Client.Implementations.Repositories;
 using Crypter.Common.Client.Interfaces;
@@ -55,12 +56,11 @@ namespace Crypter.Test.Integration_Tests.Common
       private Respawner _hangfireRespawner;
       private NpgsqlConnection _hangfireConnection;
 
+      public const string TestEnvironmentName = "Integration";
+
       public Setup()
       {
-         IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
-            .AddJsonFile(GetConfigurationFile());
-
-         IConfigurationRoot configuration = configurationBuilder.Build();
+         IConfigurationRoot configuration = GetIntegrationConfiguration();
 
          DefaultConnectionString = configuration.GetConnectionString("DefaultConnection");
          HangfireConnectionString = configuration.GetConnectionString("HangfireConnection");
@@ -90,9 +90,19 @@ namespace Crypter.Test.Integration_Tests.Common
          }
          catch (Exception)
          { }
-         
+
          await ResetDatabaseAsync(_crypterRespawner, _defaultConnection);
          await ResetDatabaseAsync(_hangfireRespawner, _hangfireConnection);
+      }
+
+      internal static WebApplicationFactory<Program> SetupWebApplicationFactory()
+      {
+         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+         {
+            builder
+               .UseEnvironment(TestEnvironmentName)
+               .UseConfiguration(GetIntegrationConfiguration());
+         });
       }
 
       internal static ICrypterApiService SetupCrypterApiService(HttpClient webApplicationHttpClient)
@@ -113,24 +123,14 @@ namespace Crypter.Test.Integration_Tests.Common
          return serviceProvider.GetRequiredService<ICrypterApiService>();
       }
 
-      internal static WebApplicationFactory<Program> SetupWebApplicationFactory()
-      {
-         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
-         {
-            builder
-               .UseEnvironment("integration")
-               .ConfigureAppConfiguration((context, configuration) =>
-               {
-                  configuration.AddJsonFile(GetConfigurationFile(), false, false);
-                  configuration.AddEnvironmentVariables();
-               });
-         });
-      }
-
-      private static string GetConfigurationFile()
+      private static IConfigurationRoot GetIntegrationConfiguration()
       {
          string assemblyLocation = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-         return Path.Combine(assemblyLocation, "Integration_Tests", "Configuration", "appsettings.integration.json");
+         string filepath = Path.Combine(assemblyLocation, "Integration_Tests", "Configuration", $"appsettings.{TestEnvironmentName}.json");
+
+         return new ConfigurationBuilder()
+            .AddJsonFile(filepath)
+            .Build();
       }
 
       private static async Task<Respawner> InitializeRespawnerAsync(NpgsqlConnection connection, RespawnerOptions options)
