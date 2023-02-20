@@ -48,14 +48,14 @@ namespace Crypter.Test.Integration_Tests
          _setup = new Setup();
          await _setup.InitializeRespawnerAsync();
 
-         _factory = Setup.SetupWebApplicationFactory();
+         _factory = await Setup.SetupWebApplicationFactoryAsync();
          _client = Setup.SetupCrypterApiService(_factory.CreateClient());
       }
 
       [TearDown]
       public async Task TearDown()
       {
-         await _setup.ResetBetweenTestRunsAsync();
+         await _setup.ResetServerDataAsync();
       }
 
       [OneTimeTearDown]

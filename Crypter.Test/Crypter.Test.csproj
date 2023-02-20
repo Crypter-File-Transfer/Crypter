@@ -7,10 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Integration_Tests\Configuration\appsettings.Integration.json">
+    <Content Include="Integration_Tests\Configuration\appsettings.Test.Linux.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+   <ItemGroup>
+      <Content Include="Integration_Tests\Configuration\appsettings.Test.Windows.json">
+         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.2" />

@@ -54,13 +54,13 @@ jobs:
       run: |
          dotnet tool install --global dotnet-ef
          dotnet tool restore
-         dotnet ef database update -c DataContext -p Crypter.Core -s Crypter.API --connection "host=127.0.0.1:5432;database=crypter;user id=postgres;pwd=UNIT_TESTING_PASSWORD;"
+         dotnet ef database update -c DataContext -p Crypter.Core -s Crypter.API --connection "host=127.0.0.1:5432;database=crypter_test;user id=postgres;pwd=UNIT_TESTING_PASSWORD;"
 
     - name: Create Hangfire database
       run: |
           sudo apt-get install --yes --no-install-recommends postgresql-client
           export PGPASSWORD=UNIT_TESTING_PASSWORD
-          psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE crypter_hangfire;'
+          psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE crypter_hangfire_test;'
 
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal

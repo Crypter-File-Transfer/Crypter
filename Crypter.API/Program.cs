@@ -107,8 +107,6 @@ builder.WebHost.UseKestrel(options =>
 
 WebApplication app = builder.Build();
 
-if (app.Environment.EnvironmentName != "Integration") throw new System.Exception($"Environment name is: {app.Environment.EnvironmentName}");
-
 if (app.Environment.IsDevelopment())
 {
    app.UseDeveloperExceptionPage();

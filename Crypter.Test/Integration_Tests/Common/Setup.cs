@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Castle.Core.Configuration;
 using Crypter.Common.Client.Implementations;
 using Crypter.Common.Client.Implementations.Repositories;
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Core;
 using Crypter.Core.Settings;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -56,7 +56,7 @@ namespace Crypter.Test.Integration_Tests.Common
       private Respawner _hangfireRespawner;
       private NpgsqlConnection _hangfireConnection;
 
-      public const string TestEnvironmentName = "Integration";
+      public const string TestEnvironmentName = "Test";
 
       public Setup()
       {
@@ -75,14 +75,15 @@ namespace Crypter.Test.Integration_Tests.Common
 
          RespawnerOptions respawnOptions = new RespawnerOptions
          {
-            DbAdapter = DbAdapter.Postgres
+            DbAdapter = DbAdapter.Postgres,
+            WithReseed =  true
          };
 
          _crypterRespawner = await InitializeRespawnerAsync(_defaultConnection, respawnOptions);
          _hangfireRespawner = await InitializeRespawnerAsync(_defaultConnection, respawnOptions);
       }
 
-      public async Task ResetBetweenTestRunsAsync()
+      public async Task ResetServerDataAsync()
       {
          try
          {
@@ -95,14 +96,19 @@ namespace Crypter.Test.Integration_Tests.Common
          await ResetDatabaseAsync(_hangfireRespawner, _hangfireConnection);
       }
 
-      internal static WebApplicationFactory<Program> SetupWebApplicationFactory()
+      internal static async Task<WebApplicationFactory<Program>> SetupWebApplicationFactoryAsync()
       {
-         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+         WebApplicationFactory<Program> factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
          {
             builder
                .UseEnvironment(TestEnvironmentName)
                .UseConfiguration(GetIntegrationConfiguration());
          });
+
+         DataContext dataContext = factory.Services.GetService<DataContext>();
+         await dataContext.Database.EnsureCreatedAsync();
+
+         return factory;
       }
 
       internal static ICrypterApiService SetupCrypterApiService(HttpClient webApplicationHttpClient)
@@ -125,8 +131,14 @@ namespace Crypter.Test.Integration_Tests.Common
 
       private static IConfigurationRoot GetIntegrationConfiguration()
       {
+         string operatingSystem = OperatingSystem.IsWindows()
+            ? "Windows"
+            : OperatingSystem.IsLinux()
+               ? "Linux"
+               : throw new NotImplementedException("Unit testing for the current operating system has not been implemented.");
+
          string assemblyLocation = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-         string filepath = Path.Combine(assemblyLocation, "Integration_Tests", "Configuration", $"appsettings.{TestEnvironmentName}.json");
+         string filepath = Path.Combine(assemblyLocation, "Integration_Tests", "Configuration", $"appsettings.{TestEnvironmentName}.{operatingSystem}.json");
 
          return new ConfigurationBuilder()
             .AddJsonFile(filepath)
