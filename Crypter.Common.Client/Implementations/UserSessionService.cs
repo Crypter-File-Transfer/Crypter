@@ -95,7 +95,7 @@ namespace Crypter.Common.Client.Implementations
                {
                   if (session.Schema == UserSession.LATEST_SCHEMA)
                   {
-                     await _crypterApiClient.RefreshAsync().DoRightAsync(async x =>
+                     await _crypterApiClient.UserAuthentication.RefreshSessionAsync().DoRightAsync(async x =>
                      {
                         await _tokenRepository.StoreAuthenticationTokenAsync(x.AuthenticationToken);
                         await _tokenRepository.StoreRefreshTokenAsync(x.RefreshToken, x.RefreshTokenType);

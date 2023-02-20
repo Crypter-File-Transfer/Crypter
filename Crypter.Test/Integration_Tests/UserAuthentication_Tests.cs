@@ -25,9 +25,17 @@
  */
 
 using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Enums;
+using Crypter.Core;
+using Crypter.Core.Entities;
+using Crypter.Core.Identity;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +49,7 @@ namespace Crypter.Test.Integration_Tests
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
       private ICrypterApiClient _client;
+      private ITokenRepository _clientTokenRepository;
 
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
@@ -49,7 +58,7 @@ namespace Crypter.Test.Integration_Tests
          await _setup.InitializeRespawnerAsync();
 
          _factory = await Setup.SetupWebApplicationFactoryAsync();
-         _client = Setup.SetupCrypterApiClient(_factory.CreateClient());
+         (_client, _clientTokenRepository) = Setup.SetupCrypterApiClient(_factory.CreateClient());
       }
 
       [TearDown]
@@ -156,6 +165,83 @@ namespace Crypter.Test.Integration_Tests
          var result = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
 
          Assert.True(registrationResult.IsRight);
+         Assert.True(result.IsLeft);
+      }
+
+      [TestCase(TokenType.Session)]
+      [TestCase(TokenType.Device)]
+      public async Task Refresh_Works(TokenType refreshTokenType)
+      {
+         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
+         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
+
+         LoginRequest loginRequest = TestData.GetDefaultLoginRequest(refreshTokenType);
+         var loginResult = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
+
+         await loginResult.DoRightAsync(async loginResponse =>
+         {
+            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, refreshTokenType);
+         });
+
+         var result = await _client.UserAuthentication.RefreshSessionAsync();
+
+         Assert.True(registrationResult.IsRight);
+         Assert.True(loginResult.IsRight);
+         Assert.True(result.IsRight);
+      }
+
+      [Test]
+      public async Task Refresh_Fails_Expired_Token()
+      {
+         IConfigurationRoot apiConfiguration = Setup.GetIntegrationConfiguration();
+         TokenSettings apiTokenSettings = apiConfiguration.GetSection("TokenSettings").Get<TokenSettings>();
+
+         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
+         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
+
+         LoginRequest loginRequest = TestData.GetDefaultLoginRequest(TokenType.Session);
+         var loginResult = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
+
+         await loginResult.DoRightAsync(async loginResponse =>
+         {
+            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+         });
+
+         await Task.Delay(apiTokenSettings.SessionTokenLifetimeMinutes * 60000);
+         var result = await _client.UserAuthentication.RefreshSessionAsync();
+
+         Assert.True(registrationResult.IsRight);
+         Assert.True(loginResult.IsRight);
+         Assert.True(result.IsLeft);
+      }
+
+      [Test]
+      public async Task Refresh_Fails_Deleted_Token()
+      {
+         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
+         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
+
+         LoginRequest loginRequest = TestData.GetDefaultLoginRequest(TokenType.Session);
+         var loginResult = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
+
+         await loginResult.DoRightAsync(async loginResponse =>
+         {
+            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+         });
+
+         DataContext dataContext = _factory.Services.GetService<DataContext>();
+         UserTokenEntity refreshTokenEntity = await dataContext.UserTokens
+            .SingleOrDefaultAsync();
+         dataContext.UserTokens.Remove(refreshTokenEntity);
+         await dataContext.SaveChangesAsync();
+
+         var result = await _client.UserAuthentication.RefreshSessionAsync();
+
+         Assert.True(registrationResult.IsRight);
+         Assert.True(loginResult.IsRight);
          Assert.True(result.IsLeft);
       }
    }

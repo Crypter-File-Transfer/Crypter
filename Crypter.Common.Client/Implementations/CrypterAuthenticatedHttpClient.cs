@@ -70,13 +70,27 @@ namespace Crypter.Common.Client.Implementations
          };
       }
 
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri)
+      public Task<Either<ErrorResponse, TResponse>> GetAsync<TResponse>(string uri)
          where TResponse : class
       {
-         return GetAsync<TResponse>(uri, false);
+         return GetAsync<TResponse>(uri);
       }
 
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri, bool useRefreshToken = false)
+      public async Task<Either<ErrorResponse, TResponse>> GetAsync<TResponse>(string uri, bool useRefreshToken = false)
+         where TResponse : class
+      {
+         var request = MakeRequestMessageFactory(HttpMethod.Get, uri, Maybe<object>.None);
+         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
+         return await DeserializeResponseAsync<TResponse>(response);
+      }
+
+      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)
+         where TResponse : class
+      {
+         return GetWithStatusCodeAsync<TResponse>(uri);
+      }
+
+      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri, bool useRefreshToken = false)
          where TResponse : class
       {
          var request = MakeRequestMessageFactory(HttpMethod.Get, uri, Maybe<object>.None);
@@ -211,7 +225,7 @@ namespace Crypter.Common.Client.Implementations
             try
             {
                var retryRequest = requestFactory();
-               var refreshAndRetry = from refreshResponse in _crypterApiClient.RefreshAsync()
+               var refreshAndRetry = from refreshResponse in _crypterApiClient.UserAuthentication.RefreshSessionAsync()
                                      from unit0 in Either<RefreshError, Unit>.FromRightAsync(_tokenRepository.StoreAuthenticationTokenAsync(refreshResponse.AuthenticationToken))
                                      from unit1 in Either<RefreshError, Unit>.FromRightAsync(_tokenRepository.StoreRefreshTokenAsync(refreshResponse.RefreshToken, refreshResponse.RefreshTokenType))
                                      from unit2 in Either<RefreshError, Unit>.FromRightAsync(AttachTokenAsync(retryRequest, false))

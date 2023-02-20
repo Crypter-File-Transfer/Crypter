@@ -38,13 +38,13 @@ namespace Crypter.Common.Client.Implementations.Requests
 {
    public class MessageTransferRequests : IMessageTransferRequests
    {
-      private readonly ICrypterHttpClient _crypterHttpService;
-      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpService;
+      private readonly ICrypterHttpClient _crypterHttpClient;
+      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
 
-      public MessageTransferRequests(ICrypterHttpClient crypterHttpService, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpService)
+      public MessageTransferRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
       {
-         _crypterHttpService = crypterHttpService;
-         _crypterAuthenticatedHttpService = crypterAuthenticatedHttpService;
+         _crypterHttpClient = crypterHttpClient;
+         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
       }
 
       public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<string> recipientUsername, UploadMessageTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)
@@ -54,8 +54,8 @@ namespace Crypter.Common.Client.Implementations.Requests
             x => $"api/message/transfer?username={x}");
 
          ICrypterHttpClient service = withAuthentication
-            ? _crypterAuthenticatedHttpService
-            : _crypterHttpService;
+            ? _crypterAuthenticatedHttpClient
+            : _crypterHttpClient;
 
          using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
          {

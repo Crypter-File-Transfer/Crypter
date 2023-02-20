@@ -129,12 +129,12 @@ namespace Crypter.Test.Integration_Tests.Common
          return new RegistrationRequest(username, versionedPassword, emailAddress);
       }
 
-      internal static LoginRequest GetDefaultLoginRequest()
+      internal static LoginRequest GetDefaultLoginRequest(TokenType tokenType = TokenType.Session)
       {
          Username username = Username.From("Frodo");
          VersionedPassword versionedPassword = new VersionedPassword("The Precious"u8.ToArray(), 1);
 
-         return new LoginRequest(username, new List<VersionedPassword> { versionedPassword }, TokenType.Session);
+         return new LoginRequest(username, new List<VersionedPassword> { versionedPassword }, tokenType);
       }
    }
 }

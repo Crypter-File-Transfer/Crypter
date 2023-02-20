@@ -28,33 +28,46 @@ using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
+using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Implementations.Requests
 {
    public class UserAuthenticationRequests : IUserAuthenticationRequests
    {
-      private readonly ICrypterHttpClient _crypterHttpService;
-      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpService;
+      private readonly ICrypterHttpClient _crypterHttpClient;
+      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+      private readonly EventHandler _refreshTokenRejectedHandler;
 
-      public UserAuthenticationRequests(ICrypterHttpClient crypterHttpService, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpService)
+      public UserAuthenticationRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient, EventHandler refreshTokenRejectedHandler)
       {
-         _crypterHttpService = crypterHttpService;
-         _crypterAuthenticatedHttpService = crypterAuthenticatedHttpService;
+         _crypterHttpClient = crypterHttpClient;
+         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+         _refreshTokenRejectedHandler = refreshTokenRejectedHandler;
       }
 
-      public async Task<Either<RegistrationError, Unit>> SendUserRegistrationRequest(RegistrationRequest registerRequest)
+      public Task<Either<RegistrationError, Unit>> SendUserRegistrationRequest(RegistrationRequest registerRequest)
       {
          string url = "api/user/authentication/register";
-         return await _crypterHttpService.PostUnitResponseAsync<RegistrationRequest>(url, registerRequest)
+         return _crypterHttpClient.PostUnitResponseAsync<RegistrationRequest>(url, registerRequest)
             .ExtractErrorCode<RegistrationError, Unit>();
       }
 
-      public async Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(LoginRequest loginRequest)
+      public Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(LoginRequest loginRequest)
       {
          string url = "api/user/authentication/login";
-         return await _crypterHttpService.PostAsync<LoginRequest, LoginResponse>(url, loginRequest)
+         return _crypterHttpClient.PostAsync<LoginRequest, LoginResponse>(url, loginRequest)
             .ExtractErrorCode<LoginError, LoginResponse>();
+      }
+
+      public async Task<Either<RefreshError, RefreshResponse>> RefreshSessionAsync()
+      {
+         string url = "api/user/authentication/refresh";
+         Either<RefreshError, RefreshResponse> response = await _crypterAuthenticatedHttpClient.GetAsync<RefreshResponse>(url, true)
+            .ExtractErrorCode<RefreshError, RefreshResponse>();
+
+         response.DoLeftOrNeither(() => _refreshTokenRejectedHandler?.Invoke(this, EventArgs.Empty));
+         return response;
       }
    }
 }

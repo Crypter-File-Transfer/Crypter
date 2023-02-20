@@ -29,6 +29,7 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Crypter.Core.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -48,6 +49,12 @@ namespace Crypter.API.Controllers
          _userAuthenticationService = userAuthenticationService;
       }
 
+      /// <summary>
+      /// Handle a registration request.
+      /// </summary>
+      /// <param name="request"></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
       [HttpPost]
       [Route("register")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
@@ -115,6 +122,47 @@ namespace Crypter.API.Controllers
             MakeErrorResponse,
             Ok,
             MakeErrorResponse(LoginError.UnknownError));
+      }
+
+      /// <summary>
+      /// Trade in a valid refresh token for a new authentication token and refresh token.
+      /// </summary>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      /// <remarks>
+      /// This action will accept a valid, un-expired refresh token. In exchange, it will respond with a fresh authentication token
+      /// and a fresh refresh token of the same type (i.e. a short-term "session" token vs a long-term "device" token).
+      /// If the client wants to switch the type of refresh token, it should perform a new login.
+      /// The refresh token should be provided in the Authorization header.
+      /// </remarks>
+      [HttpGet("refresh")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RefreshResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> RefreshAsync(CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(RefreshError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               RefreshError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               RefreshError.UserNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+               RefreshError.InvalidToken => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         var requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
+         var refreshResult = await _userAuthenticationService.RefreshAsync(User, requestUserAgent, cancellationToken);
+
+         return refreshResult.Match(
+            MakeErrorResponse,
+            Ok,
+            MakeErrorResponse(RefreshError.UnknownError));
       }
    }
 }

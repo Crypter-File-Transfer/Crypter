@@ -50,7 +50,7 @@ namespace Crypter.Test.Integration_Tests
          await _setup.InitializeRespawnerAsync();
 
          _factory = await Setup.SetupWebApplicationFactoryAsync();
-         _client = Setup.SetupCrypterApiClient(_factory.CreateClient());
+         (_client, _) = Setup.SetupCrypterApiClient(_factory.CreateClient());
       }
 
       [TearDown]

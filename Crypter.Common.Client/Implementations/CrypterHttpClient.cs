@@ -50,7 +50,7 @@ namespace Crypter.Common.Client.Implementations
          };
       }
 
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri)
+      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)
          where TResponse : class
       {
          var request = MakeRequestMessage(HttpMethod.Get, uri, Maybe<object>.None);

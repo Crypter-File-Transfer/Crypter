@@ -50,7 +50,6 @@ namespace Crypter.Common.Client.Interfaces
 
       #region Authentication
       Task<Either<TestPasswordError, TestPasswordResponse>> TestPasswordAsync(TestPasswordRequest testPasswordRequest);
-      Task<Either<RefreshError, RefreshResponse>>RefreshAsync();
       Task<Either<LogoutError, LogoutResponse>>LogoutAsync();
       #endregion
 

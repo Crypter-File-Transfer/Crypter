@@ -58,7 +58,7 @@ namespace Crypter.Test.Integration_Tests.Common
 
       public const string TestEnvironmentName = "Test";
 
-      public Setup()
+      internal Setup()
       {
          IConfigurationRoot configuration = GetIntegrationConfiguration();
 
@@ -68,7 +68,7 @@ namespace Crypter.Test.Integration_Tests.Common
             .Get<TransferStorageSettings>().Location;
       }
 
-      public async Task InitializeRespawnerAsync()
+      internal async Task InitializeRespawnerAsync()
       {
          _defaultConnection = new NpgsqlConnection(DefaultConnectionString);
          _hangfireConnection = new NpgsqlConnection(HangfireConnectionString);
@@ -83,7 +83,7 @@ namespace Crypter.Test.Integration_Tests.Common
          _hangfireRespawner = await InitializeRespawnerAsync(_defaultConnection, respawnOptions);
       }
 
-      public async Task ResetServerDataAsync()
+      internal async Task ResetServerDataAsync()
       {
          try
          {
@@ -111,12 +111,14 @@ namespace Crypter.Test.Integration_Tests.Common
          return factory;
       }
 
-      internal static ICrypterApiClient SetupCrypterApiClient(HttpClient webApplicationHttpClient)
+      internal static (ICrypterApiClient crypterApiClient, ITokenRepository tokenRepository) SetupCrypterApiClient(HttpClient webApplicationHttpClient)
       {
-         return new CrypterApiClient(webApplicationHttpClient, new MemoryTokenRepository());
+         ITokenRepository memoryTokenRepository = new MemoryTokenRepository();
+         ICrypterApiClient crypterApiClient = new CrypterApiClient(webApplicationHttpClient, memoryTokenRepository);
+         return (crypterApiClient, memoryTokenRepository);
       }
 
-      private static IConfigurationRoot GetIntegrationConfiguration()
+      internal static IConfigurationRoot GetIntegrationConfiguration()
       {
          string operatingSystem = OperatingSystem.IsWindows()
             ? "Windows"
