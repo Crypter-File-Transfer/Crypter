@@ -34,7 +34,7 @@ namespace Crypter.Web.Shared.UserSettings
    public partial class UserSettingsPublicDetailsBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Parameter]
       public string Alias { get; set; }

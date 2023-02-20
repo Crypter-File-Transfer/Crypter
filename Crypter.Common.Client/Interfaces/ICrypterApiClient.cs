@@ -40,7 +40,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Interfaces
 {
-   public interface ICrypterApiService
+   public interface ICrypterApiClient
    {
       event EventHandler RefreshTokenRejectedEventHandler;
 

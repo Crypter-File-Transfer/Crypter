@@ -38,7 +38,7 @@ namespace Crypter.Web.Shared
       protected TransferSettings UploadSettings { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       protected bool ServerHasDiskSpace = true;
 

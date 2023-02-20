@@ -43,7 +43,7 @@ namespace Crypter.Common.Client.Implementations
    public class UserSessionService<TStorageLocation> : IUserSessionService, IDisposable
       where TStorageLocation : Enum
    {
-      private readonly ICrypterApiService _crypterApiService;
+      private readonly ICrypterApiClient _crypterApiClient;
       private readonly IUserPasswordService _userPasswordService;
       private readonly IDeviceRepository<TStorageLocation> _deviceRepository;
       private readonly IUserSessionRepository _userSessionRepository;
@@ -65,9 +65,9 @@ namespace Crypter.Common.Client.Implementations
       // Public properties
       public Maybe<UserSession> Session { get; protected set; } = Maybe<UserSession>.None;
 
-      public UserSessionService(ICrypterApiService crypterApiService, IUserSessionRepository userSessionRepository, ITokenRepository tokenRepository, IDeviceRepository<TStorageLocation> deviceRepository, IUserPasswordService userPasswordService)
+      public UserSessionService(ICrypterApiClient crypterApiClient, IUserSessionRepository userSessionRepository, ITokenRepository tokenRepository, IDeviceRepository<TStorageLocation> deviceRepository, IUserPasswordService userPasswordService)
       {
-         _crypterApiService = crypterApiService;
+         _crypterApiClient = crypterApiClient;
          _userSessionRepository = userSessionRepository;
          _tokenRepository = tokenRepository;
          _deviceRepository = deviceRepository;
@@ -80,7 +80,7 @@ namespace Crypter.Common.Client.Implementations
          };
 
          _deviceRepository.InitializedEventHandler += OnDeviceRepositoryInitializedAsync;
-         _crypterApiService.RefreshTokenRejectedEventHandler += OnRefreshTokenRejectedByApi;
+         _crypterApiClient.RefreshTokenRejectedEventHandler += OnRefreshTokenRejectedByApi;
       }
 
       private async Task InitializeAsync()
@@ -95,7 +95,7 @@ namespace Crypter.Common.Client.Implementations
                {
                   if (session.Schema == UserSession.LATEST_SCHEMA)
                   {
-                     await _crypterApiService.RefreshAsync().DoRightAsync(async x =>
+                     await _crypterApiClient.RefreshAsync().DoRightAsync(async x =>
                      {
                         await _tokenRepository.StoreAuthenticationTokenAsync(x.AuthenticationToken);
                         await _tokenRepository.StoreRefreshTokenAsync(x.RefreshToken, x.RefreshTokenType);
@@ -175,7 +175,7 @@ namespace Crypter.Common.Client.Implementations
 
       public async Task<Unit> LogoutAsync()
       {
-         await _crypterApiService.LogoutAsync();
+         await _crypterApiClient.LogoutAsync();
          return await RecycleAsync();
       }
 
@@ -236,7 +236,7 @@ namespace Crypter.Common.Client.Implementations
       private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
       {
          LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType);
-         return _crypterApiService.UserAuthentication.SendLoginRequestAsync(loginRequest);
+         return _crypterApiClient.UserAuthentication.SendLoginRequestAsync(loginRequest);
       }
 
       private Task<Either<TestPasswordError, TestPasswordResponse>> SendTestPasswordRequestAsync(Username username, Password password)
@@ -247,7 +247,7 @@ namespace Crypter.Common.Client.Implementations
             versionedPassword =>
             {
                TestPasswordRequest testRequest = new TestPasswordRequest(username, versionedPassword.Password);
-               return _crypterApiService.TestPasswordAsync(testRequest);
+               return _crypterApiClient.TestPasswordAsync(testRequest);
             });
       }
 
@@ -284,7 +284,7 @@ namespace Crypter.Common.Client.Implementations
       public void Dispose()
       {
          _deviceRepository.InitializedEventHandler -= OnDeviceRepositoryInitializedAsync;
-         _crypterApiService.RefreshTokenRejectedEventHandler -= OnRefreshTokenRejectedByApi;
+         _crypterApiClient.RefreshTokenRejectedEventHandler -= OnRefreshTokenRejectedByApi;
          GC.SuppressFinalize(this);
       }
    }

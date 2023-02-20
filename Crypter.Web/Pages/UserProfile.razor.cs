@@ -34,7 +34,7 @@ namespace Crypter.Web.Pages
    public partial class UserProfileBase : ComponentBase
    {
       [Inject]
-      private ICrypterApiService CrypterApiService { get; set; }
+      private ICrypterApiClient CrypterApiService { get; set; }
 
       [Inject]
       private IUserSessionService UserSessionService { get; set; }

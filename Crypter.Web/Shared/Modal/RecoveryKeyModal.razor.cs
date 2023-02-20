@@ -42,7 +42,7 @@ namespace Crypter.Web.Shared.Modal
       protected IJSRuntime JSRuntime { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Inject]
       protected IUserKeysService UserKeysService { get; set; }

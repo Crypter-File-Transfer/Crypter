@@ -39,7 +39,7 @@ namespace Crypter.Web.Pages
    public partial class UserTransfersBase : AuthenticatedPageBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       protected bool Loading = true;
 

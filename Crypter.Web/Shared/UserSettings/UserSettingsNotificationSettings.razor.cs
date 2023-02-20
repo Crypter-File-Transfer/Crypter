@@ -34,7 +34,7 @@ namespace Crypter.Web.Shared.UserSettings
    public partial class UserSettingsNotificationSettingsBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Parameter]
       public bool EmailAddressVerified { get; set; }

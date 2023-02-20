@@ -43,21 +43,21 @@ using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Implementations
 {
-   public class CrypterAuthenticatedHttpService : ICrypterAuthenticatedHttpService
+   public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
    {
       private readonly HttpClient _httpClient;
-      private readonly Func<ICrypterApiService> _crypterApiFactory;
+      private readonly ICrypterApiClient _crypterApiClient;
       private readonly ITokenRepository _tokenRepository;
       private readonly JsonSerializerOptions _jsonSerializerOptions;
 
       private readonly SemaphoreSlim _requestSemaphore = new(1);
       private readonly Dictionary<bool, Func<Task<Maybe<TokenObject>>>> _tokenProviderMap;
 
-      public CrypterAuthenticatedHttpService(HttpClient httpClient, ITokenRepository tokenRepository, Func<ICrypterApiService> crypterApiFactory)
+      public CrypterAuthenticatedHttpClient(HttpClient httpClient, ITokenRepository tokenRepository, ICrypterApiClient crypterApiClient)
       {
          _httpClient = httpClient;
          _tokenRepository = tokenRepository;
-         _crypterApiFactory = crypterApiFactory;
+         _crypterApiClient = crypterApiClient;
          _jsonSerializerOptions = new JsonSerializerOptions
          {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -211,7 +211,7 @@ namespace Crypter.Common.Client.Implementations
             try
             {
                var retryRequest = requestFactory();
-               var refreshAndRetry = from refreshResponse in _crypterApiFactory().RefreshAsync()
+               var refreshAndRetry = from refreshResponse in _crypterApiClient.RefreshAsync()
                                      from unit0 in Either<RefreshError, Unit>.FromRightAsync(_tokenRepository.StoreAuthenticationTokenAsync(refreshResponse.AuthenticationToken))
                                      from unit1 in Either<RefreshError, Unit>.FromRightAsync(_tokenRepository.StoreRefreshTokenAsync(refreshResponse.RefreshToken, refreshResponse.RefreshTokenType))
                                      from unit2 in Either<RefreshError, Unit>.FromRightAsync(AttachTokenAsync(retryRequest, false))

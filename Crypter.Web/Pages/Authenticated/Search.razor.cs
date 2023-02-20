@@ -40,7 +40,7 @@ namespace Crypter.Web.Pages
    public partial class SearchBase : AuthenticatedPageBase, IDisposable
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Inject]
       protected IUserContactsService UserContactsService { get; set; }

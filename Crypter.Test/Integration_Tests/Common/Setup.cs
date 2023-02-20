@@ -111,22 +111,9 @@ namespace Crypter.Test.Integration_Tests.Common
          return factory;
       }
 
-      internal static ICrypterApiService SetupCrypterApiService(HttpClient webApplicationHttpClient)
+      internal static ICrypterApiClient SetupCrypterApiClient(HttpClient webApplicationHttpClient)
       {
-         ServiceCollection serviceCollection = new ServiceCollection();
-
-         serviceCollection
-            .AddSingleton<ICrypterHttpService>(sp => new CrypterHttpService(webApplicationHttpClient))
-            .AddSingleton<ICrypterAuthenticatedHttpService>(sp => new CrypterAuthenticatedHttpService(
-               webApplicationHttpClient,
-               sp.GetService<ITokenRepository>(),
-               sp.GetService<Func<ICrypterApiService>>()))
-            .AddSingleton<ITokenRepository, MemoryTokenRepository>()
-            .AddSingleton<ICrypterApiService, CrypterApiService>()
-            .AddSingleton<Func<ICrypterApiService>>(sp => () => sp.GetService<ICrypterApiService>());
-
-         ServiceProvider serviceProvider = serviceCollection.BuildServiceProvider();
-         return serviceProvider.GetRequiredService<ICrypterApiService>();
+         return new CrypterApiClient(webApplicationHttpClient, new MemoryTokenRepository());
       }
 
       private static IConfigurationRoot GetIntegrationConfiguration()

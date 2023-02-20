@@ -35,7 +35,7 @@ namespace Crypter.Web.Pages
    public partial class UserSettingsBase : AuthenticatedPageBase
    {
       [Inject]
-      private ICrypterApiService CrypterApiService { get; set; }
+      private ICrypterApiClient CrypterApiService { get; set; }
 
       protected bool Loading = true;
 

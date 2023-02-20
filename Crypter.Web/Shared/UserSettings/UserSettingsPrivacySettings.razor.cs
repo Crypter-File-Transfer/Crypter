@@ -35,7 +35,7 @@ namespace Crypter.Web.Shared.UserSettings
    public class UserSettingsPrivacySettingsBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Parameter]
       public UserVisibilityLevel ProfileVisibility { get; set; }

@@ -40,7 +40,7 @@ namespace Crypter.Test.Integration_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
-      private ICrypterApiService _client;
+      private ICrypterApiClient _client;
 
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
@@ -49,7 +49,7 @@ namespace Crypter.Test.Integration_Tests
          await _setup.InitializeRespawnerAsync();
 
          _factory = await Setup.SetupWebApplicationFactoryAsync();
-         _client = Setup.SetupCrypterApiService(_factory.CreateClient());
+         _client = Setup.SetupCrypterApiClient(_factory.CreateClient());
       }
 
       [TearDown]

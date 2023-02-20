@@ -38,10 +38,10 @@ namespace Crypter.Common.Client.Implementations.Requests
 {
    public class FileTransferRequests : IFileTransferRequests
    {
-      private readonly ICrypterHttpService _crypterHttpService;
-      private readonly ICrypterAuthenticatedHttpService _crypterAuthenticatedHttpService;
+      private readonly ICrypterHttpClient _crypterHttpService;
+      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpService;
 
-      public FileTransferRequests(ICrypterHttpService crypterHttpService, ICrypterAuthenticatedHttpService authenticatedHttpService)
+      public FileTransferRequests(ICrypterHttpClient crypterHttpService, ICrypterAuthenticatedHttpClient authenticatedHttpService)
       {
          _crypterHttpService = crypterHttpService;
          _crypterAuthenticatedHttpService = authenticatedHttpService;
@@ -53,7 +53,7 @@ namespace Crypter.Common.Client.Implementations.Requests
             () => "api/file/transfer",
             x => $"api/file/transfer?username={x}");
 
-         ICrypterHttpService service = withAuthentication
+         ICrypterHttpClient service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
 

@@ -42,8 +42,8 @@ namespace Crypter.Common.Client.Transfer.Handlers
       private MemoryStream _messageStream;
       private string _messageSubject;
 
-      public UploadMessageHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
-         : base(crypterApiService, cryptoProvider, transferSettings)
+      public UploadMessageHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
+         : base(crypterApiClient, cryptoProvider, transferSettings)
       { }
 
       internal void SetTransferInfo(string messageSubject, string messageBody, int expirationHours)
@@ -58,7 +58,7 @@ namespace Crypter.Common.Client.Transfer.Handlers
       {
          var (encryptionStream, senderPublicKey, proof) = GetEncryptionInfo(_messageStream, _messageStream.Length);
          UploadMessageTransferRequest request = new UploadMessageTransferRequest(_messageSubject, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
-         return _crypterApiService.MessageTransfer.UploadMessageTransferAsync(_recipientUsername, request, encryptionStream, _senderDefined)
+         return _crypterApiClient.MessageTransfer.UploadMessageTransferAsync(_recipientUsername, request, encryptionStream, _senderDefined)
             .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.Message, x.UserType, _recipientKeySeed));
       }
    }

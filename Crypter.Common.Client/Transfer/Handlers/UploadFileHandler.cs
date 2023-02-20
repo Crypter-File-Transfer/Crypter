@@ -44,8 +44,8 @@ namespace Crypter.Common.Client.Transfer.Handlers
       private long _fileSize;
       private string _fileContentType;
 
-      public UploadFileHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
-         : base(crypterApiService, cryptoProvider, transferSettings)
+      public UploadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
+         : base(crypterApiClient, cryptoProvider, transferSettings)
       { }
 
       internal void SetTransferInfo(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours)
@@ -61,7 +61,7 @@ namespace Crypter.Common.Client.Transfer.Handlers
       {
          var (encryptionStream, senderPublicKey, proof) = GetEncryptionInfo(_fileStream, _fileSize);
          UploadFileTransferRequest request = new UploadFileTransferRequest(_fileName, _fileContentType, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
-         return _crypterApiService.FileTransfer.UploadFileTransferAsync(_recipientUsername, request, encryptionStream, _senderDefined)
+         return _crypterApiClient.FileTransfer.UploadFileTransferAsync(_recipientUsername, request, encryptionStream, _senderDefined)
             .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.File, x.UserType, _recipientKeySeed));
       }
 

@@ -39,15 +39,15 @@ namespace Crypter.Common.Client.Implementations
 {
    public class UserContactsService : IUserContactsService, IDisposable
    {
-      private readonly ICrypterApiService _crypterApiService;
+      private readonly ICrypterApiClient _crypterApiClient;
       private readonly IUserSessionService _userSessionService;
       private IDictionary<string, UserContactDTO> _contacts;
 
       private readonly SemaphoreSlim _fetchMutex = new(1);
 
-      public UserContactsService(ICrypterApiService crypterApiService, IUserSessionService userSessionService)
+      public UserContactsService(ICrypterApiClient crypterApiClient, IUserSessionService userSessionService)
       {
-         _crypterApiService = crypterApiService;
+         _crypterApiClient = crypterApiClient;
          _userSessionService = userSessionService;
          _userSessionService.ServiceInitializedEventHandler += OnSessionServiceInitialized;
          _userSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
@@ -84,7 +84,7 @@ namespace Crypter.Common.Client.Implementations
 
          var request = new AddUserContactRequest(lowerContactUsername);
 
-         return await _crypterApiService.AddUserContactAsync(request)
+         return await _crypterApiClient.AddUserContactAsync(request)
             .BindAsync(x =>
             {
                _contacts.Add(lowerContactUsername, x.Contact);
@@ -96,13 +96,13 @@ namespace Crypter.Common.Client.Implementations
       {
          string lowerContactUsername = contactUsername.ToLower();
          var request = new RemoveContactRequest(lowerContactUsername);
-         var response = await _crypterApiService.RemoveUserContactAsync(request);
+         var response = await _crypterApiClient.RemoveUserContactAsync(request);
          response.DoRight(x => _contacts.Remove(lowerContactUsername));
       }
 
       private async Task<IDictionary<string, UserContactDTO>> FetchContactsAsync()
       {
-         Either<DummyError, GetUserContactsResponse> response = await _crypterApiService.GetUserContactsAsync();
+         Either<DummyError, GetUserContactsResponse> response = await _crypterApiClient.GetUserContactsAsync();
          return response.Match(
             new Dictionary<string, UserContactDTO>(),
             right => right.Contacts.ToDictionary(x => x.Username.ToLower()));

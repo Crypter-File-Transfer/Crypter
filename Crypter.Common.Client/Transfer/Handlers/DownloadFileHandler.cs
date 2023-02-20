@@ -39,8 +39,8 @@ namespace Crypter.Common.Client.Transfer.Handlers
 {
    public class DownloadFileHandler : DownloadHandler
    {
-      public DownloadFileHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
-         : base(crypterApiService, cryptoProvider, userSessionService, transferSettings)
+      public DownloadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
+         : base(crypterApiClient, cryptoProvider, userSessionService, transferSettings)
       { }
 
       public async Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadPreviewAsync()
@@ -48,8 +48,8 @@ namespace Crypter.Common.Client.Transfer.Handlers
 #pragma warning disable CS8524
          var response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFilePreviewAsync(_transferHashId),
-            TransferUserType.User => await _crypterApiService.DownloadUserFilePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiClient.DownloadAnonymousFilePreviewAsync(_transferHashId),
+            TransferUserType.User => await _crypterApiClient.DownloadUserFilePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
 
@@ -70,8 +70,8 @@ namespace Crypter.Common.Client.Transfer.Handlers
 #pragma warning disable CS8524
          Either<DownloadTransferCiphertextError, StreamDownloadResponse> response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFileCiphertextAsync(_transferHashId, request),
-            TransferUserType.User => await _crypterApiService.DownloadUserFileCiphertextAsync(_transferHashId, request, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiClient.DownloadAnonymousFileCiphertextAsync(_transferHashId, request),
+            TransferUserType.User => await _crypterApiClient.DownloadUserFileCiphertextAsync(_transferHashId, request, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
 

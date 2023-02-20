@@ -37,7 +37,7 @@ namespace Crypter.Common.Client.Transfer.Handlers.Base
 {
    public class DownloadHandler : IUserDownloadHandler
    {
-      protected readonly ICrypterApiService _crypterApiService;
+      protected readonly ICrypterApiClient _crypterApiClient;
       protected readonly ICryptoProvider _cryptoProvider;
       protected readonly IUserSessionService _userSessionService;
       protected readonly TransferSettings _transferSettings;
@@ -52,9 +52,9 @@ namespace Crypter.Common.Client.Transfer.Handlers.Base
       protected Maybe<byte[]> _serverProof = Maybe<byte[]>.None;
       protected Maybe<byte[]> _keyExchangeNonce = Maybe<byte[]>.None;
 
-      public DownloadHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
+      public DownloadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
       {
-         _crypterApiService = crypterApiService;
+         _crypterApiClient = crypterApiClient;
          _cryptoProvider = cryptoProvider;
          _userSessionService = userSessionService;
          _transferSettings = transferSettings;

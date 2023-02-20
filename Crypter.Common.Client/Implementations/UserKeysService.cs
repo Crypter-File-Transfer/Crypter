@@ -41,7 +41,7 @@ namespace Crypter.Common.Client.Implementations
 {
    public class UserKeysService : IUserKeysService, IDisposable
    {
-      private readonly ICrypterApiService _crypterApiService;
+      private readonly ICrypterApiClient _crypterApiClient;
       private readonly ICryptoProvider _cryptoProvider;
       private readonly IUserPasswordService _userPasswordService;
       private readonly IUserKeysRepository _userKeysRepository;
@@ -50,9 +50,9 @@ namespace Crypter.Common.Client.Implementations
       public Maybe<byte[]> MasterKey { get; protected set; } = Maybe<byte[]>.None;
       public Maybe<byte[]> PrivateKey { get; protected set; } = Maybe<byte[]>.None;
 
-      public UserKeysService(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService)
+      public UserKeysService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService)
       {
-         _crypterApiService = crypterApiService;
+         _crypterApiClient = crypterApiClient;
          _userPasswordService = userPasswordService;
          _cryptoProvider = cryptoProvider;
          _userKeysRepository = userKeysRepository;
@@ -88,14 +88,14 @@ namespace Crypter.Common.Client.Implementations
 
       private Task<Maybe<byte[]>> DownloadAndDecryptMasterKey(byte[] credentialKey)
       {
-         return _crypterApiService.GetMasterKeyAsync()
+         return _crypterApiClient.GetMasterKeyAsync()
             .BindAsync<GetMasterKeyError, GetMasterKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(credentialKey, x.Nonce, x.EncryptedKey))
             .ToMaybeTask();
       }
 
       private Task<Maybe<byte[]>> DownloadAndDecryptPrivateKey(byte[] masterKey)
       {
-         return _crypterApiService.GetPrivateKeyAsync()
+         return _crypterApiClient.GetPrivateKeyAsync()
             .BindAsync<GetPrivateKeyError, GetPrivateKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(masterKey, x.Nonce, x.EncryptedKey))
             .ToMaybeTask();
       }
@@ -125,7 +125,7 @@ namespace Crypter.Common.Client.Implementations
          byte[] encryptedMasterKey = _cryptoProvider.Encryption.Encrypt(credentialKey, nonce, newMasterKey);
          byte[] recoveryProof = _cryptoProvider.Random.GenerateRandomBytes(32);
 
-         return _crypterApiService.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof))
+         return _crypterApiClient.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof))
             .ToMaybeTask()
             .BindAsync(x => new RecoveryKey(newMasterKey, recoveryProof));
       }
@@ -137,7 +137,7 @@ namespace Crypter.Common.Client.Implementations
          byte[] encryptedPrivateKey = _cryptoProvider.Encryption.Encrypt(masterKey, nonce, keyPair.PrivateKey);
 
          InsertKeyPairRequest request = new InsertKeyPairRequest(encryptedPrivateKey, keyPair.PublicKey, nonce);
-         return _crypterApiService.InsertKeyPairAsync(request)
+         return _crypterApiClient.InsertKeyPairAsync(request)
             .ToMaybeTask()
             .BindAsync(x => keyPair.PrivateKey);
       }
@@ -157,7 +157,7 @@ namespace Crypter.Common.Client.Implementations
             .BindAsync(masterKey =>
             {
                GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(username, versionedPassword.Password);
-               return _crypterApiService.GetMasterKeyRecoveryProofAsync(request).ToMaybeTask()
+               return _crypterApiClient.GetMasterKeyRecoveryProofAsync(request).ToMaybeTask()
                   .BindAsync(x => new RecoveryKey(masterKey, x.Proof));
             });
       }

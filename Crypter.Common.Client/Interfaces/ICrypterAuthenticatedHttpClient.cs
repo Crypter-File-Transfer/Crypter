@@ -31,7 +31,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Interfaces
 {
-   public interface ICrypterAuthenticatedHttpService : ICrypterHttpService
+   public interface ICrypterAuthenticatedHttpClient : ICrypterHttpClient
    {
       Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri, bool useRefreshToken = false)
          where TResponse : class;

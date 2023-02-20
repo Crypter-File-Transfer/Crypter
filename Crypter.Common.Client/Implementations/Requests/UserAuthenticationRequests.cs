@@ -34,10 +34,10 @@ namespace Crypter.Common.Client.Implementations.Requests
 {
    public class UserAuthenticationRequests : IUserAuthenticationRequests
    {
-      private readonly ICrypterHttpService _crypterHttpService;
-      private readonly ICrypterAuthenticatedHttpService _crypterAuthenticatedHttpService;
+      private readonly ICrypterHttpClient _crypterHttpService;
+      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpService;
 
-      public UserAuthenticationRequests(ICrypterHttpService crypterHttpService, ICrypterAuthenticatedHttpService crypterAuthenticatedHttpService)
+      public UserAuthenticationRequests(ICrypterHttpClient crypterHttpService, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpService)
       {
          _crypterHttpService = crypterHttpService;
          _crypterAuthenticatedHttpService = crypterAuthenticatedHttpService;

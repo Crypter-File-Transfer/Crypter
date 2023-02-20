@@ -36,12 +36,12 @@ using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Implementations
 {
-   public class CrypterHttpService : ICrypterHttpService
+   public class CrypterHttpClient : ICrypterHttpClient
    {
       private readonly HttpClient _httpClient;
       private readonly JsonSerializerOptions _jsonSerializerOptions;
 
-      public CrypterHttpService(HttpClient httpClient)
+      public CrypterHttpClient(HttpClient httpClient)
       {
          _httpClient = httpClient;
          _jsonSerializerOptions = new JsonSerializerOptions

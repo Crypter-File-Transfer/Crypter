@@ -38,7 +38,7 @@ namespace Crypter.Web.Shared
    public partial class RegisterComponentBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Inject]
       protected IUserSessionService UserSessionService { get; set; }

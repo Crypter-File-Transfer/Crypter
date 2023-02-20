@@ -32,7 +32,7 @@ using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Interfaces
 {
-   public interface ICrypterHttpService
+   public interface ICrypterHttpClient
    {
       Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetAsync<TResponse>(string uri)
          where TResponse : class;

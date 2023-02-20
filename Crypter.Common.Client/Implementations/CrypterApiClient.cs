@@ -26,6 +26,7 @@
 
 using Crypter.Common.Client.Implementations.Requests;
 using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Consent;
@@ -40,15 +41,16 @@ using Crypter.Common.Monads;
 using System;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Implementations
 {
-   public class CrypterApiService : ICrypterApiService
+   public class CrypterApiClient : ICrypterApiClient
    {
-      private readonly ICrypterHttpService _crypterHttpService;
-      private readonly ICrypterAuthenticatedHttpService _crypterAuthenticatedHttpService;
+      private readonly ICrypterHttpClient _crypterHttpService;
+      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpService;
 
       private EventHandler _refreshTokenRejectedHandler;
 
@@ -56,14 +58,14 @@ namespace Crypter.Common.Client.Implementations
       public IMessageTransferRequests MessageTransfer { get; init; }
       public IUserAuthenticationRequests UserAuthentication { get; init; }
 
-      public CrypterApiService(ICrypterHttpService crypterHttpService, ICrypterAuthenticatedHttpService crypterAuthenticatedHttpService)
+      public CrypterApiClient(HttpClient httpClient, ITokenRepository tokenRepository)
       {
-         _crypterHttpService = crypterHttpService;
-         _crypterAuthenticatedHttpService = crypterAuthenticatedHttpService;
+         _crypterHttpService = new CrypterHttpClient(httpClient);
+         _crypterAuthenticatedHttpService = new CrypterAuthenticatedHttpClient(httpClient, tokenRepository, this);
 
          FileTransfer = new FileTransferRequests(_crypterHttpService, _crypterAuthenticatedHttpService);
          MessageTransfer = new MessageTransferRequests(_crypterHttpService, _crypterAuthenticatedHttpService);
-         UserAuthentication = new UserAuthenticationRequests(_crypterHttpService, crypterAuthenticatedHttpService);
+         UserAuthentication = new UserAuthenticationRequests(_crypterHttpService, _crypterAuthenticatedHttpService);
       }
 
       /// <summary>
@@ -190,7 +192,7 @@ namespace Crypter.Common.Client.Implementations
       public Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadUserFilePreviewAsync(string hashId, bool withAuthentication)
       {
          string url = "/file/user/preview/?id={hashId}";
-         ICrypterHttpService service = withAuthentication
+         ICrypterHttpClient service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
 
@@ -203,7 +205,7 @@ namespace Crypter.Common.Client.Implementations
       public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication)
       {
          string url = "/file/user/ciphertext/?id={hashId}";
-         ICrypterHttpService service = withAuthentication
+         ICrypterHttpClient service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
 
@@ -269,7 +271,7 @@ namespace Crypter.Common.Client.Implementations
       public Task<Either<GetUserProfileError, GetUserProfileResponse>> GetUserProfileAsync(string username, bool withAuthentication)
       {
          string url = "/user/{username}/profile";
-         ICrypterHttpService service = withAuthentication
+         ICrypterHttpClient service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
 
@@ -340,7 +342,7 @@ namespace Crypter.Common.Client.Implementations
       public Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadUserMessagePreviewAsync(string hashId, bool withAuthentication)
       {
          string url = "/message/user/preview/?id={hashId}";
-         ICrypterHttpService service = withAuthentication
+         ICrypterHttpClient service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
 
@@ -353,7 +355,7 @@ namespace Crypter.Common.Client.Implementations
       public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication)
       {
          string url = "/message/user/ciphertext/?id={hashId}";
-         ICrypterHttpService service = withAuthentication
+         ICrypterHttpClient service = withAuthentication
             ? _crypterAuthenticatedHttpService
             : _crypterHttpService;
 
