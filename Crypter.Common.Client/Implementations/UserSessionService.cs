@@ -175,7 +175,7 @@ namespace Crypter.Common.Client.Implementations
 
       public async Task<Unit> LogoutAsync()
       {
-         await _crypterApiClient.LogoutAsync();
+         await _crypterApiClient.UserAuthentication.LogoutAsync();
          return await RecycleAsync();
       }
 
@@ -236,7 +236,7 @@ namespace Crypter.Common.Client.Implementations
       private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
       {
          LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType);
-         return _crypterApiClient.UserAuthentication.SendLoginRequestAsync(loginRequest);
+         return _crypterApiClient.UserAuthentication.LoginAsync(loginRequest);
       }
 
       private Task<Either<PasswordChallengeError, Unit>> SendTestPasswordRequestAsync(Username username, Password password)

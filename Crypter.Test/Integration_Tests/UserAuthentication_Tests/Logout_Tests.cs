@@ -27,19 +27,24 @@
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Enums;
+using Crypter.Core;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
 {
    [TestFixture]
-   internal class Registration_Tests
+   internal class Logout_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
       private ICrypterApiClient _client;
+      private ITokenRepository _clientTokenRepository;
 
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
@@ -48,7 +53,7 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
          await _setup.InitializeRespawnerAsync();
 
          _factory = await Setup.SetupWebApplicationFactoryAsync();
-         (_client, _) = Setup.SetupCrypterApiClient(_factory.CreateClient());
+         (_client, _clientTokenRepository) = Setup.SetupCrypterApiClient(_factory.CreateClient());
       }
 
       [TearDown]
@@ -63,46 +68,34 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
          await _factory.DisposeAsync();
       }
 
-      [TestCase(false)]
-      [TestCase(true)]
-      public async Task Register_User_Works(bool withEmailAddress)
+      [TestCase(TokenType.Session)]
+      [TestCase(TokenType.Device)]
+      public async Task Logout_Works(TokenType refreshTokenType)
       {
-         RegistrationRequest request = TestData.GetDefaultRegistrationRequest(withEmailAddress);
-         var result = await _client.UserAuthentication.RegisterAsync(request);
+         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
+         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
+         LoginRequest loginRequest = TestData.GetDefaultLoginRequest(refreshTokenType);
+         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+         await loginResult.DoRightAsync(async loginResponse =>
+         {
+            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, refreshTokenType);
+         });
+
+         DataContext dataContext = _factory.Services.GetService<DataContext>();
+         bool databaseHasTokenBeforeLogout = await dataContext.UserTokens.AnyAsync();
+
+         var result = await _client.UserAuthentication.LogoutAsync();
+
+         bool databaseHasTokenAfterlogout = await dataContext.UserTokens.AnyAsync();
+
+         Assert.True(registrationResult.IsRight);
+         Assert.True(loginResult.IsRight);
+         Assert.True(databaseHasTokenBeforeLogout);
          Assert.True(result.IsRight);
-      }
-
-      [TestCase("FOO", "foo")]
-      [TestCase("foo", "FOO")]
-      public async Task Register_User_Fails_For_Duplicate_Username(string initialUsername, string duplicateUsername)
-      {
-         VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
-
-         RegistrationRequest initialRequest = new RegistrationRequest(initialUsername, password, null);
-         var initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
-
-         RegistrationRequest secondRequest = new RegistrationRequest(duplicateUsername, password, null);
-         var secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
-
-         Assert.True(initialResult.IsRight);
-         Assert.True(secondResult.IsLeft);
-      }
-
-      [TestCase("FOO@foo.com", "foo@foo.com")]
-      [TestCase("foo@foo.com", "FOO@foo.com")]
-      public async Task Register_User_Fails_For_Duplicate_Email_Address(string initialEmailAddress, string duplicateEmailAddress)
-      {
-         VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
-
-         RegistrationRequest initialRequest = new RegistrationRequest("first", password, initialEmailAddress);
-         var initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
-
-         RegistrationRequest secondRequest = new RegistrationRequest("second", password, duplicateEmailAddress);
-         var secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
-
-         Assert.True(initialResult.IsRight);
-         Assert.True(secondResult.IsLeft);
+         Assert.False(databaseHasTokenAfterlogout);
       }
    }
 }

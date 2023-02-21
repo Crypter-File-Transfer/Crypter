@@ -37,32 +37,19 @@ namespace Crypter.Common.Client.Interfaces
       Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)
          where TResponse : class;
 
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
+      Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, TRequest body)
          where TRequest : class
          where TResponse : class;
 
-      Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
-         where TRequest : class
-         where TResponse : class;
+      Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync(string uri);
 
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
-         where TRequest : class
-         where TResponse : class;
-
-      Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, Maybe<TRequest> body)
+      Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, TRequest body)
          where TRequest : class;
 
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, Maybe<TRequest> body)
+      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, TRequest body)
          where TRequest : class;
-
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
-         where TRequest : class
-         where TResponse : class;
 
       Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(HttpRequestMessage request)
-         where TResponse : class;
-
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> SendWithStatusCodeAsync<TResponse>(HttpRequestMessage request)
          where TResponse : class;
    }
 }

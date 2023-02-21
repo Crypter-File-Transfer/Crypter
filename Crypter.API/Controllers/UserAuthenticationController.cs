@@ -201,5 +201,40 @@ namespace Crypter.API.Controllers
             _ => Ok(),
             MakeErrorResponse(PasswordChallengeError.UnknownError));
       }
+
+      /// <summary>
+      /// Clears the provided refresh token from the database, ensuring it cannot be used for subsequent requests.
+      /// </summary>
+      /// <param name="request"></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      /// <remarks>
+      /// The refresh token should be provided in the Authorization header.
+      /// </remarks>
+      [HttpPost("logout")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(LogoutError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               LogoutError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               LogoutError.InvalidToken => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         var logoutResult = await _userAuthenticationService.LogoutAsync(User, cancellationToken);
+         return logoutResult.Match(
+            MakeErrorResponse,
+            _ => Ok(),
+            MakeErrorResponse(LogoutError.UnknownError));
+      }
    }
 }

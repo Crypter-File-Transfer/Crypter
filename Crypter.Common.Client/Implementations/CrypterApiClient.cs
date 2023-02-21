@@ -90,19 +90,6 @@ namespace Crypter.Common.Client.Implementations
          remove => _refreshTokenRejectedHandler = (EventHandler)Delegate.Remove(_refreshTokenRejectedHandler, value);
       }
 
-      #region Authentication
-
-      public Task<Either<LogoutError, LogoutResponse>> LogoutAsync()
-      {
-         string url = "/authentication/logout";
-         return from response in Either<LogoutError, (HttpStatusCode httpStatus, Either<ErrorResponse, LogoutResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<LogoutResponse>(url, true))
-                from errorableResponse in ExtractErrorCode<LogoutError, LogoutResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      #endregion
-
       #region Consent
 
       public Task<Either<DummyError, ConsentToRecoveryKeyRisksResponse>> ConsentToRecoveryKeyRisksAsync()

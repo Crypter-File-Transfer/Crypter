@@ -53,19 +53,11 @@ namespace Crypter.Common.Client.Implementations
       public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)
          where TResponse : class
       {
-         var request = MakeRequestMessage(HttpMethod.Get, uri, Maybe<object>.None);
+         var request = new HttpRequestMessage(HttpMethod.Get, uri);
          return SendRequestWithStatusCodeAsync<TResponse>(request);
       }
 
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
-         where TResponse : class
-         where TRequest : class
-      {
-         var request = MakeRequestMessage(HttpMethod.Put, uri, body);
-         return SendRequestWithStatusCodeAsync<TResponse>(request);
-      }
-
-      public Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
+      public Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, TRequest body)
          where TResponse : class
          where TRequest : class
       {
@@ -73,7 +65,7 @@ namespace Crypter.Common.Client.Implementations
          return SendRequestAsync<TResponse>(request);
       }
 
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
+      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TRequest, TResponse>(string uri, TRequest body)
          where TResponse : class
          where TRequest : class
       {
@@ -81,32 +73,24 @@ namespace Crypter.Common.Client.Implementations
          return SendRequestWithStatusCodeAsync<TResponse>(request);
       }
 
-      public Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, Maybe<TRequest> body)
+      public Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync(string uri)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Post, uri);;
+         return SendRequestUnitResponseAsync(request);
+      }
+
+      public Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, TRequest body)
          where TRequest : class
       {
          var request = MakeRequestMessage(HttpMethod.Post, uri, body);
          return SendRequestUnitResponseAsync(request);
       }
 
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, Maybe<TRequest> body)
+      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, TRequest body)
          where TRequest : class
       {
          var request = MakeRequestMessage(HttpMethod.Post, uri, body);
          return GetStreamAsync(request);
-      }
-
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
-         where TResponse : class
-         where TRequest : class
-      {
-         var request = MakeRequestMessage(HttpMethod.Delete, uri, body);
-         return SendRequestWithStatusCodeAsync<TResponse>(request);
-      }
-
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> SendWithStatusCodeAsync<TResponse>(HttpRequestMessage requestMessage)
-         where TResponse : class
-      {
-         return SendRequestWithStatusCodeAsync<TResponse>(requestMessage);
       }
 
       public Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(HttpRequestMessage requestMessage)
@@ -115,14 +99,12 @@ namespace Crypter.Common.Client.Implementations
          return SendRequestAsync<TResponse>(requestMessage);
       }
 
-      private static HttpRequestMessage MakeRequestMessage<TRequest>(HttpMethod method, string uri, Maybe<TRequest> body)
+      private static HttpRequestMessage MakeRequestMessage<TRequest>(HttpMethod method, string uri, TRequest body)
          where TRequest : class
       {
          return new HttpRequestMessage(method, uri)
          {
-            Content = body.Match(
-               () => null,
-               x => JsonContent.Create(x))
+            Content = JsonContent.Create(body)
          };
       }
 

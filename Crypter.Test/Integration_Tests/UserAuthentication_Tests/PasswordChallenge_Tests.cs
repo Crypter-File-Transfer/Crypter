@@ -76,10 +76,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       public async Task Password_Challenge_Works()
       {
          RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
-         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
+         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
          LoginRequest loginRequest = TestData.GetDefaultLoginRequest(TokenType.Session);
-         var loginResult = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
+         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
          await loginResult.DoRightAsync(async loginResponse =>
          {
@@ -99,7 +99,7 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       public async Task Password_Challenge_Fails_Not_Authenticated()
       {
          RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
-         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
+         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
          PasswordChallengeRequest request = new PasswordChallengeRequest(registrationRequest.VersionedPassword.Password);
          using HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, "api/user/authentication/password/challenge")
@@ -116,10 +116,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       public async Task Password_Challenge_Fails_Wrong_Password()
       {
          RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
-         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
+         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
          LoginRequest loginRequest = TestData.GetDefaultLoginRequest(TokenType.Session);
-         var loginResult = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
+         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
          await loginResult.DoRightAsync(async loginResponse =>
          {

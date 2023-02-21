@@ -196,7 +196,7 @@ namespace Crypter.Web.Shared
                   .BindAsync(async versionedPassword =>
                   {
                      RegistrationRequest request = new RegistrationRequest(username, versionedPassword, emailAddress);
-                     return await CrypterApiService.UserAuthentication.SendUserRegistrationRequest(request);
+                     return await CrypterApiService.UserAuthentication.RegisterAsync(request);
                   });
             })));
 

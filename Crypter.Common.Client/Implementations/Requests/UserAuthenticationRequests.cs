@@ -46,14 +46,14 @@ namespace Crypter.Common.Client.Implementations.Requests
          _refreshTokenRejectedHandler = refreshTokenRejectedHandler;
       }
 
-      public Task<Either<RegistrationError, Unit>> SendUserRegistrationRequest(RegistrationRequest registerRequest)
+      public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest registerRequest)
       {
          string url = "api/user/authentication/register";
-         return _crypterHttpClient.PostUnitResponseAsync<RegistrationRequest>(url, registerRequest)
+         return _crypterHttpClient.PostUnitResponseAsync(url, registerRequest)
             .ExtractErrorCode<RegistrationError, Unit>();
       }
 
-      public Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(LoginRequest loginRequest)
+      public Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest)
       {
          string url = "api/user/authentication/login";
          return _crypterHttpClient.PostAsync<LoginRequest, LoginResponse>(url, loginRequest)
@@ -73,8 +73,15 @@ namespace Crypter.Common.Client.Implementations.Requests
       public Task<Either<PasswordChallengeError, Unit>> PasswordChallengeAsync(PasswordChallengeRequest testPasswordRequest)
       {
          string url = "api/user/authentication/password/challenge";
-         return _crypterAuthenticatedHttpClient.PostUnitResponseAsync<PasswordChallengeRequest>(url, testPasswordRequest)
+         return _crypterAuthenticatedHttpClient.PostUnitResponseAsync(url, testPasswordRequest)
             .ExtractErrorCode<PasswordChallengeError, Unit>();
+      }
+
+      public Task<Either<LogoutError, Unit>> LogoutAsync()
+      {
+         string url = "api/user/authentication/logout";
+         return _crypterAuthenticatedHttpClient.PostUnitResponseAsync(url, true)
+            .ExtractErrorCode<LogoutError, Unit>();
       }
    }
 }

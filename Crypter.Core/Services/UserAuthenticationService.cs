@@ -52,7 +52,7 @@ namespace Crypter.Core.Services
       Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken);
       Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription, CancellationToken cancellationToken);
       Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription, CancellationToken cancellationToken);
-      Task<Either<LogoutError, LogoutResponse>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
+      Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
       Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken);
       Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken);
    }
@@ -208,14 +208,14 @@ namespace Crypter.Core.Services
                 select new RefreshResponse(authenticationToken, newRefreshTokenData.Token, databaseToken.Type);
       }
 
-      public Task<Either<LogoutError, LogoutResponse>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken)
+      public Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken)
       {
          return from userId in ParseUserId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
                 from tokenId in ParseRefreshTokenId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
                 from databaseToken in FetchUserTokenAsync(tokenId, cancellationToken).ToEitherAsync(LogoutError.InvalidToken)
                 let databaseTokenDeleted = DeleteUserTokenInContext(databaseToken)
                 from entriesModified in Either<LogoutError, int>.FromRightAsync(SaveContextChangesAsync(cancellationToken))
-                select new LogoutResponse();
+                select Unit.Default;
       }
 
       public Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken)

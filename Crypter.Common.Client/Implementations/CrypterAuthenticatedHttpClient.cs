@@ -79,7 +79,7 @@ namespace Crypter.Common.Client.Implementations
       public async Task<Either<ErrorResponse, TResponse>> GetAsync<TResponse>(string uri, bool useRefreshToken = false)
          where TResponse : class
       {
-         var request = MakeRequestMessageFactory(HttpMethod.Get, uri, Maybe<object>.None);
+         var request = MakeRequestMessageFactory(HttpMethod.Get, uri);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
          return await DeserializeResponseAsync<TResponse>(response);
       }
@@ -93,19 +93,19 @@ namespace Crypter.Common.Client.Implementations
       public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri, bool useRefreshToken = false)
          where TResponse : class
       {
-         var request = MakeRequestMessageFactory(HttpMethod.Get, uri, Maybe<object>.None);
+         var request = MakeRequestMessageFactory(HttpMethod.Get, uri);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
          return await DeserializeResponseWithStatusCodeAsync<TResponse>(response);
       }
 
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
+      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, TRequest body)
          where TRequest : class
          where TResponse : class
       {
          return PutAsync<TRequest, TResponse>(uri, body, false);
       }
 
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, bool useRefreshToken = false)
+      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
          where TRequest : class
          where TResponse : class
       {
@@ -116,12 +116,12 @@ namespace Crypter.Common.Client.Implementations
 
       public async Task<Either<ErrorResponse, TResponse>> PostAsync<TResponse>(string uri, bool useRefreshToken = false) where TResponse : class
       {
-         var request = MakeRequestMessageFactory(HttpMethod.Post, uri, Maybe<object>.None);
+         var request = MakeRequestMessageFactory(HttpMethod.Post, uri);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
          return await DeserializeResponseAsync<TResponse>(response);
       }
 
-      public async Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
+      public async Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, TRequest body)
          where TResponse : class
          where TRequest : class
       {
@@ -130,30 +130,55 @@ namespace Crypter.Common.Client.Implementations
          return await DeserializeResponseAsync<TResponse>(response);
       }
 
+      public Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync(string uri)
+      {
+         return PostUnitResponseAsync(uri, false);
+      }
+
+      public async Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync(string uri, bool useRefreshToken = false)
+      {
+         var request = MakeRequestMessageFactory(HttpMethod.Post, uri);
+         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
+         return await DeserializeUnitResponseAsync(response);
+      }
+
+      public Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, TRequest body)
+         where TRequest : class
+      {
+         return PostUnitResponseAsync(uri, body, false);
+      }
+
+      public async Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, bool useRefreshToken = false)
+      {
+         var request = MakeRequestMessageFactory(HttpMethod.Post, uri);
+         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
+         return await DeserializeUnitResponseAsync(response);
+      }
+
+      public async Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)
+         where TRequest : class
+      {
+         var request = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
+         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
+         return await DeserializeUnitResponseAsync(response);
+      }
+
       public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TResponse>(string uri, bool useRefreshToken = false)
          where TResponse : class
       {
-         var request = MakeRequestMessageFactory(HttpMethod.Post, uri, Maybe<object>.None);
+         var request = MakeRequestMessageFactory(HttpMethod.Post, uri);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
          return await DeserializeResponseWithStatusCodeAsync<TResponse>(response);
       }
 
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
+      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TRequest, TResponse>(string uri, TRequest body)
          where TRequest : class
          where TResponse : class
       {
          return PostWithStatusCodeAsync<TRequest, TResponse>(uri, body, false);
       }
 
-      public async Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, Maybe<TRequest> body)
-         where TRequest : class
-      {
-         var request = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
-         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, false);
-         return await DeserializeUnitResponseAsync(response);
-      }
-
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, bool useRefreshToken = false)
+      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
          where TRequest : class
          where TResponse : class
       {
@@ -162,7 +187,7 @@ namespace Crypter.Common.Client.Implementations
          return await DeserializeResponseWithStatusCodeAsync<TResponse>(response);
       }
 
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, Maybe<TRequest> body)
+      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, TRequest body)
          where TRequest : class
       {
          var request = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
@@ -170,14 +195,14 @@ namespace Crypter.Common.Client.Implementations
          return await GetStreamResponseAsync(response);
       }
 
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body)
+      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, TRequest body)
          where TRequest : class
          where TResponse : class
       {
          return DeleteAsync<TRequest, TResponse>(uri, body, false);
       }
 
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, Maybe<TRequest> body, bool useRefreshToken = false)
+      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
          where TRequest : class
          where TResponse : class
       {
@@ -200,14 +225,17 @@ namespace Crypter.Common.Client.Implementations
          return await DeserializeResponseWithStatusCodeAsync<TResponse>(response);
       }
 
-      private static Func<HttpRequestMessage> MakeRequestMessageFactory<TRequest>(HttpMethod method, string uri, Maybe<TRequest> body)
+      private static Func<HttpRequestMessage> MakeRequestMessageFactory(HttpMethod method, string uri)
+      {
+         return () => new HttpRequestMessage(method, uri);
+      }
+
+      private static Func<HttpRequestMessage> MakeRequestMessageFactory<TRequest>(HttpMethod method, string uri, TRequest body)
          where TRequest : class
       {
          return () => new HttpRequestMessage(method, uri)
          {
-            Content = body.Match(
-               () => null,
-               x => JsonContent.Create(x))
+            Content = JsonContent.Create(body)
          };
       }
 
