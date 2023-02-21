@@ -239,15 +239,15 @@ namespace Crypter.Common.Client.Implementations
          return _crypterApiClient.UserAuthentication.SendLoginRequestAsync(loginRequest);
       }
 
-      private Task<Either<TestPasswordError, TestPasswordResponse>> SendTestPasswordRequestAsync(Username username, Password password)
+      private Task<Either<PasswordChallengeError, Unit>> SendTestPasswordRequestAsync(Username username, Password password)
       {
          return _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
             .MatchAsync(
-            () => TestPasswordError.PasswordHashFailure,
+            () => PasswordChallengeError.PasswordHashFailure,
             versionedPassword =>
             {
-               TestPasswordRequest testRequest = new TestPasswordRequest(username, versionedPassword.Password);
-               return _crypterApiClient.TestPasswordAsync(testRequest);
+               PasswordChallengeRequest testRequest = new PasswordChallengeRequest(versionedPassword.Password);
+               return _crypterApiClient.UserAuthentication.PasswordChallengeAsync(testRequest);
             });
       }
 

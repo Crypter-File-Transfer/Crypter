@@ -37,14 +37,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
-namespace Crypter.Test.Integration_Tests
+namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
 {
    [TestFixture]
-   internal class UserAuthentication_Tests
+   internal class Refresh_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -71,101 +69,6 @@ namespace Crypter.Test.Integration_Tests
       public async Task OneTimeTearDown()
       {
          await _factory.DisposeAsync();
-      }
-
-      [TestCase(false)]
-      [TestCase(true)]
-      public async Task Register_User_Works(bool withEmailAddress)
-      {
-         RegistrationRequest request = TestData.GetDefaultRegistrationRequest(withEmailAddress);
-         var result = await _client.UserAuthentication.SendUserRegistrationRequest(request);
-
-         Assert.True(result.IsRight);
-      }
-
-      [TestCase("FOO", "foo")]
-      [TestCase("foo", "FOO")]
-      public async Task Register_User_Fails_For_Duplicate_Username(string initialUsername, string duplicateUsername)
-      {
-         VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
-
-         RegistrationRequest initialRequest = new RegistrationRequest(initialUsername, password, null);
-         var initialResult = await _client.UserAuthentication.SendUserRegistrationRequest(initialRequest);
-
-         RegistrationRequest secondRequest = new RegistrationRequest(duplicateUsername, password, null);
-         var secondResult = await _client.UserAuthentication.SendUserRegistrationRequest(secondRequest);
-
-         Assert.True(initialResult.IsRight);
-         Assert.True(secondResult.IsLeft);
-      }
-
-      [TestCase("FOO@foo.com", "foo@foo.com")]
-      [TestCase("foo@foo.com", "FOO@foo.com")]
-      public async Task Register_User_Fails_For_Duplicate_Email_Address(string initialEmailAddress, string duplicateEmailAddress)
-      {
-         VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
-
-         RegistrationRequest initialRequest = new RegistrationRequest("first", password, initialEmailAddress);
-         var initialResult = await _client.UserAuthentication.SendUserRegistrationRequest(initialRequest);
-
-         RegistrationRequest secondRequest = new RegistrationRequest("second", password, duplicateEmailAddress);
-         var secondResult = await _client.UserAuthentication.SendUserRegistrationRequest(secondRequest);
-
-         Assert.True(initialResult.IsRight);
-         Assert.True(secondResult.IsLeft);
-      }
-
-      [Test]
-      public async Task Login_Works()
-      {
-         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
-         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
-
-         LoginRequest loginRequest = TestData.GetDefaultLoginRequest();
-         var result = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
-
-         Assert.True(registrationResult.IsRight);
-         Assert.True(result.IsRight);
-      }
-
-      [Test]
-      public async Task Login_Fails_Invalid_Username()
-      {
-         LoginRequest request = TestData.GetDefaultLoginRequest();
-         var result = await _client.UserAuthentication.SendLoginRequestAsync(request);
-
-         Assert.True(result.IsLeft);
-      }
-
-      [Test]
-      public async Task Login_Fails_Invalid_Password()
-      {
-         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
-         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
-
-         LoginRequest loginRequest = TestData.GetDefaultLoginRequest();
-         VersionedPassword invalidPassword = new VersionedPassword("invalid"u8.ToArray(), 1);
-         loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
-         var result = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
-
-         Assert.True(registrationResult.IsRight);
-         Assert.True(result.IsLeft);
-      }
-
-      [Test]
-      public async Task Login_Fails_Invalid_Password_Version()
-      {
-         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
-         var registrationResult = await _client.UserAuthentication.SendUserRegistrationRequest(registrationRequest);
-
-         LoginRequest loginRequest = TestData.GetDefaultLoginRequest();
-         VersionedPassword correctPassword = loginRequest.VersionedPasswords.First();
-         VersionedPassword invalidPassword = new VersionedPassword(correctPassword.Password, (short)(correctPassword.Version - 1));
-         loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
-         var result = await _client.UserAuthentication.SendLoginRequestAsync(loginRequest);
-
-         Assert.True(registrationResult.IsRight);
-         Assert.True(result.IsLeft);
       }
 
       [TestCase(TokenType.Session)]

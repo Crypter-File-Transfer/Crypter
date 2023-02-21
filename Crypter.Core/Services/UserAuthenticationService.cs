@@ -54,7 +54,7 @@ namespace Crypter.Core.Services
       Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription, CancellationToken cancellationToken);
       Task<Either<LogoutError, LogoutResponse>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
       Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken);
-      Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(Guid userId, TestPasswordRequest request, CancellationToken cancellationToken);
+      Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken);
    }
 
    public static class UserAuthenticationServiceExtensions
@@ -232,15 +232,15 @@ namespace Crypter.Core.Services
                 select new UpdateContactInfoResponse();
       }
 
-      public Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(Guid userId, TestPasswordRequest request, CancellationToken cancellationToken)
+      public Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken)
       {
-         return from suppliedPassword in ValidateRequestPassword(request.Password, TestPasswordError.InvalidPassword).AsTask()
-                from user in FetchUserAsync(userId, TestPasswordError.UnknownError, cancellationToken)
-                from unit0 in VerifyUserPasswordIsMigrated(user, TestPasswordError.PasswordNeedsMigration).ToLeftEither(Unit.Default).AsTask()
+         return from suppliedPassword in ValidateRequestPassword(request.Password, PasswordChallengeError.InvalidPassword).AsTask()
+                from user in FetchUserAsync(userId, PasswordChallengeError.UnknownError, cancellationToken)
+                from unit0 in VerifyUserPasswordIsMigrated(user, PasswordChallengeError.PasswordNeedsMigration).ToLeftEither(Unit.Default).AsTask()
                 from passwordVerified in VerifyPassword(suppliedPassword, user.PasswordHash, user.PasswordSalt, _serverPasswordVersions[_latestServerPasswordVersion].Iterations)
-                  ? Either<TestPasswordError, Unit>.FromRight(Unit.Default).AsTask()
-                  : Either<TestPasswordError, Unit>.FromLeft(TestPasswordError.InvalidPassword).AsTask()
-                select new TestPasswordResponse();
+                  ? Either<PasswordChallengeError, Unit>.FromRight(Unit.Default).AsTask()
+                  : Either<PasswordChallengeError, Unit>.FromLeft(PasswordChallengeError.InvalidPassword).AsTask()
+                select Unit.Default;
       }
 
       private Either<LoginError, ValidLoginRequest> ValidateLoginRequest(LoginRequest request)

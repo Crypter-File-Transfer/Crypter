@@ -24,14 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.API.Methods;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -85,34 +83,6 @@ namespace Crypter.API.Controllers.Old
             MakeErrorResponse,
             Ok,
             MakeErrorResponse(LogoutError.UnknownError));
-      }
-
-      [HttpPost("password/test")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TestPasswordResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> TestPasswordAsync([FromBody] TestPasswordRequest request, CancellationToken cancellationToken)
-      {
-         IActionResult MakeErrorResponse(TestPasswordError error)
-         {
-#pragma warning disable CS8524
-            return error switch
-            {
-               TestPasswordError.UnknownError
-                  or TestPasswordError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               TestPasswordError.InvalidPassword
-                  or TestPasswordError.PasswordNeedsMigration => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
-            };
-#pragma warning restore CS8524
-         }
-
-         Guid userId = _tokenService.ParseUserId(User);
-         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, request, cancellationToken);
-         return testPasswordResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(TestPasswordError.UnknownError));
       }
    }
 }

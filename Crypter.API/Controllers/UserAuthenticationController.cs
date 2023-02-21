@@ -32,6 +32,7 @@ using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,10 +43,12 @@ namespace Crypter.API.Controllers
    [Route("api/user/authentication")]
    public class UserAuthenticationController : CrypterControllerBase
    {
+      private readonly ITokenService _tokenService;
       private readonly IUserAuthenticationService _userAuthenticationService;
 
-      public UserAuthenticationController(IUserAuthenticationService userAuthenticationService)
+      public UserAuthenticationController(ITokenService tokenService, IUserAuthenticationService userAuthenticationService)
       {
+         _tokenService = tokenService;
          _userAuthenticationService = userAuthenticationService;
       }
 
@@ -163,6 +166,40 @@ namespace Crypter.API.Controllers
             MakeErrorResponse,
             Ok,
             MakeErrorResponse(RefreshError.UnknownError));
+      }
+
+      /// <summary>
+      /// Handle a password challenge request for an authorized user.
+      /// </summary>
+      /// <param name="request"></param>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
+      [HttpPost("password/challenge")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> PasswordChallengeAsync([FromBody] PasswordChallengeRequest request, CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(PasswordChallengeError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               PasswordChallengeError.UnknownError
+                  or PasswordChallengeError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               PasswordChallengeError.InvalidPassword
+                  or PasswordChallengeError.PasswordNeedsMigration => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, request, cancellationToken);
+         return testPasswordResult.Match(
+            MakeErrorResponse,
+            _ => Ok(),
+            MakeErrorResponse(PasswordChallengeError.UnknownError));
       }
    }
 }

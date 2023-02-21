@@ -26,7 +26,11 @@
 
 namespace Crypter.Common.Contracts.Features.UserAuthentication
 {
-   public class TestPasswordResponse
+   public enum PasswordChallengeError
    {
+      UnknownError,
+      InvalidPassword,
+      PasswordNeedsMigration,
+      PasswordHashFailure
    }
 }

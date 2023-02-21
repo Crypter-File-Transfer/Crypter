@@ -69,5 +69,12 @@ namespace Crypter.Common.Client.Implementations.Requests
          response.DoLeftOrNeither(() => _refreshTokenRejectedHandler?.Invoke(this, EventArgs.Empty));
          return response;
       }
+
+      public Task<Either<PasswordChallengeError, Unit>> PasswordChallengeAsync(PasswordChallengeRequest testPasswordRequest)
+      {
+         string url = "api/user/authentication/password/challenge";
+         return _crypterAuthenticatedHttpClient.PostUnitResponseAsync<PasswordChallengeRequest>(url, testPasswordRequest)
+            .ExtractErrorCode<PasswordChallengeError, Unit>();
+      }
    }
 }

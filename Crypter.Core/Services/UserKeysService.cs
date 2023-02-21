@@ -67,7 +67,7 @@ namespace Crypter.Core.Services
 
       public async Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken)
       {
-         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new TestPasswordRequest(request.Username, request.Password), cancellationToken);
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new PasswordChallengeRequest(request.Password), cancellationToken);
          return await testPasswordResult.MatchAsync<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>>(
             error => GetMasterKeyRecoveryProofError.InvalidCredentials,
             async _ =>
@@ -86,7 +86,7 @@ namespace Crypter.Core.Services
 
       public async Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken)
       {
-         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new TestPasswordRequest(request.Username, request.Password), cancellationToken);
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new PasswordChallengeRequest(request.Password), cancellationToken);
          return await testPasswordResult.MatchAsync<Either<InsertMasterKeyError, InsertMasterKeyResponse>>(
             error => InsertMasterKeyError.InvalidCredentials,
             async _ =>
