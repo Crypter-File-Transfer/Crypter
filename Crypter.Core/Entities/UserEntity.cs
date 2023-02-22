@@ -26,8 +26,8 @@
 
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 using System.Collections.Generic;
 

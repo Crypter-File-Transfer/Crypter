@@ -26,7 +26,6 @@
 
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 
 namespace Crypter.Common.Client.Transfer.Models
 {

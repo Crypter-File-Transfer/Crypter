@@ -24,9 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Infrastructure;
-using System.Text.Json.Serialization;
-
 namespace Crypter.Common.Contracts.Features.Keys
 {
    public enum InsertMasterKeyError

@@ -76,7 +76,7 @@ namespace Crypter.Test.Integration_Tests.Common
          RespawnerOptions respawnOptions = new RespawnerOptions
          {
             DbAdapter = DbAdapter.Postgres,
-            WithReseed =  true
+            WithReseed = true
          };
 
          _crypterRespawner = await InitializeRespawnerAsync(_defaultConnection, respawnOptions);

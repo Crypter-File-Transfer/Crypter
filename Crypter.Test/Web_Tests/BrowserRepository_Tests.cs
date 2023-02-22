@@ -114,7 +114,7 @@ namespace Crypter.Test.Web_Tests
          {
             Assert.IsTrue(sut.HasItem(item));
             var itemLocation = sut.GetItemLocation(item);
-            
+
             itemLocation.IfNone(Assert.Fail);
             itemLocation.IfSome(x => Assert.AreEqual(storageLocation, x));
          }
@@ -122,7 +122,7 @@ namespace Crypter.Test.Web_Tests
          var fetchedUserSession = await sut.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession);
          fetchedUserSession.IfNone(Assert.Fail);
          fetchedUserSession.IfSome(x => Assert.AreEqual(storedUserSession.Username, x.Username));
-         
+
          var fetchedAuthenticationToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.AuthenticationToken);
          fetchedAuthenticationToken.IfNone(Assert.Fail);
          fetchedAuthenticationToken.IfSome(x => Assert.AreEqual(authenticationToken, x));

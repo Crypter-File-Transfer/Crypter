@@ -78,7 +78,7 @@ namespace Crypter.Core.Services
 
          for (int i = 0; i < byteCount; i++)
          {
-            bytes[i] = Convert.ToByte(hexString.Substring(i*2, 2), 16);
+            bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
          }
 
          return new Guid(bytes);

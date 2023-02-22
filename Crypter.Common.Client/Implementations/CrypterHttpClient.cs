@@ -84,7 +84,7 @@ namespace Crypter.Common.Client.Implementations
 
       public Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, uri);;
+         var request = new HttpRequestMessage(HttpMethod.Post, uri);
          return SendRequestUnitResponseAsync(request);
       }
 

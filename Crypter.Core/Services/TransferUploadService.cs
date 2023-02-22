@@ -78,14 +78,14 @@ namespace Crypter.Core.Services
          }
 
          return await (from diskSpace in GetRequiredDiskSpaceAsync(ciphertextStream.Length)
-                     from lifetimeHours in ValidateLifetimeHours(request.LifetimeHours).AsTask()
-                     let transferId = Guid.NewGuid()
-                     let transferUserType = DetermineTransferUserType(senderId, recipientId)
-                     from savedToDisk in SaveFileToDiskAsync(transferUserType, transferId, ciphertextStream).ToLeftEitherAsync(Unit.Default)
-                     from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveFileTransferToDatabaseAsync(transferId, senderId, recipientId, diskSpace, request))
-                     from _ in Either<UploadTransferError, Unit>.FromRightAsync(QueueTransferNotificationAsync(transferId, TransferItemType.File, recipientId))
-                     let jobId = ScheduleTransferDeletion(transferId, TransferItemType.File, transferUserType, savedToDatabase.ExpirationUTC)
-                     select savedToDatabase);
+                       from lifetimeHours in ValidateLifetimeHours(request.LifetimeHours).AsTask()
+                       let transferId = Guid.NewGuid()
+                       let transferUserType = DetermineTransferUserType(senderId, recipientId)
+                       from savedToDisk in SaveFileToDiskAsync(transferUserType, transferId, ciphertextStream).ToLeftEitherAsync(Unit.Default)
+                       from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveFileTransferToDatabaseAsync(transferId, senderId, recipientId, diskSpace, request))
+                       from _ in Either<UploadTransferError, Unit>.FromRightAsync(QueueTransferNotificationAsync(transferId, TransferItemType.File, recipientId))
+                       let jobId = ScheduleTransferDeletion(transferId, TransferItemType.File, transferUserType, savedToDatabase.ExpirationUTC)
+                       select savedToDatabase);
       }
 
       public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<Guid> senderId, Maybe<string> recipientUsername, UploadMessageTransferRequest request, Stream ciphertextStream)

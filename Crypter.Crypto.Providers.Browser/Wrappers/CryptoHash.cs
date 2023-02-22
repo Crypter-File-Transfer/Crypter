@@ -25,9 +25,6 @@
  */
 
 using Crypter.Crypto.Common.CryptoHash;
-using System.Runtime.InteropServices.JavaScript;
-using System.Threading.Tasks;
-using System;
 using System.Security.Cryptography;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers

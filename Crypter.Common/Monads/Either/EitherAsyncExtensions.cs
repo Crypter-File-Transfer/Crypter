@@ -139,7 +139,7 @@ namespace Crypter.Common.Monads
 
       public static async Task<Either<TLeft, TResult>> SelectMany<TLeft, TRight, TIntermediate, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Task<Either<TLeft, TIntermediate>>> bind, Func<TRight, TIntermediate, TResult> project)
       {
-         return await either.BindAsync(async (TRight right) => 
+         return await either.BindAsync(async (TRight right) =>
             await bind(right).BindAsync(delegate (TIntermediate intermediate)
             {
                Either<TLeft, TResult> projection = project(right, intermediate);

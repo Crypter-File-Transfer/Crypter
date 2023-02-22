@@ -76,7 +76,7 @@ namespace Crypter.Common.Client.Interfaces
       #endregion
 
       #region Metrics
-      Task<Either<DummyError, DiskMetricsResponse>>GetDiskMetricsAsync();
+      Task<Either<DummyError, DiskMetricsResponse>> GetDiskMetricsAsync();
       #endregion
 
       #region Search

@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Specialized;
 using System.Web;
-using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Helpers
 {

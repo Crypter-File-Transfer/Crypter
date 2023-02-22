@@ -24,8 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-
 namespace Crypter.Common.Client.Transfer.Handlers.Base
 {
    public interface IUserUploadHandler

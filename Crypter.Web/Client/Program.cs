@@ -26,9 +26,9 @@
 
 using BlazorSodium.Extensions;
 using Crypter.Common.Client.DeviceStorage.Enums;
+using Crypter.Common.Client.Implementations;
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
-using Crypter.Common.Client.Implementations;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Crypto.Common;
