@@ -130,37 +130,44 @@ namespace Crypter.Common.Client.Implementations
          return await DeserializeResponseAsync<TResponse>(response);
       }
 
-      public Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync(string uri)
+      public async Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri)
       {
-         return PostUnitResponseAsync(uri, false);
+         var request = MakeRequestMessageFactory(HttpMethod.Post, uri);
+         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, false);
+         return DeserializeMaybeUnitResponseAsync(response);
       }
 
-      public async Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync(string uri, bool useRefreshToken = false)
+      public Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri)
+      {
+         return PostEitherUnitResponseAsync(uri, false);
+      }
+
+      public async Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri, bool useRefreshToken = false)
       {
          var request = MakeRequestMessageFactory(HttpMethod.Post, uri);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
-         return await DeserializeUnitResponseAsync(response);
+         return await DeserializeEitherUnitResponseAsync(response);
       }
 
-      public Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, TRequest body)
+      public Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body)
          where TRequest : class
       {
-         return PostUnitResponseAsync(uri, body, false);
+         return PostEitherUnitResponseAsync(uri, body, false);
       }
 
       public async Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, bool useRefreshToken = false)
       {
          var request = MakeRequestMessageFactory(HttpMethod.Post, uri);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
-         return await DeserializeUnitResponseAsync(response);
+         return await DeserializeEitherUnitResponseAsync(response);
       }
 
-      public async Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)
+      public async Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)
          where TRequest : class
       {
          var request = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
-         return await DeserializeUnitResponseAsync(response);
+         return await DeserializeEitherUnitResponseAsync(response);
       }
 
       public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TResponse>(string uri, bool useRefreshToken = false)
@@ -278,7 +285,14 @@ namespace Crypter.Common.Client.Implementations
          }
       }
 
-      private async Task<Either<ErrorResponse, Unit>> DeserializeUnitResponseAsync(HttpResponseMessage response)
+      private Maybe<Unit> DeserializeMaybeUnitResponseAsync(HttpResponseMessage response)
+      {
+         return response.IsSuccessStatusCode
+            ? Unit.Default
+            : Maybe<Unit>.None;
+      }
+
+      private async Task<Either<ErrorResponse, Unit>> DeserializeEitherUnitResponseAsync(HttpResponseMessage response)
       {
          if (response.StatusCode == HttpStatusCode.Unauthorized)
          {

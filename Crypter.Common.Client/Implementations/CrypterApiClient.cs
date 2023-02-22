@@ -29,13 +29,11 @@ using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Consent;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using System;
@@ -57,6 +55,7 @@ namespace Crypter.Common.Client.Implementations
       public IFileTransferRequests FileTransfer { get; init; }
       public IMessageTransferRequests MessageTransfer { get; init; }
       public IUserAuthenticationRequests UserAuthentication { get; init; }
+      public IUserConsentRequests UserConsent { get; init; }
 
       public CrypterApiClient(HttpClient httpClient, ITokenRepository tokenRepository)
       {
@@ -66,6 +65,7 @@ namespace Crypter.Common.Client.Implementations
          FileTransfer = new FileTransferRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
          MessageTransfer = new MessageTransferRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
          UserAuthentication = new UserAuthenticationRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient, _refreshTokenRejectedHandler);
+         UserConsent = new UserConsentRequests(_crypterAuthenticatedHttpClient);
       }
 
       /// <summary>
@@ -89,19 +89,6 @@ namespace Crypter.Common.Client.Implementations
          add => _refreshTokenRejectedHandler = (EventHandler)Delegate.Combine(_refreshTokenRejectedHandler, value);
          remove => _refreshTokenRejectedHandler = (EventHandler)Delegate.Remove(_refreshTokenRejectedHandler, value);
       }
-
-      #region Consent
-
-      public Task<Either<DummyError, ConsentToRecoveryKeyRisksResponse>> ConsentToRecoveryKeyRisksAsync()
-      {
-         string url = "/consent/recovery-key";
-         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, ConsentToRecoveryKeyRisksResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<ConsentToRecoveryKeyRisksResponse>(url, true))
-                from errorableResponse in ExtractErrorCode<DummyError, ConsentToRecoveryKeyRisksResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      #endregion
 
       #region Contacts
 

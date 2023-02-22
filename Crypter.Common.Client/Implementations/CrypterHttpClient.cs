@@ -73,13 +73,22 @@ namespace Crypter.Common.Client.Implementations
          return SendRequestWithStatusCodeAsync<TResponse>(request);
       }
 
-      public Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync(string uri)
+      public async Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri)
+      {
+         var request = new HttpRequestMessage(HttpMethod.Post, uri);
+         using HttpResponseMessage response = await _httpClient.SendAsync(request);
+         return response.IsSuccessStatusCode
+            ? Unit.Default
+            : Maybe<Unit>.None;
+      }
+
+      public Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri)
       {
          var request = new HttpRequestMessage(HttpMethod.Post, uri);;
          return SendRequestUnitResponseAsync(request);
       }
 
-      public Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, TRequest body)
+      public Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body)
          where TRequest : class
       {
          var request = MakeRequestMessage(HttpMethod.Post, uri, body);

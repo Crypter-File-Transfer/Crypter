@@ -39,7 +39,7 @@ This should also aid developers in deciding where to add a new API endpoint or w
    * DELETE /api/user/contact?username={username}
 
 * User Consents
-   * POST /api/user/consent/recovery-key
+   * POST /api/user/consent/recovery-key-risk
 
 * User Keys
    * GET /api/user/key/master

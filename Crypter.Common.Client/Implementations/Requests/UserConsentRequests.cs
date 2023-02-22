@@ -24,9 +24,26 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Consent
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Requests;
+using Crypter.Common.Monads;
+using System.Threading.Tasks;
+
+namespace Crypter.Common.Client.Implementations.Requests
 {
-   public class ConsentToRecoveryKeyRisksResponse
+   public class UserConsentRequests : IUserConsentRequests
    {
+      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+
+      public UserConsentRequests(ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
+      {
+         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+      }
+
+      public Task<Maybe<Unit>> ConsentToRecoveryKeyRisksAsync()
+      {
+         string url = "api/user/consent/recovery-key-risk";
+         return _crypterAuthenticatedHttpClient.PostMaybeUnitResponseAsync(url);
+      }
    }
 }

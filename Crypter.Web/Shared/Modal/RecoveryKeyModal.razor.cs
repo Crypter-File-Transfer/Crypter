@@ -78,7 +78,7 @@ namespace Crypter.Web.Shared.Modal
 
       public async Task OnAcknowledgedClickedAsync()
       {
-         await CrypterApiService.ConsentToRecoveryKeyRisksAsync();
+         await CrypterApiService.UserConsent.ConsentToRecoveryKeyRisksAsync();
          ModalBehaviorRef.Close();
       }
    }

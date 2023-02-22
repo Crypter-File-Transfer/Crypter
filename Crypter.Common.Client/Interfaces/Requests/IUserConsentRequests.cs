@@ -24,34 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts;
 using Crypter.Common.Monads;
-using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Interfaces
+namespace Crypter.Common.Client.Interfaces.Requests
 {
-   public interface ICrypterHttpClient
+   public interface IUserConsentRequests
    {
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)
-         where TResponse : class;
-
-      Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, TRequest body)
-         where TRequest : class
-         where TResponse : class;
-
-      Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri);
-
-      Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri);
-
-      Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body)
-         where TRequest : class;
-
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, TRequest body)
-         where TRequest : class;
-
-      Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(HttpRequestMessage request)
-         where TResponse : class;
+      Task<Maybe<Unit>> ConsentToRecoveryKeyRisksAsync();
    }
 }

@@ -49,7 +49,7 @@ namespace Crypter.Common.Client.Implementations.Requests
       public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest registerRequest)
       {
          string url = "api/user/authentication/register";
-         return _crypterHttpClient.PostUnitResponseAsync(url, registerRequest)
+         return _crypterHttpClient.PostEitherUnitResponseAsync(url, registerRequest)
             .ExtractErrorCode<RegistrationError, Unit>();
       }
 
@@ -73,14 +73,14 @@ namespace Crypter.Common.Client.Implementations.Requests
       public Task<Either<PasswordChallengeError, Unit>> PasswordChallengeAsync(PasswordChallengeRequest testPasswordRequest)
       {
          string url = "api/user/authentication/password/challenge";
-         return _crypterAuthenticatedHttpClient.PostUnitResponseAsync(url, testPasswordRequest)
+         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, testPasswordRequest)
             .ExtractErrorCode<PasswordChallengeError, Unit>();
       }
 
       public Task<Either<LogoutError, Unit>> LogoutAsync()
       {
          string url = "api/user/authentication/logout";
-         return _crypterAuthenticatedHttpClient.PostUnitResponseAsync(url, true)
+         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, true)
             .ExtractErrorCode<LogoutError, Unit>();
       }
    }

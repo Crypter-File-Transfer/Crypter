@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Consent;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
@@ -48,7 +47,7 @@ namespace Crypter.Core.Services
       Task<UpdatePrivacySettingsResponse> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken);
       Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken);
       Task<UserSearchResponse> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken);
-      Task<ConsentToRecoveryKeyRisksResponse> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
+      Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
       Task DeleteUserEntityAsync(Guid id, CancellationToken cancellationToken);
       Task DeleteUserTokenEntityAsync(Guid tokenId, CancellationToken cancellationToken);
    }
@@ -200,12 +199,12 @@ namespace Crypter.Core.Services
          return new UserSearchResponse(matches);
       }
 
-      public async Task<ConsentToRecoveryKeyRisksResponse> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId)
+      public async Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId)
       {
          UserConsentEntity newConsent = new UserConsentEntity(userId, ConsentType.RecoveryKeyRisks, DateTime.UtcNow);
          _context.UserConsents.Add(newConsent);
          await _context.SaveChangesAsync();
-         return new ConsentToRecoveryKeyRisksResponse();
+         return Unit.Default;
       }
 
       public async Task DeleteUserEntityAsync(Guid id, CancellationToken cancellationToken)

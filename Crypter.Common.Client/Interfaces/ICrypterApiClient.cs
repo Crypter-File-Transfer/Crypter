@@ -26,7 +26,6 @@
 
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Consent;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.Metrics;
@@ -46,10 +45,7 @@ namespace Crypter.Common.Client.Interfaces
       IFileTransferRequests FileTransfer { get; }
       IMessageTransferRequests MessageTransfer { get; }
       IUserAuthenticationRequests UserAuthentication { get; }
-
-      #region Consent
-      Task<Either<DummyError, ConsentToRecoveryKeyRisksResponse>> ConsentToRecoveryKeyRisksAsync();
-      #endregion
+      IUserConsentRequests UserConsent { get; }
 
       #region Contacts
       Task<Either<DummyError, GetUserContactsResponse>> GetUserContactsAsync();

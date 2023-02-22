@@ -46,9 +46,9 @@ namespace Crypter.Common.Client.Interfaces
       Task<Either<ErrorResponse, TResponse>> PostAsync<TResponse>(string uri, bool useRefreshToken = false)
          where TResponse : class;
 
-      Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync(string uri, bool useRefreshToken = false);
+      Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri, bool useRefreshToken = false);
 
-      Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)
+      Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)
          where TRequest : class;
 
       Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TResponse>(string uri, bool useRefreshToken = false)
