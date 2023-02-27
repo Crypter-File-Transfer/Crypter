@@ -49,6 +49,13 @@ namespace Crypter.Common.Monads
          return await maybeResult.MatchAsync(noneAsync, some);
       }
 
+      public static Task<TValue> SomeOrDefaultAsync<TValue>(this Task<Maybe<TValue>> maybe, TValue defaultValue)
+      {
+         return maybe.MatchAsync(
+            () => defaultValue,
+            x => x);
+      }
+
       public static async Task<Unit> IfSomeAsync<TValue>(this Task<Maybe<TValue>> maybe, Func<TValue, Task> someAsync)
       {
          Maybe<TValue> maybeResult = await maybe;
@@ -83,16 +90,16 @@ namespace Crypter.Common.Monads
             value => Either<TValue, TRight>.FromLeft(value));
       }
 
-      public static async Task<Maybe<TResult>> Select<TValue, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, TResult> map)
+      public static Task<Maybe<TResult>> Select<TValue, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, TResult> map)
       {
-         return await maybe.MatchAsync(
+         return maybe.MatchAsync(
             () => Maybe<TResult>.None,
             value => map(value));
       }
 
-      public static async Task<Maybe<TResult>> SelectMany<TValue, TIntermediate, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, Maybe<TIntermediate>> bind, Func<TValue, TIntermediate, TResult> project)
+      public static Task<Maybe<TResult>> SelectMany<TValue, TIntermediate, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, Maybe<TIntermediate>> bind, Func<TValue, TIntermediate, TResult> project)
       {
-         return await maybe.MatchAsync(
+         return maybe.MatchAsync(
             () => Maybe<TResult>.None,
             value =>
             {
@@ -105,9 +112,9 @@ namespace Crypter.Common.Monads
             });
       }
 
-      public static async Task<Maybe<TValue>> Where<TValue>(this Task<Maybe<TValue>> maybe, Func<TValue, bool> predicate)
+      public static Task<Maybe<TValue>> Where<TValue>(this Task<Maybe<TValue>> maybe, Func<TValue, bool> predicate)
       {
-         return await maybe.MatchAsync(
+         return maybe.MatchAsync(
             () => Maybe<TValue>.None,
             value =>
             {

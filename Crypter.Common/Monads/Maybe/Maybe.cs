@@ -276,12 +276,9 @@ namespace Crypter.Common.Monads
 
          var result = project(_value, bound._value);
 
-         if (result is null)
-         {
-            throw new InvalidOperationException();
-         }
-
-         return result;
+         return result is null
+            ? throw new InvalidOperationException()
+            : (Maybe<TResult>)result;
       }
 
       public Maybe<TValue> Where(Func<TValue, bool> predicate)

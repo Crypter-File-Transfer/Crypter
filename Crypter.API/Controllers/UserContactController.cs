@@ -26,48 +26,62 @@
 
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
+using Crypter.Common.Monads;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.API.Controllers.Old
+namespace Crypter.API.Controllers
 {
    [ApiController]
-   [Route("api/contacts")]
-   public class ContactsController : CrypterControllerBase
+   [Route("api/user/contact")]
+   public class UserContactController : CrypterControllerBase
    {
       private readonly IUserContactsService _userContactsService;
       private readonly ITokenService _tokenService;
 
-      public ContactsController(IUserContactsService userContactsService, ITokenService tokenService)
+      public UserContactController(IUserContactsService userContactsService, ITokenService tokenService)
       {
          _userContactsService = userContactsService;
          _tokenService = tokenService;
       }
 
+      /// <summary>
+      /// Get a list of user contacts.
+      /// </summary>
+      /// <param name="cancellationToken"></param>
+      /// <returns></returns>
       [HttpGet]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetUserContactsResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserContact>))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       public async Task<IActionResult> GetUserContactsAsync(CancellationToken cancellationToken)
       {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userContactsService.GetUserContactsAsync(userId, cancellationToken);
+         Guid userId = _tokenService.ParseUserId(User);
+         List<UserContact> result = await _userContactsService.GetUserContactsAsync(userId, cancellationToken);
          return Ok(result);
       }
 
+      /// <summary>
+      /// Add a user as a contact.
+      /// </summary>
+      /// <param name="username"></param>
+      /// <returns></returns>
       [HttpPost]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AddUserContactResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserContact))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> AddUserContactAsync([FromBody] AddUserContactRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> AddUserContactAsync([FromQuery] string username)
       {
          IActionResult MakeErrorResponse(AddUserContactError error)
          {
@@ -81,23 +95,28 @@ namespace Crypter.API.Controllers.Old
 #pragma warning restore CS8524
          }
 
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userContactsService.UpsertUserContactAsync(userId, request, cancellationToken);
-         return result.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(AddUserContactError.UnknownError));
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userContactsService.UpsertUserContactAsync(userId, username)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(AddUserContactError.UnknownError));
       }
 
+      /// <summary>
+      /// Remove a user from contacts.
+      /// </summary>
+      /// <param name="username"></param>
+      /// <returns></returns>
       [HttpDelete]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RemoveContactResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> RemoveUserContactAsync([FromBody] RemoveContactRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> RemoveUserContactAsync([FromQuery] string username)
       {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userContactsService.RemoveUserContactAsync(userId, request, cancellationToken);
-         return Ok(result);
+         Guid userId = _tokenService.ParseUserId(User);
+         await _userContactsService.RemoveUserContactAsync(userId, username);
+         return Ok();
       }
    }
 }

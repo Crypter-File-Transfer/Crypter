@@ -84,6 +84,13 @@ namespace Crypter.Common.Client.Implementations
          return await DeserializeResponseAsync<TResponse>(response);
       }
 
+      public async Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri)
+      {
+         var request = MakeRequestMessageFactory(HttpMethod.Get, uri);
+         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, false);
+         return await DeserializeMaybeResponseAsync<TResponse>(response);
+      }
+
       public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)
          where TResponse : class
       {
@@ -202,20 +209,13 @@ namespace Crypter.Common.Client.Implementations
          return await GetStreamResponseAsync(response);
       }
 
-      public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, TRequest body)
-         where TRequest : class
-         where TResponse : class
+      public async Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri)
       {
-         return DeleteAsync<TRequest, TResponse>(uri, body, false);
-      }
-
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
-         where TRequest : class
-         where TResponse : class
-      {
-         var request = MakeRequestMessageFactory(HttpMethod.Delete, uri, body);
-         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
-         return await DeserializeResponseWithStatusCodeAsync<TResponse>(response);
+         var request = MakeRequestMessageFactory(HttpMethod.Delete, uri);
+         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, false);
+         return response.IsSuccessStatusCode
+            ? Unit.Default
+            : Maybe<Unit>.None;
       }
 
       public async Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(HttpRequestMessage requestMessage)
@@ -285,11 +285,22 @@ namespace Crypter.Common.Client.Implementations
          }
       }
 
-      private Maybe<Unit> DeserializeMaybeUnitResponseAsync(HttpResponseMessage response)
+      private static Maybe<Unit> DeserializeMaybeUnitResponseAsync(HttpResponseMessage response)
       {
          return response.IsSuccessStatusCode
             ? Unit.Default
             : Maybe<Unit>.None;
+      }
+
+      private async Task<Maybe<TResponse>> DeserializeMaybeResponseAsync<TResponse>(HttpResponseMessage response)
+      {
+         if (!response.IsSuccessStatusCode)
+         {
+            return Maybe<TResponse>.None;
+         }
+
+         using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+         return await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
       }
 
       private async Task<Either<ErrorResponse, Unit>> DeserializeEitherUnitResponseAsync(HttpResponseMessage response)
@@ -299,7 +310,7 @@ namespace Crypter.Common.Client.Implementations
             return Either<ErrorResponse, Unit>.Neither;
          }
 
-         Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+         using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          if (response.StatusCode != HttpStatusCode.OK)
          {
             return await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
@@ -315,7 +326,7 @@ namespace Crypter.Common.Client.Implementations
             return Either<ErrorResponse, TResponse>.Neither;
          }
 
-         Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+         using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          return response.StatusCode == HttpStatusCode.OK
             ? await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false)
             : await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
@@ -328,7 +339,7 @@ namespace Crypter.Common.Client.Implementations
             return (response.StatusCode, Either<ErrorResponse, TResponse>.Neither);
          }
 
-         Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+         using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          if (response.StatusCode != HttpStatusCode.OK)
          {
             ErrorResponse error = await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
@@ -346,7 +357,7 @@ namespace Crypter.Common.Client.Implementations
             return (response.StatusCode, Either<ErrorResponse, StreamDownloadResponse>.Neither);
          }
 
-         Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+         using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          if (response.StatusCode != HttpStatusCode.OK)
          {
             ErrorResponse error = await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);

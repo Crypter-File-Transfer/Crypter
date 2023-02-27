@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
@@ -39,9 +40,9 @@ namespace Crypter.Core.Services
 {
    public interface IUserContactsService
    {
-      Task<GetUserContactsResponse> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken);
-      Task<Either<AddUserContactError, AddUserContactResponse>> UpsertUserContactAsync(Guid userId, AddUserContactRequest request, CancellationToken cancellationToken);
-      Task<RemoveContactResponse> RemoveUserContactAsync(Guid userId, RemoveContactRequest request, CancellationToken cancellationToken);
+      Task<List<UserContact>> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken);
+      Task<Either<AddUserContactError, UserContact>> UpsertUserContactAsync(Guid userId, string contactUsername);
+      Task<Unit> RemoveUserContactAsync(Guid userId, string contactUsername);
    }
 
    public class UserContactsService : IUserContactsService
@@ -53,13 +54,15 @@ namespace Crypter.Core.Services
          _context = context;
       }
 
-      public async Task<Either<AddUserContactError, AddUserContactResponse>> UpsertUserContactAsync(Guid userId, AddUserContactRequest request, CancellationToken cancellationToken)
+      public async Task<Either<AddUserContactError, UserContact>> UpsertUserContactAsync(Guid userId, string contactUsername)
       {
+         string lowerContactUsername = contactUsername.ToLower();
+
          var foundUser = await _context.Users
-            .Where(x => x.Username == request.ContactUsername)
+            .Where(x => x.Username.ToLower() == lowerContactUsername)
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(userId))
             .Select(x => new { x.Id, x.Username, x.Profile.Alias })
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync();
 
          if (foundUser is null)
          {
@@ -71,43 +74,44 @@ namespace Crypter.Core.Services
             return AddUserContactError.InvalidUser;
          }
 
-         var existingContact = await _context.UserContacts
-            .FirstOrDefaultAsync(x => x.OwnerId == userId && x.ContactId == foundUser.Id, cancellationToken);
+         bool contactExists = await _context.UserContacts
+            .Where(x => x.OwnerId == userId)
+            .Where(x => x.ContactId == foundUser.Id)
+            .AnyAsync();
 
-         if (existingContact is null)
+         if (!contactExists)
          {
             UserContactEntity newContactEntity = new UserContactEntity(userId, foundUser.Id);
             _context.UserContacts.Add(newContactEntity);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync();
          }
 
-         UserContactDTO dto = new UserContactDTO(foundUser.Username, foundUser.Alias);
-         return new AddUserContactResponse(dto);
+         return new UserContact(foundUser.Username, foundUser.Alias);
       }
 
-      public async Task<GetUserContactsResponse> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken)
+      public Task<List<UserContact>> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken)
       {
-         List<UserContactDTO> contacts = await _context.UserContacts
+         return _context.UserContacts
             .Where(x => x.OwnerId == userId)
             .Select(x => x.Contact)
             .Select(LinqUserExpressions.ToUserContactDTO(userId))
             .ToListAsync(cancellationToken);
-
-         return new GetUserContactsResponse(contacts);
       }
 
-      public async Task<RemoveContactResponse> RemoveUserContactAsync(Guid userId, RemoveContactRequest request, CancellationToken cancellationToken)
+      public async Task<Unit> RemoveUserContactAsync(Guid userId, string contactUsername)
       {
-         var contactEntity = await _context.UserContacts
-            .FirstOrDefaultAsync(x => x.OwnerId == userId && x.Contact.Username == request.ContactUsername, cancellationToken);
+         string lowerContactUsername = contactUsername.ToLower();
+
+         UserContactEntity contactEntity = await _context.UserContacts
+            .FirstOrDefaultAsync(x => x.OwnerId == userId && x.Contact.Username.ToLower() == lowerContactUsername);
 
          if (contactEntity is not null)
          {
             _context.UserContacts.Remove(contactEntity);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync();
          }
 
-         return new RemoveContactResponse();
+         return Unit.Default;
       }
    }
 }

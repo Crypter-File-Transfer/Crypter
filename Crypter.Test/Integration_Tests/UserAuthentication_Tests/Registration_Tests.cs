@@ -40,6 +40,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       private WebApplicationFactory<Program> _factory;
       private ICrypterApiClient _client;
 
+      private const string _defaultUsername = "Frodo";
+      private const string _defaultPassword = "The Precious";
+      private const string _defaultEmailAddress = "ring_bearer@fellowship.org";
+
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
       {
@@ -66,7 +70,7 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [TestCase(true)]
       public async Task Register_User_Works(bool withEmailAddress)
       {
-         RegistrationRequest request = TestData.GetDefaultRegistrationRequest(withEmailAddress);
+         RegistrationRequest request = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword, _defaultEmailAddress);
          var result = await _client.UserAuthentication.RegisterAsync(request);
 
          Assert.True(result.IsRight);

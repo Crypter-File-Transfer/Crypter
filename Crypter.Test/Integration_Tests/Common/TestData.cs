@@ -26,12 +26,11 @@
 
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Crypto.Providers.Default;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace Crypter.Test.Integration_Tests.Common
 {
@@ -118,22 +117,17 @@ namespace Crypter.Test.Integration_Tests.Common
          return (encryptionStream, proof);
       }
 
-      internal static RegistrationRequest GetDefaultRegistrationRequest(bool withEmailAddress)
+      internal static RegistrationRequest GetRegistrationRequest(string username, string password, string emailAddress = null)
       {
-         Username username = Username.From("Frodo");
-         VersionedPassword versionedPassword = new VersionedPassword("The Precious"u8.ToArray(), 1);
-         Maybe<EmailAddress> emailAddress = withEmailAddress
-            ? EmailAddress.From("f.baggins@theshire.org")
-            : Maybe<EmailAddress>.None;
-
+         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+         VersionedPassword versionedPassword = new VersionedPassword(passwordBytes, 1);
          return new RegistrationRequest(username, versionedPassword, emailAddress);
       }
 
-      internal static LoginRequest GetDefaultLoginRequest(TokenType tokenType = TokenType.Session)
+      internal static LoginRequest GetLoginRequest(string username, string password, TokenType tokenType = TokenType.Session)
       {
-         Username username = Username.From("Frodo");
-         VersionedPassword versionedPassword = new VersionedPassword("The Precious"u8.ToArray(), 1);
-
+         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+         VersionedPassword versionedPassword = new VersionedPassword(passwordBytes, 1);
          return new LoginRequest(username, new List<VersionedPassword> { versionedPassword }, tokenType);
       }
    }

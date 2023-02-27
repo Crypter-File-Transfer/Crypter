@@ -57,9 +57,5 @@ namespace Crypter.Common.Client.Interfaces
       Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PostWithStatusCodeAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
          where TRequest : class
          where TResponse : class;
-
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> DeleteAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
-         where TRequest : class
-         where TResponse : class;
    }
 }

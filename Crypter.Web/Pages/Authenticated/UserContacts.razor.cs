@@ -40,7 +40,7 @@ namespace Crypter.Web.Pages
 
       protected bool Loading = true;
 
-      protected IReadOnlyCollection<UserContactDTO> Contacts { get; set; }
+      protected IReadOnlyCollection<UserContact> Contacts { get; set; }
 
       protected override async Task OnInitializedAsync()
       {

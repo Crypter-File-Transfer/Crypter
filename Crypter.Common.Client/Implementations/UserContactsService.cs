@@ -26,8 +26,8 @@
 
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Events;
-using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using Crypter.Common.Monads;
 using System;
 using System.Collections.Generic;
@@ -41,7 +41,7 @@ namespace Crypter.Common.Client.Implementations
    {
       private readonly ICrypterApiClient _crypterApiClient;
       private readonly IUserSessionService _userSessionService;
-      private IDictionary<string, UserContactDTO> _contacts;
+      private IDictionary<string, UserContact> _contacts;
 
       private readonly SemaphoreSlim _fetchMutex = new(1);
 
@@ -59,7 +59,7 @@ namespace Crypter.Common.Client.Implementations
          await InitializeContactsCacheAsync();
       }
 
-      public async Task<IReadOnlyCollection<UserContactDTO>> GetContactsAsync(bool getCached = true)
+      public async Task<IReadOnlyCollection<UserContact>> GetContactsAsync(bool getCached = true)
       {
          if (!getCached || _contacts is null)
          {
@@ -74,38 +74,34 @@ namespace Crypter.Common.Client.Implementations
          return _contacts.ContainsKey(contactUsername.ToLower());
       }
 
-      public async Task<Either<AddUserContactError, UserContactDTO>> AddContactAsync(string contactUsername)
+      public Task<Either<AddUserContactError, UserContact>> AddContactAsync(string contactUsername)
       {
          string lowerContactUsername = contactUsername.ToLower();
          if (_contacts.ContainsKey(lowerContactUsername))
          {
-            return Either<AddUserContactError, UserContactDTO>.FromRight(_contacts[lowerContactUsername]);
+            return Either<AddUserContactError, UserContact>.FromRight(_contacts[lowerContactUsername]).AsTask();
          }
 
-         var request = new AddUserContactRequest(lowerContactUsername);
-
-         return await _crypterApiClient.AddUserContactAsync(request)
+         return _crypterApiClient.UserContact.AddUserContactAsync(lowerContactUsername)
             .BindAsync(x =>
             {
-               _contacts.Add(lowerContactUsername, x.Contact);
-               return Either<AddUserContactError, UserContactDTO>.FromRight(x.Contact).AsTask();
+               _contacts.Add(lowerContactUsername, x);
+               return Either<AddUserContactError, UserContact>.FromRight(x);
             });
       }
 
       public async Task RemoveContactAsync(string contactUsername)
       {
          string lowerContactUsername = contactUsername.ToLower();
-         var request = new RemoveContactRequest(lowerContactUsername);
-         var response = await _crypterApiClient.RemoveUserContactAsync(request);
-         response.DoRight(x => _contacts.Remove(lowerContactUsername));
+         var response = await _crypterApiClient.UserContact.RemoveUserContactAsync(lowerContactUsername);
+         response.IfSome(_ => _contacts.Remove(lowerContactUsername));
       }
 
-      private async Task<IDictionary<string, UserContactDTO>> FetchContactsAsync()
+      private Task<Dictionary<string, UserContact>> FetchContactsAsync()
       {
-         Either<DummyError, GetUserContactsResponse> response = await _crypterApiClient.GetUserContactsAsync();
-         return response.Match(
-            new Dictionary<string, UserContactDTO>(),
-            right => right.Contacts.ToDictionary(x => x.Username.ToLower()));
+         return _crypterApiClient.UserContact.GetUserContactsAsync()
+            .BindAsync(x => x.ToDictionary(y => y.Username.ToLower()))
+            .SomeOrDefaultAsync(new Dictionary<string, UserContact>());
       }
 
       private async Task InitializeContactsCacheAsync(bool refreshCache = false)

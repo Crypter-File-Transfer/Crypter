@@ -24,20 +24,42 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using Crypter.Common.Monads;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Interfaces
+namespace Crypter.Common.Client.Implementations.Requests
 {
-   public interface IUserContactsService
+   public class UserContactRequests : IUserContactRequests
    {
-      Task InitializeAsync();
-      Task<IReadOnlyCollection<UserContact>> GetContactsAsync(bool getCached = true);
-      bool IsContact(string contactUsername);
-      Task<Either<AddUserContactError, UserContact>> AddContactAsync(string contactUsername);
-      Task RemoveContactAsync(string contactUsername);
+      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+
+      public UserContactRequests(ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
+      {
+         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+      }
+
+      public Task<Maybe<List<UserContact>>> GetUserContactsAsync()
+      {
+         string url = "api/user/contact";
+         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserContact>>(url);
+      }
+
+      public Task<Either<AddUserContactError, UserContact>> AddUserContactAsync(string contactUsername)
+      {
+         string url = $"api/user/contact?username={contactUsername}";
+         return _crypterAuthenticatedHttpClient.PostAsync<UserContact>(url, false)
+            .ExtractErrorCode<AddUserContactError, UserContact>();
+      }
+
+      public Task<Maybe<Unit>> RemoveUserContactAsync(string contactUsername)
+      {
+         string url = $"api/user/contact?username={contactUsername}";
+         return _crypterAuthenticatedHttpClient.DeleteUnitResponseAsync(url);
+      }
    }
 }

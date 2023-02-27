@@ -24,19 +24,18 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
+using Crypter.Common.Monads;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
-namespace Crypter.Common.Contracts.Features.Contacts
+namespace Crypter.Common.Client.Interfaces.Requests
 {
-   public class GetUserContactsResponse
+   public interface IUserContactRequests
    {
-      public IEnumerable<UserContactDTO> Contacts { get; set; }
-
-      [JsonConstructor]
-      public GetUserContactsResponse(IEnumerable<UserContactDTO> contacts)
-      {
-         Contacts = contacts;
-      }
+      Task<Maybe<List<UserContact>>> GetUserContactsAsync();
+      Task<Either<AddUserContactError, UserContact>> AddUserContactAsync(string contactUsername);
+      Task<Maybe<Unit>> RemoveUserContactAsync(string contactUsername);
    }
 }

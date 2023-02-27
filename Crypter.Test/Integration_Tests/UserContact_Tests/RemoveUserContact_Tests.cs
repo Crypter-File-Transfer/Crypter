@@ -28,16 +28,15 @@ using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 using System.Threading.Tasks;
 
-namespace Crypter.Test.Integration_Tests.UserConsent_Tests
+namespace Crypter.Test.Integration_Tests.UserContact_Tests
 {
    [TestFixture]
-   internal class RecoveryKeyRisksConsent_Tests
+   internal class RemoveUserContact_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -69,26 +68,52 @@ namespace Crypter.Test.Integration_Tests.UserConsent_Tests
          await _factory.DisposeAsync();
       }
 
-      [Test]
-      public async Task Conset_To_Recovery_Key_Risks_Works_Async()
+      [TestCase]
+      public async Task Remove_User_Contact_Works_Async()
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+         const string contactUsername = "Samwise";
+         const string contactPassword = "dropping_no_eaves";
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
-         await loginResult.DoRightAsync(async loginResponse =>
+         LoginRequest userLoginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword);
+         var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+
+         await userLoginResult.DoRightAsync(async loginResponse =>
          {
             await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         Maybe<Unit> result = await _client.UserConsent.ConsentToRecoveryKeyRisksAsync();
+         var initialContactsResult = await _client.UserContact.GetUserContactsAsync();
 
-         Assert.True(registrationResult.IsRight);
-         Assert.True(loginResult.IsRight);
-         Assert.True(result.IsSome);
+         RegistrationRequest contactRegistrationRequest = TestData.GetRegistrationRequest(contactUsername, contactPassword);
+         var contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
+
+         var addContactResult = await _client.UserContact.AddUserContactAsync(contactUsername);
+         var secondContactsResult = await _client.UserContact.GetUserContactsAsync();
+
+         var removeContactResult = await _client.UserContact.RemoveUserContactAsync(contactUsername);
+         var finalContactsResult = await _client.UserContact.GetUserContactsAsync();
+
+         Assert.True(userRegistrationResult.IsRight);
+         Assert.True(userLoginResult.IsRight);
+         Assert.True(initialContactsResult.IsSome);
+         initialContactsResult.IfSome(x => Assert.AreEqual(0, x.Count));
+
+         Assert.True(contactRegistrationResult.IsRight);
+         Assert.True(addContactResult.IsRight);
+         Assert.True(secondContactsResult.IsSome);
+         secondContactsResult.IfSome(x =>
+         {
+            Assert.AreEqual(1, x.Count);
+            Assert.AreEqual(contactUsername, x[0].Username);
+         });
+
+         Assert.True(removeContactResult.IsSome);
+         Assert.True(finalContactsResult.IsSome);
+         finalContactsResult.IfSome(x => Assert.AreEqual(0, x.Count));
       }
    }
 }

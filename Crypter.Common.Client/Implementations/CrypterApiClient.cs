@@ -29,7 +29,6 @@ using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Common.Contracts.Features.Settings;
@@ -56,6 +55,7 @@ namespace Crypter.Common.Client.Implementations
       public IMessageTransferRequests MessageTransfer { get; init; }
       public IUserAuthenticationRequests UserAuthentication { get; init; }
       public IUserConsentRequests UserConsent { get; init; }
+      public IUserContactRequests UserContact { get; init; }
 
       public CrypterApiClient(HttpClient httpClient, ITokenRepository tokenRepository)
       {
@@ -66,6 +66,7 @@ namespace Crypter.Common.Client.Implementations
          MessageTransfer = new MessageTransferRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
          UserAuthentication = new UserAuthenticationRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient, _refreshTokenRejectedHandler);
          UserConsent = new UserConsentRequests(_crypterAuthenticatedHttpClient);
+         UserContact = new UserContactRequests(_crypterAuthenticatedHttpClient);
       }
 
       /// <summary>
@@ -89,37 +90,6 @@ namespace Crypter.Common.Client.Implementations
          add => _refreshTokenRejectedHandler = (EventHandler)Delegate.Combine(_refreshTokenRejectedHandler, value);
          remove => _refreshTokenRejectedHandler = (EventHandler)Delegate.Remove(_refreshTokenRejectedHandler, value);
       }
-
-      #region Contacts
-
-      public Task<Either<DummyError, GetUserContactsResponse>> GetUserContactsAsync()
-      {
-         string url = "/contacts";
-         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetUserContactsResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.GetWithStatusCodeAsync<GetUserContactsResponse>(url))
-                from errorableResponse in ExtractErrorCode<DummyError, GetUserContactsResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<AddUserContactError, AddUserContactResponse>> AddUserContactAsync(AddUserContactRequest request)
-      {
-         string url = "/contacts";
-         return from response in Either<AddUserContactError, (HttpStatusCode httpStatus, Either<ErrorResponse, AddUserContactResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<AddUserContactRequest, AddUserContactResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<AddUserContactError, AddUserContactResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<DummyError, RemoveContactResponse>> RemoveUserContactAsync(RemoveContactRequest request)
-      {
-         string url = "/contacts";
-         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, RemoveContactResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.DeleteAsync<RemoveContactRequest, RemoveContactResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<DummyError, RemoveContactResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      #endregion
 
       #region File Transfer
 

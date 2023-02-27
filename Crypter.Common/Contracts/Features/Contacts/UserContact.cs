@@ -24,18 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
-
 namespace Crypter.Common.Contracts.Features.Contacts
 {
-   public class RemoveContactRequest
+   public class UserContact
    {
-      public string ContactUsername { get; private set; }
+      public string Username { get; init; }
+      public string Alias { get; init; }
 
-      [JsonConstructor]
-      public RemoveContactRequest(string contactUsername)
+      public UserContact(string username, string alias)
       {
-         ContactUsername = contactUsername;
+         Username = username;
+         Alias = alias;
       }
    }
 }

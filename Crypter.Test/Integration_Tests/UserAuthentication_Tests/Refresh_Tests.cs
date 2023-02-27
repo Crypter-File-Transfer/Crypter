@@ -49,6 +49,9 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
 
+      private const string _defaultUsername = "Frodo";
+      private const string _defaultPassword = "The Precious";
+
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
       {
@@ -75,10 +78,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [TestCase(TokenType.Device)]
       public async Task Refresh_Works(TokenType refreshTokenType)
       {
-         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetDefaultLoginRequest(refreshTokenType);
+         LoginRequest loginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword, refreshTokenType);
          var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
          await loginResult.DoRightAsync(async loginResponse =>
@@ -100,10 +103,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
          IConfigurationRoot apiConfiguration = Setup.GetIntegrationConfiguration();
          TokenSettings apiTokenSettings = apiConfiguration.GetSection("TokenSettings").Get<TokenSettings>();
 
-         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetDefaultLoginRequest(TokenType.Session);
+         LoginRequest loginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword, TokenType.Session);
          var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
          await loginResult.DoRightAsync(async loginResponse =>
@@ -123,10 +126,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [Test]
       public async Task Refresh_Fails_Deleted_Token()
       {
-         RegistrationRequest registrationRequest = TestData.GetDefaultRegistrationRequest(false);
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetDefaultLoginRequest(TokenType.Session);
+         LoginRequest loginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword, TokenType.Session);
          var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
          await loginResult.DoRightAsync(async loginResponse =>
