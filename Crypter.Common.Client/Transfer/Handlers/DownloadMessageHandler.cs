@@ -44,7 +44,7 @@ namespace Crypter.Common.Client.Transfer.Handlers
          : base(crypterApiClient, cryptoProvider, userSessionService, transferSettings)
       { }
 
-      public async Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadPreviewAsync()
+      public async Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> DownloadPreviewAsync()
       {
 #pragma warning disable CS8524
          var response = _transferUserType switch

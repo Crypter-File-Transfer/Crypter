@@ -44,7 +44,7 @@ namespace Crypter.API.Controllers.Old
          : base(transferDownloadService, transferUploadService, tokenService) { }
 
       [HttpGet("preview")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> GetAnonymousMessagePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
       {
@@ -52,7 +52,7 @@ namespace Crypter.API.Controllers.Old
          return previewResult.Match(
             MakeErrorResponse,
             Ok,
-            MakeErrorResponse(DownloadTransferPreviewError.UnknownError));
+            MakeErrorResponse(TransferPreviewError.UnknownError));
       }
 
       [HttpPost("ciphertext")]
@@ -70,7 +70,7 @@ namespace Crypter.API.Controllers.Old
 
       [HttpGet("user/preview")]
       [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(DownloadTransferMessagePreviewResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> GetUserMessagePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
       {
@@ -79,7 +79,7 @@ namespace Crypter.API.Controllers.Old
          return previewResult.Match(
             MakeErrorResponse,
             Ok,
-            MakeErrorResponse(DownloadTransferPreviewError.UnknownError));
+            MakeErrorResponse(TransferPreviewError.UnknownError));
       }
 
       [HttpPost("user/ciphertext")]

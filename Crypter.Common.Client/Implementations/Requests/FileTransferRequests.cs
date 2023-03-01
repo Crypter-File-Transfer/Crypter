@@ -69,5 +69,24 @@ namespace Crypter.Common.Client.Implementations.Requests
          return await service.SendAsync<UploadTransferResponse>(request)
             .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
       }
+
+      public Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetAnonymousFilePreviewAsync(string hashId)
+      {
+         string url = $"api/file/transfer/preview/anonymous?id={hashId}";
+         return _crypterHttpClient.GetEitherAsync<FileTransferPreviewResponse>(url)
+            .ExtractErrorCode<TransferPreviewError, FileTransferPreviewResponse>();
+      }
+
+      public Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetUserFilePreviewAsync(string hashId, bool withAuthentication)
+      {
+         string url = $"api/file/transfer/preview/user?id={hashId}";
+
+         ICrypterHttpClient client = withAuthentication
+            ? _crypterAuthenticatedHttpClient
+            : _crypterHttpClient;
+
+         return client.GetEitherAsync<FileTransferPreviewResponse>(url)
+            .ExtractErrorCode<TransferPreviewError, FileTransferPreviewResponse>();
+      }
    }
 }

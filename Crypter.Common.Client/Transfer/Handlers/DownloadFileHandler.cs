@@ -43,13 +43,13 @@ namespace Crypter.Common.Client.Transfer.Handlers
          : base(crypterApiClient, cryptoProvider, userSessionService, transferSettings)
       { }
 
-      public async Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadPreviewAsync()
+      public async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> DownloadPreviewAsync()
       {
 #pragma warning disable CS8524
          var response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiClient.DownloadAnonymousFilePreviewAsync(_transferHashId),
-            TransferUserType.User => await _crypterApiClient.DownloadUserFilePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiClient.FileTransfer.GetAnonymousFilePreviewAsync(_transferHashId),
+            TransferUserType.User => await _crypterApiClient.FileTransfer.GetUserFilePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
 

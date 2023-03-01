@@ -70,25 +70,26 @@ namespace Crypter.Common.Client.Implementations
          };
       }
 
-      public Task<Either<ErrorResponse, TResponse>> GetAsync<TResponse>(string uri)
+      public async Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri)
          where TResponse : class
       {
-         return GetAsync<TResponse>(uri);
+         var request = MakeRequestMessageFactory(HttpMethod.Get, uri);
+         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, false);
+         return await DeserializeMaybeResponseAsync<TResponse>(response);
       }
 
-      public async Task<Either<ErrorResponse, TResponse>> GetAsync<TResponse>(string uri, bool useRefreshToken = false)
+      public Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri)
+         where TResponse : class
+      {
+         return GetEitherAsync<TResponse>(uri, false);
+      }
+
+      public async Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri, bool useRefreshToken = false)
          where TResponse : class
       {
          var request = MakeRequestMessageFactory(HttpMethod.Get, uri);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
          return await DeserializeResponseAsync<TResponse>(response);
-      }
-
-      public async Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri)
-      {
-         var request = MakeRequestMessageFactory(HttpMethod.Get, uri);
-         using HttpResponseMessage response = await SendWithAuthenticationAsync(request, false);
-         return await DeserializeMaybeResponseAsync<TResponse>(response);
       }
 
       public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)

@@ -142,7 +142,7 @@ namespace Crypter.Core.Services
          Guid? nullableSenderId = senderId.Bind<Guid?>(x => x).SomeOrDefault(null);
          Guid? nullableRecipientId = recipientId.Bind<Guid?>(x => x).SomeOrDefault(null);
 
-         if (nullableRecipientId is null && nullableRecipientId is null)
+         if (nullableSenderId is null && nullableRecipientId is null)
          {
             AnonymousFileTransferEntity transferEntity = new AnonymousFileTransferEntity(
                id: transferId,
@@ -188,7 +188,7 @@ namespace Crypter.Core.Services
          Guid? nullableSenderId = senderId.Bind<Guid?>(x => x).SomeOrDefault(null);
          Guid? nullableRecipientId = recipientId.Bind<Guid?>(x => x).SomeOrDefault(null);
 
-         if (nullableRecipientId is null && nullableRecipientId is null)
+         if (nullableSenderId is null && nullableRecipientId is null)
          {
             AnonymousMessageTransferEntity transferEntity = new AnonymousMessageTransferEntity(
                id: transferId,

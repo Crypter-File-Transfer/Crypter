@@ -34,7 +34,11 @@ namespace Crypter.Common.Client.Interfaces
 {
    public interface ICrypterHttpClient
    {
-      Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri);
+      Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri)
+         where TResponse : class;
+
+      Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri)
+         where TResponse : class;
 
       Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)
          where TResponse : class;

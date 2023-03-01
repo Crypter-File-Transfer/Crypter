@@ -26,7 +26,7 @@
 
 namespace Crypter.Common.Contracts.Features.Transfer
 {
-   public enum DownloadTransferPreviewError
+   public enum TransferPreviewError
    {
       UnknownError,
       NotFound

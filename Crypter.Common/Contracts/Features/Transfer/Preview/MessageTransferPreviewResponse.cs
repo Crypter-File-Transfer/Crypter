@@ -29,7 +29,7 @@ using System.Text.Json.Serialization;
 
 namespace Crypter.Common.Contracts.Features.Transfer
 {
-   public class DownloadTransferMessagePreviewResponse
+   public class MessageTransferPreviewResponse
    {
       public string Subject { get; init; }
       public long Size { get; init; }
@@ -42,7 +42,7 @@ namespace Crypter.Common.Contracts.Features.Transfer
       public DateTime ExpirationUTC { get; init; }
 
       [JsonConstructor]
-      public DownloadTransferMessagePreviewResponse(string subject, long size, string sender, string senderAlias, string recipient, byte[] publicKey, byte[] keyExchangeNonce, DateTime creationUTC, DateTime expirationUTC)
+      public MessageTransferPreviewResponse(string subject, long size, string sender, string senderAlias, string recipient, byte[] publicKey, byte[] keyExchangeNonce, DateTime creationUTC, DateTime expirationUTC)
       {
          Subject = subject;
          Size = size;

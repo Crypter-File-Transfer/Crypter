@@ -33,7 +33,7 @@ namespace Crypter.Common.Client.Interfaces
 {
    public interface ICrypterAuthenticatedHttpClient : ICrypterHttpClient
    {
-      Task<Either<ErrorResponse, TResponse>> GetAsync<TResponse>(string uri, bool useRefreshToken = false)
+      Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri, bool useRefreshToken = false)
          where TResponse : class;
 
       Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri, bool useRefreshToken = false)

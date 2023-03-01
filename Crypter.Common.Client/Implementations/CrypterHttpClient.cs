@@ -51,9 +51,17 @@ namespace Crypter.Common.Client.Implementations
       }
 
       public Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri)
+         where TResponse : class
       {
          var request = new HttpRequestMessage(HttpMethod.Get, uri);
          return SendRequestMaybeResponseAsync<TResponse>(request);
+      }
+
+      public Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri)
+         where TResponse : class
+      {
+         var request = new HttpRequestMessage(HttpMethod.Get, uri);
+         return SendRequestEitherResponseAsync<TResponse>(request);
       }
 
       public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)

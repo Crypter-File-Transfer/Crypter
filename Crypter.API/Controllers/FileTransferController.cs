@@ -35,6 +35,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
@@ -64,12 +65,39 @@ namespace Crypter.API.Controllers
                right: Ok,
                neither: MakeErrorResponse(UploadTransferError.UnknownError));
       }
+
+      [HttpGet("preview/anonymous")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetAnonymousFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
+      {
+         return await _transferDownloadService.GetAnonymousFilePreviewAsync(id, cancellationToken)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(TransferPreviewError.UnknownError));
+      }
+
+      [HttpGet("preview/user")]
+      [MaybeAuthorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetUserFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
+      {
+         Maybe<Guid> userId = _tokenService.TryParseUserId(User);
+
+         return await _transferDownloadService.GetUserFilePreviewAsync(id, userId, cancellationToken)
+            .MatchAsync(
+               left: MakeErrorResponse,
+               right: Ok,
+               neither: MakeErrorResponse(TransferPreviewError.UnknownError));
+      }
       /*
-       *  - POST /api/file?username
-          - GET /api/file/sent
-          - GET /api/file/received
-          - GET /api/file/preview?id
-          - GET /api/file/cipher?id&proof
+       *  - POST /api/file/transfer?username
+          - GET /api/file/transfer/sent
+          - GET /api/file/transfer/received
+          - GET /api/file/transfer/cipher/anonymous?id&proof
+          - GET /api/file/transfer/cipher/user?id&proof
        */
    }
 }

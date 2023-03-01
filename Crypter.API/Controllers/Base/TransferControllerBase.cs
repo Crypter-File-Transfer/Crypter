@@ -57,13 +57,13 @@ namespace Crypter.API.Controllers.Base
 #pragma warning restore CS8524
       }
 
-      protected IActionResult MakeErrorResponse(DownloadTransferPreviewError error)
+      protected IActionResult MakeErrorResponse(TransferPreviewError error)
       {
 #pragma warning disable CS8524
          return error switch
          {
-            DownloadTransferPreviewError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-            DownloadTransferPreviewError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            TransferPreviewError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+            TransferPreviewError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
          };
 #pragma warning restore CS8524
       }

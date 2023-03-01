@@ -48,9 +48,7 @@ namespace Crypter.Common.Client.Interfaces
       IUserContactRequests UserContact { get; }
 
       #region File Transfer
-      Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadAnonymousFilePreviewAsync(string hashId);
       Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
-      Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadUserFilePreviewAsync(string hashId, bool withAuthentication);
       Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
       #endregion
 
@@ -63,9 +61,9 @@ namespace Crypter.Common.Client.Interfaces
       #endregion
 
       #region Message Transfer
-      Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadAnonymousMessagePreviewAsync(string hashId);
+      Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> DownloadAnonymousMessagePreviewAsync(string hashId);
       Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
-      Task<Either<DownloadTransferPreviewError, DownloadTransferMessagePreviewResponse>> DownloadUserMessagePreviewAsync(string hashId, bool withAuthentication);
+      Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> DownloadUserMessagePreviewAsync(string hashId, bool withAuthentication);
       Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
       #endregion
 

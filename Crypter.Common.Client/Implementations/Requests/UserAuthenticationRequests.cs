@@ -63,7 +63,7 @@ namespace Crypter.Common.Client.Implementations.Requests
       public async Task<Either<RefreshError, RefreshResponse>> RefreshSessionAsync()
       {
          string url = "api/user/authentication/refresh";
-         Either<RefreshError, RefreshResponse> response = await _crypterAuthenticatedHttpClient.GetAsync<RefreshResponse>(url, true)
+         Either<RefreshError, RefreshResponse> response = await _crypterAuthenticatedHttpClient.GetEitherAsync<RefreshResponse>(url, true)
             .ExtractErrorCode<RefreshError, RefreshResponse>();
 
          response.DoLeftOrNeither(() => _refreshTokenRejectedHandler?.Invoke(this, EventArgs.Empty));

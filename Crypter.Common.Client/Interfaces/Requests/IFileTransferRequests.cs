@@ -34,5 +34,7 @@ namespace Crypter.Common.Client.Interfaces.Requests
    public interface IFileTransferRequests
    {
       Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<string> recipientUsername, UploadFileTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication);
+      Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetAnonymousFilePreviewAsync(string hashId);
+      Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetUserFilePreviewAsync(string hashId, bool withAuthentication);
    }
 }
