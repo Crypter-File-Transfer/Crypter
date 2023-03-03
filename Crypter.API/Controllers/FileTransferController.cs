@@ -85,7 +85,6 @@ namespace Crypter.API.Controllers
       public async Task<IActionResult> GetUserFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
       {
          Maybe<Guid> userId = _tokenService.TryParseUserId(User);
-
          return await _transferDownloadService.GetUserFilePreviewAsync(id, userId, cancellationToken)
             .MatchAsync(
                left: MakeErrorResponse,

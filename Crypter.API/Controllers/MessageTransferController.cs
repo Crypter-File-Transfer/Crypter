@@ -35,6 +35,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
@@ -63,6 +64,32 @@ namespace Crypter.API.Controllers
                MakeErrorResponse,
                Ok,
                MakeErrorResponse(UploadTransferError.UnknownError));
+      }
+
+      [HttpGet("preview/anonymous")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetAnonymousMessagePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
+      {
+         return await _transferDownloadService.GetAnonymousMessagePreviewAsync(id, cancellationToken)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(TransferPreviewError.UnknownError));
+      }
+
+      [HttpGet("preview/user")]
+      [MaybeAuthorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetUserMessagePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
+      {
+         Maybe<Guid> userId = _tokenService.TryParseUserId(User);
+         return await _transferDownloadService.GetUserMessagePreviewAsync(id, userId, cancellationToken)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(TransferPreviewError.UnknownError));
       }
    }
 }

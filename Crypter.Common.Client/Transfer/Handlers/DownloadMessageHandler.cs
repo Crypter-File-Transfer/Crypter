@@ -49,8 +49,8 @@ namespace Crypter.Common.Client.Transfer.Handlers
 #pragma warning disable CS8524
          var response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiClient.DownloadAnonymousMessagePreviewAsync(_transferHashId),
-            TransferUserType.User => await _crypterApiClient.DownloadUserMessagePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiClient.MessageTransfer.GetAnonymousMessagePreviewAsync(_transferHashId),
+            TransferUserType.User => await _crypterApiClient.MessageTransfer.GetUserMessagePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
 

@@ -43,18 +43,6 @@ namespace Crypter.API.Controllers.Old
       public MessageController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
          : base(transferDownloadService, transferUploadService, tokenService) { }
 
-      [HttpGet("preview")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetAnonymousMessagePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
-      {
-         var previewResult = await _transferDownloadService.GetAnonymousMessagePreviewAsync(id, cancellationToken);
-         return previewResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(TransferPreviewError.UnknownError));
-      }
-
       [HttpPost("ciphertext")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
@@ -66,20 +54,6 @@ namespace Crypter.API.Controllers.Old
             MakeErrorResponse,
             x => new FileStreamResult(x, "application/octet-stream"),
             MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
-      }
-
-      [HttpGet("user/preview")]
-      [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserMessagePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
-      {
-         var userId = _tokenService.TryParseUserId(User);
-         var previewResult = await _transferDownloadService.GetUserMessagePreviewAsync(id, userId, cancellationToken);
-         return previewResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(TransferPreviewError.UnknownError));
       }
 
       [HttpPost("user/ciphertext")]

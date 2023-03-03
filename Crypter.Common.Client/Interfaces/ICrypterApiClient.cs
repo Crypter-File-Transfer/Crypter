@@ -61,9 +61,7 @@ namespace Crypter.Common.Client.Interfaces
       #endregion
 
       #region Message Transfer
-      Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> DownloadAnonymousMessagePreviewAsync(string hashId);
       Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
-      Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> DownloadUserMessagePreviewAsync(string hashId, bool withAuthentication);
       Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
       #endregion
 

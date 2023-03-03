@@ -34,10 +34,10 @@ using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
 
-namespace Crypter.Test.Integration_Tests
+namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
 {
    [TestFixture]
-   internal class MessageTransfer_Tests
+   internal class UploadMessageTransfer_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
