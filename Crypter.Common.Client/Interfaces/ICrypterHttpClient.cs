@@ -43,6 +43,8 @@ namespace Crypter.Common.Client.Interfaces
       Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)
          where TResponse : class;
 
+      Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(string uri);
+
       Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, TRequest body)
          where TRequest : class
          where TResponse : class;
@@ -52,9 +54,6 @@ namespace Crypter.Common.Client.Interfaces
       Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri);
 
       Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body)
-         where TRequest : class;
-
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, TRequest body)
          where TRequest : class;
 
       Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri);

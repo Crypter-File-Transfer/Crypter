@@ -32,7 +32,6 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Common.Contracts.Features.Settings;
-using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using System;
@@ -90,45 +89,6 @@ namespace Crypter.Common.Client.Implementations
          add => _refreshTokenRejectedHandler = (EventHandler)Delegate.Combine(_refreshTokenRejectedHandler, value);
          remove => _refreshTokenRejectedHandler = (EventHandler)Delegate.Remove(_refreshTokenRejectedHandler, value);
       }
-
-      #region File Transfer
-
-      public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest)
-      {
-         string url = "/file/ciphertext/?id={hashId}";
-         return from response in Either<DownloadTransferCiphertextError, (HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> data)>.FromRightAsync(
-                  _crypterHttpClient.PostWithStreamResponseAsync<DownloadTransferCiphertextRequest>(url, downloadRequest))
-                from errorableResponse in ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<TransferPreviewError, FileTransferPreviewResponse>> DownloadUserFilePreviewAsync(string hashId, bool withAuthentication)
-      {
-         string url = "/file/user/preview/?id={hashId}";
-         ICrypterHttpClient service = withAuthentication
-            ? _crypterAuthenticatedHttpClient
-            : _crypterHttpClient;
-
-         return from response in Either<TransferPreviewError, (HttpStatusCode httpStatus, Either<ErrorResponse, FileTransferPreviewResponse> data)>.FromRightAsync(
-                  service.GetWithStatusCodeAsync<FileTransferPreviewResponse>(url))
-                from errorableResponse in ExtractErrorCode<TransferPreviewError, FileTransferPreviewResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication)
-      {
-         string url = "/file/user/ciphertext/?id={hashId}";
-         ICrypterHttpClient service = withAuthentication
-            ? _crypterAuthenticatedHttpClient
-            : _crypterHttpClient;
-
-         return from response in Either<DownloadTransferCiphertextError, (HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> data)>.FromRightAsync(
-                  service.PostWithStreamResponseAsync<DownloadTransferCiphertextRequest>(url, downloadRequest))
-                from errorableResponse in ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      #endregion
 
       #region Keys
 
@@ -227,54 +187,6 @@ namespace Crypter.Common.Client.Implementations
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserSentMessagesResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpClient.GetWithStatusCodeAsync<UserSentMessagesResponse>(url))
                 from errorableResponse in ExtractErrorCode<DummyError, UserSentMessagesResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      #endregion
-
-      #region Message Transfer
-
-      public Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> DownloadAnonymousMessagePreviewAsync(string hashId)
-      {
-         string url = "/message/preview/?id={hashId}";
-         return from response in Either<TransferPreviewError, (HttpStatusCode httpStatus, Either<ErrorResponse, MessageTransferPreviewResponse> data)>.FromRightAsync(
-                  _crypterHttpClient.GetWithStatusCodeAsync<MessageTransferPreviewResponse>(url))
-                from errorableResponse in ExtractErrorCode<TransferPreviewError, MessageTransferPreviewResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest)
-      {
-         string url = "/message/ciphertext/?id={hashId}";
-         return from response in Either<DownloadTransferCiphertextError, (HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> data)>.FromRightAsync(
-                  _crypterHttpClient.PostWithStreamResponseAsync<DownloadTransferCiphertextRequest>(url, downloadRequest))
-                from errorableResponse in ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> DownloadUserMessagePreviewAsync(string hashId, bool withAuthentication)
-      {
-         string url = "/message/user/preview/?id={hashId}";
-         ICrypterHttpClient service = withAuthentication
-            ? _crypterAuthenticatedHttpClient
-            : _crypterHttpClient;
-
-         return from response in Either<TransferPreviewError, (HttpStatusCode httpStatus, Either<ErrorResponse, MessageTransferPreviewResponse> data)>.FromRightAsync(
-                  service.GetWithStatusCodeAsync<MessageTransferPreviewResponse>(url))
-                from errorableResponse in ExtractErrorCode<TransferPreviewError, MessageTransferPreviewResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication)
-      {
-         string url = "/message/user/ciphertext/?id={hashId}";
-         ICrypterHttpClient service = withAuthentication
-            ? _crypterAuthenticatedHttpClient
-            : _crypterHttpClient;
-
-         return from response in Either<DownloadTransferCiphertextError, (HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> data)>.FromRightAsync(
-                  service.PostWithStreamResponseAsync<DownloadTransferCiphertextRequest>(url, downloadRequest))
-                from errorableResponse in ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 

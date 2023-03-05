@@ -26,9 +26,11 @@
 
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Requests;
+using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
 using Crypter.Crypto.Common.StreamEncryption;
+using System;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -87,6 +89,25 @@ namespace Crypter.Common.Client.Implementations.Requests
 
          return client.GetEitherAsync<FileTransferPreviewResponse>(url)
             .ExtractErrorCode<TransferPreviewError, FileTransferPreviewResponse>();
+      }
+
+      public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetAnonymousFileCiphertextAsync(string hashId, byte[] proof)
+      {
+         string url = $"api/file/transfer/ciphertext/anonymous?id={hashId}&proof={Convert.ToBase64String(proof)}";
+         return _crypterHttpClient.GetStreamResponseAsync(url)
+            .ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>();
+      }
+
+      public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetUserFileCiphertextAsync(string hashId, byte[] proof, bool withAuthentication)
+      {
+         string url = $"api/file/transfer/ciphertext/user?id={hashId}&proof={Convert.ToBase64String(proof)}";
+
+         ICrypterHttpClient client = withAuthentication
+            ? _crypterAuthenticatedHttpClient
+            : _crypterHttpClient;
+
+         return client.GetStreamResponseAsync(url)
+            .ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>();
       }
    }
 }

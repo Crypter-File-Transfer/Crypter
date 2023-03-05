@@ -63,15 +63,15 @@ namespace Crypter.Common.Client.Transfer.Handlers
             () => throw new Exception("Missing symmetric key"),
             x => x);
 
-         DownloadTransferCiphertextRequest request = _serverProof.Match(
-            () => throw new Exception("Missing server key"),
-            x => new DownloadTransferCiphertextRequest(x));
+         byte[] serverProof = _serverProof.Match(
+            () => throw new Exception("Missing server proof"),
+            x => x);
 
 #pragma warning disable CS8524
          Either<DownloadTransferCiphertextError, StreamDownloadResponse> response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiClient.DownloadAnonymousFileCiphertextAsync(_transferHashId, request),
-            TransferUserType.User => await _crypterApiClient.DownloadUserFileCiphertextAsync(_transferHashId, request, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiClient.FileTransfer.GetAnonymousFileCiphertextAsync(_transferHashId, serverProof),
+            TransferUserType.User => await _crypterApiClient.FileTransfer.GetUserFileCiphertextAsync(_transferHashId, serverProof, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
 

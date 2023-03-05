@@ -29,7 +29,6 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Common.Contracts.Features.Settings;
-using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using System;
@@ -47,22 +46,12 @@ namespace Crypter.Common.Client.Interfaces
       IUserConsentRequests UserConsent { get; }
       IUserContactRequests UserContact { get; }
 
-      #region File Transfer
-      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
-      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserFileCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
-      #endregion
-
       #region Keys
       Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
       Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
       Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync();
       Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request);
-      #endregion
-
-      #region Message Transfer
-      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadAnonymousMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest);
-      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> DownloadUserMessageCiphertextAsync(string hashId, DownloadTransferCiphertextRequest downloadRequest, bool withAuthentication);
       #endregion
 
       #region Metrics

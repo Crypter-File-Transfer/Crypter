@@ -91,5 +91,33 @@ namespace Crypter.API.Controllers
                Ok,
                MakeErrorResponse(TransferPreviewError.UnknownError));
       }
+
+      [HttpGet("ciphertext/anonymous")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetAnonymousMessageCiphertextAsync([FromQuery] string id, [FromQuery] byte[] proof, CancellationToken cancellationToken)
+      {
+         return await _transferDownloadService.GetAnonymousMessageCiphertextAsync(id, proof, cancellationToken)
+            .MatchAsync(
+               MakeErrorResponse,
+               x => new FileStreamResult(x, "application/octet-stream"),
+               MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
+      }
+
+      [HttpGet("ciphertext/user")]
+      [MaybeAuthorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetUserMessageCiphertextAsync([FromQuery] string id, [FromQuery] byte[] proof, CancellationToken cancellationToken)
+      {
+         Maybe<Guid> userId = _tokenService.TryParseUserId(User);
+         return await _transferDownloadService.GetUserMessageCiphertextAsync(id, proof, userId, cancellationToken)
+            .MatchAsync(
+               MakeErrorResponse,
+               x => new FileStreamResult(x, "application/octet-stream"),
+               MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
+      }
    }
 }

@@ -91,12 +91,33 @@ namespace Crypter.API.Controllers
                right: Ok,
                neither: MakeErrorResponse(TransferPreviewError.UnknownError));
       }
-      /*
-       *  - POST /api/file/transfer?username
-          - GET /api/file/transfer/sent
-          - GET /api/file/transfer/received
-          - GET /api/file/transfer/cipher/anonymous?id&proof
-          - GET /api/file/transfer/cipher/user?id&proof
-       */
+
+      [HttpGet("ciphertext/anonymous")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetAnonymousFileCiphertextAsync([FromQuery] string id, [FromQuery] byte[] proof)
+      {
+         return await _transferDownloadService.GetAnonymousFileCiphertextAsync(id, proof)
+            .MatchAsync(
+               MakeErrorResponse,
+               x => new FileStreamResult(x, "application/octet-stream"),
+               MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
+      }
+
+      [HttpGet("ciphertext/user")]
+      [MaybeAuthorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetUserFileCiphertextAsync([FromQuery] string id, [FromQuery] byte[] proof)
+      {
+         Maybe<Guid> userId = _tokenService.TryParseUserId(User);
+         return await _transferDownloadService.GetUserFileCiphertextAsync(id, proof, userId)
+            .MatchAsync(
+               MakeErrorResponse,
+               x => new FileStreamResult(x, "application/octet-stream"),
+               MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
+      }
    }
 }

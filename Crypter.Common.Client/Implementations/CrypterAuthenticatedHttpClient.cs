@@ -106,6 +106,13 @@ namespace Crypter.Common.Client.Implementations
          return await DeserializeResponseWithStatusCodeAsync<TResponse>(response);
       }
 
+      public async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(string uri)
+      {
+         var request = MakeRequestMessageFactory(HttpMethod.Get, uri);
+         HttpResponseMessage response = await SendWithAuthenticationAsync(request, false);
+         return await GetStreamResponseAsync(response);
+      }
+
       public Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, TRequest body)
          where TRequest : class
          where TResponse : class
@@ -192,14 +199,6 @@ namespace Crypter.Common.Client.Implementations
          var request = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
          return await DeserializeResponseWithStatusCodeAsync<TResponse>(response);
-      }
-
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> PostWithStreamResponseAsync<TRequest>(string uri, TRequest body)
-         where TRequest : class
-      {
-         var request = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
-         HttpResponseMessage response = await SendWithAuthenticationAsync(request, false);
-         return await GetStreamResponseAsync(response);
       }
 
       public async Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri)
@@ -343,22 +342,20 @@ namespace Crypter.Common.Client.Implementations
          return (response.StatusCode, content);
       }
 
-      private async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, StreamDownloadResponse> response)> GetStreamResponseAsync(HttpResponseMessage response)
+      private async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(HttpResponseMessage response)
       {
          if (response.StatusCode == HttpStatusCode.Unauthorized)
          {
-            return (response.StatusCode, Either<ErrorResponse, StreamDownloadResponse>.Neither);
+            return Either<ErrorResponse, StreamDownloadResponse>.Neither;
          }
 
          using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          if (response.StatusCode != HttpStatusCode.OK)
          {
-            ErrorResponse error = await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
-            return (response.StatusCode, error);
+            return await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
          }
 
-         StreamDownloadResponse responseData = new StreamDownloadResponse(stream, response.Content.Headers.ContentLength!.Value);
-         return (response.StatusCode, responseData);
+         return new StreamDownloadResponse(stream, response.Content.Headers.ContentLength!.Value);
       }
 
       private async Task<Unit> AttachTokenAsync(HttpRequestMessage request, bool useRefreshToken = false)

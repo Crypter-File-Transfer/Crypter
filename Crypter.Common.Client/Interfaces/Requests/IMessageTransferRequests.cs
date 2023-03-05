@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
 using Crypter.Crypto.Common.StreamEncryption;
@@ -36,5 +37,7 @@ namespace Crypter.Common.Client.Interfaces.Requests
       Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<string> recipientUsername, UploadMessageTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication);
       Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetAnonymousMessagePreviewAsync(string hashId);
       Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetUserMessagePreviewAsync(string hashId, bool withAuthentication);
+      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetAnonymousMessageCiphertextAsync(string hashId, byte[] proof);
+      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetUserMessageCiphertextAsync(string hashId, byte[] proof, bool withAuthentication);
    }
 }
