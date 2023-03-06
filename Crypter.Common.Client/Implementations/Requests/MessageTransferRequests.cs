@@ -31,7 +31,6 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
 using Crypter.Crypto.Common.StreamEncryption;
 using System;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;

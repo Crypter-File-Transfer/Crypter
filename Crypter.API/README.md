@@ -9,15 +9,19 @@ This should also aid developers in deciding where to add a new API endpoint or w
     * POST /api/file/transfer?username={username}
     * GET /api/file/transfer/sent
     * GET /api/file/transfer/received
-    * GET /api/file/transfer/preview?id={hashId}
-    * GET /api/file/transfer/cipher?id={hashId}&proof={proof}
+    * GET /api/file/transfer/preview/anonymous?id={hashId}
+    * GET /api/file/transfer/preview/user?id={hashId}
+    * GET /api/file/transfer/ciphertext/anonymous?id={hashId}&proof={proof}
+    * GET /api/file/transfer/ciphertext/user?id={hashId}&proof={proof}
 
 * Message Transfer
    * POST /api/message/transfer?username={username}
    * GET /api/message/transfer/sent
    * GET /api/message/transfer/received
-   * GET /api/message/transfer/preview?id={hashId}
-   * GET /api/message/transfer/cipher?id={hashId}&proof={proof}
+   * GET /api/message/transfer/preview/anonymous?id={hashId}
+   * GET /api/message/transfer/user/anonymous?id={hashId}
+   * GET /api/message/transfer/ciphertext/anonymous?id={hashId}&proof={proof}
+   * GET /api/message/transfer/ciphertext/user?id={hashId}&proof={proof}
 
 * Metrics
    * GET /api/metrics/storage/public

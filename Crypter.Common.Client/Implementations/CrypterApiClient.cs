@@ -30,7 +30,6 @@ using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Keys;
-using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
@@ -52,6 +51,7 @@ namespace Crypter.Common.Client.Implementations
 
       public IFileTransferRequests FileTransfer { get; init; }
       public IMessageTransferRequests MessageTransfer { get; init; }
+      public IMetricsRequests Metrics { get; init; }
       public IUserAuthenticationRequests UserAuthentication { get; init; }
       public IUserConsentRequests UserConsent { get; init; }
       public IUserContactRequests UserContact { get; init; }
@@ -63,6 +63,7 @@ namespace Crypter.Common.Client.Implementations
 
          FileTransfer = new FileTransferRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
          MessageTransfer = new MessageTransferRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
+         Metrics = new MetricsRequests(_crypterHttpClient);
          UserAuthentication = new UserAuthenticationRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient, _refreshTokenRejectedHandler);
          UserConsent = new UserConsentRequests(_crypterAuthenticatedHttpClient);
          UserContact = new UserContactRequests(_crypterAuthenticatedHttpClient);
@@ -187,19 +188,6 @@ namespace Crypter.Common.Client.Implementations
          return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserSentMessagesResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpClient.GetWithStatusCodeAsync<UserSentMessagesResponse>(url))
                 from errorableResponse in ExtractErrorCode<DummyError, UserSentMessagesResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      #endregion
-
-      #region Metrics
-
-      public Task<Either<DummyError, DiskMetricsResponse>> GetDiskMetricsAsync()
-      {
-         string url = "/metrics/disk";
-         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, DiskMetricsResponse> data)>.FromRightAsync(
-                     _crypterHttpClient.GetWithStatusCodeAsync<DiskMetricsResponse>(url))
-                from errorableResponse in ExtractErrorCode<DummyError, DiskMetricsResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 

@@ -46,18 +46,18 @@ namespace Crypter.Web.Shared
 
       protected override async Task OnInitializedAsync()
       {
-         var response = await CrypterApiService.GetDiskMetricsAsync();
+         var response = await CrypterApiService.Metrics.GetPublicStorageMetricsAsync();
 
          ServerSpacePercentageRemaining = response.Match(
             0.0,
-            right => 100.0 * (right.Available / (double)right.Allocated));
+            x => 100.0 * (x.Available / (double)x.Allocated));
 
          ServerHasDiskSpace = response.Match(
             false,
-            right =>
+            x =>
             {
                long maxUploadBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
-               return right.Available > maxUploadBytes;
+               return x.Available > maxUploadBytes;
             });
       }
    }

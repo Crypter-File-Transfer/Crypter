@@ -27,7 +27,6 @@
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Keys;
-using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
@@ -42,6 +41,7 @@ namespace Crypter.Common.Client.Interfaces
 
       IFileTransferRequests FileTransfer { get; }
       IMessageTransferRequests MessageTransfer { get; }
+      IMetricsRequests Metrics { get; }
       IUserAuthenticationRequests UserAuthentication { get; }
       IUserConsentRequests UserConsent { get; }
       IUserContactRequests UserContact { get; }
@@ -52,10 +52,6 @@ namespace Crypter.Common.Client.Interfaces
       Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync();
       Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request);
-      #endregion
-
-      #region Metrics
-      Task<Either<DummyError, DiskMetricsResponse>> GetDiskMetricsAsync();
       #endregion
 
       #region Search
