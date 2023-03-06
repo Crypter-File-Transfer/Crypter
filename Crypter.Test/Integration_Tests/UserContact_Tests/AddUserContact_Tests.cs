@@ -43,9 +43,6 @@ namespace Crypter.Test.Integration_Tests.UserContact_Tests
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
 
-      private const string _defaultUsername = "Frodo";
-      private const string _defaultPassword = "The Precious";
-
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
       {
@@ -77,10 +74,10 @@ namespace Crypter.Test.Integration_Tests.UserContact_Tests
          RegistrationRequest contactRegistrationRequest = TestData.GetRegistrationRequest(contactUsername, contactPassword);
          var contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
 
-         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
-         LoginRequest userLoginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword);
+         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
 
          await userLoginResult.DoRightAsync(async loginResponse =>
@@ -100,10 +97,10 @@ namespace Crypter.Test.Integration_Tests.UserContact_Tests
       [TestCase]
       public async Task Add_User_Contact_Fails_For_Same_User_Async()
       {
-         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
-         LoginRequest userLoginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword);
+         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
 
          await userLoginResult.DoRightAsync(async loginResponse =>
@@ -112,7 +109,7 @@ namespace Crypter.Test.Integration_Tests.UserContact_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         var result = await _client.UserContact.AddUserContactAsync(_defaultUsername);
+         var result = await _client.UserContact.AddUserContactAsync(TestData.DefaultUsername);
 
          Assert.True(userRegistrationResult.IsRight);
          Assert.True(userLoginResult.IsRight);
@@ -122,10 +119,10 @@ namespace Crypter.Test.Integration_Tests.UserContact_Tests
       [TestCase]
       public async Task Add_User_Contact_Fails_For_User_Not_Found_Async()
       {
-         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
-         LoginRequest userLoginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword);
+         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
 
          await userLoginResult.DoRightAsync(async loginResponse =>

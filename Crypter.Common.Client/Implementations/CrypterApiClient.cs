@@ -55,6 +55,7 @@ namespace Crypter.Common.Client.Implementations
       public IUserAuthenticationRequests UserAuthentication { get; init; }
       public IUserConsentRequests UserConsent { get; init; }
       public IUserContactRequests UserContact { get; init; }
+      public IUserKeyRequests UserKey { get; init; }
 
       public CrypterApiClient(HttpClient httpClient, ITokenRepository tokenRepository)
       {
@@ -67,6 +68,7 @@ namespace Crypter.Common.Client.Implementations
          UserAuthentication = new UserAuthenticationRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient, _refreshTokenRejectedHandler);
          UserConsent = new UserConsentRequests(_crypterAuthenticatedHttpClient);
          UserContact = new UserContactRequests(_crypterAuthenticatedHttpClient);
+         UserKey = new UserKeyRequests(_crypterAuthenticatedHttpClient);
       }
 
       /// <summary>
@@ -92,24 +94,6 @@ namespace Crypter.Common.Client.Implementations
       }
 
       #region Keys
-
-      public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync()
-      {
-         string url = "/keys/master";
-         return from response in Either<GetMasterKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetMasterKeyResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.GetWithStatusCodeAsync<GetMasterKeyResponse>(url))
-                from errorableResponse in ExtractErrorCode<GetMasterKeyError, GetMasterKeyResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(InsertMasterKeyRequest request)
-      {
-         string url = "/keys/master";
-         return from response in Either<InsertMasterKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertMasterKeyResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PutAsync<InsertMasterKeyRequest, InsertMasterKeyResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<InsertMasterKeyError, InsertMasterKeyResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
 
       public Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
       {

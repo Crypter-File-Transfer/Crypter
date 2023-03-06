@@ -50,62 +50,6 @@ namespace Crypter.API.Controllers.Old
          _tokenService = tokenService;
       }
 
-      [HttpGet("master")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetMasterKeyResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetMasterKeyAsync(CancellationToken cancellationToken)
-      {
-         IActionResult MakeErrorResponse(GetMasterKeyError error)
-         {
-#pragma warning disable CS8524
-            return error switch
-            {
-               GetMasterKeyError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               GetMasterKeyError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
-            };
-#pragma warning restore CS8524
-         }
-
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.GetMasterKeyAsync(userId, cancellationToken);
-         return result.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(GetMasterKeyError.UnknownError));
-      }
-
-      [HttpPut("master")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertMasterKeyResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> InsertMasterKeyAsync(InsertMasterKeyRequest request, CancellationToken cancellationToken)
-      {
-         IActionResult MakeErrorResponse(InsertMasterKeyError error)
-         {
-#pragma warning disable CS8524
-            return error switch
-            {
-               InsertMasterKeyError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               InsertMasterKeyError.Conflict => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
-               InsertMasterKeyError.InvalidCredentials => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
-            };
-#pragma warning restore CS8524
-         }
-
-         Guid userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.InsertMasterKeyAsync(userId, request, cancellationToken);
-         return result.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(InsertMasterKeyError.UnknownError));
-      }
-
       [HttpPost("master/recovery-proof")]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetMasterKeyRecoveryProofResponse))]
@@ -168,7 +112,7 @@ namespace Crypter.API.Controllers.Old
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> InsertKeyPairAsync([FromBody] InsertKeyPairRequest body, CancellationToken cancellationToken)
+      public async Task<IActionResult> InsertKeyPairAsync([FromBody] InsertKeyPairRequest body)
       {
          IActionResult MakeErrorResponse(InsertKeyPairError error)
          {
@@ -182,7 +126,7 @@ namespace Crypter.API.Controllers.Old
          }
 
          var userId = _tokenService.ParseUserId(User);
-         var result = await _userKeysService.InsertKeyPairAsync(userId, body, cancellationToken);
+         var result = await _userKeysService.InsertKeyPairAsync(userId, body);
          return result.Match(
             MakeErrorResponse,
             Ok,

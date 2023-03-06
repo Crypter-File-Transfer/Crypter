@@ -43,9 +43,6 @@ namespace Crypter.Test.Integration_Tests.UserContact_Tests
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
 
-      private const string _defaultUsername = "Frodo";
-      private const string _defaultPassword = "The Precious";
-
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
       {
@@ -74,10 +71,10 @@ namespace Crypter.Test.Integration_Tests.UserContact_Tests
          const string contactUsername = "Samwise";
          const string contactPassword = "dropping_no_eaves";
 
-         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
-         LoginRequest userLoginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword);
+         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
 
          await userLoginResult.DoRightAsync(async loginResponse =>

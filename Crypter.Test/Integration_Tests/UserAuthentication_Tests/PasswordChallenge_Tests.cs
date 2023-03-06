@@ -47,9 +47,6 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
 
-      private const string _defaultUsername = "Frodo";
-      private const string _defaultPassword = "The Precious";
-
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
       {
@@ -76,10 +73,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [Test]
       public async Task Password_Challenge_Works()
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword, TokenType.Session);
+         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
          var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
          await loginResult.DoRightAsync(async loginResponse =>
@@ -99,7 +96,7 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [Test]
       public async Task Password_Challenge_Fails_Not_Authenticated()
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
          PasswordChallengeRequest request = new PasswordChallengeRequest(registrationRequest.VersionedPassword.Password);
@@ -116,10 +113,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [Test]
       public async Task Password_Challenge_Fails_Wrong_Password()
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword, TokenType.Session);
+         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
          var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
          await loginResult.DoRightAsync(async loginResponse =>

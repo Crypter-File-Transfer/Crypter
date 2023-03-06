@@ -91,9 +91,9 @@ namespace Crypter.Test.Integration_Tests.FileTransfer_Tests
       public async Task Preview_User_File_Transfer_Works(bool senderDefined, bool recipientDefined)
       {
          Maybe<string> senderUsername = senderDefined
-            ? "Frodo"
+            ? TestData.DefaultUsername
             : Maybe<string>.None;
-         const string senderPassword = "The Precious";
+         const string senderPassword = TestData.DefaultPassword;
 
          Maybe<string> recipientUsername = recipientDefined
             ? "Samwise"

@@ -43,6 +43,9 @@ namespace Crypter.Common.Client.Interfaces
          where TRequest : class
          where TResponse : class;
 
+      Task<Either<ErrorResponse, Unit>> PutEitherUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)
+         where TRequest : class;
+
       Task<Either<ErrorResponse, TResponse>> PostAsync<TResponse>(string uri, bool useRefreshToken = false)
          where TResponse : class;
 

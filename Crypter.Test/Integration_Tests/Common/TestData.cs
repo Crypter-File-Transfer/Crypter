@@ -24,10 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Crypto.Providers.Default;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -101,6 +103,10 @@ namespace Crypter.Test.Integration_Tests.Common
          get => _defaultKeyExchangeNonce;
       }
 
+      internal const string DefaultUsername = "Frodo";
+      internal const string DefaultPassword = "The Precious";
+      internal const string DefaultEmailAdress = "ring_bearer@fellowship.org";
+
       internal const string DefaultTransferFileName = "unit testing.txt";
       internal const string DefaultTransferFileContentType = "text/plain";
       internal const string DefaultTransferMessageSubject = "hello there";
@@ -129,6 +135,22 @@ namespace Crypter.Test.Integration_Tests.Common
          byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
          VersionedPassword versionedPassword = new VersionedPassword(passwordBytes, 1);
          return new LoginRequest(username, new List<VersionedPassword> { versionedPassword }, tokenType);
+      }
+
+      internal static InsertMasterKeyRequest GetInsertMasterKeyRequest(string username, string password, Random random)
+      {
+         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+
+         byte[] randomBytesMasterKey = new byte[32];
+         random.NextBytes(randomBytesMasterKey);
+
+         byte[] randomBytesNonce = new byte[32];
+         random.NextBytes(randomBytesNonce);
+
+         byte[] randomBytesRecoveryProof = new byte[32];
+         random.NextBytes(randomBytesRecoveryProof);
+
+         return new InsertMasterKeyRequest(username, passwordBytes, randomBytesMasterKey, randomBytesNonce, randomBytesRecoveryProof);
       }
    }
 }

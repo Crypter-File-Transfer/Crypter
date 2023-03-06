@@ -88,7 +88,7 @@ namespace Crypter.Common.Client.Implementations
 
       private Task<Maybe<byte[]>> DownloadAndDecryptMasterKey(byte[] credentialKey)
       {
-         return _crypterApiClient.GetMasterKeyAsync()
+         return _crypterApiClient.UserKey.GetMasterKeyAsync()
             .BindAsync<GetMasterKeyError, GetMasterKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(credentialKey, x.Nonce, x.EncryptedKey))
             .ToMaybeTask();
       }
@@ -125,7 +125,7 @@ namespace Crypter.Common.Client.Implementations
          byte[] encryptedMasterKey = _cryptoProvider.Encryption.Encrypt(credentialKey, nonce, newMasterKey);
          byte[] recoveryProof = _cryptoProvider.Random.GenerateRandomBytes(32);
 
-         return _crypterApiClient.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof))
+         return _crypterApiClient.UserKey.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof))
             .ToMaybeTask()
             .BindAsync(x => new RecoveryKey(newMasterKey, recoveryProof));
       }

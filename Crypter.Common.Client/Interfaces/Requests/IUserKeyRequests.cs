@@ -24,9 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Keys
+using Crypter.Common.Contracts.Features.Keys;
+using Crypter.Common.Monads;
+using System.Threading.Tasks;
+
+namespace Crypter.Common.Client.Interfaces.Requests
 {
-   public class InsertMasterKeyResponse
+   public interface IUserKeyRequests
    {
+      Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
+      Task<Either<InsertMasterKeyError, Unit>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
    }
 }

@@ -26,20 +26,24 @@
 
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
+using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
+using System;
 using System.Threading.Tasks;
 
-namespace Crypter.Test.Integration_Tests.UserContact_Tests
+namespace Crypter.Test.Integration_Tests.UserKey_Tests
 {
    [TestFixture]
-   internal class GetUserContact_Tests
+   internal class GetMasterKey_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
+      private Random _random;
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
 
@@ -51,6 +55,8 @@ namespace Crypter.Test.Integration_Tests.UserContact_Tests
 
          _factory = await Setup.SetupWebApplicationFactoryAsync();
          (_client, _clientTokenRepository) = Setup.SetupCrypterApiClient(_factory.CreateClient());
+
+         _random = new Random();
       }
 
       [TearDown]
@@ -65,45 +71,34 @@ namespace Crypter.Test.Integration_Tests.UserContact_Tests
          await _factory.DisposeAsync();
       }
 
-      [TestCase]
-      public async Task Get_User_Contacts_Works_Async()
+      [Test]
+      public async Task Get_Master_Key_Works()
       {
-         const string contactUsername = "Samwise";
-         const string contactPassword = "dropping_no_eaves";
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
+         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
-
-         await userLoginResult.DoRightAsync(async loginResponse =>
+         await loginResult.DoRightAsync(async loginResponse =>
          {
             await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         var initialContactsResult = await _client.UserContact.GetUserContactsAsync();
+         InsertMasterKeyRequest insertMasterKeyRequest = TestData.GetInsertMasterKeyRequest(TestData.DefaultUsername, TestData.DefaultPassword, _random);
+         Either<InsertMasterKeyError, Unit> insertMasterKeyResult = await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
-         RegistrationRequest contactRegistrationRequest = TestData.GetRegistrationRequest(contactUsername, contactPassword);
-         var contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
+         Either<GetMasterKeyError, GetMasterKeyResponse> result = await _client.UserKey.GetMasterKeyAsync();
 
-         var addContactResult = await _client.UserContact.AddUserContactAsync(contactUsername);
-         var finalContactsResult = await _client.UserContact.GetUserContactsAsync();
+         GetMasterKeyResponse response = result.RightOrDefault(null);
 
-         Assert.True(userRegistrationResult.IsRight);
-         Assert.True(userLoginResult.IsRight);
-         Assert.True(initialContactsResult.IsSome);
-         initialContactsResult.IfSome(x => Assert.AreEqual(0, x.Count));
+         Assert.True(insertMasterKeyResult.IsRight);
+         Assert.True(result.IsRight);
+         Assert.NotNull(response);
 
-         Assert.True(contactRegistrationResult.IsRight);
-         Assert.True(addContactResult.IsRight);
-         Assert.True(finalContactsResult.IsSome);
-         finalContactsResult.IfSome(x =>
-         {
-            Assert.AreEqual(1, x.Count);
-            Assert.AreEqual(contactUsername, x[0].Username);
-         });
+         Assert.AreEqual(insertMasterKeyRequest.EncryptedKey, response.EncryptedKey);
+         Assert.AreEqual(insertMasterKeyRequest.Nonce, response.Nonce);
       }
    }
 }

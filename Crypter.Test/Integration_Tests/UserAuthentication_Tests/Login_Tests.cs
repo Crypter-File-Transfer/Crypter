@@ -42,9 +42,6 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       private WebApplicationFactory<Program> _factory;
       private ICrypterApiClient _client;
 
-      private const string _defaultUsername = "Frodo";
-      private const string _defaultPassword = "The Precious";
-
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
       {
@@ -70,10 +67,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [Test]
       public async Task Login_Works()
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword);
+         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var result = await _client.UserAuthentication.LoginAsync(loginRequest);
 
          Assert.True(registrationResult.IsRight);
@@ -83,7 +80,7 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [Test]
       public async Task Login_Fails_Invalid_Username()
       {
-         LoginRequest request = TestData.GetLoginRequest(_defaultUsername, _defaultPassword);
+         LoginRequest request = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var result = await _client.UserAuthentication.LoginAsync(request);
 
          Assert.True(result.IsLeft);
@@ -92,10 +89,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [Test]
       public async Task Login_Fails_Invalid_Password()
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword);
+         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          VersionedPassword invalidPassword = new VersionedPassword("invalid"u8.ToArray(), 1);
          loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
          var result = await _client.UserAuthentication.LoginAsync(loginRequest);
@@ -107,10 +104,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [Test]
       public async Task Login_Fails_Invalid_Password_Version()
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword);
+         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          VersionedPassword correctPassword = loginRequest.VersionedPasswords.First();
          VersionedPassword invalidPassword = new VersionedPassword(correctPassword.Password, (short)(correctPassword.Version - 1));
          loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };

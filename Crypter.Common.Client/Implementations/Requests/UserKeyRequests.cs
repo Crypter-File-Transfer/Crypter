@@ -24,36 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
-using System.Text.Json.Serialization;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Requests;
+using Crypter.Common.Contracts.Features.Keys;
+using Crypter.Common.Monads;
+using System.Threading.Tasks;
 
-namespace Crypter.Common.Contracts.Features.Keys
+namespace Crypter.Common.Client.Implementations.Requests
 {
-   public class InsertMasterKeyRequest
+   public class UserKeyRequests : IUserKeyRequests
    {
-      public string Username { get; init; }
-      public byte[] Password { get; init; }
-      public byte[] EncryptedKey { get; init; }
-      public byte[] Nonce { get; init; }
-      public byte[] RecoveryProof { get; init; }
+      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
 
-      [JsonConstructor]
-      public InsertMasterKeyRequest(string username, byte[] password, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof)
+      public UserKeyRequests(ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
       {
-         Username = username;
-         Password = password;
-         EncryptedKey = encryptedKey;
-         Nonce = nonce;
-         RecoveryProof = recoveryProof;
+         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
       }
 
-      public InsertMasterKeyRequest(Username username, byte[] password, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof)
+      public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync()
       {
-         Username = username.Value;
-         Password = password;
-         EncryptedKey = encryptedKey;
-         Nonce = nonce;
-         RecoveryProof = recoveryProof;
+         string url = "/api/user/key/master";
+         return _crypterAuthenticatedHttpClient.GetEitherAsync<GetMasterKeyResponse>(url)
+            .ExtractErrorCode<GetMasterKeyError, GetMasterKeyResponse>();
+      }
+
+      public Task<Either<InsertMasterKeyError, Unit>> InsertMasterKeyAsync(InsertMasterKeyRequest request)
+      {
+         string url = "api/user/key/master";
+         return _crypterAuthenticatedHttpClient.PutEitherUnitResponseAsync(url, request)
+            .ExtractErrorCode<InsertMasterKeyError, Unit>();
       }
    }
 }

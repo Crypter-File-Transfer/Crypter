@@ -46,9 +46,6 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
 
-      private const string _defaultUsername = "Frodo";
-      private const string _defaultPassword = "The Precious";
-
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
       {
@@ -75,10 +72,10 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [TestCase(TokenType.Device)]
       public async Task Logout_Works(TokenType refreshTokenType)
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(_defaultUsername, _defaultPassword);
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(_defaultUsername, _defaultPassword, refreshTokenType);
+         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, refreshTokenType);
          var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
          await loginResult.DoRightAsync(async loginResponse =>

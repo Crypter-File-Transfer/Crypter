@@ -45,10 +45,9 @@ namespace Crypter.Common.Client.Interfaces
       IUserAuthenticationRequests UserAuthentication { get; }
       IUserConsentRequests UserConsent { get; }
       IUserContactRequests UserContact { get; }
+      IUserKeyRequests UserKey { get; }
 
       #region Keys
-      Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
-      Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
       Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request);
       Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync();
       Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request);

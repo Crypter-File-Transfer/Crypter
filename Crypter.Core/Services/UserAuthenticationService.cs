@@ -54,7 +54,7 @@ namespace Crypter.Core.Services
       Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription, CancellationToken cancellationToken);
       Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
       Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken);
-      Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken);
+      Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken = default);
    }
 
    public static class UserAuthenticationServiceExtensions
@@ -232,7 +232,7 @@ namespace Crypter.Core.Services
                 select new UpdateContactInfoResponse();
       }
 
-      public Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken)
+      public Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken = default)
       {
          return from suppliedPassword in ValidateRequestPassword(request.Password, PasswordChallengeError.InvalidPassword).AsTask()
                 from user in FetchUserAsync(userId, PasswordChallengeError.UnknownError, cancellationToken)
