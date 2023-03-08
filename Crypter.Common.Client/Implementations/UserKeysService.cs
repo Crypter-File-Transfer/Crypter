@@ -76,27 +76,27 @@ namespace Crypter.Common.Client.Implementations
       public Task DownloadExistingKeysAsync(Username username, Password password, bool trustDevice)
       {
          return _userPasswordService.DeriveUserCredentialKeyAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .BindAsync(credentialKey => DownloadExistingKeysAsync(credentialKey, trustDevice));
+            .IfSomeAsync(credentialKey => DownloadExistingKeysAsync(credentialKey, trustDevice));
       }
 
       public Task DownloadExistingKeysAsync(byte[] credentialKey, bool trustDevice)
       {
          return DownloadAndDecryptMasterKey(credentialKey)
             .BindAsync(masterKey => DownloadAndDecryptPrivateKey(masterKey)
-            .BindAsync(privateKey => Maybe<Unit>.FromAsync(StoreSecretKeys(masterKey, privateKey, trustDevice))));
+               .IfSomeAsync(privateKey => StoreSecretKeys(masterKey, privateKey, trustDevice)));
       }
 
       private Task<Maybe<byte[]>> DownloadAndDecryptMasterKey(byte[] credentialKey)
       {
          return _crypterApiClient.UserKey.GetMasterKeyAsync()
-            .BindAsync<GetMasterKeyError, GetMasterKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(credentialKey, x.Nonce, x.EncryptedKey))
+            .MapAsync<GetMasterKeyError, GetMasterKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(credentialKey, x.Nonce, x.EncryptedKey))
             .ToMaybeTask();
       }
 
       private Task<Maybe<byte[]>> DownloadAndDecryptPrivateKey(byte[] masterKey)
       {
          return _crypterApiClient.GetPrivateKeyAsync()
-            .BindAsync<GetPrivateKeyError, GetPrivateKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(masterKey, x.Nonce, x.EncryptedKey))
+            .MapAsync<GetPrivateKeyError, GetPrivateKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(masterKey, x.Nonce, x.EncryptedKey))
             .ToMaybeTask();
       }
 
@@ -114,8 +114,8 @@ namespace Crypter.Common.Client.Implementations
       {
          return UploadNewMasterKeyAsync(credentialKey, username, versionedPassword)
             .BindAsync(recoveryKey => UploadNewUserKeyPairAsync(recoveryKey.MasterKey)
-            .BindAsync(privateKey => Maybe<Unit>.FromAsync(StoreSecretKeys(recoveryKey.MasterKey, privateKey, trustDevice))
-            .BindAsync(_ => recoveryKey)));
+               .MapAsync(privateKey => StoreSecretKeys(recoveryKey.MasterKey, privateKey, trustDevice))
+               .MapAsync(_ => recoveryKey));
       }
 
       private Task<Maybe<RecoveryKey>> UploadNewMasterKeyAsync(byte[] credentialKey, Username username, VersionedPassword versionedPassword)
@@ -127,7 +127,7 @@ namespace Crypter.Common.Client.Implementations
 
          return _crypterApiClient.UserKey.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof))
             .ToMaybeTask()
-            .BindAsync(x => new RecoveryKey(newMasterKey, recoveryProof));
+            .MapAsync(x => new RecoveryKey(newMasterKey, recoveryProof));
       }
 
       private Task<Maybe<byte[]>> UploadNewUserKeyPairAsync(byte[] masterKey)
@@ -139,7 +139,7 @@ namespace Crypter.Common.Client.Implementations
          InsertKeyPairRequest request = new InsertKeyPairRequest(encryptedPrivateKey, keyPair.PublicKey, nonce);
          return _crypterApiClient.InsertKeyPairAsync(request)
             .ToMaybeTask()
-            .BindAsync(x => keyPair.PrivateKey);
+            .MapAsync(x => keyPair.PrivateKey);
       }
 
       #endregion
@@ -157,8 +157,8 @@ namespace Crypter.Common.Client.Implementations
             .BindAsync(masterKey =>
             {
                GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(username, versionedPassword.Password);
-               return _crypterApiClient.GetMasterKeyRecoveryProofAsync(request).ToMaybeTask()
-                  .BindAsync(x => new RecoveryKey(masterKey, x.Proof));
+               return _crypterApiClient.UserKey.GetMasterKeyRecoveryProofAsync(request).ToMaybeTask()
+                  .MapAsync(x => new RecoveryKey(masterKey, x.Proof));
             });
       }
 

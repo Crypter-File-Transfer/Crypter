@@ -83,11 +83,7 @@ namespace Crypter.Common.Client.Implementations
          }
 
          return _crypterApiClient.UserContact.AddUserContactAsync(lowerContactUsername)
-            .BindAsync(x =>
-            {
-               _contacts.Add(lowerContactUsername, x);
-               return Either<AddUserContactError, UserContact>.FromRight(x);
-            });
+            .DoRightAsync(x => _contacts.Add(lowerContactUsername, x));
       }
 
       public async Task RemoveContactAsync(string contactUsername)
@@ -100,7 +96,7 @@ namespace Crypter.Common.Client.Implementations
       private Task<Dictionary<string, UserContact>> FetchContactsAsync()
       {
          return _crypterApiClient.UserContact.GetUserContactsAsync()
-            .BindAsync(x => x.ToDictionary(y => y.Username.ToLower()))
+            .MapAsync(x => x.ToDictionary(y => y.Username.ToLower()))
             .SomeOrDefaultAsync(new Dictionary<string, UserContact>());
       }
 

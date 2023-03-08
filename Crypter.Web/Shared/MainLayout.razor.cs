@@ -79,7 +79,7 @@ namespace Crypter.Web.Shared
       private async void HandleUserLoggedInEvent(object sender, UserLoggedInEventArgs args)
       {
          await UserPasswordService.DeriveUserCredentialKeyAsync(args.Username, args.Password, UserPasswordService.CurrentPasswordVersion)
-            .BindAsync(async credentialKey =>
+            .IfSomeAsync(async credentialKey =>
             {
                if (args.UploadNewKeys)
                {

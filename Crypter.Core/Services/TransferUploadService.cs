@@ -134,13 +134,13 @@ namespace Crypter.Core.Services
             : TransferUserType.User;
       }
 
-      private async Task<UploadTransferResponse> SaveFileTransferToDatabaseAsync(Guid transferId, Maybe<Guid> senderId, Maybe<Guid> recipientId, long requiredDiskSpace, UploadFileTransferRequest request)
+      private async Task<UploadTransferResponse> SaveFileTransferToDatabaseAsync(Guid transferId, Maybe<Guid> senderId, Maybe<Guid> recipientId, long requiredDiskSpace, UploadFileTransferRequest request, CancellationToken cancellationToken = default)
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
 
-         Guid? nullableSenderId = senderId.Bind<Guid?>(x => x).SomeOrDefault(null);
-         Guid? nullableRecipientId = recipientId.Bind<Guid?>(x => x).SomeOrDefault(null);
+         Guid? nullableSenderId = senderId.Map<Guid?>(x => x).SomeOrDefault(null);
+         Guid? nullableRecipientId = recipientId.Map<Guid?>(x => x).SomeOrDefault(null);
 
          if (nullableSenderId is null && nullableRecipientId is null)
          {
@@ -173,20 +173,20 @@ namespace Crypter.Core.Services
             _context.UserFileTransfers.Add(transferEntity);
          }
 
-         await _context.SaveChangesAsync();
+         await _context.SaveChangesAsync(cancellationToken);
 
          string hashId = _hashIdService.Encode(transferId);
          TransferUserType userType = DetermineTransferUserType(nullableSenderId, nullableRecipientId);
          return new UploadTransferResponse(hashId, expiration, userType);
       }
 
-      private async Task<UploadTransferResponse> SaveMessageTransferToDatabaseAsync(Guid transferId, Maybe<Guid> senderId, Maybe<Guid> recipientId, long requiredDiskSpace, UploadMessageTransferRequest request)
+      private async Task<UploadTransferResponse> SaveMessageTransferToDatabaseAsync(Guid transferId, Maybe<Guid> senderId, Maybe<Guid> recipientId, long requiredDiskSpace, UploadMessageTransferRequest request, CancellationToken cancellationToken = default)
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
 
-         Guid? nullableSenderId = senderId.Bind<Guid?>(x => x).SomeOrDefault(null);
-         Guid? nullableRecipientId = recipientId.Bind<Guid?>(x => x).SomeOrDefault(null);
+         Guid? nullableSenderId = senderId.Map<Guid?>(x => x).SomeOrDefault(null);
+         Guid? nullableRecipientId = recipientId.Map<Guid?>(x => x).SomeOrDefault(null);
 
          if (nullableSenderId is null && nullableRecipientId is null)
          {
@@ -217,7 +217,7 @@ namespace Crypter.Core.Services
             _context.UserMessageTransfers.Add(transferEntity);
          }
 
-         await _context.SaveChangesAsync();
+         await _context.SaveChangesAsync(cancellationToken);
 
          string hashId = _hashIdService.Encode(transferId);
          TransferUserType userType = DetermineTransferUserType(nullableSenderId, nullableRecipientId);
@@ -242,13 +242,13 @@ namespace Crypter.Core.Services
 
       private async Task<Maybe<Guid>> GetRecipientIdAsync(Maybe<Guid> senderId, string recipientUsername, CancellationToken cancellationToken = default)
       {
-         Guid? nullableSenderId = senderId.Bind<Guid?>(x => x).SomeOrDefault(null);
+         Guid? nullableSenderId = senderId.Map<Guid?>(x => x).SomeOrDefault(null);
 
          Guid recipientId = await _context.Users
             .Where(x => x.Username.ToLower() == recipientUsername.ToLower())
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(nullableSenderId))
             .Select(x => x.Id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
          return recipientId == default
             ? Maybe<Guid>.None
@@ -271,13 +271,13 @@ namespace Crypter.Core.Services
             : UploadTransferError.UnknownError;
       }
 
-      private async Task<bool> IsDiskSpaceForTransferAsync(long transferSize, CancellationToken cancellationToken)
+      private async Task<bool> IsDiskSpaceForTransferAsync(long transferSize, CancellationToken cancellationToken = default)
       {
          var diskMetrics = await _serverMetricsService.GetAggregateDiskMetricsAsync(cancellationToken);
          return transferSize <= diskMetrics.Available;
       }
 
-      private async Task<Unit> QueueTransferNotificationAsync(Guid itemId, TransferItemType itemType, Maybe<Guid> maybeUserId)
+      private async Task<Unit> QueueTransferNotificationAsync(Guid itemId, TransferItemType itemType, Maybe<Guid> maybeUserId, CancellationToken cancellationToken = default)
       {
          await maybeUserId.IfSomeAsync(
             async userId =>
@@ -287,7 +287,7 @@ namespace Crypter.Core.Services
                   .Where(x => x.NotificationSetting.EnableTransferNotifications
                      && x.EmailVerified
                      && x.NotificationSetting.EmailNotifications)
-                  .FirstOrDefaultAsync();
+                  .FirstOrDefaultAsync(cancellationToken);
 
                _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType, CancellationToken.None));
             });

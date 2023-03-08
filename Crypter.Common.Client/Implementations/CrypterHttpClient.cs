@@ -77,7 +77,7 @@ namespace Crypter.Common.Client.Implementations
          return GetStreamAsync(request);
       }
 
-      public Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, TRequest body)
+      public Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body)
          where TResponse : class
          where TRequest : class
       {

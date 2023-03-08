@@ -46,7 +46,7 @@ namespace Crypter.Common.Client.Implementations.Requests
       internal static Either<TErrorCode, TResponse> ExtractErrorCode<TErrorCode, TResponse>(Either<ErrorResponse, TResponse> response)
       {
          return response
-            .BindLeft<TErrorCode>(x => x.Errors.Select(y => (TErrorCode)(object)y.ErrorCode).First());
+            .MapLeft(x => x.Errors.Select(y => (TErrorCode)(object)y.ErrorCode).First());
       }
 
       /// <summary>
@@ -62,7 +62,7 @@ namespace Crypter.Common.Client.Implementations.Requests
       internal static Task<Either<TErrorCode, TResponse>> ExtractErrorCode<TErrorCode, TResponse>(this Task<Either<ErrorResponse, TResponse>> response)
       {
          return response
-            .BindLeftAsync<ErrorResponse, TResponse, TErrorCode>(x => x.Errors.Select(y => (TErrorCode)(object)y.ErrorCode).First());
+            .MapLeftAsync<ErrorResponse, TResponse, TErrorCode>(x => x.Errors.Select(y => (TErrorCode)(object)y.ErrorCode).First());
       }
    }
 }

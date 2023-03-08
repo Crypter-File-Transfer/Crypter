@@ -64,7 +64,7 @@ namespace Crypter.Common.Monads
       public bool IsNone
       { get { return _state == MaybeState.None; } }
 
-      public Unit IfSome(Action<TValue> some)
+      public Maybe<TValue> IfSome(Action<TValue> some)
       {
          if (some is null)
          {
@@ -76,10 +76,10 @@ namespace Crypter.Common.Monads
             some(_value);
          }
 
-         return default;
+         return this;
       }
 
-      public async Task<Unit> IfSomeAsync(Func<TValue, Task> someAsync)
+      public async Task<Maybe<TValue>> IfSomeAsync(Func<TValue, Task> someAsync)
       {
          if (someAsync is null)
          {
@@ -91,10 +91,10 @@ namespace Crypter.Common.Monads
             await someAsync(_value);
          }
 
-         return default;
+         return this;
       }
 
-      public Unit IfNone(Action none)
+      public Maybe<TValue> IfNone(Action none)
       {
          if (none is null)
          {
@@ -106,7 +106,7 @@ namespace Crypter.Common.Monads
             none();
          }
 
-         return default;
+         return this;
       }
 
       public TValue SomeOrDefault(TValue defaultValue)

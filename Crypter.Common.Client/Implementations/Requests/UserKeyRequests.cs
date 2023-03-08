@@ -54,5 +54,12 @@ namespace Crypter.Common.Client.Implementations.Requests
          return _crypterAuthenticatedHttpClient.PutEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<InsertMasterKeyError, Unit>();
       }
+
+      public Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
+      {
+         string url = "api/user/key/master/recovery-proof/challenge";
+         return _crypterAuthenticatedHttpClient.PostEitherAsync<GetMasterKeyRecoveryProofRequest, GetMasterKeyRecoveryProofResponse>(url, request)
+            .ExtractErrorCode<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>();
+      }
    }
 }

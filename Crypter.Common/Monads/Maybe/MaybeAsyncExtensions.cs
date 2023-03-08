@@ -56,17 +56,17 @@ namespace Crypter.Common.Monads
             x => x);
       }
 
-      public static async Task<Unit> IfSomeAsync<TValue>(this Task<Maybe<TValue>> maybe, Func<TValue, Task> someAsync)
+      public static async Task<Maybe<TValue>> IfSomeAsync<TValue>(this Task<Maybe<TValue>> maybe, Func<TValue, Task> someAsync)
       {
          Maybe<TValue> maybeResult = await maybe;
          return await maybeResult.IfSomeAsync(someAsync);
       }
 
-      public static Task<Maybe<TResult>> BindAsync<TValue, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, TResult> bind)
+      public static Task<Maybe<TResult>> MapAsync<TValue, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, TResult> map)
       {
          return maybe.MatchAsync(
             () => Maybe<TResult>.None,
-            value => bind(value));
+            value => map(value));
       }
 
       public static Task<Maybe<TResult>> BindAsync<TValue, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, Task<Maybe<TResult>>> bindAsync)

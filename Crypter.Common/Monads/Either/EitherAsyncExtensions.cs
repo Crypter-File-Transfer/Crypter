@@ -55,13 +55,13 @@ namespace Crypter.Common.Monads
          return await eitherResult.MatchAsync(leftAsync, right, neither);
       }
 
-      public static async Task<Unit> DoRightAsync<TLeft, TRight>(this Task<Either<TLeft, TRight>> either, Action<TRight> right)
+      public static async Task<Either<TLeft, TRight>> DoRightAsync<TLeft, TRight>(this Task<Either<TLeft, TRight>> either, Action<TRight> right)
       {
          var eitherResult = await either;
          return eitherResult.DoRight(right);
       }
 
-      public async static Task<Unit> DoRightAsync<TLeft, TRight>(this Task<Either<TLeft, TRight>> either, Func<TRight, Task> rightAsync)
+      public async static Task<Either<TLeft, TRight>> DoRightAsync<TLeft, TRight>(this Task<Either<TLeft, TRight>> either, Func<TRight, Task> rightAsync)
       {
          var eitherResult = await either;
          return await eitherResult.DoRightAsync(rightAsync);

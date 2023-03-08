@@ -34,5 +34,6 @@ namespace Crypter.Common.Client.Interfaces.Requests
    {
       Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
       Task<Either<InsertMasterKeyError, Unit>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
+      Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request);
    }
 }

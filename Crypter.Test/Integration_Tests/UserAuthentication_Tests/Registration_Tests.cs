@@ -62,11 +62,11 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
          await _factory.DisposeAsync();
       }
 
-      [TestCase(false)]
-      [TestCase(true)]
-      public async Task Register_User_Works(bool withEmailAddress)
+      [TestCase(TestData.DefaultEmailAdress)]
+      [TestCase(null)]
+      public async Task Register_User_Works(string emailAddress)
       {
-         RegistrationRequest request = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword, TestData.DefaultEmailAdress);
+         RegistrationRequest request = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword, emailAddress);
          var result = await _client.UserAuthentication.RegisterAsync(request);
 
          Assert.True(result.IsRight);

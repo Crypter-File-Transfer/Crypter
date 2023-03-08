@@ -84,7 +84,7 @@ namespace Crypter.Common.Client.Implementations
       private static Either<TErrorCode, TResponse> ExtractErrorCode<TErrorCode, TResponse>(Either<ErrorResponse, TResponse> response)
       {
          return response
-            .BindLeft<TErrorCode>(x => x.Errors.Select(x => (TErrorCode)(object)x.ErrorCode).First());
+            .MapLeft(x => x.Errors.Select(x => (TErrorCode)(object)x.ErrorCode).First());
       }
 
       public event EventHandler RefreshTokenRejectedEventHandler
@@ -94,15 +94,6 @@ namespace Crypter.Common.Client.Implementations
       }
 
       #region Keys
-
-      public Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
-      {
-         string url = "/keys/master/recovery-proof";
-         return from response in Either<GetMasterKeyRecoveryProofError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetMasterKeyRecoveryProofResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<GetMasterKeyRecoveryProofRequest, GetMasterKeyRecoveryProofResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
 
       public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync()
       {

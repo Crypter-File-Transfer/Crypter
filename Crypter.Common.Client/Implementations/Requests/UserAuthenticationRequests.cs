@@ -56,7 +56,7 @@ namespace Crypter.Common.Client.Implementations.Requests
       public Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest)
       {
          string url = "api/user/authentication/login";
-         return _crypterHttpClient.PostAsync<LoginRequest, LoginResponse>(url, loginRequest)
+         return _crypterHttpClient.PostEitherAsync<LoginRequest, LoginResponse>(url, loginRequest)
             .ExtractErrorCode<LoginError, LoginResponse>();
       }
 

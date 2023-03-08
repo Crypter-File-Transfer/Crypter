@@ -104,5 +104,34 @@ namespace Crypter.API.Controllers
                _ => Ok(),
                MakeErrorResponse(InsertMasterKeyError.UnknownError));
       }
+
+      [HttpPost("master/recovery-proof/challenge")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetMasterKeyRecoveryProofResponse))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(GetMasterKeyRecoveryProofError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               GetMasterKeyRecoveryProofError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               GetMasterKeyRecoveryProofError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+               GetMasterKeyRecoveryProofError.InvalidCredentials => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userKeysService.GetMasterKeyProofAsync(userId, request, cancellationToken)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(GetMasterKeyRecoveryProofError.UnknownError));
+      }
    }
 }

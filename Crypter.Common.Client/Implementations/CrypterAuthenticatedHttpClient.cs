@@ -130,14 +130,22 @@ namespace Crypter.Common.Client.Implementations
          return await DeserializeEitherUnitResponseAsync(response);
       }
 
-      public async Task<Either<ErrorResponse, TResponse>> PostAsync<TResponse>(string uri, bool useRefreshToken = false) where TResponse : class
+      public async Task<Either<ErrorResponse, TResponse>> PostEitherNoBodyAsync<TResponse>(string uri, bool useRefreshToken = false)
+         where TResponse : class
       {
          var request = MakeRequestMessageFactory(HttpMethod.Post, uri);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
          return await DeserializeResponseAsync<TResponse>(response);
       }
 
-      public async Task<Either<ErrorResponse, TResponse>> PostAsync<TRequest, TResponse>(string uri, TRequest body)
+      public Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body)
+         where TResponse : class
+         where TRequest : class
+      {
+         return PostEitherAsync<TRequest, TResponse>(uri, body, false);
+      }
+
+      public async Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
          where TResponse : class
          where TRequest : class
       {

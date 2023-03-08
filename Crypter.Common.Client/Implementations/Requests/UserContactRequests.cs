@@ -52,7 +52,7 @@ namespace Crypter.Common.Client.Implementations.Requests
       public Task<Either<AddUserContactError, UserContact>> AddUserContactAsync(string contactUsername)
       {
          string url = $"api/user/contact?username={contactUsername}";
-         return _crypterAuthenticatedHttpClient.PostAsync<UserContact>(url, false)
+         return _crypterAuthenticatedHttpClient.PostEitherNoBodyAsync<UserContact>(url, false)
             .ExtractErrorCode<AddUserContactError, UserContact>();
       }
 
