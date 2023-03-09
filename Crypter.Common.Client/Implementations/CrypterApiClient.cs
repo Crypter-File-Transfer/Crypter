@@ -93,28 +93,6 @@ namespace Crypter.Common.Client.Implementations
          remove => _refreshTokenRejectedHandler = (EventHandler)Delegate.Remove(_refreshTokenRejectedHandler, value);
       }
 
-      #region Keys
-
-      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync()
-      {
-         string url = "/keys/private";
-         return from response in Either<GetPrivateKeyError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetPrivateKeyResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.GetWithStatusCodeAsync<GetPrivateKeyResponse>(url))
-                from errorableResponse in ExtractErrorCode<GetPrivateKeyError, GetPrivateKeyResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request)
-      {
-         string url = "/keys/private";
-         return from response in Either<InsertKeyPairError, (HttpStatusCode httpStatus, Either<ErrorResponse, InsertKeyPairResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PutAsync<InsertKeyPairRequest, InsertKeyPairResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<InsertKeyPairError, InsertKeyPairResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      #endregion
-
       #region User
 
       public Task<Either<GetUserProfileError, GetUserProfileResponse>> GetUserProfileAsync(string username, bool withAuthentication)

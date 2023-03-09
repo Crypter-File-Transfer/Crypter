@@ -29,6 +29,7 @@ using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Crypto.Providers.Default;
+using Hangfire.Storage.Monitoring;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -137,8 +138,10 @@ namespace Crypter.Test.Integration_Tests.Common
          return new LoginRequest(username, new List<VersionedPassword> { versionedPassword }, tokenType);
       }
 
-      internal static InsertMasterKeyRequest GetInsertMasterKeyRequest(string username, string password, Random random)
+      internal static InsertMasterKeyRequest GetInsertMasterKeyRequest(string username, string password)
       {
+         Random random = new Random();
+
          byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
 
          byte[] randomBytesMasterKey = new byte[32];
@@ -151,6 +154,22 @@ namespace Crypter.Test.Integration_Tests.Common
          random.NextBytes(randomBytesRecoveryProof);
 
          return new InsertMasterKeyRequest(username, passwordBytes, randomBytesMasterKey, randomBytesNonce, randomBytesRecoveryProof);
+      }
+
+      internal static InsertKeyPairRequest GetInsertKeyPairRequest()
+      {
+         Random random = new Random();
+
+         byte[] randomBytesAsPrivateKey = new byte[32];
+         random.NextBytes(randomBytesAsPrivateKey);
+
+         byte[] randomBytesAsPublicKey = new byte[32];
+         random.NextBytes(randomBytesAsPublicKey);
+
+         byte[] randomBytesAsNonce = new byte[32];
+         random.NextBytes(randomBytesAsNonce);
+
+         return new InsertKeyPairRequest(randomBytesAsPrivateKey, randomBytesAsPublicKey, randomBytesAsNonce);
       }
    }
 }

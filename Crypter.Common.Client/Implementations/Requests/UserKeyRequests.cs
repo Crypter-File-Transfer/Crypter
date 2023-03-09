@@ -26,8 +26,10 @@
 
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Requests;
+using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Monads;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Implementations.Requests
@@ -60,6 +62,20 @@ namespace Crypter.Common.Client.Implementations.Requests
          string url = "api/user/key/master/recovery-proof/challenge";
          return _crypterAuthenticatedHttpClient.PostEitherAsync<GetMasterKeyRecoveryProofRequest, GetMasterKeyRecoveryProofResponse>(url, request)
             .ExtractErrorCode<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>();
+      }
+
+      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync()
+      {
+         string url = "api/user/key/private";
+         return _crypterAuthenticatedHttpClient.GetEitherAsync<GetPrivateKeyResponse>(url)
+            .ExtractErrorCode<GetPrivateKeyError, GetPrivateKeyResponse>();
+      }
+
+      public Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request)
+      {
+         string url = "api/user/key/private";
+         return _crypterAuthenticatedHttpClient.PutEitherAsync<InsertKeyPairRequest, InsertKeyPairResponse>(url, request)
+            .ExtractErrorCode<InsertKeyPairError, InsertKeyPairResponse>();
       }
    }
 }

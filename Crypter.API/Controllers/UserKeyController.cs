@@ -133,5 +133,59 @@ namespace Crypter.API.Controllers
                Ok,
                MakeErrorResponse(GetMasterKeyRecoveryProofError.UnknownError));
       }
+
+      [HttpGet("private")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetPrivateKeyResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetPrivateKeyAsync(CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(GetPrivateKeyError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               GetPrivateKeyError.UnkownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               GetPrivateKeyError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userKeysService.GetPrivateKeyAsync(userId, cancellationToken)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(GetPrivateKeyError.UnkownError));
+      }
+
+      [HttpPut("private")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertKeyPairResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> InsertKeyPairAsync([FromBody] InsertKeyPairRequest body)
+      {
+         IActionResult MakeErrorResponse(InsertKeyPairError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               InsertKeyPairError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               InsertKeyPairError.KeyPairAlreadyExists => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userKeysService.InsertKeyPairAsync(userId, body)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(InsertKeyPairError.UnknownError));
+      }
    }
 }

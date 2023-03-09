@@ -26,7 +26,6 @@
 
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
@@ -46,11 +45,6 @@ namespace Crypter.Common.Client.Interfaces
       IUserConsentRequests UserConsent { get; }
       IUserContactRequests UserContact { get; }
       IUserKeyRequests UserKey { get; }
-
-      #region Keys
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync();
-      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request);
-      #endregion
 
       #region Search
       Task<Either<DummyError, UserSearchResponse>> GetUserSearchResultsAsync(UserSearchParameters searchInfo);

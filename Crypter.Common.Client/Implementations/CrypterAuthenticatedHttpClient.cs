@@ -113,13 +113,12 @@ namespace Crypter.Common.Client.Implementations
          return await GetStreamResponseAsync(response);
       }
 
-      public async Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> PutAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
+      public async Task<Either<ErrorResponse, TResponse>> PutEitherAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
          where TRequest : class
-         where TResponse : class
       {
          var request = MakeRequestMessageFactory(HttpMethod.Put, uri, body);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(request, useRefreshToken);
-         return await DeserializeResponseWithStatusCodeAsync<TResponse>(response);
+         return await DeserializeResponseAsync<TResponse>(response);
       }
 
       public async Task<Either<ErrorResponse, Unit>> PutEitherUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)

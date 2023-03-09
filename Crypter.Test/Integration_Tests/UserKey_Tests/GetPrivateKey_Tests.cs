@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
@@ -33,13 +33,12 @@ using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests.UserKey_Tests
 {
    [TestFixture]
-   internal class InsertMasterKey_Tests
+   internal class GetPrivateKey_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -69,7 +68,7 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests
       }
 
       [Test]
-      public async Task Insert_Master_Key_Works()
+      public async Task Get_Master_Key_Works()
       {
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
@@ -83,10 +82,17 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         InsertMasterKeyRequest request = TestData.GetInsertMasterKeyRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         Either<InsertMasterKeyError, Unit> result = await _client.UserKey.InsertMasterKeyAsync(request);
+         InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
+         var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-         Assert.True(result.IsRight);
+         var getKeyPairResponse = await _client.UserKey.GetPrivateKeyAsync();
+         GetPrivateKeyResponse result = getKeyPairResponse.RightOrDefault(null);
+
+         Assert.True(insertKeyPairResponse.IsRight);
+         Assert.True(getKeyPairResponse.IsRight);
+
+         Assert.AreEqual(insertKeyPairRequest.EncryptedPrivateKey, result.EncryptedKey);
+         Assert.AreEqual(insertKeyPairRequest.Nonce, result.Nonce);
       }
    }
 }

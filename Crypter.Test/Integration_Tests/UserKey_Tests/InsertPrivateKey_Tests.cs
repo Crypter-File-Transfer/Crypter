@@ -29,7 +29,6 @@ using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
@@ -39,7 +38,7 @@ using System.Threading.Tasks;
 namespace Crypter.Test.Integration_Tests.UserKey_Tests
 {
    [TestFixture]
-   internal class InsertMasterKey_Tests
+   internal class InsertPrivateKey_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -68,8 +67,7 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests
          await _factory.DisposeAsync();
       }
 
-      [Test]
-      public async Task Insert_Master_Key_Works()
+      public async Task Insert_Private_Key_Works_Async()
       {
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
@@ -83,8 +81,8 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         InsertMasterKeyRequest request = TestData.GetInsertMasterKeyRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         Either<InsertMasterKeyError, Unit> result = await _client.UserKey.InsertMasterKeyAsync(request);
+         InsertKeyPairRequest request = TestData.GetInsertKeyPairRequest();
+         var result = await _client.UserKey.InsertKeyPairAsync(request);
 
          Assert.True(result.IsRight);
       }

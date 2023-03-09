@@ -95,7 +95,7 @@ namespace Crypter.Common.Client.Implementations
 
       private Task<Maybe<byte[]>> DownloadAndDecryptPrivateKey(byte[] masterKey)
       {
-         return _crypterApiClient.GetPrivateKeyAsync()
+         return _crypterApiClient.UserKey.GetPrivateKeyAsync()
             .MapAsync<GetPrivateKeyError, GetPrivateKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(masterKey, x.Nonce, x.EncryptedKey))
             .ToMaybeTask();
       }
@@ -137,7 +137,7 @@ namespace Crypter.Common.Client.Implementations
          byte[] encryptedPrivateKey = _cryptoProvider.Encryption.Encrypt(masterKey, nonce, keyPair.PrivateKey);
 
          InsertKeyPairRequest request = new InsertKeyPairRequest(encryptedPrivateKey, keyPair.PublicKey, nonce);
-         return _crypterApiClient.InsertKeyPairAsync(request)
+         return _crypterApiClient.UserKey.InsertKeyPairAsync(request)
             .ToMaybeTask()
             .MapAsync(x => keyPair.PrivateKey);
       }

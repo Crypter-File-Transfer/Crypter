@@ -43,7 +43,6 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
-      private Random _random;
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
 
@@ -55,8 +54,6 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests
 
          _factory = await Setup.SetupWebApplicationFactoryAsync();
          (_client, _clientTokenRepository) = Setup.SetupCrypterApiClient(_factory.CreateClient());
-
-         _random = new Random();
       }
 
       [TearDown]
@@ -86,7 +83,7 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         InsertMasterKeyRequest insertMasterKeyRequest = TestData.GetInsertMasterKeyRequest(TestData.DefaultUsername, TestData.DefaultPassword, _random);
+         InsertMasterKeyRequest insertMasterKeyRequest = TestData.GetInsertMasterKeyRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          Either<InsertMasterKeyError, Unit> insertMasterKeyResult = await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
          Either<GetMasterKeyError, GetMasterKeyResponse> result = await _client.UserKey.GetMasterKeyAsync();
