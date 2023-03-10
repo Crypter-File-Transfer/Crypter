@@ -31,6 +31,7 @@ using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,7 +47,7 @@ namespace Crypter.Core.Services
       Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken);
       Task<UpdatePrivacySettingsResponse> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken);
       Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken);
-      Task<UserSearchResponse> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken);
+      Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken);
       Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
       Task DeleteUserEntityAsync(Guid id, CancellationToken cancellationToken);
       Task DeleteUserTokenEntityAsync(Guid tokenId, CancellationToken cancellationToken);
@@ -181,11 +182,11 @@ namespace Crypter.Core.Services
          return new UpdateNotificationSettingsResponse();
       }
 
-      public async Task<UserSearchResponse> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken)
+      public Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken)
       {
          string lowerKeyword = keyword.ToLower();
 
-         var matches = await _context.Users
+         return _context.Users
             .Where(x => x.Username.StartsWith(lowerKeyword)
                || x.Profile.Alias.ToLower().StartsWith(lowerKeyword))
             .Where(LinqUserExpressions.UserProfileIsComplete())
@@ -193,10 +194,8 @@ namespace Crypter.Core.Services
             .OrderBy(x => x.Username)
             .Skip(index)
             .Take(count)
-            .Select(x => new UserSearchResultDTO(x.Username, x.Profile.Alias))
+            .Select(x => new UserSearchResult(x.Username, x.Profile.Alias))
             .ToListAsync(cancellationToken);
-
-         return new UserSearchResponse(matches);
       }
 
       public async Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId)

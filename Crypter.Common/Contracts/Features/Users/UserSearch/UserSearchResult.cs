@@ -26,12 +26,12 @@
 
 namespace Crypter.Common.Contracts.Features.Users
 {
-   public class UserSearchResultDTO
+   public class UserSearchResult
    {
       public string Username { get; set; }
       public string Alias { get; set; }
 
-      public UserSearchResultDTO(string username, string alias)
+      public UserSearchResult(string username, string alias)
       {
          Username = username;
          Alias = alias;

@@ -41,14 +41,11 @@ namespace Crypter.Common.Client.Interfaces
       IFileTransferRequests FileTransfer { get; }
       IMessageTransferRequests MessageTransfer { get; }
       IMetricsRequests Metrics { get; }
+      IUserRequests User { get; }
       IUserAuthenticationRequests UserAuthentication { get; }
       IUserConsentRequests UserConsent { get; }
       IUserContactRequests UserContact { get; }
       IUserKeyRequests UserKey { get; }
-
-      #region Search
-      Task<Either<DummyError, UserSearchResponse>> GetUserSearchResultsAsync(UserSearchParameters searchInfo);
-      #endregion
 
       #region Settings
       Task<Either<DummyError, UserSettingsResponse>> GetUserSettingsAsync();

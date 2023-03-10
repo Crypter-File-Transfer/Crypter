@@ -56,6 +56,12 @@ namespace Crypter.Common.Monads
             x => x);
       }
 
+      public static async Task<Maybe<TValue>> IfSomeAsync<TValue>(this Task<Maybe<TValue>> maybe, Action<TValue> some)
+      {
+         Maybe<TValue> maybeResult = await maybe;
+         return maybeResult.IfSome(some);
+      }
+
       public static async Task<Maybe<TValue>> IfSomeAsync<TValue>(this Task<Maybe<TValue>> maybe, Func<TValue, Task> someAsync)
       {
          Maybe<TValue> maybeResult = await maybe;

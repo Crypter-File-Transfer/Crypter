@@ -24,20 +24,23 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
-using Crypter.Common.Contracts.Features.Keys;
-using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Enums;
+using Crypter.Common.Client.Interfaces;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Enums;
+using Crypter.Common.Contracts.Features.Users;
+using Crypter.Common.Monads;
+using System.Collections.Generic;
+using Crypter.Common.Contracts.Features.Keys;
 
-namespace Crypter.Test.Integration_Tests.UserKey_Tests
+namespace Crypter.Test.Integration_Tests.User_Tests
 {
    [TestFixture]
-   internal class GetPrivateKey_Tests
+   internal class UserSearch_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -67,7 +70,7 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests
       }
 
       [Test]
-      public async Task Get_Master_Key_Works()
+      public async Task User_Search_Works_Async()
       {
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
@@ -84,14 +87,15 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests
          InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
          var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-         var getKeyPairResponse = await _client.UserKey.GetPrivateKeyAsync();
-         GetPrivateKeyResponse result = getKeyPairResponse.RightOrDefault(null);
+         UserSearchParameters searchParameters = new UserSearchParameters(TestData.DefaultUsername, 0, 10);
+         Maybe<List<UserSearchResult>> response = await _client.User.GetUserSearchResultsAsync(searchParameters);
 
-         Assert.True(insertKeyPairResponse.IsRight);
-         Assert.True(getKeyPairResponse.IsRight);
+         List<UserSearchResult> results = response.SomeOrDefault(null);
 
-         Assert.AreEqual(insertKeyPairRequest.EncryptedPrivateKey, result.EncryptedKey);
-         Assert.AreEqual(insertKeyPairRequest.Nonce, result.Nonce);
+         Assert.True(loginResult.IsRight);
+         Assert.True(response.IsSome);
+         Assert.AreEqual(1, results.Count);
+         Assert.AreEqual(TestData.DefaultUsername, results[0].Username);
       }
    }
 }

@@ -32,6 +32,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -48,7 +49,7 @@ namespace Crypter.Web.Pages
       protected bool Loading = true;
       protected string SessionUsernameLowercase = string.Empty;
       protected UserSearchParameters SearchParameters;
-      protected UserSearchResponse SearchResults;
+      protected List<UserSearchResult> SearchResults;
 
       protected override async Task OnInitializedAsync()
       {
@@ -77,8 +78,8 @@ namespace Crypter.Web.Pages
             return;
          }
 
-         await CrypterApiService.GetUserSearchResultsAsync(SearchParameters)
-            .DoRightAsync(x =>
+         await CrypterApiService.User.GetUserSearchResultsAsync(SearchParameters)
+            .IfSomeAsync(x =>
             {
                SearchResults = x;
             });
