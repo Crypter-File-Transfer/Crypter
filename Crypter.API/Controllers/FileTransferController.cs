@@ -31,9 +31,11 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
 using Crypter.Core.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,8 +46,8 @@ namespace Crypter.API.Controllers
    [Route("api/file/transfer")]
    public class FileTransferController : TransferControllerBase
    {
-      public FileTransferController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
-         : base(transferDownloadService, transferUploadService, tokenService) { }
+      public FileTransferController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService, IUserTransferService userTransferService)
+         : base(transferDownloadService, transferUploadService, tokenService, userTransferService) { }
 
       [HttpPost]
       [MaybeAuthorize]
@@ -64,6 +66,28 @@ namespace Crypter.API.Controllers
                left: MakeErrorResponse,
                right: Ok,
                neither: MakeErrorResponse(UploadTransferError.UnknownError));
+      }
+
+      [HttpGet("received")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserReceivedFileDTO>))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> GetReceivedFilesAsync(CancellationToken cancellationToken)
+      {
+         Guid userId = _tokenService.ParseUserId(User);
+         List<UserReceivedFileDTO> result = await _userTransferService.GetUserReceivedFilesAsync(userId, cancellationToken);
+         return Ok(result);
+      }
+
+      [HttpGet("sent")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserSentFileDTO>))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> GetSentFilesAsync(CancellationToken cancellationToken)
+      {
+         Guid userId = _tokenService.ParseUserId(User);
+         List<UserSentFileDTO> result = await _userTransferService.GetUserSentFilesAsync(userId, cancellationToken);
+         return Ok(result);
       }
 
       [HttpGet("preview/anonymous")]

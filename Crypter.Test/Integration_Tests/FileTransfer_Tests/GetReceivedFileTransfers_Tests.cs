@@ -27,19 +27,20 @@
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.Keys;
+using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
+using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Crypter.Test.Integration_Tests.User_Tests
+namespace Crypter.Test.Integration_Tests.FileTransfer_Tests
 {
    [TestFixture]
-   internal class GetUserProfile_Tests
+   internal class GetReceivedFileTransfers_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -69,7 +70,7 @@ namespace Crypter.Test.Integration_Tests.User_Tests
       }
 
       [Test]
-      public async Task Get_User_Profile_Works_Async()
+      public async Task Get_Received_File_Transfer_Works()
       {
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
@@ -86,13 +87,15 @@ namespace Crypter.Test.Integration_Tests.User_Tests
          InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
          var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-         Either<GetUserProfileError, UserProfileDTO> response = await _client.User.GetUserProfileAsync(TestData.DefaultUsername, false);
+         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         UploadFileTransferRequest uploadFileTransferRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+         var uploadFileTransferResponse = await _client.FileTransfer.UploadFileTransferAsync(TestData.DefaultUsername, uploadFileTransferRequest, encryptionStream, false);
 
-         UserProfileDTO result = response.RightOrDefault(null);
+         var response = await _client.FileTransfer.GetReceivedFilesAsync();
+         List<UserReceivedFileDTO> result = response.SomeOrDefault(null);
 
-         Assert.True(loginResult.IsRight);
-         Assert.True(response.IsRight);
-         Assert.AreEqual(TestData.DefaultUsername, result.Username);
+         Assert.True(response.IsSome);
+         Assert.AreEqual(1, result.Count);
       }
    }
 }

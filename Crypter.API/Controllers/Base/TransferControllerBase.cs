@@ -36,12 +36,14 @@ namespace Crypter.API.Controllers.Base
       protected readonly ITransferDownloadService _transferDownloadService;
       protected readonly ITransferUploadService _transferUploadService;
       protected readonly ITokenService _tokenService;
+      protected readonly IUserTransferService _userTransferService;
 
-      public TransferControllerBase(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
+      public TransferControllerBase(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService, IUserTransferService userTransferService)
       {
          _transferDownloadService = transferDownloadService;
          _transferUploadService = transferUploadService;
          _tokenService = tokenService;
+         _userTransferService = userTransferService;
       }
 
       protected IActionResult MakeErrorResponse(UploadTransferError error)

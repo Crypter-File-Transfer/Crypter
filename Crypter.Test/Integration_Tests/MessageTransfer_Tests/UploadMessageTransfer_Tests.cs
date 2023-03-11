@@ -25,7 +25,10 @@
  */
 
 using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Test.Integration_Tests.Common;
@@ -42,6 +45,7 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
       private ICrypterApiClient _client;
+      private ITokenRepository _clientTokenRepository;
 
       [OneTimeSetUp]
       public async Task OneTimeSetUp()
@@ -50,7 +54,7 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
          await _setup.InitializeRespawnerAsync();
 
          _factory = await Setup.SetupWebApplicationFactoryAsync();
-         (_client, _) = Setup.SetupCrypterApiClient(_factory.CreateClient());
+         (_client, _clientTokenRepository) = Setup.SetupCrypterApiClient(_factory.CreateClient());
       }
 
       [TearDown]
@@ -71,6 +75,58 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
          (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
          var result = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request, encryptionStream, false);
+
+         Assert.True(result.IsRight);
+      }
+
+      [TestCase(true, false)]
+      [TestCase(false, true)]
+      [TestCase(true, true)]
+      public async Task Upload_User_Message_Transfer_Works(bool senderDefined, bool recipientDefined)
+      {
+         Maybe<string> senderUsername = senderDefined
+            ? TestData.DefaultUsername
+            : Maybe<string>.None;
+         const string senderPassword = TestData.DefaultPassword;
+
+         Maybe<string> recipientUsername = recipientDefined
+            ? "Samwise"
+            : Maybe<string>.None;
+         const string recipientPassword = "dropping_eaves";
+
+         Assert.True((senderDefined == false && senderUsername.IsNone)
+            || (senderDefined && senderUsername.IsSome));
+
+         await senderUsername.IfSomeAsync(async username =>
+         {
+            RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, senderPassword);
+            var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+            LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword, TokenType.Session);
+            var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+            await loginResult.DoRightAsync(async loginResponse =>
+            {
+               await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+               await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            });
+
+            Assert.True(registrationResult.IsRight);
+            Assert.True(loginResult.IsRight);
+         });
+
+         Assert.True((recipientDefined == false && recipientUsername.IsNone)
+            || (recipientDefined && recipientUsername.IsSome));
+
+         await recipientUsername.IfSomeAsync(async username =>
+         {
+            RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, recipientPassword);
+            var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+         });
+
+         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+         var result = await _client.MessageTransfer.UploadMessageTransferAsync(recipientUsername, request, encryptionStream, senderDefined);
 
          Assert.True(result.IsRight);
       }

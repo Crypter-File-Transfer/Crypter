@@ -31,6 +31,7 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
 using Crypter.Crypto.Common.StreamEncryption;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -70,6 +71,18 @@ namespace Crypter.Common.Client.Implementations.Requests
 
          return await service.SendAsync<UploadTransferResponse>(request)
             .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
+      }
+
+      public Task<Maybe<List<UserReceivedMessageDTO>>> GetReceivedMessagesAsync()
+      {
+         string url = "/api/message/transfer/received";
+         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserReceivedMessageDTO>>(url);
+      }
+
+      public Task<Maybe<List<UserSentMessageDTO>>> GetSentMessagesAsync()
+      {
+         string url = "/api/message/transfer/sent";
+         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserSentMessageDTO>>(url);
       }
 
       public Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetAnonymousMessagePreviewAsync(string hashId)

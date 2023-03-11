@@ -28,6 +28,7 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
 using Crypter.Crypto.Common.StreamEncryption;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Interfaces.Requests
@@ -35,6 +36,8 @@ namespace Crypter.Common.Client.Interfaces.Requests
    public interface IFileTransferRequests
    {
       Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<string> recipientUsername, UploadFileTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication);
+      Task<Maybe<List<UserReceivedFileDTO>>> GetReceivedFilesAsync();
+      Task<Maybe<List<UserSentFileDTO>>> GetSentFilesAsync();
       Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetAnonymousFilePreviewAsync(string hashId);
       Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetUserFilePreviewAsync(string hashId, bool withAuthentication);
       Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetAnonymousFileCiphertextAsync(string hashId, byte[] proof);

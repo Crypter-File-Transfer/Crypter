@@ -32,7 +32,6 @@ using Crypter.Common.Enums;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests.UserKey_Tests

@@ -31,9 +31,11 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
 using Crypter.Core.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,8 +46,8 @@ namespace Crypter.API.Controllers
    [Route("api/message/transfer")]
    public class MessageTransferController : TransferControllerBase
    {
-      public MessageTransferController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService)
-         : base(transferDownloadService, transferUploadService, tokenService) { }
+      public MessageTransferController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService, IUserTransferService userTransferService)
+         : base(transferDownloadService, transferUploadService, tokenService, userTransferService) { }
 
       [HttpPost]
       [MaybeAuthorize]
@@ -64,6 +66,28 @@ namespace Crypter.API.Controllers
                MakeErrorResponse,
                Ok,
                MakeErrorResponse(UploadTransferError.UnknownError));
+      }
+
+      [HttpGet("received")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserReceivedMessageDTO>))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> GetReceivedMessagesAsync(CancellationToken cancellationToken)
+      {
+         Guid userId = _tokenService.ParseUserId(User);
+         List<UserReceivedMessageDTO> result = await _userTransferService.GetUserReceivedMessagesAsync(userId, cancellationToken);
+         return Ok(result);
+      }
+
+      [HttpGet("sent")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserSentMessageDTO>))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> GetSentMessagesAsync(CancellationToken cancellationToken)
+      {
+         Guid userId = _tokenService.ParseUserId(User);
+         List<UserSentMessageDTO> result = await _userTransferService.GetUserSentMessagesAsync(userId, cancellationToken);
+         return Ok(result);
       }
 
       [HttpGet("preview/anonymous")]

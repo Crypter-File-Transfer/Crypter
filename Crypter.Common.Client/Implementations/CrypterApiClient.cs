@@ -93,46 +93,6 @@ namespace Crypter.Common.Client.Implementations
          remove => _refreshTokenRejectedHandler = (EventHandler)Delegate.Remove(_refreshTokenRejectedHandler, value);
       }
 
-      #region User
-
-      public Task<Either<DummyError, UserReceivedFilesResponse>> GetReceivedFilesAsync()
-      {
-         string url = "/user/self/file/received";
-         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserReceivedFilesResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.GetWithStatusCodeAsync<UserReceivedFilesResponse>(url))
-                from errorableResponse in ExtractErrorCode<DummyError, UserReceivedFilesResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<DummyError, UserSentFilesResponse>> GetSentFilesAsync()
-      {
-         string url = "/user/self/file/sent";
-         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserSentFilesResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.GetWithStatusCodeAsync<UserSentFilesResponse>(url))
-                from errorableResponse in ExtractErrorCode<DummyError, UserSentFilesResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<DummyError, UserReceivedMessagesResponse>> GetReceivedMessagesAsync()
-      {
-         string url = "/user/self/message/received";
-         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserReceivedMessagesResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.GetWithStatusCodeAsync<UserReceivedMessagesResponse>(url))
-                from errorableResponse in ExtractErrorCode<DummyError, UserReceivedMessagesResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<DummyError, UserSentMessagesResponse>> GetSentMessagesAsync()
-      {
-         string url = "/user/self/message/sent";
-         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserSentMessagesResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.GetWithStatusCodeAsync<UserSentMessagesResponse>(url))
-                from errorableResponse in ExtractErrorCode<DummyError, UserSentMessagesResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      #endregion
-
       #region Settings
 
       public Task<Either<DummyError, UserSettingsResponse>> GetUserSettingsAsync()

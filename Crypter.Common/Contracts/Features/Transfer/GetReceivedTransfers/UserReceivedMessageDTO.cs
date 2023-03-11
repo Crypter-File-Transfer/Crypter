@@ -26,7 +26,7 @@
 
 using System;
 
-namespace Crypter.Common.Contracts.Features.Users
+namespace Crypter.Common.Contracts.Features.Transfer
 {
    public class UserReceivedMessageDTO
    {

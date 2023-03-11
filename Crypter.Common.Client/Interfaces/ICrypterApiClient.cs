@@ -27,7 +27,6 @@
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Settings;
-using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using System;
 using System.Threading.Tasks;
@@ -54,13 +53,6 @@ namespace Crypter.Common.Client.Interfaces
       Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request);
       Task<Either<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request);
       Task<Either<VerifyEmailAddressError, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
-      #endregion
-
-      #region User
-      Task<Either<DummyError, UserReceivedFilesResponse>> GetReceivedFilesAsync();
-      Task<Either<DummyError, UserSentFilesResponse>> GetSentFilesAsync();
-      Task<Either<DummyError, UserReceivedMessagesResponse>> GetReceivedMessagesAsync();
-      Task<Either<DummyError, UserSentMessagesResponse>> GetSentMessagesAsync();
       #endregion
    }
 }

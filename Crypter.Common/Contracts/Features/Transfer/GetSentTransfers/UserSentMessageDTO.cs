@@ -24,19 +24,25 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
+using System;
 
-namespace Crypter.Common.Contracts.Features.Users
+namespace Crypter.Common.Contracts.Features.Transfer
 {
-   public class UserReceivedFilesResponse
+   public class UserSentMessageDTO
    {
-      public IEnumerable<UserReceivedFileDTO> Files { get; set; }
+      public string HashId { get; set; }
+      public string Subject { get; set; }
+      public string RecipientUsername { get; set; }
+      public string RecipientAlias { get; set; }
+      public DateTime ExpirationUTC { get; set; }
 
-      [JsonConstructor]
-      public UserReceivedFilesResponse(IEnumerable<UserReceivedFileDTO> files)
+      public UserSentMessageDTO(string hashId, string subject, string recipientUsername, string recipientAlias, DateTime expirationUTC)
       {
-         Files = files;
+         HashId = hashId;
+         Subject = subject;
+         RecipientUsername = recipientUsername;
+         RecipientAlias = recipientAlias;
+         ExpirationUTC = expirationUTC;
       }
    }
 }
