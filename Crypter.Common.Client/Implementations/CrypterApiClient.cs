@@ -64,7 +64,7 @@ namespace Crypter.Common.Client.Implementations
          FileTransfer = new FileTransferRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
          MessageTransfer = new MessageTransferRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
          Metrics = new MetricsRequests(_crypterHttpClient);
-         User = new UserRequests(_crypterAuthenticatedHttpClient);
+         User = new UserRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
          UserAuthentication = new UserAuthenticationRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient, _refreshTokenRejectedHandler);
          UserConsent = new UserConsentRequests(_crypterAuthenticatedHttpClient);
          UserContact = new UserContactRequests(_crypterAuthenticatedHttpClient);
@@ -94,19 +94,6 @@ namespace Crypter.Common.Client.Implementations
       }
 
       #region User
-
-      public Task<Either<GetUserProfileError, GetUserProfileResponse>> GetUserProfileAsync(string username, bool withAuthentication)
-      {
-         string url = "/user/{username}/profile";
-         ICrypterHttpClient service = withAuthentication
-            ? _crypterAuthenticatedHttpClient
-            : _crypterHttpClient;
-
-         return from response in Either<GetUserProfileError, (HttpStatusCode httpStatus, Either<ErrorResponse, GetUserProfileResponse> data)>.FromRightAsync(
-                  service.GetWithStatusCodeAsync<GetUserProfileResponse>(url))
-                from errorableResponse in ExtractErrorCode<GetUserProfileError, GetUserProfileResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
 
       public Task<Either<DummyError, UserReceivedFilesResponse>> GetReceivedFilesAsync()
       {

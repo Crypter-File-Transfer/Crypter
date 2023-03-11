@@ -57,7 +57,6 @@ namespace Crypter.Common.Client.Interfaces
       #endregion
 
       #region User
-      Task<Either<GetUserProfileError, GetUserProfileResponse>> GetUserProfileAsync(string username, bool withAuthentication);
       Task<Either<DummyError, UserReceivedFilesResponse>> GetReceivedFilesAsync();
       Task<Either<DummyError, UserSentFilesResponse>> GetSentFilesAsync();
       Task<Either<DummyError, UserReceivedMessagesResponse>> GetReceivedMessagesAsync();

@@ -33,6 +33,9 @@ using System.Threading.Tasks;
 using System.Threading;
 using System;
 using System.Collections.Generic;
+using Crypter.Common.Contracts;
+using System.Net;
+using Crypter.Common.Monads;
 
 namespace Crypter.API.Controllers
 {
@@ -47,6 +50,29 @@ namespace Crypter.API.Controllers
       {
          _userService = userService;
          _tokenService = tokenService;
+      }
+
+      [HttpGet("profile")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserProfileDTO))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetUserProfileAsync([FromQuery] string username, CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(GetUserProfileError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               GetUserProfileError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Maybe<Guid> userId = _tokenService.TryParseUserId(User);
+         return await _userService.GetUserProfileAsync(userId, username, cancellationToken)
+            .MatchAsync(
+               () => MakeErrorResponse(GetUserProfileError.NotFound),
+               Ok);
       }
 
       [HttpGet("search")]

@@ -42,7 +42,7 @@ namespace Crypter.Core.Services
    {
       Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken);
       Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken);
-      Task<Maybe<GetUserProfileResponse>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken);
+      Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken);
       Task<UpdateProfileResponse> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken);
       Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken);
       Task<UpdatePrivacySettingsResponse> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken);
@@ -74,22 +74,18 @@ namespace Crypter.Core.Services
             .FirstOrDefaultAsync(x => x.Username == username, cancellationToken);
       }
 
-      public async Task<Maybe<GetUserProfileResponse>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken)
+      public Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken)
       {
          Guid? visitorId = userId.Match<Guid?>(
             () => null,
             x => x);
 
-         var profileDTO = await _context.Users
+         return Maybe<UserProfileDTO>.FromAsync(_context.Users
             .Where(x => x.Username == username)
             .Where(LinqUserExpressions.UserProfileIsComplete())
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(visitorId))
             .Select(LinqUserExpressions.ToUserProfileDTOForVisitor(visitorId))
-            .FirstOrDefaultAsync(cancellationToken);
-
-         return profileDTO is null
-            ? Maybe<GetUserProfileResponse>.None
-            : new GetUserProfileResponse(profileDTO);
+            .FirstOrDefaultAsync(cancellationToken));
       }
 
       public async Task<UpdateProfileResponse> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken)

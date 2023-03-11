@@ -36,11 +36,24 @@ namespace Crypter.Common.Client.Implementations.Requests
 {
    public class UserRequests : IUserRequests
    {
+      private readonly ICrypterHttpClient _crypterHttpClient;
       private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
 
-      public UserRequests(ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
+      public UserRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
       {
+         _crypterHttpClient = crypterHttpClient;
          _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+      }
+
+      public Task<Either<GetUserProfileError, UserProfileDTO>> GetUserProfileAsync(string username, bool withAuthentication)
+      {
+         string url = $"/api/user/profile/?username={username}";
+         ICrypterHttpClient client = withAuthentication
+            ? _crypterAuthenticatedHttpClient
+            : _crypterHttpClient;
+
+         return client.GetEitherAsync<UserProfileDTO>(url)
+            .ExtractErrorCode<GetUserProfileError, UserProfileDTO>();
       }
 
       public Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters)

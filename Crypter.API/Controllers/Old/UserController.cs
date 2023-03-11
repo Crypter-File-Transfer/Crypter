@@ -24,13 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -41,37 +39,12 @@ namespace Crypter.API.Controllers.Old
    public class UserController : CrypterControllerBase
    {
       private readonly ITokenService _tokenService;
-      private readonly IUserService _userService;
       private readonly IUserTransferService _userTransferService;
 
-      public UserController(ITokenService tokenService, IUserService userService, IUserTransferService userTransferService)
+      public UserController(ITokenService tokenService, IUserTransferService userTransferService)
       {
          _tokenService = tokenService;
-         _userService = userService;
          _userTransferService = userTransferService;
-      }
-
-      [HttpGet("{username}/profile")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetUserProfileResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserProfileAsync(string username, CancellationToken cancellationToken)
-      {
-         IActionResult MakeErrorResponse(GetUserProfileError error)
-         {
-#pragma warning disable CS8524
-            return error switch
-            {
-               GetUserProfileError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
-            };
-#pragma warning restore CS8524
-         }
-
-         var userId = _tokenService.TryParseUserId(User);
-         var result = await _userService.GetUserProfileAsync(userId, username, cancellationToken);
-         return result.Match(
-            () => MakeErrorResponse(GetUserProfileError.NotFound),
-            Ok);
       }
 
       [HttpGet("self/file/received")]
