@@ -24,19 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
+using Crypter.Common.Monads;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using System.Threading;
 using System;
 using System.Collections.Generic;
-using Crypter.Common.Contracts;
 using System.Net;
-using Crypter.Common.Monads;
-using Crypter.Common.Contracts.Features.Settings;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
 {

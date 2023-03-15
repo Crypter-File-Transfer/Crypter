@@ -30,7 +30,6 @@ using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;

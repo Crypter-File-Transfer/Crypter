@@ -26,10 +26,8 @@
 
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Requests;
-using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Monads;
-using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Implementations.Requests
