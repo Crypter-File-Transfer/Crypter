@@ -100,6 +100,18 @@ namespace Crypter.API.Controllers
                MakeErrorResponse(UpdateContactInfoError.UnknownError));
       }
 
+      [HttpPost("contact/verify")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> VerifyUserEmailAddressAsync([FromBody] VerifyEmailAddressRequest request, CancellationToken cancellationToken)
+      {
+         return await _userEmailVerificationService.VerifyUserEmailAddressAsync(request, cancellationToken)
+            .MatchAsync(
+               () => MakeErrorResponseBase(HttpStatusCode.NotFound, VerifyEmailAddressError.NotFound),
+               x => Ok());
+      }
+
       [HttpPost("notification")]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]

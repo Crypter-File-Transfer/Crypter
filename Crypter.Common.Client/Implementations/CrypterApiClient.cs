@@ -105,15 +105,6 @@ namespace Crypter.Common.Client.Implementations
                 select errorableResponse;
       }
 
-      public Task<Either<VerifyEmailAddressError, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo)
-      {
-         string url = "/settings/verify";
-         return from response in Either<VerifyEmailAddressError, (HttpStatusCode httpStatus, Either<ErrorResponse, VerifyEmailAddressResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<VerifyEmailAddressRequest, VerifyEmailAddressResponse>(url, verificationInfo))
-                from errorableResponse in ExtractErrorCode<VerifyEmailAddressError, VerifyEmailAddressResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
       #endregion
    }
 }

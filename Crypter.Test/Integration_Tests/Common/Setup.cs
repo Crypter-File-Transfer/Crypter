@@ -39,6 +39,7 @@ using Respawn;
 using System;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -96,19 +97,39 @@ namespace Crypter.Test.Integration_Tests.Common
          await ResetDatabaseAsync(_hangfireRespawner, _hangfireConnection);
       }
 
-      internal static async Task<WebApplicationFactory<Program>> SetupWebApplicationFactoryAsync()
+      internal static async Task<WebApplicationFactory<Program>> SetupWebApplicationFactoryAsync(IServiceCollection overrides = null)
       {
          WebApplicationFactory<Program> factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
          {
             builder
                .UseEnvironment(TestEnvironmentName)
-               .UseConfiguration(GetIntegrationConfiguration());
+               .UseConfiguration(GetIntegrationConfiguration())
+               .ConfigureServices(services =>
+               {
+                  if (overrides is not null)
+                  {
+                     foreach (var overrideService in overrides)
+                     {
+                        ReplaceService(services, overrideService);
+                     }
+                  }
+               });
          });
 
          DataContext dataContext = factory.Services.GetService<DataContext>();
          await dataContext.Database.EnsureCreatedAsync();
 
          return factory;
+      }
+
+      private static void ReplaceService(IServiceCollection serviceCollection, ServiceDescriptor service)
+      {
+         if (service is not null)
+         {
+            serviceCollection.Remove(service);
+         }
+
+         serviceCollection.Add(service);
       }
 
       internal static (ICrypterApiClient crypterApiClient, ITokenRepository tokenRepository) SetupCrypterApiClient(HttpClient webApplicationHttpClient)

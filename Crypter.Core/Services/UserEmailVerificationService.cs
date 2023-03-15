@@ -42,7 +42,7 @@ namespace Crypter.Core.Services
    {
       Task<Maybe<UserEmailAddressVerificationParameters>> CreateNewVerificationParametersAsync(Guid userId, CancellationToken cancellationToken);
       Task<int> SaveSentVerificationParametersAsync(UserEmailAddressVerificationParameters parameters, CancellationToken cancellationToken);
-      Task<Maybe<VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request, CancellationToken cancellationToken);
+      Task<Maybe<Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request, CancellationToken cancellationToken);
    }
 
    public class UserEmailVerificationService : IUserEmailVerificationService
@@ -94,7 +94,7 @@ namespace Crypter.Core.Services
          return await _context.SaveChangesAsync(cancellationToken);
       }
 
-      public async Task<Maybe<VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request, CancellationToken cancellationToken)
+      public async Task<Maybe<Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request, CancellationToken cancellationToken)
       {
          Guid verificationCode;
          try
@@ -103,7 +103,7 @@ namespace Crypter.Core.Services
          }
          catch (Exception)
          {
-            return Maybe<VerifyEmailAddressResponse>.None;
+            return Maybe<Unit>.None;
          }
 
          var verificationEntity = await _context.UserEmailVerifications
@@ -111,13 +111,13 @@ namespace Crypter.Core.Services
 
          if (verificationEntity is null)
          {
-            return Maybe<VerifyEmailAddressResponse>.None;
+            return Maybe<Unit>.None;
          }
 
          byte[] signature = EmailVerificationEncoder.DecodeSignatureFromUrlSafe(request.Signature);
          if (!_cryptoProvider.DigitalSignature.VerifySignature(verificationEntity.VerificationKey, verificationCode.ToByteArray(), signature))
          {
-            return Maybe<VerifyEmailAddressResponse>.None;
+            return Maybe<Unit>.None;
          }
 
          var user = await _context.Users
@@ -131,7 +131,7 @@ namespace Crypter.Core.Services
          _context.UserEmailVerifications.Remove(verificationEntity);
          await _context.SaveChangesAsync(CancellationToken.None);
 
-         return new VerifyEmailAddressResponse();
+         return Unit.Default;
       }
    }
 }

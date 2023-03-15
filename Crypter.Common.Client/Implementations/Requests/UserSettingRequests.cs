@@ -26,8 +26,10 @@
 
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Requests;
+using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Monads;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Implementations.Requests
@@ -52,6 +54,13 @@ namespace Crypter.Common.Client.Implementations.Requests
          string url = "/api/user/setting/contact";
          return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<UpdateContactInfoError, Unit>();
+      }
+
+      public Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo)
+      {
+         string url = "/api/user/setting/contact/verify";
+         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, verificationInfo)
+            .ExtractErrorCode<VerifyEmailAddressError, Unit>();
       }
 
       public Task<Either<UpdateNotificationSettingsError, Unit>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request)
