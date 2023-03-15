@@ -34,5 +34,6 @@ namespace Crypter.Common.Client.Interfaces.Requests
    {
       Task<Maybe<UserSettingsResponse>> GetUserSettingsAsync();
       Task<Either<UpdateContactInfoError, Unit>> UpdateContactInfoAsync(UpdateContactInfoRequest request);
+      Task<Either<UpdateNotificationSettingsError, Unit>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request);
    }
 }

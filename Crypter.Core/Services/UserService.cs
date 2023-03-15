@@ -46,7 +46,7 @@ namespace Crypter.Core.Services
       Task<UpdateProfileResponse> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken);
       Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken);
       Task<UpdatePrivacySettingsResponse> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken);
-      Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken);
+      Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken);
       Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken);
       Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
       Task DeleteUserEntityAsync(Guid id, CancellationToken cancellationToken);
@@ -145,7 +145,7 @@ namespace Crypter.Core.Services
          return new UpdatePrivacySettingsResponse();
       }
 
-      public async Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken)
+      public async Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken)
       {
          bool userEmailVerified = await _context.Users
             .Where(x => x.Id == userId)
@@ -175,7 +175,7 @@ namespace Crypter.Core.Services
          }
 
          await _context.SaveChangesAsync(cancellationToken);
-         return new UpdateNotificationSettingsResponse();
+         return Unit.Default;
       }
 
       public Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken)

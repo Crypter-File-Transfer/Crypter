@@ -53,5 +53,12 @@ namespace Crypter.Common.Client.Implementations.Requests
          return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<UpdateContactInfoError, Unit>();
       }
+
+      public Task<Either<UpdateNotificationSettingsError, Unit>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request)
+      {
+         string url = "/api/user/setting/notification";
+         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
+            .ExtractErrorCode<UpdateNotificationSettingsError, Unit>();
+      }
    }
 }

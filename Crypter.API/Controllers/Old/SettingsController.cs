@@ -53,33 +53,6 @@ namespace Crypter.API.Controllers.Old
          _userService = userService;
       }
 
-      [HttpPost("notification")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateNotificationSettingsResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpdateUserNotificationPreferencesAsync([FromBody] UpdateNotificationSettingsRequest request, CancellationToken cancellationToken)
-      {
-         IActionResult MakeErrorResponse(UpdateNotificationSettingsError error)
-         {
-#pragma warning disable CS8524
-            return error switch
-            {
-               UpdateNotificationSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               UpdateNotificationSettingsError.EmailAddressNotVerified => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
-            };
-#pragma warning restore CS8524
-         }
-
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userService.UpsertUserNotificationPreferencesAsync(userId, request, cancellationToken);
-         return result.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(UpdateNotificationSettingsError.UnknownError));
-      }
-
       [HttpPost("privacy")]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdatePrivacySettingsResponse))]

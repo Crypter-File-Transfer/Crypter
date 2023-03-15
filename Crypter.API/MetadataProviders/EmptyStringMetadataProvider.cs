@@ -24,9 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Settings
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+
+namespace Crypter.API.MetadataProviders
 {
-   public class UpdateNotificationSettingsResponse
+   public sealed class EmptyStringMetaDataProvider : IDisplayMetadataProvider
    {
+      public void CreateDisplayMetadata(DisplayMetadataProviderContext context)
+      {
+         if (context.Key.MetadataKind == ModelMetadataKind.Parameter
+            && context.Key.ModelType == typeof(string))
+         {
+            context.DisplayMetadata.ConvertEmptyStringToNull = false;
+         }
+      }
    }
 }

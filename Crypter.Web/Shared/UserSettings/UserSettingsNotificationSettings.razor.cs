@@ -64,7 +64,7 @@ namespace Crypter.Web.Shared.UserSettings
       protected async Task OnSaveClickedAsync()
       {
          var request = new UpdateNotificationSettingsRequest(EnableTransferNotificationsEdit, EnableTransferNotificationsEdit);
-         await CrypterApiService.UpdateNotificationPreferencesAsync(request);
+         await CrypterApiService.UserSetting.UpdateNotificationPreferencesAsync(request);
 
          EnableTransferNotifications = EnableTransferNotificationsEdit;
          IsEditing = false;

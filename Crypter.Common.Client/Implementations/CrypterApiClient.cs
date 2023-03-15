@@ -97,30 +97,12 @@ namespace Crypter.Common.Client.Implementations
 
       #region Settings
 
-      public Task<Either<DummyError, UserSettingsResponse>> GetUserSettingsAsync()
-      {
-         string url = "/settings";
-         return from response in Either<DummyError, (HttpStatusCode httpStatus, Either<ErrorResponse, UserSettingsResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.GetWithStatusCodeAsync<UserSettingsResponse>(url))
-                from errorableResponse in ExtractErrorCode<DummyError, UserSettingsResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
       public Task<Either<UpdateProfileError, UpdateProfileResponse>> UpdateProfileInfoAsync(UpdateProfileRequest request)
       {
          string url = "/settings/profile";
          return from response in Either<UpdateProfileError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpdateProfileResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<UpdateProfileRequest, UpdateProfileResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<UpdateProfileError, UpdateProfileResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request)
-      {
-         string url = "/settings/notification";
-         return from response in Either<UpdateNotificationSettingsError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpdateNotificationSettingsResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<UpdateNotificationSettingsRequest, UpdateNotificationSettingsResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 
