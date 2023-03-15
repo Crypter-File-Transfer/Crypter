@@ -28,14 +28,8 @@ using Crypter.Common.Client.Implementations.Requests;
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Requests;
-using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Settings;
-using Crypter.Common.Monads;
 using System;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Implementations
 {
@@ -72,39 +66,10 @@ namespace Crypter.Common.Client.Implementations
          UserSetting = new UserSettingRequests(_crypterAuthenticatedHttpClient);
       }
 
-      /// <summary>
-      /// Lift the first error code out of the API error response.
-      /// </summary>
-      /// <typeparam name="TErrorCode"></typeparam>
-      /// <typeparam name="TResponse"></typeparam>
-      /// <param name="response"></param>
-      /// <returns></returns>
-      /// <remarks>
-      /// Need to refactor Crypter.Web and other client services to handle multiple error codes.
-      /// </remarks>
-      private static Either<TErrorCode, TResponse> ExtractErrorCode<TErrorCode, TResponse>(Either<ErrorResponse, TResponse> response)
-      {
-         return response
-            .MapLeft(x => x.Errors.Select(x => (TErrorCode)(object)x.ErrorCode).First());
-      }
-
       public event EventHandler RefreshTokenRejectedEventHandler
       {
          add => _refreshTokenRejectedHandler = (EventHandler)Delegate.Combine(_refreshTokenRejectedHandler, value);
          remove => _refreshTokenRejectedHandler = (EventHandler)Delegate.Remove(_refreshTokenRejectedHandler, value);
       }
-
-      #region Settings
-
-      public Task<Either<UpdateProfileError, UpdateProfileResponse>> UpdateProfileInfoAsync(UpdateProfileRequest request)
-      {
-         string url = "/settings/profile";
-         return from response in Either<UpdateProfileError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpdateProfileResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<UpdateProfileRequest, UpdateProfileResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<UpdateProfileError, UpdateProfileResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      #endregion
    }
 }

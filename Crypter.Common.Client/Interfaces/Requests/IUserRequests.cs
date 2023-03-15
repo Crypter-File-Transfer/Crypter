@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using System.Collections.Generic;
@@ -34,6 +35,7 @@ namespace Crypter.Common.Client.Interfaces.Requests
    public interface IUserRequests
    {
       Task<Either<GetUserProfileError, UserProfileDTO>> GetUserProfileAsync(string username, bool withAuthentication);
+      Task<Either<UpdateProfileError, Unit>> UpdateProfileInfoAsync(UpdateProfileRequest request);
       Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters);
    }
 }

@@ -25,10 +25,7 @@
  */
 
 using Crypter.Common.Client.Interfaces.Requests;
-using Crypter.Common.Contracts.Features.Settings;
-using Crypter.Common.Monads;
 using System;
-using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Interfaces
 {
@@ -45,9 +42,5 @@ namespace Crypter.Common.Client.Interfaces
       IUserContactRequests UserContact { get; }
       IUserKeyRequests UserKey { get; }
       IUserSettingRequests UserSetting { get; }
-
-      #region Settings
-      Task<Either<UpdateProfileError, UpdateProfileResponse>> UpdateProfileInfoAsync(UpdateProfileRequest request);
-      #endregion
    }
 }

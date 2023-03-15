@@ -26,9 +26,12 @@
 
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Requests;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using System.Collections.Generic;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -54,6 +57,13 @@ namespace Crypter.Common.Client.Implementations.Requests
 
          return client.GetEitherAsync<UserProfileDTO>(url)
             .ExtractErrorCode<GetUserProfileError, UserProfileDTO>();
+      }
+
+      public Task<Either<UpdateProfileError, Unit>> UpdateProfileInfoAsync(UpdateProfileRequest request)
+      {
+         string url = "/api/user/profile";
+         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
+            .ExtractErrorCode<UpdateProfileError, Unit>();
       }
 
       public Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters)

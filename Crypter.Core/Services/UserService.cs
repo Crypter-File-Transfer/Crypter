@@ -43,7 +43,7 @@ namespace Crypter.Core.Services
       Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken);
       Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken);
       Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken);
-      Task<UpdateProfileResponse> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken);
+      Task<Unit> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken);
       Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken);
       Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken);
       Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken);
@@ -88,7 +88,7 @@ namespace Crypter.Core.Services
             .FirstOrDefaultAsync(cancellationToken));
       }
 
-      public async Task<UpdateProfileResponse> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken)
+      public async Task<Unit> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken)
       {
          var userProfile = await _context.UserProfiles
             .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
@@ -100,7 +100,7 @@ namespace Crypter.Core.Services
             await _context.SaveChangesAsync(cancellationToken);
          }
 
-         return new UpdateProfileResponse();
+         return Unit.Default;
       }
 
       public Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken)

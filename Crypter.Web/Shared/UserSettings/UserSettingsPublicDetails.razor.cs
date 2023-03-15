@@ -67,7 +67,7 @@ namespace Crypter.Web.Shared.UserSettings
       protected async Task OnSaveClickedAsync()
       {
          var request = new UpdateProfileRequest(AliasEdit, AboutEdit);
-         await CrypterApiService.UpdateProfileInfoAsync(request);
+         await CrypterApiService.User.UpdateProfileInfoAsync(request);
 
          Alias = AliasEdit;
          About = AboutEdit;
