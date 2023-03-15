@@ -53,62 +53,6 @@ namespace Crypter.API.Controllers.Old
          _userService = userService;
       }
 
-      [HttpGet]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSettingsResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetUserSettingsAsync(CancellationToken cancellationToken)
-      {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userService.GetUserSettingsAsync(userId, cancellationToken);
-         return Ok(result);
-      }
-
-      [HttpPost("contact-info")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateContactInfoResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request, CancellationToken cancellationToken)
-      {
-         IActionResult MakeErrorResponse(UpdateContactInfoError error)
-         {
-#pragma warning disable CS8524
-            return error switch
-            {
-               UpdateContactInfoError.UnknownError
-                  or UpdateContactInfoError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               UpdateContactInfoError.UserNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
-               UpdateContactInfoError.EmailAddressUnavailable => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
-               UpdateContactInfoError.InvalidEmailAddress
-                  or UpdateContactInfoError.InvalidPassword
-                  or UpdateContactInfoError.PasswordNeedsMigration => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
-            };
-#pragma warning restore CS8524
-         }
-
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userAuthenticationService.UpdateUserContactInfoAsync(userId, request, cancellationToken);
-         return result.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(UpdateContactInfoError.UnknownError));
-      }
-
-      [HttpPost("profile")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateProfileResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> UpdateUserProfileAsync([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
-      {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userService.UpdateUserProfileAsync(userId, request, cancellationToken);
-         return Ok(result);
-      }
-
       [HttpPost("notification")]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdateNotificationSettingsResponse))]

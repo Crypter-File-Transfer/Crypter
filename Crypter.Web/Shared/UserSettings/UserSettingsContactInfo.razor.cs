@@ -115,17 +115,15 @@ namespace Crypter.Web.Shared.UserSettings
          await authPasswordResult.IfSomeAsync(async authPassword =>
          {
             var request = new UpdateContactInfoRequest(EmailAddressEdit, authPassword.Password);
-            var maybeUpdate = await CrypterApiService.UpdateContactInfoAsync(request);
-
-            maybeUpdate.DoLeftOrNeither(HandleContactInfoUpdateError, () => HandleContactInfoUpdateError());
-            maybeUpdate.DoRight(right =>
-            {
-               EmailAddress = EmailAddressEdit;
-               Password = "";
-               EmailAddressVerified = false;
-               IsEditing = false;
-            });
-
+            await CrypterApiService.UserSetting.UpdateContactInfoAsync(request)
+               .DoLeftOrNeitherAsync(() => HandleContactInfoUpdateError())
+               .DoRightAsync(x =>
+               {
+                  EmailAddress = EmailAddressEdit;
+                  Password = "";
+                  EmailAddressVerified = false;
+                  IsEditing = false;
+               });
          });
       }
 

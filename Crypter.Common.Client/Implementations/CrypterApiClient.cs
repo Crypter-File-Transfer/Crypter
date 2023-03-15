@@ -106,15 +106,6 @@ namespace Crypter.Common.Client.Implementations
                 select errorableResponse;
       }
 
-      public Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateContactInfoAsync(UpdateContactInfoRequest request)
-      {
-         string url = "/settings/contact-info";
-         return from response in Either<UpdateContactInfoError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpdateContactInfoResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<UpdateContactInfoRequest, UpdateContactInfoResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<UpdateContactInfoError, UpdateContactInfoResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
       public Task<Either<UpdateProfileError, UpdateProfileResponse>> UpdateProfileInfoAsync(UpdateProfileRequest request)
       {
          string url = "/settings/profile";

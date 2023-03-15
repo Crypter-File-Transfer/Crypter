@@ -46,5 +46,12 @@ namespace Crypter.Common.Client.Implementations.Requests
          string url = "/api/user/setting";
          return _crypterAuthenticatedHttpClient.GetMaybeAsync<UserSettingsResponse>(url);
       }
+
+      public Task<Either<UpdateContactInfoError, Unit>> UpdateContactInfoAsync(UpdateContactInfoRequest request)
+      {
+         string url = "/api/user/setting/contact";
+         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
+            .ExtractErrorCode<UpdateContactInfoError, Unit>();
+      }
    }
 }

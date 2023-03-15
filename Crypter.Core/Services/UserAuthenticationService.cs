@@ -53,7 +53,7 @@ namespace Crypter.Core.Services
       Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription, CancellationToken cancellationToken);
       Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription, CancellationToken cancellationToken);
       Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
-      Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken);
+      Task<Either<UpdateContactInfoError, Unit>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken);
       Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken = default);
    }
 
@@ -218,7 +218,7 @@ namespace Crypter.Core.Services
                 select Unit.Default;
       }
 
-      public Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken)
+      public Task<Either<UpdateContactInfoError, Unit>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken)
       {
          return from currentPassword in ValidateRequestPassword(request.CurrentPassword, UpdateContactInfoError.InvalidPassword).AsTask()
                 from emailAddress in ValidateRequestEmailAddress(request.EmailAddress, UpdateContactInfoError.InvalidEmailAddress).AsTask()
@@ -229,7 +229,7 @@ namespace Crypter.Core.Services
                   : Either<UpdateContactInfoError, Unit>.FromLeft(UpdateContactInfoError.InvalidPassword).AsTask()
                 from isEmailAddressAvailable in VerifyEmailIsAddressAvailable(user, emailAddress, UpdateContactInfoError.EmailAddressUnavailable, cancellationToken)
                 from unit in Either<UpdateContactInfoError, Unit>.FromRightAsync(UpdateUserEmailAddressAsync(user, emailAddress, cancellationToken))
-                select new UpdateContactInfoResponse();
+                select Unit.Default;
       }
 
       public Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken = default)

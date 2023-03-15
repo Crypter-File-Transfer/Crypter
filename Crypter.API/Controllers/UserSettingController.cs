@@ -24,14 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Monads;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using System.Threading;
 using System;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
 {
@@ -61,6 +64,40 @@ namespace Crypter.API.Controllers
          Guid userId = _tokenService.ParseUserId(User);
          UserSettingsResponse result = await _userService.GetUserSettingsAsync(userId, cancellationToken);
          return Ok(result);
+      }
+
+      [HttpPost("contact")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request, CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(UpdateContactInfoError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               UpdateContactInfoError.UnknownError
+                  or UpdateContactInfoError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               UpdateContactInfoError.UserNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+               UpdateContactInfoError.EmailAddressUnavailable => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
+               UpdateContactInfoError.InvalidEmailAddress
+                  or UpdateContactInfoError.InvalidPassword
+                  or UpdateContactInfoError.PasswordNeedsMigration => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userAuthenticationService.UpdateUserContactInfoAsync(userId, request, cancellationToken)
+            .MatchAsync(
+               MakeErrorResponse,
+               _ => Ok(),
+               MakeErrorResponse(UpdateContactInfoError.UnknownError));
       }
    }
 }

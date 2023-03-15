@@ -33,5 +33,6 @@ namespace Crypter.Common.Client.Interfaces.Requests
    public interface IUserSettingRequests
    {
       Task<Maybe<UserSettingsResponse>> GetUserSettingsAsync();
+      Task<Either<UpdateContactInfoError, Unit>> UpdateContactInfoAsync(UpdateContactInfoRequest request);
    }
 }

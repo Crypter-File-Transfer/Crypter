@@ -53,9 +53,9 @@ This should also aid developers in deciding where to add a new API endpoint or w
    * PUT /api/user/key/private
 
 * User Settings
-   * GET /api/user/settings
-   * POST /api/user/settings/contact
-   * POST /api/user/settings/contact/email-verification
-   * POST /api/user/settings/profile
-   * POST /api/user/settings/notification
-   * POST /api/user/settings/privacy
+   * GET /api/user/setting
+   * POST /api/user/setting/contact
+   * POST /api/user/setting/contact/email-verification
+   * POST /api/user/setting/profile
+   * POST /api/user/setting/notification
+   * POST /api/user/setting/privacy
