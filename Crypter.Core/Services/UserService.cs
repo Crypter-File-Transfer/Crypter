@@ -45,7 +45,7 @@ namespace Crypter.Core.Services
       Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken);
       Task<UpdateProfileResponse> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken);
       Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken);
-      Task<UpdatePrivacySettingsResponse> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken);
+      Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken);
       Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken);
       Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken);
       Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
@@ -123,7 +123,7 @@ namespace Crypter.Core.Services
             .FirstOrDefaultAsync(cancellationToken);
       }
 
-      public async Task<UpdatePrivacySettingsResponse> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken)
+      public async Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken)
       {
          var userPrivacySettings = await _context.UserPrivacySettings
             .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
@@ -142,7 +142,7 @@ namespace Crypter.Core.Services
          }
 
          await _context.SaveChangesAsync(cancellationToken);
-         return new UpdatePrivacySettingsResponse();
+         return Unit.Default;
       }
 
       public async Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken)

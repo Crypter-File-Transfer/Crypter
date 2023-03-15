@@ -126,5 +126,16 @@ namespace Crypter.API.Controllers
                _ => Ok(),
                MakeErrorResponse(UpdateNotificationSettingsError.UnknownError));
       }
+
+      [HttpPost("privacy")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> UpdateUserPrivacySettingsAsync([FromBody] UpdatePrivacySettingsRequest request, CancellationToken cancellationToken)
+      {
+         Guid userId = _tokenService.ParseUserId(User);
+         await _userService.UpsertUserPrivacySettingsAsync(userId, request, cancellationToken);
+         return Ok();
+      }
    }
 }

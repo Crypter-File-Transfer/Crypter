@@ -30,7 +30,6 @@ using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Settings;
-using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using System;
 using System.Linq;
@@ -103,15 +102,6 @@ namespace Crypter.Common.Client.Implementations
          return from response in Either<UpdateProfileError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpdateProfileResponse> data)>.FromRightAsync(
                   _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<UpdateProfileRequest, UpdateProfileResponse>(url, request))
                 from errorableResponse in ExtractErrorCode<UpdateProfileError, UpdateProfileResponse>(response.data).AsTask()
-                select errorableResponse;
-      }
-
-      public Task<Either<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request)
-      {
-         string url = "/settings/privacy";
-         return from response in Either<UpdatePrivacySettingsError, (HttpStatusCode httpStatus, Either<ErrorResponse, UpdatePrivacySettingsResponse> data)>.FromRightAsync(
-                  _crypterAuthenticatedHttpClient.PostWithStatusCodeAsync<UpdatePrivacySettingsRequest, UpdatePrivacySettingsResponse>(url, request))
-                from errorableResponse in ExtractErrorCode<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>(response.data).AsTask()
                 select errorableResponse;
       }
 

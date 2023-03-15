@@ -53,17 +53,6 @@ namespace Crypter.API.Controllers.Old
          _userService = userService;
       }
 
-      [HttpPost("privacy")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UpdatePrivacySettingsResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> UpdateUserPrivacySettingsAsync([FromBody] UpdatePrivacySettingsRequest request, CancellationToken cancellationToken)
-      {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userService.UpsertUserPrivacySettingsAsync(userId, request, cancellationToken);
-         return Ok(result);
-      }
-
       [HttpPost("verify")]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(VerifyEmailAddressResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]

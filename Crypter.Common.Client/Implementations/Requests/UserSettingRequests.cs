@@ -60,5 +60,12 @@ namespace Crypter.Common.Client.Implementations.Requests
          return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<UpdateNotificationSettingsError, Unit>();
       }
+
+      public Task<Either<UpdatePrivacySettingsError, Unit>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request)
+      {
+         string url = "/api/user/setting/privacy";
+         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
+            .ExtractErrorCode<UpdatePrivacySettingsError, Unit>();
+      }
    }
 }
