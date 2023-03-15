@@ -75,8 +75,8 @@ namespace Crypter.Web.Pages
 
       private async Task GetUserInfoAsync()
       {
-         var maybeSettings = await CrypterApiService.GetUserSettingsAsync();
-         maybeSettings.DoRight(right =>
+         var maybeSettings = await CrypterApiService.UserSetting.GetUserSettingsAsync();
+         maybeSettings.IfSome(right =>
          {
             EmailAddress = right.EmailAddress;
             EmailAddressVerified = right.EmailVerified;

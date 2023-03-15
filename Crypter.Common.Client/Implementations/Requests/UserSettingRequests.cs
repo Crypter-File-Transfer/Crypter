@@ -24,34 +24,27 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Monads;
-using System;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Interfaces
+namespace Crypter.Common.Client.Implementations.Requests
 {
-   public interface ICrypterApiClient
+   public class UserSettingRequests : IUserSettingRequests
    {
-      event EventHandler RefreshTokenRejectedEventHandler;
+      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
 
-      IFileTransferRequests FileTransfer { get; }
-      IMessageTransferRequests MessageTransfer { get; }
-      IMetricsRequests Metrics { get; }
-      IUserRequests User { get; }
-      IUserAuthenticationRequests UserAuthentication { get; }
-      IUserConsentRequests UserConsent { get; }
-      IUserContactRequests UserContact { get; }
-      IUserKeyRequests UserKey { get; }
-      IUserSettingRequests UserSetting { get; }
+      public UserSettingRequests(ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
+      {
+         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+      }
 
-      #region Settings
-      Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateContactInfoAsync(UpdateContactInfoRequest request);
-      Task<Either<UpdateProfileError, UpdateProfileResponse>> UpdateProfileInfoAsync(UpdateProfileRequest request);
-      Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request);
-      Task<Either<UpdatePrivacySettingsError, UpdatePrivacySettingsResponse>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request);
-      Task<Either<VerifyEmailAddressError, VerifyEmailAddressResponse>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
-      #endregion
+      public Task<Maybe<UserSettingsResponse>> GetUserSettingsAsync()
+      {
+         string url = "/api/user/setting";
+         return _crypterAuthenticatedHttpClient.GetMaybeAsync<UserSettingsResponse>(url);
+      }
    }
 }
