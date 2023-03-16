@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Consent;
 using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
@@ -32,6 +31,7 @@ using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,13 +42,13 @@ namespace Crypter.Core.Services
    {
       Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken);
       Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken);
-      Task<Maybe<GetUserProfileResponse>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken);
-      Task<UpdateProfileResponse> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken);
+      Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken);
+      Task<Unit> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken);
       Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken);
-      Task<UpdatePrivacySettingsResponse> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken);
-      Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken);
-      Task<UserSearchResponse> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken);
-      Task<ConsentToRecoveryKeyRisksResponse> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
+      Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken);
+      Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken);
+      Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken);
+      Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
       Task DeleteUserEntityAsync(Guid id, CancellationToken cancellationToken);
       Task DeleteUserTokenEntityAsync(Guid tokenId, CancellationToken cancellationToken);
    }
@@ -74,25 +74,21 @@ namespace Crypter.Core.Services
             .FirstOrDefaultAsync(x => x.Username == username, cancellationToken);
       }
 
-      public async Task<Maybe<GetUserProfileResponse>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken)
+      public Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken)
       {
          Guid? visitorId = userId.Match<Guid?>(
             () => null,
             x => x);
 
-         var profileDTO = await _context.Users
+         return Maybe<UserProfileDTO>.FromAsync(_context.Users
             .Where(x => x.Username == username)
             .Where(LinqUserExpressions.UserProfileIsComplete())
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(visitorId))
             .Select(LinqUserExpressions.ToUserProfileDTOForVisitor(visitorId))
-            .FirstOrDefaultAsync(cancellationToken);
-
-         return profileDTO is null
-            ? Maybe<GetUserProfileResponse>.None
-            : new GetUserProfileResponse(profileDTO);
+            .FirstOrDefaultAsync(cancellationToken));
       }
 
-      public async Task<UpdateProfileResponse> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken)
+      public async Task<Unit> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request, CancellationToken cancellationToken)
       {
          var userProfile = await _context.UserProfiles
             .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
@@ -104,7 +100,7 @@ namespace Crypter.Core.Services
             await _context.SaveChangesAsync(cancellationToken);
          }
 
-         return new UpdateProfileResponse();
+         return Unit.Default;
       }
 
       public Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken)
@@ -127,7 +123,7 @@ namespace Crypter.Core.Services
             .FirstOrDefaultAsync(cancellationToken);
       }
 
-      public async Task<UpdatePrivacySettingsResponse> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken)
+      public async Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request, CancellationToken cancellationToken)
       {
          var userPrivacySettings = await _context.UserPrivacySettings
             .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
@@ -146,10 +142,10 @@ namespace Crypter.Core.Services
          }
 
          await _context.SaveChangesAsync(cancellationToken);
-         return new UpdatePrivacySettingsResponse();
+         return Unit.Default;
       }
 
-      public async Task<Either<UpdateNotificationSettingsError, UpdateNotificationSettingsResponse>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken)
+      public async Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request, CancellationToken cancellationToken)
       {
          bool userEmailVerified = await _context.Users
             .Where(x => x.Id == userId)
@@ -179,14 +175,14 @@ namespace Crypter.Core.Services
          }
 
          await _context.SaveChangesAsync(cancellationToken);
-         return new UpdateNotificationSettingsResponse();
+         return Unit.Default;
       }
 
-      public async Task<UserSearchResponse> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken)
+      public Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken)
       {
          string lowerKeyword = keyword.ToLower();
 
-         var matches = await _context.Users
+         return _context.Users
             .Where(x => x.Username.StartsWith(lowerKeyword)
                || x.Profile.Alias.ToLower().StartsWith(lowerKeyword))
             .Where(LinqUserExpressions.UserProfileIsComplete())
@@ -194,18 +190,16 @@ namespace Crypter.Core.Services
             .OrderBy(x => x.Username)
             .Skip(index)
             .Take(count)
-            .Select(x => new UserSearchResultDTO(x.Username, x.Profile.Alias))
+            .Select(x => new UserSearchResult(x.Username, x.Profile.Alias))
             .ToListAsync(cancellationToken);
-
-         return new UserSearchResponse(matches);
       }
 
-      public async Task<ConsentToRecoveryKeyRisksResponse> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId)
+      public async Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId)
       {
          UserConsentEntity newConsent = new UserConsentEntity(userId, ConsentType.RecoveryKeyRisks, DateTime.UtcNow);
          _context.UserConsents.Add(newConsent);
          await _context.SaveChangesAsync();
-         return new ConsentToRecoveryKeyRisksResponse();
+         return Unit.Default;
       }
 
       public async Task DeleteUserEntityAsync(Guid id, CancellationToken cancellationToken)

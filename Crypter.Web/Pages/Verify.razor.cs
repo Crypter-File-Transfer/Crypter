@@ -40,7 +40,7 @@ namespace Crypter.Web.Pages
       NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       protected EmailVerificationParams EmailVerificationParams = new();
 
@@ -72,13 +72,10 @@ namespace Crypter.Web.Pages
 
       protected async Task VerifyEmailAddressAsync()
       {
-         var maybeVerification = await CrypterApiService.VerifyUserEmailAddressAsync(
+         var verificationResponse = await CrypterApiService.UserSetting.VerifyUserEmailAddressAsync(
             new VerifyEmailAddressRequest(EmailVerificationParams.Code, EmailVerificationParams.Signature));
 
-         EmailVerificationSuccess = maybeVerification.Match(
-            false,
-            right => true);
-
+         EmailVerificationSuccess = verificationResponse.IsRight;
          EmailVerificationInProgress = false;
       }
    }

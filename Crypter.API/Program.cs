@@ -30,12 +30,8 @@ using Crypter.Common.Contracts;
 using Crypter.Core;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
-using Crypter.Core.Services;
 using Crypter.Core.Settings;
-using Crypter.Crypto.Common;
-using Crypter.Crypto.Providers.Default;
 using Hangfire;
-using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -48,92 +44,37 @@ using System.Linq;
 using System.Net;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
 TokenSettings tokenSettings = builder.Configuration
    .GetSection("TokenSettings")
    .Get<TokenSettings>();
 
-builder.Services.AddEmailService(options =>
-{
-   EmailSettings settings = builder.Configuration
+string hangfireConnectionString = builder.Configuration
+   .GetConnectionString("HangfireConnection");
+
+builder.Services.AddCrypterCore(
+   builder.Configuration
       .GetSection("EmailSettings")
-      .Get<EmailSettings>();
+      .Get<EmailSettings>(),
 
-   options.Enabled = settings.Enabled;
-   options.From = settings.From;
-   options.Username = settings.Username;
-   options.Password = settings.Password;
-   options.Host = settings.Host;
-   options.Port = settings.Port;
-});
-
-builder.Services.AddTokenService(options =>
-{
-   options.Audience = tokenSettings.Audience;
-   options.Issuer = tokenSettings.Issuer;
-   options.SecretKey = tokenSettings.SecretKey;
-   options.AuthenticationTokenLifetimeMinutes = tokenSettings.AuthenticationTokenLifetimeMinutes;
-   options.SessionTokenLifetimeMinutes = tokenSettings.SessionTokenLifetimeMinutes;
-   options.DeviceTokenLifetimeDays = tokenSettings.DeviceTokenLifetimeDays;
-});
-
-builder.Services.AddTransferStorageService(options =>
-{
-   TransferStorageSettings settings = builder.Configuration
-      .GetSection("TransferStorageSettings")
-      .Get<TransferStorageSettings>();
-
-   options.AllocatedGB = settings.AllocatedGB;
-   options.Location = settings.Location;
-});
-
-builder.Services.AddHashIdService(options =>
-{
-   HashIdSettings settings = builder.Configuration
+   builder.Configuration
       .GetSection("HashIdSettings")
-      .Get<HashIdSettings>();
+      .Get<HashIdSettings>(),
 
-   options.Salt = settings.Salt;
-});
-
-builder.Services.AddUserAuthenticationService(options =>
-{
-   var settings = builder.Configuration
+   builder.Configuration
       .GetSection("PasswordSettings")
-      .Get<ServerPasswordSettings>();
+      .Get<ServerPasswordSettings>(),
 
-   options.ClientVersion = settings.ClientVersion;
-   options.ServerVersions = settings.ServerVersions;
-});
+   tokenSettings,
 
+   builder.Configuration
+      .GetSection("TransferStorageSettings")
+      .Get<TransferStorageSettings>(),
 
-builder.Services.AddDbContext<DataContext>();
+   builder.Configuration.GetConnectionString("DefaultConnection"),
 
-builder.Services.AddSingleton<IPasswordHashService, PasswordHashService>();
-builder.Services.AddSingleton<ICryptoProvider, DefaultCryptoProvider>();
-
-builder.Services.AddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
-builder.Services.AddScoped<IServerMetricsService, ServerMetricsService>();
-builder.Services.AddScoped<ITransferDownloadService, TransferDownloadService>();
-builder.Services.AddScoped<ITransferUploadService, TransferUploadService>();
-builder.Services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
-builder.Services.AddScoped<IUserContactsService, UserContactsService>();
-builder.Services.AddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
-builder.Services.AddScoped<IUserKeysService, UserKeysService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IUserTransferService, UserTransferService>();
-
-builder.Services.AddHangfire(config => config
-   .UsePostgreSqlStorage(builder.Configuration.GetConnectionString("HangfireConnection"))
-   .UseRecommendedSerializerSettings());
-
-builder.Services.AddHangfireServer(options =>
-{
-   HangfireSettings hangfireSettings = builder.Configuration
-      .GetSection("HangfireSettings")
-      .Get<HangfireSettings>();
-
-   options.WorkerCount = hangfireSettings.Workers;
-});
+   hangfireConnectionString)
+   .AddBackgroundServer(builder.Configuration.GetSection("HangfireSettings").Get<HangfireSettings>());
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
    .AddJwtBearerConfiguration(tokenSettings);

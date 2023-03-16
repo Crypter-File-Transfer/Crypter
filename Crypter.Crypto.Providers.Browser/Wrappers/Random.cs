@@ -26,7 +26,6 @@
 
 using BlazorSodium.Sodium;
 using Crypter.Crypto.Common.Random;
-using System;
 using System.Runtime.Versioning;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers

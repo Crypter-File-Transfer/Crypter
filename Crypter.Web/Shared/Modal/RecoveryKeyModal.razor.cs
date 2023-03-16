@@ -26,8 +26,7 @@
 
 
 using Crypter.Common.Client.Interfaces;
-using Crypter.Common.Client.Interfaces.Models;
-using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Web.Shared.Modal.Template;
@@ -43,7 +42,7 @@ namespace Crypter.Web.Shared.Modal
       protected IJSRuntime JSRuntime { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Inject]
       protected IUserKeysService UserKeysService { get; set; }
@@ -79,7 +78,7 @@ namespace Crypter.Web.Shared.Modal
 
       public async Task OnAcknowledgedClickedAsync()
       {
-         await CrypterApiService.ConsentToRecoveryKeyRisksAsync();
+         await CrypterApiService.UserConsent.ConsentToRecoveryKeyRisksAsync();
          ModalBehaviorRef.Close();
       }
    }

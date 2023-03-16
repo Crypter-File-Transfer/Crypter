@@ -34,7 +34,7 @@ namespace Crypter.Web.Shared.UserSettings
    public partial class UserSettingsPublicDetailsBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Parameter]
       public string Alias { get; set; }
@@ -67,7 +67,7 @@ namespace Crypter.Web.Shared.UserSettings
       protected async Task OnSaveClickedAsync()
       {
          var request = new UpdateProfileRequest(AliasEdit, AboutEdit);
-         await CrypterApiService.UpdateProfileInfoAsync(request);
+         await CrypterApiService.User.UpdateProfileInfoAsync(request);
 
          Alias = AliasEdit;
          About = AboutEdit;

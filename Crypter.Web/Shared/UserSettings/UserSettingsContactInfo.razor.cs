@@ -25,8 +25,8 @@
  */
 
 using Crypter.Common.Client.Interfaces;
-using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
@@ -36,7 +36,7 @@ namespace Crypter.Web.Shared.UserSettings
    public partial class UserSettingsContactInfoBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Inject]
       protected IUserPasswordService UserPasswordService { get; set; }
@@ -115,17 +115,15 @@ namespace Crypter.Web.Shared.UserSettings
          await authPasswordResult.IfSomeAsync(async authPassword =>
          {
             var request = new UpdateContactInfoRequest(EmailAddressEdit, authPassword.Password);
-            var maybeUpdate = await CrypterApiService.UpdateContactInfoAsync(request);
-
-            maybeUpdate.DoLeftOrNeither(HandleContactInfoUpdateError, () => HandleContactInfoUpdateError());
-            maybeUpdate.DoRight(right =>
-            {
-               EmailAddress = EmailAddressEdit;
-               Password = "";
-               EmailAddressVerified = false;
-               IsEditing = false;
-            });
-
+            await CrypterApiService.UserSetting.UpdateContactInfoAsync(request)
+               .DoLeftOrNeitherAsync(() => HandleContactInfoUpdateError())
+               .DoRightAsync(x =>
+               {
+                  EmailAddress = EmailAddressEdit;
+                  Password = "";
+                  EmailAddressVerified = false;
+                  IsEditing = false;
+               });
          });
       }
 

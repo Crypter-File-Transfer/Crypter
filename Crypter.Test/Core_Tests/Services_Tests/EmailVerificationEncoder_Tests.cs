@@ -28,7 +28,7 @@ using Crypter.Core.Services;
 using NUnit.Framework;
 using System;
 
-namespace Crypter.Test.Core_Tests_Services_Tests
+namespace Crypter.Test.Core_Tests.Services_Tests
 {
    [TestFixture]
    public class EmailVerificationEncoder_Tests

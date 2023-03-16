@@ -39,17 +39,17 @@ namespace Crypter.Common.Client.Transfer.Handlers
 {
    public class DownloadFileHandler : DownloadHandler
    {
-      public DownloadFileHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
-         : base(crypterApiService, cryptoProvider, userSessionService, transferSettings)
+      public DownloadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
+         : base(crypterApiClient, cryptoProvider, userSessionService, transferSettings)
       { }
 
-      public async Task<Either<DownloadTransferPreviewError, DownloadTransferFilePreviewResponse>> DownloadPreviewAsync()
+      public async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> DownloadPreviewAsync()
       {
 #pragma warning disable CS8524
          var response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFilePreviewAsync(_transferHashId),
-            TransferUserType.User => await _crypterApiService.DownloadUserFilePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiClient.FileTransfer.GetAnonymousFilePreviewAsync(_transferHashId),
+            TransferUserType.User => await _crypterApiClient.FileTransfer.GetUserFilePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
 
@@ -63,15 +63,15 @@ namespace Crypter.Common.Client.Transfer.Handlers
             () => throw new Exception("Missing symmetric key"),
             x => x);
 
-         DownloadTransferCiphertextRequest request = _serverProof.Match(
-            () => throw new Exception("Missing server key"),
-            x => new DownloadTransferCiphertextRequest(x));
+         byte[] serverProof = _serverProof.Match(
+            () => throw new Exception("Missing server proof"),
+            x => x);
 
 #pragma warning disable CS8524
          Either<DownloadTransferCiphertextError, StreamDownloadResponse> response = _transferUserType switch
          {
-            TransferUserType.Anonymous => await _crypterApiService.DownloadAnonymousFileCiphertextAsync(_transferHashId, request),
-            TransferUserType.User => await _crypterApiService.DownloadUserFileCiphertextAsync(_transferHashId, request, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await _crypterApiClient.FileTransfer.GetAnonymousFileCiphertextAsync(_transferHashId, serverProof),
+            TransferUserType.User => await _crypterApiClient.FileTransfer.GetUserFileCiphertextAsync(_transferHashId, serverProof, _userSessionService.Session.IsSome)
          };
 #pragma warning restore CS8524
 

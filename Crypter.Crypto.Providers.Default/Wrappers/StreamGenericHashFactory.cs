@@ -35,7 +35,7 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
 
       public IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default)
       {
-         throw new NotImplementedException();
+         return new StreamGenericHash(hashLength, key);
       }
    }
 }

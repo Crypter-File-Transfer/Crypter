@@ -41,10 +41,8 @@ namespace Crypter.Core.Services
 {
    public interface ITransferUploadService
    {
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousMessageAsync(UploadMessageTransferRequest request, Stream ciphertext, CancellationToken cancellationToken);
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserMessageAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadMessageTransferRequest request, Stream ciphertext, CancellationToken cancellationToken);
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousFileAsync(UploadFileTransferRequest request, Stream ciphertext, CancellationToken cancellationToken);
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserFileAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadFileTransferRequest request, Stream ciphertext, CancellationToken cancellationToken);
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<Guid> senderId, Maybe<string> recipientUsername, UploadFileTransferRequest request, Stream ciphertextStream);
+      Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<Guid> senderId, Maybe<string> recipientUsername, UploadMessageTransferRequest request, Stream ciphertextStream);
    }
 
    public class TransferUploadService : ITransferUploadService
@@ -68,75 +66,165 @@ namespace Crypter.Core.Services
          _hashIdService = hashIdService;
       }
 
-      public Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousMessageAsync(UploadMessageTransferRequest request, Stream ciphertext, CancellationToken cancellationToken)
-      {
-         return from diskSpace in GetRequiredDiskSpaceAsync(ciphertext.Length, cancellationToken)
-                from lifetimeHours in GetValidLifetimeHours(request.LifetimeHours).AsTask()
-                let transferId = Guid.NewGuid()
-                from savedToDisk in SaveMessageToDiskAsync(TransferUserType.Anonymous, transferId, ciphertext, cancellationToken).ToLeftEitherAsync(Unit.Default)
-                from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveAnonymousMessageTransferToDatabaseAsync(transferId, diskSpace, request, cancellationToken))
-                let jobId = ScheduleTransferDeletion(transferId, TransferItemType.Message, TransferUserType.Anonymous, savedToDatabase.ExpirationUTC)
-                select savedToDatabase;
-      }
-
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserMessageAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadMessageTransferRequest request, Stream ciphertext, CancellationToken cancellationToken)
+      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<Guid> senderId, Maybe<string> recipientUsername, UploadFileTransferRequest request, Stream ciphertextStream)
       {
          Maybe<Guid> recipientId = await recipientUsername.MatchAsync(
             () => Maybe<Guid>.None,
-            async x => await GetRecipientIdAsync(sender, x, cancellationToken));
+            async x => await GetRecipientIdAsync(senderId, x));
 
          if (recipientUsername.IsSome && recipientId.IsNone)
          {
             return UploadTransferError.RecipientNotFound;
          }
 
-         var task = from diskSpace in GetRequiredDiskSpaceAsync(ciphertext.Length, cancellationToken)
-                    from lifetimeHours in GetValidLifetimeHours(request.LifetimeHours).AsTask()
-                    let transferId = Guid.NewGuid()
-                    from savedToDisk in SaveMessageToDiskAsync(TransferUserType.User, transferId, ciphertext, cancellationToken).ToLeftEitherAsync(Unit.Default)
-                    from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveUserMessageTransferToDatabaseAsync(transferId, diskSpace, sender, recipientId, request, cancellationToken))
-                    from emailJobId in Either<UploadTransferError, string>.FromRightAsync(QueueTransferNotificationAsync(transferId, TransferItemType.Message, recipientId))
-                    let deletionJobId = ScheduleTransferDeletion(transferId, TransferItemType.Message, TransferUserType.User, savedToDatabase.ExpirationUTC)
-                    select savedToDatabase;
-
-         return await task;
+         return await (from diskSpace in GetRequiredDiskSpaceAsync(ciphertextStream.Length)
+                       from lifetimeHours in ValidateLifetimeHours(request.LifetimeHours).AsTask()
+                       let transferId = Guid.NewGuid()
+                       let transferUserType = DetermineTransferUserType(senderId, recipientId)
+                       from savedToDisk in SaveFileToDiskAsync(transferUserType, transferId, ciphertextStream).ToLeftEitherAsync(Unit.Default)
+                       from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveFileTransferToDatabaseAsync(transferId, senderId, recipientId, diskSpace, request))
+                       from _ in Either<UploadTransferError, Unit>.FromRightAsync(QueueTransferNotificationAsync(transferId, TransferItemType.File, recipientId))
+                       let jobId = ScheduleTransferDeletion(transferId, TransferItemType.File, transferUserType, savedToDatabase.ExpirationUTC)
+                       select savedToDatabase);
       }
 
-      public Task<Either<UploadTransferError, UploadTransferResponse>> UploadAnonymousFileAsync(UploadFileTransferRequest request, Stream ciphertext, CancellationToken cancellationToken)
-      {
-         return from diskSpace in GetRequiredDiskSpaceAsync(ciphertext.Length, cancellationToken)
-                from lifetimeHours in GetValidLifetimeHours(request.LifetimeHours).AsTask()
-                let transferId = Guid.NewGuid()
-                from savedToDisk in SaveFileToDiskAsync(TransferUserType.Anonymous, transferId, ciphertext, cancellationToken).ToLeftEitherAsync(Unit.Default)
-                from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveAnonymousFileTransferToDatabaseAsync(transferId, diskSpace, request, cancellationToken))
-                let jobId = ScheduleTransferDeletion(transferId, TransferItemType.File, TransferUserType.Anonymous, savedToDatabase.ExpirationUTC)
-                select savedToDatabase;
-      }
-
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadUserFileAsync(Maybe<Guid> sender, Maybe<string> recipientUsername, UploadFileTransferRequest request, Stream ciphertext, CancellationToken cancellationToken)
+      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<Guid> senderId, Maybe<string> recipientUsername, UploadMessageTransferRequest request, Stream ciphertextStream)
       {
          Maybe<Guid> recipientId = await recipientUsername.MatchAsync(
             () => Maybe<Guid>.None,
-            async x => await GetRecipientIdAsync(sender, x, cancellationToken));
+            async x => await GetRecipientIdAsync(senderId, x));
 
          if (recipientUsername.IsSome && recipientId.IsNone)
          {
             return UploadTransferError.RecipientNotFound;
          }
 
-         var task = from diskSpace in GetRequiredDiskSpaceAsync(ciphertext.Length, cancellationToken)
-                    from lifetimeHours in GetValidLifetimeHours(request.LifetimeHours).AsTask()
+         var task = from diskSpace in GetRequiredDiskSpaceAsync(ciphertextStream.Length)
+                    from lifetimeHours in ValidateLifetimeHours(request.LifetimeHours).AsTask()
                     let transferId = Guid.NewGuid()
-                    from savedToDisk in SaveFileToDiskAsync(TransferUserType.User, transferId, ciphertext, cancellationToken).ToLeftEitherAsync(Unit.Default)
-                    from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveUserFileTransferToDatabaseAsync(transferId, diskSpace, sender, recipientId, request, cancellationToken))
-                    from emailJobId in Either<UploadTransferError, string>.FromRightAsync(QueueTransferNotificationAsync(transferId, TransferItemType.File, recipientId))
-                    let deletionJobId = ScheduleTransferDeletion(transferId, TransferItemType.File, TransferUserType.User, savedToDatabase.ExpirationUTC)
+                    let transferUserType = DetermineTransferUserType(senderId, recipientId)
+                    from savedToDisk in SaveMessageToDiskAsync(transferUserType, transferId, ciphertextStream).ToLeftEitherAsync(Unit.Default)
+                    from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(SaveMessageTransferToDatabaseAsync(transferId, senderId, recipientId, diskSpace, request))
+                    from _ in Either<UploadTransferError, Unit>.FromRightAsync(QueueTransferNotificationAsync(transferId, TransferItemType.Message, recipientId))
+                    let deletionJobId = ScheduleTransferDeletion(transferId, TransferItemType.Message, transferUserType, savedToDatabase.ExpirationUTC)
                     select savedToDatabase;
 
          return await task;
       }
 
-      private async Task<Either<UploadTransferError, long>> GetRequiredDiskSpaceAsync(long ciphertextSize, CancellationToken cancellationToken)
+      private static TransferUserType DetermineTransferUserType(Maybe<Guid> senderId, Maybe<Guid> recipientId)
+      {
+         if (senderId.SomeOrDefault(Guid.Empty) != Guid.Empty)
+         {
+            return TransferUserType.User;
+         }
+
+         if (recipientId.SomeOrDefault(Guid.Empty) != Guid.Empty)
+         {
+            return TransferUserType.User;
+         }
+
+         return TransferUserType.Anonymous;
+      }
+
+      private static TransferUserType DetermineTransferUserType(Guid? senderId, Guid? recipientId)
+      {
+         return senderId is null && recipientId is null
+            ? TransferUserType.Anonymous
+            : TransferUserType.User;
+      }
+
+      private async Task<UploadTransferResponse> SaveFileTransferToDatabaseAsync(Guid transferId, Maybe<Guid> senderId, Maybe<Guid> recipientId, long requiredDiskSpace, UploadFileTransferRequest request, CancellationToken cancellationToken = default)
+      {
+         DateTime now = DateTime.UtcNow;
+         DateTime expiration = now.AddHours(request.LifetimeHours);
+
+         Guid? nullableSenderId = senderId.Map<Guid?>(x => x).SomeOrDefault(null);
+         Guid? nullableRecipientId = recipientId.Map<Guid?>(x => x).SomeOrDefault(null);
+
+         if (nullableSenderId is null && nullableRecipientId is null)
+         {
+            AnonymousFileTransferEntity transferEntity = new AnonymousFileTransferEntity(
+               id: transferId,
+               size: requiredDiskSpace,
+               publicKey: request.PublicKey,
+               keyExchangeNonce: request.KeyExchangeNonce,
+               proof: request.Proof,
+               created: now,
+               expiration: expiration,
+               fileName: request.Filename,
+               contentType: request.ContentType);
+            _context.AnonymousFileTransfers.Add(transferEntity);
+         }
+         else
+         {
+            UserFileTransferEntity transferEntity = new UserFileTransferEntity(
+               id: transferId,
+               size: requiredDiskSpace,
+               publicKey: request.PublicKey,
+               keyExchangeNonce: request.KeyExchangeNonce,
+               proof: request.Proof,
+               created: now,
+               expiration: expiration,
+               senderId: nullableSenderId,
+               recipientId: nullableRecipientId,
+               fileName: request.Filename,
+               contentType: request.ContentType);
+            _context.UserFileTransfers.Add(transferEntity);
+         }
+
+         await _context.SaveChangesAsync(cancellationToken);
+
+         string hashId = _hashIdService.Encode(transferId);
+         TransferUserType userType = DetermineTransferUserType(nullableSenderId, nullableRecipientId);
+         return new UploadTransferResponse(hashId, expiration, userType);
+      }
+
+      private async Task<UploadTransferResponse> SaveMessageTransferToDatabaseAsync(Guid transferId, Maybe<Guid> senderId, Maybe<Guid> recipientId, long requiredDiskSpace, UploadMessageTransferRequest request, CancellationToken cancellationToken = default)
+      {
+         DateTime now = DateTime.UtcNow;
+         DateTime expiration = now.AddHours(request.LifetimeHours);
+
+         Guid? nullableSenderId = senderId.Map<Guid?>(x => x).SomeOrDefault(null);
+         Guid? nullableRecipientId = recipientId.Map<Guid?>(x => x).SomeOrDefault(null);
+
+         if (nullableSenderId is null && nullableRecipientId is null)
+         {
+            AnonymousMessageTransferEntity transferEntity = new AnonymousMessageTransferEntity(
+               id: transferId,
+               size: requiredDiskSpace,
+               publicKey: request.PublicKey,
+               keyExchangeNonce: request.KeyExchangeNonce,
+               proof: request.Proof,
+               created: now,
+               expiration: expiration,
+               subject: request.Subject);
+            _context.AnonymousMessageTransfers.Add(transferEntity);
+         }
+         else
+         {
+            UserMessageTransferEntity transferEntity = new UserMessageTransferEntity(
+               id: transferId,
+               size: requiredDiskSpace,
+               publicKey: request.PublicKey,
+               keyExchangeNonce: request.KeyExchangeNonce,
+               proof: request.Proof,
+               created: now,
+               expiration: expiration,
+               senderId: nullableSenderId,
+               recipientId: nullableRecipientId,
+               subject: request.Subject);
+            _context.UserMessageTransfers.Add(transferEntity);
+         }
+
+         await _context.SaveChangesAsync(cancellationToken);
+
+         string hashId = _hashIdService.Encode(transferId);
+         TransferUserType userType = DetermineTransferUserType(nullableSenderId, nullableRecipientId);
+         return new UploadTransferResponse(hashId, expiration, userType);
+      }
+
+      private async Task<Either<UploadTransferError, long>> GetRequiredDiskSpaceAsync(long ciphertextSize, CancellationToken cancellationToken = default)
       {
          bool serverHasDiskSpace = await IsDiskSpaceForTransferAsync(ciphertextSize, cancellationToken);
          return serverHasDiskSpace
@@ -144,7 +232,7 @@ namespace Crypter.Core.Services
             : UploadTransferError.OutOfSpace;
       }
 
-      private static Either<UploadTransferError, int> GetValidLifetimeHours(int lifetimeHours)
+      private static Either<UploadTransferError, int> ValidateLifetimeHours(int lifetimeHours)
       {
          bool inRange = lifetimeHours <= _maxLifetimeHours || lifetimeHours >= _minLifetimeHours;
          return inRange
@@ -152,15 +240,13 @@ namespace Crypter.Core.Services
             : UploadTransferError.InvalidRequestedLifetimeHours;
       }
 
-      private async Task<Maybe<Guid>> GetRecipientIdAsync(Maybe<Guid> senderId, string recipientUsername, CancellationToken cancellationToken)
+      private async Task<Maybe<Guid>> GetRecipientIdAsync(Maybe<Guid> senderId, string recipientUsername, CancellationToken cancellationToken = default)
       {
-         Guid? effectiveSenderId = senderId.Match<Guid?>(
-            () => null,
-            x => x);
+         Guid? nullableSenderId = senderId.Map<Guid?>(x => x).SomeOrDefault(null);
 
          Guid recipientId = await _context.Users
             .Where(x => x.Username.ToLower() == recipientUsername.ToLower())
-            .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(effectiveSenderId))
+            .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(nullableSenderId))
             .Select(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -169,7 +255,7 @@ namespace Crypter.Core.Services
             : recipientId;
       }
 
-      private async Task<Maybe<UploadTransferError>> SaveMessageToDiskAsync(TransferUserType userType, Guid id, Stream ciphertext, CancellationToken cancellationToken)
+      private async Task<Maybe<UploadTransferError>> SaveMessageToDiskAsync(TransferUserType userType, Guid id, Stream ciphertext, CancellationToken cancellationToken = default)
       {
          var storageSuccess = await _transferStorageService.SaveTransferAsync(id, TransferItemType.Message, userType, ciphertext, cancellationToken);
          return storageSuccess
@@ -177,7 +263,7 @@ namespace Crypter.Core.Services
             : UploadTransferError.UnknownError;
       }
 
-      private async Task<Maybe<UploadTransferError>> SaveFileToDiskAsync(TransferUserType userType, Guid id, Stream ciphertext, CancellationToken cancellationToken)
+      private async Task<Maybe<UploadTransferError>> SaveFileToDiskAsync(TransferUserType userType, Guid id, Stream ciphertext, CancellationToken cancellationToken = default)
       {
          var storageSuccess = await _transferStorageService.SaveTransferAsync(id, TransferItemType.File, userType, ciphertext, cancellationToken);
          return storageSuccess
@@ -185,82 +271,15 @@ namespace Crypter.Core.Services
             : UploadTransferError.UnknownError;
       }
 
-      private async Task<UploadTransferResponse> SaveAnonymousMessageTransferToDatabaseAsync(Guid id, long requiredDiskSpace, UploadMessageTransferRequest request, CancellationToken cancellationToken)
-      {
-         DateTime now = DateTime.UtcNow;
-         DateTime expiration = now.AddHours(request.LifetimeHours);
-         var newTransferEntity = new AnonymousMessageTransferEntity(id, requiredDiskSpace, request.PublicKey, request.KeyExchangeNonce, request.Proof, now, expiration, request.Subject);
-         _context.AnonymousMessageTransfers.Add(newTransferEntity);
-         await _context.SaveChangesAsync(cancellationToken);
-
-         string hashId = _hashIdService.Encode(id);
-         return new UploadTransferResponse(hashId, expiration, TransferUserType.Anonymous);
-      }
-
-      private async Task<UploadTransferResponse> SaveUserMessageTransferToDatabaseAsync(Guid id, long requiredDiskSpace, Maybe<Guid> sender, Maybe<Guid> recipient, UploadMessageTransferRequest request, CancellationToken cancellationToken)
-      {
-         DateTime now = DateTime.UtcNow;
-         DateTime expiration = now.AddHours(request.LifetimeHours);
-
-         Guid? nullableSenderId = sender.Match<Guid?>(
-            () => null,
-            x => x);
-
-         Guid? nullableRecipientId = recipient.Match<Guid?>(
-            () => null,
-            x => x);
-
-         var newTransferEntity = new UserMessageTransferEntity(id, requiredDiskSpace, request.PublicKey, request.KeyExchangeNonce, request.Proof, now, expiration, nullableSenderId, nullableRecipientId, request.Subject);
-         _context.UserMessageTransfers.Add(newTransferEntity);
-         await _context.SaveChangesAsync(cancellationToken);
-
-         string hashId = _hashIdService.Encode(id);
-         return new UploadTransferResponse(hashId, expiration, TransferUserType.User);
-      }
-
-      private async Task<UploadTransferResponse> SaveAnonymousFileTransferToDatabaseAsync(Guid id, long requiredDiskSpace, UploadFileTransferRequest request, CancellationToken cancellationToken)
-      {
-         DateTime now = DateTime.UtcNow;
-         DateTime expiration = now.AddHours(request.LifetimeHours);
-         var newTransferEntity = new AnonymousFileTransferEntity(id, requiredDiskSpace, request.PublicKey, request.KeyExchangeNonce, request.Proof, now, expiration, request.Filename, request.ContentType);
-         _context.AnonymousFileTransfers.Add(newTransferEntity);
-         await _context.SaveChangesAsync(cancellationToken);
-
-         string hashId = _hashIdService.Encode(id);
-         return new UploadTransferResponse(hashId, expiration, TransferUserType.Anonymous);
-      }
-
-      private async Task<UploadTransferResponse> SaveUserFileTransferToDatabaseAsync(Guid id, long requiredDiskSpace, Maybe<Guid> sender, Maybe<Guid> recipient, UploadFileTransferRequest request, CancellationToken cancellationToken)
-      {
-         DateTime now = DateTime.UtcNow;
-         DateTime expiration = now.AddHours(request.LifetimeHours);
-
-         Guid? nullableSenderId = sender.Match<Guid?>(
-            () => null,
-            x => x);
-
-         Guid? nullableRecipientId = recipient.Match<Guid?>(
-            () => null,
-            x => x);
-
-         var newTransferEntity = new UserFileTransferEntity(id, requiredDiskSpace, request.PublicKey, request.KeyExchangeNonce, request.Proof, now, expiration, nullableSenderId, nullableRecipientId, request.Filename, request.ContentType);
-         _context.UserFileTransfers.Add(newTransferEntity);
-         await _context.SaveChangesAsync(cancellationToken);
-
-         string hashId = _hashIdService.Encode(id);
-         return new UploadTransferResponse(hashId, expiration, TransferUserType.User);
-      }
-
-      private async Task<bool> IsDiskSpaceForTransferAsync(long transferSize, CancellationToken cancellationToken)
+      private async Task<bool> IsDiskSpaceForTransferAsync(long transferSize, CancellationToken cancellationToken = default)
       {
          var diskMetrics = await _serverMetricsService.GetAggregateDiskMetricsAsync(cancellationToken);
          return transferSize <= diskMetrics.Available;
       }
 
-      private async Task<string> QueueTransferNotificationAsync(Guid itemId, TransferItemType itemType, Maybe<Guid> maybeUserId)
+      private async Task<Unit> QueueTransferNotificationAsync(Guid itemId, TransferItemType itemType, Maybe<Guid> maybeUserId, CancellationToken cancellationToken = default)
       {
-         return await maybeUserId.MatchAsync(
-            () => string.Empty,
+         await maybeUserId.IfSomeAsync(
             async userId =>
             {
                UserEntity user = await _context.Users
@@ -268,10 +287,11 @@ namespace Crypter.Core.Services
                   .Where(x => x.NotificationSetting.EnableTransferNotifications
                      && x.EmailVerified
                      && x.NotificationSetting.EmailNotifications)
-                  .FirstOrDefaultAsync();
+                  .FirstOrDefaultAsync(cancellationToken);
 
-               return _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType, CancellationToken.None));
+               _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType, CancellationToken.None));
             });
+         return Unit.Default;
       }
 
       private string ScheduleTransferDeletion(Guid itemId, TransferItemType itemType, TransferUserType userType, DateTime itemExpiration)

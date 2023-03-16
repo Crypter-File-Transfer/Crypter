@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
@@ -49,12 +49,12 @@ namespace Crypter.Core.Services
 {
    public interface IUserAuthenticationService
    {
-      Task<Either<RegistrationError, RegistrationResponse>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken);
+      Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken);
       Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription, CancellationToken cancellationToken);
       Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription, CancellationToken cancellationToken);
-      Task<Either<LogoutError, LogoutResponse>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
-      Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken);
-      Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(Guid userId, TestPasswordRequest request, CancellationToken cancellationToken);
+      Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
+      Task<Either<UpdateContactInfoError, Unit>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken);
+      Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken = default);
    }
 
    public static class UserAuthenticationServiceExtensions
@@ -103,7 +103,7 @@ namespace Crypter.Core.Services
          };
       }
 
-      public Task<Either<RegistrationError, RegistrationResponse>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken)
+      public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken)
       {
          return from validRegistrationRequest in ValidateRegistrationRequest(request).AsTask()
                 from usernameAvailable in VerifyUsernameIsAvailableAsync(validRegistrationRequest.Username, RegistrationError.UsernameTaken, cancellationToken)
@@ -112,7 +112,7 @@ namespace Crypter.Core.Services
                 from newUserEntity in Either<RegistrationError, UserEntity>.FromRight(InsertNewUserInContext(validRegistrationRequest.Username, validRegistrationRequest.EmailAddress, securePasswordData.Salt, securePasswordData.Hash, _latestServerPasswordVersion, _clientPasswordVersion)).AsTask()
                 from entriesModified in Either<RegistrationError, int>.FromRightAsync(SaveContextChangesAsync(cancellationToken))
                 let jobId = EnqueueEmailAddressVerificationEmailDelivery(newUserEntity.Id)
-                select new RegistrationResponse();
+                select Unit.Default;
       }
 
       /// <summary>
@@ -208,17 +208,17 @@ namespace Crypter.Core.Services
                 select new RefreshResponse(authenticationToken, newRefreshTokenData.Token, databaseToken.Type);
       }
 
-      public Task<Either<LogoutError, LogoutResponse>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken)
+      public Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken)
       {
          return from userId in ParseUserId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
                 from tokenId in ParseRefreshTokenId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
                 from databaseToken in FetchUserTokenAsync(tokenId, cancellationToken).ToEitherAsync(LogoutError.InvalidToken)
                 let databaseTokenDeleted = DeleteUserTokenInContext(databaseToken)
                 from entriesModified in Either<LogoutError, int>.FromRightAsync(SaveContextChangesAsync(cancellationToken))
-                select new LogoutResponse();
+                select Unit.Default;
       }
 
-      public Task<Either<UpdateContactInfoError, UpdateContactInfoResponse>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken)
+      public Task<Either<UpdateContactInfoError, Unit>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken)
       {
          return from currentPassword in ValidateRequestPassword(request.CurrentPassword, UpdateContactInfoError.InvalidPassword).AsTask()
                 from emailAddress in ValidateRequestEmailAddress(request.EmailAddress, UpdateContactInfoError.InvalidEmailAddress).AsTask()
@@ -229,18 +229,18 @@ namespace Crypter.Core.Services
                   : Either<UpdateContactInfoError, Unit>.FromLeft(UpdateContactInfoError.InvalidPassword).AsTask()
                 from isEmailAddressAvailable in VerifyEmailIsAddressAvailable(user, emailAddress, UpdateContactInfoError.EmailAddressUnavailable, cancellationToken)
                 from unit in Either<UpdateContactInfoError, Unit>.FromRightAsync(UpdateUserEmailAddressAsync(user, emailAddress, cancellationToken))
-                select new UpdateContactInfoResponse();
+                select Unit.Default;
       }
 
-      public Task<Either<TestPasswordError, TestPasswordResponse>> TestUserPasswordAsync(Guid userId, TestPasswordRequest request, CancellationToken cancellationToken)
+      public Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken = default)
       {
-         return from suppliedPassword in ValidateRequestPassword(request.Password, TestPasswordError.InvalidPassword).AsTask()
-                from user in FetchUserAsync(userId, TestPasswordError.UnknownError, cancellationToken)
-                from unit0 in VerifyUserPasswordIsMigrated(user, TestPasswordError.PasswordNeedsMigration).ToLeftEither(Unit.Default).AsTask()
+         return from suppliedPassword in ValidateRequestPassword(request.Password, PasswordChallengeError.InvalidPassword).AsTask()
+                from user in FetchUserAsync(userId, PasswordChallengeError.UnknownError, cancellationToken)
+                from unit0 in VerifyUserPasswordIsMigrated(user, PasswordChallengeError.PasswordNeedsMigration).ToLeftEither(Unit.Default).AsTask()
                 from passwordVerified in VerifyPassword(suppliedPassword, user.PasswordHash, user.PasswordSalt, _serverPasswordVersions[_latestServerPasswordVersion].Iterations)
-                  ? Either<TestPasswordError, Unit>.FromRight(Unit.Default).AsTask()
-                  : Either<TestPasswordError, Unit>.FromLeft(TestPasswordError.InvalidPassword).AsTask()
-                select new TestPasswordResponse();
+                  ? Either<PasswordChallengeError, Unit>.FromRight(Unit.Default).AsTask()
+                  : Either<PasswordChallengeError, Unit>.FromLeft(PasswordChallengeError.InvalidPassword).AsTask()
+                select Unit.Default;
       }
 
       private Either<LoginError, ValidLoginRequest> ValidateLoginRequest(LoginRequest request)

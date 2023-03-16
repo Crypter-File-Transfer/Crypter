@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+   database:
+      container_name: postgres
+      image: postgres:14.2
+      volumes:
+         - "./postgres-init-files:/docker-entrypoint-initdb.d"
+         - "${POSTGRES_DATA_DIR:?err}:/var/lib/postgresql/data"
+      restart: unless-stopped
+      environment:
+         POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+         POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+         POSTGRES_USER: postgres
+         POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?err}
+         POSTGRES_DB: postgres
+      ports:
+         - 127.0.0.1:5432:5432

@@ -7,25 +7,31 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="Integration_Tests\Configuration\appsettings.Test.Linux.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+   <ItemGroup>
+      <Content Include="Integration_Tests\Configuration\appsettings.Test.Windows.json">
+         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.2" />
     <PackageReference Include="Moq" Version="4.18.4" />
     <PackageReference Include="NUnit" Version="3.13.3" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.3.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    <PackageReference Include="Respawn" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Crypter.API\Crypter.API.csproj" />
     <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
     <ProjectReference Include="..\Crypter.Crypto.Providers.Default\Crypter.Crypto.Providers.Default.csproj" />
     <ProjectReference Include="..\Crypter.Web\Crypter.Web.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Assets\Saturn.jpg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\WindowsCodecsRaw.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

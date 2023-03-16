@@ -49,17 +49,30 @@ namespace Crypter.Common.Monads
          return await maybeResult.MatchAsync(noneAsync, some);
       }
 
-      public static async Task<Unit> IfSomeAsync<TValue>(this Task<Maybe<TValue>> maybe, Func<TValue, Task> someAsync)
+      public static Task<TValue> SomeOrDefaultAsync<TValue>(this Task<Maybe<TValue>> maybe, TValue defaultValue)
+      {
+         return maybe.MatchAsync(
+            () => defaultValue,
+            x => x);
+      }
+
+      public static async Task<Maybe<TValue>> IfSomeAsync<TValue>(this Task<Maybe<TValue>> maybe, Action<TValue> some)
+      {
+         Maybe<TValue> maybeResult = await maybe;
+         return maybeResult.IfSome(some);
+      }
+
+      public static async Task<Maybe<TValue>> IfSomeAsync<TValue>(this Task<Maybe<TValue>> maybe, Func<TValue, Task> someAsync)
       {
          Maybe<TValue> maybeResult = await maybe;
          return await maybeResult.IfSomeAsync(someAsync);
       }
 
-      public static Task<Maybe<TResult>> BindAsync<TValue, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, TResult> bind)
+      public static Task<Maybe<TResult>> MapAsync<TValue, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, TResult> map)
       {
          return maybe.MatchAsync(
             () => Maybe<TResult>.None,
-            value => bind(value));
+            value => map(value));
       }
 
       public static Task<Maybe<TResult>> BindAsync<TValue, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, Task<Maybe<TResult>>> bindAsync)
@@ -83,16 +96,16 @@ namespace Crypter.Common.Monads
             value => Either<TValue, TRight>.FromLeft(value));
       }
 
-      public static async Task<Maybe<TResult>> Select<TValue, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, TResult> map)
+      public static Task<Maybe<TResult>> Select<TValue, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, TResult> map)
       {
-         return await maybe.MatchAsync(
+         return maybe.MatchAsync(
             () => Maybe<TResult>.None,
             value => map(value));
       }
 
-      public static async Task<Maybe<TResult>> SelectMany<TValue, TIntermediate, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, Maybe<TIntermediate>> bind, Func<TValue, TIntermediate, TResult> project)
+      public static Task<Maybe<TResult>> SelectMany<TValue, TIntermediate, TResult>(this Task<Maybe<TValue>> maybe, Func<TValue, Maybe<TIntermediate>> bind, Func<TValue, TIntermediate, TResult> project)
       {
-         return await maybe.MatchAsync(
+         return maybe.MatchAsync(
             () => Maybe<TResult>.None,
             value =>
             {
@@ -105,9 +118,9 @@ namespace Crypter.Common.Monads
             });
       }
 
-      public static async Task<Maybe<TValue>> Where<TValue>(this Task<Maybe<TValue>> maybe, Func<TValue, bool> predicate)
+      public static Task<Maybe<TValue>> Where<TValue>(this Task<Maybe<TValue>> maybe, Func<TValue, bool> predicate)
       {
-         return await maybe.MatchAsync(
+         return maybe.MatchAsync(
             () => Maybe<TValue>.None,
             value =>
             {

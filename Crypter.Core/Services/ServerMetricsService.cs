@@ -37,7 +37,7 @@ namespace Crypter.Core.Services
 {
    public interface IServerMetricsService
    {
-      Task<DiskMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken);
+      Task<PublicStorageMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken);
    }
 
    public class ServerMetricsService : IServerMetricsService
@@ -51,7 +51,7 @@ namespace Crypter.Core.Services
          _transferStorageSettings = transferStorageSettings.Value;
       }
 
-      public async Task<DiskMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken)
+      public async Task<PublicStorageMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken)
       {
          IQueryable<long> anonymousMessageSizes = _context.AnonymousMessageTransfers
             .Select(x => (long)x.Size);
@@ -74,7 +74,7 @@ namespace Crypter.Core.Services
          long allocatedBytes = _transferStorageSettings.AllocatedGB * Convert.ToInt64(Math.Pow(2, 30));
          long freeBytes = allocatedBytes - usedBytes;
 
-         return new DiskMetricsResponse(allocatedBytes, freeBytes);
+         return new PublicStorageMetricsResponse(allocatedBytes, freeBytes);
       }
    }
 }

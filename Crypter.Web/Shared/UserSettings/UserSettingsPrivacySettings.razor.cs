@@ -35,7 +35,7 @@ namespace Crypter.Web.Shared.UserSettings
    public class UserSettingsPrivacySettingsBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Parameter]
       public UserVisibilityLevel ProfileVisibility { get; set; }
@@ -74,7 +74,7 @@ namespace Crypter.Web.Shared.UserSettings
       protected async Task OnSaveClickedAsync()
       {
          var request = new UpdatePrivacySettingsRequest(true, (UserVisibilityLevel)ProfileVisibilityEdit, (UserItemTransferPermission)MessageTransferPermissionEdit, (UserItemTransferPermission)FileTransferPermissionEdit);
-         await CrypterApiService.UpdateUserPrivacySettingsAsync(request);
+         await CrypterApiService.UserSetting.UpdateUserPrivacySettingsAsync(request);
 
          ProfileVisibility = (UserVisibilityLevel)ProfileVisibilityEdit;
          MessageTransferPermission = (UserItemTransferPermission)MessageTransferPermissionEdit;

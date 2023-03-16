@@ -64,7 +64,7 @@ namespace Crypter.Common.Monads
       public bool IsNone
       { get { return _state == MaybeState.None; } }
 
-      public Unit IfSome(Action<TValue> some)
+      public Maybe<TValue> IfSome(Action<TValue> some)
       {
          if (some is null)
          {
@@ -76,10 +76,10 @@ namespace Crypter.Common.Monads
             some(_value);
          }
 
-         return default;
+         return this;
       }
 
-      public async Task<Unit> IfSomeAsync(Func<TValue, Task> someAsync)
+      public async Task<Maybe<TValue>> IfSomeAsync(Func<TValue, Task> someAsync)
       {
          if (someAsync is null)
          {
@@ -91,10 +91,10 @@ namespace Crypter.Common.Monads
             await someAsync(_value);
          }
 
-         return default;
+         return this;
       }
 
-      public Unit IfNone(Action none)
+      public Maybe<TValue> IfNone(Action none)
       {
          if (none is null)
          {
@@ -106,7 +106,7 @@ namespace Crypter.Common.Monads
             none();
          }
 
-         return default;
+         return this;
       }
 
       public TValue SomeOrDefault(TValue defaultValue)
@@ -114,6 +114,18 @@ namespace Crypter.Common.Monads
          return IsNone
             ? defaultValue
             : _value;
+      }
+
+      public TResult Match<TResult>(TResult none, Func<TValue, TResult> some)
+      {
+         if (some is null)
+         {
+            throw new ArgumentNullException(nameof(some));
+         }
+
+         return IsSome
+            ? some(_value)
+            : none;
       }
 
       public TResult Match<TResult>(Func<TResult> none, Func<TValue, TResult> some)
@@ -276,12 +288,9 @@ namespace Crypter.Common.Monads
 
          var result = project(_value, bound._value);
 
-         if (result is null)
-         {
-            throw new InvalidOperationException();
-         }
-
-         return result;
+         return result is null
+            ? throw new InvalidOperationException()
+            : (Maybe<TResult>)result;
       }
 
       public Maybe<TValue> Where(Func<TValue, bool> predicate)

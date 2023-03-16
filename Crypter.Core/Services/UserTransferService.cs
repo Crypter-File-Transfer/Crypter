@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Users;
+using Crypter.Common.Contracts.Features.Transfer;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -36,10 +36,10 @@ namespace Crypter.Core.Services
 {
    public interface IUserTransferService
    {
-      Task<UserSentMessagesResponse> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken);
-      Task<UserReceivedMessagesResponse> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken);
-      Task<UserSentFilesResponse> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken);
-      Task<UserReceivedFilesResponse> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken);
+      Task<List<UserSentMessageDTO>> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken);
+      Task<List<UserReceivedMessageDTO>> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken);
+      Task<List<UserSentFileDTO>> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken);
+      Task<List<UserReceivedFileDTO>> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken);
    }
 
    public class UserTransferService : IUserTransferService
@@ -53,7 +53,7 @@ namespace Crypter.Core.Services
          _hashIdService = hashIdService;
       }
 
-      public async Task<UserSentMessagesResponse> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserSentMessageDTO>> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken)
       {
          var sentMessages = await _context.UserMessageTransfers
             .Where(x => x.SenderId == userId)
@@ -65,10 +65,10 @@ namespace Crypter.Core.Services
             .Select(x => new UserSentMessageDTO(_hashIdService.Encode(x.Id), x.Subject, x.Username, x.Alias, x.Expiration))
             .ToList();
 
-         return new UserSentMessagesResponse(sentMessagesWithHashIds);
+         return sentMessagesWithHashIds;
       }
 
-      public async Task<UserReceivedMessagesResponse> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserReceivedMessageDTO>> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken)
       {
          var receivedMessages = await _context.UserMessageTransfers
             .Where(x => x.RecipientId == userId)
@@ -80,10 +80,10 @@ namespace Crypter.Core.Services
             .Select(x => new UserReceivedMessageDTO(_hashIdService.Encode(x.Id), x.Subject, x.Username, x.Alias, x.Expiration))
             .ToList();
 
-         return new UserReceivedMessagesResponse(receivedMessagesWithHashIds);
+         return receivedMessagesWithHashIds;
       }
 
-      public async Task<UserSentFilesResponse> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserSentFileDTO>> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken)
       {
          var sentFiles = await _context.UserFileTransfers
             .Where(x => x.SenderId == userId)
@@ -95,10 +95,10 @@ namespace Crypter.Core.Services
             .Select(x => new UserSentFileDTO(_hashIdService.Encode(x.Id), x.FileName, x.Username, x.Alias, x.Expiration))
             .ToList();
 
-         return new UserSentFilesResponse(sentFilesWithHashIds);
+         return sentFilesWithHashIds;
       }
 
-      public async Task<UserReceivedFilesResponse> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserReceivedFileDTO>> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken)
       {
          var receivedFiles = await _context.UserFileTransfers
             .Where(x => x.RecipientId == userId)
@@ -110,7 +110,7 @@ namespace Crypter.Core.Services
             .Select(x => new UserReceivedFileDTO(_hashIdService.Encode(x.Id), x.FileName, x.Username, x.Alias, x.Expiration))
             .ToList();
 
-         return new UserReceivedFilesResponse(receivedFilesWithHashIds);
+         return receivedFilesWithHashIds;
       }
    }
 }

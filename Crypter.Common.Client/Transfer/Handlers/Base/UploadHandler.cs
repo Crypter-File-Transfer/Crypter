@@ -38,7 +38,7 @@ namespace Crypter.Common.Client.Transfer.Handlers.Base
 {
    public class UploadHandler : IUserUploadHandler
    {
-      protected readonly ICrypterApiService _crypterApiService;
+      protected readonly ICrypterApiClient _crypterApiClient;
       protected readonly ICryptoProvider _cryptoProvider;
       protected readonly TransferSettings _transferSettings;
 
@@ -57,9 +57,9 @@ namespace Crypter.Common.Client.Transfer.Handlers.Base
       protected Maybe<byte[]> _recipientPrivateKey = Maybe<byte[]>.None;
       protected Maybe<byte[]> _recipientPublicKey = Maybe<byte[]>.None;
 
-      public UploadHandler(ICrypterApiService crypterApiService, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
+      public UploadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
       {
-         _crypterApiService = crypterApiService;
+         _crypterApiClient = crypterApiClient;
          _cryptoProvider = cryptoProvider;
          _transferSettings = transferSettings;
 
