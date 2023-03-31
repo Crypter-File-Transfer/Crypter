@@ -40,7 +40,7 @@ namespace Crypter.Core.Services
 {
    public interface IUserContactsService
    {
-      Task<List<UserContact>> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken);
+      Task<List<UserContact>> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken = default);
       Task<Either<AddUserContactError, UserContact>> UpsertUserContactAsync(Guid userId, string contactUsername);
       Task<Unit> RemoveUserContactAsync(Guid userId, string contactUsername);
    }
@@ -89,7 +89,7 @@ namespace Crypter.Core.Services
          return new UserContact(foundUser.Username, foundUser.Alias);
       }
 
-      public Task<List<UserContact>> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken)
+      public Task<List<UserContact>> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          return _context.UserContacts
             .Where(x => x.OwnerId == userId)

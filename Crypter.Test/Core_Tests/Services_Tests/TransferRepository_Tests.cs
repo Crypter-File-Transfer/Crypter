@@ -26,30 +26,29 @@
 
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Core.Services;
+using Crypter.Core.Repositories;
 using Crypter.Core.Settings;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using System;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {
    [TestFixture]
-   internal class TransferStorageService_Tests
+   internal class TransferRepository_Tests
    {
-      private TransferStorageService _sut;
+      private TransferRepository _sut;
       private string _storageLocation;
 
       [OneTimeSetUp]
       public void OneTimeSetup()
       {
-         SetupService();
+         SetupRepository();
       }
 
-      private void SetupService()
+      private void SetupRepository()
       {
          _storageLocation = OperatingSystem.IsLinux()
             ? "/home/runner/work/Crypter/crypter_files"
@@ -61,7 +60,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
             Location = _storageLocation
          };
          IOptions<TransferStorageSettings> options = Options.Create(settings);
-         _sut = new TransferStorageService(options);
+         _sut = new TransferRepository(options);
       }
 
       [OneTimeTearDown]
@@ -77,7 +76,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
          byte[] buffer = new byte[] { 0x01, 0x02, 0x03, 0x04 };
          Guid itemGuid = Guid.NewGuid();
          MemoryStream memoryStream = new MemoryStream(buffer);
-         bool saveSuccess = await _sut.SaveTransferAsync(itemGuid, TransferItemType.File, userType, memoryStream, CancellationToken.None);
+         bool saveSuccess = await _sut.SaveTransferAsync(itemGuid, TransferItemType.File, userType, memoryStream);
          Assert.IsTrue(saveSuccess);
          memoryStream.Dispose();
 

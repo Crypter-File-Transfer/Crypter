@@ -75,13 +75,13 @@ namespace Crypter.Common.Client.Implementations.Requests
 
       public Task<Maybe<List<UserReceivedMessageDTO>>> GetReceivedMessagesAsync()
       {
-         string url = "/api/message/transfer/received";
+         string url = "api/message/transfer/received";
          return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserReceivedMessageDTO>>(url);
       }
 
       public Task<Maybe<List<UserSentMessageDTO>>> GetSentMessagesAsync()
       {
-         string url = "/api/message/transfer/sent";
+         string url = "api/message/transfer/sent";
          return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserSentMessageDTO>>(url);
       }
 

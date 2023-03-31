@@ -40,7 +40,16 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
       public byte[] GenerateHash(uint size, ReadOnlySpan<byte> data, ReadOnlySpan<byte> key = default)
       {
          byte[] buffer = new byte[size];
-         BLAKE2b.ComputeTag(buffer, data, key);
+
+         if (key == default)
+         {
+            BLAKE2b.ComputeHash(buffer, data);
+         }
+         else
+         {
+            BLAKE2b.ComputeTag(buffer, data, key);
+         }
+
          return buffer;
       }
 
@@ -48,7 +57,16 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
       {
          byte[] buffer = new byte[size];
          byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-         BLAKE2b.ComputeTag(buffer, dataBytes, key);
+
+         if (key == default)
+         {
+            BLAKE2b.ComputeHash(buffer, dataBytes);
+         }
+         else
+         {
+            BLAKE2b.ComputeTag(buffer, dataBytes, key);
+         }
+
          return buffer;
       }
    }

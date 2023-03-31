@@ -29,7 +29,6 @@ using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
@@ -51,7 +50,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       {
          var sut = new EmailService(_defaultEmailSettings);
          var emailAddress = EmailAddress.From("jack@crypter.dev");
-         var result = await sut.SendAsync("foo", "bar", emailAddress, CancellationToken.None);
+         var result = await sut.SendAsync("foo", "bar", emailAddress);
          Assert.IsTrue(result);
       }
    }

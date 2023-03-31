@@ -49,11 +49,11 @@ namespace Crypter.Core.Services
 {
    public interface IUserAuthenticationService
    {
-      Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken);
-      Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription, CancellationToken cancellationToken);
-      Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription, CancellationToken cancellationToken);
-      Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken);
-      Task<Either<UpdateContactInfoError, Unit>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken);
+      Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request);
+      Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription);
+      Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription);
+      Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal);
+      Task<Either<UpdateContactInfoError, Unit>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request);
       Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken = default);
    }
 
@@ -79,10 +79,8 @@ namespace Crypter.Core.Services
       private readonly IBackgroundJobClient _backgroundJobClient;
       private readonly IHangfireBackgroundService _hangfireBackgroundService;
       private readonly IReadOnlyDictionary<TokenType, Func<Guid, RefreshTokenData>> _refreshTokenProviderMap;
-      private readonly IReadOnlyDictionary<short, PasswordVersion> _serverPasswordVersions;
 
       private readonly short _clientPasswordVersion;
-      private readonly short _latestServerPasswordVersion;
       private const int _maximumFailedLoginAttempts = 3;
 
       public UserAuthenticationService(DataContext context, IPasswordHashService passwordHashService, ITokenService tokenService, IBackgroundJobClient backgroundJobClient, IHangfireBackgroundService hangfireBackgroundService, IOptions<ServerPasswordSettings> passwordSettings)
@@ -92,10 +90,8 @@ namespace Crypter.Core.Services
          _tokenService = tokenService;
          _backgroundJobClient = backgroundJobClient;
          _hangfireBackgroundService = hangfireBackgroundService;
-         _serverPasswordVersions = passwordSettings.Value.ServerVersions.ToDictionary(x => x.Version);
 
          _clientPasswordVersion = passwordSettings.Value.ClientVersion;
-         _latestServerPasswordVersion = passwordSettings.Value.ServerVersions.Max(x => x.Version);
          _refreshTokenProviderMap = new Dictionary<TokenType, Func<Guid, RefreshTokenData>>()
          {
             { TokenType.Session, _tokenService.NewSessionToken },
@@ -103,14 +99,14 @@ namespace Crypter.Core.Services
          };
       }
 
-      public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request, CancellationToken cancellationToken)
+      public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request)
       {
          return from validRegistrationRequest in ValidateRegistrationRequest(request).AsTask()
-                from usernameAvailable in VerifyUsernameIsAvailableAsync(validRegistrationRequest.Username, RegistrationError.UsernameTaken, cancellationToken)
-                from emailAddressAvailable in VerifyEmailIsAddressAvailable(validRegistrationRequest.EmailAddress, RegistrationError.EmailAddressTaken, cancellationToken)
-                let securePasswordData = _passwordHashService.MakeSecurePasswordHash(validRegistrationRequest.Password, _serverPasswordVersions[_latestServerPasswordVersion].Iterations)
-                from newUserEntity in Either<RegistrationError, UserEntity>.FromRight(InsertNewUserInContext(validRegistrationRequest.Username, validRegistrationRequest.EmailAddress, securePasswordData.Salt, securePasswordData.Hash, _latestServerPasswordVersion, _clientPasswordVersion)).AsTask()
-                from entriesModified in Either<RegistrationError, int>.FromRightAsync(SaveContextChangesAsync(cancellationToken))
+                from usernameAvailable in VerifyUsernameIsAvailableAsync(validRegistrationRequest.Username, RegistrationError.UsernameTaken)
+                from emailAddressAvailable in VerifyEmailAddressIsAvailable(validRegistrationRequest.EmailAddress, RegistrationError.EmailAddressTaken)
+                let securePasswordData = _passwordHashService.MakeSecurePasswordHash(validRegistrationRequest.Password, _passwordHashService.LatestServerPasswordVersion)
+                from newUserEntity in Either<RegistrationError, UserEntity>.FromRight(InsertNewUserInContext(validRegistrationRequest.Username, validRegistrationRequest.EmailAddress, securePasswordData.Salt, securePasswordData.Hash, _passwordHashService.LatestServerPasswordVersion, _clientPasswordVersion)).AsTask()
+                from entriesModified in Either<RegistrationError, int>.FromRightAsync(SaveContextChangesAsync())
                 let jobId = EnqueueEmailAddressVerificationEmailDelivery(newUserEntity.Id)
                 select Unit.Default;
       }
@@ -120,13 +116,12 @@ namespace Crypter.Core.Services
       /// </summary>
       /// <param name="request"></param>
       /// <param name="deviceDescription"></param>
-      /// <param name="cancellationToken"></param>
       /// <returns></returns>
       /// <remarks>
       /// The reason this does not use Linq query syntax is to save a single trip to the database when querying for the user entity.
       /// `.Include(x => x.FailedLoginAttempts)` is less likely to be forgotten and break things when the reason for having it is on the very next line.
       /// </remarks>
-      public async Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription, CancellationToken cancellationToken)
+      public async Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription)
       {
          var validLoginRequest = ValidateLoginRequest(request);
          return await validLoginRequest.MatchAsync<Either<LoginError, LoginResponse>>(
@@ -136,7 +131,7 @@ namespace Crypter.Core.Services
                UserEntity user = await _context.Users
                   .Where(x => x.Username == validatedLoginRequest.Username.Value)
                   .Include(x => x.FailedLoginAttempts)
-                  .Include(x => x.Consents)
+                  .Include(x => x.Consents.Where(y => y.Active == true))
                   .Include(x => x.MasterKey)
                   .Include(x => x.KeyPair)
                   .FirstOrDefaultAsync();
@@ -159,20 +154,20 @@ namespace Crypter.Core.Services
                }
 
                byte[] currentClientPassword = validatedLoginRequest.VersionedPasswords[user.ClientPasswordVersion];
-               bool isMatchingPassword = _passwordHashService.VerifySecurePasswordHash(currentClientPassword, user.PasswordHash, user.PasswordSalt, _serverPasswordVersions[user.ServerPasswordVersion].Iterations);
+               bool isMatchingPassword = _passwordHashService.VerifySecurePasswordHash(currentClientPassword, user.PasswordHash, user.PasswordSalt, user.ServerPasswordVersion);
                if (!isMatchingPassword)
                {
                   await HandlePasswordVerificationFailedAsync(user.Id);
                   return LoginError.InvalidPassword;
                }
 
-               if (user.ServerPasswordVersion != _latestServerPasswordVersion || user.ClientPasswordVersion != _clientPasswordVersion)
+               if (user.ServerPasswordVersion != _passwordHashService.LatestServerPasswordVersion || user.ClientPasswordVersion != _clientPasswordVersion)
                {
                   byte[] latestClientPassword = validatedLoginRequest.VersionedPasswords[_clientPasswordVersion];
-                  var hashOutput = _passwordHashService.MakeSecurePasswordHash(latestClientPassword, _serverPasswordVersions[_latestServerPasswordVersion].Iterations);
+                  var hashOutput = _passwordHashService.MakeSecurePasswordHash(latestClientPassword, _passwordHashService.LatestServerPasswordVersion);
                   user.PasswordHash = hashOutput.Hash;
                   user.PasswordSalt = hashOutput.Salt;
-                  user.ServerPasswordVersion = _latestServerPasswordVersion;
+                  user.ServerPasswordVersion = _passwordHashService.LatestServerPasswordVersion;
                   user.ClientPasswordVersion = _clientPasswordVersion;
                }
 
@@ -181,7 +176,7 @@ namespace Crypter.Core.Services
                var refreshToken = CreateRefreshTokenInContext(user.Id, validatedLoginRequest.RefreshTokenType, deviceDescription);
                var authToken = MakeAuthenticationToken(user.Id);
 
-               await _context.SaveChangesAsync(cancellationToken);
+               await _context.SaveChangesAsync();
                ScheduleRefreshTokenDeletion(refreshToken.TokenId, refreshToken.Expiration);
 
                bool userHasConsentedToRecoveryKeyRisks = user.Consents.Any(x => x.ConsentType == ConsentType.RecoveryKeyRisks);
@@ -192,43 +187,43 @@ namespace Crypter.Core.Services
             LoginError.UnknownError);
       }
 
-      public Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription, CancellationToken cancellationToken)
+      public Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription)
       {
          return from userId in ParseUserId(claimsPrincipal).ToEither(RefreshError.InvalidToken).AsTask()
                 from tokenId in ParseRefreshTokenId(claimsPrincipal).ToEither(RefreshError.InvalidToken).AsTask()
-                from databaseToken in FetchUserTokenAsync(tokenId, cancellationToken).ToEitherAsync(RefreshError.InvalidToken)
+                from databaseToken in FetchUserTokenAsync(tokenId).ToEitherAsync(RefreshError.InvalidToken)
                 from databaseTokenValidated in ValidateUserToken(databaseToken, userId).ToEither(RefreshError.InvalidToken).AsTask()
                 let databaseTokenDeleted = DeleteUserTokenInContext(databaseToken)
-                from foundUser in FetchUserAsync(userId, RefreshError.UserNotFound, cancellationToken)
+                from foundUser in FetchUserAsync(userId, RefreshError.UserNotFound)
                 let lastLoginTimeUpdated = UpdateLastLoginTimeInContext(foundUser)
                 let newRefreshTokenData = CreateRefreshTokenInContext(userId, databaseToken.Type, deviceDescription)
                 let authenticationToken = MakeAuthenticationToken(userId)
-                from entriesModified in Either<RefreshError, int>.FromRightAsync(SaveContextChangesAsync(cancellationToken))
+                from entriesModified in Either<RefreshError, int>.FromRightAsync(SaveContextChangesAsync())
                 let jobId = ScheduleRefreshTokenDeletion(newRefreshTokenData.TokenId, newRefreshTokenData.Expiration)
                 select new RefreshResponse(authenticationToken, newRefreshTokenData.Token, databaseToken.Type);
       }
 
-      public Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal, CancellationToken cancellationToken)
+      public Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal)
       {
          return from userId in ParseUserId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
                 from tokenId in ParseRefreshTokenId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
-                from databaseToken in FetchUserTokenAsync(tokenId, cancellationToken).ToEitherAsync(LogoutError.InvalidToken)
+                from databaseToken in FetchUserTokenAsync(tokenId).ToEitherAsync(LogoutError.InvalidToken)
                 let databaseTokenDeleted = DeleteUserTokenInContext(databaseToken)
-                from entriesModified in Either<LogoutError, int>.FromRightAsync(SaveContextChangesAsync(cancellationToken))
+                from entriesModified in Either<LogoutError, int>.FromRightAsync(SaveContextChangesAsync())
                 select Unit.Default;
       }
 
-      public Task<Either<UpdateContactInfoError, Unit>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request, CancellationToken cancellationToken)
+      public Task<Either<UpdateContactInfoError, Unit>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request)
       {
          return from currentPassword in ValidateRequestPassword(request.CurrentPassword, UpdateContactInfoError.InvalidPassword).AsTask()
                 from emailAddress in ValidateRequestEmailAddress(request.EmailAddress, UpdateContactInfoError.InvalidEmailAddress).AsTask()
-                from user in FetchUserAsync(userId, UpdateContactInfoError.UserNotFound, cancellationToken)
+                from user in FetchUserAsync(userId, UpdateContactInfoError.UserNotFound)
                 from unit0 in VerifyUserPasswordIsMigrated(user, UpdateContactInfoError.PasswordNeedsMigration).ToLeftEither(Unit.Default).AsTask()
-                from passwordVerified in VerifyPassword(currentPassword, user.PasswordHash, user.PasswordSalt, _serverPasswordVersions[_latestServerPasswordVersion].Iterations)
+                from passwordVerified in VerifyPassword(currentPassword, user.PasswordHash, user.PasswordSalt, _passwordHashService.LatestServerPasswordVersion)
                   ? Either<UpdateContactInfoError, Unit>.FromRight(Unit.Default).AsTask()
                   : Either<UpdateContactInfoError, Unit>.FromLeft(UpdateContactInfoError.InvalidPassword).AsTask()
-                from isEmailAddressAvailable in VerifyEmailIsAddressAvailable(user, emailAddress, UpdateContactInfoError.EmailAddressUnavailable, cancellationToken)
-                from unit in Either<UpdateContactInfoError, Unit>.FromRightAsync(UpdateUserEmailAddressAsync(user, emailAddress, cancellationToken))
+                from isEmailAddressAvailable in VerifyEmailAddressIsAvailableForUser(user, emailAddress, UpdateContactInfoError.EmailAddressUnavailable)
+                from unit in Either<UpdateContactInfoError, Unit>.FromRightAsync(UpdateUserEmailAddressAsync(user, emailAddress))
                 select Unit.Default;
       }
 
@@ -237,7 +232,7 @@ namespace Crypter.Core.Services
          return from suppliedPassword in ValidateRequestPassword(request.Password, PasswordChallengeError.InvalidPassword).AsTask()
                 from user in FetchUserAsync(userId, PasswordChallengeError.UnknownError, cancellationToken)
                 from unit0 in VerifyUserPasswordIsMigrated(user, PasswordChallengeError.PasswordNeedsMigration).ToLeftEither(Unit.Default).AsTask()
-                from passwordVerified in VerifyPassword(suppliedPassword, user.PasswordHash, user.PasswordSalt, _serverPasswordVersions[_latestServerPasswordVersion].Iterations)
+                from passwordVerified in VerifyPassword(suppliedPassword, user.PasswordHash, user.PasswordSalt, _passwordHashService.LatestServerPasswordVersion)
                   ? Either<PasswordChallengeError, Unit>.FromRight(Unit.Default).AsTask()
                   : Either<PasswordChallengeError, Unit>.FromLeft(PasswordChallengeError.InvalidPassword).AsTask()
                 select Unit.Default;
@@ -315,7 +310,7 @@ namespace Crypter.Core.Services
 
       private Maybe<T> VerifyUserPasswordIsMigrated<T>(UserEntity user, T error)
       {
-         return user.ClientPasswordVersion == _clientPasswordVersion && user.ServerPasswordVersion == _latestServerPasswordVersion
+         return user.ClientPasswordVersion == _clientPasswordVersion && user.ServerPasswordVersion == _passwordHashService.LatestServerPasswordVersion
             ? Maybe<T>.None
             : error;
       }
@@ -329,7 +324,7 @@ namespace Crypter.Core.Services
                : error;
       }
 
-      private async Task<Either<T, Unit>> VerifyUsernameIsAvailableAsync<T>(Username username, T error, CancellationToken cancellationToken)
+      private async Task<Either<T, Unit>> VerifyUsernameIsAvailableAsync<T>(Username username, T error, CancellationToken cancellationToken = default)
       {
          bool isUsernameAvailable = await _context.Users.IsUsernameAvailableAsync(username, cancellationToken);
          return isUsernameAvailable
@@ -337,7 +332,7 @@ namespace Crypter.Core.Services
             : error;
       }
 
-      private async Task<Either<T, Unit>> VerifyEmailIsAddressAvailable<T>(Maybe<EmailAddress> emailAddress, T error, CancellationToken cancellationToken)
+      private async Task<Either<T, Unit>> VerifyEmailAddressIsAvailable<T>(Maybe<EmailAddress> emailAddress, T error, CancellationToken cancellationToken = default)
       {
          return await emailAddress.MatchAsync<Either<T, Unit>>(
             () => Unit.Default,
@@ -350,7 +345,7 @@ namespace Crypter.Core.Services
             });
       }
 
-      private async Task<Either<T, Unit>> VerifyEmailIsAddressAvailable<T>(UserEntity user, Maybe<EmailAddress> emailAddress, T error, CancellationToken cancellationToken)
+      private async Task<Either<T, Unit>> VerifyEmailAddressIsAvailableForUser<T>(UserEntity user, Maybe<EmailAddress> emailAddress, T error, CancellationToken cancellationToken = default)
       {
          return await emailAddress.MatchAsync(
             () => Unit.Default,
@@ -361,7 +356,7 @@ namespace Crypter.Core.Services
                   return Unit.Default;
                }
 
-               return await VerifyEmailIsAddressAvailable(emailAddress, error, cancellationToken);
+               return await VerifyEmailAddressIsAvailable(emailAddress, error, cancellationToken);
             });
       }
 
@@ -386,16 +381,16 @@ namespace Crypter.Core.Services
          return user;
       }
 
-      private Task<Either<T, UserEntity>> FetchUserAsync<T>(Guid userId, T error, CancellationToken cancellationToken)
+      private Task<Either<T, UserEntity>> FetchUserAsync<T>(Guid userId, T error, CancellationToken cancellationToken = default)
       {
          return Either<T, UserEntity>.FromRightAsync(
             _context.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken),
             error);
       }
 
-      private bool VerifyPassword(byte[] password, byte[] existingPasswordHash, byte[] passwordSalt, int iterations)
+      private bool VerifyPassword(byte[] password, byte[] existingPasswordHash, byte[] passwordSalt, short serverPasswordVersion)
       {
-         return _passwordHashService.VerifySecurePasswordHash(password, existingPasswordHash, passwordSalt, iterations);
+         return _passwordHashService.VerifySecurePasswordHash(password, existingPasswordHash, passwordSalt, serverPasswordVersion);
       }
 
       private async Task HandlePasswordVerificationFailedAsync(Guid userId)
@@ -403,7 +398,7 @@ namespace Crypter.Core.Services
          UserFailedLoginEntity failedLoginEntity = new UserFailedLoginEntity(Guid.NewGuid(), userId, DateTime.UtcNow);
          _context.UserFailedLoginAttempts.Add(failedLoginEntity);
          await _context.SaveChangesAsync(CancellationToken.None);
-         _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteFailedLoginAttemptAsync(failedLoginEntity.Id, CancellationToken.None), failedLoginEntity.Date.AddDays(1));
+         _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteFailedLoginAttemptAsync(failedLoginEntity.Id), failedLoginEntity.Date.AddDays(1));
       }
 
       private static Unit UpdateLastLoginTimeInContext(UserEntity user)
@@ -422,7 +417,7 @@ namespace Crypter.Core.Services
          return _tokenService.TryParseTokenId(claimsPrincipal);
       }
 
-      private Task<Maybe<UserTokenEntity>> FetchUserTokenAsync(Guid tokenId, CancellationToken cancellationToken)
+      private Task<Maybe<UserTokenEntity>> FetchUserTokenAsync(Guid tokenId, CancellationToken cancellationToken = default)
       {
          return Maybe<UserTokenEntity>.FromAsync(_context.UserTokens
             .FindAsync(new object[] { tokenId }, cancellationToken).AsTask());
@@ -436,12 +431,12 @@ namespace Crypter.Core.Services
 
       private string EnqueueEmailAddressVerificationEmailDelivery(Guid userId)
       {
-         return _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId, CancellationToken.None));
+         return _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId));
       }
 
       private string ScheduleRefreshTokenDeletion(Guid tokenId, DateTime tokenExpiration)
       {
-         return _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteUserTokenAsync(tokenId, CancellationToken.None), tokenExpiration - DateTime.UtcNow);
+         return _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteUserTokenAsync(tokenId), tokenExpiration - DateTime.UtcNow);
       }
 
       private string MakeAuthenticationToken(Guid userId)
@@ -449,16 +444,16 @@ namespace Crypter.Core.Services
          return _tokenService.NewAuthenticationToken(userId);
       }
 
-      private async Task<Unit> UpdateUserEmailAddressAsync(UserEntity user, Maybe<EmailAddress> newEmailAddress, CancellationToken cancellationToken)
+      private async Task<Unit> UpdateUserEmailAddressAsync(UserEntity user, Maybe<EmailAddress> newEmailAddress)
       {
          user.EmailAddress = newEmailAddress.Match(
             () => string.Empty,
             x => x.Value);
          user.EmailVerified = false;
 
-         await ResetUserNotificationSettingsInContext(user.Id, cancellationToken);
-         await DeleteUserEmailVerificationEntityInContext(user.Id, cancellationToken);
-         await _context.SaveChangesAsync(cancellationToken);
+         await ResetUserNotificationSettingsInContext(user.Id);
+         await DeleteUserEmailVerificationEntityInContext(user.Id);
+         await _context.SaveChangesAsync();
 
          newEmailAddress.IfSome(_ =>
          {
@@ -475,10 +470,10 @@ namespace Crypter.Core.Services
          return refreshToken;
       }
 
-      private async Task<Unit> ResetUserNotificationSettingsInContext(Guid userId, CancellationToken cancellationToken)
+      private async Task<Unit> ResetUserNotificationSettingsInContext(Guid userId)
       {
          UserNotificationSettingEntity foundEntity = await _context.UserNotificationSettings
-            .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Owner == userId);
 
          if (foundEntity is not null)
          {
@@ -489,10 +484,10 @@ namespace Crypter.Core.Services
          return Unit.Default;
       }
 
-      private async Task<Unit> DeleteUserEmailVerificationEntityInContext(Guid userId, CancellationToken cancellationToken)
+      private async Task<Unit> DeleteUserEmailVerificationEntityInContext(Guid userId)
       {
          UserEmailVerificationEntity foundEntity = await _context.UserEmailVerifications
-            .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Owner == userId);
 
          if (foundEntity is not null)
          {
@@ -502,9 +497,9 @@ namespace Crypter.Core.Services
          return Unit.Default;
       }
 
-      private Task<int> SaveContextChangesAsync(CancellationToken cancellationToken)
+      private Task<int> SaveContextChangesAsync()
       {
-         return _context.SaveChangesAsync(cancellationToken);
+         return _context.SaveChangesAsync();
       }
 
       private record ValidLoginRequest

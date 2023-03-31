@@ -80,10 +80,10 @@ namespace Crypter.API.Controllers
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> UpdateUserProfileAsync([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> UpdateUserProfileAsync([FromBody] UpdateProfileRequest request)
       {
          Guid userId = _tokenService.ParseUserId(User);
-         await _userService.UpdateUserProfileAsync(userId, request, cancellationToken);
+         await _userService.UpdateUserProfileAsync(userId, request);
          return Ok();
       }
 

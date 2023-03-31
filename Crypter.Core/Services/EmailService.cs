@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Infrastructure;
 using Crypter.Common.Primitives;
 using Crypter.Core.Models;
 using Crypter.Core.Settings;
@@ -34,16 +35,16 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services
 {
    public interface IEmailService
    {
-      Task<bool> SendAsync(string subject, string message, EmailAddress recipient, CancellationToken cancellationToken);
-      Task<bool> SendEmailVerificationAsync(UserEmailAddressVerificationParameters parameters, CancellationToken cancellationToken);
-      Task<bool> SendTransferNotificationAsync(EmailAddress emailAddress, CancellationToken cancellationToken);
+      Task<bool> SendAsync(string subject, string message, EmailAddress recipient);
+      Task<bool> SendAccountRecoveryLinkAsync(UserRecoveryParameters parameters, int expirationMinutes);
+      Task<bool> SendEmailVerificationAsync(UserEmailAddressVerificationParameters parameters);
+      Task<bool> SendTransferNotificationAsync(EmailAddress emailAddress);
    }
 
    public static class EmailServiceExtensions
@@ -77,7 +78,7 @@ namespace Crypter.Core.Services
       /// <param name="recipient"></param>
       /// <remarks>This method is 'virtual' to enable some unit tests.</remarks>
       /// <returns></returns>
-      public virtual async Task<bool> SendAsync(string subject, string message, EmailAddress recipient, CancellationToken cancellationToken)
+      public virtual async Task<bool> SendAsync(string subject, string message, EmailAddress recipient)
       {
          if (!Settings.Enabled)
          {
@@ -97,9 +98,9 @@ namespace Crypter.Core.Services
 
          try
          {
-            await smtpClient.ConnectAsync(Settings.Host, Settings.Port, SecureSocketOptions.StartTls, cancellationToken);
-            await smtpClient.AuthenticateAsync(Settings.Username, Settings.Password, cancellationToken);
-            await smtpClient.SendAsync(mailMessage, cancellationToken);
+            await smtpClient.ConnectAsync(Settings.Host, Settings.Port, SecureSocketOptions.StartTls);
+            await smtpClient.AuthenticateAsync(Settings.Username, Settings.Password);
+            await smtpClient.SendAsync(mailMessage);
          }
          catch (Exception ex)
          {
@@ -108,9 +109,21 @@ namespace Crypter.Core.Services
          }
          finally
          {
-            await smtpClient.DisconnectAsync(true, cancellationToken);
+            await smtpClient.DisconnectAsync(true);
          }
          return true;
+      }
+
+      public async Task<bool> SendAccountRecoveryLinkAsync(UserRecoveryParameters parameters, int expirationMinutes)
+      {
+         string encodedUsername = UrlSafeEncoder.EncodeStringUrlSafe(parameters.Username.Value);
+         string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(parameters.RecoveryCode);
+         string encodedSignature = UrlSafeEncoder.EncodeBytesUrlSafe(parameters.Signature);
+         string recoveryLink = $"Click the link below to begin account recovery.\n" +
+            $"https://www.crypter.dev/recovery?username={encodedUsername}&code={encodedVerificationCode}&signature={encodedSignature}\n" +
+            $"This link will expire in {expirationMinutes} minutes.";
+
+         return await SendAsync("Account recovery", recoveryLink, parameters.EmailAddress);
       }
 
       /// <summary>
@@ -121,18 +134,18 @@ namespace Crypter.Core.Services
       /// <param name="ecdsaPrivateKey"></param>
       /// <remarks>This method is 'virtual' to enable some unit tests.</remarks>
       /// <returns></returns>
-      public virtual async Task<bool> SendEmailVerificationAsync(UserEmailAddressVerificationParameters parameters, CancellationToken cancellationToken)
+      public virtual async Task<bool> SendEmailVerificationAsync(UserEmailAddressVerificationParameters parameters)
       {
-         var encodedVerificationCode = EmailVerificationEncoder.EncodeVerificationCodeUrlSafe(parameters.VerificationCode);
-         var encodedSignature = EmailVerificationEncoder.EncodeSignatureUrlSafe(parameters.Signature);
-         var verificationLink = $"https://www.crypter.dev/verify?code={encodedVerificationCode}&signature={encodedSignature}";
+         string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(parameters.VerificationCode);
+         string encodedSignature = UrlSafeEncoder.EncodeBytesUrlSafe(parameters.Signature);
+         string verificationLink = $"https://www.crypter.dev/verify?code={encodedVerificationCode}&signature={encodedSignature}";
 
-         return await SendAsync("Verify your email address", verificationLink, parameters.EmailAddress, cancellationToken);
+         return await SendAsync("Verify your email address", verificationLink, parameters.EmailAddress);
       }
 
-      public async Task<bool> SendTransferNotificationAsync(EmailAddress emailAddress, CancellationToken cancellationToken)
+      public async Task<bool> SendTransferNotificationAsync(EmailAddress emailAddress)
       {
-         return await SendAsync("Someone sent you a transfer", "Someone sent you something on Crypter!  Login to https://www.crypter.dev see what it is.", emailAddress, cancellationToken);
+         return await SendAsync("Someone sent you a transfer", "Someone sent you something on Crypter!  Login to https://www.crypter.dev see what it is.", emailAddress);
       }
    }
 }

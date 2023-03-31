@@ -29,6 +29,7 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
+using Crypter.Core.Repositories;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -49,14 +50,14 @@ namespace Crypter.Core.Services
    {
       private readonly DataContext _context;
       private readonly IServerMetricsService _serverMetricsService;
-      private readonly ITransferStorageService _transferStorageService;
+      private readonly ITransferRepository _transferStorageService;
       private readonly IHangfireBackgroundService _hangfireBackgroundService;
       private readonly IBackgroundJobClient _backgroundJobClient;
       private readonly IHashIdService _hashIdService;
       private const int _maxLifetimeHours = 24;
       private const int _minLifetimeHours = 1;
 
-      public TransferUploadService(DataContext context, IServerMetricsService serverMetricsService, ITransferStorageService transferStorageService, IHangfireBackgroundService hangfireBackgroundService, IBackgroundJobClient backgroundJobClient, IHashIdService hashIdService)
+      public TransferUploadService(DataContext context, IServerMetricsService serverMetricsService, ITransferRepository transferStorageService, IHangfireBackgroundService hangfireBackgroundService, IBackgroundJobClient backgroundJobClient, IHashIdService hashIdService)
       {
          _context = context;
          _serverMetricsService = serverMetricsService;
@@ -134,7 +135,7 @@ namespace Crypter.Core.Services
             : TransferUserType.User;
       }
 
-      private async Task<UploadTransferResponse> SaveFileTransferToDatabaseAsync(Guid transferId, Maybe<Guid> senderId, Maybe<Guid> recipientId, long requiredDiskSpace, UploadFileTransferRequest request, CancellationToken cancellationToken = default)
+      private async Task<UploadTransferResponse> SaveFileTransferToDatabaseAsync(Guid transferId, Maybe<Guid> senderId, Maybe<Guid> recipientId, long requiredDiskSpace, UploadFileTransferRequest request)
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
@@ -173,14 +174,14 @@ namespace Crypter.Core.Services
             _context.UserFileTransfers.Add(transferEntity);
          }
 
-         await _context.SaveChangesAsync(cancellationToken);
+         await _context.SaveChangesAsync();
 
          string hashId = _hashIdService.Encode(transferId);
          TransferUserType userType = DetermineTransferUserType(nullableSenderId, nullableRecipientId);
          return new UploadTransferResponse(hashId, expiration, userType);
       }
 
-      private async Task<UploadTransferResponse> SaveMessageTransferToDatabaseAsync(Guid transferId, Maybe<Guid> senderId, Maybe<Guid> recipientId, long requiredDiskSpace, UploadMessageTransferRequest request, CancellationToken cancellationToken = default)
+      private async Task<UploadTransferResponse> SaveMessageTransferToDatabaseAsync(Guid transferId, Maybe<Guid> senderId, Maybe<Guid> recipientId, long requiredDiskSpace, UploadMessageTransferRequest request)
       {
          DateTime now = DateTime.UtcNow;
          DateTime expiration = now.AddHours(request.LifetimeHours);
@@ -217,7 +218,7 @@ namespace Crypter.Core.Services
             _context.UserMessageTransfers.Add(transferEntity);
          }
 
-         await _context.SaveChangesAsync(cancellationToken);
+         await _context.SaveChangesAsync();
 
          string hashId = _hashIdService.Encode(transferId);
          TransferUserType userType = DetermineTransferUserType(nullableSenderId, nullableRecipientId);
@@ -255,17 +256,17 @@ namespace Crypter.Core.Services
             : recipientId;
       }
 
-      private async Task<Maybe<UploadTransferError>> SaveMessageToDiskAsync(TransferUserType userType, Guid id, Stream ciphertext, CancellationToken cancellationToken = default)
+      private async Task<Maybe<UploadTransferError>> SaveMessageToDiskAsync(TransferUserType userType, Guid id, Stream ciphertext)
       {
-         var storageSuccess = await _transferStorageService.SaveTransferAsync(id, TransferItemType.Message, userType, ciphertext, cancellationToken);
+         var storageSuccess = await _transferStorageService.SaveTransferAsync(id, TransferItemType.Message, userType, ciphertext);
          return storageSuccess
             ? Maybe<UploadTransferError>.None
             : UploadTransferError.UnknownError;
       }
 
-      private async Task<Maybe<UploadTransferError>> SaveFileToDiskAsync(TransferUserType userType, Guid id, Stream ciphertext, CancellationToken cancellationToken = default)
+      private async Task<Maybe<UploadTransferError>> SaveFileToDiskAsync(TransferUserType userType, Guid id, Stream ciphertext)
       {
-         var storageSuccess = await _transferStorageService.SaveTransferAsync(id, TransferItemType.File, userType, ciphertext, cancellationToken);
+         var storageSuccess = await _transferStorageService.SaveTransferAsync(id, TransferItemType.File, userType, ciphertext);
          return storageSuccess
             ? Maybe<UploadTransferError>.None
             : UploadTransferError.UnknownError;
@@ -277,7 +278,7 @@ namespace Crypter.Core.Services
          return transferSize <= diskMetrics.Available;
       }
 
-      private async Task<Unit> QueueTransferNotificationAsync(Guid itemId, TransferItemType itemType, Maybe<Guid> maybeUserId, CancellationToken cancellationToken = default)
+      private async Task<Unit> QueueTransferNotificationAsync(Guid itemId, TransferItemType itemType, Maybe<Guid> maybeUserId)
       {
          await maybeUserId.IfSomeAsync(
             async userId =>
@@ -287,14 +288,14 @@ namespace Crypter.Core.Services
                   .Where(x => x.NotificationSetting.EnableTransferNotifications
                      && x.EmailVerified
                      && x.NotificationSetting.EmailNotifications)
-                  .FirstOrDefaultAsync(cancellationToken);
+                  .FirstOrDefaultAsync();
 
-               _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType, CancellationToken.None));
+               _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType));
             });
          return Unit.Default;
       }
 
       private string ScheduleTransferDeletion(Guid itemId, TransferItemType itemType, TransferUserType userType, DateTime itemExpiration)
-         => _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteTransferAsync(itemId, itemType, userType, true, CancellationToken.None), itemExpiration);
+         => _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteTransferAsync(itemId, itemType, userType, true), itemExpiration);
    }
 }

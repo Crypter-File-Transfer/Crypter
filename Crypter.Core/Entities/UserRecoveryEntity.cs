@@ -24,9 +24,45 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
+
+namespace Crypter.Core.Entities
 {
-   public enum DummyError
+   public class UserRecoveryEntity
    {
+      public Guid Owner { get; set; }
+      public Guid Code { get; set; }
+      public byte[] VerificationKey { get; set; }
+      public DateTime Created { get; set; }
+
+      public UserEntity User { get; set; }
+
+      public UserRecoveryEntity(Guid owner, Guid code, byte[] verificationKey, DateTime created)
+      {
+         Owner = owner;
+         Code = code;
+         VerificationKey = verificationKey;
+         Created = created;
+      }
+   }
+
+   public class UserRecoveryEntityConfiguration : IEntityTypeConfiguration<UserRecoveryEntity>
+   {
+      public void Configure(EntityTypeBuilder<UserRecoveryEntity> builder)
+      {
+         builder.ToTable("UserRecovery");
+
+         builder.HasKey(x => x.Owner);
+
+         builder.HasIndex(x => x.Code)
+            .IsUnique();
+
+         builder.HasOne(x => x.User)
+            .WithOne(x => x.Recovery)
+            .HasForeignKey<UserRecoveryEntity>(x => x.Owner)
+            .OnDelete(DeleteBehavior.Cascade);
+      }
    }
 }

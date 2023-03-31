@@ -25,8 +25,11 @@
  */
 
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Infrastructure;
+using Crypter.Common.Monads;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Net;
 
 namespace Crypter.API.Controllers.Base
@@ -44,6 +47,18 @@ namespace Crypter.API.Controllers.Base
          _transferUploadService = transferUploadService;
          _tokenService = tokenService;
          _userTransferService = userTransferService;
+      }
+
+      protected Either<DownloadTransferCiphertextError, byte[]> DecodeProof(string base64EncodedProof)
+      {
+         try
+         {
+            return UrlSafeEncoder.DecodeBytesFromUrlSafe(base64EncodedProof);
+         }
+         catch (Exception)
+         {
+            return DownloadTransferCiphertextError.InvalidRecipientProof;
+         }
       }
 
       protected IActionResult MakeErrorResponse(UploadTransferError error)

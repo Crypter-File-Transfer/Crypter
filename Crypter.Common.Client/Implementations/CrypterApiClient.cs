@@ -48,6 +48,7 @@ namespace Crypter.Common.Client.Implementations
       public IUserConsentRequests UserConsent { get; init; }
       public IUserContactRequests UserContact { get; init; }
       public IUserKeyRequests UserKey { get; init; }
+      public IUserRecoveryRequests UserRecovery { get; init; }
       public IUserSettingRequests UserSetting { get; init; }
 
       public CrypterApiClient(HttpClient httpClient, ITokenRepository tokenRepository)
@@ -63,7 +64,8 @@ namespace Crypter.Common.Client.Implementations
          UserConsent = new UserConsentRequests(_crypterAuthenticatedHttpClient);
          UserContact = new UserContactRequests(_crypterAuthenticatedHttpClient);
          UserKey = new UserKeyRequests(_crypterAuthenticatedHttpClient);
-         UserSetting = new UserSettingRequests(_crypterAuthenticatedHttpClient);
+         UserRecovery = new UserRecoveryRequests(_crypterHttpClient);
+         UserSetting = new UserSettingRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
       }
 
       public event EventHandler RefreshTokenRejectedEventHandler

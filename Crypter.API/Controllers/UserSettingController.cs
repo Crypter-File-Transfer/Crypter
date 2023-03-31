@@ -74,7 +74,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request)
       {
          IActionResult MakeErrorResponse(UpdateContactInfoError error)
          {
@@ -93,7 +93,7 @@ namespace Crypter.API.Controllers
          }
 
          Guid userId = _tokenService.ParseUserId(User);
-         return await _userAuthenticationService.UpdateUserContactInfoAsync(userId, request, cancellationToken)
+         return await _userAuthenticationService.UpdateUserContactInfoAsync(userId, request)
             .MatchAsync(
                MakeErrorResponse,
                _ => Ok(),
@@ -104,12 +104,11 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> VerifyUserEmailAddressAsync([FromBody] VerifyEmailAddressRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> VerifyUserEmailAddressAsync([FromBody] VerifyEmailAddressRequest request)
       {
-         return await _userEmailVerificationService.VerifyUserEmailAddressAsync(request, cancellationToken)
-            .MatchAsync(
-               () => MakeErrorResponseBase(HttpStatusCode.NotFound, VerifyEmailAddressError.NotFound),
-               x => Ok());
+         return await _userEmailVerificationService.VerifyUserEmailAddressAsync(request)
+            ? Ok()
+            : MakeErrorResponseBase(HttpStatusCode.NotFound, VerifyEmailAddressError.NotFound);
       }
 
       [HttpPost("notification")]
@@ -118,7 +117,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpdateUserNotificationPreferencesAsync([FromBody] UpdateNotificationSettingsRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> UpdateUserNotificationPreferencesAsync([FromBody] UpdateNotificationSettingsRequest request)
       {
          IActionResult MakeErrorResponse(UpdateNotificationSettingsError error)
          {
@@ -132,7 +131,7 @@ namespace Crypter.API.Controllers
          }
 
          Guid userId = _tokenService.ParseUserId(User);
-         return await _userService.UpsertUserNotificationPreferencesAsync(userId, request, cancellationToken)
+         return await _userService.UpsertUserNotificationPreferencesAsync(userId, request)
             .MatchAsync(
                MakeErrorResponse,
                _ => Ok(),
@@ -143,10 +142,10 @@ namespace Crypter.API.Controllers
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> UpdateUserPrivacySettingsAsync([FromBody] UpdatePrivacySettingsRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> UpdateUserPrivacySettingsAsync([FromBody] UpdatePrivacySettingsRequest request)
       {
          Guid userId = _tokenService.ParseUserId(User);
-         await _userService.UpsertUserPrivacySettingsAsync(userId, request, cancellationToken);
+         await _userService.UpsertUserPrivacySettingsAsync(userId, request);
          return Ok();
       }
    }

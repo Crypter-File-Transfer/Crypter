@@ -25,11 +25,14 @@
  */
 
 using Crypter.Core.Identity;
+using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
+using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {
@@ -42,7 +45,19 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public void SetupOnce()
       {
          ICryptoProvider cryptoProvider = new DefaultCryptoProvider();
-         _sut = new PasswordHashService(cryptoProvider);
+
+         ServerPasswordSettings settings = new ServerPasswordSettings
+         {
+            ClientVersion = 1,
+            ServerVersions = new List<PasswordVersion>
+            {
+               new PasswordVersion{ Version = 0, Algorithm = "PBKDF2", Iterations = 1 },
+               new PasswordVersion{ Version = 1, Algorithm = "PBKDF2", Iterations = 2 },
+               new PasswordVersion{ Version = 2, Algorithm = "PBKDF2", Iterations = 100001 },
+            }
+         };
+         IOptions<ServerPasswordSettings> options = Options.Create(settings);
+         _sut = new PasswordHashService(cryptoProvider, options);
       }
 
       [Test]
@@ -56,7 +71,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public void Salt_Is_16_Bytes()
       {
          byte[] password = "foo"u8.ToArray();
-         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
          Assert.True(hashOutput.Salt.Length == 16);
       }
 
@@ -64,7 +79,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public void Hash_Is_64_Bytes()
       {
          byte[] password = "foo"u8.ToArray();
-         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
          Assert.True(hashOutput.Hash.Length == 64);
       }
 
@@ -72,8 +87,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public void Salts_Are_Unique()
       {
          byte[] password = "foo"u8.ToArray();
-         SecurePasswordHashOutput hashOutput1 = _sut.MakeSecurePasswordHash(password, 1);
-         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 1);
+         SecurePasswordHashOutput hashOutput1 = _sut.MakeSecurePasswordHash(password, 0);
+         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 0);
          Assert.AreNotEqual(hashOutput1.Salt, hashOutput2.Salt);
       }
 
@@ -81,8 +96,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public void Hashes_With_Unique_Salts_Are_Unique()
       {
          byte[] password = "foo"u8.ToArray();
-         SecurePasswordHashOutput hashOutput1 = _sut.MakeSecurePasswordHash(password, 1);
-         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 1);
+         SecurePasswordHashOutput hashOutput1 = _sut.MakeSecurePasswordHash(password, 0);
+         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 0);
          Assert.AreNotEqual(hashOutput1.Hash, hashOutput2.Hash);
       }
 
@@ -90,8 +105,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public void Hash_Verification_Can_Succeed()
       {
          byte[] password = "foo"u8.ToArray();
-         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
-         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 1);
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
+         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 0);
          Assert.True(hashesMatch);
       }
 
@@ -100,8 +115,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       {
          byte[] password = "foo"u8.ToArray();
          byte[] notPassword = "not foo"u8.ToArray();
-         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
-         bool hashesMatch = _sut.VerifySecurePasswordHash(notPassword, hashOutput.Hash, hashOutput.Salt, 1);
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
+         bool hashesMatch = _sut.VerifySecurePasswordHash(notPassword, hashOutput.Hash, hashOutput.Salt, 0);
          Assert.False(hashesMatch);
       }
 
@@ -109,14 +124,14 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public void Hash_Verification_Fails_With_Bad_Salt()
       {
          byte[] password = "foo"u8.ToArray();
-         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
 
          // Modify the first byte in the salt to make it "bad"
          hashOutput.Salt[0] = hashOutput.Salt[0] == 0x01
             ? hashOutput.Salt[0] = 0x02
             : hashOutput.Salt[0] = 0x01;
 
-         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 1);
+         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 0);
          Assert.False(hashesMatch);
       }
 
@@ -124,9 +139,9 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public void Hash_Verification_Fails_With_Different_Iterations()
       {
          byte[] password = "foo"u8.ToArray();
-         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 1);
+         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
 
-         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 2);
+         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 1);
          Assert.False(hashesMatch);
       }
 
@@ -152,7 +167,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
             0x90, 0xe8, 0x6b, 0x19, 0x70, 0x27, 0xa5, 0xc6
          };
 
-         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt, 100001);
+         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt, 2);
          Assert.True(hashesMatch);
       }
    }

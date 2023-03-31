@@ -76,7 +76,7 @@ namespace Crypter.API.Controllers
                MakeErrorResponse(GetMasterKeyError.UnknownError));
       }
 
-      [HttpPut("master")]
+      [HttpPost("master")]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
@@ -98,7 +98,7 @@ namespace Crypter.API.Controllers
          }
 
          Guid userId = _tokenService.ParseUserId(User);
-         return await _userKeysService.InsertMasterKeyAsync(userId, request)
+         return await _userKeysService.UpsertMasterKeyAsync(userId, request, false)
             .MatchAsync(
                MakeErrorResponse,
                _ => Ok(),

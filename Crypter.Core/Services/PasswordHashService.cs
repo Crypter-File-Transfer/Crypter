@@ -25,41 +25,53 @@
  */
 
 using Crypter.Core.Identity;
+using Crypter.Core.Models;
 using Crypter.Crypto.Common;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Crypter.Core.Services
 {
    public interface IPasswordHashService
    {
-      SecurePasswordHashOutput MakeSecurePasswordHash(byte[] password, int iterations);
-      bool VerifySecurePasswordHash(byte[] password, byte[] existingHash, byte[] existingSalt, int iterations);
+      short LatestServerPasswordVersion { get; }
+      SecurePasswordHashOutput MakeSecurePasswordHash(byte[] password, short serverPasswordVersion);
+      bool VerifySecurePasswordHash(byte[] password, byte[] existingHash, byte[] existingSalt, short serverPasswordVersion);
    }
 
    public class PasswordHashService : IPasswordHashService
    {
+      public short LatestServerPasswordVersion { get; init; }
+
       private static readonly KeyDerivationPrf KeyDerivationAlgorithm = KeyDerivationPrf.HMACSHA512;
       private static readonly int HashByteLength = 64; // 512 bits
       private static readonly int SaltByteLength = 16; // 128 bits
 
       private readonly ICryptoProvider _cryptoProvider;
 
-      public PasswordHashService(ICryptoProvider cryptoProvider)
+      private readonly IReadOnlyDictionary<short, PasswordVersion> _serverPasswordVersions;
+
+      public PasswordHashService(ICryptoProvider cryptoProvider, IOptions<ServerPasswordSettings> passwordSettings)
       {
          _cryptoProvider = cryptoProvider;
+
+         _serverPasswordVersions = passwordSettings.Value.ServerVersions.ToDictionary(x => x.Version);
+         LatestServerPasswordVersion = passwordSettings.Value.ServerVersions.Max(x => x.Version);
       }
 
-      public SecurePasswordHashOutput MakeSecurePasswordHash(byte[] password, int iterations)
+      public SecurePasswordHashOutput MakeSecurePasswordHash(byte[] password, short serverPasswordVersion)
       {
          var salt = _cryptoProvider.Random.GenerateRandomBytes(SaltByteLength);
-         var hash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), salt, KeyDerivationAlgorithm, iterations, HashByteLength);
+         var hash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), salt, KeyDerivationAlgorithm, _serverPasswordVersions[serverPasswordVersion].Iterations, HashByteLength);
          return new SecurePasswordHashOutput { Hash = hash, Salt = salt };
       }
 
-      public bool VerifySecurePasswordHash(byte[] password, byte[] existingHash, byte[] existingSalt, int iterations)
+      public bool VerifySecurePasswordHash(byte[] password, byte[] existingHash, byte[] existingSalt, short serverPasswordVersion)
       {
-         var computedHash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), existingSalt, KeyDerivationAlgorithm, iterations, HashByteLength);
+         var computedHash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), existingSalt, KeyDerivationAlgorithm, _serverPasswordVersions[serverPasswordVersion].Iterations, HashByteLength);
          return _cryptoProvider.ConstantTime.Equals(computedHash, existingHash);
       }
    }

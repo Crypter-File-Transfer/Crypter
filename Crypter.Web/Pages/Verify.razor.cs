@@ -51,8 +51,6 @@ namespace Crypter.Web.Pages
       {
          ParseVerificationParamsFromUri();
          await VerifyEmailAddressAsync();
-
-         await base.OnInitializedAsync();
       }
 
       protected void ParseVerificationParamsFromUri()

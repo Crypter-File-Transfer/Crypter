@@ -26,7 +26,6 @@
 
 using Crypter.Common.Contracts;
 using Crypter.Common.Monads;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -40,8 +39,7 @@ namespace Crypter.Common.Client.Interfaces
       Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri)
          where TResponse : class;
 
-      Task<(HttpStatusCode httpStatus, Either<ErrorResponse, TResponse> response)> GetWithStatusCodeAsync<TResponse>(string uri)
-         where TResponse : class;
+      Task<Either<ErrorResponse, Unit>> GetEitherUnitResponseAsync(string uri);
 
       Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(string uri);
 

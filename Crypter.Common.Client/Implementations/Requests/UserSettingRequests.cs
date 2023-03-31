@@ -34,43 +34,45 @@ namespace Crypter.Common.Client.Implementations.Requests
 {
    public class UserSettingRequests : IUserSettingRequests
    {
+      private readonly ICrypterHttpClient _crypterHttpClient;
       private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
 
-      public UserSettingRequests(ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
+      public UserSettingRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
       {
+         _crypterHttpClient = crypterHttpClient;
          _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
       }
 
       public Task<Maybe<UserSettingsResponse>> GetUserSettingsAsync()
       {
-         string url = "/api/user/setting";
+         string url = "api/user/setting";
          return _crypterAuthenticatedHttpClient.GetMaybeAsync<UserSettingsResponse>(url);
       }
 
       public Task<Either<UpdateContactInfoError, Unit>> UpdateContactInfoAsync(UpdateContactInfoRequest request)
       {
-         string url = "/api/user/setting/contact";
+         string url = "api/user/setting/contact";
          return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<UpdateContactInfoError, Unit>();
       }
 
       public Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo)
       {
-         string url = "/api/user/setting/contact/verify";
-         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, verificationInfo)
+         string url = "api/user/setting/contact/verify";
+         return _crypterHttpClient.PostEitherUnitResponseAsync(url, verificationInfo)
             .ExtractErrorCode<VerifyEmailAddressError, Unit>();
       }
 
       public Task<Either<UpdateNotificationSettingsError, Unit>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request)
       {
-         string url = "/api/user/setting/notification";
+         string url = "api/user/setting/notification";
          return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<UpdateNotificationSettingsError, Unit>();
       }
 
       public Task<Either<UpdatePrivacySettingsError, Unit>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request)
       {
-         string url = "/api/user/setting/privacy";
+         string url = "api/user/setting/privacy";
          return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<UpdatePrivacySettingsError, Unit>();
       }

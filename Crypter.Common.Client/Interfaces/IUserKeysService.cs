@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.Models;
+using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
@@ -42,8 +42,5 @@ namespace Crypter.Common.Client.Interfaces
 
       Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, Password password, VersionedPassword versionedPassword, bool trustDevice);
       Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, VersionedPassword versionedPassword, byte[] credentialKey, bool trustDevice);
-
-      Task<Maybe<RecoveryKey>> GetExistingRecoveryKeyAsync(Username username, Password password);
-      Task<Maybe<RecoveryKey>> GetExistingRecoveryKeyAsync(Username username, VersionedPassword versionedPassword);
    }
 }

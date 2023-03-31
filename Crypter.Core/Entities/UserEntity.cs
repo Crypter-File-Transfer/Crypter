@@ -48,6 +48,7 @@ namespace Crypter.Core.Entities
 
       public UserProfileEntity Profile { get; set; }
       public UserPrivacySettingEntity PrivacySetting { get; set; }
+      public UserRecoveryEntity Recovery { get; set; }
       public UserEmailVerificationEntity EmailVerification { get; set; }
       public UserNotificationSettingEntity NotificationSetting { get; set; }
       public UserKeyPairEntity KeyPair { get; set; }

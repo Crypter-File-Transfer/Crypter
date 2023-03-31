@@ -41,6 +41,7 @@ namespace Crypter.Common.Client.Interfaces
       IUserConsentRequests UserConsent { get; }
       IUserContactRequests UserContact { get; }
       IUserKeyRequests UserKey { get; }
+      IUserRecoveryRequests UserRecovery { get; }
       IUserSettingRequests UserSetting { get; }
    }
 }

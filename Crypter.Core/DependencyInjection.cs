@@ -26,6 +26,7 @@
 
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
+using Crypter.Core.Repositories;
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Crypter.Crypto.Common;
@@ -65,6 +66,7 @@ namespace Crypter.Core
          services.TryAddScoped<IUserContactsService, UserContactsService>();
          services.TryAddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
          services.TryAddScoped<IUserKeysService, UserKeysService>();
+         services.TryAddScoped<IUserRecoveryService, UserRecoveryService>();
          services.TryAddScoped<IUserService, UserService>();
          services.TryAddScoped<IUserTransferService, UserTransferService>();
 
@@ -99,7 +101,7 @@ namespace Crypter.Core
             options.DeviceTokenLifetimeDays = tokenSettings.DeviceTokenLifetimeDays;
          });
 
-         services.AddTransferStorageService(options =>
+         services.AddTransferRepository(options =>
          {
             options.AllocatedGB = transferStorageSettings.AllocatedGB;
             options.Location = transferStorageSettings.Location;

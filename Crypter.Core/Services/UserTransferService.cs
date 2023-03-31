@@ -25,6 +25,9 @@
  */
 
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Enums;
+using Crypter.Core.Entities;
+using Crypter.Core.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -36,24 +39,28 @@ namespace Crypter.Core.Services
 {
    public interface IUserTransferService
    {
-      Task<List<UserSentMessageDTO>> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken);
-      Task<List<UserReceivedMessageDTO>> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken);
-      Task<List<UserSentFileDTO>> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken);
-      Task<List<UserReceivedFileDTO>> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken);
+      Task<List<UserSentMessageDTO>> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<List<UserReceivedMessageDTO>> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<List<UserSentFileDTO>> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<List<UserReceivedFileDTO>> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken = default);
+
+      Task DeleteReceivedTransfersAsync(Guid userId);
    }
 
    public class UserTransferService : IUserTransferService
    {
       private readonly DataContext _context;
       private readonly IHashIdService _hashIdService;
+      private readonly ITransferRepository _transferRepository;
 
-      public UserTransferService(DataContext context, IHashIdService hashIdService)
+      public UserTransferService(DataContext context, IHashIdService hashIdService, ITransferRepository transferRepository)
       {
          _context = context;
          _hashIdService = hashIdService;
+         _transferRepository = transferRepository;
       }
 
-      public async Task<List<UserSentMessageDTO>> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserSentMessageDTO>> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          var sentMessages = await _context.UserMessageTransfers
             .Where(x => x.SenderId == userId)
@@ -68,7 +75,7 @@ namespace Crypter.Core.Services
          return sentMessagesWithHashIds;
       }
 
-      public async Task<List<UserReceivedMessageDTO>> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserReceivedMessageDTO>> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          var receivedMessages = await _context.UserMessageTransfers
             .Where(x => x.RecipientId == userId)
@@ -83,7 +90,7 @@ namespace Crypter.Core.Services
          return receivedMessagesWithHashIds;
       }
 
-      public async Task<List<UserSentFileDTO>> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserSentFileDTO>> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          var sentFiles = await _context.UserFileTransfers
             .Where(x => x.SenderId == userId)
@@ -98,7 +105,7 @@ namespace Crypter.Core.Services
          return sentFilesWithHashIds;
       }
 
-      public async Task<List<UserReceivedFileDTO>> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserReceivedFileDTO>> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          var receivedFiles = await _context.UserFileTransfers
             .Where(x => x.RecipientId == userId)
@@ -111,6 +118,31 @@ namespace Crypter.Core.Services
             .ToList();
 
          return receivedFilesWithHashIds;
+      }
+
+      public async Task DeleteReceivedTransfersAsync(Guid userId)
+      {
+         List<UserFileTransferEntity> receivedFileTransfers = await _context.UserFileTransfers
+            .Where(x => x.RecipientId == userId)
+            .ToListAsync();
+
+         List<UserMessageTransferEntity> receivedMessageTransfers = await _context.UserMessageTransfers
+            .Where(x => x.RecipientId == userId)
+            .ToListAsync();
+
+         foreach (var receivedTransfer in receivedFileTransfers)
+         {
+            _context.Remove(receivedTransfer);
+            _transferRepository.DeleteTransfer(receivedTransfer.Id, TransferItemType.File, TransferUserType.User);
+         }
+
+         foreach (var receivedTransfer in receivedMessageTransfers)
+         {
+            _context.Remove(receivedTransfer);
+            _transferRepository.DeleteTransfer(receivedTransfer.Id, TransferItemType.Message, TransferUserType.User);
+         }
+
+         await _context.SaveChangesAsync();
       }
    }
 }
