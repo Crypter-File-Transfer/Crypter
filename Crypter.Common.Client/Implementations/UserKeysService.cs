@@ -26,8 +26,8 @@
 
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Events;
-using Crypter.Common.Client.Interfaces.Models;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
@@ -112,22 +112,23 @@ namespace Crypter.Common.Client.Implementations
 
       public Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, VersionedPassword versionedPassword, byte[] credentialKey, bool trustDevice)
       {
-         return UploadNewMasterKeyAsync(credentialKey, username, versionedPassword)
+         return UploadNewMasterKeyAsync(username, versionedPassword, credentialKey)
             .BindAsync(recoveryKey => UploadNewUserKeyPairAsync(recoveryKey.MasterKey)
                .MapAsync(privateKey => StoreSecretKeys(recoveryKey.MasterKey, privateKey, trustDevice))
                .MapAsync(_ => recoveryKey));
       }
 
-      private Task<Maybe<RecoveryKey>> UploadNewMasterKeyAsync(byte[] credentialKey, Username username, VersionedPassword versionedPassword)
+      private Task<Maybe<RecoveryKey>> UploadNewMasterKeyAsync(Username username, VersionedPassword versionedPassword, byte[] credentialKey)
       {
          byte[] newMasterKey = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.KeySize);
          byte[] nonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.NonceSize);
          byte[] encryptedMasterKey = _cryptoProvider.Encryption.Encrypt(credentialKey, nonce, newMasterKey);
          byte[] recoveryProof = _cryptoProvider.Random.GenerateRandomBytes(32);
 
-         return _crypterApiClient.UserKey.InsertMasterKeyAsync(new InsertMasterKeyRequest(username, versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof))
+         InsertMasterKeyRequest request = new InsertMasterKeyRequest(username, versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof);
+         return _crypterApiClient.UserKey.InsertMasterKeyAsync(request)
             .ToMaybeTask()
-            .MapAsync(x => new RecoveryKey(newMasterKey, recoveryProof));
+            .MapAsync(x => new RecoveryKey(newMasterKey, request.RecoveryProof));
       }
 
       private Task<Maybe<byte[]>> UploadNewUserKeyPairAsync(byte[] masterKey)
@@ -143,24 +144,6 @@ namespace Crypter.Common.Client.Implementations
       }
 
       #endregion
-
-      public Task<Maybe<RecoveryKey>> GetExistingRecoveryKeyAsync(Username username, Password password)
-      {
-         return MasterKey
-            .BindAsync(masterKey => _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .BindAsync(versionedPassword => GetExistingRecoveryKeyAsync(username, versionedPassword)));
-      }
-
-      public Task<Maybe<RecoveryKey>> GetExistingRecoveryKeyAsync(Username username, VersionedPassword versionedPassword)
-      {
-         return MasterKey
-            .BindAsync(masterKey =>
-            {
-               GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(username, versionedPassword.Password);
-               return _crypterApiClient.UserKey.GetMasterKeyRecoveryProofAsync(request).ToMaybeTask()
-                  .MapAsync(x => new RecoveryKey(masterKey, x.Proof));
-            });
-      }
 
       private async Task<Unit> StoreSecretKeys(byte[] masterKey, byte[] privateKey, bool trustDevice)
       {

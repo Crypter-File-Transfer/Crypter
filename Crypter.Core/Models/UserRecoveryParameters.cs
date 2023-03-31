@@ -24,31 +24,28 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Microsoft.IdentityModel.Tokens;
+using Crypter.Common.Primitives;
 using System;
 
-namespace Crypter.Core.Services
+namespace Crypter.Core.Models
 {
-   public class EmailVerificationEncoder
+   public class UserRecoveryParameters
    {
-      public static string EncodeVerificationCodeUrlSafe(Guid verificationCode)
-      {
-         return Base64UrlEncoder.Encode(verificationCode.ToByteArray());
-      }
+      public Guid UserId { get; init; }
+      public Username Username { get; init; }
+      public EmailAddress EmailAddress { get; init; }
+      public Guid RecoveryCode { get; init; }
+      public byte[] Signature { get; init; }
+      public byte[] VerificationKey { get; init; }
 
-      public static Guid DecodeVerificationCodeFromUrlSafe(string verificationCode)
+      public UserRecoveryParameters(Guid userId, Username username, EmailAddress emailAddress, Guid recoveryCode, byte[] signature, byte[] verificationKey)
       {
-         return new Guid(Base64UrlEncoder.DecodeBytes(verificationCode));
-      }
-
-      public static string EncodeSignatureUrlSafe(byte[] signature)
-      {
-         return Base64UrlEncoder.Encode(signature);
-      }
-
-      public static byte[] DecodeSignatureFromUrlSafe(string signature)
-      {
-         return Base64UrlEncoder.DecodeBytes(signature);
+         UserId = userId;
+         Username = username;
+         EmailAddress = emailAddress;
+         RecoveryCode = recoveryCode;
+         Signature = signature;
+         VerificationKey = verificationKey;
       }
    }
 }

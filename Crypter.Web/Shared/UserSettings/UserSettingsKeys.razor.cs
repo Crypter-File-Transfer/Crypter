@@ -44,6 +44,9 @@ namespace Crypter.Web.Shared.UserSettings
       private IUserKeysService UserKeysService { get; set; }
 
       [Inject]
+      private IUserRecoveryService UserRecoveryService { get; set; }
+
+      [Inject]
       protected IJSRuntime JSRuntime { get; set; }
 
       protected PasswordModal PasswordModal { get; set; }
@@ -64,12 +67,13 @@ namespace Crypter.Web.Shared.UserSettings
 
       private async void OnPasswordTestSuccess(object sender, UserPasswordTestSuccessEventArgs args)
       {
-         RecoveryKey = await UserKeysService.GetExistingRecoveryKeyAsync(args.Username, args.Password)
+         RecoveryKey = await UserKeysService.MasterKey
+            .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, args.Username, args.Password))
             .MatchAsync(
-            () => "An error occurred",
-            x => x.ToBase64String());
+               () => "An error occurred",
+               x => x.ToBase64String());
 
-         await InvokeAsync(() => StateHasChanged());
+         await InvokeAsync(StateHasChanged);
       }
 
       protected async Task CopyRecoveryKeyToClipboardAsync()

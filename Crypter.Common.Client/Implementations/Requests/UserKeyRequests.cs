@@ -43,7 +43,7 @@ namespace Crypter.Common.Client.Implementations.Requests
 
       public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync()
       {
-         string url = "/api/user/key/master";
+         string url = "api/user/key/master";
          return _crypterAuthenticatedHttpClient.GetEitherAsync<GetMasterKeyResponse>(url)
             .ExtractErrorCode<GetMasterKeyError, GetMasterKeyResponse>();
       }
@@ -51,7 +51,7 @@ namespace Crypter.Common.Client.Implementations.Requests
       public Task<Either<InsertMasterKeyError, Unit>> InsertMasterKeyAsync(InsertMasterKeyRequest request)
       {
          string url = "api/user/key/master";
-         return _crypterAuthenticatedHttpClient.PutEitherUnitResponseAsync(url, request)
+         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<InsertMasterKeyError, Unit>();
       }
 

@@ -120,9 +120,10 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetAnonymousMessageCiphertextAsync([FromQuery] string id, [FromQuery] byte[] proof, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetAnonymousMessageCiphertextAsync([FromQuery] string id, [FromQuery] string proof)
       {
-         return await _transferDownloadService.GetAnonymousMessageCiphertextAsync(id, proof, cancellationToken)
+         return await DecodeProof(proof)
+            .BindAsync(async decodedProof => await _transferDownloadService.GetAnonymousMessageCiphertextAsync(id, decodedProof))
             .MatchAsync(
                MakeErrorResponse,
                x => new FileStreamResult(x, "application/octet-stream"),
@@ -134,10 +135,11 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserMessageCiphertextAsync([FromQuery] string id, [FromQuery] byte[] proof, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetUserMessageCiphertextAsync([FromQuery] string id, [FromQuery] string proof)
       {
          Maybe<Guid> userId = _tokenService.TryParseUserId(User);
-         return await _transferDownloadService.GetUserMessageCiphertextAsync(id, proof, userId, cancellationToken)
+         return await DecodeProof(proof)
+            .BindAsync(async decodedProof => await _transferDownloadService.GetUserMessageCiphertextAsync(id, decodedProof, userId))
             .MatchAsync(
                MakeErrorResponse,
                x => new FileStreamResult(x, "application/octet-stream"),

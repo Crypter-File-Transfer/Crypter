@@ -32,22 +32,21 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using System;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Core.Services
+namespace Crypter.Core.Repositories
 {
-   public interface ITransferStorageService
+   public interface ITransferRepository
    {
       bool TransferExists(Guid id, TransferItemType itemType, TransferUserType userType);
       Maybe<FileStream> GetTransfer(Guid id, TransferItemType itemType, TransferUserType userType, bool deleteOnReadCompletion);
-      Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream stream, CancellationToken cancellationToken);
+      Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream stream);
       void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType);
    }
 
-   public static class TransferStorageServiceExtensions
+   public static class TransferRepositoryExtensions
    {
-      public static void AddTransferStorageService(this IServiceCollection services, Action<TransferStorageSettings> settings)
+      public static void AddTransferRepository(this IServiceCollection services, Action<TransferStorageSettings> settings)
       {
          if (settings is null)
          {
@@ -55,15 +54,15 @@ namespace Crypter.Core.Services
          }
 
          services.Configure(settings);
-         services.TryAddSingleton<ITransferStorageService, TransferStorageService>();
+         services.TryAddSingleton<ITransferRepository, TransferRepository>();
       }
    }
 
-   public class TransferStorageService : ITransferStorageService
+   public class TransferRepository : ITransferRepository
    {
       private readonly TransferStorageSettings _transferStorageSettings;
 
-      public TransferStorageService(IOptions<TransferStorageSettings> transferStorageSettings)
+      public TransferRepository(IOptions<TransferStorageSettings> transferStorageSettings)
       {
          _transferStorageSettings = transferStorageSettings.Value;
       }
@@ -89,7 +88,7 @@ namespace Crypter.Core.Services
             : Maybe<FileStream>.None;
       }
 
-      public async Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream stream, CancellationToken cancellationToken)
+      public async Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream stream)
       {
          string directory = GetTransferDirectory(itemType, userType);
          string filepath = Path.Join(directory, id.ToString());
@@ -102,8 +101,8 @@ namespace Crypter.Core.Services
             }
 
             using FileStream ciphertextStream = File.OpenWrite(filepath);
-            await stream.CopyToAsync(ciphertextStream, cancellationToken);
-            await ciphertextStream.FlushAsync(cancellationToken);
+            await stream.CopyToAsync(ciphertextStream);
+            await ciphertextStream.FlushAsync();
             ciphertextStream.Dispose();
          }
          catch (OperationCanceledException)

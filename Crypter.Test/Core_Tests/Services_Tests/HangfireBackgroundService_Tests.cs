@@ -24,14 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Core.Models;
+using Crypter.Core.Repositories;
 using Crypter.Core.Services;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.Providers.Default;
+using Hangfire;
 using Moq;
 using NUnit.Framework;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
@@ -40,26 +41,25 @@ namespace Crypter.Test.Core_Tests.Services_Tests
    public class HangfireBackgroundService_Tests
    {
       private TestDataContext _testContext;
-      private IUserService _userService;
-      private Mock<IUserEmailVerificationService> _userEmailVerificationMock;
+      private ICryptoProvider _cryptoProvider;
+      private Mock<IBackgroundJobClient> _backgroundJobClientMock;
       private Mock<IEmailService> _emailServiceMock;
-      private Mock<ITransferStorageService> _transferStorageMock;
+      private Mock<ITransferRepository> _transferStorageMock;
 
       [OneTimeSetUp]
       public void SetupOnce()
       {
          _testContext = new TestDataContext(GetType().Name);
          _testContext.EnsureCreated();
-
-         _userService = new UserService(_testContext);
       }
 
       [SetUp]
       public void Setup()
       {
-         _userEmailVerificationMock = new Mock<IUserEmailVerificationService>();
+         _cryptoProvider = new DefaultCryptoProvider();
+         _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
          _emailServiceMock = new Mock<IEmailService>();
-         _transferStorageMock = new Mock<ITransferStorageService>();
+         _transferStorageMock = new Mock<ITransferRepository>();
       }
 
       [TearDown]
@@ -71,62 +71,30 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [Test]
       public async Task Verification_Email_Not_Sent_Without_Verification_Parameters()
       {
-         _userEmailVerificationMock
-            .Setup(x => x.CreateNewVerificationParametersAsync(
-               It.IsAny<Guid>(),
-               It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => Maybe<UserEmailAddressVerificationParameters>.None);
-
          _emailServiceMock
             .Setup(x => x.SendEmailVerificationAsync(
-               It.IsAny<UserEmailAddressVerificationParameters>(),
-               It.IsAny<CancellationToken>()))
-            .ReturnsAsync((UserEmailAddressVerificationParameters parameters, CancellationToken cancellationToken) => true);
+               It.IsAny<UserEmailAddressVerificationParameters>()))
+            .ReturnsAsync((UserEmailAddressVerificationParameters parameters) => true);
 
-         HangfireBackgroundService sut = new HangfireBackgroundService(_testContext, _userService, _userEmailVerificationMock.Object, _emailServiceMock.Object, _transferStorageMock.Object);
-         await sut.SendEmailVerificationAsync(Guid.NewGuid(), CancellationToken.None);
+         HangfireBackgroundService sut = new HangfireBackgroundService(_testContext, _backgroundJobClientMock.Object, _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
+         await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
-         _userEmailVerificationMock.Verify(x => x.CreateNewVerificationParametersAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
-         _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>(), It.IsAny<CancellationToken>()), Times.Never);
-         _userEmailVerificationMock.Verify(x => x.SaveSentVerificationParametersAsync(It.IsAny<UserEmailAddressVerificationParameters>(), It.IsAny<CancellationToken>()), Times.Never);
+         _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>()), Times.Never);
       }
 
       [Test]
-      public async Task Verification_Email_Is_Sent_When_Given_Verification_Parameters()
+      public async Task Recovery_Email_Not_Sent_Without_Recovery_Parameters()
       {
-         byte[] publicKey = new byte[]
-         {
-            0xf4, 0x5b, 0x53, 0x77, 0x36, 0x6a, 0x0d, 0x4d,
-            0x46, 0x46, 0xd7, 0x55, 0x55, 0x5c, 0xef, 0xa4,
-            0xda, 0xa5, 0xae, 0x2b, 0xec, 0xc3, 0xbd, 0x5f,
-            0x2d, 0x0a, 0x6c, 0x98, 0x33, 0x8e, 0x13, 0x56
-         };
-         var parameters = new UserEmailAddressVerificationParameters(Guid.NewGuid(), EmailAddress.From("test@test.com"), Guid.NewGuid(), new byte[] { 0x00 }, publicKey);
-
-         _userEmailVerificationMock
-            .Setup(x => x.CreateNewVerificationParametersAsync(
-               It.IsAny<Guid>(),
-               It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid userId, CancellationToken cancellationToken) => parameters);
-
          _emailServiceMock
-            .Setup(x => x.SendEmailVerificationAsync(
-               It.IsAny<UserEmailAddressVerificationParameters>(),
-               It.IsAny<CancellationToken>()))
-            .ReturnsAsync((UserEmailAddressVerificationParameters parameters, CancellationToken cancellationToken) => true);
+            .Setup(x => x.SendAccountRecoveryLinkAsync(
+               It.IsAny<UserRecoveryParameters>(),
+               It.IsAny<int>()))
+            .ReturnsAsync((UserRecoveryParameters parameters, int expirationMinutes) => true);
 
-         _userEmailVerificationMock
-            .Setup(x => x.SaveSentVerificationParametersAsync(
-               It.IsAny<UserEmailAddressVerificationParameters>(),
-               It.IsAny<CancellationToken>()))
-            .ReturnsAsync((UserEmailAddressVerificationParameters parameters, CancellationToken cancellationToken) => 1);
+         HangfireBackgroundService sut = new HangfireBackgroundService(_testContext, _backgroundJobClientMock.Object, _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
+         await sut.SendRecoveryEmailAsync("foo@test.com");
 
-         HangfireBackgroundService sut = new HangfireBackgroundService(_testContext, _userService, _userEmailVerificationMock.Object, _emailServiceMock.Object, _transferStorageMock.Object);
-         await sut.SendEmailVerificationAsync(parameters.UserId, CancellationToken.None);
-
-         _userEmailVerificationMock.Verify(x => x.CreateNewVerificationParametersAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
-         _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>(), It.IsAny<CancellationToken>()), Times.Once);
-         _userEmailVerificationMock.Verify(x => x.SaveSentVerificationParametersAsync(It.IsAny<UserEmailAddressVerificationParameters>(), It.IsAny<CancellationToken>()), Times.Once);
+         _emailServiceMock.Verify(x => x.SendAccountRecoveryLinkAsync(It.IsAny<UserRecoveryParameters>(), It.IsAny<int>()), Times.Never);
       }
    }
 }

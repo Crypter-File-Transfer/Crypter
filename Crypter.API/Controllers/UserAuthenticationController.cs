@@ -64,7 +64,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> RegisterAsync([FromBody] RegistrationRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> RegisterAsync([FromBody] RegistrationRequest request)
       {
          IActionResult MakeErrorResponse(RegistrationError error)
          {
@@ -84,7 +84,7 @@ namespace Crypter.API.Controllers
 #pragma warning restore CS8524
          }
 
-         return await _userAuthenticationService.RegisterAsync(request, cancellationToken)
+         return await _userAuthenticationService.RegisterAsync(request)
             .MatchAsync(
                MakeErrorResponse,
                _ => Ok(),
@@ -101,7 +101,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginResponse))]
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request, CancellationToken cancellationToken)
+      public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request)
       {
          IActionResult MakeErrorResponse(LoginError error)
          {
@@ -120,7 +120,7 @@ namespace Crypter.API.Controllers
          }
 
          var requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-         var loginResult = await _userAuthenticationService.LoginAsync(request, requestUserAgent, cancellationToken);
+         var loginResult = await _userAuthenticationService.LoginAsync(request, requestUserAgent);
          return loginResult.Match(
             MakeErrorResponse,
             Ok,
@@ -145,7 +145,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> RefreshAsync(CancellationToken cancellationToken)
+      public async Task<IActionResult> RefreshAsync()
       {
          IActionResult MakeErrorResponse(RefreshError error)
          {
@@ -160,7 +160,7 @@ namespace Crypter.API.Controllers
          }
 
          var requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-         var refreshResult = await _userAuthenticationService.RefreshAsync(User, requestUserAgent, cancellationToken);
+         var refreshResult = await _userAuthenticationService.RefreshAsync(User, requestUserAgent);
 
          return refreshResult.Match(
             MakeErrorResponse,
@@ -217,7 +217,7 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+      public async Task<IActionResult> Logout()
       {
          IActionResult MakeErrorResponse(LogoutError error)
          {
@@ -230,7 +230,7 @@ namespace Crypter.API.Controllers
 #pragma warning restore CS8524
          }
 
-         var logoutResult = await _userAuthenticationService.LogoutAsync(User, cancellationToken);
+         var logoutResult = await _userAuthenticationService.LogoutAsync(User);
          return logoutResult.Match(
             MakeErrorResponse,
             _ => Ok(),

@@ -87,6 +87,14 @@ namespace Crypter.Common.Monads
             neither: Either<TLeft, TResult>.Neither);
       }
 
+      public static Task<Either<TLeft, TResult>> MapAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Task<Either<TLeft, TResult>>> mapAsync)
+      {
+         return either.MatchAsync(
+            left: left => Either<TLeft, TResult>.FromLeft(left),
+            rightAsync: right => mapAsync(right),
+            neither: Either<TLeft, TResult>.Neither);
+      }
+
       public static Task<Either<TResult, TRight>> MapLeftAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TLeft, Either<TResult, TRight>> map)
       {
          return either.MatchAsync(
@@ -95,12 +103,12 @@ namespace Crypter.Common.Monads
             neither: Either<TResult, TRight>.Neither);
       }
 
-      public static Task<Either<TLeft, TResult>> MapAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Task<Either<TLeft, TResult>>> map)
+      public static Task<Either<TResult, TRight>> MapLeftAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TLeft, Task<Either<TResult, TRight>>> mapAsync)
       {
          return either.MatchAsync(
-            left: left => Either<TLeft, TResult>.FromLeft(left),
-            rightAsync: right => map(right),
-            neither: Either<TLeft, TResult>.Neither);
+            leftAsync: left => mapAsync(left),
+            right: right => Either<TResult, TRight>.FromRight(right),
+            neither: Either<TResult, TRight>.Neither);
       }
 
       public static Task<Either<TLeft, TResult>> BindAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TRight, Task<Either<TLeft, TResult>>> bindAsync)
@@ -121,6 +129,16 @@ namespace Crypter.Common.Monads
                      left => Either<TLeft, TResult>.FromLeft(left),
                      right2 => bind(right2),
                      Either<TLeft, TResult>.Neither));
+      }
+
+      public static Task<Either<TResult, TRight>> BindLeftAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TLeft, Task<Either<TResult, TRight>>> bindAsync)
+      {
+         return either.MapLeftAsync(
+               async left =>
+                  await Either<TLeft, TRight>.FromLeft(left).MatchAsync(
+                     async left2 => await bindAsync(left2),
+                     right => Either<TResult, TRight>.FromRight(right),
+                     Either<TResult, TRight>.Neither));
       }
 
       public static Task<Either<TResult, TRight>> BindLeftAsync<TLeft, TRight, TResult>(this Task<Either<TLeft, TRight>> either, Func<TLeft, Either<TResult, TRight>> bind)

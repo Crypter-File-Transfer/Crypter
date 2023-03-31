@@ -24,11 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
 using System;
 using System.Text;
 using System.Text.Json;
 
-namespace Crypter.Common.Client.Interfaces.Models
+namespace Crypter.Common.Client.Models
 {
    public class RecoveryKey
    {
@@ -48,11 +49,18 @@ namespace Crypter.Common.Client.Interfaces.Models
          return Convert.ToBase64String(bytes);
       }
 
-      public static RecoveryKey FromBase64String(string encodedRecoveryKey)
+      public static Maybe<RecoveryKey> FromBase64String(string encodedRecoveryKey)
       {
-         byte[] bytes = Convert.FromBase64String(encodedRecoveryKey);
-         string json = Encoding.UTF8.GetString(bytes);
-         return JsonSerializer.Deserialize<RecoveryKey>(json);
+         try
+         {
+            byte[] bytes = Convert.FromBase64String(encodedRecoveryKey);
+            string json = Encoding.UTF8.GetString(bytes);
+            return JsonSerializer.Deserialize<RecoveryKey>(json);
+         }
+         catch (Exception)
+         {
+            return Maybe<RecoveryKey>.None;
+         }
       }
    }
 }

@@ -25,21 +25,30 @@
  */
 
 using Crypter.Common.Enums;
+using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
+using Crypter.Core.Features.Transfer;
+using Crypter.Core.Features.UserAuthentication;
+using Crypter.Core.Features.UserEmailVerification;
+using Crypter.Core.Features.UserRecovery;
+using Crypter.Core.Features.UserToken;
+using Crypter.Core.Repositories;
+using Crypter.Crypto.Common;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services
 {
    public interface IHangfireBackgroundService
    {
-      Task SendEmailVerificationAsync(Guid userId, CancellationToken cancellationToken);
-      Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType, CancellationToken cancellationToken);
+      Task SendEmailVerificationAsync(Guid userId);
+      Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType);
+      Task SendRecoveryEmailAsync(string emailAddress);
 
       /// <summary>
       /// Delete a transfer from transfer storage and the database.
@@ -52,152 +61,121 @@ namespace Crypter.Core.Services
       /// These streams are sometimes configured to "DeleteOnClose".
       /// The background service should not delete from transfer storage when "DeleteOnClose" is configured.
       /// </param>
-      /// <param name="cancellationToken"></param>
       /// <returns></returns>
-      Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferStorage, CancellationToken cancellationToken);
-      Task DeleteUserTokenAsync(Guid tokenId, CancellationToken cancellationToken);
-      Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId, CancellationToken cancellationToken);
+      Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferStorage);
+      Task DeleteUserTokenAsync(Guid tokenId);
+      Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId);
+      Task DeleteRecoveryParametersAsync(Guid userId);
    }
 
    public class HangfireBackgroundService : IHangfireBackgroundService
    {
-      private readonly DataContext _context;
-      private readonly IUserService _userService;
-      private readonly IUserEmailVerificationService _userEmailVerificationService;
+      private readonly DataContext _dataContext;
+      private readonly IBackgroundJobClient _backgroundJobClient;
+      private readonly ICryptoProvider _cryptoProvider;
       private readonly IEmailService _emailService;
-      private readonly ITransferStorageService _transferStorageService;
+      private readonly ITransferRepository _transferRepository;
 
+      private const int _accountRecoveryEmailExpirationMinutes = 30;
+
+      /// <summary>
+      /// The purpose of this class is to organize all the methods invoked by Hangfire.
+      /// Modifying the method definitions risks breaking pending jobs in production.
+      /// Moving methods out of this class also risks breaking pending jobs in production.
+      /// 
+      /// Do not modify methods in this class or move them out of the class.
+      /// </summary>
+      /// <param name="dataContext"></param>
+      /// <param name="backgroundJobClient"></param>
+      /// <param name="emailService"></param>
+      /// <param name="transferRepository"></param>
       public HangfireBackgroundService(
-         DataContext context, IUserService userService, IUserEmailVerificationService userEmailVerificationService, IEmailService emailService, ITransferStorageService transferStorageService)
+         DataContext dataContext, IBackgroundJobClient backgroundJobClient, ICryptoProvider cryptoProvider, IEmailService emailService, ITransferRepository transferRepository)
       {
-         _context = context;
-         _userService = userService;
-         _userEmailVerificationService = userEmailVerificationService;
+         _dataContext = dataContext;
+         _backgroundJobClient = backgroundJobClient;
+         _cryptoProvider = cryptoProvider;
          _emailService = emailService;
-         _transferStorageService = transferStorageService;
+         _transferRepository = transferRepository;
       }
 
-      public async Task SendEmailVerificationAsync(Guid userId, CancellationToken cancellationToken)
+      public Task SendEmailVerificationAsync(Guid userId)
       {
-         var verificationParameters = await _userEmailVerificationService.CreateNewVerificationParametersAsync(userId, cancellationToken);
-         await verificationParameters.IfSomeAsync(async x =>
+         return UserEmailVerificationQueries.GenerateVerificationParametersAsync(_dataContext, _cryptoProvider, userId)
+         .IfSomeAsync(async x =>
          {
-            bool deliverySuccess = await _emailService.SendEmailVerificationAsync(x, CancellationToken.None);
+            bool deliverySuccess = await _emailService.SendEmailVerificationAsync(x);
             if (deliverySuccess)
             {
-               await _userEmailVerificationService.SaveSentVerificationParametersAsync(x, CancellationToken.None);
+               await UserEmailVerificationCommands.SaveVerificationParametersAsync(_dataContext, x);
             }
          });
       }
 
-      public async Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType, CancellationToken cancellationToken)
+      public async Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType)
       {
          UserEntity recipient = null;
 
          switch (itemType)
          {
             case TransferItemType.Message:
-               recipient = await _context.UserMessageTransfers
+               recipient = await _dataContext.UserMessageTransfers
                   .Where(x => x.Id == itemId)
                   .Select(x => x.Recipient)
                   .Where(LinqUserExpressions.UserReceivesEmailNotifications())
-                  .FirstOrDefaultAsync(cancellationToken);
+                  .FirstOrDefaultAsync();
                break;
             case TransferItemType.File:
-               recipient = await _context.UserFileTransfers
+               recipient = await _dataContext.UserFileTransfers
                   .Where(x => x.Id == itemId)
                   .Select(x => x.Recipient)
                   .Where(LinqUserExpressions.UserReceivesEmailNotifications())
-                  .FirstOrDefaultAsync(cancellationToken);
+                  .FirstOrDefaultAsync();
                break;
-            default:
-               return;
          }
 
-         if (recipient is null)
+         if (recipient is not null
+            && EmailAddress.TryFrom(recipient.EmailAddress, out EmailAddress validEmailAddress))
          {
-            return;
-         }
-
-         if (!EmailAddress.TryFrom(recipient.EmailAddress, out var emailAddress))
-         {
-            return;
-         }
-
-         await _emailService.SendTransferNotificationAsync(emailAddress, cancellationToken);
-      }
-
-      public async Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferStorage, CancellationToken cancellationToken)
-      {
-         bool entityFound = false;
-
-         if (itemType == TransferItemType.Message && userType == TransferUserType.Anonymous)
-         {
-            var entity = await _context.AnonymousMessageTransfers.FirstOrDefaultAsync(x => x.Id == itemId, cancellationToken);
-            if (entity is not null)
-            {
-               _context.AnonymousMessageTransfers.Remove(entity);
-               entityFound = true;
-            }
-         }
-         else if (itemType == TransferItemType.File && userType == TransferUserType.Anonymous)
-         {
-            var entity = await _context.AnonymousFileTransfers.FirstOrDefaultAsync(x => x.Id == itemId, cancellationToken);
-            if (entity is not null)
-            {
-               _context.AnonymousFileTransfers.Remove(entity);
-               entityFound = true;
-            }
-         }
-         else if (itemType == TransferItemType.Message && userType == TransferUserType.User)
-         {
-            var entity = await _context.UserMessageTransfers.FirstOrDefaultAsync(x => x.Id == itemId, cancellationToken);
-            if (entity is not null)
-            {
-               _context.UserMessageTransfers.Remove(entity);
-               entityFound = true;
-            }
-         }
-         else if (itemType == TransferItemType.File && userType == TransferUserType.User)
-         {
-            var entity = await _context.UserFileTransfers.FirstOrDefaultAsync(x => x.Id == itemId, cancellationToken);
-            if (entity is not null)
-            {
-               _context.UserFileTransfers.Remove(entity);
-               entityFound = true;
-            }
-         }
-         else
-         {
-            // todo
-         }
-
-         if (entityFound)
-         {
-            await _context.SaveChangesAsync(cancellationToken);
-         }
-
-         if (deleteFromTransferStorage)
-         {
-            _transferStorageService.DeleteTransfer(itemId, itemType, userType);
+            await _emailService.SendTransferNotificationAsync(validEmailAddress);
          }
       }
 
-      public async Task DeleteUserTokenAsync(Guid tokenId, CancellationToken cancellationToken)
+      public Task SendRecoveryEmailAsync(string emailAddress)
       {
-         await _userService.DeleteUserTokenEntityAsync(tokenId, cancellationToken);
+         return UserRecoveryQueries.GenerateRecoveryParametersAsync(_dataContext, _cryptoProvider, emailAddress)
+            .IfSomeAsync(async parameters =>
+            {
+               bool deliverySuccess = await _emailService.SendAccountRecoveryLinkAsync(parameters, _accountRecoveryEmailExpirationMinutes);
+               if (deliverySuccess)
+               {
+                  DateTime utcNow = DateTime.UtcNow;
+                  await UserRecoveryCommands.SaveRecoveryParametersAsync(_dataContext, parameters, utcNow);
+
+                  DateTime recoveryExpiration = utcNow.AddMinutes(_accountRecoveryEmailExpirationMinutes);
+                  _backgroundJobClient.Schedule(() => DeleteRecoveryParametersAsync(parameters.UserId), recoveryExpiration);
+               }
+            });
       }
 
-      public async Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId, CancellationToken cancellationToken)
+      public Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferStorage)
       {
-         var foundAttempt = await _context.UserFailedLoginAttempts
-            .FirstOrDefaultAsync(x => x.Id == failedAttemptId, cancellationToken);
+         return TransferCommands.DeleteTransferAsync(_dataContext, _transferRepository, itemId, itemType, userType, deleteFromTransferStorage);
+      }
 
-         if (foundAttempt is not null)
-         {
-            _context.UserFailedLoginAttempts.Remove(foundAttempt);
-            await _context.SaveChangesAsync(cancellationToken);
-         }
+      public Task DeleteUserTokenAsync(Guid tokenId)
+      {
+         return UserTokenCommands.DeleteUserTokenAsync(_dataContext, tokenId);
+      }
+
+      public Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId)
+      {
+         return UserAuthenticationCommands.DeleteFailedLoginAttemptAsync(_dataContext, failedAttemptId);
+      }
+
+      public Task DeleteRecoveryParametersAsync(Guid userId)
+      {
+         return UserRecoveryCommands.DeleteRecoveryParametersAsync(_dataContext, userId);
       }
    }
 }

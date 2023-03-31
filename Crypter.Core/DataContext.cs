@@ -59,6 +59,7 @@ namespace Crypter.Core
       public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; set; }
       public DbSet<UserMasterKeyEntity> UserMasterKeys { get; set; }
       public DbSet<UserConsentEntity> UserConsents { get; set; }
+      public DbSet<UserRecoveryEntity> UserRecoveries { get; set; }
 
       protected override void OnModelCreating(ModelBuilder builder)
       {

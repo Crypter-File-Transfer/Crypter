@@ -48,7 +48,7 @@ namespace Crypter.Common.Client.Implementations.Requests
 
       public Task<Either<GetUserProfileError, UserProfileDTO>> GetUserProfileAsync(string username, bool withAuthentication)
       {
-         string url = $"/api/user/profile/?username={username}";
+         string url = $"api/user/profile/?username={username}";
          ICrypterHttpClient client = withAuthentication
             ? _crypterAuthenticatedHttpClient
             : _crypterHttpClient;
@@ -59,14 +59,14 @@ namespace Crypter.Common.Client.Implementations.Requests
 
       public Task<Either<UpdateProfileError, Unit>> UpdateProfileInfoAsync(UpdateProfileRequest request)
       {
-         string url = "/api/user/profile";
+         string url = "api/user/profile";
          return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<UpdateProfileError, Unit>();
       }
 
       public Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters)
       {
-         StringBuilder urlBuilder = new StringBuilder("/api/user/search/?keyword=");
+         StringBuilder urlBuilder = new StringBuilder("api/user/search/?keyword=");
          urlBuilder.Append(searchParameters.Keyword);
          urlBuilder.Append("&index=");
          urlBuilder.Append(searchParameters.Index);

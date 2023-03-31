@@ -33,10 +33,11 @@
       <div class="invalid-feedback">@UsernameValidationErrorMessage</div>
    </div>
 
-   <div class="mb-3">
+   <div class="mb-3 position-relative">
       <label for="passwordFormControl" class="form-label">Password</label>
-      <input type="password" @bind="LoginModel.Password" class="form-control @PasswordInvalidClassPlaceholder" id="passwordFormControl" />
       <div class="invalid-feedback">@PasswordValidationErrorMessage</div>
+      <input type="password" @bind="LoginModel.Password" class="form-control @PasswordInvalidClassPlaceholder" id="passwordFormControl" />
+      <a class="position-absolute top-0 end-0" href="./forgot-password">Forgot password?</a>
    </div>
 
    <div hidden="@(!LoginAttemptFailed)" class="alert alert-danger" role="alert">
