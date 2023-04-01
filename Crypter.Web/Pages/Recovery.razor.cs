@@ -30,11 +30,9 @@ using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Infrastructure;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
+using Crypter.Web.Helpers;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Primitives;
-using System;
-using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -65,12 +63,11 @@ namespace Crypter.Web.Pages
 
       protected override void OnInitialized()
       {
-         Uri uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-         Dictionary<string, StringValues> queryParameters = QueryHelpers.ParseQuery(uri.Query);
+         NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
 
-         bool validPageLanding = queryParameters.ContainsKey("username")
-            && queryParameters.ContainsKey("code")
-            && queryParameters.ContainsKey("signature");
+         bool validPageLanding = !string.IsNullOrEmpty(queryParameters["username"])
+            && !string.IsNullOrEmpty(queryParameters["code"])
+            && !string.IsNullOrEmpty(queryParameters["signature"]);
 
          if (!validPageLanding)
          {

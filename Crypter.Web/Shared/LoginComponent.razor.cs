@@ -82,7 +82,7 @@ namespace Crypter.Web.Shared
 
          loginTaskResult.DoRight(_ =>
          {
-            string returnUrl = NavigationManager.QueryString("returnUrl") ?? _userLandingPage;
+            string returnUrl = NavigationManager.GetQueryParameter("returnUrl") ?? _userLandingPage;
             NavigationManager.NavigateTo(returnUrl);
          });
       }

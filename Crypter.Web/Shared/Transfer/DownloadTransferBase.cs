@@ -28,9 +28,8 @@ using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
-using Crypter.Crypto.Common;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.IdentityModel.Tokens;
 using System;
 
 namespace Crypter.Web.Shared.Transfer
@@ -50,7 +49,7 @@ namespace Crypter.Web.Shared.Transfer
       protected TransferHandlerFactory TransferHandlerFactory { get; set; }
 
       [Inject]
-      protected ICryptoProvider CryptoProvider { get; set; }
+      protected Crypto.Common.ICryptoProvider CryptoProvider { get; set; }
 
       [Parameter]
       public string TransferHashId { get; set; }
@@ -79,7 +78,7 @@ namespace Crypter.Web.Shared.Transfer
 
          try
          {
-            byte[] seed = Base64UrlTextEncoder.Decode(encodedSeed);
+            byte[] seed = Base64UrlEncoder.DecodeBytes(encodedSeed);
             return CryptoProvider.KeyExchange.GenerateKeyPairDeterministic(seed).PrivateKey;
          }
          catch (Exception)
