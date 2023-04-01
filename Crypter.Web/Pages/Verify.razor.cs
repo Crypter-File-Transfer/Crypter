@@ -26,10 +26,10 @@
 
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Web.Helpers;
 using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.WebUtilities;
-using System.Linq;
+using System.Collections.Specialized;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -55,17 +55,9 @@ namespace Crypter.Web.Pages
 
       protected void ParseVerificationParamsFromUri()
       {
-         var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-
-         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("code", out var code))
-         {
-            EmailVerificationParams.Code = code.First();
-         }
-
-         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("signature", out var signature))
-         {
-            EmailVerificationParams.Signature = signature.First();
-         }
+         NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
+         EmailVerificationParams.Code = queryParameters["code"];
+         EmailVerificationParams.Signature = queryParameters["signature"];
       }
 
       protected async Task VerifyEmailAddressAsync()
