@@ -79,8 +79,7 @@ namespace Crypter.Core.Entities
          builder.Property(x => x.Id)
             .UseIdentityAlwaysColumn();
 
-         builder.Property(x => x.Active)
-            .HasDefaultValue(true);
+         builder.Property(x => x.Active);
 
          builder.HasIndex(x => x.Owner);
 
