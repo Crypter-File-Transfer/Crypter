@@ -28,6 +28,7 @@ using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Infrastructure;
 using Crypter.Common.Monads;
 using Crypter.Crypto.Common.StreamEncryption;
 using System;
@@ -106,14 +107,14 @@ namespace Crypter.Common.Client.Implementations.Requests
 
       public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetAnonymousMessageCiphertextAsync(string hashId, byte[] proof)
       {
-         string url = $"api/message/transfer/ciphertext/anonymous?id={hashId}&proof={Convert.ToBase64String(proof)}";
+         string url = $"api/message/transfer/ciphertext/anonymous?id={hashId}&proof={UrlSafeEncoder.EncodeBytesUrlSafe(proof)}";
          return _crypterHttpClient.GetStreamResponseAsync(url)
             .ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>();
       }
 
       public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetUserMessageCiphertextAsync(string hashId, byte[] proof, bool withAuthentication)
       {
-         string url = $"api/message/transfer/ciphertext/user?id={hashId}&proof={Convert.ToBase64String(proof)}";
+         string url = $"api/message/transfer/ciphertext/user?id={hashId}&proof={UrlSafeEncoder.EncodeBytesUrlSafe(proof)}";
 
          ICrypterHttpClient client = withAuthentication
             ? _crypterAuthenticatedHttpClient
