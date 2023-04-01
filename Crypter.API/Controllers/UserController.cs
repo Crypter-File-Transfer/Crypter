@@ -24,10 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.API.Attributes;
-using Crypter.API.Contracts;
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using Crypter.Core.Services;
@@ -35,7 +33,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,26 +42,22 @@ namespace Crypter.API.Controllers
 {
    [ApiController]
    [Route("api/user")]
-   public class UserController : CrypterController
+   public class UserController : CrypterControllerBase
    {
-      private readonly ITransferUploadService _transferUploadService;
-      private readonly ITokenService _tokenService;
       private readonly IUserService _userService;
-      private readonly IUserTransferService _userTransferService;
+      private readonly ITokenService _tokenService;
 
-      public UserController(ITransferUploadService transferUploadService, ITokenService tokenService, IUserService userService, IUserTransferService userTransferService)
+      public UserController(IUserService userService, ITokenService tokenService)
       {
-         _transferUploadService = transferUploadService;
-         _tokenService = tokenService;
          _userService = userService;
-         _userTransferService = userTransferService;
+         _tokenService = tokenService;
       }
 
-      [HttpGet("{username}/profile")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetUserProfileResponse))]
+      [HttpGet("profile")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserProfileDTO))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserProfileAsync(string username, CancellationToken cancellationToken)
+      public async Task<IActionResult> GetUserProfileAsync([FromQuery] string username, CancellationToken cancellationToken)
       {
          IActionResult MakeErrorResponse(GetUserProfileError error)
          {
@@ -75,91 +69,33 @@ namespace Crypter.API.Controllers
 #pragma warning restore CS8524
          }
 
-         var userId = _tokenService.TryParseUserId(User);
-         var result = await _userService.GetUserProfileAsync(userId, username, cancellationToken);
-         return result.Match(
-            () => MakeErrorResponse(GetUserProfileError.NotFound),
-            Ok);
-      }
-
-      [HttpGet("self/file/received")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserReceivedFilesResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetReceivedFilesAsync(CancellationToken cancellationToken)
-      {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userTransferService.GetUserReceivedFilesAsync(userId, cancellationToken);
-         return Ok(result);
-      }
-
-      [HttpGet("self/file/sent")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSentFilesResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetSentFilesAsync(CancellationToken cancellationToken)
-      {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userTransferService.GetUserSentFilesAsync(userId, cancellationToken);
-         return Ok(result);
-      }
-
-      [HttpGet("self/message/received")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserReceivedMessagesResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetReceivedMessagesAsync(CancellationToken cancellationToken)
-      {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userTransferService.GetUserReceivedMessagesAsync(userId, cancellationToken);
-         return Ok(result);
-      }
-
-      [HttpGet("self/message/sent")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSentMessagesResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetSentMessagesAsync(CancellationToken cancellationToken)
-      {
-         var userId = _tokenService.ParseUserId(User);
-         var result = await _userTransferService.GetUserSentMessagesAsync(userId, cancellationToken);
-         return Ok(result);
-      }
-
-      [HttpPost("{username}/file")]
-      [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadUserFileTransferAsync([FromForm] UploadFileTransferReceipt request, string username, CancellationToken cancellationToken)
-      {
-         using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
-         var uploadResult = await _tokenService.TryParseUserId(User)
+         Maybe<Guid> userId = _tokenService.TryParseUserId(User);
+         return await _userService.GetUserProfileAsync(userId, username, cancellationToken)
             .MatchAsync(
-            async () => await _transferUploadService.UploadUserFileAsync(Maybe<Guid>.None, username, request.Data, ciphertextStream, cancellationToken),
-            async x => await _transferUploadService.UploadUserFileAsync(x, username, request.Data, ciphertextStream, cancellationToken));
-
-         return uploadResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(UploadTransferError.UnknownError));
+               () => MakeErrorResponse(GetUserProfileError.NotFound),
+               Ok);
       }
 
-      [HttpPost("{username}/message")]
-      [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadUserMessageTransferAsync([FromForm] UploadMessageTransferReceipt request, string username, CancellationToken cancellationToken)
+      [HttpPost("profile")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> UpdateUserProfileAsync([FromBody] UpdateProfileRequest request)
       {
-         using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
-         var uploadResult = await _tokenService.TryParseUserId(User)
-            .MatchAsync(
-            async () => await _transferUploadService.UploadUserMessageAsync(Maybe<Guid>.None, username, request.Data, ciphertextStream, cancellationToken),
-            async x => await _transferUploadService.UploadUserMessageAsync(x, username, request.Data, ciphertextStream, cancellationToken));
+         Guid userId = _tokenService.ParseUserId(User);
+         await _userService.UpdateUserProfileAsync(userId, request);
+         return Ok();
+      }
 
-         return uploadResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(UploadTransferError.UnknownError));
+      [HttpGet("search")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserSearchResult>))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      public async Task<IActionResult> SearchUsersAsync([FromQuery] string keyword, [FromQuery] int index, [FromQuery] int count, CancellationToken cancellationToken)
+      {
+         Guid userId = _tokenService.ParseUserId(User);
+         List<UserSearchResult> results = await _userService.SearchForUsersAsync(userId, keyword, index, count, cancellationToken);
+         return Ok(results);
       }
    }
 }

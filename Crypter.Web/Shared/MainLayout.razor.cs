@@ -25,11 +25,11 @@
  */
 
 using BlazorSodium.Services;
-using Crypter.ClientServices.DeviceStorage.Enums;
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Enum;
-using Crypter.ClientServices.Interfaces.Events;
-using Crypter.ClientServices.Interfaces.Repositories;
+using Crypter.Common.Client.DeviceStorage.Enums;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Enum;
+using Crypter.Common.Client.Interfaces.Events;
+using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Monads;
 using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
@@ -79,7 +79,7 @@ namespace Crypter.Web.Shared
       private async void HandleUserLoggedInEvent(object sender, UserLoggedInEventArgs args)
       {
          await UserPasswordService.DeriveUserCredentialKeyAsync(args.Username, args.Password, UserPasswordService.CurrentPasswordVersion)
-            .BindAsync(async credentialKey =>
+            .IfSomeAsync(async credentialKey =>
             {
                if (args.UploadNewKeys)
                {

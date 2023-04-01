@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Transfer.Models;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Threading.Tasks;
@@ -38,7 +38,7 @@ namespace Crypter.Web.Shared
       protected TransferSettings UploadSettings { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       protected bool ServerHasDiskSpace = true;
 
@@ -46,18 +46,18 @@ namespace Crypter.Web.Shared
 
       protected override async Task OnInitializedAsync()
       {
-         var response = await CrypterApiService.GetDiskMetricsAsync();
+         var response = await CrypterApiService.Metrics.GetPublicStorageMetricsAsync();
 
          ServerSpacePercentageRemaining = response.Match(
             0.0,
-            right => 100.0 * (right.Available / (double)right.Allocated));
+            x => 100.0 * (x.Available / (double)x.Allocated));
 
          ServerHasDiskSpace = response.Match(
             false,
-            right =>
+            x =>
             {
                long maxUploadBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
-               return right.Available > maxUploadBytes;
+               return x.Available > maxUploadBytes;
             });
       }
    }

@@ -7,19 +7,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Hangfire.Core" Version="1.7.32" />
-    <PackageReference Include="Hashids.net" Version="1.6.1" />
-    <PackageReference Include="MailKit" Version="3.4.3" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.7.34" />
+    <PackageReference Include="Hangfire.Core" Version="1.7.34" />
+    <PackageReference Include="Hangfire.PostgreSql" Version="1.19.12" />
+    <PackageReference Include="Hashids.net" Version="1.7.0" />
+    <PackageReference Include="MailKit" Version="3.6.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="7.0.1" />
-    <PackageReference Include="MimeKit" Version="3.4.3" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.1" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.25.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="7.0.4" />
+    <PackageReference Include="MimeKit" Version="3.6.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.3" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.28.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
     <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
+    <ProjectReference Include="..\Crypter.Crypto.Providers.Default\Crypter.Crypto.Providers.Default.csproj" />
   </ItemGroup>
 
   <ItemGroup>

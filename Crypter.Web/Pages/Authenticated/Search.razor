@@ -47,13 +47,13 @@
       <div class="row">
          @if (SearchResults != null)
          {
-            @if (SearchResults.Result.Count == 0)
+            @if (SearchResults.Count == 0)
             {
                <h3 class="text-center">No results found</h3>
             }
             else
             {
-               @foreach (var result in SearchResults.Result)
+               @foreach (var result in SearchResults)
                {
                   <div class="col-md-6">
                      <div class="card my-1">

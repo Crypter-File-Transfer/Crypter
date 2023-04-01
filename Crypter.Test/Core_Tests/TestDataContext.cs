@@ -26,7 +26,6 @@
 
 using Crypter.Core;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,18 +36,14 @@ namespace Crypter.Test.Core_Tests
    {
       private readonly string _databaseName;
 
-      public TestDataContext(IConfiguration configuration = null)
-         : base(configuration)
-      { }
-
       public TestDataContext(string databaseName)
-         : base(null)
+         : base()
       {
          _databaseName = databaseName;
       }
 
       protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-         => optionsBuilder.UseNpgsql($"Host=localhost;Database={_databaseName};Username=postgres;Password=password");
+         => optionsBuilder.UseNpgsql($"Host=localhost;Database={_databaseName};Username=postgres;Password=UNIT_TESTING_PASSWORD");
 
       public void EnsureCreated()
          => Database.EnsureCreated();

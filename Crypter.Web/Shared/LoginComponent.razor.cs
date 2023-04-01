@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;
@@ -60,7 +60,7 @@ namespace Crypter.Web.Shared
 
       protected override void OnInitialized()
       {
-         LoginModel = new  LoginForm()
+         LoginModel = new LoginForm()
          {
             RememberMe = true
          };
@@ -145,7 +145,7 @@ namespace Crypter.Web.Shared
 #pragma warning disable CS8524
          LoginAttemptErrorMessage = error switch
          {
-            LoginError.UnknownError 
+            LoginError.UnknownError
                or LoginError.InvalidTokenTypeRequested => "An unknown error occurred",
             LoginError.InvalidUsername
                or LoginError.InvalidPassword => "Invalid username or password",

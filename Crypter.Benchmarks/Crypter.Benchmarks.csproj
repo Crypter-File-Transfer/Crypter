@@ -8,11 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.3" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Crypter.ClientServices\Crypter.ClientServices.csproj" />
+    <ProjectReference Include="..\Crypter.Common.Client\Crypter.Common.Client.csproj" />
     <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
   </ItemGroup>
 

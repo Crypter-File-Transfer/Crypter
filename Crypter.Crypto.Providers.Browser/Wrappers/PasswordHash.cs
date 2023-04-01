@@ -38,7 +38,14 @@ namespace Crypter.Crypto.Providers.Browser.Wrappers
       protected override Either<Exception, byte[]> HashImplementation(string password, ReadOnlySpan<byte> salt, uint outputLength, uint opsLimit, uint memLimit)
       {
          byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-         return BlazorSodium.Sodium.PasswordHash.Crypto_PwHash(outputLength, passwordBytes, salt.ToArray(), opsLimit, memLimit, Constants.ALG_ARGON2ID13);
+         try
+         {
+            return BlazorSodium.Sodium.PasswordHash.Crypto_PwHash(outputLength, passwordBytes, salt.ToArray(), opsLimit, memLimit, Constants.ALG_ARGON2ID13);
+         }
+         catch (Exception e)
+         {
+            return e;
+         }
       }
    }
 }

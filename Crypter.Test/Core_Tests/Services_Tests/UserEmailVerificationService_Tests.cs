@@ -37,7 +37,7 @@ using System.Threading.Tasks;
 namespace Crypter.Test.Core_Tests.Services_Tests
 {
    [TestFixture]
-   public class UserEmailVerificationService_Tests
+   internal class UserEmailVerificationService_Tests
    {
       private ICryptoProvider _cryptoProvider;
       private UserEmailVerificationService _sut;
@@ -61,7 +61,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [Test]
       public async Task Verification_Parameters_Not_Created_If_User_Does_Not_Exist()
       {
-         var result = await _sut.CreateNewVerificationParametersAsync(Guid.NewGuid(), CancellationToken.None);
+         var result = await _sut.GenerateVerificationParametersAsync(Guid.NewGuid());
          Assert.IsTrue(result.IsNone);
       }
 
@@ -72,7 +72,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
          _testContext.Users.Add(newUser);
          await _testContext.SaveChangesAsync();
 
-         var result = await _sut.CreateNewVerificationParametersAsync(newUser.Id, CancellationToken.None);
+         var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
          Assert.IsTrue(result.IsNone);
       }
 
@@ -85,7 +85,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
          _testContext.Users.Add(newUser);
          await _testContext.SaveChangesAsync();
 
-         var result = await _sut.CreateNewVerificationParametersAsync(newUser.Id, CancellationToken.None);
+         var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
          Assert.IsTrue(result.IsNone);
       }
 
@@ -98,7 +98,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
          _testContext.Users.Add(newUser);
          await _testContext.SaveChangesAsync();
 
-         var result = await _sut.CreateNewVerificationParametersAsync(newUser.Id, CancellationToken.None);
+         var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
          Assert.IsTrue(result.IsNone);
       }
 
@@ -109,7 +109,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
          _testContext.Users.Add(newUser);
          await _testContext.SaveChangesAsync();
 
-         var result = await _sut.CreateNewVerificationParametersAsync(newUser.Id, CancellationToken.None);
+         var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
          Assert.IsTrue(result.IsSome);
          result.IfSome(x =>
          {

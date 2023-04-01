@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Contracts.Features.Settings;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
@@ -34,7 +34,7 @@ namespace Crypter.Web.Shared.UserSettings
    public partial class UserSettingsNotificationSettingsBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Parameter]
       public bool EmailAddressVerified { get; set; }
@@ -64,7 +64,7 @@ namespace Crypter.Web.Shared.UserSettings
       protected async Task OnSaveClickedAsync()
       {
          var request = new UpdateNotificationSettingsRequest(EnableTransferNotificationsEdit, EnableTransferNotificationsEdit);
-         await CrypterApiService.UpdateNotificationPreferencesAsync(request);
+         await CrypterApiService.UserSetting.UpdateNotificationPreferencesAsync(request);
 
          EnableTransferNotifications = EnableTransferNotificationsEdit;
          IsEditing = false;

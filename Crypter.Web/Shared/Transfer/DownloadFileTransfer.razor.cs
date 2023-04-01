@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Transfer.Handlers;
+using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Monads;
 using Crypter.Web.Services;

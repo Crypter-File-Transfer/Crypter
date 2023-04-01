@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Transfer;
-using Crypter.ClientServices.Transfer.Handlers.Base;
-using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Transfer;
+using Crypter.Common.Client.Transfer.Handlers.Base;
+using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
@@ -51,7 +51,7 @@ namespace Crypter.Web.Shared.Transfer
       protected NavigationManager NavigationManager { get; set; }
 
       [Inject]
-      protected ClientServices.Transfer.Models.TransferSettings UploadSettings { get; set; }
+      protected Common.Client.Transfer.Models.TransferSettings UploadSettings { get; set; }
 
       [Inject]
       protected TransferHandlerFactory TransferHandlerFactory { get; set; }

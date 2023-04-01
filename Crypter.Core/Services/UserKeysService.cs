@@ -24,12 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Authentication;
 using Crypter.Common.Contracts.Features.Keys;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,11 +39,13 @@ namespace Crypter.Core.Services
 {
    public interface IUserKeysService
    {
-      Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken);
-      Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken);
-      Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken);
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId, CancellationToken cancellationToken);
-      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken);
+      Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken = default);
+      Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, bool allowReplacement);
+      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId, InsertKeyPairRequest request);
+
+      Task DeleteUserKeysAsync(Guid userId);
    }
 
    public class UserKeysService : IUserKeysService
@@ -56,7 +59,7 @@ namespace Crypter.Core.Services
          _userAuthenticationService = userAuthenticationService;
       }
 
-      public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken)
+      public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          return Either<GetMasterKeyError, GetMasterKeyResponse>.FromRightAsync(
             _context.UserMasterKeys
@@ -65,9 +68,9 @@ namespace Crypter.Core.Services
                .FirstOrDefaultAsync(cancellationToken), GetMasterKeyError.NotFound);
       }
 
-      public async Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken)
+      public async Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken = default)
       {
-         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new TestPasswordRequest(request.Username, request.Password), cancellationToken);
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new PasswordChallengeRequest(request.Password), cancellationToken);
          return await testPasswordResult.MatchAsync<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>>(
             error => GetMasterKeyRecoveryProofError.InvalidCredentials,
             async _ =>
@@ -84,33 +87,33 @@ namespace Crypter.Core.Services
             GetMasterKeyRecoveryProofError.UnknownError);
       }
 
-      public async Task<Either<InsertMasterKeyError, InsertMasterKeyResponse>> InsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, CancellationToken cancellationToken)
+      public async Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, bool allowReplacement)
       {
-         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new TestPasswordRequest(request.Username, request.Password), cancellationToken);
-         return await testPasswordResult.MatchAsync<Either<InsertMasterKeyError, InsertMasterKeyResponse>>(
+         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new PasswordChallengeRequest(request.Password));
+         return await testPasswordResult.MatchAsync<Either<InsertMasterKeyError, Unit>>(
             error => InsertMasterKeyError.InvalidCredentials,
             async _ =>
             {
                var masterKeyEntity = await _context.UserMasterKeys
-                  .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
+                  .FirstOrDefaultAsync(x => x.Owner == userId);
 
-               if (masterKeyEntity is not null)
+               if (masterKeyEntity is not null && !allowReplacement)
                {
                   return InsertMasterKeyError.Conflict;
                }
 
                DateTime now = DateTime.UtcNow;
-               var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.Nonce, request.Proof, now, now);
+               var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.Nonce, request.RecoveryProof, now, now);
                _context.UserMasterKeys.Add(newEntity);
 
-               await _context.SaveChangesAsync(cancellationToken);
-               return new InsertMasterKeyResponse();
+               await _context.SaveChangesAsync();
+               return Unit.Default;
             },
             InsertMasterKeyError.UnknownError);
       }
 
 
-      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId, CancellationToken cancellationToken)
+      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
             _context.UserKeyPairs
@@ -119,21 +122,41 @@ namespace Crypter.Core.Services
                .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
       }
 
-      public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId, InsertKeyPairRequest request, CancellationToken cancellationToken)
+      public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId, InsertKeyPairRequest request)
       {
          var keyPairEntity = await _context.UserKeyPairs
-            .FirstOrDefaultAsync(x => x.Owner == userId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Owner == userId);
 
          if (keyPairEntity is null)
          {
             var newEntity = new UserKeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.Nonce, DateTime.UtcNow);
             _context.UserKeyPairs.Add(newEntity);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync();
          }
 
          return keyPairEntity is null
             ? new InsertKeyPairResponse()
             : InsertKeyPairError.KeyPairAlreadyExists;
+      }
+
+      public async Task DeleteUserKeysAsync(Guid userId)
+      {
+         UserMasterKeyEntity masterKey = await _context.UserMasterKeys
+            .Where(x => x.Owner == userId)
+            .FirstOrDefaultAsync();
+
+         if (masterKey is not null)
+         {
+            _context.Remove(masterKey);
+         }
+
+         List<UserKeyPairEntity> keyPairs = await _context.UserKeyPairs
+            .Where(x => x.Owner == userId)
+            .ToListAsync();
+
+         _context.RemoveRange(keyPairs);
+
+         await _context.SaveChangesAsync();
       }
    }
 }

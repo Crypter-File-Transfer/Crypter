@@ -24,9 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Client.Interfaces;
 using Microsoft.AspNetCore.Components;
-using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -34,7 +33,7 @@ namespace Crypter.Web.Pages
    public partial class UserProfileBase : ComponentBase
    {
       [Inject]
-      private ICrypterApiService CrypterApiService { get; set; }
+      private ICrypterApiClient CrypterApiService { get; set; }
 
       [Inject]
       private IUserSessionService UserSessionService { get; set; }
@@ -53,8 +52,14 @@ namespace Crypter.Web.Pages
       protected bool AllowsFiles;
       protected bool AllowsMessages;
       protected byte[] UserPublicKey;
+      protected bool EmailVerified;
 
-      protected override async Task OnInitializedAsync()
+      protected override void OnInitialized()
+      {
+         Loading = true;
+      }
+
+      protected override async Task OnParametersSetAsync()
       {
          Loading = true;
          await PrepareUserProfileAsync();
@@ -64,20 +69,21 @@ namespace Crypter.Web.Pages
       protected async Task PrepareUserProfileAsync()
       {
          bool isLoggedIn = await UserSessionService.IsLoggedInAsync();
-         var response = await CrypterApiService.GetUserProfileAsync(Username, isLoggedIn);
+         var response = await CrypterApiService.User.GetUserProfileAsync(Username, isLoggedIn);
          response.DoRight(x =>
          {
-            Alias = x.Result.Alias;
-            About = x.Result.About;
-            ProperUsername = x.Result.Username;
-            AllowsFiles = x.Result.ReceivesFiles;
-            AllowsMessages = x.Result.ReceivesMessages;
-            UserPublicKey = x.Result.PublicKey;
+            Alias = x.Alias;
+            About = x.About;
+            ProperUsername = x.Username;
+            AllowsFiles = x.ReceivesFiles;
+            AllowsMessages = x.ReceivesMessages;
+            UserPublicKey = x.PublicKey;
+            EmailVerified = x.EmailVerified;
          });
 
          IsProfileAvailable = response.Match(
             false,
-            right => right.Result.PublicKey is not null);
+            right => right.PublicKey is not null);
       }
    }
 }

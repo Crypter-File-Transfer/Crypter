@@ -24,11 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.IO;
 
 namespace Crypter.Common.Contracts
 {
-   public class StreamDownloadResponse
+   public class StreamDownloadResponse : IDisposable
    {
       public Stream Stream { get; init; }
       public long StreamSize { get; init; }
@@ -37,6 +38,12 @@ namespace Crypter.Common.Contracts
       {
          Stream = stream;
          StreamSize = size;
+      }
+
+      public void Dispose()
+      {
+         Stream.Dispose();
+         GC.SuppressFinalize(this);
       }
    }
 }

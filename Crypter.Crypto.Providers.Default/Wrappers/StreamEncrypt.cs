@@ -26,8 +26,10 @@
 
 using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
+using Geralt;
 using System;
 using System.Runtime.Versioning;
+using static Geralt.IncrementalXChaCha20Poly1305;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {
@@ -35,25 +37,32 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
    public class StreamEncrypt : IStreamEncrypt
    {
       private readonly IPadding _padding;
-      private readonly int _blockSize;
+      private readonly int _padSize;
+      private IncrementalXChaCha20Poly1305 _state;
 
-      public uint KeySize { get => Geralt.IncrementalXChaCha20Poly1305.KeySize; }
-      public uint TagSize { get => Geralt.IncrementalXChaCha20Poly1305.TagSize; }
+      public uint KeySize { get => IncrementalXChaCha20Poly1305.KeySize; }
+      public uint TagSize { get => IncrementalXChaCha20Poly1305.TagSize; }
 
-      public StreamEncrypt(IPadding padding, int blockSize)
+      public StreamEncrypt(IPadding padding, int padSize)
       {
          _padding = padding;
-         _blockSize = blockSize;
+         _padSize = padSize;
       }
 
       public byte[] GenerateHeader(ReadOnlySpan<byte> key)
       {
-         throw new NotImplementedException();
+         byte[] header = new byte[HeaderSize];
+         _state = new IncrementalXChaCha20Poly1305(false, header, key);
+         return header;
       }
 
       public byte[] Push(byte[] plaintext, bool final)
       {
-         throw new NotImplementedException();
+         ChunkFlag chunkFlag = final ? ChunkFlag.Final : ChunkFlag.Message;
+         byte[] paddedPlaintext = _padding.Pad(plaintext, _padSize);
+         byte[] ciphertext = new byte[paddedPlaintext.Length + TagSize];
+         _state.Push(ciphertext, paddedPlaintext, chunkFlag);
+         return ciphertext;
       }
    }
 }

@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Events;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Events;
 using Crypter.Common.Monads;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
@@ -42,6 +42,9 @@ namespace Crypter.Web.Shared.UserSettings
 
       [Inject]
       private IUserKeysService UserKeysService { get; set; }
+
+      [Inject]
+      private IUserRecoveryService UserRecoveryService { get; set; }
 
       [Inject]
       protected IJSRuntime JSRuntime { get; set; }
@@ -64,12 +67,13 @@ namespace Crypter.Web.Shared.UserSettings
 
       private async void OnPasswordTestSuccess(object sender, UserPasswordTestSuccessEventArgs args)
       {
-         RecoveryKey = await UserKeysService.GetExistingRecoveryKeyAsync(args.Username, args.Password)
+         RecoveryKey = await UserKeysService.MasterKey
+            .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, args.Username, args.Password))
             .MatchAsync(
-            () => "An error occurred",
-            x => x.ToBase64String());
+               () => "An error occurred",
+               x => x.ToBase64String());
 
-         await InvokeAsync(() => StateHasChanged());
+         await InvokeAsync(StateHasChanged);
       }
 
       protected async Task CopyRecoveryKeyToClipboardAsync()

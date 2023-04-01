@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.DeviceStorage.Enums;
-using Crypter.ClientServices.Interfaces.Repositories;
+using Crypter.Common.Client.DeviceStorage.Enums;
+using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Exceptions;
 using Crypter.Common.Monads;
 using Microsoft.JSInterop;

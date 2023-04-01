@@ -44,14 +44,14 @@ namespace Crypter.Core.Extensions
             || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts && x.Contacts.Any(y => y.ContactId == visitorId));
       }
 
-      public static Expression<Func<UserEntity, UserContactDTO>> ToUserContactDTO(Guid? visitorId)
+      public static Expression<Func<UserEntity, UserContact>> ToUserContactDTO(Guid? visitorId)
       {
          return (x) => x.Id == visitorId
             || x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
             || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && visitorId != null)
             || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts && x.Contacts.Any(y => y.ContactId == visitorId))
-            ? new UserContactDTO(x.Username, x.Profile.Alias)
-            : new UserContactDTO("{ Private }", string.Empty);
+            ? new UserContact(x.Username, x.Profile.Alias)
+            : new UserContact("{ Private }", string.Empty);
       }
 
       public static Expression<Func<UserEntity, bool>> UserProfileIsComplete()
@@ -76,7 +76,8 @@ namespace Crypter.Core.Extensions
                || x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Everyone
                || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Authenticated && visitorId != null)
                || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Contacts && x.Contacts.Any(y => y.ContactId == visitorId)),
-            x.KeyPair.PublicKey);
+            x.KeyPair.PublicKey,
+            x.EmailVerified);
       }
 
       public static Expression<Func<UserEntity, bool>> UserReceivesEmailNotifications()

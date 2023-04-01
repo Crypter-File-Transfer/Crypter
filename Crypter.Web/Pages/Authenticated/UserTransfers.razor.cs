@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.Common.Contracts.Features.Users;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Web.Models;
 using Crypter.Web.Pages.Authenticated.Base;
@@ -39,7 +39,7 @@ namespace Crypter.Web.Pages
    public partial class UserTransfersBase : AuthenticatedPageBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       protected bool Loading = true;
 
@@ -62,15 +62,11 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserSentItem>> GetUserSentItems()
       {
-         var maybeSentMessages = await CrypterApiService.GetSentMessagesAsync();
-         var sentMessages = maybeSentMessages.Match(
-            new List<UserSentMessageDTO>(),
-            right => right.Messages);
+         var maybeSentMessages = await CrypterApiService.MessageTransfer.GetSentMessagesAsync();
+         var sentMessages = maybeSentMessages.SomeOrDefault(new List<UserSentMessageDTO>());
 
-         var maybeSentFiles = await CrypterApiService.GetSentFilesAsync();
-         var sentFiles = maybeSentFiles.Match(
-            new List<UserSentFileDTO>(),
-            right => right.Files);
+         var maybeSentFiles = await CrypterApiService.FileTransfer.GetSentFilesAsync();
+         var sentFiles = maybeSentFiles.SomeOrDefault(new List<UserSentFileDTO>());
 
          return sentMessages
             .Select(x => new UserSentItem
@@ -97,15 +93,11 @@ namespace Crypter.Web.Pages
 
       protected async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
       {
-         var maybeReceivedMessages = await CrypterApiService.GetReceivedMessagesAsync();
-         var receivedMessages = maybeReceivedMessages.Match(
-            new List<UserReceivedMessageDTO>(),
-            right => right.Messages);
+         var maybeReceivedMessages = await CrypterApiService.MessageTransfer.GetReceivedMessagesAsync();
+         var receivedMessages = maybeReceivedMessages.SomeOrDefault(new List<UserReceivedMessageDTO>());
 
-         var maybeReceivedFiles = await CrypterApiService.GetReceivedFilesAsync();
-         var receivedFiles = maybeReceivedFiles.Match(
-            new List<UserReceivedFileDTO>(),
-            right => right.Files);
+         var maybeReceivedFiles = await CrypterApiService.FileTransfer.GetReceivedFilesAsync();
+         var receivedFiles = maybeReceivedFiles.SomeOrDefault(new List<UserReceivedFileDTO>());
 
          return receivedMessages
             .Select(x => new UserReceivedItem

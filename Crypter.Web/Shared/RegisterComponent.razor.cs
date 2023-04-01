@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;
@@ -38,7 +38,7 @@ namespace Crypter.Web.Shared
    public partial class RegisterComponentBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Inject]
       protected IUserSessionService UserSessionService { get; set; }
@@ -196,7 +196,7 @@ namespace Crypter.Web.Shared
                   .BindAsync(async versionedPassword =>
                   {
                      RegistrationRequest request = new RegistrationRequest(username, versionedPassword, emailAddress);
-                     return await CrypterApiService.RegisterUserAsync(request);
+                     return await CrypterApiService.UserAuthentication.RegisterAsync(request);
                   });
             })));
 

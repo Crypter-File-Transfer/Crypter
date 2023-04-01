@@ -304,7 +304,7 @@ namespace Crypter.Common.Monads
                : Either<TLeft, TResult>.Neither;
       }
 
-      public Unit DoRight(Action<TRight> right)
+      public Either<TLeft, TRight> DoRight(Action<TRight> right)
       {
          ValidateAction(right);
 
@@ -313,10 +313,10 @@ namespace Crypter.Common.Monads
             right(_right);
          }
 
-         return Unit.Default;
+         return this;
       }
 
-      public async Task<Unit> DoRightAsync(Func<TRight, Task> rightAsync)
+      public async Task<Either<TLeft, TRight>> DoRightAsync(Func<TRight, Task> rightAsync)
       {
          ValidateFunction(rightAsync);
 
@@ -325,10 +325,10 @@ namespace Crypter.Common.Monads
             await rightAsync(_right);
          }
 
-         return Unit.Default;
+         return this;
       }
 
-      public Unit DoLeftOrNeither(Action leftOrNeither)
+      public Either<TLeft, TRight> DoLeftOrNeither(Action leftOrNeither)
       {
          ValidateAction(leftOrNeither);
 
@@ -337,10 +337,10 @@ namespace Crypter.Common.Monads
             leftOrNeither();
          }
 
-         return Unit.Default;
+         return this;
       }
 
-      public Unit DoLeftOrNeither(Action<TLeft> left, Action neither)
+      public Either<TLeft, TRight> DoLeftOrNeither(Action<TLeft> left, Action neither)
       {
          ValidateAction(left);
          ValidateAction(neither);
@@ -355,10 +355,10 @@ namespace Crypter.Common.Monads
             neither();
          }
 
-         return Unit.Default;
+         return this;
       }
 
-      public async Task<Unit> DoLeftOrNeitherAsync(Func<TLeft, Task> leftAsync, Action neither)
+      public async Task<Either<TLeft, TRight>> DoLeftOrNeitherAsync(Func<TLeft, Task> leftAsync, Action neither)
       {
          ValidateFunction(leftAsync);
          ValidateAction(neither);
@@ -373,7 +373,7 @@ namespace Crypter.Common.Monads
             neither();
          }
 
-         return Unit.Default;
+         return this;
       }
 
       public Maybe<TRight> ToMaybe()

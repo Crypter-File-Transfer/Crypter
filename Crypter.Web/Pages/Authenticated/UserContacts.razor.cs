@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.Interfaces;
+using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
@@ -40,7 +40,7 @@ namespace Crypter.Web.Pages
 
       protected bool Loading = true;
 
-      protected IReadOnlyCollection<UserContactDTO> Contacts { get; set; }
+      protected IReadOnlyCollection<UserContact> Contacts { get; set; }
 
       protected override async Task OnInitializedAsync()
       {

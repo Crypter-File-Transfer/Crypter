@@ -34,7 +34,7 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
    [UnsupportedOSPlatform("browser")]
    public class DigitalSignature : IDigitalSignature
    {
-      public Ed25519KeyPair GenerateKeyPair()
+      public virtual Ed25519KeyPair GenerateKeyPair()
       {
          byte[] privateKey = new byte[Ed25519.PrivateKeySize];
          byte[] publicKey = new byte[Ed25519.PublicKeySize];

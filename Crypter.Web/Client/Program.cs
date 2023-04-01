@@ -25,12 +25,12 @@
  */
 
 using BlazorSodium.Extensions;
-using Crypter.ClientServices.DeviceStorage.Enums;
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Repositories;
-using Crypter.ClientServices.Services;
-using Crypter.ClientServices.Transfer;
-using Crypter.ClientServices.Transfer.Models;
+using Crypter.Common.Client.DeviceStorage.Enums;
+using Crypter.Common.Client.Implementations;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Transfer;
+using Crypter.Common.Client.Transfer.Models;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Browser;
 using Crypter.Web;
@@ -64,16 +64,7 @@ builder.Services.AddSingleton(sp =>
    return config.GetSection("TransferSettings").Get<TransferSettings>();
 });
 
-builder.Services.AddHttpClient<ICrypterHttpService, CrypterHttpService>(httpClient =>
-{
-   var config = builder.Services
-      .BuildServiceProvider()
-      .GetService<IClientApiSettings>();
-
-   httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
-});
-
-builder.Services.AddHttpClient<ICrypterAuthenticatedHttpService, CrypterAuthenticatedHttpService>(httpClient =>
+builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =>
 {
    var config = builder.Services
       .BuildServiceProvider()
@@ -88,12 +79,12 @@ builder.Services
    .AddSingleton<IUserKeysRepository, BrowserUserKeysRepository>()
    .AddSingleton<IUserSessionRepository, BrowserUserSessionRepository>()
    .AddSingleton<IUserSessionService, UserSessionService<BrowserStorageLocation>>()
-   .AddSingleton<ICrypterApiService, CrypterApiService>()
    .AddSingleton<IUserContactsService, UserContactsService>()
    .AddSingleton<IUserPasswordService, UserPasswordService>()
+   .AddSingleton<IUserRecoveryService, UserRecoveryService>()
    .AddSingleton<IUserKeysService, UserKeysService>()
    .AddSingleton<TransferHandlerFactory>()
-   .AddSingleton<Func<ICrypterApiService>>(sp => () => sp.GetService<ICrypterApiService>());
+   .AddSingleton<Func<ICrypterApiClient>>(sp => () => sp.GetService<ICrypterApiClient>());
 
 if (OperatingSystem.IsBrowser())
 {

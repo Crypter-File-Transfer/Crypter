@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 
 namespace Crypter.Core.Entities
@@ -45,16 +45,19 @@ namespace Crypter.Core.Entities
       public long Id { get; set; }
       public Guid Owner { get; set; }
       public ConsentType ConsentType { get; set; }
-      public DateTime Timestamp { get; set; }
+      public DateTime Created { get; set; }
+      public DateTime? Deactivated { get; set; }
+      public bool Active { get; set; }
 
       public UserEntity User { get; set; }
 
-      public UserConsentEntity(Guid owner, ConsentType consentType, DateTime timestamp, long id = 0)
+      public UserConsentEntity(Guid owner, ConsentType consentType, bool active, DateTime created, DateTime? deactivated = null)
       {
-         Id = id;
          Owner = owner;
          ConsentType = consentType;
-         Timestamp = timestamp;
+         Active = active;
+         Created = created;
+         Deactivated = deactivated;
       }
    }
 
@@ -75,6 +78,9 @@ namespace Crypter.Core.Entities
 
          builder.Property(x => x.Id)
             .UseIdentityAlwaysColumn();
+
+         builder.Property(x => x.Active)
+            .HasDefaultValue(true);
 
          builder.HasIndex(x => x.Owner);
 

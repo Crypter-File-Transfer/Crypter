@@ -24,7 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Users;
+using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Enums;
+using Crypter.Core.Entities;
+using Crypter.Core.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -36,24 +39,28 @@ namespace Crypter.Core.Services
 {
    public interface IUserTransferService
    {
-      Task<UserSentMessagesResponse> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken);
-      Task<UserReceivedMessagesResponse> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken);
-      Task<UserSentFilesResponse> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken);
-      Task<UserReceivedFilesResponse> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken);
+      Task<List<UserSentMessageDTO>> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<List<UserReceivedMessageDTO>> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<List<UserSentFileDTO>> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<List<UserReceivedFileDTO>> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken = default);
+
+      Task DeleteReceivedTransfersAsync(Guid userId);
    }
 
    public class UserTransferService : IUserTransferService
    {
       private readonly DataContext _context;
       private readonly IHashIdService _hashIdService;
+      private readonly ITransferRepository _transferRepository;
 
-      public UserTransferService(DataContext context, IHashIdService hashIdService)
+      public UserTransferService(DataContext context, IHashIdService hashIdService, ITransferRepository transferRepository)
       {
          _context = context;
          _hashIdService = hashIdService;
+         _transferRepository = transferRepository;
       }
 
-      public async Task<UserSentMessagesResponse> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserSentMessageDTO>> GetUserSentMessagesAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          var sentMessages = await _context.UserMessageTransfers
             .Where(x => x.SenderId == userId)
@@ -65,10 +72,10 @@ namespace Crypter.Core.Services
             .Select(x => new UserSentMessageDTO(_hashIdService.Encode(x.Id), x.Subject, x.Username, x.Alias, x.Expiration))
             .ToList();
 
-         return new UserSentMessagesResponse(sentMessagesWithHashIds);
+         return sentMessagesWithHashIds;
       }
 
-      public async Task<UserReceivedMessagesResponse> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserReceivedMessageDTO>> GetUserReceivedMessagesAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          var receivedMessages = await _context.UserMessageTransfers
             .Where(x => x.RecipientId == userId)
@@ -80,10 +87,10 @@ namespace Crypter.Core.Services
             .Select(x => new UserReceivedMessageDTO(_hashIdService.Encode(x.Id), x.Subject, x.Username, x.Alias, x.Expiration))
             .ToList();
 
-         return new UserReceivedMessagesResponse(receivedMessagesWithHashIds);
+         return receivedMessagesWithHashIds;
       }
 
-      public async Task<UserSentFilesResponse> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserSentFileDTO>> GetUserSentFilesAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          var sentFiles = await _context.UserFileTransfers
             .Where(x => x.SenderId == userId)
@@ -95,10 +102,10 @@ namespace Crypter.Core.Services
             .Select(x => new UserSentFileDTO(_hashIdService.Encode(x.Id), x.FileName, x.Username, x.Alias, x.Expiration))
             .ToList();
 
-         return new UserSentFilesResponse(sentFilesWithHashIds);
+         return sentFilesWithHashIds;
       }
 
-      public async Task<UserReceivedFilesResponse> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken)
+      public async Task<List<UserReceivedFileDTO>> GetUserReceivedFilesAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          var receivedFiles = await _context.UserFileTransfers
             .Where(x => x.RecipientId == userId)
@@ -110,7 +117,32 @@ namespace Crypter.Core.Services
             .Select(x => new UserReceivedFileDTO(_hashIdService.Encode(x.Id), x.FileName, x.Username, x.Alias, x.Expiration))
             .ToList();
 
-         return new UserReceivedFilesResponse(receivedFilesWithHashIds);
+         return receivedFilesWithHashIds;
+      }
+
+      public async Task DeleteReceivedTransfersAsync(Guid userId)
+      {
+         List<UserFileTransferEntity> receivedFileTransfers = await _context.UserFileTransfers
+            .Where(x => x.RecipientId == userId)
+            .ToListAsync();
+
+         List<UserMessageTransferEntity> receivedMessageTransfers = await _context.UserMessageTransfers
+            .Where(x => x.RecipientId == userId)
+            .ToListAsync();
+
+         foreach (var receivedTransfer in receivedFileTransfers)
+         {
+            _context.Remove(receivedTransfer);
+            _transferRepository.DeleteTransfer(receivedTransfer.Id, TransferItemType.File, TransferUserType.User);
+         }
+
+         foreach (var receivedTransfer in receivedMessageTransfers)
+         {
+            _context.Remove(receivedTransfer);
+            _transferRepository.DeleteTransfer(receivedTransfer.Id, TransferItemType.Message, TransferUserType.User);
+         }
+
+         await _context.SaveChangesAsync();
       }
    }
 }

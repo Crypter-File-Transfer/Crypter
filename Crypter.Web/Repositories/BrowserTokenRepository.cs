@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.ClientServices.DeviceStorage.Enums;
-using Crypter.ClientServices.DeviceStorage.Models;
-using Crypter.ClientServices.Interfaces.Repositories;
+using Crypter.Common.Client.DeviceStorage.Enums;
+using Crypter.Common.Client.DeviceStorage.Models;
+using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using System.Collections.Generic;
@@ -52,7 +52,7 @@ namespace Crypter.Web.Repositories
 
       public async Task<Unit> StoreAuthenticationTokenAsync(string token)
       {
-         TokenObject tokenObject = new(TokenType.Authentication, token);
+         TokenObject tokenObject = new TokenObject(TokenType.Authentication, token);
          await _browserRepository.SetItemAsync(DeviceStorageObjectType.AuthenticationToken, tokenObject, _tokenStorageMap[TokenType.Authentication]);
          return Unit.Default;
       }
@@ -64,7 +64,7 @@ namespace Crypter.Web.Repositories
 
       public async Task<Unit> StoreRefreshTokenAsync(string token, TokenType tokenType)
       {
-         TokenObject tokenObject = new(tokenType, token);
+         TokenObject tokenObject = new TokenObject(tokenType, token);
          await _browserRepository.SetItemAsync(DeviceStorageObjectType.RefreshToken, tokenObject, _tokenStorageMap[tokenType]);
          return Unit.Default;
       }

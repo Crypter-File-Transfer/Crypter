@@ -25,11 +25,9 @@
  */
 
 using Crypter.Common.Contracts.Features.Metrics;
+using Crypter.Core.Features.Metrics;
 using Crypter.Core.Settings;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,7 +35,7 @@ namespace Crypter.Core.Services
 {
    public interface IServerMetricsService
    {
-      Task<DiskMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken);
+      Task<PublicStorageMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken = default);
    }
 
    public class ServerMetricsService : IServerMetricsService
@@ -51,30 +49,9 @@ namespace Crypter.Core.Services
          _transferStorageSettings = transferStorageSettings.Value;
       }
 
-      public async Task<DiskMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken)
+      public Task<PublicStorageMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken = default)
       {
-         IQueryable<long> anonymousMessageSizes = _context.AnonymousMessageTransfers
-            .Select(x => (long)x.Size);
-
-         IQueryable<long> userMessageSizes = _context.UserMessageTransfers
-            .Select(x => (long)x.Size);
-
-         IQueryable<long> anonymousFileSizes = _context.AnonymousFileTransfers
-            .Select(x => (long)x.Size);
-
-         IQueryable<long> userFileSizes = _context.UserFileTransfers
-            .Select(x => (long)x.Size);
-
-         long usedBytes = await anonymousMessageSizes
-            .Concat(userMessageSizes)
-            .Concat(anonymousFileSizes)
-            .Concat(userFileSizes)
-            .SumAsync(cancellationToken);
-
-         long allocatedBytes = _transferStorageSettings.AllocatedGB * Convert.ToInt64(Math.Pow(2, 30));
-         long freeBytes = allocatedBytes - usedBytes;
-
-         return new DiskMetricsResponse(allocatedBytes, freeBytes);
+         return MetricsQueries.GetAggregateDiskMetricsAsync(_context, _transferStorageSettings, cancellationToken);
       }
    }
 }

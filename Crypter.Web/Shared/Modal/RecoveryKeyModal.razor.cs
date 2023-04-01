@@ -25,9 +25,8 @@
  */
 
 
-using Crypter.ClientServices.Interfaces;
-using Crypter.ClientServices.Interfaces.Models;
-using Crypter.Common.Contracts.Features.Authentication;
+using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Web.Shared.Modal.Template;
@@ -43,10 +42,13 @@ namespace Crypter.Web.Shared.Modal
       protected IJSRuntime JSRuntime { get; set; }
 
       [Inject]
-      protected ICrypterApiService CrypterApiService { get; set; }
+      protected ICrypterApiClient CrypterApiService { get; set; }
 
       [Inject]
       protected IUserKeysService UserKeysService { get; set; }
+
+      [Inject]
+      protected IUserRecoveryService UserRecoveryService { get; set; }
 
       protected string RecoveryKey;
 
@@ -54,20 +56,22 @@ namespace Crypter.Web.Shared.Modal
 
       public async Task OpenAsync(Username username, Password password)
       {
-         RecoveryKey = await UserKeysService.GetExistingRecoveryKeyAsync(username, password)
+         RecoveryKey = await UserKeysService.MasterKey
+            .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, username, password))
             .MatchAsync(
-            () => "An error occurred",
-            x => x.ToBase64String());
+               () => "An error occurred",
+               x => x.ToBase64String());
 
          ModalBehaviorRef.Open();
       }
 
       public async Task OpenAsync(Username username, VersionedPassword versionedPassword)
       {
-         RecoveryKey = await UserKeysService.GetExistingRecoveryKeyAsync(username, versionedPassword)
+         RecoveryKey = await UserKeysService.MasterKey
+            .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, username, versionedPassword))
             .MatchAsync(
-            () => "An error occurred",
-            x => x.ToBase64String());
+               () => "An error occurred",
+               x => x.ToBase64String());
 
          ModalBehaviorRef.Open();
       }
@@ -79,7 +83,7 @@ namespace Crypter.Web.Shared.Modal
 
       public async Task OnAcknowledgedClickedAsync()
       {
-         await CrypterApiService.ConsentToRecoveryKeyRisksAsync();
+         await CrypterApiService.UserConsent.ConsentToRecoveryKeyRisksAsync();
          ModalBehaviorRef.Close();
       }
    }
