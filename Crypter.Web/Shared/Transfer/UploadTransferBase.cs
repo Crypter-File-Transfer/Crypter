@@ -33,7 +33,7 @@ using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Threading.Tasks;
 
@@ -128,7 +128,7 @@ namespace Crypter.Web.Shared.Transfer
 
             response.RecipientKeySeed.IfSome(x =>
             {
-               string recipientKeySeed = Base64UrlTextEncoder.Encode(x);
+               string recipientKeySeed = Base64UrlEncoder.Encode(x);
                string downloadUrl = $"{NavigationManager.BaseUri}decrypt/{itemType}/{(int)response.UserType}/{response.TransferId}#{recipientKeySeed}";
                ModalForAnonymousRecipient.Open(downloadUrl, response.ExpirationHours, UploadCompletedEvent);
             });

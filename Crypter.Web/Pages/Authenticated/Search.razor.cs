@@ -27,13 +27,12 @@
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
+using Crypter.Web.Helpers;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -92,11 +91,10 @@ namespace Crypter.Web.Pages
 
       protected void ParseSearchParamsFromUri()
       {
-         var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-
-         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("query", out var query))
+         string query = NavigationManager.GetQueryParameter("query");
+         if (!string.IsNullOrEmpty(query))
          {
-            SearchParameters.Keyword = query.First();
+            SearchParameters.Keyword = query;
          }
 
          StateHasChanged();
