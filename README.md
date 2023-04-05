@@ -13,12 +13,12 @@ Please reach out to <jackedwards@protonmail.com> or submit an issue if you belie
 Check out these documents to get started working on Crypter:
 
 * [Contribution Guide](./CONTRIBUTING.md)
-* [Coding Standard](<./Docs/Development/Coding Standard.md>)
-* [Development Environment Setup](<./Docs/Development/Development Environment Setup.md>)
+* [Coding Standard](<./Documentation/Development/Coding Standard.md>)
+* [Development Environment Setup](<./Documentation/Development/Development Environment Setup.md>)
 
 Also take a look at some of the articles that have come in handy while working on the project:
 
-* [Learning Material](<./Docs/Learning Material.md>)
+* [Learning Material](<./Documentation/Learning%20Material.md>)
 
 If you have any questions, please add an issue or send an email to <jackedwards@protonmail.com>.
 I would love to hear from you.
