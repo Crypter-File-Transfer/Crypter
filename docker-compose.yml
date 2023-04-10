@@ -1,0 +1,70 @@
+services:
+
+   windows-api:
+      build:
+         context: .
+         dockerfile: Crypter.API.Dockerfile
+      depends_on:
+         - windows-db
+      ports:
+         - 5002:80
+         - 5003:443
+      profiles:
+         - windows_development
+      restart: unless-stopped
+      volumes:
+         - ./Crypter.API/appsettings.json:/app/appsettings.json
+         - "C:\\CrypterFiles:/mnt/crypter_files"
+
+   windows-db:
+      environment:
+         POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+         POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+         POSTGRES_USER: postgres
+         POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?err}
+         POSTGRES_DB: crypter
+      image: postgres:14.2
+      ports:
+         - 127.0.0.1:5432:5432
+      profiles:
+         - windows_database
+      restart: unless-stopped
+      volumes:
+         - ./Containers/PostgreSQL/postgres-init-files:/docker-entrypoint-initdb.d
+         - ./Containers/PostgreSQL/postgres-data:/var/lib/postgresql/data
+
+   linux-api:
+      build:
+         context: .
+         dockerfile: Crypter.API.Dockerfile
+      ports:
+         - 8000:80
+      profiles:
+         - linux_web_server
+      restart: unless-stopped
+      volumes:
+         - ./Crypter.API/appsettings.json:/app/appsettings.json
+         - /mnt/crypter_files:/mnt/crypter_files
+
+   linux-db:
+      environment:
+         POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+         POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+         POSTGRES_USER: postgres
+         POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?err}
+         POSTGRES_DB: crypter
+      image: postgres:14.2
+      ports:
+         - 127.0.0.1:5432:5432
+         - ${CONTAINER_LISTEN_IP:?err}:5432:5432
+      profiles:
+         - linux_database_server
+      restart: unless-stopped
+      volumes:
+         - "./postgres-init-files:/docker-entrypoint-initdb.d"
+         - "${POSTGRES_DATA_DIR:?err}:/var/lib/postgresql/data"
+
+# docker-compose --profile windows_development up -d
+# docker-compose --profile windows_database up -d
+# docker-compose --profile linux_web_server up -d
+# docker-compose --profile linux_database_server up -d

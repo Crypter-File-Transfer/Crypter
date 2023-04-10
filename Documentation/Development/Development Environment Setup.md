@@ -40,13 +40,13 @@ You will not be able to create a database schema without executing this script.
 3. Set `Crypter.API` as the startup project in Visual Studio.
 4. Either run the startup project by clicking the green arrow in Visual Studio, or by pressing F5.
 
-This will run the API on `https://localhost:44357`.
+This will run the API on `https://localhost:5003`.
 Make sure you navigate to this address in your browser before trying to use the API.
-You will need to acknowledge the API's self-signed certificate.
+You may need to acknowledge the API's self-signed certificate.
 
 ## Crypter.Web
 
-1. Review and configure the `.\Crypter.Web\appsettings.json` file.
+1. Review and configure the `.\Crypter.Web\wwwroot\appsettings.json` file.
 2. Open `.\Crypter.Web` in a terminal.
 3. Invoke `dotnet run`.
 

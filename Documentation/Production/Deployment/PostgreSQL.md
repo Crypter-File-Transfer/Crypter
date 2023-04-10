@@ -30,7 +30,7 @@ A few drawbacks to this method are:
 
 To create the database:
 
- 1. Verify the user configured in the `Crypter.API/appsettings.json` file's `DefaultConnection` connection string is a superuser. This is usually the `postgres` user with a password of `CHANGE_ME`.
+ 1. Verify the user configured in the `Crypter.API/appsettings.json` file's `DefaultConnection` connection string is a superuser. This is usually the `crypter_user` user with a password of `DEFAULT_PASSWORD`.
  2. Open the Package Manager Console in Visual Studio.
  3. Select `Crypter.API` as the default project.
  4. Invoke `Update-Database` to create the most recent version of the database.
