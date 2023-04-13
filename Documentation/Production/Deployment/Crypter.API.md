@@ -4,6 +4,8 @@ This guide is subject to change as we improve our deployment processes.
 
 Although we may want to document various deployment methods as time goes on, the purpose of this guide is document the current deployment process. This guide should not reflect some hypothetical deployment in a hypothetical scenario.
 
+
+
 ## Publish the project
 
 Our current publish consists of making a 'release' build and saving the output to a folder.

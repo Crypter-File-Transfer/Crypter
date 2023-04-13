@@ -3,6 +3,8 @@
       <TargetFramework>net7.0</TargetFramework>
       <Nullable>disable</Nullable>
       <ImplicitUsings>disable</ImplicitUsings>
+      <UserSecretsId>e1ee0979-b84f-467f-a982-82e93f8175e0</UserSecretsId>
+      <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
    </PropertyGroup>
    <PropertyGroup Condition=" '$(RunConfiguration)' == 'crypterAPI' " />
    <ItemGroup>
@@ -24,6 +26,7 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
+      <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.2" />
       <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.5" />
    </ItemGroup>
