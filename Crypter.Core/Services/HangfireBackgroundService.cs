@@ -68,6 +68,13 @@ namespace Crypter.Core.Services
       Task DeleteRecoveryParametersAsync(Guid userId);
    }
 
+   /// <summary>
+   /// The purpose of this class is to organize all the methods invoked by Hangfire.
+   /// Modifying the method definitions risks breaking pending jobs in production.
+   /// Moving methods out of this class also risks breaking pending jobs in production.
+   /// 
+   /// Do not modify methods in this class or move them out of the class.
+   /// </summary>
    public class HangfireBackgroundService : IHangfireBackgroundService
    {
       private readonly DataContext _dataContext;
@@ -78,17 +85,6 @@ namespace Crypter.Core.Services
 
       private const int _accountRecoveryEmailExpirationMinutes = 30;
 
-      /// <summary>
-      /// The purpose of this class is to organize all the methods invoked by Hangfire.
-      /// Modifying the method definitions risks breaking pending jobs in production.
-      /// Moving methods out of this class also risks breaking pending jobs in production.
-      /// 
-      /// Do not modify methods in this class or move them out of the class.
-      /// </summary>
-      /// <param name="dataContext"></param>
-      /// <param name="backgroundJobClient"></param>
-      /// <param name="emailService"></param>
-      /// <param name="transferRepository"></param>
       public HangfireBackgroundService(
          DataContext dataContext, IBackgroundJobClient backgroundJobClient, ICryptoProvider cryptoProvider, IEmailService emailService, ITransferRepository transferRepository)
       {
