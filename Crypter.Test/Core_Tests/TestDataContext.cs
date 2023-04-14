@@ -43,7 +43,7 @@ namespace Crypter.Test.Core_Tests
       }
 
       protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-         => optionsBuilder.UseNpgsql($"Host=localhost;Database={_databaseName};Username=postgres;Password=UNIT_TESTING_PASSWORD");
+         => optionsBuilder.UseNpgsql($"Host=localhost;Database={_databaseName};Username=postgres;Password=DEFAULT_PASSWORD");
 
       public void EnsureCreated()
          => Database.EnsureCreated();
@@ -51,7 +51,7 @@ namespace Crypter.Test.Core_Tests
       public void Reset()
       {
          List<string> tableNames = Model.GetEntityTypes()
-          .Select(x => $" public.\"{x.GetTableName()}\"")
+          .Select(x => $" {DataContext.SchemaName}.\"{x.GetTableName()}\"")
           .Distinct()
           .ToList();
 

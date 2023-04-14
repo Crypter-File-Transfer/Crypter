@@ -31,7 +31,6 @@ using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
 using NUnit.Framework;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
