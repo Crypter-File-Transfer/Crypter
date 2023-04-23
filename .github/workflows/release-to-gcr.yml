@@ -1,0 +1,61 @@
+name: Release to GitHub Container Registry.
+
+on:
+  release:
+    types:
+    - published
+
+  workflow_dispatch:
+
+env:
+  registry: ghcr.io
+
+jobs:
+  build-api:
+    runs-on: ubuntu-latest
+    env:
+      dotnet_version: 6.x
+      project_root: Crypter.API/
+      image_name: crypter-api
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.dotnet_version }}
+
+      - name: Install dependencies
+        working-directory: ${{ env.project_root }}
+        run: dotnet restore
+
+      - name: Build .NET project
+        working-directory: ${{ env.project_root }}
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish .NET project
+        working-directory: ${{ env.project_root }}
+        run: dotnet publish --configuration Release --no-restore
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: ${{ env.registry }}/${{ env.image_name }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: ${{ env.project_root }}
+          file: ${{ env.project_root }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
