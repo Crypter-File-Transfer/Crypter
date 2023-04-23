@@ -11,8 +11,11 @@ env:
   registry: ghcr.io/${{ github.repository_owner }}
 
 jobs:
-  build-api:
+  build-and-push-api:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     env:
       dotnet_version: 6.x
       project_root: Crypter.API/
