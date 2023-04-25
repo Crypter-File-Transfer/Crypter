@@ -31,7 +31,6 @@ using Crypter.Core;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Settings;
-using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -140,10 +139,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlerMiddleware>();
-app.UseEndpoints(endpoints =>
-{
-   endpoints.MapControllers();
-   endpoints.MapHangfireDashboard();
-});
+app.MapControllers();
 
 app.Run();
