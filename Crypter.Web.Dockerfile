@@ -8,12 +8,12 @@ COPY *.sln ./
 COPY */*.csproj ./
 
 RUN dotnet-references fix --entry-point ./Crypter.sln --working-directory ./ --remove-unreferenced-project-files
-RUN dotnet restore Crypter.API
+RUN dotnet restore Crypter.Web
 
 COPY ./ ./
-RUN dotnet publish Crypter.API --no-restore --configuration release --output /app/
+RUN dotnet publish Crypter.Web --no-restore --configuration release --output /app/
 
-FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
-WORKDIR /app
-COPY --from=build /app ./
-ENTRYPOINT ["dotnet", "Crypter.API.dll"]
+FROM caddy:2.6-alpine AS webhost
+COPY Crypter.Web/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/wwwroot/ /srv/
+EXPOSE 8080
