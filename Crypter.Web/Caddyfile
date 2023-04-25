@@ -1,0 +1,6 @@
+:8080 {
+    reverse_proxy /api/* {$CRYPTER_API_BASE}
+
+    root * /srv/
+    file_server
+}
