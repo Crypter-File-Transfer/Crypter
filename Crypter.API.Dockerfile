@@ -7,7 +7,7 @@ ENV PATH="${PATH}:/root/.dotnet/tools"
 COPY *.sln ./
 COPY */*.csproj ./
 
-RUN dotnet references fix --entry-point ./ --working-directory ./ --remove-unreferenced-project-files
+RUN dotnet references fix --entry-point ./Crypter.API/ --working-directory ./ --remove-unreferenced-project-files
 RUN dotnet restore Crypter.API
 
 COPY ./ ./
