@@ -31,6 +31,8 @@ namespace Crypter.Core
 {
    public class DataContext : DbContext
    {
+      public const string SchemaName = "crypter";
+
       /// <summary>
       /// This constructor is used by the TestDataContext.
       /// </summary>
@@ -63,8 +65,9 @@ namespace Crypter.Core
 
       protected override void OnModelCreating(ModelBuilder builder)
       {
-         builder.HasPostgresExtension("citext");
-         builder.ApplyConfigurationsFromAssembly(typeof(DataContext).Assembly);
+         builder.HasPostgresExtension("citext")
+            .HasDefaultSchema(SchemaName)
+            .ApplyConfigurationsFromAssembly(typeof(DataContext).Assembly);
       }
    }
 }

@@ -34,6 +34,7 @@ using Crypter.Crypto.Providers.Default;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -52,7 +53,11 @@ namespace Crypter.Core
       {
          services.AddDbContext<DataContext>(options =>
          {
-            options.UseNpgsql(defaultConnectionString);
+            options.UseNpgsql(defaultConnectionString, options =>
+            {
+               options.EnableRetryOnFailure();
+               options.MigrationsHistoryTable(HistoryRepository.DefaultTableName, DataContext.SchemaName);
+            });
          });
 
          services.TryAddSingleton<IPasswordHashService, PasswordHashService>();
