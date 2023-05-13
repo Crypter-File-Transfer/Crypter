@@ -9,7 +9,7 @@ COPY *.sln ./
 COPY */*.csproj ./
 
 RUN dotnet-references fix --entry-point ./Crypter.sln --working-directory ./ --remove-unreferenced-project-files
-RUN dotnet restore Crypter.API
+RUN dotnet restore Crypter.API --runtime linux-x64
 
 COPY ./ ./
 RUN dotnet publish Crypter.API --configuration release --no-self-contained --output /app/
