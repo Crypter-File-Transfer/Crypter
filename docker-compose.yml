@@ -9,8 +9,9 @@ services:
       context: .
       dockerfile: Crypter.API.Dockerfile
     expose:
-      - "8080"
+      - "80"
     environment:
+      ASPNETCORE_URLS: http://localhost:80
       ASPNETCORE_TransferStorageSettings__Location: /mnt/storage
       CUSTOMCONNSTR_DefaultConnection: host=${POSTGRES_HOST:-db};database=crypter;user id=crypter_user;pwd=${POSTGRES_USER_PASSWORD-dev};
       CUSTOMCONNSTR_HangfireConnection: host=${POSTGRES_HANGFIRE_HOST:-db};database=crypter_hangfire;user id=crypter_hangfire_user;pwd=${POSTGRES_HANGFIRE_USER_PASSWORD-dev};
@@ -32,7 +33,7 @@ services:
       - ${WEB_BIND_PORT-80}:80
       - ${WEB_SECURE_BIND_PORT-443}:443
     environment:
-      CRYPTER_API_BASE: http://api:8080
+      CRYPTER_API_BASE: http://api:80
       CADDY_HOST: ${CADDY_HOST-localhost}
       CADDY_OPTIONS: ${CADDY_OPTIONS}
       CADDY_TLS_VOLUME: ${CADDY_TLS_VOLUME-./Containers/Caddy/tls}
