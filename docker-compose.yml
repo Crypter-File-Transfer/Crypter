@@ -46,7 +46,7 @@ services:
     expose:
       - "5432"
     ports:
-      - ${POSTGRES_BIND_IP-::1}:{$POSTGRES_BIND_PORT:5432}:5432
+      - ${POSTGRES_BIND_IP-::1}:{$POSTGRES_BIND_PORT-5432}:5432
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD-dev}
       POSTGRES_C_PASSWORD: ${POSTGRES_USER_PASSWORD-dev}
