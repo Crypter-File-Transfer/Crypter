@@ -35,9 +35,10 @@ services:
       CRYPTER_API_BASE: http://api:8080
       CADDY_HOST: ${CADDY_HOST-localhost}
       CADDY_OPTIONS: ${CADDY_OPTIONS}
+      CADDY_TLS_VOLUME: ${CADDY_TLS_VOLUME-./Containers/Caddy/tls}
     volumes:
       - ./Containers/Caddy/data:/data
-      - ./Containers/Caddy/tls:/mnt/tls
+      - ${CADDY_TLS_VOLUME}:/mnt/tls
     restart: always
   db:
     profiles:
