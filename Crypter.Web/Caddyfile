@@ -1,5 +1,5 @@
 localhost {
-    tls {$CADDY_TLS_CER} {$CADDY_TLS_KEY}
+    ${CADDY_OPTIONS}
 
     reverse_proxy /api/* {$CRYPTER_API_BASE}
 

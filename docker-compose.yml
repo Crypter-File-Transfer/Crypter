@@ -33,8 +33,7 @@ services:
       - ${WEB_SECURE_BIND_PORT-443}:443
     environment:
       CRYPTER_API_BASE: http://api:8080
-      CADDY_TLS_CER: /mnt/tls/cert.pem
-      CADDY_TLS_KEY: /mnt/tls/key.pem
+      CADDY_OPTIONS: ${CADDY_OPTIONS}
     volumes:
       - ./Containers/Caddy/tls:/mnt/tls
     restart: always
