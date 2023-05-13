@@ -11,7 +11,7 @@ services:
     expose:
       - "80"
     environment:
-      ASPNETCORE_URLS: http://localhost:80
+      ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_TransferStorageSettings__Location: /mnt/storage
       CUSTOMCONNSTR_DefaultConnection: host=${POSTGRES_HOST:-db};database=crypter;user id=crypter_user;pwd=${POSTGRES_USER_PASSWORD-dev};
       CUSTOMCONNSTR_HangfireConnection: host=${POSTGRES_HANGFIRE_HOST:-db};database=crypter_hangfire;user id=crypter_hangfire_user;pwd=${POSTGRES_HANGFIRE_USER_PASSWORD-dev};
