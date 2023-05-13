@@ -57,7 +57,7 @@ jobs:
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container pull
+          script: docker compose --project-directory crypter-web-container pull web api db
           script_stop: true
 
       - name: Migrate database
