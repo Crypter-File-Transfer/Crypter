@@ -18,6 +18,8 @@ services:
       - ./Containers/API/storage:/mnt/storage
       - ./Containers/API/appsettings.json:/app/appsettings.json
     restart: always
+    depends_on:
+      - db
   web:
     profiles:
       - web
