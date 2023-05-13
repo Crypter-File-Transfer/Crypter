@@ -16,4 +16,5 @@ RUN dotnet publish Crypter.Web --no-restore --configuration release --output /ap
 FROM caddy:2.6-alpine AS webhost
 COPY Crypter.Web/Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/wwwroot/ /srv/
-EXPOSE 8080
+EXPOSE 80
+EXPOSE 443
