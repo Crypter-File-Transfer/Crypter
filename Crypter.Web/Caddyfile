@@ -1,9 +1,11 @@
 {$CADDY_HOST} {
     {$CADDY_OPTIONS}
 
-    reverse_proxy /api/* {$CRYPTER_API_BASE}
+    route {
+        reverse_proxy /api/* {$CRYPTER_API_BASE}
 
-    root * /srv/
-    try_files {path} /index.html
-    file_server
+        try_files {path} /index.html
+        root * /srv/
+        file_server
+    }
 }
