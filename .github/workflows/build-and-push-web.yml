@@ -27,7 +27,7 @@ jobs:
       - name: Replace tokens in configuration
         working-directory: ${{ env.project_root }}
         run: |
-          sed -i 's/\$\{API_BASE_URL\}/${{ env.api_base_url }}/g' wwwroot/appsettings.json
+          sed -i 's/\\$\\{API_BASE_URL\\}/${{ env.api_base_url }}/g' wwwroot/appsettings.json
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
