@@ -57,7 +57,7 @@ jobs:
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container pull web api db
+          script: docker compose --project-directory crypter-web-container --profile web pull
           script_stop: true
 
       - name: Migrate database
@@ -67,7 +67,7 @@ jobs:
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container run api /app/efbundle
+          script: docker compose --project-directory crypter-web-container --profile web run api /app/efbundle
           script_stop: true
 
       - name: Start service
