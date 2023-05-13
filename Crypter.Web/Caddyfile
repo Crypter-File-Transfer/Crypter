@@ -1,4 +1,6 @@
 :8080 {
+    tls {$CRYPTER_TLS_CER} {$CRYPTER_TLS_KEY}
+
     reverse_proxy /api/* {$CRYPTER_API_BASE}
 
     root * /srv/

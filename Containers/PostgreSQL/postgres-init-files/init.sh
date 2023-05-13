@@ -1,14 +1,15 @@
 #!/bin/bash
 set -e
 
-# Create hangfire database
+# Create databases database
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
+   CREATE DATABASE crypter;
    CREATE DATABASE crypter_hangfire;
 EOSQL
 
 # Create crypter_user
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-   CREATE USER crypter_user WITH PASSWORD 'DEFAULT_PASSWORD';
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "crypter" <<-EOSQL
+   CREATE USER crypter WITH PASSWORD '$POSTGRES_C_PASSWORD';
 
    REVOKE ALL PRIVILEGES ON DATABASE crypter_hangfire FROM crypter_user;
 
@@ -23,7 +24,7 @@ EOSQL
 
 # Create crypter_hangfire_user
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "crypter_hangfire" <<-EOSQL
-   CREATE USER crypter_hangfire_user WITH PASSWORD 'DEFAULT_PASSWORD';
+   CREATE USER crypter_hangfire_user WITH PASSWORD '$POSTGRES_HF_PASSWORD';
 
    REVOKE ALL PRIVILEGES ON DATABASE crypter FROM crypter_hangfire_user;
 
