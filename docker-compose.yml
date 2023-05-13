@@ -35,6 +35,7 @@ services:
       CRYPTER_API_BASE: http://api:8080
       CADDY_OPTIONS: ${CADDY_OPTIONS}
     volumes:
+      - ./Containers/Caddy/data:/data
       - ./Containers/Caddy/tls:/mnt/tls
     restart: always
   db:
