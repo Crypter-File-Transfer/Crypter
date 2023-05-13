@@ -1,5 +1,5 @@
 localhost {
-    ${CADDY_OPTIONS}
+    {$CADDY_OPTIONS}
 
     reverse_proxy /api/* {$CRYPTER_API_BASE}
 
