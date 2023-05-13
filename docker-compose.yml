@@ -40,6 +40,10 @@ services:
       - db
       - dev
     image: postgres:15.2
+    expose:
+      - "5432"
+    ports:
+      - ${POSTGRES_BIND_IP-localhost}:5432:5432
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD-dev}
       POSTGRES_C_PASSWORD: ${POSTGRES_USER_PASSWORD-dev}
