@@ -13,7 +13,7 @@ RUN dotnet restore Crypter.API
 
 COPY ./ ./
 RUN dotnet publish Crypter.API --no-restore --configuration release --output /app/
-RUN dotnet-ef migrations bundle --output /app/efbundle
+RUN dotnet-ef migrations bundle --project Crypter.API --output /app/efbundle
 
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
 WORKDIR /app
