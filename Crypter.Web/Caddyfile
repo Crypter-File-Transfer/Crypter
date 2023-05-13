@@ -4,5 +4,6 @@
     reverse_proxy /api/* {$CRYPTER_API_BASE}
 
     root * /srv/
+    try_files {path} /index.html
     file_server
 }
