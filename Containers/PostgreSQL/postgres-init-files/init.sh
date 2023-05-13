@@ -9,7 +9,7 @@ EOSQL
 
 # Create crypter_user
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "crypter" <<-EOSQL
-   CREATE USER crypter WITH PASSWORD '$POSTGRES_C_PASSWORD';
+   CREATE USER crypter_user WITH PASSWORD '$POSTGRES_C_PASSWORD';
 
    REVOKE ALL PRIVILEGES ON DATABASE crypter_hangfire FROM crypter_user;
 

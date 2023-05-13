@@ -12,8 +12,8 @@ services:
       - "8080"
     environment:
       ASPNETCORE_TransferStorageSettings__Location: /mnt/storage
-      CUSTOMCONNSTR_DefaultConnection: host=${POSTGRES_HOST:-db};database=crypter;user id=crypter;pwd=${POSTGRES_USER_PASSWORD-dev};
-      CUSTOMCONNSTR_HangfireConnection: host=${POSTGRES_HANGFIRE_HOST:-db};database=crypter_hangfire;user id=crypter_hangfire;pwd=${POSTGRES_HANGFIRE_USER_PASSWORD-dev};
+      CUSTOMCONNSTR_DefaultConnection: host=${POSTGRES_HOST:-db};database=crypter;user id=crypter_user;pwd=${POSTGRES_USER_PASSWORD-dev};
+      CUSTOMCONNSTR_HangfireConnection: host=${POSTGRES_HANGFIRE_HOST:-db};database=crypter_hangfire;user id=crypter_hangfire_user;pwd=${POSTGRES_HANGFIRE_USER_PASSWORD-dev};
     volumes:
       - ./Containers/API/storage:/mnt/storage
       - ./Containers/API/appsettings.json:/app/appsettings.json
