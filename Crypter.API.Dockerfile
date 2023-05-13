@@ -19,4 +19,4 @@ RUN dotnet-ef migrations bundle --project Crypter.API --configuration release --
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
 WORKDIR /app
 COPY --from=build /app ./
-ENTRYPOINT ["dotnet", "Crypter.API.dll"]
+CMD ["dotnet", "Crypter.API.dll"]
