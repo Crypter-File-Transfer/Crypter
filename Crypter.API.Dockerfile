@@ -9,12 +9,11 @@ COPY *.sln ./
 COPY */*.csproj ./
 
 RUN dotnet-references fix --entry-point ./Crypter.sln --working-directory ./ --remove-unreferenced-project-files
-RUN dotnet restore Crypter.API --runtime linux-x64
+RUN dotnet restore Crypter.API
 
 COPY ./ ./
-RUN dotnet build Crypter.API --configuration release --no-restore --runtime linux-x64 --no-self-contained
-RUN dotnet publish Crypter.API --configuration release --no-build --runtime linux-x64 --no-self-contained --output /app/
-RUN dotnet-ef migrations bundle --project Crypter.Core --startup-project Crypter.API --configuration release --no-build --runtime linux-x64 --target-runtime linux-x64 --output /app/efbundle
+RUN dotnet publish Crypter.API --configuration release --no-self-contained --output /app/
+RUN dotnet-ef migrations bundle --project Crypter.Core --startup-project Crypter.API --configuration release --no-build --target-runtime linux-x64 --output /app/efbundle
 
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
 WORKDIR /app
