@@ -4,7 +4,7 @@ services:
     profiles:
       - web
       - dev
-    image: ghcr.io/saraelsa/crypter_api:main
+    image: ghcr.io/crypter-file-transfer/crypter_api:main
     build:
       context: .
       dockerfile: Crypter.API.Dockerfile
@@ -25,7 +25,7 @@ services:
     profiles:
       - web
       - dev
-    image: ghcr.io/saraelsa/crypter_web:main
+    image: ghcr.io/crypter-file-transfer/crypter_web:main
     build:
       context: .
       dockerfile: Crypter.Web.Dockerfile
