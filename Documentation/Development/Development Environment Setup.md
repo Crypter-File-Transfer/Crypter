@@ -12,7 +12,7 @@ I recommend using Visual Studio 2022 for Crypter development.
 The only workload you need to install is `ASP.NET and web development`.
 
 Make sure these individual components are also installed:
-* `.NET 6.0 Runtime` 
+* `.NET 7.0 Runtime` 
 * `.NET WebAssembly build tools`
 
 ## Docker
