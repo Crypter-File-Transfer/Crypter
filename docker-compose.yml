@@ -11,13 +11,14 @@ services:
     expose:
       - "80"
     environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT-Production}
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_TransferStorageSettings__Location: /mnt/storage
       CUSTOMCONNSTR_DefaultConnection: host=${POSTGRES_HOST:-db};database=crypter;user id=crypter_user;pwd=${POSTGRES_USER_PASSWORD-dev};
       CUSTOMCONNSTR_HangfireConnection: host=${POSTGRES_HANGFIRE_HOST:-db};database=crypter_hangfire;user id=crypter_hangfire_user;pwd=${POSTGRES_HANGFIRE_USER_PASSWORD-dev};
     volumes:
-      - ./Containers/API/storage:/mnt/storage
-      - ./Containers/API/appsettings.json:/app/appsettings.json
+      - ${API_STORAGE_PATH}:/mnt/storage
+      - ${API_SETTINGS_FILE}:/app/appsettings.json
     restart: always
     depends_on:
       - db
@@ -34,9 +35,9 @@ services:
       - ${WEB_SECURE_BIND_PORT-443}:443
     environment:
       CRYPTER_API_BASE: http://api:80
-      CADDY_HOST: ${CADDY_HOST-localhost}
+      CADDY_HOST: ${CADDY_HOST}
       CADDY_OPTIONS: ${CADDY_OPTIONS}
-      CADDY_TLS_VOLUME: ${CADDY_TLS_VOLUME-./Containers/Caddy/tls}
+      CADDY_TLS_VOLUME: ${CADDY_TLS_VOLUME}
     volumes:
       - ./Containers/Caddy/data:/data
       - ${CADDY_TLS_VOLUME}:/mnt/tls
