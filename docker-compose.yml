@@ -14,14 +14,15 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT-Production}
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_TransferStorageSettings__Location: /mnt/storage
-      CUSTOMCONNSTR_DefaultConnection: host=${POSTGRES_HOST:-db};database=crypter;user id=crypter_user;pwd=${POSTGRES_USER_PASSWORD-dev};
-      CUSTOMCONNSTR_HangfireConnection: host=${POSTGRES_HANGFIRE_HOST:-db};database=crypter_hangfire;user id=crypter_hangfire_user;pwd=${POSTGRES_HANGFIRE_USER_PASSWORD-dev};
+      CUSTOMCONNSTR_DefaultConnection: host=${POSTGRES_HOST:-db};database=crypter;user id=crypter_user;pwd=${POSTGRES_USER_PASSWORD:-dev};
+      CUSTOMCONNSTR_HangfireConnection: host=${POSTGRES_HANGFIRE_HOST:-db};database=crypter_hangfire;user id=crypter_hangfire_user;pwd=${POSTGRES_HANGFIRE_USER_PASSWORD:-dev};
     volumes:
       - ${API_STORAGE_PATH}:/mnt/storage
       - ${API_SETTINGS_FILE}:/app/appsettings.json
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
   web:
     profiles:
       - web
@@ -53,9 +54,15 @@ services:
       - ${POSTGRES_BIND_IP-[::1]}:${POSTGRES_BIND_PORT-5432}:5432
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD-dev}
-      POSTGRES_C_PASSWORD: ${POSTGRES_USER_PASSWORD-dev}
-      POSTGRES_HF_PASSWORD: ${POSTGRES_HANGFIRE_USER_PASSWORD-dev}
+      POSTGRES_C_PASSWORD: ${POSTGRES_USER_PASSWORD:-dev}
+      POSTGRES_HF_PASSWORD: ${POSTGRES_HANGFIRE_USER_PASSWORD:-dev}
     volumes:
       - ./Containers/PostgreSQL/data:/var/lib/postgresql/data
       - ./Containers/PostgreSQL/postgres-init-files:/docker-entrypoint-initdb.d
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "crypter"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
