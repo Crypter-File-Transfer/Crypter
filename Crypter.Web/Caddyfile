@@ -6,6 +6,9 @@
 
         try_files {path} /index.html
         root * /srv/
-        file_server
+
+        file_server {
+            precompressed gzip br
+        }
     }
 }

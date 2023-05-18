@@ -12,7 +12,7 @@
                object-src 'none';
                script-src 'self'
                           'sha256-v8v3RKRPmN4odZ1CWM5gw80QKPCCWMcpNeOmimNL2AA='
-                          'unsafe-inline'
+                          'sha256-T7Xq9csPhdQ6cFFC3HBIE5q5xlQP/V+nYw3NTroCkKU='
                           'unsafe-eval';
                style-src 'self'
                          'unsafe-inline';
@@ -76,7 +76,14 @@
    </div>
    <script src="js/scripts.js"></script>
    <script src="lib/bootstrap-5.2.3-dist/js/bootstrap.bundle.min.js"></script>
-   <script src="_framework/blazor.webassembly.js"></script>
+   <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+   <script>
+      Blazor.start({
+         environment: window.location.hostname == "localhost"
+            ? "Development"
+            : "Production"
+      });
+   </script>
 </body>
 
 </html>

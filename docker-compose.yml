@@ -61,7 +61,7 @@ services:
       - ./Containers/PostgreSQL/postgres-init-files:/docker-entrypoint-initdb.d
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready", "-d", "crypter"]
+      test: ["CMD-SHELL", "pg_isready -d crypter -U postgres"]
       interval: 10s
       timeout: 10s
       retries: 5
