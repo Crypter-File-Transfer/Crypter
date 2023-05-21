@@ -449,4 +449,9 @@ $RECYCLE.BIN/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-/Containers/PostgreSQL_Test/postgres-data
+
+# Container data
+Containers/API/storage/
+Containers/Caddy/tls/
+Containers/PostgreSQL/data
+Containers/Caddy/data

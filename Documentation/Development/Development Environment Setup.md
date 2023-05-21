@@ -12,28 +12,40 @@ I recommend using Visual Studio 2022 for Crypter development.
 The only workload you need to install is `ASP.NET and web development`.
 
 Make sure these individual components are also installed:
-* `.NET 6.0 Runtime` 
+* `.NET 7.0 Runtime` 
 * `.NET WebAssembly build tools`
 
 ## Docker
 
-Docker is required to run the PostgreSQL database. Get Docker setup on your development machine.
+I highly recommend installing Docker Desktop, though it is not required.
 
 [Get Started with Docker](https://www.docker.com/get-started)
 
-## PostgreSQL
+Refer to the commands below if you decide to run the application using Docker.
+
+### Run everything
+
+`docker-compose --profile dev up`
+
+You do not need to modify anything in the project for this to work.
+
+Just navigate to `https://localhost`.
+
+### Run just the database
+
+`docker-compose --profile db up`
+
+It's expected that you will run Crypter.API and Crypter.Web through Visual Studio or the command line.
+
+Instructions on running these web applications "the old fashioned way" are below.
+
+## PostgreSQL - Additional Tools
 
 Download and install PGAdmin: [PGAdmin Downloads Page](https://www.pgadmin.org/download/)
 
-Follow the instructions for a production deployment to get the container running on your development machine.
-Those instructions are located [here](../Production/Deployment/PostgreSQL.md).
-
-If you would rather not use Docker or Docker-Compose, you are free to setup PostgreSQL on your own.
-However, you must still refer to the initialization script located [here](../../Containers/PostgreSQL/postgres-init-files/init.sh).
-This script does a few things, including create some databases and a database user.
-You will not be able to create a database schema without executing this script.
-
 ## Crypter.API
+
+### Using Visual Studio
 
 1. Review and configure the `.\Crypter.API\appsettings.json` file.
 2. From within Visual Studio, verify you have the `Crypter.sln` solution loaded in the Solution Explorer. This is as opposed to having the Solution Explorer set to *Folder View*.
@@ -46,7 +58,7 @@ You may need to acknowledge the API's self-signed certificate.
 
 ## Crypter.Web
 
-1. Review and configure the `.\Crypter.Web\wwwroot\appsettings.json` file.
+1. Review and configure the `.\Crypter.Web\wwwroot\appsettings.Development.json` file.
 2. Open `.\Crypter.Web` in a terminal.
 3. Invoke `dotnet run`.
 

@@ -1,4 +1,6 @@
-﻿# Deploying Crypter.Web to a production environment
+﻿# [Deprecated]
+
+# Deploying Crypter.Web to a production environment
 
 This guide is subject to change as we improve our deployment processes.
 
