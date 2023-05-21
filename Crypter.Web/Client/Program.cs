@@ -46,6 +46,8 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+Console.WriteLine($"Environment: {builder.HostEnvironment.Environment}");
+
 builder.Services.AddSingleton(sp =>
 {
    var config = sp.GetService<IConfiguration>();

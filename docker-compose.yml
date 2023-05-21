@@ -1,0 +1,68 @@
+version: "3.9"
+services:
+  api:
+    profiles:
+      - web
+      - dev
+    image: ghcr.io/crypter-file-transfer/crypter_api:main
+    build:
+      context: .
+      dockerfile: Crypter.API.Dockerfile
+    expose:
+      - "80"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT-Production}
+      ASPNETCORE_URLS: http://0.0.0.0:80
+      ASPNETCORE_TransferStorageSettings__Location: /mnt/storage
+      CUSTOMCONNSTR_DefaultConnection: host=${POSTGRES_HOST:-db};database=crypter;user id=crypter_user;pwd=${POSTGRES_USER_PASSWORD:-dev};
+      CUSTOMCONNSTR_HangfireConnection: host=${POSTGRES_HANGFIRE_HOST:-db};database=crypter_hangfire;user id=crypter_hangfire_user;pwd=${POSTGRES_HANGFIRE_USER_PASSWORD:-dev};
+    volumes:
+      - ${API_STORAGE_PATH}:/mnt/storage
+      - ${API_SETTINGS_FILE}:/app/appsettings.json
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+  web:
+    profiles:
+      - web
+      - dev
+    image: ghcr.io/crypter-file-transfer/crypter_web:main
+    build:
+      context: .
+      dockerfile: Crypter.Web.Dockerfile
+    ports:
+      - ${WEB_BIND_PORT-80}:80
+      - ${WEB_SECURE_BIND_PORT-443}:443
+    environment:
+      CRYPTER_API_BASE: http://api:80
+      CADDY_HOST: ${CADDY_HOST}
+      CADDY_OPTIONS: ${CADDY_OPTIONS}
+      CADDY_TLS_VOLUME: ${CADDY_TLS_VOLUME}
+    volumes:
+      - ./Containers/Caddy/data:/data
+      - ${CADDY_TLS_VOLUME}:/mnt/tls
+    restart: always
+  db:
+    profiles:
+      - db
+      - dev
+    image: postgres:15.2
+    expose:
+      - "5432"
+    ports:
+      - ${POSTGRES_BIND_IP-[::1]}:${POSTGRES_BIND_PORT-5432}:5432
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD-dev}
+      POSTGRES_C_PASSWORD: ${POSTGRES_USER_PASSWORD:-dev}
+      POSTGRES_HF_PASSWORD: ${POSTGRES_HANGFIRE_USER_PASSWORD:-dev}
+    volumes:
+      - ./Containers/PostgreSQL/data:/var/lib/postgresql/data
+      - ./Containers/PostgreSQL/postgres-init-files:/docker-entrypoint-initdb.d
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d crypter -U postgres"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s

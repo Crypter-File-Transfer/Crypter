@@ -10,7 +10,7 @@ Both databases are required.
 1. Copy the [./Containers/PostgreSQL](../../../Containers/PostgreSQL) directory to the database server.
 2. Review and configure the `.env` file.
 3. Modify the user passwords in the `./postgres-init-files/init.sh` file, lines 10 and 25.
-4. Invoke `docker-compose up -d`.
+4. Invoke `docker-compose --profile db up`.
 
 ## Crypter schema
 
@@ -30,7 +30,7 @@ A few drawbacks to this method are:
 
 To create the database:
 
- 1. Verify the user configured in the `Crypter.API/appsettings.json` file's `DefaultConnection` connection string is a superuser. This is usually the `postgres` user with a password of `DEFAULT_PASSWORD`.
+ 1. Verify the user configured in the `Crypter.API/appsettings.json` file's `DefaultConnection` connection string is a superuser.
  2. Open the Package Manager Console in Visual Studio.
  3. Select `Crypter.API` as the default project.
  4. Invoke `Update-Database` to create the most recent version of the database.

@@ -1,0 +1,23 @@
+{$CADDY_HOST} {
+   {$CADDY_OPTIONS}
+
+   log {
+      output file /var/log/caddy
+      format console
+   }
+
+   handle /api/* {
+      reverse_proxy {$CRYPTER_API_BASE}
+   }
+
+   handle {
+      root * /srv
+      try_files {path} /index.html
+
+      header ?Content-Type "application/octet-stream"
+
+      file_server {
+         precompressed br gzip
+      }
+   }
+}
