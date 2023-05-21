@@ -4,7 +4,7 @@ services:
     profiles:
       - web
       - dev
-    image: ghcr.io/crypter-file-transfer/crypter_api:main
+    image: ghcr.io/crypter-file-transfer/crypter_api:latest
     build:
       context: .
       dockerfile: Crypter.API.Dockerfile
@@ -27,7 +27,7 @@ services:
     profiles:
       - web
       - dev
-    image: ghcr.io/crypter-file-transfer/crypter_web:main
+    image: ghcr.io/crypter-file-transfer/crypter_web:latest
     build:
       context: .
       dockerfile: Crypter.Web.Dockerfile
