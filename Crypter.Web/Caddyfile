@@ -1,23 +1,31 @@
-{$CADDY_HOST} {
-   {$CADDY_OPTIONS}
+{$CADDY_DOMAIN} {
+	{$CADDY_OPTIONS}
 
-   log {
-      output file /var/log/caddy
-      format console
-   }
+	log {
+		output file /var/log/caddy
+		format console
+	}
 
-   handle /api/* {
-      reverse_proxy {$CRYPTER_API_BASE}
-   }
+	handle /api/* {
+		request_body {
+			max_size {$CADDY_MAX_REQUEST_BODY}
+		}
 
-   handle {
-      root * /srv
-      try_files {path} /index.html
+		reverse_proxy {$CRYPTER_API_BASE}
+	}
 
-      header ?Content-Type "application/octet-stream"
+	handle {
+		root * /srv
+		try_files {path} /index.html
 
-      file_server {
-         precompressed br gzip
-      }
-   }
+		header ?Content-Type "application/octet-stream"
+
+		file_server {
+			precompressed br gzip
+		}
+	}
+}
+
+{$CADDY_REDIRECT_TO_WWW} {
+	redir https://www.{host}{uri} permanent
 }

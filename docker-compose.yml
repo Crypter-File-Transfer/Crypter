@@ -33,9 +33,11 @@ services:
       - ${WEB_SECURE_BIND_PORT-443}:443
     environment:
       CRYPTER_API_BASE: http://api:80
-      CADDY_HOST: ${CADDY_HOST}
+      CADDY_DOMAIN: ${CADDY_DOMAIN}
+      CADDY_REDIRECT_TO_WWW: ${CADDY_REDIRECT_TO_WWW}
       CADDY_OPTIONS: ${CADDY_OPTIONS}
       CADDY_TLS_VOLUME: ${CADDY_TLS_VOLUME}
+      CADDY_MAX_REQUEST_BODY: ${CADDY_MAX_REQUEST_BODY}
     volumes:
       - ./Containers/Caddy/data:/data
       - ${CADDY_TLS_VOLUME}:/mnt/tls
