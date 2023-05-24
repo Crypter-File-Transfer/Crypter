@@ -6,6 +6,8 @@ on:
 jobs:
   deploy-web-container:
     runs-on: ubuntu-latest
+    environment:
+      name: production
 
     steps:
       - name: Checkout repository
