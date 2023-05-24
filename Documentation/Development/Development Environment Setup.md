@@ -25,6 +25,12 @@ Refer to the commands below if you decide to run the application using Docker.
 
 ### Run everything
 
+Run
+
+`docker-compose --profile web build`
+
+then run
+
 `docker-compose --profile dev up`
 
 You do not need to modify anything in the project for this to work.
@@ -45,6 +51,8 @@ Download and install PGAdmin: [PGAdmin Downloads Page](https://www.pgadmin.org/d
 
 ## Crypter.API
 
+Follow these instructions to run Crypter.API outside of Docker.
+
 ### Using Visual Studio
 
 1. Review and configure the `.\Crypter.API\appsettings.json` file.
@@ -57,6 +65,8 @@ Make sure you navigate to this address in your browser before trying to use the 
 You may need to acknowledge the API's self-signed certificate.
 
 ## Crypter.Web
+
+Follow these instructions to run Crypter.Web outside of Docker.
 
 1. Review and configure the `.\Crypter.Web\wwwroot\appsettings.Development.json` file.
 2. Open `.\Crypter.Web` in a terminal.
