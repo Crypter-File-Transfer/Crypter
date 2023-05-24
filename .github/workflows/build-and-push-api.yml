@@ -13,6 +13,8 @@ env:
 jobs:
   build-and-push-api:
     runs-on: ubuntu-latest
+    environment:
+      name: production
     permissions:
       contents: read
       packages: write
