@@ -102,7 +102,7 @@ namespace Crypter.Common.Client.Implementations
       public async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(string uri)
       {
          var requestFactory = MakeRequestMessageFactory(HttpMethod.Get, uri);
-         HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
+         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
          return await GetStreamResponseAsync(response);
       }
 
