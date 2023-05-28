@@ -29,7 +29,6 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Monads;
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -134,6 +133,7 @@ namespace Crypter.Common.Client.Implementations
       private async Task<Maybe<TResponse>> SendRequestMaybeResponseAsync<TResponse>(HttpRequestMessage request)
       {
          using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+         request.Dispose();
          using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          if (!response.IsSuccessStatusCode)
          {
@@ -146,6 +146,7 @@ namespace Crypter.Common.Client.Implementations
       private async Task<Either<ErrorResponse, TResponse>> SendRequestEitherResponseAsync<TResponse>(HttpRequestMessage request)
       {
          using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+         request.Dispose();
          using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          if (!response.IsSuccessStatusCode)
          {
@@ -158,6 +159,7 @@ namespace Crypter.Common.Client.Implementations
       private async Task<Either<ErrorResponse, Unit>> SendRequestEitherUnitResponseAsync(HttpRequestMessage request)
       {
          using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+         request.Dispose();
          using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          return response.IsSuccessStatusCode
             ? Unit.Default
@@ -166,7 +168,8 @@ namespace Crypter.Common.Client.Implementations
 
       private async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamAsync(HttpRequestMessage request)
       {
-         HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+         using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+         request.Dispose();
          Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 
          if (!response.IsSuccessStatusCode)
