@@ -224,10 +224,9 @@ namespace Crypter.Common.Client.Implementations
             _requestSemaphore.Release();
          }
 
-         HttpRequestMessage initialRequest = requestFactory();
+         using HttpRequestMessage initialRequest = requestFactory();
          await AttachTokenAsync(initialRequest, useRefreshToken);
          HttpResponseMessage initialAttempt = await _httpClient.SendAsync(initialRequest, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
-         initialRequest.Dispose();
 
          if (initialAttempt.StatusCode != HttpStatusCode.Unauthorized || useRefreshToken)
          {
