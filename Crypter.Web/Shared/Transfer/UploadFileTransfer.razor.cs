@@ -98,10 +98,10 @@ namespace Crypter.Web.Shared.Transfer
 
          await SetProgressMessage("Encrypting file");
 
-         Stream fileStreamFactory()
+         Stream fileStreamOpener()
             => SelectedFile.OpenReadStream(SelectedFile.Size);
 
-         UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(fileStreamFactory, SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours);
+         UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(fileStreamOpener, SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours);
 
          SetHandlerUserInfo(fileUploader);
          var uploadResponse = await fileUploader.UploadAsync();
