@@ -37,6 +37,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System;
 
 namespace Crypter.Core
 {
@@ -51,12 +52,12 @@ namespace Crypter.Core
          string defaultConnectionString,
          string hangfireConnectionString)
       {
-         services.AddDbContext<DataContext>(options =>
+         services.AddDbContext<DataContext>(optionsBuilder =>
          {
-            options.UseNpgsql(defaultConnectionString, options =>
+            optionsBuilder.UseNpgsql(defaultConnectionString, npgsqlOptionsBuilder =>
             {
-               options.EnableRetryOnFailure();
-               options.MigrationsHistoryTable(HistoryRepository.DefaultTableName, DataContext.SchemaName);
+               npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), new string[] { "57P01" });
+               npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName, DataContext.SchemaName);
             });
          });
 
