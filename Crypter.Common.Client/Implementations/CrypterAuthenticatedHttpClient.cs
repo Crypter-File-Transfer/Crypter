@@ -238,15 +238,14 @@ namespace Crypter.Common.Client.Implementations
             await _requestSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-               HttpRequestMessage retryRequest = requestFactory();
+               using HttpRequestMessage retryRequest = requestFactory();
                var refreshAndRetry = await (from refreshResponse in _crypterApiClient.UserAuthentication.RefreshSessionAsync()
-                                     from unit0 in Either<RefreshError, Unit>.FromRightAsync(_tokenRepository.StoreAuthenticationTokenAsync(refreshResponse.AuthenticationToken))
-                                     from unit1 in Either<RefreshError, Unit>.FromRightAsync(_tokenRepository.StoreRefreshTokenAsync(refreshResponse.RefreshToken, refreshResponse.RefreshTokenType))
-                                     from unit2 in Either<RefreshError, Unit>.FromRightAsync(AttachTokenAsync(retryRequest, false))
-                                     from secondAttempt in Either<RefreshError, HttpResponseMessage>.FromRightAsync(_httpClient.SendAsync(retryRequest, HttpCompletionOption.ResponseHeadersRead))
-                                     select secondAttempt);
+                                            from unit0 in Either<RefreshError, Unit>.FromRightAsync(_tokenRepository.StoreAuthenticationTokenAsync(refreshResponse.AuthenticationToken))
+                                            from unit1 in Either<RefreshError, Unit>.FromRightAsync(_tokenRepository.StoreRefreshTokenAsync(refreshResponse.RefreshToken, refreshResponse.RefreshTokenType))
+                                            from unit2 in Either<RefreshError, Unit>.FromRightAsync(AttachTokenAsync(retryRequest, false))
+                                            from secondAttempt in Either<RefreshError, HttpResponseMessage>.FromRightAsync(_httpClient.SendAsync(retryRequest, HttpCompletionOption.ResponseHeadersRead))
+                                            select secondAttempt);
 
-               retryRequest.Dispose();
                return refreshAndRetry.Match(
                   initialAttempt,
                   right => right);
