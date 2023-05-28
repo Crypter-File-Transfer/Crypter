@@ -115,11 +115,11 @@ namespace Crypter.Common.Client.Implementations
             : Maybe<Unit>.None;
       }
 
-      public Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)
+      public async Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)
          where TResponse : class
       {
          using HttpRequestMessage request = requestFactory();
-         return SendRequestEitherResponseAsync<TResponse>(request);
+         return await SendRequestEitherResponseAsync<TResponse>(request);
       }
 
       private static HttpRequestMessage MakeRequestMessage<TRequest>(HttpMethod method, string uri, TRequest body)
