@@ -50,65 +50,65 @@ namespace Crypter.Common.Client.Implementations
          };
       }
 
-      public Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri)
+      public async Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri)
          where TResponse : class
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-         return SendRequestMaybeResponseAsync<TResponse>(request);
+         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+         return await SendRequestMaybeResponseAsync<TResponse>(request);
       }
 
-      public Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri)
+      public async Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri)
          where TResponse : class
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-         return SendRequestEitherResponseAsync<TResponse>(request);
+         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+         return await SendRequestEitherResponseAsync<TResponse>(request);
       }
 
-      public Task<Either<ErrorResponse, Unit>> GetEitherUnitResponseAsync(string uri)
+      public async Task<Either<ErrorResponse, Unit>> GetEitherUnitResponseAsync(string uri)
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-         return SendRequestEitherUnitResponseAsync(request);
+         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+         return await SendRequestEitherUnitResponseAsync(request);
       }
 
-      public Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(string uri)
+      public async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(string uri)
       {
-         var request = new HttpRequestMessage(HttpMethod.Get, uri);
-         return GetStreamAsync(request);
+         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
+         return await GetStreamAsync(request);
       }
 
-      public Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body)
+      public async Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body)
          where TResponse : class
          where TRequest : class
       {
-         var request = MakeRequestMessage(HttpMethod.Post, uri, body);
-         return SendRequestEitherResponseAsync<TResponse>(request);
+         using HttpRequestMessage request = MakeRequestMessage(HttpMethod.Post, uri, body);
+         return await SendRequestEitherResponseAsync<TResponse>(request);
       }
 
       public async Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, uri);
+         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uri);
          using HttpResponseMessage response = await _httpClient.SendAsync(request);
          return response.IsSuccessStatusCode
             ? Unit.Default
             : Maybe<Unit>.None;
       }
 
-      public Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri)
+      public async Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, uri);
-         return SendRequestEitherUnitResponseAsync(request);
+         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uri);
+         return await SendRequestEitherUnitResponseAsync(request);
       }
 
-      public Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body)
+      public async Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body)
          where TRequest : class
       {
-         var request = MakeRequestMessage(HttpMethod.Post, uri, body);
-         return SendRequestEitherUnitResponseAsync(request);
+         using HttpRequestMessage request = MakeRequestMessage(HttpMethod.Post, uri, body);
+         return await SendRequestEitherUnitResponseAsync(request);
       }
 
       public async Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri)
       {
-         var request = new HttpRequestMessage(HttpMethod.Post, uri);
+         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uri);
          using HttpResponseMessage response = await _httpClient.SendAsync(request);
          return response.IsSuccessStatusCode
             ? Unit.Default
@@ -118,7 +118,8 @@ namespace Crypter.Common.Client.Implementations
       public Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)
          where TResponse : class
       {
-         return SendRequestEitherResponseAsync<TResponse>(requestFactory());
+         using HttpRequestMessage request = requestFactory();
+         return SendRequestEitherResponseAsync<TResponse>(request);
       }
 
       private static HttpRequestMessage MakeRequestMessage<TRequest>(HttpMethod method, string uri, TRequest body)
@@ -133,7 +134,6 @@ namespace Crypter.Common.Client.Implementations
       private async Task<Maybe<TResponse>> SendRequestMaybeResponseAsync<TResponse>(HttpRequestMessage request)
       {
          using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
-         request.Dispose();
          using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          if (!response.IsSuccessStatusCode)
          {
@@ -146,7 +146,6 @@ namespace Crypter.Common.Client.Implementations
       private async Task<Either<ErrorResponse, TResponse>> SendRequestEitherResponseAsync<TResponse>(HttpRequestMessage request)
       {
          using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
-         request.Dispose();
          using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          if (!response.IsSuccessStatusCode)
          {
@@ -159,7 +158,6 @@ namespace Crypter.Common.Client.Implementations
       private async Task<Either<ErrorResponse, Unit>> SendRequestEitherUnitResponseAsync(HttpRequestMessage request)
       {
          using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
-         request.Dispose();
          using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
          return response.IsSuccessStatusCode
             ? Unit.Default
@@ -169,7 +167,6 @@ namespace Crypter.Common.Client.Implementations
       private async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamAsync(HttpRequestMessage request)
       {
          using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
-         request.Dispose();
          Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 
          if (!response.IsSuccessStatusCode)
