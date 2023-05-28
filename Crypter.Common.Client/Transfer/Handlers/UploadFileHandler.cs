@@ -37,9 +37,9 @@ using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Transfer.Handlers
 {
-   public class UploadFileHandler : UploadHandler, IDisposable
+   public class UploadFileHandler : UploadHandler
    {
-      private Stream _fileStream;
+      private Func<Stream> _fileStreamOpener;
       private string _fileName;
       private long _fileSize;
       private string _fileContentType;
@@ -48,9 +48,9 @@ namespace Crypter.Common.Client.Transfer.Handlers
          : base(crypterApiClient, cryptoProvider, transferSettings)
       { }
 
-      internal void SetTransferInfo(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours)
+      internal void SetTransferInfo(Func<Stream> fileStreamOpener, string fileName, long fileSize, string fileContentType, int expirationHours)
       {
-         _fileStream = fileStream;
+         _fileStreamOpener = fileStreamOpener;
          _fileName = fileName;
          _fileSize = fileSize;
          _fileContentType = fileContentType;
@@ -59,16 +59,10 @@ namespace Crypter.Common.Client.Transfer.Handlers
 
       public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
       {
-         var (encryptionStream, senderPublicKey, proof) = GetEncryptionInfo(_fileStream, _fileSize);
+         var (encryptionStreamOpener, senderPublicKey, proof) = GetEncryptionInfo(_fileStreamOpener, _fileSize);
          UploadFileTransferRequest request = new UploadFileTransferRequest(_fileName, _fileContentType, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
-         return _crypterApiClient.FileTransfer.UploadFileTransferAsync(_recipientUsername, request, encryptionStream, _senderDefined)
+         return _crypterApiClient.FileTransfer.UploadFileTransferAsync(_recipientUsername, request, encryptionStreamOpener, _senderDefined)
             .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.File, x.UserType, _recipientKeySeed));
-      }
-
-      public void Dispose()
-      {
-         _fileStream?.Dispose();
-         GC.SuppressFinalize(this);
       }
    }
 }

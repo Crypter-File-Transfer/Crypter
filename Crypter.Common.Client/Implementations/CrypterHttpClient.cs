@@ -27,6 +27,7 @@
 using Crypter.Common.Client.Interfaces;
 using Crypter.Common.Contracts;
 using Crypter.Common.Monads;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -115,10 +116,10 @@ namespace Crypter.Common.Client.Implementations
             : Maybe<Unit>.None;
       }
 
-      public Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(HttpRequestMessage requestMessage)
+      public Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)
          where TResponse : class
       {
-         return SendRequestEitherResponseAsync<TResponse>(requestMessage);
+         return SendRequestEitherResponseAsync<TResponse>(requestFactory());
       }
 
       private static HttpRequestMessage MakeRequestMessage<TRequest>(HttpMethod method, string uri, TRequest body)

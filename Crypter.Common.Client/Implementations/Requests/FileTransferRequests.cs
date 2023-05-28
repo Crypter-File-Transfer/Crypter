@@ -51,7 +51,7 @@ namespace Crypter.Common.Client.Implementations.Requests
          _crypterAuthenticatedHttpClient = authenticatedHttpService;
       }
 
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<string> recipientUsername, UploadFileTransferRequest uploadRequest, EncryptionStream encryptionStream, bool withAuthentication)
+      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<string> recipientUsername, UploadFileTransferRequest uploadRequest, Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication)
       {
          string url = recipientUsername.Match(
             () => "api/file/transfer",
@@ -61,16 +61,16 @@ namespace Crypter.Common.Client.Implementations.Requests
             ? _crypterAuthenticatedHttpClient
             : _crypterHttpClient;
 
-         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url)
+         HttpRequestMessage requestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
          {
             Content = new MultipartFormDataContent
             {
                { new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"), "Data" },
-               { new StreamContent(encryptionStream), "Ciphertext", "Ciphertext" }
+               { new StreamContent(encryptionStreamOpener()), "Ciphertext", "Ciphertext" }
             }
          };
 
-         return await service.SendAsync<UploadTransferResponse>(request)
+         return await service.SendAsync<UploadTransferResponse>(requestFactory)
             .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
       }
 

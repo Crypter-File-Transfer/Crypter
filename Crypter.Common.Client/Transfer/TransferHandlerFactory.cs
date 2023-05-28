@@ -29,6 +29,7 @@ using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Common;
+using System;
 using System.IO;
 
 namespace Crypter.Common.Client.Transfer
@@ -49,10 +50,10 @@ namespace Crypter.Common.Client.Transfer
          _transferSettings = transferSettings;
       }
 
-      public UploadFileHandler CreateUploadFileHandler(Stream fileStream, string fileName, long fileSize, string fileContentType, int expirationHours)
+      public UploadFileHandler CreateUploadFileHandler(Func<Stream> fileStreamOpener, string fileName, long fileSize, string fileContentType, int expirationHours)
       {
          var handler = new UploadFileHandler(_crypterApiClient, _cryptoProvider, _transferSettings);
-         handler.SetTransferInfo(fileStream, fileName, fileSize, fileContentType, expirationHours);
+         handler.SetTransferInfo(fileStreamOpener, fileName, fileSize, fileContentType, expirationHours);
          return handler;
       }
 

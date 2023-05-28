@@ -195,10 +195,10 @@ namespace Crypter.Common.Client.Implementations
             : Maybe<Unit>.None;
       }
 
-      public async Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(HttpRequestMessage requestMessage)
+      public async Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)
          where TResponse : class
       {
-         using HttpResponseMessage response = await SendWithAuthenticationAsync(() => requestMessage, false);
+         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
          return await DeserializeResponseAsync<TResponse>(response);
       }
 
@@ -224,9 +224,10 @@ namespace Crypter.Common.Client.Implementations
             _requestSemaphore.Release();
          }
 
-         var initialRequest = requestFactory();
+         using HttpRequestMessage initialRequest = requestFactory();
          await AttachTokenAsync(initialRequest, useRefreshToken);
          HttpResponseMessage initialAttempt = await _httpClient.SendAsync(initialRequest, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+
          if (initialAttempt.StatusCode != HttpStatusCode.Unauthorized || useRefreshToken)
          {
             return initialAttempt;
@@ -236,7 +237,7 @@ namespace Crypter.Common.Client.Implementations
             await _requestSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-               var retryRequest = requestFactory();
+               using HttpRequestMessage retryRequest = requestFactory();
                var refreshAndRetry = from refreshResponse in _crypterApiClient.UserAuthentication.RefreshSessionAsync()
                                      from unit0 in Either<RefreshError, Unit>.FromRightAsync(_tokenRepository.StoreAuthenticationTokenAsync(refreshResponse.AuthenticationToken))
                                      from unit1 in Either<RefreshError, Unit>.FromRightAsync(_tokenRepository.StoreRefreshTokenAsync(refreshResponse.RefreshToken, refreshResponse.RefreshTokenType))

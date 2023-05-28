@@ -34,6 +34,7 @@ using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
+using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
@@ -71,9 +72,9 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
       [Test]
       public async Task Preview_Anonymous_Message_Transfer_Works()
       {
-         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var uploadResult = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request, encryptionStream, false);
+         var uploadResult = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request, encryptionStreamOpener, false);
 
          string uploadId = uploadResult
             .Map(x => x.HashId)
@@ -130,9 +131,9 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
             var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
          });
 
-         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadMessageTransferRequest uploadRequest = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var uploadResult = await _client.MessageTransfer.UploadMessageTransferAsync(recipientUsername, uploadRequest, encryptionStream, senderDefined);
+         var uploadResult = await _client.MessageTransfer.UploadMessageTransferAsync(recipientUsername, uploadRequest, encryptionStreamOpener, senderDefined);
 
          await recipientUsername.IfSomeAsync(async username =>
          {
