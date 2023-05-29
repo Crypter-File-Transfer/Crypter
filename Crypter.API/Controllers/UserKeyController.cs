@@ -92,7 +92,8 @@ namespace Crypter.API.Controllers
             {
                InsertMasterKeyError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
                InsertMasterKeyError.Conflict => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
-               InsertMasterKeyError.InvalidCredentials => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+               InsertMasterKeyError.InvalidPassword
+                  or InsertMasterKeyError.InvalidMasterKey => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
          }

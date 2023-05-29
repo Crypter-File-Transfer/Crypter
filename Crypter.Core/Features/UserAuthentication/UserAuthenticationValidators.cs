@@ -24,15 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery
+namespace Crypter.Core.Features.UserAuthentication
 {
-   public enum SubmitRecoveryError
+   internal static class UserAuthenticationValidators
    {
-      UnknownError,
-      InvalidUsername,
-      RecoveryNotFound,
-      WrongRecoveryKey,
-      InvalidMasterKey,
-      PasswordHashFailure,
+      internal static bool ValidatePassword(byte[] password)
+      {
+         return password?.Length > 0;
+      }
    }
 }

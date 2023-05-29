@@ -29,6 +29,7 @@ using Crypter.Common.Infrastructure;
 using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
+using Crypter.Core.Features.Keys;
 using Crypter.Core.Features.UserRecovery.Models;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
@@ -79,8 +80,13 @@ namespace Crypter.Core.Features.UserRecovery
          }
 
          bool validRecoveryProofProvided = false;
-         if (recoveryRequest.ReplacementMasterKeyInformation?.CurrentRecoveryProof is not null)
+         if (recoveryRequest.ReplacementMasterKeyInformation?.CurrentRecoveryProof?.Length > 0)
          {
+            if (!MasterKeyValidators.ValidateMasterKeyInformation(recoveryRequest.ReplacementMasterKeyInformation?.EncryptedKey, recoveryRequest.ReplacementMasterKeyInformation?.Nonce, recoveryRequest.ReplacementMasterKeyInformation?.NewRecoveryProof))
+            {
+               return SubmitRecoveryError.InvalidMasterKey;
+            }
+
             validRecoveryProofProvided = await dataContext.UserMasterKeys
                .Where(x => x.Owner == recoveryEntity.Owner)
                .Where(x => x.RecoveryProof == recoveryRequest.ReplacementMasterKeyInformation.CurrentRecoveryProof)

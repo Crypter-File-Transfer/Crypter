@@ -30,6 +30,7 @@ namespace Crypter.Common.Contracts.Features.Keys
    {
       UnknownError,
       Conflict,
-      InvalidCredentials
+      InvalidPassword,
+      InvalidMasterKey
    }
 }

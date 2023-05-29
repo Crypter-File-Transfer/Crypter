@@ -28,6 +28,7 @@ using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Monads;
 using Crypter.Core.Entities;
+using Crypter.Core.Features.Keys;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -89,9 +90,14 @@ namespace Crypter.Core.Services
 
       public async Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, bool allowReplacement)
       {
+         if (!MasterKeyValidators.ValidateMasterKeyInformation(request.EncryptedKey, request.Nonce, request.RecoveryProof))
+         {
+            return InsertMasterKeyError.InvalidMasterKey;
+         }
+
          var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new PasswordChallengeRequest(request.Password));
          return await testPasswordResult.MatchAsync<Either<InsertMasterKeyError, Unit>>(
-            error => InsertMasterKeyError.InvalidCredentials,
+            error => InsertMasterKeyError.InvalidPassword,
             async _ =>
             {
                var masterKeyEntity = await _context.UserMasterKeys
