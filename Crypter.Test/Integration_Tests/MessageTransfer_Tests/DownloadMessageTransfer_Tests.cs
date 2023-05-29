@@ -70,7 +70,7 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
       }
 
       [Test]
-      public async Task Preview_Anonymous_Message_Transfer_Works()
+      public async Task Download_Anonymous_Message_Transfer_Works()
       {
          (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
@@ -84,12 +84,16 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
 
          Assert.True(uploadResult.IsRight);
          Assert.True(result.IsRight);
+         result.DoRight(x =>
+         {
+            Assert.DoesNotThrow(() => x.Stream.ReadByte());
+         });
       }
 
       [TestCase(true, false)]
       [TestCase(false, true)]
       [TestCase(true, true)]
-      public async Task Preview_User_Message_Transfer_Works(bool senderDefined, bool recipientDefined)
+      public async Task Download_User_Message_Transfer_Works(bool senderDefined, bool recipientDefined)
       {
          Maybe<string> senderUsername = senderDefined
             ? TestData.DefaultUsername
@@ -155,6 +159,10 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
 
          Assert.True(uploadResult.IsRight);
          Assert.True(result.IsRight);
+         result.DoRight(x =>
+         {
+            Assert.DoesNotThrow(() => x.Stream.ReadByte());
+         });
       }
    }
 }

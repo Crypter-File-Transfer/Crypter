@@ -135,24 +135,18 @@ namespace Crypter.Common.Client.Implementations
       {
          using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
          using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-         if (!response.IsSuccessStatusCode)
-         {
-            return Maybe<TResponse>.None;
-         }
-
-         return await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+         return response.IsSuccessStatusCode
+            ? await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false)
+            : Maybe<TResponse>.None;
       }
 
       private async Task<Either<ErrorResponse, TResponse>> SendRequestEitherResponseAsync<TResponse>(HttpRequestMessage request)
       {
          using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
          using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-         if (!response.IsSuccessStatusCode)
-         {
-            return await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
-         }
-
-         return await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+         return response.IsSuccessStatusCode
+            ? await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false)
+            : await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
       }
 
       private async Task<Either<ErrorResponse, Unit>> SendRequestEitherUnitResponseAsync(HttpRequestMessage request)
@@ -166,15 +160,20 @@ namespace Crypter.Common.Client.Implementations
 
       private async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamAsync(HttpRequestMessage request)
       {
-         using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+         HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
          Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 
-         if (!response.IsSuccessStatusCode)
+         if (response.IsSuccessStatusCode)
          {
-            return await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+            // Do not dispose of the Stream here. The caller needs to read it.
+            return new StreamDownloadResponse(stream, response.Content.Headers.ContentLength!.Value);
          }
-
-         return new StreamDownloadResponse(stream, response.Content.Headers.ContentLength!.Value);
+         else
+         {
+            ErrorResponse errorResponse = await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+            response.Dispose();
+            return errorResponse;
+         }
       }
    }
 }

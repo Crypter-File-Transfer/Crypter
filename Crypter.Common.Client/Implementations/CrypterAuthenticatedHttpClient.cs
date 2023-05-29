@@ -102,7 +102,10 @@ namespace Crypter.Common.Client.Implementations
       public async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(string uri)
       {
          var requestFactory = MakeRequestMessageFactory(HttpMethod.Get, uri);
-         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
+
+         // Do not dispose of the HttpResponseMessage here.
+         // Callers need to read the contained Stream.
+         HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
          return await GetStreamResponseAsync(response);
       }
 
@@ -150,7 +153,7 @@ namespace Crypter.Common.Client.Implementations
       {
          var requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri);
          using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
-         return DeserializeMaybeUnitResponseAsync(response);
+         return DeserializeMaybeUnitResponse(response);
       }
 
       public Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri)
@@ -256,7 +259,7 @@ namespace Crypter.Common.Client.Implementations
          }
       }
 
-      private static Maybe<Unit> DeserializeMaybeUnitResponseAsync(HttpResponseMessage response)
+      private static Maybe<Unit> DeserializeMaybeUnitResponse(HttpResponseMessage response)
       {
          return response.IsSuccessStatusCode
             ? Unit.Default
@@ -311,12 +314,18 @@ namespace Crypter.Common.Client.Implementations
          }
 
          Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-         if (!response.IsSuccessStatusCode)
-         {
-            return await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
-         }
 
-         return new StreamDownloadResponse(stream, response.Content.Headers.ContentLength!.Value);
+         if (response.IsSuccessStatusCode)
+         {
+            // Do not dispose of the Stream here. The caller needs to read it.
+            return new StreamDownloadResponse(stream, response.Content.Headers.ContentLength!.Value);
+         }
+         else
+         {
+            ErrorResponse errorResponse = await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+            stream.Dispose();
+            return errorResponse;
+         }
       }
 
       private async Task<Unit> AttachTokenAsync(HttpRequestMessage request, bool useRefreshToken = false)

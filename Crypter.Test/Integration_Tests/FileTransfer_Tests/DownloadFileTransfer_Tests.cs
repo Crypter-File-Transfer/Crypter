@@ -84,6 +84,10 @@ namespace Crypter.Test.Integration_Tests.FileTransfer_Tests
 
          Assert.True(uploadResult.IsRight);
          Assert.True(result.IsRight);
+         result.DoRight(x =>
+         {
+            Assert.DoesNotThrow(() => x.Stream.ReadByte());
+         });
       }
 
       [TestCase(true, false)]
@@ -155,6 +159,10 @@ namespace Crypter.Test.Integration_Tests.FileTransfer_Tests
 
          Assert.True(uploadResult.IsRight);
          Assert.True(result.IsRight);
+         result.DoRight(x =>
+         {
+            Assert.DoesNotThrow(() => x.Stream.ReadByte());
+         });
       }
    }
 }
