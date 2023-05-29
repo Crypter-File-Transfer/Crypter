@@ -142,7 +142,7 @@ namespace Crypter.Test.Integration_Tests.Common
          return new LoginRequest(username, new List<VersionedPassword> { versionedPassword }, tokenType);
       }
 
-      internal static (byte[] masterKey, InsertMasterKeyRequest request) GetInsertMasterKeyRequest(string username, string password)
+      internal static (byte[] masterKey, InsertMasterKeyRequest request) GetInsertMasterKeyRequest(string password)
       {
          Random random = new Random();
 
@@ -157,7 +157,7 @@ namespace Crypter.Test.Integration_Tests.Common
          byte[] randomBytesRecoveryProof = new byte[32];
          random.NextBytes(randomBytesRecoveryProof);
 
-         InsertMasterKeyRequest request = new InsertMasterKeyRequest(username, passwordBytes, randomBytesMasterKey, randomBytesNonce, randomBytesRecoveryProof);
+         InsertMasterKeyRequest request = new InsertMasterKeyRequest(passwordBytes, randomBytesMasterKey, randomBytesNonce, randomBytesRecoveryProof);
          return (randomBytesMasterKey, request);
       }
 
