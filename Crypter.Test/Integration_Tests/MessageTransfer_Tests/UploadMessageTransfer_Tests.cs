@@ -72,9 +72,9 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
       [Test]
       public async Task Upload_Anonymous_Message_Transfer_Works()
       {
-         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var result = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request, encryptionStream, false);
+         var result = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request, encryptionStreamOpener, false);
 
          Assert.True(result.IsRight);
       }
@@ -124,9 +124,9 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
             var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
          });
 
-         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var result = await _client.MessageTransfer.UploadMessageTransferAsync(recipientUsername, request, encryptionStream, senderDefined);
+         var result = await _client.MessageTransfer.UploadMessageTransferAsync(recipientUsername, request, encryptionStreamOpener, senderDefined);
 
          Assert.True(result.IsRight);
       }
@@ -134,9 +134,9 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
       [Test]
       public async Task Upload_User_Message_Transfer_Fails_When_Recipient_Does_Not_Exist()
       {
-         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var result = await _client.MessageTransfer.UploadMessageTransferAsync("John Smith", request, encryptionStream, false);
+         var result = await _client.MessageTransfer.UploadMessageTransferAsync("John Smith", request, encryptionStreamOpener, false);
 
          Assert.True(result.IsLeft);
       }
@@ -144,10 +144,38 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
       [Test]
       public void Upload_Authenticated_Message_Transfer_Throws_When_Not_Authenticated()
       {
-         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
 
-         Assert.ThrowsAsync<InvalidOperationException>(async () => await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request, encryptionStream, true));
+         Assert.ThrowsAsync<InvalidOperationException>(async () => await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request, encryptionStreamOpener, true));
+      }
+
+      [Test]
+      public async Task Upload_User_Message_Transfer_Works_After_Refresh_Occurs()
+      {
+         const string senderUsername = TestData.DefaultUsername;
+         const string senderPassword = TestData.DefaultPassword;
+
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(senderUsername, senderPassword);
+         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+         LoginRequest loginRequest = TestData.GetLoginRequest(senderUsername, senderPassword, TokenType.Session);
+         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+         await loginResult.DoRightAsync(async loginResponse =>
+         {
+            await _clientTokenRepository.StoreAuthenticationTokenAsync("bogus auth token");
+            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+         });
+
+         Assert.True(registrationResult.IsRight);
+         Assert.True(loginResult.IsRight);
+
+         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+         var result = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request, encryptionStreamOpener, true);
+
+         Assert.True(result.IsRight);
       }
    }
 }

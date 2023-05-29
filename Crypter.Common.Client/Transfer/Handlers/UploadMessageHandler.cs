@@ -31,6 +31,7 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Crypto.Common;
+using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,8 +40,9 @@ namespace Crypter.Common.Client.Transfer.Handlers
 {
    public class UploadMessageHandler : UploadHandler
    {
-      private MemoryStream _messageStream;
+      private Func<MemoryStream> _messageStreamOpener;
       private string _messageSubject;
+      private int _messageSize;
 
       public UploadMessageHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
          : base(crypterApiClient, cryptoProvider, transferSettings)
@@ -50,15 +52,16 @@ namespace Crypter.Common.Client.Transfer.Handlers
       {
          _messageSubject = messageSubject;
          byte[] messageBytes = Encoding.UTF8.GetBytes(messageBody);
-         _messageStream = new MemoryStream(messageBytes);
+         _messageStreamOpener = () => new MemoryStream(messageBytes);
+         _messageSize = messageBytes.Length;
          _expirationHours = expirationHours;
       }
 
       public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
       {
-         var (encryptionStream, senderPublicKey, proof) = GetEncryptionInfo(_messageStream, _messageStream.Length);
+         var (encryptionStreamOpener, senderPublicKey, proof) = GetEncryptionInfo(_messageStreamOpener, _messageSize);
          UploadMessageTransferRequest request = new UploadMessageTransferRequest(_messageSubject, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
-         return _crypterApiClient.MessageTransfer.UploadMessageTransferAsync(_recipientUsername, request, encryptionStream, _senderDefined)
+         return _crypterApiClient.MessageTransfer.UploadMessageTransferAsync(_recipientUsername, request, encryptionStreamOpener, _senderDefined)
             .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.Message, x.UserType, _recipientKeySeed));
       }
    }

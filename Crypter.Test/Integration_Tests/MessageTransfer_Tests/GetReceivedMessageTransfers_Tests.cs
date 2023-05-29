@@ -34,6 +34,7 @@ using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -87,9 +88,9 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
          InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
          var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadMessageTransferRequest uploadMessageRequest = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var uploadMessageResponse = await _client.MessageTransfer.UploadMessageTransferAsync(TestData.DefaultUsername, uploadMessageRequest, encryptionStream, true);
+         var uploadMessageResponse = await _client.MessageTransfer.UploadMessageTransferAsync(TestData.DefaultUsername, uploadMessageRequest, encryptionStreamOpener, true);
 
          var response = await _client.MessageTransfer.GetReceivedMessagesAsync();
          List<UserReceivedMessageDTO> result = response.SomeOrDefault(null);

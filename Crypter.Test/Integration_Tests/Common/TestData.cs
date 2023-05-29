@@ -29,6 +29,7 @@ using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Crypto.Providers.Default;
+using MimeKit.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -113,14 +114,18 @@ namespace Crypter.Test.Integration_Tests.Common
       internal static byte[] DefaultTransferBytes => "unit testing is great"u8.ToArray();
       internal const int DefaultTransferLifetimeHours = 24;
 
-      internal static (EncryptionStream encryptionStream, byte[] proof) GetDefaultEncryptionStream()
+      internal static (Func<EncryptionStream> encryptionStreamOpener, byte[] proof) GetDefaultEncryptionStream()
       {
-         MemoryStream plaintextStream = new MemoryStream(DefaultTransferBytes);
+         MemoryStream plaintextStreamOpener() => new MemoryStream(DefaultTransferBytes);
          DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
          (byte[] encryptionKey, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(cryptoProvider.StreamEncryptionFactory.KeySize, DefaultPrivateKey, AlternatePublicKey, DefaultKeyExchangeNonce);
 
-         EncryptionStream encryptionStream = new EncryptionStream(plaintextStream, plaintextStream.Length, encryptionKey, cryptoProvider.StreamEncryptionFactory, 128, 64);
-         return (encryptionStream, proof);
+         EncryptionStream encryptionStreamOpener()
+         {
+            MemoryStream stream = plaintextStreamOpener();
+            return new EncryptionStream(stream, stream.Length, encryptionKey, cryptoProvider.StreamEncryptionFactory, 128, 64);
+         }
+         return (encryptionStreamOpener, proof);
       }
 
       internal static RegistrationRequest GetRegistrationRequest(string username, string password, string emailAddress = null)

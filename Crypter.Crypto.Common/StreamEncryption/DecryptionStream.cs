@@ -186,5 +186,11 @@ namespace Crypter.Crypto.Common.StreamEncryption
             throw new CryptographicException("Unexpected 'final' block");
          }
       }
+
+      protected override void Dispose(bool disposing)
+      {
+         _ciphertextStream.Dispose();
+         base.Dispose(disposing);
+      }
    }
 }

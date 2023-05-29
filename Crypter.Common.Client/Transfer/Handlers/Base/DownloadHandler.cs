@@ -96,7 +96,7 @@ namespace Crypter.Common.Client.Transfer.Handlers.Base
 
       protected byte[] Decrypt(byte[] key, Stream ciphertext, long streamSize)
       {
-         DecryptionStream decryptionStream = new DecryptionStream(ciphertext, streamSize, key, _cryptoProvider.StreamEncryptionFactory);
+         using DecryptionStream decryptionStream = new DecryptionStream(ciphertext, streamSize, key, _cryptoProvider.StreamEncryptionFactory);
          byte[] plaintextBuffer = new byte[checked((int)streamSize)];
          int plaintextPosition = 0;
          int bytesRead;
@@ -106,7 +106,6 @@ namespace Crypter.Common.Client.Transfer.Handlers.Base
             plaintextPosition += bytesRead;
          }
          while (bytesRead > 0);
-         ciphertext.Dispose();
          return plaintextBuffer[..plaintextPosition];
       }
    }
