@@ -107,25 +107,25 @@ namespace Crypter.Common.Client.Implementations
       public Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, Password password, VersionedPassword versionedPassword, bool trustDevice)
       {
          return _userPasswordService.DeriveUserCredentialKeyAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .BindAsync(credentialKey => UploadNewKeysAsync(username, versionedPassword, credentialKey, trustDevice));
+            .BindAsync(credentialKey => UploadNewKeysAsync(versionedPassword, credentialKey, trustDevice));
       }
 
-      public Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, VersionedPassword versionedPassword, byte[] credentialKey, bool trustDevice)
+      public Task<Maybe<RecoveryKey>> UploadNewKeysAsync(VersionedPassword versionedPassword, byte[] credentialKey, bool trustDevice)
       {
-         return UploadNewMasterKeyAsync(username, versionedPassword, credentialKey)
+         return UploadNewMasterKeyAsync(versionedPassword, credentialKey)
             .BindAsync(recoveryKey => UploadNewUserKeyPairAsync(recoveryKey.MasterKey)
                .MapAsync(privateKey => StoreSecretKeys(recoveryKey.MasterKey, privateKey, trustDevice))
                .MapAsync(_ => recoveryKey));
       }
 
-      private Task<Maybe<RecoveryKey>> UploadNewMasterKeyAsync(Username username, VersionedPassword versionedPassword, byte[] credentialKey)
+      private Task<Maybe<RecoveryKey>> UploadNewMasterKeyAsync(VersionedPassword versionedPassword, byte[] credentialKey)
       {
          byte[] newMasterKey = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.KeySize);
          byte[] nonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.NonceSize);
          byte[] encryptedMasterKey = _cryptoProvider.Encryption.Encrypt(credentialKey, nonce, newMasterKey);
          byte[] recoveryProof = _cryptoProvider.Random.GenerateRandomBytes(32);
 
-         InsertMasterKeyRequest request = new InsertMasterKeyRequest(username, versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof);
+         InsertMasterKeyRequest request = new InsertMasterKeyRequest(versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof);
          return _crypterApiClient.UserKey.InsertMasterKeyAsync(request)
             .ToMaybeTask()
             .MapAsync(x => new RecoveryKey(newMasterKey, request.RecoveryProof));

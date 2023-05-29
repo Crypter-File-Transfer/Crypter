@@ -117,7 +117,7 @@ namespace Crypter.Test.Integration_Tests.UserRecovery_Tests
                await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
             });
 
-            (byte[] masterKey, InsertMasterKeyRequest insertMasterKeyRequest) = TestData.GetInsertMasterKeyRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+            (byte[] masterKey, InsertMasterKeyRequest insertMasterKeyRequest) = TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
             Either<InsertMasterKeyError, Unit> insertMasterKeyResponse = await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
             
