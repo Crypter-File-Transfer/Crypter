@@ -25,34 +25,55 @@
  */
 
 using Microsoft.AspNetCore.Components;
+using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer
 {
    public partial class TransferSettingsBase : ComponentBase
    {
-      private int _requestedExpirationHours;
+      protected const int MinExpirationHours = 1;
+      protected const int MaxExpirationHours = 24;
+      protected const int DefaultExpirationHours = 24;
 
       [Parameter]
-      public int RequestedExpirationHours
-      {
-         get => _requestedExpirationHours;
-         set
-         {
-            if (_requestedExpirationHours == value) return;
-            if (value < 1) value = 1;
-            if (value > 24) value = 24;
-            _requestedExpirationHours = value;
+      public int ExpirationHours { get; set; }
 
-            RequestedExpirationHoursChanged.InvokeAsync(value);
+      [Parameter]
+      public EventCallback<int> ExpirationHoursChanged { get; set; }
+
+      protected override Task OnParametersSetAsync()
+      {
+         if (ExpirationHours > MaxExpirationHours)
+         {
+            return ExpirationHoursChanged.InvokeAsync(MaxExpirationHours);
          }
+
+         if (ExpirationHours < MinExpirationHours)
+         {
+            return ExpirationHoursChanged.InvokeAsync(DefaultExpirationHours);
+         }
+
+         return Task.CompletedTask;
       }
 
-      [Parameter]
-      public EventCallback<int> RequestedExpirationHoursChanged { get; set; }
-
-      protected override void OnInitialized()
+      protected Task OnExpirationHoursChanged(int value)
       {
-         RequestedExpirationHours = 24;
+         if (ExpirationHours == value)
+         {
+            return Task.CompletedTask;
+         }
+
+         if (value > MaxExpirationHours)
+         {
+            return ExpirationHoursChanged.InvokeAsync(MaxExpirationHours);
+         }
+         
+         if (value < MinExpirationHours)
+         {
+            return ExpirationHoursChanged.InvokeAsync(MinExpirationHours);
+         }
+
+         return ExpirationHoursChanged.InvokeAsync(value);
       }
    }
 }
