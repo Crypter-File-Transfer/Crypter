@@ -85,7 +85,8 @@ namespace Crypter.API.Controllers
                SubmitRecoveryError.PasswordHashFailure
                or SubmitRecoveryError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
                SubmitRecoveryError.InvalidUsername
-                  or SubmitRecoveryError.WrongRecoveryKey => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
+                  or SubmitRecoveryError.WrongRecoveryKey
+                  or SubmitRecoveryError.InvalidMasterKey => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
                SubmitRecoveryError.RecoveryNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
             };
 #pragma warning restore CS8524

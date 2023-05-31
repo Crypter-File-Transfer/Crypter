@@ -1,17 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>disable</Nullable>
-  </PropertyGroup>
+   <PropertyGroup>
+      <TargetFramework>net7.0</TargetFramework>
+      <ImplicitUsings>disable</ImplicitUsings>
+      <Nullable>disable</Nullable>
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Geralt" Version="2.0.0" />
-  </ItemGroup>
+   <ItemGroup>
+      <PackageReference Include="Geralt" Version="2.0.0" />
+   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
-  </ItemGroup>
+   <ItemGroup>
+      <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
+   </ItemGroup>
 
 </Project>

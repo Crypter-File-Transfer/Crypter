@@ -47,17 +47,17 @@
          <div class="tab-content" id="encryptionTabContent">
             <div class="tab-pane fade show active" id="file-tab" role="tabpanel" aria-labelledby="file-tab">
                <h2 class="card-title mt-0">Upload a file</h2>
-               <UploadFileTransfer ExpirationHours=RequestedExpirationHours />
+               <UploadFileTransfer ExpirationHours=ExpirationHours />
             </div>
 
             <div class="tab-pane fade" id="message-tab" role="tabpanel" aria-labelledby="message-tab">
                <h2 class="card-title mt-0 mb-0">Upload a message</h2>
-               <UploadMessageTransfer ExpirationHours=RequestedExpirationHours />
+               <UploadMessageTransfer ExpirationHours=ExpirationHours />
             </div>
 
             <div class="tab-pane fade" id="settings-tab" role="tabpanel" aria-labelledby="settings-tab">
                <h2 class="card-title mt-0 mb-0">Configuration</h2>
-               <TransferSettings @bind-RequestedExpirationHours=RequestedExpirationHours />
+               <TransferSettings @bind-ExpirationHours=ExpirationHours />
             </div>
          </div>
       </div>

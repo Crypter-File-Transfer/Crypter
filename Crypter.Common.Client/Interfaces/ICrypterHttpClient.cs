@@ -26,6 +26,7 @@
 
 using Crypter.Common.Contracts;
 using Crypter.Common.Monads;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -56,7 +57,7 @@ namespace Crypter.Common.Client.Interfaces
 
       Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri);
 
-      Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(HttpRequestMessage request)
+      Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)
          where TResponse : class;
    }
 }

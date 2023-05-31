@@ -6,6 +6,7 @@ After=docker.service
 Type=simple
 WorkingDirectory=%h/crypter-web-container
 ExecStart=/usr/bin/docker compose --profile web up
+ExecStop=/usr/bin/docker compose --profile web down
 Restart=on-failure
 
 [Install]

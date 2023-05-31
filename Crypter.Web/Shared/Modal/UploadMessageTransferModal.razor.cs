@@ -49,7 +49,7 @@ namespace Crypter.Web.Shared.Modal
       protected ModalBehavior ModalBehaviorRef;
       protected UploadMessageTransfer UploadComponent;
 
-      protected int RequestedExpirationHours;
+      protected int ExpirationHours;
 
       protected string ModalDisplay = "none;";
       protected string ModalClass = "";

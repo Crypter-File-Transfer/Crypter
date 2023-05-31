@@ -45,12 +45,12 @@
          <div class="card-body justify-content-center">
             <div class="tab-content">
                <div class="tab-pane fade show active" id="message-modal-message-tab-@InstanceId" role="tabpanel" aria-labelledby="message-tab">
-                  <UploadMessageTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientPublicKey="RecipientPublicKey" ExpirationHours="RequestedExpirationHours" UploadCompletedEvent="CloseAsync" />
+                  <UploadMessageTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientPublicKey="RecipientPublicKey" ExpirationHours="ExpirationHours" UploadCompletedEvent="CloseAsync" />
                </div>
 
                <div class="tab-pane fade" id="message-modal-settings-tab-@InstanceId" role="tabpanel" aria-labelledby="settings-tab">
                   <h2 class="card-title mt-0 mb-0">Configuration</h2>
-                  <TransferSettings @bind-RequestedExpirationHours=RequestedExpirationHours />
+                  <TransferSettings @bind-ExpirationHours=ExpirationHours />
                </div>
             </div>
          </div>

@@ -83,7 +83,7 @@ namespace Crypter.Web.Shared
             {
                if (args.UploadNewKeys)
                {
-                  await UserKeysService.UploadNewKeysAsync(args.Username, args.VersionedPassword, credentialKey, args.RememberUser);
+                  await UserKeysService.UploadNewKeysAsync(args.VersionedPassword, credentialKey, args.RememberUser);
                }
                else
                {

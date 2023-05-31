@@ -118,7 +118,8 @@ namespace Crypter.Web.Pages
                SubmitRecoveryError.InvalidUsername => "Invalid username.",
                SubmitRecoveryError.RecoveryNotFound => "This recovery link is expired. Request a new recovery link and try again.",
                SubmitRecoveryError.WrongRecoveryKey => "The recovery key you provided is invalid.",
-               SubmitRecoveryError.PasswordHashFailure => "A cryptographic error occurred while securing your new password. This device or browser may not be supported.",
+               SubmitRecoveryError.InvalidMasterKey => "Invalid master key information.",
+               SubmitRecoveryError.PasswordHashFailure => "A cryptographic error occurred while securing your new password. This device or browser may not be supported."
             },
             () => RecoveryErrorMessage = "An unknown error occurred.");
 #pragma warning restore CS8524

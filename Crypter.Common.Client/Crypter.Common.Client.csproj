@@ -1,14 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>disable</Nullable>
-  </PropertyGroup>
+   <PropertyGroup>
+      <TargetFramework>net7.0</TargetFramework>
+      <ImplicitUsings>disable</ImplicitUsings>
+      <Nullable>disable</Nullable>
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
-    <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
-  </ItemGroup>
+   <ItemGroup>
+      <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
+      <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
+   </ItemGroup>
 
 </Project>

@@ -34,6 +34,7 @@ using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
+using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests.FileTransfer_Tests
@@ -71,9 +72,9 @@ namespace Crypter.Test.Integration_Tests.FileTransfer_Tests
       [Test]
       public async Task Download_Anonymous_File_Transfer_Works()
       {
-         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var uploadResult = await _client.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, uploadRequest, encryptionStream, false);
+         var uploadResult = await _client.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, uploadRequest, encryptionStreamOpener, false);
 
          string uploadId = uploadResult
             .Map(x => x.HashId)
@@ -83,6 +84,10 @@ namespace Crypter.Test.Integration_Tests.FileTransfer_Tests
 
          Assert.True(uploadResult.IsRight);
          Assert.True(result.IsRight);
+         result.DoRight(x =>
+         {
+            Assert.DoesNotThrow(() => x.Stream.ReadByte());
+         });
       }
 
       [TestCase(true, false)]
@@ -130,9 +135,9 @@ namespace Crypter.Test.Integration_Tests.FileTransfer_Tests
             var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
          });
 
-         (EncryptionStream encryptionStream, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
          UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var uploadResult = await _client.FileTransfer.UploadFileTransferAsync(recipientUsername, uploadRequest, encryptionStream, senderDefined);
+         var uploadResult = await _client.FileTransfer.UploadFileTransferAsync(recipientUsername, uploadRequest, encryptionStreamOpener, senderDefined);
 
          await recipientUsername.IfSomeAsync(async username =>
          {
@@ -154,6 +159,10 @@ namespace Crypter.Test.Integration_Tests.FileTransfer_Tests
 
          Assert.True(uploadResult.IsRight);
          Assert.True(result.IsRight);
+         result.DoRight(x =>
+         {
+            Assert.DoesNotThrow(() => x.Stream.ReadByte());
+         });
       }
    }
 }

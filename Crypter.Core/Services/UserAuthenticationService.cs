@@ -31,6 +31,7 @@ using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core.DataContextExtensions;
 using Crypter.Core.Entities;
+using Crypter.Core.Features.UserAuthentication;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Hangfire;
@@ -303,7 +304,7 @@ namespace Crypter.Core.Services
 
       private static Either<T, byte[]> ValidateRequestPassword<T>(byte[] password, T error)
       {
-         return password is not null && password.Length > 0
+         return UserAuthenticationValidators.ValidatePassword(password)
             ? password
             : error;
       }

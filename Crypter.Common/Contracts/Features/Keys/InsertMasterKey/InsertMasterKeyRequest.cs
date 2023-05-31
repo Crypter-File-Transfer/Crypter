@@ -24,32 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
-using System.Text.Json.Serialization;
-
 namespace Crypter.Common.Contracts.Features.Keys
 {
    public class InsertMasterKeyRequest
    {
-      public string Username { get; init; }
       public byte[] Password { get; init; }
       public byte[] EncryptedKey { get; init; }
       public byte[] Nonce { get; init; }
       public byte[] RecoveryProof { get; init; }
 
-      [JsonConstructor]
-      public InsertMasterKeyRequest(string username, byte[] password, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof)
+      public InsertMasterKeyRequest(byte[] password, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof)
       {
-         Username = username;
-         Password = password;
-         EncryptedKey = encryptedKey;
-         Nonce = nonce;
-         RecoveryProof = recoveryProof;
-      }
-
-      public InsertMasterKeyRequest(Username username, byte[] password, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof)
-      {
-         Username = username.Value;
          Password = password;
          EncryptedKey = encryptedKey;
          Nonce = nonce;

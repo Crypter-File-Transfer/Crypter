@@ -95,7 +95,7 @@ namespace Crypter.Common.Client.Transfer.Handlers.Base
          _recipientPublicKey = recipientKeyPair.PublicKey;
       }
 
-      protected (EncryptionStream encryptionStream, byte[] senderPublicKey, byte[] proof) GetEncryptionInfo(Stream plaintextStream, long streamSize)
+      protected (Func<EncryptionStream> encryptionStreamOpener, byte[] senderPublicKey, byte[] proof) GetEncryptionInfo(Func<Stream> plaintextStreamOpener, long streamSize)
       {
          if (_recipientUsername.IsNone)
          {
@@ -122,8 +122,10 @@ namespace Crypter.Common.Client.Transfer.Handlers.Base
             ? null
             : senderPublicKey;
 
-         EncryptionStream encryptionStream = new EncryptionStream(plaintextStream, streamSize, encryptionKey, _cryptoProvider.StreamEncryptionFactory, _transferSettings.MaxReadSize, _transferSettings.PadSize);
-         return (encryptionStream, senderPublicKeyToUpload, proof);
+         EncryptionStream encryptionStreamOpener()
+            => new EncryptionStream(plaintextStreamOpener(), streamSize, encryptionKey, _cryptoProvider.StreamEncryptionFactory, _transferSettings.MaxReadSize, _transferSettings.PadSize);
+
+         return (encryptionStreamOpener, senderPublicKeyToUpload, proof);
       }
    }
 }

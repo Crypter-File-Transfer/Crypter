@@ -27,12 +27,9 @@
 @inherits TransferSettingsBase
 
 <div class="transfer-settings text-start">
-   <form>
-      <div class="mb-3">
-         <label for="expirationHours" class="form-label">Expiration hours</label>
-         <input type="number" @bind="RequestedExpirationHours" class="form-control w-auto" id="expirationHours" placeholder="Hours">
-         <div id="expirationHelp" class="form-text">The number of hours before an upload is automatically deleted.</div>
-      </div>
-   </form>
+   <div class="mb-3">
+      <label for="expirationHours" class="form-label">Expiration hours</label>
+      <input type="number" @bind:get="ExpirationHours" @bind:set="OnExpirationHoursChanged" min="@MinExpirationHours" max="@MaxExpirationHours" class="form-control w-auto" id="expirationHours" placeholder="Hours">
+      <div id="expirationHelp" class="form-text">The number of hours before an upload is automatically deleted.</div>
+   </div>
 </div>
-
