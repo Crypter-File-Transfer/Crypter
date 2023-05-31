@@ -1,30 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <Nullable>disable</Nullable>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <ApplicationIcon />
-    <OutputType>Exe</OutputType>
-    <RunAOTCompilation>false</RunAOTCompilation>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <StartupObject />
+   <PropertyGroup>
+      <TargetFramework>net7.0</TargetFramework>
+      <Nullable>disable</Nullable>
+      <ImplicitUsings>disable</ImplicitUsings>
+      <ApplicationIcon />
+      <OutputType>Exe</OutputType>
+      <RunAOTCompilation>false</RunAOTCompilation>
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <StartupObject />
 
-    <EmccInitialHeapSize>134217728</EmccInitialHeapSize>
-  </PropertyGroup>
+      <EmccInitialHeapSize>134217728</EmccInitialHeapSize>
+   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="ByteSize" Version="2.1.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.5" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.5" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
-  </ItemGroup>
+   <ItemGroup>
+      <PackageReference Include="ByteSize" Version="2.1.1" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.5" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.5" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
-    <ProjectReference Include="..\Crypter.Common.Client\Crypter.Common.Client.csproj" />
-    <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
-    <ProjectReference Include="..\Crypter.Crypto.Providers.Browser\Crypter.Crypto.Providers.Browser.csproj" />
-  </ItemGroup>
+   <ItemGroup>
+      <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
+      <ProjectReference Include="..\Crypter.Common.Client\Crypter.Common.Client.csproj" />
+      <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
+      <ProjectReference Include="..\Crypter.Crypto.Providers.Browser\Crypter.Crypto.Providers.Browser.csproj" />
+   </ItemGroup>
 
 </Project>

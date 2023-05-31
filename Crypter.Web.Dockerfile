@@ -11,7 +11,7 @@ RUN dotnet-references fix --entry-point ./Crypter.sln --working-directory ./ --r
 RUN dotnet restore Crypter.Web
 
 COPY ./ ./
-RUN dotnet publish Crypter.Web --no-restore --configuration release --output /app/
+RUN dotnet publish Crypter.Web --no-restore --configuration release /p:TreatWarningsAsErrors=true /warnaserror --output /app/
 
 FROM caddy:2.6-alpine AS webhost
 COPY Crypter.Web/Caddyfile /etc/caddy/Caddyfile
