@@ -1,25 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>disable</Nullable>
-  </PropertyGroup>
+   <PropertyGroup>
+      <OutputType>Exe</OutputType>
+      <TargetFramework>net7.0</TargetFramework>
+      <ImplicitUsings>disable</ImplicitUsings>
+      <Nullable>disable</Nullable>
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
-  </ItemGroup>
+   <ItemGroup>
+      <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
+   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Crypter.Common.Client\Crypter.Common.Client.csproj" />
-    <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
-  </ItemGroup>
+   <ItemGroup>
+      <ProjectReference Include="..\Crypter.Common.Client\Crypter.Common.Client.csproj" />
+      <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
+   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Assets\WindowsCodecsRaw.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+   <ItemGroup>
+      <None Update="Assets\WindowsCodecsRaw.dll">
+         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+   </ItemGroup>
 
 </Project>

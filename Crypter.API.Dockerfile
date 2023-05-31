@@ -12,7 +12,7 @@ RUN dotnet-references fix --entry-point ./Crypter.sln --working-directory ./ --r
 RUN dotnet restore Crypter.API --runtime linux-x64
 
 COPY ./ ./
-RUN dotnet publish Crypter.API --configuration release --no-self-contained --output /app/
+RUN dotnet publish Crypter.API --configuration release --no-self-contained /p:TreatWarningsAsErrors=true /warnaserror --output /app/
 RUN dotnet-ef migrations bundle --project Crypter.Core --startup-project Crypter.API --configuration release --no-build --target-runtime linux-x64 --output /app/efbundle --verbose
 
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
