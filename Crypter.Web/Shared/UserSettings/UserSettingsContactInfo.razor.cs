@@ -47,19 +47,8 @@ namespace Crypter.Web.Shared.UserSettings
       [Parameter]
       public string EmailAddress { get; set; }
 
-      private bool _emailAddressVerified;
-
       [Parameter]
-      public bool EmailAddressVerified
-      {
-         get { return _emailAddressVerified; }
-         set
-         {
-            if (_emailAddressVerified == value) return;
-            _emailAddressVerified = value;
-            EmailAddressVerifiedChanged.InvokeAsync(value);
-         }
-      }
+      public bool EmailAddressVerified { get; set; }
 
       [Parameter]
       public EventCallback<bool> EmailAddressVerifiedChanged { get; set; }
@@ -97,6 +86,16 @@ namespace Crypter.Web.Shared.UserSettings
          GenericError = string.Empty;
       }
 
+      protected Task OnEmailAddressVerifiedChanged(bool value)
+      {
+         if (EmailAddressVerified == value)
+         {
+            return Task.CompletedTask;
+         }
+
+         return EmailAddressVerifiedChanged.InvokeAsync(value);
+      }
+
       protected async Task OnSaveClickedAsync()
       {
          ResetErrors();
@@ -117,12 +116,13 @@ namespace Crypter.Web.Shared.UserSettings
             var request = new UpdateContactInfoRequest(EmailAddressEdit, authPassword.Password);
             await CrypterApiService.UserSetting.UpdateContactInfoAsync(request)
                .DoLeftOrNeitherAsync(() => HandleContactInfoUpdateError())
-               .DoRightAsync(x =>
+               .DoRightAsync(async x =>
                {
                   EmailAddress = EmailAddressEdit;
                   Password = "";
-                  EmailAddressVerified = false;
                   IsEditing = false;
+
+                  await OnEmailAddressVerifiedChanged(false);
                });
          });
       }
