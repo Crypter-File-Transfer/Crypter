@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
    <PropertyGroup>
       <TargetFramework>net7.0</TargetFramework>
@@ -9,7 +9,7 @@
 
    <ItemGroup>
       <PackageReference Include="Hangfire.AspNetCore" Version="1.7.34" />
-      <PackageReference Include="Hangfire.Core" Version="1.7.34" />
+      <PackageReference Include="Hangfire.Core" Version="1.8.2" />
       <PackageReference Include="Hangfire.PostgreSql" Version="1.19.12" />
       <PackageReference Include="Hashids.net" Version="1.7.0" />
       <PackageReference Include="MailKit" Version="3.6.0" />
