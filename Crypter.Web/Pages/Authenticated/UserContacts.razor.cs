@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
