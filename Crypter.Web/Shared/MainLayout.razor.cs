@@ -25,11 +25,10 @@
  */
 
 using BlazorSodium.Services;
-using Crypter.Common.Client.DeviceStorage.Enums;
-using Crypter.Common.Client.Interfaces;
-using Crypter.Common.Client.Interfaces.Enum;
-using Crypter.Common.Client.Interfaces.Events;
+using Crypter.Common.Client.Enums;
+using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Monads;
 using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;

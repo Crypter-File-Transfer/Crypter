@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.DeviceStorage.Models;
+using Crypter.Common.Client.Models;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using System.Threading.Tasks;

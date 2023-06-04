@@ -25,10 +25,13 @@
  */
 
 using BlazorSodium.Extensions;
-using Crypter.Common.Client.DeviceStorage.Enums;
-using Crypter.Common.Client.Implementations;
-using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Enums;
+using Crypter.Common.Client.HttpClients;
+using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Interfaces.Services;
+using Crypter.Common.Client.Models;
+using Crypter.Common.Client.Services;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Crypto.Common;
@@ -54,7 +57,7 @@ builder.Services.AddSingleton(sp =>
    return config.Get<ClientSettings>();
 });
 
-builder.Services.AddSingleton<IClientApiSettings>(sp =>
+builder.Services.AddSingleton(sp =>
 {
    var config = sp.GetService<IConfiguration>();
    return config.GetSection("ApiSettings").Get<ClientApiSettings>();
@@ -70,7 +73,7 @@ builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =
 {
    var config = builder.Services
       .BuildServiceProvider()
-      .GetService<IClientApiSettings>();
+      .GetService<ClientApiSettings>();
 
    httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
 });

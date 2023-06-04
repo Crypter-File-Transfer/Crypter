@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces;
-using Crypter.Common.Client.Interfaces.Events;
+using Crypter.Common.Client.Events;
+using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Monads;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
