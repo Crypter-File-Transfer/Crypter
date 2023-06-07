@@ -34,6 +34,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
@@ -49,17 +50,16 @@ namespace Crypter.Web.Pages
       protected bool Loading = true;
       protected string SessionUsernameLowercase = string.Empty;
       protected UserSearchParameters SearchParameters;
-      protected List<UserSearchResult> SearchResults;
+      protected List<ContactSearchResult> SearchResults;
 
       protected override async Task OnInitializedAsync()
       {
          await base.OnInitializedAsync();
-         if (UserSessionService.Session.IsNone)
+         bool isLoggedIn = await UserSessionService.IsLoggedInAsync();
+         if (!isLoggedIn)
          {
             return;
          }
-
-         await UserContactsService.InitializeAsync();
 
          SearchParameters = new UserSearchParameters(string.Empty, 0, 20);
          NavigationManager.LocationChanged += HandleLocationChanged;
@@ -78,11 +78,18 @@ namespace Crypter.Web.Pages
             return;
          }
 
-         await CrypterApiService.User.GetUserSearchResultsAsync(SearchParameters)
-            .IfSomeAsync(x =>
+         SearchResults = await CrypterApiService.User.GetUserSearchResultsAsync(SearchParameters)
+            .BindAsync<List<UserSearchResult>, List<ContactSearchResult>>(async searchResults =>
             {
-               SearchResults = x;
-            });
+               bool[] contactLookupTasks = await Task.WhenAll(
+                  searchResults.Select(x =>
+                     UserContactsService.IsContactAsync(x.Username))
+                  .ToList());
+               
+               return contactLookupTasks.Zip(searchResults.Select(x => x))
+                  .Select(x => new ContactSearchResult(x.Second.Username, x.Second.Alias, x.First))
+                  .ToList();
+            }).SomeOrDefaultAsync(null);
       }
 
       protected void OnSearchClicked()
@@ -116,7 +123,21 @@ namespace Crypter.Web.Pages
 
       protected async Task AddContactAsync(string contactUsername)
       {
-         await UserContactsService.AddContactAsync(contactUsername);
+         bool contactAdded = (await UserContactsService.AddContactAsync(contactUsername))
+            .IsRight;
+
+         if (contactAdded)
+         {
+            ContactSearchResult addedContact = SearchResults
+               .Where(x => x.Username == contactUsername)
+               .FirstOrDefault();
+
+            if (addedContact is not null)
+            {
+               addedContact.IsContact = true;
+            }
+         }
+
          StateHasChanged();
       }
 
@@ -131,6 +152,16 @@ namespace Crypter.Web.Pages
       {
          NavigationManager.LocationChanged -= HandleLocationChanged;
          GC.SuppressFinalize(this);
+      }
+
+      protected class ContactSearchResult : UserSearchResult
+      {
+         public bool IsContact { get; set; }
+
+         public ContactSearchResult(string username, string alias, bool isContact) : base(username, alias)
+         {
+            IsContact = isContact;
+         }
       }
    }
 }

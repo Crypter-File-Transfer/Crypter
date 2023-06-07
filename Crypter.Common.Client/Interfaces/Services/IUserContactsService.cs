@@ -34,9 +34,8 @@ namespace Crypter.Common.Client.Interfaces.Services
 {
    public interface IUserContactsService
    {
-      Task InitializeAsync();
       Task<IReadOnlyCollection<UserContact>> GetContactsAsync();
-      bool IsContact(string contactUsername);
+      Task<bool> IsContactAsync(string contactUsername);
       Task<Either<AddUserContactError, UserContact>> AddContactAsync(string contactUsername);
       Task RemoveContactAsync(string contactUsername);
    }

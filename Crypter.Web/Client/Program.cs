@@ -99,7 +99,7 @@ if (OperatingSystem.IsBrowser())
 
 WebAssemblyHost host = builder.Build();
 
-// Resolve services so they can initialize
+// Resolve services so they can subscribe to events
 IUserContactsService contactsService = host.Services.GetRequiredService<IUserContactsService>();
 IUserSessionService userSessionService = host.Services.GetRequiredService<IUserSessionService>();
 
