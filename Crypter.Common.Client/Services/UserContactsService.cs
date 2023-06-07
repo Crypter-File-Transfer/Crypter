@@ -60,9 +60,9 @@ namespace Crypter.Common.Client.Services
          await InitializeContactsCacheAsync();
       }
 
-      public async Task<IReadOnlyCollection<UserContact>> GetContactsAsync(bool getCached = true)
+      public async Task<IReadOnlyCollection<UserContact>> GetContactsAsync()
       {
-         if (!getCached || _contacts is null)
+         if (_contacts is null)
          {
             await InitializeContactsCacheAsync(true);
          }
