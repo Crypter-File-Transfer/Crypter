@@ -44,7 +44,7 @@ namespace Crypter.Core.Services
       Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken = default);
       Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken = default);
       Task<Unit> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request);
-      Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
       Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request);
       Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request);
       Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default);
@@ -102,11 +102,11 @@ namespace Crypter.Core.Services
          return Unit.Default;
       }
 
-      public Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
+      public Task<UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          return _context.Users
             .Where(x => x.Id == userId)
-            .Select(x => new UserSettingsResponse(
+            .Select(x => new UserSettings(
                x.Username,
                x.EmailAddress,
                x.EmailVerified,

@@ -43,10 +43,10 @@ namespace Crypter.Common.Client.HttpClients.Requests
          _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
       }
 
-      public Task<Maybe<UserSettingsResponse>> GetUserSettingsAsync()
+      public Task<Maybe<UserSettings>> GetUserSettingsAsync()
       {
          string url = "api/user/setting";
-         return _crypterAuthenticatedHttpClient.GetMaybeAsync<UserSettingsResponse>(url);
+         return _crypterAuthenticatedHttpClient.GetMaybeAsync<UserSettings>(url);
       }
 
       public Task<Either<UpdateContactInfoError, Unit>> UpdateContactInfoAsync(UpdateContactInfoRequest request)

@@ -32,7 +32,7 @@ namespace Crypter.Common.Client.Interfaces.Requests
 {
    public interface IUserSettingRequests
    {
-      Task<Maybe<UserSettingsResponse>> GetUserSettingsAsync();
+      Task<Maybe<UserSettings>> GetUserSettingsAsync();
       Task<Either<UpdateContactInfoError, Unit>> UpdateContactInfoAsync(UpdateContactInfoRequest request);
       Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
       Task<Either<UpdateNotificationSettingsError, Unit>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request);

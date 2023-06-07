@@ -82,8 +82,8 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         Maybe<UserSettingsResponse> result = await _client.UserSetting.GetUserSettingsAsync();
-         UserSettingsResponse response = result.SomeOrDefault(null);
+         Maybe<UserSettings> result = await _client.UserSetting.GetUserSettingsAsync();
+         UserSettings response = result.SomeOrDefault(null);
 
          Assert.True(result.IsSome);
          Assert.AreEqual(TestData.DefaultUsername, response.Username);

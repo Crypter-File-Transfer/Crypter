@@ -57,12 +57,12 @@ namespace Crypter.API.Controllers
 
       [HttpGet]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSettingsResponse))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSettings))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       public async Task<IActionResult> GetUserSettingsAsync(CancellationToken cancellationToken)
       {
          Guid userId = _tokenService.ParseUserId(User);
-         UserSettingsResponse result = await _userService.GetUserSettingsAsync(userId, cancellationToken);
+         UserSettings result = await _userService.GetUserSettingsAsync(userId, cancellationToken);
          return Ok(result);
       }
 

@@ -26,11 +26,10 @@
 
 using Crypter.Common.Enums;
 using System;
-using System.Text.Json.Serialization;
 
 namespace Crypter.Common.Contracts.Features.Settings
 {
-   public class UserSettingsResponse
+   public class UserSettings
    {
       public string Username { get; set; }
       public string EmailAddress { get; set; }
@@ -45,8 +44,7 @@ namespace Crypter.Common.Contracts.Features.Settings
       public bool EmailNotifications { get; set; }
       public DateTime UserCreated { get; set; }
 
-      [JsonConstructor]
-      public UserSettingsResponse(string username, string emailAddress, bool emailVerified, string alias, string about,
+      public UserSettings(string username, string emailAddress, bool emailVerified, string alias, string about,
          UserVisibilityLevel visibility, bool allowKeyExchangeRequests, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission,
          bool enableTransferNotifications, bool emailNotifications, DateTime userCreated)
       {
