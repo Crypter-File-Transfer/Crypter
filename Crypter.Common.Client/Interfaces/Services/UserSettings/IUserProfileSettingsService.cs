@@ -24,20 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
+using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
+using Crypter.Common.Monads;
+using System.Threading.Tasks;
 
-namespace Crypter.Common.Contracts.Features.Settings
+namespace Crypter.Common.Client.Interfaces.Services.UserSettings
 {
-   public class UpdateProfileRequest
+   public interface IUserProfileSettingsService
    {
-      public string Alias { get; set; }
-      public string About { get; set; }
-
-      [JsonConstructor]
-      public UpdateProfileRequest(string alias, string about)
-      {
-         Alias = alias;
-         About = about;
-      }
+      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
+      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
    }
 }

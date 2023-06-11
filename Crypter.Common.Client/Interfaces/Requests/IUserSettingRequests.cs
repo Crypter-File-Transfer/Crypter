@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
 using Crypter.Common.Monads;
 using System.Threading.Tasks;
 
@@ -32,6 +33,9 @@ namespace Crypter.Common.Client.Interfaces.Requests
 {
    public interface IUserSettingRequests
    {
+      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
+      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
+
       Task<Maybe<UserSettings>> GetUserSettingsAsync();
       Task<Either<UpdateContactInfoError, Unit>> UpdateContactInfoAsync(UpdateContactInfoRequest request);
       Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);

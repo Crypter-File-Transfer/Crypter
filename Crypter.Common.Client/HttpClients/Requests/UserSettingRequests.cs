@@ -27,6 +27,7 @@
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
 using Crypter.Common.Monads;
 using System.Threading.Tasks;
 
@@ -41,6 +42,19 @@ namespace Crypter.Common.Client.HttpClients.Requests
       {
          _crypterHttpClient = crypterHttpClient;
          _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+      }
+
+      public Task<Maybe<ProfileSettings>> GetProfileSettingsAsync()
+      {
+         string url = "api/user/setting/profile";
+         return _crypterAuthenticatedHttpClient.GetMaybeAsync<ProfileSettings>(url);
+      }
+
+      public Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings)
+      {
+         string url = "api/user/setting/profile";
+         return _crypterAuthenticatedHttpClient.PutEitherAsync<ProfileSettings, ProfileSettings>(url, newProfileSettings)
+            .ExtractErrorCode<UpdateProfileSettingsError, ProfileSettings>();
       }
 
       public Task<Maybe<UserSettings>> GetUserSettingsAsync()

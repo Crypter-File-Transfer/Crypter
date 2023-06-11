@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using Crypter.Core.Entities;
@@ -43,7 +44,8 @@ namespace Crypter.Core.Services
       Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken = default);
       Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken = default);
       Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken = default);
-      Task<Unit> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request);
+      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(Guid userId, ProfileSettings request);
       Task<UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
       Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request);
       Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request);
@@ -87,7 +89,15 @@ namespace Crypter.Core.Services
             .FirstOrDefaultAsync(cancellationToken));
       }
 
-      public async Task<Unit> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request)
+      public Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
+      {
+         return Maybe<ProfileSettings>.FromAsync(_context.UserProfiles
+            .Where(x => x.Owner == userId)
+            .Select(x => new ProfileSettings(x.Alias, x.About))
+            .FirstOrDefaultAsync(cancellationToken));
+      }
+
+      public async Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(Guid userId, ProfileSettings request)
       {
          var userProfile = await _context.UserProfiles
             .FirstOrDefaultAsync(x => x.Owner == userId);
@@ -99,7 +109,8 @@ namespace Crypter.Core.Services
             await _context.SaveChangesAsync();
          }
 
-         return Unit.Default;
+         return await GetProfileSettingsAsync(userId)
+            .ToEitherAsync(UpdateProfileSettingsError.UnknownError);
       }
 
       public Task<UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -110,8 +121,6 @@ namespace Crypter.Core.Services
                x.Username,
                x.EmailAddress,
                x.EmailVerified,
-               x.Profile.Alias,
-               x.Profile.About,
                x.PrivacySetting.Visibility,
                x.PrivacySetting.AllowKeyExchangeRequests,
                x.PrivacySetting.ReceiveMessages,

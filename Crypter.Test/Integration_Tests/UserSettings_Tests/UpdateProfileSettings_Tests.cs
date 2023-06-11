@@ -26,7 +26,7 @@
 
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
-using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
@@ -35,10 +35,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 using System.Threading.Tasks;
 
-namespace Crypter.Test.Integration_Tests.User_Tests
+namespace Crypter.Test.Integration_Tests.UserSettings_Tests
 {
    [TestFixture]
-   internal class UpdateUserProfile_Tests
+   internal class UpdateProfileSettings_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -82,8 +82,8 @@ namespace Crypter.Test.Integration_Tests.User_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         UpdateProfileRequest request = new UpdateProfileRequest("foo", "bar");
-         Either<UpdateProfileError, Unit> response = await _client.User.UpdateProfileInfoAsync(request);
+         ProfileSettings request = new ProfileSettings("foo", "bar");
+         Either<UpdateProfileSettingsError, ProfileSettings> response = await _client.UserSetting.UpdateProfileSettingsAsync(request);
 
          Assert.True(response.IsRight);
       }

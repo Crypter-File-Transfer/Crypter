@@ -26,16 +26,19 @@
 
 @inherits UserSettingsPublicDetailsBase
 
-<form id="userSettingsPublicDetails">
-   <div class="mb-3">
-      <label for="publicDetailsAlias" class="form-label">Alias</label>
-      <input @bind="AliasEdit" type="text" id="publicDetailsAlias" class="form-control" placeholder="Alias Not Set" readonly="@(!IsEditing)" />
-   </div>
-   <div class="mb-3">
-      <label for="publicDetailsAbout" class="form-label">About</label>
-      <textarea @bind="AboutEdit" type="text" id="publicDetailsAbout" class="form-control" placeholder="Write something about yourself" readonly="@(!IsEditing)"></textarea>
-   </div>
-   <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
-   <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelClicked" hidden="@(!IsEditing)">Cancel</button>
-   <button type="button" class="btn btn-primary mx-auto" @onclick="async () => await OnSaveClickedAsync()" hidden="@(!IsEditing)">Save</button>
-</form>
+@if (IsDataReady)
+{
+   <form id="userSettingsPublicDetails">
+      <div class="mb-3">
+         <label for="publicDetailsAlias" class="form-label">Alias</label>
+         <input @bind="AliasEdit" type="text" id="publicDetailsAlias" class="form-control" placeholder="Alias Not Set" readonly="@(!IsEditing)" />
+      </div>
+      <div class="mb-3">
+         <label for="publicDetailsAbout" class="form-label">About</label>
+         <textarea @bind="AboutEdit" type="text" id="publicDetailsAbout" class="form-control" placeholder="Write something about yourself" readonly="@(!IsEditing)"></textarea>
+      </div>
+      <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
+      <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelClicked" hidden="@(!IsEditing)">Cancel</button>
+      <button type="button" class="btn btn-primary mx-auto" @onclick="async () => await OnSaveClickedAsync()" hidden="@(!IsEditing)">Save</button>
+   </form>
+}

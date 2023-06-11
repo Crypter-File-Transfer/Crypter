@@ -34,8 +34,6 @@ namespace Crypter.Common.Contracts.Features.Settings
       public string Username { get; set; }
       public string EmailAddress { get; set; }
       public bool EmailVerified { get; set; }
-      public string Alias { get; set; }
-      public string About { get; set; }
       public UserVisibilityLevel Visibility { get; set; }
       public bool AllowKeyExchangeRequests { get; set; }
       public UserItemTransferPermission MessageTransferPermission { get; set; }
@@ -44,15 +42,13 @@ namespace Crypter.Common.Contracts.Features.Settings
       public bool EmailNotifications { get; set; }
       public DateTime UserCreated { get; set; }
 
-      public UserSettings(string username, string emailAddress, bool emailVerified, string alias, string about,
+      public UserSettings(string username, string emailAddress, bool emailVerified,
          UserVisibilityLevel visibility, bool allowKeyExchangeRequests, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission,
          bool enableTransferNotifications, bool emailNotifications, DateTime userCreated)
       {
          Username = username;
          EmailAddress = emailAddress;
          EmailVerified = emailVerified;
-         Alias = alias;
-         About = about;
          Visibility = visibility;
          AllowKeyExchangeRequests = allowKeyExchangeRequests;
          MessageTransferPermission = messageTransferPermission;

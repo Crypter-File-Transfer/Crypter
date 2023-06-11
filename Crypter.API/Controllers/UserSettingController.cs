@@ -26,6 +26,7 @@
 
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
 using Crypter.Common.Monads;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -53,6 +54,57 @@ namespace Crypter.API.Controllers
          _userAuthenticationService = userAuthenticationService;
          _userEmailVerificationService = userEmailVerificationService;
          _userService = userService;
+      }
+
+      [HttpGet("profile")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProfileSettings))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetProfileSettingsAsync(CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(GetProfileSettingsError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               GetProfileSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               GetProfileSettingsError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userService.GetProfileSettingsAsync(userId, cancellationToken)
+            .MatchAsync(
+               () => MakeErrorResponse(GetProfileSettingsError.NotFound),
+               Ok);
+      }
+
+      [HttpPut("profile")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProfileSettings))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> UpdateProfileSettingsAsync([FromBody] ProfileSettings request)
+      {
+         IActionResult MakeErrorResponse(UpdateProfileSettingsError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               UpdateProfileSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userService.UpdateProfileSettingsAsync(userId, request)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(UpdateProfileSettingsError.UnknownError));
       }
 
       [HttpGet]

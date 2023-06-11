@@ -24,16 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Users;
-using Crypter.Common.Monads;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-
-namespace Crypter.Common.Client.Interfaces.Requests
+namespace Crypter.Common.Contracts.Features.Settings.ProfileSettings
 {
-   public interface IUserRequests
+   public enum GetProfileSettingsError
    {
-      Task<Either<GetUserProfileError, UserProfileDTO>> GetUserProfileAsync(string username, bool withAuthentication);
-      Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters);
+      UnknownError,
+      NotFound
    }
 }

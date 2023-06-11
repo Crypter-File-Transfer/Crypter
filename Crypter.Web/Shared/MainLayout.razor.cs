@@ -69,9 +69,14 @@ namespace Crypter.Web.Shared
          UserSessionService.UserLoggedInEventHandler += HandleUserLoggedInEvent;
          UserPasswordService.PasswordHashBeginEventHandler += ShowPasswordHashingModal;
          UserPasswordService.PasswordHashEndEventHandler += ClosePasswordHashingModal;
-         await BlazorSodiumService.InitializeAsync();
          await BrowserRepository.InitializeAsync();
-         await BrowserDownloadFileService.InitializeAsync();
+
+         await Task.WhenAll(new Task[]
+         {
+            BlazorSodiumService.InitializeAsync(),
+            BrowserDownloadFileService.InitializeAsync()
+         });
+
          ServicesInitialized = true;
       }
 

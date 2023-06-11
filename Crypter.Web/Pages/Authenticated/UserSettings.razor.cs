@@ -41,10 +41,6 @@ namespace Crypter.Web.Pages
 
       protected string Username;
 
-      // Public Details
-      protected string Alias;
-      protected string About;
-
       // Contact Info
       protected string EmailAddress;
       protected bool EmailAddressVerified;
@@ -80,8 +76,6 @@ namespace Crypter.Web.Pages
          {
             EmailAddress = right.EmailAddress;
             EmailAddressVerified = right.EmailVerified;
-            Alias = right.Alias;
-            About = right.About;
             UserProfileVisibility = right.Visibility;
             MessageTransferPermission = right.MessageTransferPermission;
             FileTransferPermission = right.FileTransferPermission;
