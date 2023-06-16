@@ -26,13 +26,36 @@
 
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
+using Crypter.Core.Features.UserSettings.ProfileSettings;
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Interfaces.Services.UserSettings
+namespace Crypter.Core.Services.UserSettings
 {
    public interface IUserProfileSettingsService
    {
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
+      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(Guid userId, ProfileSettings request);
+   }
+
+   public class UserProfileSettingsService : IUserProfileSettingsService
+   {
+      private readonly DataContext _context;
+
+      public UserProfileSettingsService(DataContext context)
+      {
+         _context = context;
+      }
+
+      public async Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
+      {
+         return await UserProfileSettingsQueries.GetProfileSettingsAsync(_context, userId, cancellationToken);
+      }
+
+      public async Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(Guid userId, ProfileSettings request)
+      {
+         return await UserProfileSettingsCommands.UpdateProfileSettingsAsync(_context, userId, request);
+      }
    }
 }

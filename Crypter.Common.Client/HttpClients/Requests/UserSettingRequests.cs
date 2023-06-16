@@ -26,8 +26,9 @@
 
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Requests;
-using Crypter.Common.Contracts.Features.Settings;
-using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
 using System.Threading.Tasks;
 
@@ -57,17 +58,23 @@ namespace Crypter.Common.Client.HttpClients.Requests
             .ExtractErrorCode<UpdateProfileSettingsError, ProfileSettings>();
       }
 
+      public Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync()
+      {
+         string url = "api/user/setting/contact";
+         return _crypterAuthenticatedHttpClient.GetMaybeAsync<ContactInfoSettings>(url);
+      }
+
+      public Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(UpdateContactInfoSettingsRequest request)
+      {
+         string url = "api/user/setting/contact";
+         return _crypterAuthenticatedHttpClient.PostEitherAsync<UpdateContactInfoSettingsRequest, ContactInfoSettings>(url, request)
+            .ExtractErrorCode<UpdateContactInfoSettingsError, ContactInfoSettings>();
+      }
+
       public Task<Maybe<UserSettings>> GetUserSettingsAsync()
       {
          string url = "api/user/setting";
          return _crypterAuthenticatedHttpClient.GetMaybeAsync<UserSettings>(url);
-      }
-
-      public Task<Either<UpdateContactInfoError, Unit>> UpdateContactInfoAsync(UpdateContactInfoRequest request)
-      {
-         string url = "api/user/setting/contact";
-         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
-            .ExtractErrorCode<UpdateContactInfoError, Unit>();
       }
 
       public Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo)

@@ -28,6 +28,7 @@ using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
+using Crypter.Core.Services.UserSettings;
 using Crypter.Core.Settings;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
@@ -75,6 +76,8 @@ namespace Crypter.Core
          services.TryAddScoped<IUserRecoveryService, UserRecoveryService>();
          services.TryAddScoped<IUserService, UserService>();
          services.TryAddScoped<IUserTransferService, UserTransferService>();
+         services.TryAddScoped<IUserProfileSettingsService, UserProfileSettingsService>();
+         services.TryAddScoped<IUserContactInfoSettingsService, UserContactInfoSettingsService>();
 
          services.AddEmailService(options =>
          {

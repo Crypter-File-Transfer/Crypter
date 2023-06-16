@@ -27,13 +27,11 @@
 using Crypter.Common.Enums;
 using System;
 
-namespace Crypter.Common.Contracts.Features.Settings
+namespace Crypter.Common.Contracts.Features.UserSettings
 {
    public class UserSettings
    {
       public string Username { get; set; }
-      public string EmailAddress { get; set; }
-      public bool EmailVerified { get; set; }
       public UserVisibilityLevel Visibility { get; set; }
       public bool AllowKeyExchangeRequests { get; set; }
       public UserItemTransferPermission MessageTransferPermission { get; set; }
@@ -42,13 +40,10 @@ namespace Crypter.Common.Contracts.Features.Settings
       public bool EmailNotifications { get; set; }
       public DateTime UserCreated { get; set; }
 
-      public UserSettings(string username, string emailAddress, bool emailVerified,
-         UserVisibilityLevel visibility, bool allowKeyExchangeRequests, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission,
-         bool enableTransferNotifications, bool emailNotifications, DateTime userCreated)
+      public UserSettings(string username, UserVisibilityLevel visibility, bool allowKeyExchangeRequests, UserItemTransferPermission messageTransferPermission,
+         UserItemTransferPermission fileTransferPermission, bool enableTransferNotifications, bool emailNotifications, DateTime userCreated)
       {
          Username = username;
-         EmailAddress = emailAddress;
-         EmailVerified = emailVerified;
          Visibility = visibility;
          AllowKeyExchangeRequests = allowKeyExchangeRequests;
          MessageTransferPermission = messageTransferPermission;

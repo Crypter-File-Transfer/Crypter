@@ -26,8 +26,8 @@
 
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
-using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
@@ -69,7 +69,7 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
       }
 
       [Test]
-      public async Task Update_Contact_Info_Works_Async()
+      public async Task Update_Contact_Info_Settings_Works_Async()
       {
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
@@ -83,8 +83,8 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         UpdateContactInfoRequest request = new UpdateContactInfoRequest(TestData.DefaultEmailAdress, Encoding.UTF8.GetBytes(TestData.DefaultPassword));
-         Either<UpdateContactInfoError, Unit> result = await _client.UserSetting.UpdateContactInfoAsync(request);
+         UpdateContactInfoSettingsRequest request = new UpdateContactInfoSettingsRequest(TestData.DefaultEmailAdress, Encoding.UTF8.GetBytes(TestData.DefaultPassword));
+         Either<UpdateContactInfoSettingsError, ContactInfoSettings> result = await _client.UserSetting.UpdateContactInfoSettingsAsync(request);
 
          Assert.True(result.IsRight);
       }

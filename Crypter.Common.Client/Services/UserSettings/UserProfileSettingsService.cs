@@ -27,13 +27,14 @@
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Interfaces.Services.UserSettings;
-using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
+using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Common.Client.Services.UserSettings
 {
-   public class UserProfileSettingsService : IUserProfileSettingsService
+   public class UserProfileSettingsService : IUserProfileSettingsService, IDisposable
    {
       private readonly ICrypterApiClient _crypterApiClient;
       private readonly IUserSessionService _userSessionService;
@@ -44,6 +45,8 @@ namespace Crypter.Common.Client.Services.UserSettings
       {
          _crypterApiClient = crypterApiClient;
          _userSessionService = userSessionService;
+
+         _userSessionService.UserLoggedOutEventHandler += Recycle;
       }
 
       public async Task<Maybe<ProfileSettings>> GetProfileSettingsAsync()
@@ -61,6 +64,17 @@ namespace Crypter.Common.Client.Services.UserSettings
          Either<UpdateProfileSettingsError, ProfileSettings> result = await _crypterApiClient.UserSetting.UpdateProfileSettingsAsync(newProfileSettings);
          _profileSettings = result.ToMaybe();
          return result;
+      }
+
+      private void Recycle(object sender, EventArgs _)
+      {
+         _profileSettings = Maybe<ProfileSettings>.None;
+      }
+
+      public void Dispose()
+      {
+         _userSessionService.UserLoggedOutEventHandler -= Recycle;
+         GC.SuppressFinalize(this);
       }
    }
 }

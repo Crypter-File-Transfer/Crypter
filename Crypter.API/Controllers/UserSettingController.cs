@@ -25,10 +25,12 @@
  */
 
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Settings;
-using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
 using Crypter.Core.Services;
+using Crypter.Core.Services.UserSettings;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -44,16 +46,18 @@ namespace Crypter.API.Controllers
    public class UserSettingController : CrypterControllerBase
    {
       private readonly ITokenService _tokenService;
-      private readonly IUserAuthenticationService _userAuthenticationService;
       private readonly IUserEmailVerificationService _userEmailVerificationService;
       private readonly IUserService _userService;
+      private readonly IUserProfileSettingsService _userProfileSettingsService;
+      private readonly IUserContactInfoSettingsService _userContactInfoSettingsService;
 
-      public UserSettingController(ITokenService tokenService, IUserAuthenticationService userAuthenticationService, IUserEmailVerificationService userEmailVerificationService, IUserService userService)
+      public UserSettingController(ITokenService tokenService, IUserEmailVerificationService userEmailVerificationService, IUserService userService, IUserProfileSettingsService userProfileSettingsService, IUserContactInfoSettingsService userContactInfoSettingsService)
       {
          _tokenService = tokenService;
-         _userAuthenticationService = userAuthenticationService;
          _userEmailVerificationService = userEmailVerificationService;
          _userService = userService;
+         _userProfileSettingsService = userProfileSettingsService;
+         _userContactInfoSettingsService = userContactInfoSettingsService;
       }
 
       [HttpGet("profile")]
@@ -76,7 +80,7 @@ namespace Crypter.API.Controllers
          }
 
          Guid userId = _tokenService.ParseUserId(User);
-         return await _userService.GetProfileSettingsAsync(userId, cancellationToken)
+         return await _userProfileSettingsService.GetProfileSettingsAsync(userId, cancellationToken)
             .MatchAsync(
                () => MakeErrorResponse(GetProfileSettingsError.NotFound),
                Ok);
@@ -100,11 +104,69 @@ namespace Crypter.API.Controllers
          }
 
          Guid userId = _tokenService.ParseUserId(User);
-         return await _userService.UpdateProfileSettingsAsync(userId, request)
+         return await _userProfileSettingsService.UpdateProfileSettingsAsync(userId, request)
             .MatchAsync(
                MakeErrorResponse,
                Ok,
                MakeErrorResponse(UpdateProfileSettingsError.UnknownError));
+      }
+
+      [HttpGet("contact")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ContactInfoSettings))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetContactInfoSettingsAsync(CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(GetContactInfoSettingsError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               GetContactInfoSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               GetContactInfoSettingsError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userContactInfoSettingsService.GetContactInfoSettingsAsync(userId, cancellationToken)
+            .MatchAsync(
+               () => MakeErrorResponse(GetContactInfoSettingsError.NotFound),
+               Ok);
+      }
+
+      [HttpPost("contact")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ContactInfoSettings))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> UpdateContactInfoSettingsAsync(UpdateContactInfoSettingsRequest request)
+      {
+         IActionResult MakeErrorResponse(UpdateContactInfoSettingsError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               UpdateContactInfoSettingsError.UnknownError
+                  or UpdateContactInfoSettingsError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               UpdateContactInfoSettingsError.UserNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+               UpdateContactInfoSettingsError.EmailAddressUnavailable => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
+               UpdateContactInfoSettingsError.InvalidEmailAddress
+                  or UpdateContactInfoSettingsError.InvalidPassword
+                  or UpdateContactInfoSettingsError.PasswordNeedsMigration
+                  or UpdateContactInfoSettingsError.InvalidUsername => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userContactInfoSettingsService.UpdateContactInfoSettingsAsync(userId, request)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(UpdateContactInfoSettingsError.UnknownError));
       }
 
       [HttpGet]
@@ -116,40 +178,6 @@ namespace Crypter.API.Controllers
          Guid userId = _tokenService.ParseUserId(User);
          UserSettings result = await _userService.GetUserSettingsAsync(userId, cancellationToken);
          return Ok(result);
-      }
-
-      [HttpPost("contact")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpdateUserContactInfoAsync([FromBody] UpdateContactInfoRequest request)
-      {
-         IActionResult MakeErrorResponse(UpdateContactInfoError error)
-         {
-#pragma warning disable CS8524
-            return error switch
-            {
-               UpdateContactInfoError.UnknownError
-                  or UpdateContactInfoError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               UpdateContactInfoError.UserNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
-               UpdateContactInfoError.EmailAddressUnavailable => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
-               UpdateContactInfoError.InvalidEmailAddress
-                  or UpdateContactInfoError.InvalidPassword
-                  or UpdateContactInfoError.PasswordNeedsMigration => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
-            };
-#pragma warning restore CS8524
-         }
-
-         Guid userId = _tokenService.ParseUserId(User);
-         return await _userAuthenticationService.UpdateUserContactInfoAsync(userId, request)
-            .MatchAsync(
-               MakeErrorResponse,
-               _ => Ok(),
-               MakeErrorResponse(UpdateContactInfoError.UnknownError));
       }
 
       [HttpPost("contact/verify")]

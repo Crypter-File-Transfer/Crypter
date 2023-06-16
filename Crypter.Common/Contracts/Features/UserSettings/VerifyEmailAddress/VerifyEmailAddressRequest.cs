@@ -24,17 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Settings.ProfileSettings
-{
-   public class ProfileSettings
-   {
-      public string Alias { get; set; }
-      public string About { get; set; }
+using System.Text.Json.Serialization;
 
-      public ProfileSettings(string alias, string about)
+namespace Crypter.Common.Contracts.Features.UserSettings
+{
+   public class VerifyEmailAddressRequest
+   {
+      public string Code { get; set; }
+      public string Signature { get; set; }
+
+      [JsonConstructor]
+      public VerifyEmailAddressRequest(string code, string signature)
       {
-         Alias = alias;
-         About = about;
+         Code = code;
+         Signature = signature;
       }
    }
 }

@@ -24,11 +24,30 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Settings.ProfileSettings
+using Crypter.Core.Entities;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Threading.Tasks;
+
+namespace Crypter.Core.Features.UserSettings.NotificationSettings
 {
-   public enum GetProfileSettingsError
+   internal static class UserNotificationSettingsCommands
    {
-      UnknownError,
-      NotFound
+      internal static async Task ResetUserNotificationSettings(DataContext dataContext, Guid userId, bool saveChanges)
+      {
+         UserNotificationSettingEntity foundEntity = await dataContext.UserNotificationSettings
+            .FirstOrDefaultAsync(x => x.Owner == userId);
+
+         if (foundEntity is not null)
+         {
+            foundEntity.EnableTransferNotifications = false;
+            foundEntity.EmailNotifications = false;
+         }
+
+         if (saveChanges)
+         {
+            await dataContext.SaveChangesAsync();
+         }
+      }
    }
 }

@@ -24,17 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Infrastructure;
 using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
 using Crypter.Core.Features.UserEmailVerification;
 using Crypter.Core.Models;
 using Crypter.Crypto.Common;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Crypter.Core.Services

@@ -24,20 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
-
-namespace Crypter.Common.Contracts.Features.Settings
+namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings
 {
-   public class UpdateContactInfoRequest
+   public class ContactInfoSettings
    {
-      public string EmailAddress { get; set; }
-      public byte[] CurrentPassword { get; set; }
+      public string EmailAddress { get; init; }
+      public bool EmailAddressVerified { get; init; }
 
-      [JsonConstructor]
-      public UpdateContactInfoRequest(string emailAddress, byte[] currentPassword)
+      public ContactInfoSettings(string emailAddress, bool emailAddressVerified)
       {
          EmailAddress = emailAddress;
-         CurrentPassword = currentPassword;
+         EmailAddressVerified = emailAddressVerified;
       }
    }
 }

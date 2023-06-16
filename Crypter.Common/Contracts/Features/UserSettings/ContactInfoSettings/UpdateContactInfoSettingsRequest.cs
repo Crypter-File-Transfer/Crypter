@@ -24,15 +24,30 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
-using System.Threading.Tasks;
+using Crypter.Common.Primitives;
+using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Client.Interfaces.Services.UserSettings
+namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings
 {
-   public interface IUserProfileSettingsService
+   public class UpdateContactInfoSettingsRequest
    {
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
+      public string EmailAddress { get; init; }
+      public byte[] CurrentPassword { get; init; }
+
+      [JsonConstructor]
+      public UpdateContactInfoSettingsRequest(string emailAddress, byte[] currentPassword)
+      {
+         EmailAddress = emailAddress;
+         CurrentPassword = currentPassword;
+      }
+
+      public UpdateContactInfoSettingsRequest(Maybe<EmailAddress> emailAddress, byte[] currentPassword)
+      {
+         EmailAddress = emailAddress.Match(
+            () => string.Empty,
+            x => x.Value);
+         CurrentPassword = currentPassword;
+      }
    }
 }

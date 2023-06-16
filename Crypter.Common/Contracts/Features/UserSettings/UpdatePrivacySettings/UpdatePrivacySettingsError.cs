@@ -24,20 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
-
-namespace Crypter.Common.Contracts.Features.Settings
+namespace Crypter.Common.Contracts.Features.UserSettings
 {
-   public class UpdateNotificationSettingsRequest
+   public enum UpdatePrivacySettingsError
    {
-      public bool EnableTransferNotifications { get; set; }
-      public bool EmailNotifications { get; set; }
-
-      [JsonConstructor]
-      public UpdateNotificationSettingsRequest(bool enableTransferNotifications, bool emailNotifications)
-      {
-         EnableTransferNotifications = enableTransferNotifications;
-         EmailNotifications = emailNotifications;
-      }
+      UnknownError
    }
 }

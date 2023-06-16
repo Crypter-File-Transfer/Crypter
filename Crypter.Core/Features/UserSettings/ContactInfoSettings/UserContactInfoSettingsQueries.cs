@@ -24,16 +24,24 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Settings
+using Crypter.Common.Monads;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Contracts = Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+
+namespace Crypter.Core.Features.UserSettings.ContactInfoSettings
 {
-   public enum UpdateContactInfoError
+   internal static class UserContactInfoSettingsQueries
    {
-      UnknownError,
-      UserNotFound,
-      EmailAddressUnavailable,
-      InvalidEmailAddress,
-      InvalidPassword,
-      PasswordHashFailure,
-      PasswordNeedsMigration
+      internal static async Task<Maybe<Contracts.ContactInfoSettings>> GetContactInfoSettingsAsync(DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
+      {
+         return await Maybe<Contracts.ContactInfoSettings>.FromAsync(dataContext.Users
+            .Where(x => x.Id == userId)
+            .Select(x => new Contracts.ContactInfoSettings(x.EmailAddress, x.EmailVerified))
+            .FirstOrDefaultAsync(cancellationToken));
+      }
    }
 }

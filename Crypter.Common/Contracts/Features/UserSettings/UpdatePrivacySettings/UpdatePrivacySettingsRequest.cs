@@ -24,15 +24,25 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
-using Crypter.Common.Monads;
-using System.Threading.Tasks;
+using Crypter.Common.Enums;
+using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Client.Interfaces.Services.UserSettings
+namespace Crypter.Common.Contracts.Features.UserSettings
 {
-   public interface IUserProfileSettingsService
+   public class UpdatePrivacySettingsRequest
    {
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
+      public bool AllowKeyExchangeRequests { get; set; }
+      public UserVisibilityLevel VisibilityLevel { get; set; }
+      public UserItemTransferPermission MessageTransferPermission { get; set; }
+      public UserItemTransferPermission FileTransferPermission { get; set; }
+
+      [JsonConstructor]
+      public UpdatePrivacySettingsRequest(bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission)
+      {
+         AllowKeyExchangeRequests = allowKeyExchangeRequests;
+         VisibilityLevel = visibilityLevel;
+         MessageTransferPermission = messageTransferPermission;
+         FileTransferPermission = fileTransferPermission;
+      }
    }
 }

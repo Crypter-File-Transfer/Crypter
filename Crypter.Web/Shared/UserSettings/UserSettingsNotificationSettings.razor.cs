@@ -25,7 +25,9 @@
  */
 
 using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Client.Interfaces.Services.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings;
+using Crypter.Common.Monads;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -36,18 +38,27 @@ namespace Crypter.Web.Shared.UserSettings
       [Inject]
       protected ICrypterApiClient CrypterApiService { get; set; }
 
-      [Parameter]
-      public bool EmailAddressVerified { get; set; }
+      [Inject]
+      protected IUserContactInfoSettingsService UserContactInfoSettingsService { get; set; }
 
       [Parameter]
       public bool EnableTransferNotifications { get; set; }
 
+      protected bool IsDataReady { get; set; } = false;
+
+      protected bool EmailAddressVerified { get; set; }
       protected bool IsEditing;
       protected bool EnableTransferNotificationsEdit { get; set; }
 
-      protected override void OnParametersSet()
+      protected override async Task OnParametersSetAsync()
       {
          EnableTransferNotificationsEdit = EnableTransferNotifications;
+         EmailAddressVerified = await UserContactInfoSettingsService.GetContactInfoSettingsAsync()
+            .MatchAsync(() =>
+               false,
+               x => x.EmailAddressVerified);
+
+         IsDataReady = true;
       }
 
       protected void OnEditClicked()

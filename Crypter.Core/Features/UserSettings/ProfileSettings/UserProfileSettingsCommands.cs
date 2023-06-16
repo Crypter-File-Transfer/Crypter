@@ -26,13 +26,30 @@
 
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
+using Crypter.Core.Entities;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Threading.Tasks;
+using Contracts = Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 
-namespace Crypter.Common.Client.Interfaces.Services.UserSettings
+namespace Crypter.Core.Features.UserSettings.ProfileSettings
 {
-   public interface IUserProfileSettingsService
+   internal static class UserProfileSettingsCommands
    {
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
+      public static async Task<Either<UpdateProfileSettingsError, Contracts.ProfileSettings>> UpdateProfileSettingsAsync(DataContext dataContext, Guid userId, Contracts.ProfileSettings request)
+      {
+         UserProfileEntity userProfile = await dataContext.UserProfiles
+            .FirstOrDefaultAsync(x => x.Owner == userId);
+
+         if (userProfile is not null)
+         {
+            userProfile.About = request.About;
+            userProfile.Alias = request.Alias;
+            await dataContext.SaveChangesAsync();
+         }
+
+         return await UserProfileSettingsQueries.GetProfileSettingsAsync(dataContext, userId)
+            .ToEitherAsync(UpdateProfileSettingsError.UnknownError);
+      }
    }
 }

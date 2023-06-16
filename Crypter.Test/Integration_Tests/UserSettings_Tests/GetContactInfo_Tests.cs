@@ -27,18 +27,19 @@
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests.UserSettings_Tests
 {
    [TestFixture]
-   internal class UpdatePrivacySettings_Tests
+   internal class GetContactInfo_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -68,7 +69,7 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
       }
 
       [Test]
-      public async Task Update_Privacy_Settings_Work_async()
+      public async Task Get_Contact_Info_Settings_Works_Async()
       {
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
@@ -82,10 +83,8 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         UpdatePrivacySettingsRequest request = new UpdatePrivacySettingsRequest(false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None);
-         Either<UpdatePrivacySettingsError, Unit> result = await _client.UserSetting.UpdateUserPrivacySettingsAsync(request);
-
-         Assert.True(result.IsRight);
+         Maybe<ContactInfoSettings> result = await _client.UserSetting.GetContactInfoSettingsAsync();
+         Assert.True(result.IsSome);
       }
    }
 }

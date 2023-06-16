@@ -25,7 +25,7 @@
  */
 
 using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Web.Helpers;
 using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components;

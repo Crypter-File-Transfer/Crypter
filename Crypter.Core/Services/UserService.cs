@@ -24,9 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Settings;
-using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
 using Crypter.Common.Contracts.Features.Users;
+using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
@@ -36,6 +35,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Contracts = Crypter.Common.Contracts.Features.UserSettings;
 
 namespace Crypter.Core.Services
 {
@@ -44,9 +44,7 @@ namespace Crypter.Core.Services
       Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken = default);
       Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken = default);
       Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken = default);
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(Guid userId, ProfileSettings request);
-      Task<UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<Contracts.UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
       Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request);
       Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request);
       Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default);
@@ -89,38 +87,12 @@ namespace Crypter.Core.Services
             .FirstOrDefaultAsync(cancellationToken));
       }
 
-      public Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
-      {
-         return Maybe<ProfileSettings>.FromAsync(_context.UserProfiles
-            .Where(x => x.Owner == userId)
-            .Select(x => new ProfileSettings(x.Alias, x.About))
-            .FirstOrDefaultAsync(cancellationToken));
-      }
-
-      public async Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(Guid userId, ProfileSettings request)
-      {
-         var userProfile = await _context.UserProfiles
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (userProfile is not null)
-         {
-            userProfile.About = request.About;
-            userProfile.Alias = request.Alias;
-            await _context.SaveChangesAsync();
-         }
-
-         return await GetProfileSettingsAsync(userId)
-            .ToEitherAsync(UpdateProfileSettingsError.UnknownError);
-      }
-
-      public Task<UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
+      public Task<Contracts.UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
       {
          return _context.Users
             .Where(x => x.Id == userId)
-            .Select(x => new UserSettings(
+            .Select(x => new Contracts.UserSettings(
                x.Username,
-               x.EmailAddress,
-               x.EmailVerified,
                x.PrivacySetting.Visibility,
                x.PrivacySetting.AllowKeyExchangeRequests,
                x.PrivacySetting.ReceiveMessages,

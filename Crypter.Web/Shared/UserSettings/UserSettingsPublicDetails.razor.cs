@@ -25,7 +25,7 @@
  */
 
 using Crypter.Common.Client.Interfaces.Services.UserSettings;
-using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;

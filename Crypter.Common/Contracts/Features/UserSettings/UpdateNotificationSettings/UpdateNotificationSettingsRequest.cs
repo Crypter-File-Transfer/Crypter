@@ -24,15 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
-using Crypter.Common.Monads;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Client.Interfaces.Services.UserSettings
+namespace Crypter.Common.Contracts.Features.UserSettings
 {
-   public interface IUserProfileSettingsService
+   public class UpdateNotificationSettingsRequest
    {
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
+      public bool EnableTransferNotifications { get; set; }
+      public bool EmailNotifications { get; set; }
+
+      [JsonConstructor]
+      public UpdateNotificationSettingsRequest(bool enableTransferNotifications, bool emailNotifications)
+      {
+         EnableTransferNotifications = enableTransferNotifications;
+         EmailNotifications = emailNotifications;
+      }
    }
 }

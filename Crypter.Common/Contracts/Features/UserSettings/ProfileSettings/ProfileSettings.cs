@@ -24,11 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Settings
+namespace Crypter.Common.Contracts.Features.UserSettings.ProfileSettings
 {
-   public enum UpdateNotificationSettingsError
+   public class ProfileSettings
    {
-      UnknownError,
-      EmailAddressNotVerified
+      public string Alias { get; init; }
+      public string About { get; init; }
+
+      public ProfileSettings(string alias, string about)
+      {
+         Alias = alias;
+         About = about;
+      }
    }
 }

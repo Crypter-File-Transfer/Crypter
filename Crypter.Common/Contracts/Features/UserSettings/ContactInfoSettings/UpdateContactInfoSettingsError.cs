@@ -24,15 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
-using Crypter.Common.Monads;
-using System.Threading.Tasks;
-
-namespace Crypter.Common.Client.Interfaces.Services.UserSettings
+namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings
 {
-   public interface IUserProfileSettingsService
+   public enum UpdateContactInfoSettingsError
    {
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
+      UnknownError,
+      UserNotFound,
+      EmailAddressUnavailable,
+      InvalidEmailAddress,
+      InvalidPassword,
+      PasswordHashFailure,
+      PasswordNeedsMigration,
+      InvalidUsername
    }
 }

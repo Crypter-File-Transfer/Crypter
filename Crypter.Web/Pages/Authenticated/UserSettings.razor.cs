@@ -37,13 +37,9 @@ namespace Crypter.Web.Pages
       [Inject]
       private ICrypterApiClient CrypterApiService { get; set; }
 
-      protected bool Loading = true;
+      protected bool DataIsReady { get; set; } = false;
 
       protected string Username;
-
-      // Contact Info
-      protected string EmailAddress;
-      protected bool EmailAddressVerified;
 
       // Notification Settings
       protected bool EnableTransferNotifications;
@@ -66,7 +62,7 @@ namespace Crypter.Web.Pages
             some => some.Username);
 
          await GetUserInfoAsync();
-         Loading = false;
+         DataIsReady = true;
       }
 
       private async Task GetUserInfoAsync()
@@ -74,8 +70,6 @@ namespace Crypter.Web.Pages
          var maybeSettings = await CrypterApiService.UserSetting.GetUserSettingsAsync();
          maybeSettings.IfSome(right =>
          {
-            EmailAddress = right.EmailAddress;
-            EmailAddressVerified = right.EmailVerified;
             UserProfileVisibility = right.Visibility;
             MessageTransferPermission = right.MessageTransferPermission;
             FileTransferPermission = right.FileTransferPermission;

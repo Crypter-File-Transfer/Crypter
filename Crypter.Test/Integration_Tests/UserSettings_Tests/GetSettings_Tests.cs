@@ -26,8 +26,8 @@
 
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
-using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;

@@ -24,8 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Settings;
-using Crypter.Common.Contracts.Features.Settings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
 using System.Threading.Tasks;
 
@@ -36,8 +37,10 @@ namespace Crypter.Common.Client.Interfaces.Requests
       Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
       Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
 
+      Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync();
+      Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(UpdateContactInfoSettingsRequest request);
+
       Task<Maybe<UserSettings>> GetUserSettingsAsync();
-      Task<Either<UpdateContactInfoError, Unit>> UpdateContactInfoAsync(UpdateContactInfoRequest request);
       Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
       Task<Either<UpdateNotificationSettingsError, Unit>> UpdateNotificationPreferencesAsync(UpdateNotificationSettingsRequest request);
       Task<Either<UpdatePrivacySettingsError, Unit>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request);

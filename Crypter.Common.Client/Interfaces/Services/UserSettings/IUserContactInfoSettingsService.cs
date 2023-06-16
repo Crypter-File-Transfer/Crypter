@@ -24,20 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
+using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+using Crypter.Common.Monads;
+using Crypter.Common.Primitives;
+using System;
+using System.Threading.Tasks;
 
-namespace Crypter.Common.Contracts.Features.Settings
+namespace Crypter.Common.Client.Interfaces.Services.UserSettings
 {
-   public class VerifyEmailAddressRequest
+   public interface IUserContactInfoSettingsService
    {
-      public string Code { get; set; }
-      public string Signature { get; set; }
+      Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync();
+      Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Maybe<EmailAddress> emailAddress, Password currentPassword);
 
-      [JsonConstructor]
-      public VerifyEmailAddressRequest(string code, string signature)
-      {
-         Code = code;
-         Signature = signature;
-      }
+      event EventHandler UserContactInfoChangedEventHandler;
    }
 }
