@@ -290,7 +290,8 @@ namespace Crypter.Core.Services
                      && x.NotificationSetting.EmailNotifications)
                   .FirstOrDefaultAsync();
 
-               _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType));
+               if (user is not null)
+                  _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType));
             });
          return Unit.Default;
       }
