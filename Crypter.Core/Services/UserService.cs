@@ -46,7 +46,6 @@ namespace Crypter.Core.Services
       Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken = default);
       Task<Contracts.UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
       Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request);
-      Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request);
       Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default);
       Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
       Task DeleteUserEntityAsync(Guid id);
@@ -97,8 +96,6 @@ namespace Crypter.Core.Services
                x.PrivacySetting.AllowKeyExchangeRequests,
                x.PrivacySetting.ReceiveMessages,
                x.PrivacySetting.ReceiveFiles,
-               x.NotificationSetting.EnableTransferNotifications,
-               x.NotificationSetting.EmailNotifications,
                x.Created))
             .FirstOrDefaultAsync(cancellationToken);
       }
@@ -119,39 +116,6 @@ namespace Crypter.Core.Services
             userPrivacySettings.Visibility = request.VisibilityLevel;
             userPrivacySettings.ReceiveFiles = request.FileTransferPermission;
             userPrivacySettings.ReceiveMessages = request.MessageTransferPermission;
-         }
-
-         await _context.SaveChangesAsync();
-         return Unit.Default;
-      }
-
-      public async Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request)
-      {
-         bool userEmailVerified = await _context.Users
-            .Where(x => x.Id == userId)
-            .Select(x => x.EmailVerified)
-            .FirstOrDefaultAsync();
-
-         if (!userEmailVerified
-            && (request.EnableTransferNotifications || request.EmailNotifications))
-         {
-            return UpdateNotificationSettingsError.EmailAddressNotVerified;
-         }
-
-         bool enableNotifications = request.EnableTransferNotifications && request.EmailNotifications;
-
-         var userNotificationPreferences = await _context.UserNotificationSettings
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (userNotificationPreferences is null)
-         {
-            var newNotificationPreferences = new UserNotificationSettingEntity(userId, enableNotifications, enableNotifications);
-            _context.UserNotificationSettings.Add(newNotificationPreferences);
-         }
-         else
-         {
-            userNotificationPreferences.EnableTransferNotifications = enableNotifications;
-            userNotificationPreferences.EmailNotifications = enableNotifications;
          }
 
          await _context.SaveChangesAsync();

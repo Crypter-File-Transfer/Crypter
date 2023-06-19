@@ -27,7 +27,7 @@
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
@@ -38,7 +38,7 @@ using System.Threading.Tasks;
 namespace Crypter.Test.Integration_Tests.UserSettings_Tests
 {
    [TestFixture]
-   internal class UpdateNotificationPreferences_Tests
+   internal class UpdateNotificationSettings_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -82,8 +82,8 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         UpdateNotificationSettingsRequest request = new UpdateNotificationSettingsRequest(false, false);
-         Either<UpdateNotificationSettingsError, Unit> result = await _client.UserSetting.UpdateNotificationPreferencesAsync(request);
+         NotificationSettings request = new NotificationSettings(false, false);
+         Either<UpdateNotificationSettingsError, NotificationSettings> result = await _client.UserSetting.UpdateNotificationSettingsAsync(request);
 
          Assert.True(result.IsRight);
       }

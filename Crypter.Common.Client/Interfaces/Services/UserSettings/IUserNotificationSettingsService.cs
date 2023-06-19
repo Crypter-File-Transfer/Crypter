@@ -24,29 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
-using System;
+using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
+using Crypter.Common.Monads;
+using System.Threading.Tasks;
 
-namespace Crypter.Common.Contracts.Features.UserSettings
+namespace Crypter.Common.Client.Interfaces.Services.UserSettings
 {
-   public class UserSettings
+   public interface IUserNotificationSettingsService
    {
-      public string Username { get; set; }
-      public UserVisibilityLevel Visibility { get; set; }
-      public bool AllowKeyExchangeRequests { get; set; }
-      public UserItemTransferPermission MessageTransferPermission { get; set; }
-      public UserItemTransferPermission FileTransferPermission { get; set; }
-      public DateTime UserCreated { get; set; }
-
-      public UserSettings(string username, UserVisibilityLevel visibility, bool allowKeyExchangeRequests, UserItemTransferPermission messageTransferPermission,
-         UserItemTransferPermission fileTransferPermission, DateTime userCreated)
-      {
-         Username = username;
-         Visibility = visibility;
-         AllowKeyExchangeRequests = allowKeyExchangeRequests;
-         MessageTransferPermission = messageTransferPermission;
-         FileTransferPermission = fileTransferPermission;
-         UserCreated = userCreated;
-      }
+      Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync();
+      Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings);
    }
 }

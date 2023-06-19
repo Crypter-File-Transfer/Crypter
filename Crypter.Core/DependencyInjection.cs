@@ -78,6 +78,7 @@ namespace Crypter.Core
          services.TryAddScoped<IUserTransferService, UserTransferService>();
          services.TryAddScoped<IUserProfileSettingsService, UserProfileSettingsService>();
          services.TryAddScoped<IUserContactInfoSettingsService, UserContactInfoSettingsService>();
+         services.TryAddScoped<IUserNotificationSettingsService, UserNotificationSettingService>();
 
          services.AddEmailService(options =>
          {

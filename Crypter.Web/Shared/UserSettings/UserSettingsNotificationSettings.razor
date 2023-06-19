@@ -41,7 +41,7 @@
       <div class="mb-3">
          <span class="small text-secondary">*Alternative notifications methods are not available yet</span>
       </div>
-      <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditClicked" hidden="@IsEditing" disabled="@(!EmailAddressVerified)">Edit</button>
+      <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
       <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelClicked" hidden="@(!IsEditing)">Cancel</button>
       <button type="button" class="btn btn-primary mx-auto" @onclick="OnSaveClickedAsync" hidden="@(!IsEditing)">Save</button>
 

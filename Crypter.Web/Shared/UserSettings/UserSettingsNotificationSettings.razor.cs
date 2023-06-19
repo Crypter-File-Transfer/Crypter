@@ -24,16 +24,18 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services.UserSettings;
-using Crypter.Common.Contracts.Features.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Common.Monads;
 using Microsoft.AspNetCore.Components;
+using System;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.UserSettings
 {
-   public partial class UserSettingsNotificationSettingsBase : ComponentBase
+   public partial class UserSettingsNotificationSettingsBase : ComponentBase, IDisposable
    {
       [Inject]
       protected ICrypterApiClient CrypterApiService { get; set; }
@@ -41,22 +43,34 @@ namespace Crypter.Web.Shared.UserSettings
       [Inject]
       protected IUserContactInfoSettingsService UserContactInfoSettingsService { get; set; }
 
-      [Parameter]
-      public bool EnableTransferNotifications { get; set; }
+      [Inject]
+      protected IUserNotificationSettingsService UserNotificationSettingsService { get; set; }
 
       protected bool IsDataReady { get; set; } = false;
+      protected bool IsEditing { get; set; } = false;
 
-      protected bool EmailAddressVerified { get; set; }
-      protected bool IsEditing;
-      protected bool EnableTransferNotificationsEdit { get; set; }
+      protected bool EmailAddressVerified { get; set; } = false;
+
+      protected bool EnableTransferNotifications { get; set; } = false;
+      protected bool EnableTransferNotificationsEdit { get; set; } = false;
+
+      protected override void OnInitialized()
+      {
+         UserContactInfoSettingsService.UserContactInfoChangedEventHandler += OnContactInfoChanged;
+      }
 
       protected override async Task OnParametersSetAsync()
       {
-         EnableTransferNotificationsEdit = EnableTransferNotifications;
          EmailAddressVerified = await UserContactInfoSettingsService.GetContactInfoSettingsAsync()
             .MatchAsync(() =>
                false,
                x => x.EmailAddressVerified);
+
+         EnableTransferNotifications = await UserNotificationSettingsService.GetNotificationSettingsAsync()
+            .MatchAsync(() =>
+               false,
+               x => EnableTransferNotifications = x.EmailNotifications && x.NotifyOnTransferReceived);
+         EnableTransferNotificationsEdit = EnableTransferNotifications;
 
          IsDataReady = true;
       }
@@ -74,11 +88,31 @@ namespace Crypter.Web.Shared.UserSettings
 
       protected async Task OnSaveClickedAsync()
       {
-         var request = new UpdateNotificationSettingsRequest(EnableTransferNotificationsEdit, EnableTransferNotificationsEdit);
-         await CrypterApiService.UserSetting.UpdateNotificationPreferencesAsync(request);
+         NotificationSettings newNotificationSettings = new NotificationSettings(EnableTransferNotificationsEdit, EnableTransferNotificationsEdit);
+         await CrypterApiService.UserSetting.UpdateNotificationSettingsAsync(newNotificationSettings)
+            .DoRightAsync(x =>
+            {
+               EnableTransferNotifications = x.EmailNotifications && x.NotifyOnTransferReceived;
+               EnableTransferNotificationsEdit = EnableTransferNotifications;
+            })
+            .DoLeftOrNeitherAsync(() =>
+            {
+               EnableTransferNotificationsEdit = EnableTransferNotifications;
+            });
 
-         EnableTransferNotifications = EnableTransferNotificationsEdit;
          IsEditing = false;
+      }
+
+      private void OnContactInfoChanged(object sender, UserContactInfoChangedEventArgs args)
+      {
+         EmailAddressVerified = args.EmailAddressVerified;
+         StateHasChanged();
+      }
+
+      public void Dispose()
+      {
+         UserContactInfoSettingsService.UserContactInfoChangedEventHandler -= OnContactInfoChanged;
+         GC.SuppressFinalize(this);
       }
    }
 }

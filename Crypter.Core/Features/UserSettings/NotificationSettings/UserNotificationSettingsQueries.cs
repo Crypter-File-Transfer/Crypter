@@ -24,20 +24,24 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
+using Crypter.Common.Monads;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Contracts = Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 
-namespace Crypter.Common.Contracts.Features.UserSettings
+namespace Crypter.Core.Features.UserSettings.NotificationSettings
 {
-   public class UpdateNotificationSettingsRequest
+   internal static class UserNotificationSettingsQueries
    {
-      public bool EnableTransferNotifications { get; set; }
-      public bool EmailNotifications { get; set; }
-
-      [JsonConstructor]
-      public UpdateNotificationSettingsRequest(bool enableTransferNotifications, bool emailNotifications)
+      internal static async Task<Maybe<Contracts.NotificationSettings>> GetUserNotificationSettingsAsync(DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
       {
-         EnableTransferNotifications = enableTransferNotifications;
-         EmailNotifications = emailNotifications;
+         return await Maybe<Contracts.NotificationSettings>.FromAsync(dataContext.UserNotificationSettings
+            .Where(x => x.Owner == userId)
+            .Select(x => new Contracts.NotificationSettings(x.EmailNotifications, x.EnableTransferNotifications))
+            .FirstOrDefaultAsync(cancellationToken));
       }
    }
 }

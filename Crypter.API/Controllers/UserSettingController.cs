@@ -27,6 +27,7 @@
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
 using Crypter.Core.Services;
@@ -50,14 +51,16 @@ namespace Crypter.API.Controllers
       private readonly IUserService _userService;
       private readonly IUserProfileSettingsService _userProfileSettingsService;
       private readonly IUserContactInfoSettingsService _userContactInfoSettingsService;
+      private readonly IUserNotificationSettingsService _userNotificationSettingsService;
 
-      public UserSettingController(ITokenService tokenService, IUserEmailVerificationService userEmailVerificationService, IUserService userService, IUserProfileSettingsService userProfileSettingsService, IUserContactInfoSettingsService userContactInfoSettingsService)
+      public UserSettingController(ITokenService tokenService, IUserEmailVerificationService userEmailVerificationService, IUserService userService, IUserProfileSettingsService userProfileSettingsService, IUserContactInfoSettingsService userContactInfoSettingsService, IUserNotificationSettingsService userNotificationSettingsService)
       {
          _tokenService = tokenService;
          _userEmailVerificationService = userEmailVerificationService;
          _userService = userService;
          _userProfileSettingsService = userProfileSettingsService;
          _userContactInfoSettingsService = userContactInfoSettingsService;
+         _userNotificationSettingsService = userNotificationSettingsService;
       }
 
       [HttpGet("profile")]
@@ -169,6 +172,59 @@ namespace Crypter.API.Controllers
                MakeErrorResponse(UpdateContactInfoSettingsError.UnknownError));
       }
 
+      [HttpGet("notification")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(NotificationSettings))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetNotificationSettingsAsync(CancellationToken cancellationToken)
+      {
+         IActionResult MakeErrorResponse(GetNotificationSettingsError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               GetNotificationSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               GetNotificationSettingsError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userNotificationSettingsService.GetNotificationSettingsAsync(userId, cancellationToken)
+            .MatchAsync(
+               () => MakeErrorResponse(GetNotificationSettingsError.UnknownError),
+               Ok);
+      }
+
+      [HttpPost("notification")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(NotificationSettings))]
+      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> UpdateNotificationSettingsAsync(NotificationSettings request)
+      {
+         IActionResult MakeErrorResponse(UpdateNotificationSettingsError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               UpdateNotificationSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               UpdateNotificationSettingsError.EmailAddressNotVerified => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+            };
+#pragma warning restore CS8524
+         }
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userNotificationSettingsService.UpdateNotificationSettingsAsync(userId, request)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(UpdateNotificationSettingsError.UnknownError));
+      }
+
       [HttpGet]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSettings))]
@@ -189,33 +245,6 @@ namespace Crypter.API.Controllers
          return await _userEmailVerificationService.VerifyUserEmailAddressAsync(request)
             ? Ok()
             : MakeErrorResponseBase(HttpStatusCode.NotFound, VerifyEmailAddressError.NotFound);
-      }
-
-      [HttpPost("notification")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpdateUserNotificationPreferencesAsync([FromBody] UpdateNotificationSettingsRequest request)
-      {
-         IActionResult MakeErrorResponse(UpdateNotificationSettingsError error)
-         {
-#pragma warning disable CS8524
-            return error switch
-            {
-               UpdateNotificationSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               UpdateNotificationSettingsError.EmailAddressNotVerified => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
-            };
-#pragma warning restore CS8524
-         }
-
-         Guid userId = _tokenService.ParseUserId(User);
-         return await _userService.UpsertUserNotificationPreferencesAsync(userId, request)
-            .MatchAsync(
-               MakeErrorResponse,
-               _ => Ok(),
-               MakeErrorResponse(UpdateNotificationSettingsError.UnknownError));
       }
 
       [HttpPost("privacy")]

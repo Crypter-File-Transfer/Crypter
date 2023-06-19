@@ -104,7 +104,7 @@ namespace Crypter.Core.Features.UserSettings.ContactInfoSettings
 
             if (newEmailAddress.IsNone)
             {
-               await UserNotificationSettingsCommands.ResetUserNotificationSettings(dataContext, userId, false);
+               await UserNotificationSettingsCommands.ResetUserNotificationSettingsAsync(dataContext, userId, false);
             }
 
             await dataContext.SaveChangesAsync();

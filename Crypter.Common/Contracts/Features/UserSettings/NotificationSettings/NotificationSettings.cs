@@ -24,29 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
-using System;
-
-namespace Crypter.Common.Contracts.Features.UserSettings
+namespace Crypter.Common.Contracts.Features.UserSettings.NotificationSettings
 {
-   public class UserSettings
+   public class NotificationSettings
    {
-      public string Username { get; set; }
-      public UserVisibilityLevel Visibility { get; set; }
-      public bool AllowKeyExchangeRequests { get; set; }
-      public UserItemTransferPermission MessageTransferPermission { get; set; }
-      public UserItemTransferPermission FileTransferPermission { get; set; }
-      public DateTime UserCreated { get; set; }
+      public bool EmailNotifications { get; init; }
+      public bool NotifyOnTransferReceived { get; init; }
 
-      public UserSettings(string username, UserVisibilityLevel visibility, bool allowKeyExchangeRequests, UserItemTransferPermission messageTransferPermission,
-         UserItemTransferPermission fileTransferPermission, DateTime userCreated)
+      public NotificationSettings(bool emailNotifications, bool notifyOnTransferReceived)
       {
-         Username = username;
-         Visibility = visibility;
-         AllowKeyExchangeRequests = allowKeyExchangeRequests;
-         MessageTransferPermission = messageTransferPermission;
-         FileTransferPermission = fileTransferPermission;
-         UserCreated = userCreated;
+         EmailNotifications = emailNotifications;
+         NotifyOnTransferReceived = notifyOnTransferReceived;
       }
    }
 }

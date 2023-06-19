@@ -24,28 +24,38 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings;
-using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
+using Crypter.Core.Features.UserSettings.NotificationSettings;
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.Interfaces.Requests
+namespace Crypter.Core.Services.UserSettings
 {
-   public interface IUserSettingRequests
+   public interface IUserNotificationSettingsService
    {
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
+      Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(Guid userId, NotificationSettings request);
+   }
 
-      Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync();
-      Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(UpdateContactInfoSettingsRequest newContactInfoSettings);
+   public class UserNotificationSettingService : IUserNotificationSettingsService
+   {
+      private readonly DataContext _dataContext;
 
-      Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync();
-      Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings);
+      public UserNotificationSettingService(DataContext context)
+      {
+         _dataContext = context;
+      }
 
-      Task<Maybe<UserSettings>> GetUserSettingsAsync();
-      Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
-      Task<Either<UpdatePrivacySettingsError, Unit>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request);
+      public async Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
+      {
+         return await UserNotificationSettingsQueries.GetUserNotificationSettingsAsync(_dataContext, userId, cancellationToken);
+      }
+
+      public async Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(Guid userId, NotificationSettings request)
+      {
+         return await UserNotificationSettingsCommands.UpdateNotificationSettingsAsync(_dataContext, userId, request);
+      }
    }
 }

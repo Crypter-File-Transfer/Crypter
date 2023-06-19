@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Interfaces.Services.UserSettings;
@@ -43,7 +44,7 @@ namespace Crypter.Common.Client.Services.UserSettings
 
       private Maybe<ContactInfoSettings> _contactInfoSettings;
 
-      private EventHandler _userContactInfoChangedEventHandler;
+      private EventHandler<UserContactInfoChangedEventArgs> _userContactInfoChangedEventHandler;
 
       public UserContactInfoSettingsService(ICrypterApiClient crypterApiClient, IUserPasswordService userPasswordService, IUserSessionService userSessionService)
       {
@@ -83,23 +84,23 @@ namespace Crypter.Common.Client.Services.UserSettings
                Either<UpdateContactInfoSettingsError, ContactInfoSettings> response = await _crypterApiClient.UserSetting.UpdateContactInfoSettingsAsync(request);
                _contactInfoSettings = response.ToMaybe();
 
-               if (response.IsRight)
+               response.DoRight(updatedContactInfoSettings =>
                {
-                  HandleUserContactInfoChangedEvent();
-               }
+                  HandleUserContactInfoChangedEvent(EmailAddress.From(updatedContactInfoSettings.EmailAddress), updatedContactInfoSettings.EmailAddressVerified);
+               });
 
                return response;
             });
       }
 
-      public event EventHandler UserContactInfoChangedEventHandler
+      public event EventHandler<UserContactInfoChangedEventArgs> UserContactInfoChangedEventHandler
       {
-         add => _userContactInfoChangedEventHandler = (EventHandler)Delegate.Combine(_userContactInfoChangedEventHandler, value);
-         remove => _userContactInfoChangedEventHandler = (EventHandler)Delegate.Remove(_userContactInfoChangedEventHandler, value);
+         add => _userContactInfoChangedEventHandler = (EventHandler<UserContactInfoChangedEventArgs>)Delegate.Combine(_userContactInfoChangedEventHandler, value);
+         remove => _userContactInfoChangedEventHandler = (EventHandler<UserContactInfoChangedEventArgs>)Delegate.Remove(_userContactInfoChangedEventHandler, value);
       }
 
-      private void HandleUserContactInfoChangedEvent() =>
-         _userContactInfoChangedEventHandler?.Invoke(this, EventArgs.Empty);
+      private void HandleUserContactInfoChangedEvent(EmailAddress emailAddress, bool emailAddressVerified) =>
+         _userContactInfoChangedEventHandler?.Invoke(this, new UserContactInfoChangedEventArgs(emailAddress, emailAddressVerified));
 
       private void Recycle(object sender, EventArgs _)
       {

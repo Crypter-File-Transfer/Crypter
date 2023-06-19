@@ -41,9 +41,6 @@ namespace Crypter.Web.Pages
 
       protected string Username;
 
-      // Notification Settings
-      protected bool EnableTransferNotifications;
-
       // Privacy
       protected UserVisibilityLevel UserProfileVisibility;
       protected UserItemTransferPermission MessageTransferPermission;
@@ -73,7 +70,6 @@ namespace Crypter.Web.Pages
             UserProfileVisibility = right.Visibility;
             MessageTransferPermission = right.MessageTransferPermission;
             FileTransferPermission = right.FileTransferPermission;
-            EnableTransferNotifications = right.EnableTransferNotifications;
          });
       }
    }

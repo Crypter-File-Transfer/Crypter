@@ -24,16 +24,54 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
+using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Contracts = Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 
 namespace Crypter.Core.Features.UserSettings.NotificationSettings
 {
    internal static class UserNotificationSettingsCommands
    {
-      internal static async Task ResetUserNotificationSettings(DataContext dataContext, Guid userId, bool saveChanges)
+      internal static async Task<Either<UpdateNotificationSettingsError, Contracts.NotificationSettings>> UpdateNotificationSettingsAsync(DataContext dataContext, Guid userId, Contracts.NotificationSettings request)
+      {
+         var userData = await dataContext.Users
+            .Where(x => x.Id == userId)
+            .Select(x => new { x.EmailVerified, x.NotificationSetting })
+            .FirstOrDefaultAsync();
+
+         if (userData is null)
+         {
+            return UpdateNotificationSettingsError.UnknownError;
+         }
+
+         if (!userData.EmailVerified && request.EmailNotifications)
+         {
+            return UpdateNotificationSettingsError.EmailAddressNotVerified;
+         }
+
+         if (userData.NotificationSetting is null)
+         {
+            UserNotificationSettingEntity newNotificationSettings = new UserNotificationSettingEntity(userId, request.NotifyOnTransferReceived, request.EmailNotifications);
+            dataContext.UserNotificationSettings.Add(newNotificationSettings);
+         }
+         else
+         {
+            userData.NotificationSetting.EmailNotifications = request.EmailNotifications;
+            userData.NotificationSetting.EnableTransferNotifications = request.NotifyOnTransferReceived;
+         
+         }
+         await dataContext.SaveChangesAsync();
+
+         return await UserNotificationSettingsQueries.GetUserNotificationSettingsAsync(dataContext, userId)
+            .ToEitherAsync(UpdateNotificationSettingsError.UnknownError);
+      }
+
+      internal static async Task ResetUserNotificationSettingsAsync(DataContext dataContext, Guid userId, bool saveChanges)
       {
          UserNotificationSettingEntity foundEntity = await dataContext.UserNotificationSettings
             .FirstOrDefaultAsync(x => x.Owner == userId);

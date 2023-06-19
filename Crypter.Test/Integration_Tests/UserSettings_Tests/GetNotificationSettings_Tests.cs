@@ -27,7 +27,7 @@
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
@@ -38,7 +38,7 @@ using System.Threading.Tasks;
 namespace Crypter.Test.Integration_Tests.UserSettings_Tests
 {
    [TestFixture]
-   internal class GetProfileSettings_Tests
+   internal class GetNotificationSettings_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -68,7 +68,7 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
       }
 
       [Test]
-      public async Task Get_Profile_Settings_Works_Async()
+      public async Task Get_Notification_Settings_Works_Async()
       {
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
@@ -82,14 +82,8 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         ProfileSettings updateRequest = new ProfileSettings("foo", "bar");
-         Either<UpdateProfileSettingsError, ProfileSettings> response = await _client.UserSetting.UpdateProfileSettingsAsync(updateRequest);
-
-         Assert.True(response.IsRight);
-
-         Maybe<ProfileSettings> settingsResponse = await _client.UserSetting.GetProfileSettingsAsync();
-
-         Assert.True(settingsResponse.IsSome);
+         Maybe<NotificationSettings> response = await _client.UserSetting.GetNotificationSettingsAsync();
+         Assert.True(response.IsSome);
       }
    }
 }

@@ -24,11 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings
+using Crypter.Common.Primitives;
+using System;
+
+namespace Crypter.Common.Client.Events
 {
-   public enum UpdateNotificationSettingsError
+   public class UserContactInfoChangedEventArgs : EventArgs
    {
-      UnknownError,
-      EmailAddressNotVerified
+      public EmailAddress EmailAddress { get; init; }
+      public bool EmailAddressVerified { get; init; }
+
+      public UserContactInfoChangedEventArgs(EmailAddress emailAddress, bool emailAddressVerified)
+      {
+         EmailAddress = emailAddress;
+         EmailAddressVerified = emailAddressVerified;
+      }
    }
 }
