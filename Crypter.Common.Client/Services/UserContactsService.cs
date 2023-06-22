@@ -55,58 +55,58 @@ namespace Crypter.Common.Client.Services
          _userSessionService.UserLoggedOutEventHandler += OnUserLoggedOut;
       }
 
-      public async Task InitializeAsync()
+      public async Task<IReadOnlyCollection<UserContact>> GetContactsAsync()
       {
-         await InitializeContactsCacheAsync();
-      }
-
-      public async Task<IReadOnlyCollection<UserContact>> GetContactsAsync(bool getCached = true)
-      {
-         if (!getCached || _contacts is null)
-         {
-            await InitializeContactsCacheAsync(true);
-         }
-
+         await LoadContactsAsync(true);
          return _contacts.Values.ToList();
       }
 
-      public bool IsContact(string contactUsername)
+      public async Task<bool> IsContactAsync(string contactUsername)
       {
+         await LoadContactsAsync();
          return _contacts.ContainsKey(contactUsername.ToLower());
       }
 
-      public Task<Either<AddUserContactError, UserContact>> AddContactAsync(string contactUsername)
+      public async Task<Either<AddUserContactError, UserContact>> AddContactAsync(string contactUsername)
       {
+         await LoadContactsAsync();
          string lowerContactUsername = contactUsername.ToLower();
          if (_contacts.ContainsKey(lowerContactUsername))
          {
-            return Either<AddUserContactError, UserContact>.FromRight(_contacts[lowerContactUsername]).AsTask();
+            return Either<AddUserContactError, UserContact>.FromRight(_contacts[lowerContactUsername]);
          }
 
-         return _crypterApiClient.UserContact.AddUserContactAsync(lowerContactUsername)
+         return await _crypterApiClient.UserContact.AddUserContactAsync(lowerContactUsername)
             .DoRightAsync(x => _contacts.Add(lowerContactUsername, x));
       }
 
       public async Task RemoveContactAsync(string contactUsername)
       {
+         await LoadContactsAsync();
          string lowerContactUsername = contactUsername.ToLower();
          var response = await _crypterApiClient.UserContact.RemoveUserContactAsync(lowerContactUsername);
          response.IfSome(_ => _contacts.Remove(lowerContactUsername));
       }
 
-      private Task<Dictionary<string, UserContact>> FetchContactsAsync()
+      private async Task<Dictionary<string, UserContact>> FetchContactsAsync()
       {
-         return _crypterApiClient.UserContact.GetUserContactsAsync()
+         return await _crypterApiClient.UserContact.GetUserContactsAsync()
             .MapAsync(x => x.ToDictionary(y => y.Username.ToLower()))
             .SomeOrDefaultAsync(new Dictionary<string, UserContact>());
       }
 
-      private async Task InitializeContactsCacheAsync(bool refreshCache = false)
+      private async Task LoadContactsAsync(bool refresh = false)
       {
+         if (_contacts is not null && !refresh)
+         {
+            return;
+         }
+
          await _fetchMutex.WaitAsync().ConfigureAwait(false);
          try
          {
-            if (_userSessionService.Session.IsSome && (_contacts is null || refreshCache))
+            bool isLoggedIn = await _userSessionService.IsLoggedInAsync().ConfigureAwait(false);
+            if (isLoggedIn && (_contacts is null || refresh))
             {
                _contacts = await FetchContactsAsync();
             }
@@ -121,7 +121,7 @@ namespace Crypter.Common.Client.Services
       {
          if (args.IsLoggedIn)
          {
-            await InitializeContactsCacheAsync();
+            await LoadContactsAsync();
          }
          else
          {
@@ -131,7 +131,7 @@ namespace Crypter.Common.Client.Services
 
       private async void OnUserLoggedIn(object sender, UserLoggedInEventArgs _)
       {
-         await InitializeContactsCacheAsync();
+         await LoadContactsAsync();
       }
 
       private void OnUserLoggedOut(object sender, EventArgs _)

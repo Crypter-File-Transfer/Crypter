@@ -45,17 +45,12 @@ namespace Crypter.Web.Pages
       protected override async Task OnInitializedAsync()
       {
          await base.OnInitializedAsync();
-         if (UserSessionService.Session.IsNone)
-         {
-            return;
-         }
-
          Loading = false;
       }
 
       protected override async Task OnAfterRenderAsync(bool firstRender)
       {
-         if (firstRender && UserSessionService.Session.IsSome)
+         if (firstRender && await UserSessionService.IsLoggedInAsync())
          {
             Contacts = await UserContactsService.GetContactsAsync();
             StateHasChanged();

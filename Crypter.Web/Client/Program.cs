@@ -30,8 +30,10 @@ using Crypter.Common.Client.HttpClients;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Services;
+using Crypter.Common.Client.Interfaces.Services.UserSettings;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Client.Services;
+using Crypter.Common.Client.Services.UserSettings;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Crypto.Common;
@@ -88,6 +90,10 @@ builder.Services
    .AddSingleton<IUserPasswordService, UserPasswordService>()
    .AddSingleton<IUserRecoveryService, UserRecoveryService>()
    .AddSingleton<IUserKeysService, UserKeysService>()
+   .AddSingleton<IUserProfileSettingsService, UserProfileSettingsService>()
+   .AddSingleton<IUserContactInfoSettingsService, UserContactInfoSettingsService>()
+   .AddSingleton<IUserNotificationSettingsService, UserNotificationSettingsService>()
+   .AddSingleton<IUserPrivacySettingsService, UserPrivacySettingsService>()
    .AddSingleton<TransferHandlerFactory>()
    .AddSingleton<Func<ICrypterApiClient>>(sp => () => sp.GetService<ICrypterApiClient>());
 
@@ -99,7 +105,7 @@ if (OperatingSystem.IsBrowser())
 
 WebAssemblyHost host = builder.Build();
 
-// Resolve services so they can initialize
+// Resolve services so they can subscribe to events
 IUserContactsService contactsService = host.Services.GetRequiredService<IUserContactsService>();
 IUserSessionService userSessionService = host.Services.GetRequiredService<IUserSessionService>();
 

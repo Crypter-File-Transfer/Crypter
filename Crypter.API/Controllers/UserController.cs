@@ -25,7 +25,6 @@
  */
 
 using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using Crypter.Core.Services;
@@ -74,17 +73,6 @@ namespace Crypter.API.Controllers
             .MatchAsync(
                () => MakeErrorResponse(GetUserProfileError.NotFound),
                Ok);
-      }
-
-      [HttpPost("profile")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> UpdateUserProfileAsync([FromBody] UpdateProfileRequest request)
-      {
-         Guid userId = _tokenService.ParseUserId(User);
-         await _userService.UpdateUserProfileAsync(userId, request);
-         return Ok();
       }
 
       [HttpGet("search")]

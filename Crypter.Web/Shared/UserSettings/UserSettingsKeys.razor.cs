@@ -51,16 +51,14 @@ namespace Crypter.Web.Shared.UserSettings
 
       protected PasswordModal PasswordModal { get; set; }
 
-      protected string PrivateKey;
-      protected string RecoveryKey;
+      protected string PrivateKey = string.Empty;
+      protected string RecoveryKey = string.Empty;
 
       protected override void OnInitialized()
       {
          PrivateKey = UserKeysService.PrivateKey.Match(
             () => "",
             Convert.ToHexString);
-
-         RecoveryKey = string.Empty;
 
          UserSessionService.UserPasswordTestSuccessEventHandler += OnPasswordTestSuccess;
       }

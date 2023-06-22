@@ -28,7 +28,6 @@ This should also aid developers in deciding where to add a new API endpoint or w
 
 * User
    * GET /api/user/profile?username={username}
-   * POST /api/user/profile
    * GET /api/user/search?keyword={keyword}&index={index}&count={count}
 
 * User Authentication
@@ -58,6 +57,8 @@ This should also aid developers in deciding where to add a new API endpoint or w
    * POST /api/user/recovery
 
 * User Settings
+   * GET /api/user/setting/profile
+   * PUT /api/user/setting/profile
    * GET /api/user/setting
    * POST /api/user/setting/contact
    * POST /api/user/setting/contact/email-verification

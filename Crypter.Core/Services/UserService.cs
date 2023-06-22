@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Monads;
 using Crypter.Core.Entities;
@@ -43,10 +42,6 @@ namespace Crypter.Core.Services
       Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken = default);
       Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken = default);
       Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken = default);
-      Task<Unit> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request);
-      Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request);
-      Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request);
       Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default);
       Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
       Task DeleteUserEntityAsync(Guid id);
@@ -85,96 +80,6 @@ namespace Crypter.Core.Services
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(visitorId))
             .Select(LinqUserExpressions.ToUserProfileDTOForVisitor(visitorId))
             .FirstOrDefaultAsync(cancellationToken));
-      }
-
-      public async Task<Unit> UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request)
-      {
-         var userProfile = await _context.UserProfiles
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (userProfile is not null)
-         {
-            userProfile.About = request.About;
-            userProfile.Alias = request.Alias;
-            await _context.SaveChangesAsync();
-         }
-
-         return Unit.Default;
-      }
-
-      public Task<UserSettingsResponse> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
-      {
-         return _context.Users
-            .Where(x => x.Id == userId)
-            .Select(x => new UserSettingsResponse(
-               x.Username,
-               x.EmailAddress,
-               x.EmailVerified,
-               x.Profile.Alias,
-               x.Profile.About,
-               x.PrivacySetting.Visibility,
-               x.PrivacySetting.AllowKeyExchangeRequests,
-               x.PrivacySetting.ReceiveMessages,
-               x.PrivacySetting.ReceiveFiles,
-               x.NotificationSetting.EnableTransferNotifications,
-               x.NotificationSetting.EmailNotifications,
-               x.Created))
-            .FirstOrDefaultAsync(cancellationToken);
-      }
-
-      public async Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request)
-      {
-         var userPrivacySettings = await _context.UserPrivacySettings
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (userPrivacySettings is null)
-         {
-            var newPrivacySettings = new UserPrivacySettingEntity(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission);
-            _context.UserPrivacySettings.Add(newPrivacySettings);
-         }
-         else
-         {
-            userPrivacySettings.AllowKeyExchangeRequests = request.AllowKeyExchangeRequests;
-            userPrivacySettings.Visibility = request.VisibilityLevel;
-            userPrivacySettings.ReceiveFiles = request.FileTransferPermission;
-            userPrivacySettings.ReceiveMessages = request.MessageTransferPermission;
-         }
-
-         await _context.SaveChangesAsync();
-         return Unit.Default;
-      }
-
-      public async Task<Either<UpdateNotificationSettingsError, Unit>> UpsertUserNotificationPreferencesAsync(Guid userId, UpdateNotificationSettingsRequest request)
-      {
-         bool userEmailVerified = await _context.Users
-            .Where(x => x.Id == userId)
-            .Select(x => x.EmailVerified)
-            .FirstOrDefaultAsync();
-
-         if (!userEmailVerified
-            && (request.EnableTransferNotifications || request.EmailNotifications))
-         {
-            return UpdateNotificationSettingsError.EmailAddressNotVerified;
-         }
-
-         bool enableNotifications = request.EnableTransferNotifications && request.EmailNotifications;
-
-         var userNotificationPreferences = await _context.UserNotificationSettings
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (userNotificationPreferences is null)
-         {
-            var newNotificationPreferences = new UserNotificationSettingEntity(userId, enableNotifications, enableNotifications);
-            _context.UserNotificationSettings.Add(newNotificationPreferences);
-         }
-         else
-         {
-            userNotificationPreferences.EnableTransferNotifications = enableNotifications;
-            userNotificationPreferences.EmailNotifications = enableNotifications;
-         }
-
-         await _context.SaveChangesAsync();
-         return Unit.Default;
       }
 
       public Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default)

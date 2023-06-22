@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Settings;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
@@ -54,7 +53,6 @@ namespace Crypter.Core.Services
       Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription);
       Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription);
       Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal);
-      Task<Either<UpdateContactInfoError, Unit>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request);
       Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken = default);
    }
 
@@ -214,20 +212,6 @@ namespace Crypter.Core.Services
                 select Unit.Default;
       }
 
-      public Task<Either<UpdateContactInfoError, Unit>> UpdateUserContactInfoAsync(Guid userId, UpdateContactInfoRequest request)
-      {
-         return from currentPassword in ValidateRequestPassword(request.CurrentPassword, UpdateContactInfoError.InvalidPassword).AsTask()
-                from emailAddress in ValidateRequestEmailAddress(request.EmailAddress, UpdateContactInfoError.InvalidEmailAddress).AsTask()
-                from user in FetchUserAsync(userId, UpdateContactInfoError.UserNotFound)
-                from unit0 in VerifyUserPasswordIsMigrated(user, UpdateContactInfoError.PasswordNeedsMigration).ToLeftEither(Unit.Default).AsTask()
-                from passwordVerified in VerifyPassword(currentPassword, user.PasswordHash, user.PasswordSalt, _passwordHashService.LatestServerPasswordVersion)
-                  ? Either<UpdateContactInfoError, Unit>.FromRight(Unit.Default).AsTask()
-                  : Either<UpdateContactInfoError, Unit>.FromLeft(UpdateContactInfoError.InvalidPassword).AsTask()
-                from isEmailAddressAvailable in VerifyEmailAddressIsAvailableForUser(user, emailAddress, UpdateContactInfoError.EmailAddressUnavailable)
-                from unit in Either<UpdateContactInfoError, Unit>.FromRightAsync(UpdateUserEmailAddressAsync(user, emailAddress))
-                select Unit.Default;
-      }
-
       public Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request, CancellationToken cancellationToken = default)
       {
          return from suppliedPassword in ValidateRequestPassword(request.Password, PasswordChallengeError.InvalidPassword).AsTask()
@@ -316,15 +300,6 @@ namespace Crypter.Core.Services
             : error;
       }
 
-      private static Either<T, Maybe<EmailAddress>> ValidateRequestEmailAddress<T>(string emailAddress, T error)
-      {
-         return string.IsNullOrEmpty(emailAddress)
-            ? Maybe<EmailAddress>.None
-            : EmailAddress.TryFrom(emailAddress, out var validEmailAddress)
-               ? Maybe<EmailAddress>.From(validEmailAddress)
-               : error;
-      }
-
       private async Task<Either<T, Unit>> VerifyUsernameIsAvailableAsync<T>(Username username, T error, CancellationToken cancellationToken = default)
       {
          bool isUsernameAvailable = await _context.Users.IsUsernameAvailableAsync(username, cancellationToken);
@@ -343,21 +318,6 @@ namespace Crypter.Core.Services
                return isEmailAddressAvailable
                   ? Unit.Default
                   : error;
-            });
-      }
-
-      private async Task<Either<T, Unit>> VerifyEmailAddressIsAvailableForUser<T>(UserEntity user, Maybe<EmailAddress> emailAddress, T error, CancellationToken cancellationToken = default)
-      {
-         return await emailAddress.MatchAsync(
-            () => Unit.Default,
-            async x =>
-            {
-               if (user.EmailAddress == x.Value)
-               {
-                  return Unit.Default;
-               }
-
-               return await VerifyEmailAddressIsAvailable(emailAddress, error, cancellationToken);
             });
       }
 
@@ -445,57 +405,12 @@ namespace Crypter.Core.Services
          return _tokenService.NewAuthenticationToken(userId);
       }
 
-      private async Task<Unit> UpdateUserEmailAddressAsync(UserEntity user, Maybe<EmailAddress> newEmailAddress)
-      {
-         user.EmailAddress = newEmailAddress.Match(
-            () => string.Empty,
-            x => x.Value);
-         user.EmailVerified = false;
-
-         await ResetUserNotificationSettingsInContext(user.Id);
-         await DeleteUserEmailVerificationEntityInContext(user.Id);
-         await _context.SaveChangesAsync();
-
-         newEmailAddress.IfSome(_ =>
-         {
-            EnqueueEmailAddressVerificationEmailDelivery(user.Id);
-         });
-         return Unit.Default;
-      }
-
       private RefreshTokenData CreateRefreshTokenInContext(Guid userId, TokenType tokenType, string deviceDescription)
       {
          RefreshTokenData refreshToken = _refreshTokenProviderMap[tokenType].Invoke(userId);
          UserTokenEntity tokenEntity = new(refreshToken.TokenId, userId, deviceDescription, tokenType, refreshToken.Created, refreshToken.Expiration);
          _context.UserTokens.Add(tokenEntity);
          return refreshToken;
-      }
-
-      private async Task<Unit> ResetUserNotificationSettingsInContext(Guid userId)
-      {
-         UserNotificationSettingEntity foundEntity = await _context.UserNotificationSettings
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (foundEntity is not null)
-         {
-            foundEntity.EnableTransferNotifications = false;
-            foundEntity.EmailNotifications = false;
-         }
-
-         return Unit.Default;
-      }
-
-      private async Task<Unit> DeleteUserEmailVerificationEntityInContext(Guid userId)
-      {
-         UserEmailVerificationEntity foundEntity = await _context.UserEmailVerifications
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (foundEntity is not null)
-         {
-            _context.UserEmailVerifications.Remove(foundEntity);
-         }
-
-         return Unit.Default;
       }
 
       private Task<int> SaveContextChangesAsync()

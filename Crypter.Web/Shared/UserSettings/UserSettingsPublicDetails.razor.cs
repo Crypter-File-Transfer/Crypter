@@ -24,8 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Client.Interfaces.Services.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+using Crypter.Common.Monads;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -34,26 +35,36 @@ namespace Crypter.Web.Shared.UserSettings
    public partial class UserSettingsPublicDetailsBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiClient CrypterApiService { get; set; }
+      protected IUserProfileSettingsService UserProfileSettingsService { get; set; }
 
-      [Parameter]
-      public string Alias { get; set; }
+      protected string Alias { get; set; } = string.Empty;
+      protected string AliasEdit { get; set; } = string.Empty;
 
-      [Parameter]
-      public string About { get; set; }
+      protected string About { get; set; } = string.Empty;
+      protected string AboutEdit { get; set; } = string.Empty;
 
-      protected bool IsEditing;
-      protected string AliasEdit;
-      protected string AboutEdit;
+      protected bool IsDataReady { get; set; } = false;
+      protected bool IsEditing { get; set; } = false;
 
-      protected override void OnParametersSet()
+      protected override async Task OnInitializedAsync()
       {
-         AliasEdit = Alias;
-         AboutEdit = About;
+         await UserProfileSettingsService.GetProfileSettingsAsync()
+            .IfSomeAsync(x =>
+            {
+               Alias = x.Alias;
+               AliasEdit = x.Alias;
+
+               About = x.About;
+               AboutEdit = x.About;
+            });
+
+         IsDataReady = true;
       }
 
       protected void OnEditClicked()
       {
+         AliasEdit = Alias;
+         AboutEdit = About;
          IsEditing = true;
       }
 
@@ -66,11 +77,14 @@ namespace Crypter.Web.Shared.UserSettings
 
       protected async Task OnSaveClickedAsync()
       {
-         var request = new UpdateProfileRequest(AliasEdit, AboutEdit);
-         await CrypterApiService.User.UpdateProfileInfoAsync(request);
+         var request = new ProfileSettings(AliasEdit, AboutEdit);
+         await UserProfileSettingsService.SetProfileSettingsAsync(request)
+            .DoRightAsync(x =>
+            {
+               Alias = x.Alias;
+               About = x.About;
+            });
 
-         Alias = AliasEdit;
-         About = AboutEdit;
          IsEditing = false;
       }
    }
