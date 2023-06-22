@@ -38,19 +38,19 @@ namespace Crypter.Web.Shared.UserSettings
       [Inject]
       protected IUserContactInfoSettingsService UserContactInfoSettingsService { get; set; }
 
-      protected bool IsDataReady { get; set; } = false;
-
       protected string EmailAddress { get; set; } = string.Empty;
       protected string EmailAddressEdit { get; set; } = string.Empty;
 
-      protected  bool EmailAddressVerified { get; set; }
+      protected bool EmailAddressVerified { get; set; } = false;
 
-      protected bool IsEditing;
-      protected string Password;
+      protected string Password { get; set; } = string.Empty;
 
-      protected string EmailAddressError;
-      protected string PasswordError;
-      protected string GenericError;
+      protected bool IsDataReady { get; set; } = false;
+      protected bool IsEditing { get; set; } = false;
+
+      protected string EmailAddressError = string.Empty;
+      protected string PasswordError = string.Empty;
+      protected string GenericError = string.Empty;
 
       protected override async Task OnInitializedAsync()
       {

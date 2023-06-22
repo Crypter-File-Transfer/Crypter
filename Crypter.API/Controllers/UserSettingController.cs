@@ -28,6 +28,7 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
+using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
 using Crypter.Core.Services;
@@ -47,20 +48,20 @@ namespace Crypter.API.Controllers
    public class UserSettingController : CrypterControllerBase
    {
       private readonly ITokenService _tokenService;
-      private readonly IUserEmailVerificationService _userEmailVerificationService;
-      private readonly IUserService _userService;
       private readonly IUserProfileSettingsService _userProfileSettingsService;
       private readonly IUserContactInfoSettingsService _userContactInfoSettingsService;
       private readonly IUserNotificationSettingsService _userNotificationSettingsService;
+      private readonly IUserPrivacySettingsService _userPrivacySettingsService;
+      private readonly IUserEmailVerificationService _userEmailVerificationService;
 
-      public UserSettingController(ITokenService tokenService, IUserEmailVerificationService userEmailVerificationService, IUserService userService, IUserProfileSettingsService userProfileSettingsService, IUserContactInfoSettingsService userContactInfoSettingsService, IUserNotificationSettingsService userNotificationSettingsService)
+      public UserSettingController(ITokenService tokenService, IUserProfileSettingsService userProfileSettingsService, IUserContactInfoSettingsService userContactInfoSettingsService, IUserNotificationSettingsService userNotificationSettingsService, IUserPrivacySettingsService userPrivacySettingsService, IUserEmailVerificationService userEmailVerificationService)
       {
          _tokenService = tokenService;
-         _userEmailVerificationService = userEmailVerificationService;
-         _userService = userService;
          _userProfileSettingsService = userProfileSettingsService;
          _userContactInfoSettingsService = userContactInfoSettingsService;
          _userNotificationSettingsService = userNotificationSettingsService;
+         _userPrivacySettingsService = userPrivacySettingsService;
+         _userEmailVerificationService = userEmailVerificationService;
       }
 
       [HttpGet("profile")]
@@ -94,24 +95,24 @@ namespace Crypter.API.Controllers
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProfileSettings))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UpdateProfileSettingsAsync([FromBody] ProfileSettings request)
+      public async Task<IActionResult> SetProfileSettingsAsync([FromBody] ProfileSettings request)
       {
-         IActionResult MakeErrorResponse(UpdateProfileSettingsError error)
+         IActionResult MakeErrorResponse(SetProfileSettingsError error)
          {
 #pragma warning disable CS8524
             return error switch
             {
-               UpdateProfileSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error)
+               SetProfileSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error)
             };
 #pragma warning restore CS8524
          }
 
          Guid userId = _tokenService.ParseUserId(User);
-         return await _userProfileSettingsService.UpdateProfileSettingsAsync(userId, request)
+         return await _userProfileSettingsService.SetProfileSettingsAsync(userId, request)
             .MatchAsync(
                MakeErrorResponse,
                Ok,
-               MakeErrorResponse(UpdateProfileSettingsError.UnknownError));
+               MakeErrorResponse(SetProfileSettingsError.UnknownError));
       }
 
       [HttpGet("contact")]
@@ -144,6 +145,8 @@ namespace Crypter.API.Controllers
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ContactInfoSettings))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
       [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
       public async Task<IActionResult> UpdateContactInfoSettingsAsync(UpdateContactInfoSettingsRequest request)
       {
@@ -225,15 +228,55 @@ namespace Crypter.API.Controllers
                MakeErrorResponse(UpdateNotificationSettingsError.UnknownError));
       }
 
-      [HttpGet]
+      [HttpGet("privacy")]
       [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserSettings))]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PrivacySettings))]
       [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetUserSettingsAsync(CancellationToken cancellationToken)
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> GetPrivacySettingsAsync(CancellationToken cancellationToken)
       {
+         IActionResult MakeErrorResponse(GetPrivacySettingsError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               GetPrivacySettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+               GetPrivacySettingsError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+         }
+
          Guid userId = _tokenService.ParseUserId(User);
-         UserSettings result = await _userService.GetUserSettingsAsync(userId, cancellationToken);
-         return Ok(result);
+         return await _userPrivacySettingsService.GetPrivacySettingsAsync(userId, cancellationToken)
+            .MatchAsync(
+               () => MakeErrorResponse(GetPrivacySettingsError.NotFound),
+               Ok);
+      }
+
+      [HttpPut("privacy")]
+      [Authorize]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PrivacySettings))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> SetPrivacySettingsAsync(PrivacySettings request)
+      {
+         IActionResult MakeErrorResponse(SetPrivacySettingsError error)
+         {
+#pragma warning disable CS8524
+            return error switch
+            {
+               SetPrivacySettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error)
+            };
+#pragma warning restore CS8524
+         };
+
+         Guid userId = _tokenService.ParseUserId(User);
+         return await _userPrivacySettingsService.SetPrivacySettingsAsync(userId, request)
+            .MatchAsync(
+               MakeErrorResponse,
+               Ok,
+               MakeErrorResponse(SetPrivacySettingsError.UnknownError));
       }
 
       [HttpPost("contact/verify")]
@@ -245,17 +288,6 @@ namespace Crypter.API.Controllers
          return await _userEmailVerificationService.VerifyUserEmailAddressAsync(request)
             ? Ok()
             : MakeErrorResponseBase(HttpStatusCode.NotFound, VerifyEmailAddressError.NotFound);
-      }
-
-      [HttpPost("privacy")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> UpdateUserPrivacySettingsAsync([FromBody] UpdatePrivacySettingsRequest request)
-      {
-         Guid userId = _tokenService.ParseUserId(User);
-         await _userService.UpsertUserPrivacySettingsAsync(userId, request);
-         return Ok();
       }
    }
 }

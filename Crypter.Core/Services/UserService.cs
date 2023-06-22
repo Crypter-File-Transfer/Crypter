@@ -25,7 +25,6 @@
  */
 
 using Crypter.Common.Contracts.Features.Users;
-using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
@@ -35,7 +34,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Contracts = Crypter.Common.Contracts.Features.UserSettings;
 
 namespace Crypter.Core.Services
 {
@@ -44,8 +42,6 @@ namespace Crypter.Core.Services
       Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken = default);
       Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken = default);
       Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken = default);
-      Task<Contracts.UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request);
       Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default);
       Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
       Task DeleteUserEntityAsync(Guid id);
@@ -84,42 +80,6 @@ namespace Crypter.Core.Services
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(visitorId))
             .Select(LinqUserExpressions.ToUserProfileDTOForVisitor(visitorId))
             .FirstOrDefaultAsync(cancellationToken));
-      }
-
-      public Task<Contracts.UserSettings> GetUserSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
-      {
-         return _context.Users
-            .Where(x => x.Id == userId)
-            .Select(x => new Contracts.UserSettings(
-               x.Username,
-               x.PrivacySetting.Visibility,
-               x.PrivacySetting.AllowKeyExchangeRequests,
-               x.PrivacySetting.ReceiveMessages,
-               x.PrivacySetting.ReceiveFiles,
-               x.Created))
-            .FirstOrDefaultAsync(cancellationToken);
-      }
-
-      public async Task<Unit> UpsertUserPrivacySettingsAsync(Guid userId, UpdatePrivacySettingsRequest request)
-      {
-         var userPrivacySettings = await _context.UserPrivacySettings
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (userPrivacySettings is null)
-         {
-            var newPrivacySettings = new UserPrivacySettingEntity(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission);
-            _context.UserPrivacySettings.Add(newPrivacySettings);
-         }
-         else
-         {
-            userPrivacySettings.AllowKeyExchangeRequests = request.AllowKeyExchangeRequests;
-            userPrivacySettings.Visibility = request.VisibilityLevel;
-            userPrivacySettings.ReceiveFiles = request.FileTransferPermission;
-            userPrivacySettings.ReceiveMessages = request.MessageTransferPermission;
-         }
-
-         await _context.SaveChangesAsync();
-         return Unit.Default;
       }
 
       public Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default)

@@ -27,6 +27,7 @@
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
+using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
 using System.Threading.Tasks;
@@ -36,7 +37,7 @@ namespace Crypter.Common.Client.Interfaces.Requests
    public interface IUserSettingRequests
    {
       Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
+      Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(ProfileSettings newProfileSettings);
 
       Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync();
       Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(UpdateContactInfoSettingsRequest newContactInfoSettings);
@@ -44,8 +45,9 @@ namespace Crypter.Common.Client.Interfaces.Requests
       Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync();
       Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings);
 
-      Task<Maybe<UserSettings>> GetUserSettingsAsync();
+      Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync();
+      Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(PrivacySettings newPrivacySettings);
+
       Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
-      Task<Either<UpdatePrivacySettingsError, Unit>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request);
    }
 }

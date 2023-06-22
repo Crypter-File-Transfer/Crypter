@@ -46,13 +46,13 @@ namespace Crypter.Web.Shared.UserSettings
       [Inject]
       protected IUserNotificationSettingsService UserNotificationSettingsService { get; set; }
 
-      protected bool IsDataReady { get; set; } = false;
-      protected bool IsEditing { get; set; } = false;
-
       protected bool EmailAddressVerified { get; set; } = false;
 
       protected bool EnableTransferNotifications { get; set; } = false;
       protected bool EnableTransferNotificationsEdit { get; set; } = false;
+
+      protected bool IsDataReady { get; set; } = false;
+      protected bool IsEditing { get; set; } = false;
 
       protected override void OnInitialized()
       {

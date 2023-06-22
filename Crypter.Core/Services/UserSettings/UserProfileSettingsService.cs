@@ -36,7 +36,7 @@ namespace Crypter.Core.Services.UserSettings
    public interface IUserProfileSettingsService
    {
       Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(Guid userId, ProfileSettings request);
+      Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(Guid userId, ProfileSettings request);
    }
 
    public class UserProfileSettingsService : IUserProfileSettingsService
@@ -53,9 +53,9 @@ namespace Crypter.Core.Services.UserSettings
          return await UserProfileSettingsQueries.GetProfileSettingsAsync(_context, userId, cancellationToken);
       }
 
-      public async Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(Guid userId, ProfileSettings request)
+      public async Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(Guid userId, ProfileSettings request)
       {
-         return await UserProfileSettingsCommands.UpdateProfileSettingsAsync(_context, userId, request);
+         return await UserProfileSettingsCommands.SetProfileSettingsAsync(_context, userId, request);
       }
    }
 }

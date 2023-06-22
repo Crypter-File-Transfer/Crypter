@@ -24,38 +24,39 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
-using Contracts = Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+using Contracts = Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 
-namespace Crypter.Core.Features.UserSettings.ProfileSettings
+namespace Crypter.Core.Features.UserSettings.PrivacySettings
 {
-   internal static class UserProfileSettingsCommands
+   internal static class UserPrivacySettingsCommands
    {
-      public static async Task<Either<SetProfileSettingsError, Contracts.ProfileSettings>> SetProfileSettingsAsync(DataContext dataContext, Guid userId, Contracts.ProfileSettings request)
+      internal static async Task<Either<Contracts.SetPrivacySettingsError, Contracts.PrivacySettings>> SetPrivacySettingsAsync(DataContext dataContext, Guid userId, Contracts.PrivacySettings request)
       {
-         UserProfileEntity userProfile = await dataContext.UserProfiles
+         var userPrivacySettings = await dataContext.UserPrivacySettings
             .FirstOrDefaultAsync(x => x.Owner == userId);
 
-         if (userProfile is null)
+         if (userPrivacySettings is null)
          {
-            UserProfileEntity newUserProfile = new UserProfileEntity(userId, request.Alias, request.About, string.Empty);
-            dataContext.UserProfiles.Add(newUserProfile);
+            var newPrivacySettings = new UserPrivacySettingEntity(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission);
+            dataContext.UserPrivacySettings.Add(newPrivacySettings);
          }
          else
          {
-            userProfile.About = request.About;
-            userProfile.Alias = request.Alias;
+            userPrivacySettings.AllowKeyExchangeRequests = request.AllowKeyExchangeRequests;
+            userPrivacySettings.Visibility = request.VisibilityLevel;
+            userPrivacySettings.ReceiveFiles = request.FileTransferPermission;
+            userPrivacySettings.ReceiveMessages = request.MessageTransferPermission;
          }
 
          await dataContext.SaveChangesAsync();
-
-         return await UserProfileSettingsQueries.GetProfileSettingsAsync(dataContext, userId)
-            .ToEitherAsync(SetProfileSettingsError.UnknownError);
+         return await UserPrivacySettingsQueries.GetPrivacySettingsAsync(dataContext, userId)
+            .ToEitherAsync(SetPrivacySettingsError.UnknownError);
       }
    }
 }

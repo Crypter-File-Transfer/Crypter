@@ -24,10 +24,23 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings
+using Crypter.Common.Enums;
+
+namespace Crypter.Common.Contracts.Features.UserSettings.PrivacySettings
 {
-   public enum UpdatePrivacySettingsError
+   public class PrivacySettings
    {
-      UnknownError
+      public bool AllowKeyExchangeRequests { get; set; }
+      public UserVisibilityLevel VisibilityLevel { get; set; }
+      public UserItemTransferPermission MessageTransferPermission { get; set; }
+      public UserItemTransferPermission FileTransferPermission { get; set; }
+
+      public PrivacySettings(bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission)
+      {
+         AllowKeyExchangeRequests = allowKeyExchangeRequests;
+         VisibilityLevel = visibilityLevel;
+         MessageTransferPermission = messageTransferPermission;
+         FileTransferPermission = fileTransferPermission;
+      }
    }
 }

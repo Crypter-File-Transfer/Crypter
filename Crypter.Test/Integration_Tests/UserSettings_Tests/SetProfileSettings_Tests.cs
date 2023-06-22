@@ -27,7 +27,7 @@
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
@@ -38,7 +38,7 @@ using System.Threading.Tasks;
 namespace Crypter.Test.Integration_Tests.UserSettings_Tests
 {
    [TestFixture]
-   internal class UpdatePrivacySettings_Tests
+   internal class SetProfileSettings_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -68,7 +68,7 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
       }
 
       [Test]
-      public async Task Update_Privacy_Settings_Work_async()
+      public async Task Set_Profile_Settings_Works_Async()
       {
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
@@ -82,10 +82,10 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         UpdatePrivacySettingsRequest request = new UpdatePrivacySettingsRequest(false, UserVisibilityLevel.None, UserItemTransferPermission.None, UserItemTransferPermission.None);
-         Either<UpdatePrivacySettingsError, Unit> result = await _client.UserSetting.UpdateUserPrivacySettingsAsync(request);
+         ProfileSettings request = new ProfileSettings("foo", "bar");
+         Either<SetProfileSettingsError, ProfileSettings> response = await _client.UserSetting.SetProfileSettingsAsync(request);
 
-         Assert.True(result.IsRight);
+         Assert.True(response.IsRight);
       }
    }
 }

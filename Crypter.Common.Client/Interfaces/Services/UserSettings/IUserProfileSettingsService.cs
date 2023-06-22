@@ -33,6 +33,6 @@ namespace Crypter.Common.Client.Interfaces.Services.UserSettings
    public interface IUserProfileSettingsService
    {
       Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings);
+      Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(ProfileSettings newProfileSettings);
    }
 }

@@ -24,38 +24,38 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Monads;
-using Crypter.Core.Entities;
-using Microsoft.EntityFrameworkCore;
+using Crypter.Core.Features.UserSettings.PrivacySettings;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
-using Contracts = Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 
-namespace Crypter.Core.Features.UserSettings.ProfileSettings
+namespace Crypter.Core.Services.UserSettings
 {
-   internal static class UserProfileSettingsCommands
+   public interface IUserPrivacySettingsService
    {
-      public static async Task<Either<SetProfileSettingsError, Contracts.ProfileSettings>> SetProfileSettingsAsync(DataContext dataContext, Guid userId, Contracts.ProfileSettings request)
+      Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+      Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(Guid userId, PrivacySettings request);
+   }
+
+   public class UserPrivacySettingsService : IUserPrivacySettingsService
+   {
+      private readonly DataContext _context;
+
+      public UserPrivacySettingsService(DataContext context)
       {
-         UserProfileEntity userProfile = await dataContext.UserProfiles
-            .FirstOrDefaultAsync(x => x.Owner == userId);
+         _context = context;
+      }
 
-         if (userProfile is null)
-         {
-            UserProfileEntity newUserProfile = new UserProfileEntity(userId, request.Alias, request.About, string.Empty);
-            dataContext.UserProfiles.Add(newUserProfile);
-         }
-         else
-         {
-            userProfile.About = request.About;
-            userProfile.Alias = request.Alias;
-         }
+      public async Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default)
+      {
+         return await UserPrivacySettingsQueries.GetPrivacySettingsAsync(_context, userId, cancellationToken);
+      }
 
-         await dataContext.SaveChangesAsync();
-
-         return await UserProfileSettingsQueries.GetProfileSettingsAsync(dataContext, userId)
-            .ToEitherAsync(SetProfileSettingsError.UnknownError);
+      public async Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(Guid userId, PrivacySettings request)
+      {
+         return await UserPrivacySettingsCommands.SetPrivacySettingsAsync(_context, userId, request);
       }
    }
 }

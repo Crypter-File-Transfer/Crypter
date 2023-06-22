@@ -24,38 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Monads;
-using Crypter.Core.Entities;
-using Microsoft.EntityFrameworkCore;
-using System;
 using System.Threading.Tasks;
-using Contracts = Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 
-namespace Crypter.Core.Features.UserSettings.ProfileSettings
+namespace Crypter.Common.Client.Interfaces.Services.UserSettings
 {
-   internal static class UserProfileSettingsCommands
+   public interface IUserPrivacySettingsService
    {
-      public static async Task<Either<SetProfileSettingsError, Contracts.ProfileSettings>> SetProfileSettingsAsync(DataContext dataContext, Guid userId, Contracts.ProfileSettings request)
-      {
-         UserProfileEntity userProfile = await dataContext.UserProfiles
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (userProfile is null)
-         {
-            UserProfileEntity newUserProfile = new UserProfileEntity(userId, request.Alias, request.About, string.Empty);
-            dataContext.UserProfiles.Add(newUserProfile);
-         }
-         else
-         {
-            userProfile.About = request.About;
-            userProfile.Alias = request.Alias;
-         }
-
-         await dataContext.SaveChangesAsync();
-
-         return await UserProfileSettingsQueries.GetProfileSettingsAsync(dataContext, userId)
-            .ToEitherAsync(SetProfileSettingsError.UnknownError);
-      }
+      Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync();
+      Task<Either<SetPrivacySettingsError, PrivacySettings>> UpdatePrivacySettingsAsync(PrivacySettings newPrivacySettings);
    }
 }

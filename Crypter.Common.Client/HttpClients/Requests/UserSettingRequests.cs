@@ -29,6 +29,7 @@ using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
+using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Common.Monads;
 using System.Threading.Tasks;
@@ -52,11 +53,11 @@ namespace Crypter.Common.Client.HttpClients.Requests
          return _crypterAuthenticatedHttpClient.GetMaybeAsync<ProfileSettings>(url);
       }
 
-      public Task<Either<UpdateProfileSettingsError, ProfileSettings>> UpdateProfileSettingsAsync(ProfileSettings newProfileSettings)
+      public Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(ProfileSettings newProfileSettings)
       {
          const string url = "api/user/setting/profile";
          return _crypterAuthenticatedHttpClient.PutEitherAsync<ProfileSettings, ProfileSettings>(url, newProfileSettings)
-            .ExtractErrorCode<UpdateProfileSettingsError, ProfileSettings>();
+            .ExtractErrorCode<SetProfileSettingsError, ProfileSettings>();
       }
 
       public Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync()
@@ -85,10 +86,17 @@ namespace Crypter.Common.Client.HttpClients.Requests
             .ExtractErrorCode<UpdateNotificationSettingsError, NotificationSettings>();
       }
 
-      public Task<Maybe<UserSettings>> GetUserSettingsAsync()
+      public Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync()
       {
-         const string url = "api/user/setting";
-         return _crypterAuthenticatedHttpClient.GetMaybeAsync<UserSettings>(url);
+         const string url = "api/user/setting/privacy";
+         return _crypterAuthenticatedHttpClient.GetMaybeAsync<PrivacySettings>(url);
+      }
+
+      public Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(PrivacySettings newPrivacySettings)
+      {
+         const string url = "api/user/setting/privacy";
+         return _crypterAuthenticatedHttpClient.PutEitherAsync<PrivacySettings, PrivacySettings>(url, newPrivacySettings)
+            .ExtractErrorCode<SetPrivacySettingsError, PrivacySettings>();
       }
 
       public Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo)
@@ -96,13 +104,6 @@ namespace Crypter.Common.Client.HttpClients.Requests
          const string url = "api/user/setting/contact/verify";
          return _crypterHttpClient.PostEitherUnitResponseAsync(url, verificationInfo)
             .ExtractErrorCode<VerifyEmailAddressError, Unit>();
-      }
-
-      public Task<Either<UpdatePrivacySettingsError, Unit>> UpdateUserPrivacySettingsAsync(UpdatePrivacySettingsRequest request)
-      {
-         const string url = "api/user/setting/privacy";
-         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
-            .ExtractErrorCode<UpdatePrivacySettingsError, Unit>();
       }
    }
 }

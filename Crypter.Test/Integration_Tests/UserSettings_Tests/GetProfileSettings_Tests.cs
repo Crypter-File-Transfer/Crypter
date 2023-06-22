@@ -82,14 +82,8 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         ProfileSettings updateRequest = new ProfileSettings("foo", "bar");
-         Either<UpdateProfileSettingsError, ProfileSettings> response = await _client.UserSetting.UpdateProfileSettingsAsync(updateRequest);
-
-         Assert.True(response.IsRight);
-
-         Maybe<ProfileSettings> settingsResponse = await _client.UserSetting.GetProfileSettingsAsync();
-
-         Assert.True(settingsResponse.IsSome);
+         Maybe<ProfileSettings> response = await _client.UserSetting.GetProfileSettingsAsync();
+         Assert.True(response.IsSome);
       }
    }
 }

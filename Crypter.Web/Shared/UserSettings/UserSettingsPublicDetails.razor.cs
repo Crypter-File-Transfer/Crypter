@@ -37,15 +37,14 @@ namespace Crypter.Web.Shared.UserSettings
       [Inject]
       protected IUserProfileSettingsService UserProfileSettingsService { get; set; }
 
-      protected bool IsDataReady { get; set; } = false;
-
       protected string Alias { get; set; } = string.Empty;
       protected string AliasEdit { get; set; } = string.Empty;
 
       protected string About { get; set; } = string.Empty;
       protected string AboutEdit { get; set; } = string.Empty;
 
-      protected bool IsEditing;
+      protected bool IsDataReady { get; set; } = false;
+      protected bool IsEditing { get; set; } = false;
 
       protected override async Task OnInitializedAsync()
       {
@@ -79,7 +78,7 @@ namespace Crypter.Web.Shared.UserSettings
       protected async Task OnSaveClickedAsync()
       {
          var request = new ProfileSettings(AliasEdit, AboutEdit);
-         await UserProfileSettingsService.UpdateProfileSettingsAsync(request)
+         await UserProfileSettingsService.SetProfileSettingsAsync(request)
             .DoRightAsync(x =>
             {
                Alias = x.Alias;

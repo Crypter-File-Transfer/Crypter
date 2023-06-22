@@ -24,25 +24,24 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
-using System.Text.Json.Serialization;
+using Crypter.Common.Monads;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Contracts = Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 
-namespace Crypter.Common.Contracts.Features.UserSettings
+namespace Crypter.Core.Features.UserSettings.PrivacySettings
 {
-   public class UpdatePrivacySettingsRequest
+   internal static class UserPrivacySettingsQueries
    {
-      public bool AllowKeyExchangeRequests { get; set; }
-      public UserVisibilityLevel VisibilityLevel { get; set; }
-      public UserItemTransferPermission MessageTransferPermission { get; set; }
-      public UserItemTransferPermission FileTransferPermission { get; set; }
-
-      [JsonConstructor]
-      public UpdatePrivacySettingsRequest(bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission)
+      internal static async Task<Maybe<Contracts.PrivacySettings>> GetPrivacySettingsAsync(DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
       {
-         AllowKeyExchangeRequests = allowKeyExchangeRequests;
-         VisibilityLevel = visibilityLevel;
-         MessageTransferPermission = messageTransferPermission;
-         FileTransferPermission = fileTransferPermission;
+         return await Maybe<Contracts.PrivacySettings>.FromAsync(dataContext.UserPrivacySettings
+            .Where(x => x.Owner == userId)
+            .Select(x => new Contracts.PrivacySettings(x.AllowKeyExchangeRequests, x.Visibility, x.ReceiveMessages, x.ReceiveFiles))
+            .FirstOrDefaultAsync(cancellationToken));
       }
    }
 }

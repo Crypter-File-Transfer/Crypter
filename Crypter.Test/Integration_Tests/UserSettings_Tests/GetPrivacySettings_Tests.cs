@@ -27,7 +27,7 @@
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
@@ -38,7 +38,7 @@ using System.Threading.Tasks;
 namespace Crypter.Test.Integration_Tests.UserSettings_Tests
 {
    [TestFixture]
-   internal class GetSettings_Tests
+   internal class GetPrivacySettings_Tests
    {
       private Setup _setup;
       private WebApplicationFactory<Program> _factory;
@@ -68,7 +68,7 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
       }
 
       [Test]
-      public async Task Get_User_Settings_Works()
+      public async Task Get_Privacy_Settings_Works_Async()
       {
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
          var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
@@ -82,11 +82,8 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         Maybe<UserSettings> result = await _client.UserSetting.GetUserSettingsAsync();
-         UserSettings response = result.SomeOrDefault(null);
-
-         Assert.True(result.IsSome);
-         Assert.AreEqual(TestData.DefaultUsername, response.Username);
+         Maybe<PrivacySettings> response = await _client.UserSetting.GetPrivacySettingsAsync();
+         Assert.True(response.IsSome);
       }
    }
 }

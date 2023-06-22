@@ -24,24 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Contracts = Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
-
-namespace Crypter.Core.Features.UserSettings.ProfileSettings
+namespace Crypter.Common.Contracts.Features.UserSettings.PrivacySettings
 {
-   internal static class UserProfileSettingsQueries
+   public enum GetPrivacySettingsError
    {
-      internal static async Task<Maybe<Contracts.ProfileSettings>> GetProfileSettingsAsync(DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
-      {
-         return await Maybe<Contracts.ProfileSettings>.FromAsync(dataContext.UserProfiles
-            .Where(x => x.Owner == userId)
-            .Select(x => new Contracts.ProfileSettings(x.Alias, x.About))
-            .FirstOrDefaultAsync(cancellationToken));
-      }
+      UnknownError,
+      NotFound
    }
 }

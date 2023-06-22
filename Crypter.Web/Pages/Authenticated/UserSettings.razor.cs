@@ -24,32 +24,21 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Enums;
 using Crypter.Web.Pages.Authenticated.Base;
-using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
    public partial class UserSettingsBase : AuthenticatedPageBase
    {
-      [Inject]
-      private ICrypterApiClient CrypterApiService { get; set; }
+      protected string Username { get; set; } = string.Empty;
 
       protected bool DataIsReady { get; set; } = false;
-
-      protected string Username;
-
-      // Privacy
-      protected UserVisibilityLevel UserProfileVisibility;
-      protected UserItemTransferPermission MessageTransferPermission;
-      protected UserItemTransferPermission FileTransferPermission;
 
       protected override async Task OnInitializedAsync()
       {
          await base.OnInitializedAsync();
-         if (UserSessionService.Session.IsNone)
+         if (!await UserSessionService.IsLoggedInAsync())
          {
             return;
          }
@@ -58,19 +47,7 @@ namespace Crypter.Web.Pages
             () => null,
             some => some.Username);
 
-         await GetUserInfoAsync();
          DataIsReady = true;
-      }
-
-      private async Task GetUserInfoAsync()
-      {
-         var maybeSettings = await CrypterApiService.UserSetting.GetUserSettingsAsync();
-         maybeSettings.IfSome(right =>
-         {
-            UserProfileVisibility = right.Visibility;
-            MessageTransferPermission = right.MessageTransferPermission;
-            FileTransferPermission = right.FileTransferPermission;
-         });
       }
    }
 }

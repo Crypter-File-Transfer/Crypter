@@ -79,6 +79,7 @@ namespace Crypter.Core
          services.TryAddScoped<IUserProfileSettingsService, UserProfileSettingsService>();
          services.TryAddScoped<IUserContactInfoSettingsService, UserContactInfoSettingsService>();
          services.TryAddScoped<IUserNotificationSettingsService, UserNotificationSettingService>();
+         services.TryAddScoped<IUserPrivacySettingsService, UserPrivacySettingsService>();
 
          services.AddEmailService(options =>
          {
