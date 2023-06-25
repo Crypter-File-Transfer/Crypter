@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces;
-using Crypter.Common.Client.Interfaces.Events;
+using Crypter.Common.Client.Events;
+using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Monads;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
@@ -51,16 +51,14 @@ namespace Crypter.Web.Shared.UserSettings
 
       protected PasswordModal PasswordModal { get; set; }
 
-      protected string PrivateKey;
-      protected string RecoveryKey;
+      protected string PrivateKey = string.Empty;
+      protected string RecoveryKey = string.Empty;
 
       protected override void OnInitialized()
       {
          PrivateKey = UserKeysService.PrivateKey.Match(
             () => "",
             Convert.ToHexString);
-
-         RecoveryKey = string.Empty;
 
          UserSessionService.UserPasswordTestSuccessEventHandler += OnPasswordTestSuccess;
       }

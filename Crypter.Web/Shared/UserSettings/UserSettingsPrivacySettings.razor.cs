@@ -24,9 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces;
-using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Client.Interfaces.Services.UserSettings;
+using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Enums;
+using Crypter.Common.Monads;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
@@ -35,27 +36,36 @@ namespace Crypter.Web.Shared.UserSettings
    public class UserSettingsPrivacySettingsBase : ComponentBase
    {
       [Inject]
-      protected ICrypterApiClient CrypterApiService { get; set; }
+      protected IUserPrivacySettingsService UserPrivacySettingsService { get; set; }
 
-      [Parameter]
-      public UserVisibilityLevel ProfileVisibility { get; set; }
+      protected UserVisibilityLevel ProfileVisibility { get; set; }
+      protected int ProfileVisibilityEdit { get; set; } = 0;
 
-      [Parameter]
-      public UserItemTransferPermission MessageTransferPermission { get; set; }
+      protected UserItemTransferPermission MessageTransferPermission { get; set; }
+      protected int MessageTransferPermissionEdit { get; set; } = 0;
 
-      [Parameter]
-      public UserItemTransferPermission FileTransferPermission { get; set; }
+      protected UserItemTransferPermission FileTransferPermission { get; set; }
+      protected int FileTransferPermissionEdit { get; set; } = 0;
 
-      protected bool IsEditing;
-      protected int ProfileVisibilityEdit;
-      protected int MessageTransferPermissionEdit;
-      protected int FileTransferPermissionEdit;
+      protected bool IsDataReady { get; set; } = false;
+      protected bool IsEditing { get; set; } = false;
 
-      protected override void OnParametersSet()
+      protected override async Task OnInitializedAsync()
       {
-         ProfileVisibilityEdit = (int)ProfileVisibility;
-         MessageTransferPermissionEdit = (int)MessageTransferPermission;
-         FileTransferPermissionEdit = (int)FileTransferPermission;
+         await UserPrivacySettingsService.GetPrivacySettingsAsync()
+            .IfSomeAsync(x =>
+            {
+               ProfileVisibility = x.VisibilityLevel;
+               ProfileVisibilityEdit = (int)ProfileVisibility;
+
+               MessageTransferPermission = x.MessageTransferPermission;
+               MessageTransferPermissionEdit = (int)MessageTransferPermission;
+
+               FileTransferPermission = x.FileTransferPermission;
+               FileTransferPermissionEdit = (int)FileTransferPermission;
+            });
+
+         IsDataReady = true;
       }
 
       protected void OnEditClicked()
@@ -73,12 +83,20 @@ namespace Crypter.Web.Shared.UserSettings
 
       protected async Task OnSaveClickedAsync()
       {
-         var request = new UpdatePrivacySettingsRequest(true, (UserVisibilityLevel)ProfileVisibilityEdit, (UserItemTransferPermission)MessageTransferPermissionEdit, (UserItemTransferPermission)FileTransferPermissionEdit);
-         await CrypterApiService.UserSetting.UpdateUserPrivacySettingsAsync(request);
+         var request = new PrivacySettings(true, (UserVisibilityLevel)ProfileVisibilityEdit, (UserItemTransferPermission)MessageTransferPermissionEdit, (UserItemTransferPermission)FileTransferPermissionEdit);
+         await UserPrivacySettingsService.UpdatePrivacySettingsAsync(request)
+            .DoRightAsync(x =>
+            {
+               ProfileVisibility = x.VisibilityLevel;
+               ProfileVisibilityEdit = (int)ProfileVisibility;
 
-         ProfileVisibility = (UserVisibilityLevel)ProfileVisibilityEdit;
-         MessageTransferPermission = (UserItemTransferPermission)MessageTransferPermissionEdit;
-         FileTransferPermission = (UserItemTransferPermission)FileTransferPermissionEdit;
+               MessageTransferPermission = x.MessageTransferPermission;
+               MessageTransferPermissionEdit = (int)MessageTransferPermission;
+
+               FileTransferPermission = x.FileTransferPermission;
+               FileTransferPermissionEdit = (int)FileTransferPermission;
+            });
+
          IsEditing = false;
       }
    }

@@ -24,43 +24,21 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces;
-using Crypter.Common.Enums;
 using Crypter.Web.Pages.Authenticated.Base;
-using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {
    public partial class UserSettingsBase : AuthenticatedPageBase
    {
-      [Inject]
-      private ICrypterApiClient CrypterApiService { get; set; }
+      protected string Username { get; set; } = string.Empty;
 
-      protected bool Loading = true;
-
-      protected string Username;
-
-      // Public Details
-      protected string Alias;
-      protected string About;
-
-      // Contact Info
-      protected string EmailAddress;
-      protected bool EmailAddressVerified;
-
-      // Notification Settings
-      protected bool EnableTransferNotifications;
-
-      // Privacy
-      protected UserVisibilityLevel UserProfileVisibility;
-      protected UserItemTransferPermission MessageTransferPermission;
-      protected UserItemTransferPermission FileTransferPermission;
+      protected bool DataIsReady { get; set; } = false;
 
       protected override async Task OnInitializedAsync()
       {
          await base.OnInitializedAsync();
-         if (UserSessionService.Session.IsNone)
+         if (!await UserSessionService.IsLoggedInAsync())
          {
             return;
          }
@@ -69,24 +47,7 @@ namespace Crypter.Web.Pages
             () => null,
             some => some.Username);
 
-         await GetUserInfoAsync();
-         Loading = false;
-      }
-
-      private async Task GetUserInfoAsync()
-      {
-         var maybeSettings = await CrypterApiService.UserSetting.GetUserSettingsAsync();
-         maybeSettings.IfSome(right =>
-         {
-            EmailAddress = right.EmailAddress;
-            EmailAddressVerified = right.EmailVerified;
-            Alias = right.Alias;
-            About = right.About;
-            UserProfileVisibility = right.Visibility;
-            MessageTransferPermission = right.MessageTransferPermission;
-            FileTransferPermission = right.FileTransferPermission;
-            EnableTransferNotifications = right.EnableTransferNotifications;
-         });
+         DataIsReady = true;
       }
    }
 }

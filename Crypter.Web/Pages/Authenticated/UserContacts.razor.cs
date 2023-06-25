@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
@@ -45,17 +45,12 @@ namespace Crypter.Web.Pages
       protected override async Task OnInitializedAsync()
       {
          await base.OnInitializedAsync();
-         if (UserSessionService.Session.IsNone)
-         {
-            return;
-         }
-
          Loading = false;
       }
 
       protected override async Task OnAfterRenderAsync(bool firstRender)
       {
-         if (firstRender && UserSessionService.Session.IsSome)
+         if (firstRender && await UserSessionService.IsLoggedInAsync())
          {
             Contacts = await UserContactsService.GetContactsAsync();
             StateHasChanged();

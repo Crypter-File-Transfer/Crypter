@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces;
-using Crypter.Common.Contracts.Features.Settings;
+using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Infrastructure;
 using Crypter.Common.Monads;
 using Crypter.Core;

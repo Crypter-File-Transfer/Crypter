@@ -25,10 +25,15 @@
  */
 
 using BlazorSodium.Extensions;
-using Crypter.Common.Client.DeviceStorage.Enums;
-using Crypter.Common.Client.Implementations;
-using Crypter.Common.Client.Interfaces;
+using Crypter.Common.Client.Enums;
+using Crypter.Common.Client.HttpClients;
+using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Interfaces.Services;
+using Crypter.Common.Client.Interfaces.Services.UserSettings;
+using Crypter.Common.Client.Models;
+using Crypter.Common.Client.Services;
+using Crypter.Common.Client.Services.UserSettings;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Crypto.Common;
@@ -54,7 +59,7 @@ builder.Services.AddSingleton(sp =>
    return config.Get<ClientSettings>();
 });
 
-builder.Services.AddSingleton<IClientApiSettings>(sp =>
+builder.Services.AddSingleton(sp =>
 {
    var config = sp.GetService<IConfiguration>();
    return config.GetSection("ApiSettings").Get<ClientApiSettings>();
@@ -70,7 +75,7 @@ builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =
 {
    var config = builder.Services
       .BuildServiceProvider()
-      .GetService<IClientApiSettings>();
+      .GetService<ClientApiSettings>();
 
    httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
 });
@@ -85,6 +90,10 @@ builder.Services
    .AddSingleton<IUserPasswordService, UserPasswordService>()
    .AddSingleton<IUserRecoveryService, UserRecoveryService>()
    .AddSingleton<IUserKeysService, UserKeysService>()
+   .AddSingleton<IUserProfileSettingsService, UserProfileSettingsService>()
+   .AddSingleton<IUserContactInfoSettingsService, UserContactInfoSettingsService>()
+   .AddSingleton<IUserNotificationSettingsService, UserNotificationSettingsService>()
+   .AddSingleton<IUserPrivacySettingsService, UserPrivacySettingsService>()
    .AddSingleton<TransferHandlerFactory>()
    .AddSingleton<Func<ICrypterApiClient>>(sp => () => sp.GetService<ICrypterApiClient>());
 
@@ -96,7 +105,7 @@ if (OperatingSystem.IsBrowser())
 
 WebAssemblyHost host = builder.Build();
 
-// Resolve services so they can initialize
+// Resolve services so they can subscribe to events
 IUserContactsService contactsService = host.Services.GetRequiredService<IUserContactsService>();
 IUserSessionService userSessionService = host.Services.GetRequiredService<IUserSessionService>();
 

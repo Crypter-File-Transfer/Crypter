@@ -65,7 +65,7 @@
                                  </a>
                               </div>
                               <div class="p-2 bd-highlight">
-                                 @if (UserContactsService.IsContact(result.Username))
+                                 @if (result.IsContact)
                                  {
                                     <button type="button" disable class="btn btn-outline-success">Added</button>
                                  }
