@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using System;
 
@@ -31,10 +32,10 @@ namespace Crypter.Common.Client.Events
 {
    public class UserContactInfoChangedEventArgs : EventArgs
    {
-      public EmailAddress EmailAddress { get; init; }
+      public Maybe<EmailAddress> EmailAddress { get; init; }
       public bool EmailAddressVerified { get; init; }
 
-      public UserContactInfoChangedEventArgs(EmailAddress emailAddress, bool emailAddressVerified)
+      public UserContactInfoChangedEventArgs(Maybe<EmailAddress> emailAddress, bool emailAddressVerified)
       {
          EmailAddress = emailAddress;
          EmailAddressVerified = emailAddressVerified;
