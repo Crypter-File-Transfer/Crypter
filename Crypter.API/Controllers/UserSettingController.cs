@@ -175,6 +175,17 @@ namespace Crypter.API.Controllers
                MakeErrorResponse(UpdateContactInfoSettingsError.UnknownError));
       }
 
+      [HttpPost("contact/verify")]
+      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+      public async Task<IActionResult> VerifyUserEmailAddressAsync([FromBody] VerifyEmailAddressRequest request)
+      {
+         return await _userEmailVerificationService.VerifyUserEmailAddressAsync(request)
+            ? Ok()
+            : MakeErrorResponseBase(HttpStatusCode.NotFound, VerifyEmailAddressError.NotFound);
+      }
+
       [HttpGet("notification")]
       [Authorize]
       [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(NotificationSettings))]
@@ -277,17 +288,6 @@ namespace Crypter.API.Controllers
                MakeErrorResponse,
                Ok,
                MakeErrorResponse(SetPrivacySettingsError.UnknownError));
-      }
-
-      [HttpPost("contact/verify")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> VerifyUserEmailAddressAsync([FromBody] VerifyEmailAddressRequest request)
-      {
-         return await _userEmailVerificationService.VerifyUserEmailAddressAsync(request)
-            ? Ok()
-            : MakeErrorResponseBase(HttpStatusCode.NotFound, VerifyEmailAddressError.NotFound);
       }
    }
 }
