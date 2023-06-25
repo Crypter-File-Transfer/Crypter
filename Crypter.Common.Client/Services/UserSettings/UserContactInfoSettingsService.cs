@@ -86,7 +86,10 @@ namespace Crypter.Common.Client.Services.UserSettings
 
                response.DoRight(updatedContactInfoSettings =>
                {
-                  HandleUserContactInfoChangedEvent(EmailAddress.From(updatedContactInfoSettings.EmailAddress), updatedContactInfoSettings.EmailAddressVerified);
+                  Maybe<EmailAddress> newEmailAddress = EmailAddress.TryFrom(updatedContactInfoSettings.EmailAddress, out EmailAddress newValidEmailAddress)
+                     ? newValidEmailAddress
+                     : Maybe<EmailAddress>.None;
+                  HandleUserContactInfoChangedEvent(newEmailAddress, updatedContactInfoSettings.EmailAddressVerified);
                });
 
                return response;
@@ -99,7 +102,7 @@ namespace Crypter.Common.Client.Services.UserSettings
          remove => _userContactInfoChangedEventHandler = (EventHandler<UserContactInfoChangedEventArgs>)Delegate.Remove(_userContactInfoChangedEventHandler, value);
       }
 
-      private void HandleUserContactInfoChangedEvent(EmailAddress emailAddress, bool emailAddressVerified) =>
+      private void HandleUserContactInfoChangedEvent(Maybe<EmailAddress> emailAddress, bool emailAddressVerified) =>
          _userContactInfoChangedEventHandler?.Invoke(this, new UserContactInfoChangedEventArgs(emailAddress, emailAddressVerified));
 
       private void Recycle(object sender, EventArgs _)
