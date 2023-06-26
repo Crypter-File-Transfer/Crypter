@@ -28,7 +28,6 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Infrastructure;
-using Crypter.Common.Monads;
 using Crypter.Core;
 using Crypter.Core.Entities;
 using Crypter.Crypto.Common;
@@ -41,6 +40,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using System.Linq;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Test.Integration_Tests.UserSettings_Tests
 {

@@ -30,7 +30,6 @@ using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
-using Crypter.Common.Monads;
 using Crypter.Core.Services;
 using Crypter.Core.Services.UserSettings;
 using Microsoft.AspNetCore.Authorization;
@@ -40,6 +39,7 @@ using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.API.Controllers
 {

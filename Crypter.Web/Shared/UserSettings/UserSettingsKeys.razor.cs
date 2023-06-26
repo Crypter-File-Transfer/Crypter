@@ -26,12 +26,12 @@
 
 using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.Services;
-using Crypter.Common.Monads;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Web.Shared.UserSettings
 {

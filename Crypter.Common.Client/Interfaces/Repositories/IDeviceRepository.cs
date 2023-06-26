@@ -25,9 +25,9 @@
  */
 
 using Crypter.Common.Client.Enums;
-using Crypter.Common.Monads;
 using System;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Repositories
 {

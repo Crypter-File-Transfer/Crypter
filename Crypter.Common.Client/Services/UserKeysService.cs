@@ -31,12 +31,12 @@ using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.KeyExchange;
 using System;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Services
 {

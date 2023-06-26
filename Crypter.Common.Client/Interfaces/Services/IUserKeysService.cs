@@ -26,9 +26,9 @@
 
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Services
 {

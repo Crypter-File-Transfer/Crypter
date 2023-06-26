@@ -26,7 +26,6 @@
 
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Infrastructure;
-using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Crypter.Core.Features.UserEmailVerification;
 using Crypter.Core.Models;
@@ -34,6 +33,7 @@ using Crypter.Crypto.Common;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Core.Services
 {

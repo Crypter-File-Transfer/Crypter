@@ -25,7 +25,6 @@
  */
 
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Core.Repositories;
 using Crypter.Core.Settings;
 using Microsoft.Extensions.Options;
@@ -33,6 +32,7 @@ using NUnit.Framework;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {

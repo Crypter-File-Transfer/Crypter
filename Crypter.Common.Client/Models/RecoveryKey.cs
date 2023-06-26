@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
 using System;
 using System.Text;
 using System.Text.Json;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Models
 {

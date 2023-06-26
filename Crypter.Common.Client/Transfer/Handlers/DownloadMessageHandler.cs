@@ -31,11 +31,11 @@ using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Crypto.Common;
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Transfer.Handlers
 {

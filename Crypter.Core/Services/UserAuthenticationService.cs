@@ -26,7 +26,6 @@
 
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core.DataContextExtensions;
 using Crypter.Core.Entities;
@@ -44,6 +43,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Core.Services
 {

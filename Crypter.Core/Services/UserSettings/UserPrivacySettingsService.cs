@@ -25,11 +25,11 @@
  */
 
 using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
-using Crypter.Common.Monads;
 using Crypter.Core.Features.UserSettings.PrivacySettings;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Core.Services.UserSettings
 {

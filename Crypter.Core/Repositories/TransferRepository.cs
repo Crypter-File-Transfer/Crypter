@@ -25,7 +25,6 @@
  */
 
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Core.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -33,6 +32,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Core.Repositories
 {

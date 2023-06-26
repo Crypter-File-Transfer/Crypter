@@ -1,8 +1,8 @@
 ﻿using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.Metrics;
-using Crypter.Common.Monads;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients.Requests
 {

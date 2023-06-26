@@ -27,13 +27,13 @@
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Exceptions;
-using Crypter.Common.Monads;
 using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Web.Repositories
 {

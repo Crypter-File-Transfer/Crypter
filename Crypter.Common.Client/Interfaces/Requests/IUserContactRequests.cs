@@ -26,9 +26,9 @@
 
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
-using Crypter.Common.Monads;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Requests
 {

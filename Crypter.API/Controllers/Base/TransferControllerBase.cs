@@ -26,11 +26,11 @@
 
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Infrastructure;
-using Crypter.Common.Monads;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net;
+using EasyMonads;
 
 namespace Crypter.API.Controllers.Base
 {

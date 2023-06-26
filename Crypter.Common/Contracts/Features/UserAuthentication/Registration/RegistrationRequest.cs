@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using System.Text.Json.Serialization;
+using EasyMonads;
 
 namespace Crypter.Common.Contracts.Features.UserAuthentication
 {

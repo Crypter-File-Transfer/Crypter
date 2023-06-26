@@ -26,13 +26,13 @@
 
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts;
-using Crypter.Common.Monads;
 using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients
 {

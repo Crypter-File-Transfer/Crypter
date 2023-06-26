@@ -26,7 +26,6 @@
 
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Core.Repositories;
 using Crypter.Crypto.Common;
 using Hangfire;
@@ -36,6 +35,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Core.Services
 {

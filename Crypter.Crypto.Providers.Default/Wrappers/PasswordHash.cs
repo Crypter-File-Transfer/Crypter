@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
 using Crypter.Crypto.Common.PasswordHash;
 using Geralt;
 using System;
 using System.Runtime.Versioning;
 using System.Text;
+using EasyMonads;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {

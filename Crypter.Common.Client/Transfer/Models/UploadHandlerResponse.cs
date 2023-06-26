@@ -25,7 +25,7 @@
  */
 
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Transfer.Models
 {

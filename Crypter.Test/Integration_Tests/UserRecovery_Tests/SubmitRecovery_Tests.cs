@@ -35,7 +35,6 @@ using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Infrastructure;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core;
 using Crypter.Core.Entities;
@@ -51,6 +50,7 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Test.Integration_Tests.UserRecovery_Tests
 {

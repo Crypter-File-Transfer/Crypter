@@ -26,11 +26,11 @@
 
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.Metrics;
-using Crypter.Common.Monads;
 using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Test.Integration_Tests.Metrics_Tests
 {

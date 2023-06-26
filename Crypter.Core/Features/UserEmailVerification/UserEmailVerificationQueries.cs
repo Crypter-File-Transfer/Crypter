@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core.Models;
 using Crypter.Crypto.Common;
@@ -33,6 +32,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Core.Features.UserEmailVerification
 {

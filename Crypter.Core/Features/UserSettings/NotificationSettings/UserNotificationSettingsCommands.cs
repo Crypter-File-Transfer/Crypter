@@ -25,12 +25,12 @@
  */
 
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
-using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using EasyMonads;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 
 namespace Crypter.Core.Features.UserSettings.NotificationSettings

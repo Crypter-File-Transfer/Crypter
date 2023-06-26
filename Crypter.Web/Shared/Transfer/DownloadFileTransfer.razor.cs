@@ -26,12 +26,12 @@
 
 using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Monads;
 using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
 using System;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Web.Shared.Transfer
 {

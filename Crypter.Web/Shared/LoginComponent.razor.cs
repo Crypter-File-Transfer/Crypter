@@ -26,13 +26,13 @@
 
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;
 using Crypter.Web.Helpers;
 using Crypter.Web.Models.Forms;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Web.Shared
 {

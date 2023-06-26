@@ -28,11 +28,11 @@ using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Web.Repositories;
 using Moq;
 using NUnit.Framework;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Test.Web_Tests
 {

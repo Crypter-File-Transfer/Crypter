@@ -25,10 +25,10 @@
  */
 
 using Crypter.Common.Contracts;
-using Crypter.Common.Monads;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.HttpClients
 {

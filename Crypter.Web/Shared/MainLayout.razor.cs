@@ -29,13 +29,13 @@ using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Services;
-using Crypter.Common.Monads;
 using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Web.Shared
 {

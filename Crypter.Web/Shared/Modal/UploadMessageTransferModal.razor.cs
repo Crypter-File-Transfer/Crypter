@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
 using Crypter.Web.Shared.Modal.Template;
 using Crypter.Web.Shared.Transfer;
 using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Web.Shared.Modal
 {

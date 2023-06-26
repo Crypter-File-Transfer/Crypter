@@ -25,9 +25,9 @@
  */
 
 using Crypter.Common.Contracts;
-using Crypter.Common.Monads;
 using System.Linq;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients.Requests
 {

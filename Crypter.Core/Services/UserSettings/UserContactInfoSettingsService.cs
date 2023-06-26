@@ -25,7 +25,6 @@
  */
 
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
-using Crypter.Common.Monads;
 using Crypter.Core.Features.UserSettings.ContactInfoSettings;
 using Crypter.Core.Models;
 using Hangfire;
@@ -33,6 +32,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Core.Services.UserSettings
 {

@@ -26,7 +26,6 @@
 
 using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Infrastructure;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
 using Crypter.Core.Features.Keys;
@@ -39,6 +38,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Core.Features.UserRecovery
 {

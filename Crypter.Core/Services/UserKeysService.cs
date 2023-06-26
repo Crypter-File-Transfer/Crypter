@@ -26,7 +26,6 @@
 
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Monads;
 using Crypter.Core.Entities;
 using Crypter.Core.Features.Keys;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +34,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Core.Services
 {

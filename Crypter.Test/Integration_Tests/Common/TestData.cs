@@ -29,7 +29,6 @@ using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Crypto.Providers.Default;
-using MimeKit.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;

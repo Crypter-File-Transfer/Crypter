@@ -26,10 +26,10 @@
 
 using Crypter.Common.Client.Events;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using System;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Services.UserSettings
 {

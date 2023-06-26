@@ -25,8 +25,8 @@
  */
 
 using Crypter.Common.Contracts.Features.Metrics;
-using Crypter.Common.Monads;
 using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Requests
 {

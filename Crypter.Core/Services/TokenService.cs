@@ -25,7 +25,6 @@
  */
 
 using Crypter.Common.Exceptions;
-using Crypter.Common.Monads;
 using Crypter.Core.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -36,6 +35,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using EasyMonads;
 
 namespace Crypter.Core.Services
 {
