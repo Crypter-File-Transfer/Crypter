@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Threading.Tasks;
 using Crypter.Core.Models;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
@@ -32,8 +34,6 @@ using Crypter.Crypto.Providers.Default;
 using Hangfire;
 using Moq;
 using NUnit.Framework;
-using System;
-using System.Threading.Tasks;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {

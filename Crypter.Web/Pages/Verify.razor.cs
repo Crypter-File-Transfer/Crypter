@@ -24,13 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Collections.Specialized;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Web.Helpers;
 using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components;
-using System.Collections.Specialized;
-using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {

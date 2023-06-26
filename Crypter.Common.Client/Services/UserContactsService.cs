@@ -24,16 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Events;
-using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Client.Interfaces.Services;
-using Crypter.Common.Contracts.Features.Contacts;
-using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Events;
+using Crypter.Common.Client.Interfaces.HttpClients;
+using Crypter.Common.Client.Interfaces.Services;
+using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using EasyMonads;
 
 namespace Crypter.Common.Client.Services

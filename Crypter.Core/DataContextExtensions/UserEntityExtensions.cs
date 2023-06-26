@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading;
+using System.Threading.Tasks;
 using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Crypter.Core.DataContextExtensions
 {

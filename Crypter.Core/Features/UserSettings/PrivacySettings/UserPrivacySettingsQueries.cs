@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EasyMonads;
+using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 
 namespace Crypter.Core.Features.UserSettings.PrivacySettings

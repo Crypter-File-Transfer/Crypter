@@ -24,6 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
@@ -35,12 +38,9 @@ using Crypter.Core.Features.UserRecovery;
 using Crypter.Core.Features.UserToken;
 using Crypter.Core.Repositories;
 using Crypter.Crypto.Common;
+using EasyMonads;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using EasyMonads;
 
 namespace Crypter.Core.Services
 {

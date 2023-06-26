@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.Padding;
-using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Runtime.Versioning;
+using Crypter.Crypto.Common.Padding;
+using Crypter.Crypto.Common.StreamEncryption;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers
 {

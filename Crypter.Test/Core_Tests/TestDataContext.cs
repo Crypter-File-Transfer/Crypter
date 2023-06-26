@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core;
-using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Crypter.Core;
+using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Test.Core_Tests
 {

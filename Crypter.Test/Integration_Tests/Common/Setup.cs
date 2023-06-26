@@ -24,6 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Data;
+using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Crypter.Common.Client.HttpClients;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
@@ -36,11 +41,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Respawn;
-using System;
-using System.Data;
-using System.IO;
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests.Common
 {

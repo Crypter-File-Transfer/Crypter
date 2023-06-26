@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Runtime.Versioning;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.ConstantTime;
 using Crypter.Crypto.Common.CryptoHash;
@@ -36,7 +37,6 @@ using Crypter.Crypto.Common.PasswordHash;
 using Crypter.Crypto.Common.Random;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Crypto.Common.StreamGenericHash;
-using System.Runtime.Versioning;
 
 namespace Crypter.Crypto.Providers.Default
 {

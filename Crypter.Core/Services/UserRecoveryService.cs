@@ -24,16 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Primitives;
 using Crypter.Core.Features.UserRecovery;
 using Crypter.Core.Features.UserRecovery.Models;
 using Crypter.Core.Models;
 using Crypter.Crypto.Common;
-using Hangfire;
-using System;
-using System.Threading.Tasks;
 using EasyMonads;
+using Hangfire;
 
 namespace Crypter.Core.Services
 {

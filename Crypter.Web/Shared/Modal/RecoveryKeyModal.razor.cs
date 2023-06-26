@@ -25,15 +25,15 @@
  */
 
 
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Primitives;
 using Crypter.Web.Shared.Modal.Template;
+using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using System.Threading.Tasks;
-using EasyMonads;
 
 namespace Crypter.Web.Shared.Modal
 {

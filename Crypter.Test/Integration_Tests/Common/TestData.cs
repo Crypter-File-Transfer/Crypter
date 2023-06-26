@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Crypto.Providers.Default;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 
 namespace Crypter.Test.Integration_Tests.Common
 {

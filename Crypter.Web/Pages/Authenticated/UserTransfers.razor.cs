@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Web.Models;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {

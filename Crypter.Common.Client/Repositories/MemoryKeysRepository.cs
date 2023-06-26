@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.Repositories;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Interfaces.Repositories;
 using EasyMonads;
 
 namespace Crypter.Common.Client.Repositories

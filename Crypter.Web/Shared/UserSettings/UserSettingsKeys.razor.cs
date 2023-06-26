@@ -24,14 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Web.Shared.Modal;
+using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using System;
-using System.Threading.Tasks;
-using EasyMonads;
 
 namespace Crypter.Web.Shared.UserSettings
 {

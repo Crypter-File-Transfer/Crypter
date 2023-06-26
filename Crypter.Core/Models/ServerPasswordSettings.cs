@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Identity;
 using System.Collections.Generic;
+using Crypter.Core.Identity;
 
 namespace Crypter.Core.Models
 {

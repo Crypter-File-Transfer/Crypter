@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services.UserSettings;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Primitives;
-using Microsoft.AspNetCore.Components;
-using System.Threading.Tasks;
 using EasyMonads;
+using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.UserSettings
 {

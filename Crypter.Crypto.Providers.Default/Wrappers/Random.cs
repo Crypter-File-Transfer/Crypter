@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.Random;
 using System;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using Crypter.Crypto.Common.Random;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {

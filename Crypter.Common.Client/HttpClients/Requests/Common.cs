@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts;
 using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients.Requests

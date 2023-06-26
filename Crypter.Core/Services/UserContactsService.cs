@@ -24,17 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Contacts;
-using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
-using Crypter.Core.Entities;
-using Crypter.Core.Extensions;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
+using Crypter.Core.Entities;
+using Crypter.Core.Extensions;
 using EasyMonads;
+using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Services
 {

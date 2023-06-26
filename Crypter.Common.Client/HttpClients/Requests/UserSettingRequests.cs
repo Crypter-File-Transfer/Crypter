@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.UserSettings;
@@ -31,7 +32,6 @@ using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
-using System.Threading.Tasks;
 using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients.Requests

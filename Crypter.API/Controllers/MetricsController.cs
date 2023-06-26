@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading;
+using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Core.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Crypter.API.Controllers
 {

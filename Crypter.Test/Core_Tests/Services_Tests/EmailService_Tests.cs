@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Common.Primitives;
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
-using System.Threading.Tasks;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {

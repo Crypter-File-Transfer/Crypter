@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using BlazorSodium.Sodium;
-using Crypter.Crypto.Common.DigitalSignature;
 using System;
 using System.Runtime.Versioning;
+using BlazorSodium.Sodium;
+using Crypter.Crypto.Common.DigitalSignature;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers
 {

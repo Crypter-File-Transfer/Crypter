@@ -24,16 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Collections.Specialized;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Infrastructure;
 using Crypter.Common.Primitives;
 using Crypter.Web.Helpers;
-using Microsoft.AspNetCore.Components;
-using System.Collections.Specialized;
-using System.Threading.Tasks;
 using EasyMonads;
+using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Pages
 {

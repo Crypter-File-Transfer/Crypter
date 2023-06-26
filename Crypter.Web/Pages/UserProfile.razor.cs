@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
-using System.Threading.Tasks;
 
 namespace Crypter.Web.Pages
 {

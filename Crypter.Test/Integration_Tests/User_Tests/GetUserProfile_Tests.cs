@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.Keys;
@@ -31,10 +32,9 @@ using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Enums;
 using Crypter.Test.Integration_Tests.Common;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
-using System.Threading.Tasks;
-using EasyMonads;
 
 namespace Crypter.Test.Integration_Tests.User_Tests
 {

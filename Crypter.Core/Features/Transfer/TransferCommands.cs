@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
-using System.Threading.Tasks;
 using System;
+using System.Threading.Tasks;
+using Crypter.Common.Enums;
 using Crypter.Core.Repositories;
 using Microsoft.EntityFrameworkCore;
 

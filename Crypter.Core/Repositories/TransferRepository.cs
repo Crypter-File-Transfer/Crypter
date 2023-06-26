@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
-using Crypter.Core.Settings;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Crypter.Common.Enums;
+using Crypter.Core.Settings;
 using EasyMonads;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Crypter.Core.Repositories
 {

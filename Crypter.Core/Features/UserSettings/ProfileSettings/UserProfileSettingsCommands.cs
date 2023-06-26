@@ -24,19 +24,18 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
-using Crypter.Core.Entities;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
+using Crypter.Core.Entities;
 using EasyMonads;
+using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 
 namespace Crypter.Core.Features.UserSettings.ProfileSettings
 {
    internal static class UserProfileSettingsCommands
    {
-      public static async Task<Either<SetProfileSettingsError, Contracts.ProfileSettings>> SetProfileSettingsAsync(DataContext dataContext, Guid userId, Contracts.ProfileSettings request)
+      public static async Task<Either<Contracts.SetProfileSettingsError, Contracts.ProfileSettings>> SetProfileSettingsAsync(DataContext dataContext, Guid userId, Contracts.ProfileSettings request)
       {
          UserProfileEntity userProfile = await dataContext.UserProfiles
             .FirstOrDefaultAsync(x => x.Owner == userId);
@@ -55,7 +54,7 @@ namespace Crypter.Core.Features.UserSettings.ProfileSettings
          await dataContext.SaveChangesAsync();
 
          return await UserProfileSettingsQueries.GetProfileSettingsAsync(dataContext, userId)
-            .ToEitherAsync(SetProfileSettingsError.UnknownError);
+            .ToEitherAsync(Contracts.SetProfileSettingsError.UnknownError);
       }
    }
 }

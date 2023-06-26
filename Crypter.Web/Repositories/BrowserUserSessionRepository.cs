@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using EasyMonads;
 
 namespace Crypter.Web.Repositories

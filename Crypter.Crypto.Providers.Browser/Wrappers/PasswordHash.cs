@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.PasswordHash;
 using System;
 using System.Runtime.Versioning;
 using System.Text;
+using Crypter.Crypto.Common.PasswordHash;
 using EasyMonads;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers

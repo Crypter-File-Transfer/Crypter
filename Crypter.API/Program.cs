@@ -24,6 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 using Crypter.API.Configuration;
 using Crypter.API.Middleware;
 using Crypter.Common.Contracts;
@@ -38,9 +41,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 

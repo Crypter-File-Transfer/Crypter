@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
-using System;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {

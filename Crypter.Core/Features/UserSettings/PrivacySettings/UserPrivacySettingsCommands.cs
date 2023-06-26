@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
-using Crypter.Core.Entities;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
+using Crypter.Core.Entities;
 using EasyMonads;
+using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 
 namespace Crypter.Core.Features.UserSettings.PrivacySettings
@@ -56,7 +55,7 @@ namespace Crypter.Core.Features.UserSettings.PrivacySettings
 
          await dataContext.SaveChangesAsync();
          return await UserPrivacySettingsQueries.GetPrivacySettingsAsync(dataContext, userId)
-            .ToEitherAsync(SetPrivacySettingsError.UnknownError);
+            .ToEitherAsync(Contracts.SetPrivacySettingsError.UnknownError);
       }
    }
 }

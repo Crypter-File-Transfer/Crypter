@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using Crypter.Common.Infrastructure;
 using NUnit.Framework;
-using System;
 
 namespace Crypter.Test.Common_Tests.Infrastructure_Tests
 {

@@ -24,7 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Crypter.Common.Primitives;
 using Crypter.Core.DataContextExtensions;
 using Crypter.Core.Entities;
@@ -33,22 +35,19 @@ using Crypter.Core.Features.UserEmailVerification;
 using Crypter.Core.Features.UserSettings.NotificationSettings;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using EasyMonads;
+using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 
 namespace Crypter.Core.Features.UserSettings.ContactInfoSettings
 {
    internal static class UserContactInfoSettingsCommands
    {
-      internal static async Task<Either<UpdateContactInfoSettingsError, Contracts.ContactInfoSettings>> UpdateContactInfoSettingsAsync(DataContext dataContext, IPasswordHashService passwordHashService, ServerPasswordSettings serverPasswordSettings, Guid userId, UpdateContactInfoSettingsRequest request)
+      internal static async Task<Either<Contracts.UpdateContactInfoSettingsError, Contracts.ContactInfoSettings>> UpdateContactInfoSettingsAsync(DataContext dataContext, IPasswordHashService passwordHashService, ServerPasswordSettings serverPasswordSettings, Guid userId, Contracts.UpdateContactInfoSettingsRequest request)
       {
          if (!UserAuthenticationValidators.ValidatePassword(request.CurrentPassword))
          {
-            return UpdateContactInfoSettingsError.InvalidPassword;
+            return Contracts.UpdateContactInfoSettingsError.InvalidPassword;
          }
 
          bool noEmailAddressProvided = string.IsNullOrEmpty(request.EmailAddress);
@@ -56,7 +55,7 @@ namespace Crypter.Core.Features.UserSettings.ContactInfoSettings
          bool validEmailAddressOption = noEmailAddressProvided || validEmailAddressProvided;
          if (!validEmailAddressOption)
          {
-            return UpdateContactInfoSettingsError.InvalidEmailAddress;
+            return Contracts.UpdateContactInfoSettingsError.InvalidEmailAddress;
          }
 
          Maybe<EmailAddress> newEmailAddress = validEmailAddressProvided
@@ -69,19 +68,19 @@ namespace Crypter.Core.Features.UserSettings.ContactInfoSettings
 
          if (user is null)
          {
-            return UpdateContactInfoSettingsError.UserNotFound;
+            return Contracts.UpdateContactInfoSettingsError.UserNotFound;
          }
 
          if (user.ClientPasswordVersion != serverPasswordSettings.ClientVersion
             || user.ServerPasswordVersion != passwordHashService.LatestServerPasswordVersion)
          {
-            return UpdateContactInfoSettingsError.PasswordNeedsMigration;
+            return Contracts.UpdateContactInfoSettingsError.PasswordNeedsMigration;
          }
 
          bool correctPasswordProvided = passwordHashService.VerifySecurePasswordHash(request.CurrentPassword, user.PasswordHash, user.PasswordSalt, passwordHashService.LatestServerPasswordVersion);
          if (!correctPasswordProvided)
          {
-            return UpdateContactInfoSettingsError.InvalidPassword;
+            return Contracts.UpdateContactInfoSettingsError.InvalidPassword;
          }
 
          if (user.EmailAddress != newEmailAddress.Match(() => string.Empty, x => x.Value))
@@ -92,7 +91,7 @@ namespace Crypter.Core.Features.UserSettings.ContactInfoSettings
 
             if (!isEmailAddressAvailableForUser)
             {
-               return UpdateContactInfoSettingsError.EmailAddressUnavailable;
+               return Contracts.UpdateContactInfoSettingsError.EmailAddressUnavailable;
             }
 
             user.EmailAddress = newEmailAddress.Match(
@@ -111,7 +110,7 @@ namespace Crypter.Core.Features.UserSettings.ContactInfoSettings
          }
 
          return await UserContactInfoSettingsQueries.GetContactInfoSettingsAsync(dataContext, userId)
-            .ToEitherAsync(UpdateContactInfoSettingsError.UnknownError);
+            .ToEitherAsync(Contracts.UpdateContactInfoSettingsError.UnknownError);
       }
    }
 }

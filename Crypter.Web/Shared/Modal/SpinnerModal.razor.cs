@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Web.Shared.Modal.Template;
-using Microsoft.AspNetCore.Components;
 using System.Threading.Tasks;
+using Crypter.Web.Shared.Modal.Template;
 using EasyMonads;
+using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.Modal
 {

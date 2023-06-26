@@ -24,14 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Contracts;
 using System;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Interfaces.HttpClients;
+using Crypter.Common.Contracts;
 using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients

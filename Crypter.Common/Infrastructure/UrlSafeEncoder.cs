@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Microsoft.IdentityModel.Tokens;
 using System;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Crypter.Common.Infrastructure
 {

@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
-using Crypter.Crypto.Common;
 using System;
 using System.Linq;
 using System.Text;
+using Crypter.Common.Primitives;
+using Crypter.Crypto.Common;
 
 namespace Crypter.Core.Features.UserRecovery
 {

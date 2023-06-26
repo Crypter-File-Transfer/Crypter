@@ -24,17 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Net;
+using System.Threading.Tasks;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserRecovery.RequestRecovery;
 using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Primitives;
 using Crypter.Core.Services;
+using EasyMonads;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using System.Threading.Tasks;
-using EasyMonads;
 
 namespace Crypter.API.Controllers
 {

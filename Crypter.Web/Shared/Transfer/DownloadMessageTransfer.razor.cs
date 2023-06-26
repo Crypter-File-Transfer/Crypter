@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Contracts.Features.Transfer;
-using Microsoft.AspNetCore.Components.Web;
-using System.Threading.Tasks;
 using EasyMonads;
+using Microsoft.AspNetCore.Components.Web;
 
 namespace Crypter.Web.Shared.Transfer
 {

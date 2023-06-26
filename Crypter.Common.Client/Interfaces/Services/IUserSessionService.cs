@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Primitives;
-using System;
-using System.Threading.Tasks;
 using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Services

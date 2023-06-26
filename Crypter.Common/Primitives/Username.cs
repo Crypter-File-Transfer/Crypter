@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Text.RegularExpressions;
 using Crypter.Common.Primitives.Enums;
 using Crypter.Common.Primitives.ValidationHandlers;
-using System.Text.RegularExpressions;
 using EasyMonads;
 using ValueOf;
 

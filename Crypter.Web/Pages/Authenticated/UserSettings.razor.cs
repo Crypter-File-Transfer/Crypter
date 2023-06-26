@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Web.Pages.Authenticated.Base;
 using System.Threading.Tasks;
+using Crypter.Web.Pages.Authenticated.Base;
 
 namespace Crypter.Web.Pages
 {

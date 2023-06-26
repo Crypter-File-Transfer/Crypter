@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Runtime.Versioning;
 using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
 using Geralt;
-using System;
-using System.Runtime.Versioning;
 using static Geralt.IncrementalXChaCha20Poly1305;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
