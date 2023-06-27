@@ -24,13 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Metrics;
-using Crypter.Core.Settings;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.Metrics;
+using Crypter.Core.Settings;
+using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Metrics
 {

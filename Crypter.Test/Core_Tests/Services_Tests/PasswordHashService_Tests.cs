@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Collections.Generic;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
@@ -31,8 +33,6 @@ using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {

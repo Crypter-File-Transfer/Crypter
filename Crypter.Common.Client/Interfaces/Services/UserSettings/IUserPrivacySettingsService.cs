@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
-using Crypter.Common.Monads;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Services.UserSettings
 {

@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Threading.Tasks;
 using Crypter.Common.Infrastructure;
 using Crypter.Common.Primitives;
 using Crypter.Core.Models;
@@ -34,8 +36,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using MimeKit;
-using System;
-using System.Threading.Tasks;
 
 namespace Crypter.Core.Services
 {

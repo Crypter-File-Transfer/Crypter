@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Contacts;
-using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
-using Crypter.Common.Monads;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Services
 {

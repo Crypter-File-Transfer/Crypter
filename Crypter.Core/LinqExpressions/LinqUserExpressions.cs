@@ -24,13 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Linq;
+using System.Linq.Expressions;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Enums;
 using Crypter.Core.Entities;
-using System;
-using System.Linq;
-using System.Linq.Expressions;
 
 namespace Crypter.Core.Extensions
 {

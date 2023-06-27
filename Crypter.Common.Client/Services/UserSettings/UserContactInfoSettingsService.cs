@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Interfaces.Services.UserSettings;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using System;
-using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Services.UserSettings
 {

@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.CryptoHash;
 using System.Security.Cryptography;
+using Crypter.Crypto.Common.CryptoHash;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers
 {

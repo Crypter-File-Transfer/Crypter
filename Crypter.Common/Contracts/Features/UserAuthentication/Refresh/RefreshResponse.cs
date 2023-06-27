@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
 using System.Text.Json.Serialization;
+using Crypter.Common.Enums;
 
 namespace Crypter.Common.Contracts.Features.UserAuthentication
 {

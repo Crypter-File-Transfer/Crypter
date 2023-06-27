@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.ConstantTime;
 using System;
+using Crypter.Crypto.Common.ConstantTime;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {

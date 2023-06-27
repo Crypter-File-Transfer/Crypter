@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Models;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Web.Repositories;
+using EasyMonads;
 using Moq;
 using NUnit.Framework;
-using System.Threading.Tasks;
 
 namespace Crypter.Test.Web_Tests
 {

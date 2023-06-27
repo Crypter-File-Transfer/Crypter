@@ -3,10 +3,10 @@
  * Url: https://brokul.dev/sending-files-and-additional-data-using-httpclient-in-net-core
  */
 
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Crypter.API.Contracts.ModelBinders
 {

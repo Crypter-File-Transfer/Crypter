@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
-using Crypter.Common.Monads;
-using Crypter.Core.Features.UserSettings.ContactInfoSettings;
-using Crypter.Core.Models;
-using Hangfire;
-using Microsoft.Extensions.Options;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+using Crypter.Core.Features.UserSettings.ContactInfoSettings;
+using Crypter.Core.Models;
+using EasyMonads;
+using Hangfire;
+using Microsoft.Extensions.Options;
 
 namespace Crypter.Core.Services.UserSettings
 {

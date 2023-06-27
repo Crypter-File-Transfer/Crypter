@@ -24,6 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Models;
@@ -35,7 +39,6 @@ using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Infrastructure;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core;
 using Crypter.Core.Entities;
@@ -43,14 +46,11 @@ using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.DigitalSignature;
 using Crypter.Crypto.Providers.Default;
 using Crypter.Test.Integration_Tests.Common;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
-using System;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests.UserRecovery_Tests
 {

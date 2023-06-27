@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts;
-using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Net;
+using Crypter.Common.Contracts;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Crypter.API.Controllers
 {

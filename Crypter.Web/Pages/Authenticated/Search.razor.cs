@@ -24,18 +24,18 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Client.Interfaces.Services;
-using Crypter.Common.Contracts.Features.Users;
-using Crypter.Common.Monads;
-using Crypter.Web.Helpers;
-using Crypter.Web.Pages.Authenticated.Base;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Routing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Interfaces.HttpClients;
+using Crypter.Common.Client.Interfaces.Services;
+using Crypter.Common.Contracts.Features.Users;
+using Crypter.Web.Helpers;
+using Crypter.Web.Pages.Authenticated.Base;
+using EasyMonads;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 
 namespace Crypter.Web.Pages
 {

@@ -24,18 +24,18 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Runtime.Versioning;
+using System.Threading.Tasks;
 using BlazorSodium.Services;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Services;
-using Crypter.Common.Monads;
 using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
+using EasyMonads;
 using Microsoft.AspNetCore.Components;
-using System;
-using System.Runtime.Versioning;
-using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
 {

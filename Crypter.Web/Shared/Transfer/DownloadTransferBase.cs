@@ -24,13 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
+using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.IdentityModel.Tokens;
-using System;
 
 namespace Crypter.Web.Shared.Transfer
 {

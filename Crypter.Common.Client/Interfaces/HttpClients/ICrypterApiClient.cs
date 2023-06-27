@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.Requests;
 using System;
+using Crypter.Common.Client.Interfaces.Requests;
 
 namespace Crypter.Common.Client.Interfaces.HttpClients
 {

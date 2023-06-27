@@ -24,26 +24,26 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Enums;
-using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
-using Crypter.Core.DataContextExtensions;
-using Crypter.Core.Entities;
-using Crypter.Core.Features.UserAuthentication;
-using Crypter.Core.Identity;
-using Crypter.Core.Models;
-using Hangfire;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Enums;
+using Crypter.Common.Primitives;
+using Crypter.Core.DataContextExtensions;
+using Crypter.Core.Entities;
+using Crypter.Core.Features.UserAuthentication;
+using Crypter.Core.Identity;
+using Crypter.Core.Models;
+using EasyMonads;
+using Hangfire;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 namespace Crypter.Core.Services
 {

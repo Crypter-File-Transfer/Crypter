@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Runtime.Versioning;
 using BlazorSodium.Sodium;
 using Crypter.Crypto.Common.Random;
-using System.Runtime.Versioning;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers
 {

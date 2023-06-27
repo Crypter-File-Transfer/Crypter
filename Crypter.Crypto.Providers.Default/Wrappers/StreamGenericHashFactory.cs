@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.StreamGenericHash;
 using System;
+using Crypter.Crypto.Common.StreamGenericHash;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {

@@ -24,6 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
@@ -31,13 +36,8 @@ using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Services
 {

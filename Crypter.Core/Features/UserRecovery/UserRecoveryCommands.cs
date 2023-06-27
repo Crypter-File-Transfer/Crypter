@@ -24,9 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Infrastructure;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
 using Crypter.Core.Features.Keys;
@@ -35,10 +37,8 @@ using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
+using EasyMonads;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Crypter.Core.Features.UserRecovery
 {
