@@ -31,6 +31,6 @@ namespace Crypter.Crypto.Common.StreamGenericHash
    public interface IStreamGenericHash
    {
       void Update(ReadOnlySpan<byte> data);
-      byte[] Finalize();
+      byte[] Complete();
    }
 }
