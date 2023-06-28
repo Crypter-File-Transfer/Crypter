@@ -43,7 +43,7 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
          _state = new IncrementalBLAKE2b(checked((int)hashLength), key);
       }
 
-      public byte[] Finalize()
+      public byte[] Complete()
       {
          byte[] buffer = new byte[_hashLength];
          _state.Finalize(buffer);
