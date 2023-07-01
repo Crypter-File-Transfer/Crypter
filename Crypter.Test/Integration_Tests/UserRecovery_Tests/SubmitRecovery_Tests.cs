@@ -45,7 +45,6 @@ using Crypter.Core.Entities;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.DigitalSignature;
 using Crypter.Crypto.Providers.Default;
-using Crypter.Test.Integration_Tests.Common;
 using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -57,41 +56,37 @@ namespace Crypter.Test.Integration_Tests.UserRecovery_Tests
    [TestFixture]
    internal class SubmitRecovery_Tests
    {
-      private Setup _setup;
       private WebApplicationFactory<Program> _factory;
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
 
-      DefaultCryptoProvider _cryptoProvider;
+      private ICryptoProvider _mockCryptoProvider;
+      private DefaultCryptoProvider _cryptoProvider;
       private Ed25519KeyPair _knownKeyPair;
 
       [OneTimeSetUp]
-      public async Task OneTimeSetUp()
+      public void SetupFixture()
       {
-         _setup = new Setup();
-         await _setup.InitializeRespawnerAsync();
-
          _cryptoProvider = new DefaultCryptoProvider();
          _knownKeyPair = _cryptoProvider.DigitalSignature.GenerateKeyPair();
-
-         ICryptoProvider mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_knownKeyPair).Object;
-         IServiceCollection overrideServices = new ServiceCollection();
-         overrideServices.AddSingleton(mockCryptoProvider);
-
-         _factory = await Setup.SetupWebApplicationFactoryAsync(overrideServices);
-         (_client, _clientTokenRepository) = Setup.SetupCrypterApiClient(_factory.CreateClient());
+         _mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_knownKeyPair).Object;
       }
-
-      [TearDown]
-      public async Task TearDown()
+      
+      [SetUp]
+      public async Task SetupTestAsync()
       {
-         await _setup.ResetServerDataAsync();
-      }
+         IServiceCollection overrideServices = new ServiceCollection();
+         overrideServices.AddSingleton(_mockCryptoProvider);
 
-      [OneTimeTearDown]
-      public async Task OneTimeTearDown()
+         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync(overrideServices);
+         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      }
+      
+      [TearDown]
+      public async Task TeardownTestAsync()
       {
          await _factory.DisposeAsync();
+         await AssemblySetup.ResetServerDataAsync();
       }
 
       [TestCase(false)]
@@ -125,7 +120,8 @@ namespace Crypter.Test.Integration_Tests.UserRecovery_Tests
             recoveryKey.IfNone(Assert.Fail);
          }
 
-         DataContext dataContext = _factory.Services.GetRequiredService<DataContext>();
+         using IServiceScope scope = _factory.Services.CreateScope();
+         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
          UserEmailVerificationEntity verificationData = await dataContext.UserEmailVerifications
             .Where(x => x.User.Username == TestData.DefaultUsername)
             .FirstAsync();
@@ -177,7 +173,8 @@ namespace Crypter.Test.Integration_Tests.UserRecovery_Tests
          // Allow the background service to "send" the verification email and save the email verification data
          await Task.Delay(5000);
 
-         DataContext dataContext = _factory.Services.GetRequiredService<DataContext>();
+         using IServiceScope scope = _factory.Services.CreateScope();
+         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
          UserEmailVerificationEntity verificationData = await dataContext.UserEmailVerifications
             .Where(x => x.User.Username == TestData.DefaultUsername)
             .FirstAsync();

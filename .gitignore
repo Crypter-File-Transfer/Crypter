@@ -451,7 +451,7 @@ $RECYCLE.BIN/
 !.vscode/extensions.json
 
 # Container data
-Containers/API/storage/
-Containers/Caddy/tls/
-Containers/PostgreSQL/data
-Containers/Caddy/data
+Volumes/API/storage/
+Volumes/Caddy/tls/
+Volumes/PostgreSQL/data
+Volumes/Caddy/data

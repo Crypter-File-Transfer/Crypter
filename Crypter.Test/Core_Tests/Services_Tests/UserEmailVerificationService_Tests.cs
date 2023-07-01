@@ -27,10 +27,13 @@
 using System;
 using System.Threading.Tasks;
 using Crypter.Common.Primitives;
+using Crypter.Core;
 using Crypter.Core.Entities;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
@@ -38,23 +41,33 @@ namespace Crypter.Test.Core_Tests.Services_Tests
    [TestFixture]
    internal class UserEmailVerificationService_Tests
    {
+      private WebApplicationFactory<Program> _factory;
+      private IServiceScope _scope;
+      private DataContext _dataContext;
+      
       private ICryptoProvider _cryptoProvider;
       private UserEmailVerificationService _sut;
-      private TestDataContext _testContext;
 
-      [OneTimeSetUp]
-      public void SetupOnce()
+      [SetUp]
+      public async Task SetupTestAsync()
       {
-         _testContext = new TestDataContext(GetType().Name);
-         _testContext.EnsureCreated();
          _cryptoProvider = new DefaultCryptoProvider();
-         _sut = new UserEmailVerificationService(_testContext, _cryptoProvider);
+         
+         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+         await AssemblySetup.InitializeRespawnerAsync();
+         
+         _scope = _factory.Services.CreateScope();
+         _dataContext = _scope.ServiceProvider.GetRequiredService<DataContext>();
+         
+         _sut = new UserEmailVerificationService(_dataContext, _cryptoProvider);
       }
 
       [TearDown]
-      public void Teardown()
+      public async Task TeardownTestAsync()
       {
-         _testContext.Reset();
+         _scope.Dispose();
+         await _factory.DisposeAsync();
+         await AssemblySetup.ResetServerDataAsync();
       }
 
       [Test]
@@ -68,8 +81,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public async Task Verification_Parameters_Not_Created_If_User_Email_Already_Verified()
       {
          UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"), new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, true, DateTime.UtcNow, DateTime.UtcNow);
-         _testContext.Users.Add(newUser);
-         await _testContext.SaveChangesAsync();
+         _dataContext.Users.Add(newUser);
+         await _dataContext.SaveChangesAsync();
 
          var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
          Assert.IsTrue(result.IsNone);
@@ -81,8 +94,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
          UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"), new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
          newUser.EmailVerification = new UserEmailVerificationEntity(newUser.Id, Guid.NewGuid(), new byte[] { 0x00 }, DateTime.UtcNow);
 
-         _testContext.Users.Add(newUser);
-         await _testContext.SaveChangesAsync();
+         _dataContext.Users.Add(newUser);
+         await _dataContext.SaveChangesAsync();
 
          var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
          Assert.IsTrue(result.IsNone);
@@ -94,8 +107,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public async Task Verification_Parameters_Not_Created_If_User_Email_Address_Is_Invalid(string emailAddress)
       {
          UserEntity newUser = new UserEntity(Guid.NewGuid(), "username", emailAddress, new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
-         _testContext.Users.Add(newUser);
-         await _testContext.SaveChangesAsync();
+         _dataContext.Users.Add(newUser);
+         await _dataContext.SaveChangesAsync();
 
          var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
          Assert.IsTrue(result.IsNone);
@@ -105,8 +118,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       public async Task Verification_Parameters_Created_If_All_Criteria_Are_Satisfied()
       {
          UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"), new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
-         _testContext.Users.Add(newUser);
-         await _testContext.SaveChangesAsync();
+         _dataContext.Users.Add(newUser);
+         await _dataContext.SaveChangesAsync();
 
          var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
          Assert.IsTrue(result.IsSome);
