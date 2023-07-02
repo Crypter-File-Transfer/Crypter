@@ -40,18 +40,6 @@ namespace Crypter.Core
       private readonly ILogger<DataContext> _logger;
 
       /// <summary>
-      /// This constructor is used by the TestDataContext.
-      /// </summary>
-      public DataContext()
-      {
-         _logger = LoggerFactory.Create(builder =>
-         {
-            builder.ClearProviders();
-            builder.AddConsole();
-         }).CreateLogger<DataContext>();
-      }
-
-      /// <summary>
       /// This constructor is used during migrations.
       /// </summary>
       /// <param name="options"></param>
