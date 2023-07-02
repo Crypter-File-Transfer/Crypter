@@ -88,7 +88,7 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [Test]
       public async Task Refresh_Fails_Expired_Token()
       {
-         IConfiguration apiConfiguration = AssemblySetup.GetTestSettings();
+         IConfiguration apiConfiguration = SettingsReader.GetTestSettings();
          TokenSettings apiTokenSettings = apiConfiguration.GetSection("TokenSettings").Get<TokenSettings>();
 
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);

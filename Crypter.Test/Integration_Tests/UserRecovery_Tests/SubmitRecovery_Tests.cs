@@ -78,7 +78,7 @@ namespace Crypter.Test.Integration_Tests.UserRecovery_Tests
          IServiceCollection overrideServices = new ServiceCollection();
          overrideServices.AddSingleton(_mockCryptoProvider);
 
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync(overrideServices);
+         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync(true, overrideServices);
          (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
       }
       

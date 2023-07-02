@@ -28,15 +28,12 @@ using System;
 using System.Data;
 using System.IO;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading.Tasks;
 using Crypter.Common.Client.HttpClients;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Repositories;
 using Crypter.Core;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -45,7 +42,6 @@ using Npgsql;
 using NUnit.Framework;
 using Respawn;
 using Respawn.Graph;
-using Testcontainers.PostgreSql;
 
 namespace Crypter.Test
 {
@@ -54,11 +50,10 @@ namespace Crypter.Test
    {
       public static string CrypterConnectionString;
       public static string HangfireConnectionString;
-
       public static string FileStorageLocation;
-      
-      private IContainer _postgresContainer;
-      
+
+      private ContainerService _containerService;
+
       private static Respawner _crypterRespawner;
       private static NpgsqlConnection _crypterConnection;
 
@@ -68,41 +63,10 @@ namespace Crypter.Test
       [OneTimeSetUp]
       public async Task SetupFixtureAsync()
       {
-         ContainerSettings containerSettings = GetContainerSettings();
-         
-         _postgresContainer = new PostgreSqlBuilder()
-            .WithImage(containerSettings.Image)
-            .WithPassword(containerSettings.SuperPassword)
-            .WithPortBinding(containerSettings.ContainerPort, true)
-            .WithBindMount(GetPostgresInitVolume(), "/docker-entrypoint-initdb.d")
-            .WithEnvironment("POSTGRES_C_PASSWORD", containerSettings.CrypterUserPassword)
-            .WithEnvironment("POSTGRES_HF_PASSWORD", containerSettings.HangfireUserPassword)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilCommandIsCompleted("pg_isready -h 'localhost' -p '5432'"))
-            .Build();
-
-         await _postgresContainer.StartAsync();
-
-         NpgsqlConnectionStringBuilder crypterConnectionStringBuilder = new NpgsqlConnectionStringBuilder
-         {
-            Host = _postgresContainer.Hostname,
-            Port = _postgresContainer.GetMappedPublicPort(containerSettings.ContainerPort),
-            Database = containerSettings.CrypterDatabaseName,
-            Username = containerSettings.CrypterUserName,
-            Password = containerSettings.CrypterUserPassword
-         };
-
-         CrypterConnectionString = crypterConnectionStringBuilder.ConnectionString;
-
-         NpgsqlConnectionStringBuilder hangfireConnectionStringBuilder = new NpgsqlConnectionStringBuilder
-         {
-            Host = _postgresContainer.Hostname,
-            Port = _postgresContainer.GetMappedPublicPort(containerSettings.ContainerPort),
-            Database = containerSettings.HangfireDatabaseName,
-            Username = containerSettings.HangfireUserName,
-            Password = containerSettings.HangfireUserPassword
-         };
-
-         HangfireConnectionString = hangfireConnectionStringBuilder.ConnectionString;
+         _containerService = new ContainerService();
+         await _containerService.StartPostgresContainerAsync();
+         CrypterConnectionString = _containerService.CrypterConnectionString;
+         HangfireConnectionString = _containerService.HangfireConnectionString;
          
          string osName = OperatingSystem.IsWindows()
             ? "Windows"
@@ -110,7 +74,7 @@ namespace Crypter.Test
                ? "Linux"
                : throw new NotImplementedException("Operating system not implemented.");
 
-         FileStorageLocation = AssemblySetup.GetTestSettings()
+         FileStorageLocation = SettingsReader.GetTestSettings()
             .GetSection($"IntegrationTestingOnly:TransferStorageLocation:{osName}")
             .Get<string>();
       }
@@ -118,19 +82,19 @@ namespace Crypter.Test
       [OneTimeTearDown]
       public async Task TeardownFixtureAsync()
       {
-         if (_postgresContainer is not null)
+         if (_containerService is not null)
          {
-            await _postgresContainer.StopAsync();
+            await _containerService.DisposeAsync();
          }
       }
 
-      internal static async Task<WebApplicationFactory<Program>> CreateWebApplicationFactoryAsync(IServiceCollection overrides = null)
+      internal static async Task<WebApplicationFactory<Program>> CreateWebApplicationFactoryAsync(bool ensureDatabaseCreated = true, IServiceCollection overrides = null)
       {
          WebApplicationFactory<Program> factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
                builder
-                  .UseConfiguration(GetTestSettings())
+                  .UseConfiguration(SettingsReader.GetTestSettings())
                   .UseEnvironment("Test")
                   .ConfigureServices(services =>
                   {
@@ -150,9 +114,12 @@ namespace Crypter.Test
                builder.UseSetting("TransferStorageSettings:Location", FileStorageLocation);
             });
 
-         using IServiceScope scope = factory.Services.CreateScope();
-         await using DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-         await dataContext.Database.EnsureCreatedAsync();
+         if (ensureDatabaseCreated)
+         {
+            using IServiceScope scope = factory.Services.CreateScope();
+            await using DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+            await dataContext.Database.EnsureCreatedAsync();
+         }
 
          return factory;
       }
@@ -201,54 +168,6 @@ namespace Crypter.Test
 
          return respawner;
       }
-      
-      internal static IConfiguration GetTestSettings()
-      {
-         DirectoryInfo repoDirectory = GetRepoPath();
-
-         string testSettings = Path.Join(repoDirectory.FullName, "Crypter.Test", "appsettings.Test.json");
-         if (!Path.Exists(testSettings))
-         {
-            throw new FileNotFoundException("Failed to find ./Crypter.Test/appsettings.Test.json.");
-         }
-
-         return new ConfigurationBuilder()
-            .AddJsonFile(testSettings)
-            .Build();
-      }
-      
-      private static DirectoryInfo GetRepoPath()
-      {
-         string assemblyLocation = Assembly.GetExecutingAssembly().Location;
-         
-         DirectoryInfo directory = new DirectoryInfo(assemblyLocation);
-         do
-         {
-            directory = directory.Parent;
-         } while (directory.Name != "Crypter.Test");
-
-         return directory.Parent;
-      }
-      
-      private static string GetPostgresInitVolume()
-      {
-         DirectoryInfo repoDirectory = GetRepoPath();
-
-         string postgresInitVolume = Path.Join(repoDirectory.FullName, "Volumes", "PostgreSQL", "postgres-init-files");
-         if (!Path.Exists(postgresInitVolume))
-         {
-            throw new FileNotFoundException("Failed to find the ./Volumes/PostgreSQL/postgres-init-files directory.");
-         }
-
-         return postgresInitVolume;
-      }
-
-      private static ContainerSettings GetContainerSettings()
-      {
-         return GetTestSettings()
-            .GetSection("IntegrationTestingOnly:PostgresContainer")
-            .Get<ContainerSettings>();
-      }
 
       private static async Task ResetDatabaseAsync(Respawner respawner, NpgsqlConnection connection)
       {
@@ -275,23 +194,11 @@ namespace Crypter.Test
             Directory.Delete(FileStorageLocation, true);
          }
          catch (Exception)
-         { }
+         {
+         }
 
          await ResetDatabaseAsync(_crypterRespawner, _crypterConnection);
          await ResetDatabaseAsync(_hangfireRespawner, _hangfireConnection);
-      }
-      
-      private class ContainerSettings
-      {
-         public string Image { get; init; }
-         public int ContainerPort { get; init; }
-         public string SuperPassword { get; init; }
-         public string CrypterDatabaseName { get; init; }
-         public string CrypterUserName { get; init; }
-         public string CrypterUserPassword { get; init; }
-         public string HangfireDatabaseName { get; init; }
-         public string HangfireUserName { get; init; }
-         public string HangfireUserPassword { get; init; }
       }
    }
 }
