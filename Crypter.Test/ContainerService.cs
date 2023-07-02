@@ -88,7 +88,7 @@ namespace Crypter.Test
          }
       }
       
-      private static PostgresContainerSettings GetPostgresContainerSettings()
+      internal static PostgresContainerSettings GetPostgresContainerSettings()
       {
          return SettingsReader.GetTestSettings()
             .GetSection("IntegrationTestingOnly:PostgresContainer")
