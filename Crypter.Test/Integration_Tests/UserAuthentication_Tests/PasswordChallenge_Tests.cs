@@ -32,7 +32,6 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
-using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
@@ -41,33 +40,23 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
    [TestFixture]
    internal class PasswordChallenge_Tests
    {
-      private Setup _setup;
       private WebApplicationFactory<Program> _factory;
-      private HttpClient _baseClient;
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
-
-      [OneTimeSetUp]
-      public async Task OneTimeSetUp()
+   
+      [SetUp]
+      public async Task SetupTestAsync()
       {
-         _setup = new Setup();
-         await _setup.InitializeRespawnerAsync();
-
-         _factory = await Setup.SetupWebApplicationFactoryAsync();
-         _baseClient = _factory.CreateClient();
-         (_client, _clientTokenRepository) = Setup.SetupCrypterApiClient(_baseClient);
+         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+         await AssemblySetup.InitializeRespawnerAsync();
       }
-
+      
       [TearDown]
-      public async Task TearDown()
-      {
-         await _setup.ResetServerDataAsync();
-      }
-
-      [OneTimeTearDown]
-      public async Task OneTimeTearDown()
+      public async Task TeardownTestAsync()
       {
          await _factory.DisposeAsync();
+         await AssemblySetup.ResetServerDataAsync();
       }
 
       [Test]
@@ -104,7 +93,8 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
          {
             Content = JsonContent.Create(request)
          };
-         HttpResponseMessage response = await _baseClient.SendAsync(requestMessage);
+         using HttpClient rawClient = _factory.CreateClient();
+         HttpResponseMessage response = await rawClient.SendAsync(requestMessage);
 
          Assert.True(registrationResult.IsRight);
          Assert.AreEqual(response.StatusCode, HttpStatusCode.Unauthorized);

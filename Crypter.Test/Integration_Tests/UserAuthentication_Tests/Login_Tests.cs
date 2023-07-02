@@ -29,7 +29,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
@@ -38,30 +37,22 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
    [TestFixture]
    internal class Login_Tests
    {
-      private Setup _setup;
       private WebApplicationFactory<Program> _factory;
       private ICrypterApiClient _client;
 
-      [OneTimeSetUp]
-      public async Task OneTimeSetUp()
+      [SetUp]
+      public async Task SetupTestAsync()
       {
-         _setup = new Setup();
-         await _setup.InitializeRespawnerAsync();
-
-         _factory = await Setup.SetupWebApplicationFactoryAsync();
-         (_client, _) = Setup.SetupCrypterApiClient(_factory.CreateClient());
+         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+         (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+         await AssemblySetup.InitializeRespawnerAsync();
       }
-
+      
       [TearDown]
-      public async Task TearDown()
-      {
-         await _setup.ResetServerDataAsync();
-      }
-
-      [OneTimeTearDown]
-      public async Task OneTimeTearDown()
+      public async Task TeardownTestAsync()
       {
          await _factory.DisposeAsync();
+         await AssemblySetup.ResetServerDataAsync();
       }
 
       [Test]

@@ -32,7 +32,6 @@ using Crypter.Common.Enums;
 using Crypter.Core;
 using Crypter.Core.Entities;
 using Crypter.Core.Identity;
-using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -44,31 +43,23 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
    [TestFixture]
    internal class Refresh_Tests
    {
-      private Setup _setup;
       private WebApplicationFactory<Program> _factory;
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
-
-      [OneTimeSetUp]
-      public async Task OneTimeSetUp()
+   
+      [SetUp]
+      public async Task SetupTestAsync()
       {
-         _setup = new Setup();
-         await _setup.InitializeRespawnerAsync();
-
-         _factory = await Setup.SetupWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = Setup.SetupCrypterApiClient(_factory.CreateClient());
+         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+         await AssemblySetup.InitializeRespawnerAsync();
       }
-
+      
       [TearDown]
-      public async Task TearDown()
-      {
-         await _setup.ResetServerDataAsync();
-      }
-
-      [OneTimeTearDown]
-      public async Task OneTimeTearDown()
+      public async Task TeardownTestAsync()
       {
          await _factory.DisposeAsync();
+         await AssemblySetup.ResetServerDataAsync();
       }
 
       [TestCase(TokenType.Session)]
@@ -97,7 +88,7 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
       [Test]
       public async Task Refresh_Fails_Expired_Token()
       {
-         IConfigurationRoot apiConfiguration = Setup.GetIntegrationConfiguration();
+         IConfiguration apiConfiguration = SettingsReader.GetTestSettings();
          TokenSettings apiTokenSettings = apiConfiguration.GetSection("TokenSettings").Get<TokenSettings>();
 
          RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
@@ -135,7 +126,8 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         DataContext dataContext = _factory.Services.GetService<DataContext>();
+         using IServiceScope scope = _factory.Services.CreateScope();
+         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
          UserTokenEntity refreshTokenEntity = await dataContext.UserTokens
             .SingleOrDefaultAsync();
          dataContext.UserTokens.Remove(refreshTokenEntity);

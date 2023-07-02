@@ -120,7 +120,7 @@ if (app.Environment.IsDevelopment())
    app.UseSwaggerUI();
 
    using IServiceScope serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope();
-   DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+   using DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
    context.Database.EnsureCreated();
 }
 else
