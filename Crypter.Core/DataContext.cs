@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Collections.Generic;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 
 namespace Crypter.Core
 {
@@ -38,18 +38,6 @@ namespace Crypter.Core
       public const string SchemaName = "crypter";
 
       private readonly ILogger<DataContext> _logger;
-
-      /// <summary>
-      /// This constructor is used by the TestDataContext.
-      /// </summary>
-      public DataContext()
-      {
-         _logger = LoggerFactory.Create(builder =>
-         {
-            builder.ClearProviders();
-            builder.AddConsole();
-         }).CreateLogger<DataContext>();
-      }
 
       /// <summary>
       /// This constructor is used during migrations.

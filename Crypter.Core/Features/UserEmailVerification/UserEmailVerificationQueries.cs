@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Crypter.Common.Primitives;
 using Crypter.Core.Models;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.DigitalSignature;
+using EasyMonads;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Crypter.Core.Features.UserEmailVerification
 {

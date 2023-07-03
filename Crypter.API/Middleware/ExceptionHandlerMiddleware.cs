@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts;
-using Crypter.Common.Infrastructure;
-using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts;
+using Crypter.Common.Infrastructure;
+using Microsoft.AspNetCore.Http;
 
 namespace Crypter.API.Middleware
 {

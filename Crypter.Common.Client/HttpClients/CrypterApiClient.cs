@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Net.Http;
 using Crypter.Common.Client.HttpClients.Requests;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Requests;
-using System;
-using System.Net.Http;
 
 namespace Crypter.Common.Client.HttpClients
 {

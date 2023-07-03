@@ -24,19 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Enums;
-using Crypter.Common.Monads;
-using Crypter.Core.Entities;
-using Crypter.Core.Extensions;
-using Crypter.Core.Repositories;
-using Hangfire;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Enums;
+using Crypter.Core.Entities;
+using Crypter.Core.Extensions;
+using Crypter.Core.Repositories;
+using EasyMonads;
+using Hangfire;
+using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Services
 {

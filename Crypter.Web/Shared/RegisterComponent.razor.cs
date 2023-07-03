@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Enums;
 using Crypter.Web.Models.Forms;
+using EasyMonads;
 using Microsoft.AspNetCore.Components;
-using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared
 {

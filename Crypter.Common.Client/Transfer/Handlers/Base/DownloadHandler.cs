@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.IO;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.StreamEncryption;
-using System;
-using System.IO;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Transfer.Handlers.Base
 {

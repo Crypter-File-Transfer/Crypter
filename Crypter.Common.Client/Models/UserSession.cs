@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
 using System.Text.Json.Serialization;
+using Crypter.Common.Primitives;
 
 namespace Crypter.Common.Client.Models
 {

@@ -24,19 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Client.Interfaces.Requests;
-using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Infrastructure;
-using Crypter.Common.Monads;
-using Crypter.Crypto.Common.StreamEncryption;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Interfaces.HttpClients;
+using Crypter.Common.Client.Interfaces.Requests;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Infrastructure;
+using Crypter.Crypto.Common.StreamEncryption;
+using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients.Requests
 {

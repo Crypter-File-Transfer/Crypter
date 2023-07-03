@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.StreamGenericHash;
 using System;
 using System.Text;
+using Crypter.Crypto.Common.StreamGenericHash;
 
 namespace Crypter.Crypto.Common.KeyExchange
 {
@@ -76,14 +76,14 @@ namespace Crypter.Crypto.Common.KeyExchange
          encryptionKeyHasher.Update(sharedKey);
          encryptionKeyHasher.Update(publicKey);
          encryptionKeyHasher.Update(generatedPublicKey);
-         byte[] encryptionKey = encryptionKeyHasher.Finalize();
+         byte[] encryptionKey = encryptionKeyHasher.Complete();
 
          IStreamGenericHash decryptionKeyHasher = _streamGenericHashFactory.NewGenericHashStream(keySize, nonce);
          decryptionKeyHasher.Update(_kxContext);
          decryptionKeyHasher.Update(sharedKey);
          decryptionKeyHasher.Update(generatedPublicKey);
          decryptionKeyHasher.Update(publicKey);
-         byte[] decryptionKey = decryptionKeyHasher.Finalize();
+         byte[] decryptionKey = decryptionKeyHasher.Complete();
 
          byte[] proof = GenerateProof(encryptionKey, decryptionKey, nonce);
          return (encryptionKey, decryptionKey, proof);
@@ -114,7 +114,7 @@ namespace Crypter.Crypto.Common.KeyExchange
          IStreamGenericHash digestor = _streamGenericHashFactory.NewGenericHashStream(ProofSize, nonce);
          digestor.Update(firstKey);
          digestor.Update(secondKey);
-         return digestor.Finalize();
+         return digestor.Complete();
       }
    }
 }

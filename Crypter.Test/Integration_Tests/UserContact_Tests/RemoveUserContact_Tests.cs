@@ -24,48 +24,39 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
-using Crypter.Test.Integration_Tests.Common;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
-using System.Threading.Tasks;
 
 namespace Crypter.Test.Integration_Tests.UserContact_Tests
 {
    [TestFixture]
    internal class RemoveUserContact_Tests
    {
-      private Setup _setup;
       private WebApplicationFactory<Program> _factory;
       private ICrypterApiClient _client;
       private ITokenRepository _clientTokenRepository;
-
-      [OneTimeSetUp]
-      public async Task OneTimeSetUp()
+   
+      [SetUp]
+      public async Task SetupTestAsync()
       {
-         _setup = new Setup();
-         await _setup.InitializeRespawnerAsync();
-
-         _factory = await Setup.SetupWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = Setup.SetupCrypterApiClient(_factory.CreateClient());
+         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+         await AssemblySetup.InitializeRespawnerAsync();
       }
-
+      
       [TearDown]
-      public async Task TearDown()
-      {
-         await _setup.ResetServerDataAsync();
-      }
-
-      [OneTimeTearDown]
-      public async Task OneTimeTearDown()
+      public async Task TeardownTestAsync()
       {
          await _factory.DisposeAsync();
+         await AssemblySetup.ResetServerDataAsync();
       }
 
-      [TestCase]
+      [Test]
       public async Task Remove_User_Contact_Works_Async()
       {
          const string contactUsername = "Samwise";

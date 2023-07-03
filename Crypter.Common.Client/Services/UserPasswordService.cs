@@ -24,19 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Enums;
-using Crypter.Common.Client.Events;
-using Crypter.Common.Client.Interfaces.Services;
-using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Monads;
-using Crypter.Common.Primitives;
-using Crypter.Crypto.Common;
-using Crypter.Crypto.Common.PasswordHash;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Enums;
+using Crypter.Common.Client.Events;
+using Crypter.Common.Client.Interfaces.Services;
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Primitives;
+using Crypter.Crypto.Common;
+using Crypter.Crypto.Common.PasswordHash;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Services
 {

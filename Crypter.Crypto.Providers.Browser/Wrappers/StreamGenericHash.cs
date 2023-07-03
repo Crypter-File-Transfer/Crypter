@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using BlazorSodium.Sodium.Models;
-using Crypter.Crypto.Common.StreamGenericHash;
 using System;
 using System.Runtime.Versioning;
+using BlazorSodium.Sodium.Models;
+using Crypter.Crypto.Common.StreamGenericHash;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers
 {
@@ -47,7 +47,7 @@ namespace Crypter.Crypto.Providers.Browser.Wrappers
          _stateAddress = BlazorSodium.Sodium.GenericHash.Crypto_GenericHash_Init(_hashLength, keyBytes);
       }
 
-      public byte[] Finalize()
+      public byte[] Complete()
       {
          return BlazorSodium.Sodium.GenericHash.Crypto_GenericHash_Final(_stateAddress, _hashLength);
       }

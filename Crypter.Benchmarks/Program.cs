@@ -24,8 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using BenchmarkDotNet.Running;
-
 namespace Crypter.Benchmarks
 {
    internal class Program

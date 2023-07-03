@@ -24,20 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
-using Crypter.Common.Monads;
-using Crypter.Core.Entities;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Crypter.Core.Entities;
+using EasyMonads;
+using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 
 namespace Crypter.Core.Features.UserSettings.NotificationSettings
 {
    internal static class UserNotificationSettingsCommands
    {
-      internal static async Task<Either<UpdateNotificationSettingsError, Contracts.NotificationSettings>> UpdateNotificationSettingsAsync(DataContext dataContext, Guid userId, Contracts.NotificationSettings request)
+      internal static async Task<Either<Contracts.UpdateNotificationSettingsError, Contracts.NotificationSettings>> UpdateNotificationSettingsAsync(DataContext dataContext, Guid userId, Contracts.NotificationSettings request)
       {
          var userData = await dataContext.Users
             .Where(x => x.Id == userId)
@@ -46,12 +45,12 @@ namespace Crypter.Core.Features.UserSettings.NotificationSettings
 
          if (userData is null)
          {
-            return UpdateNotificationSettingsError.UnknownError;
+            return Contracts.UpdateNotificationSettingsError.UnknownError;
          }
 
          if (!userData.EmailVerified && request.EmailNotifications)
          {
-            return UpdateNotificationSettingsError.EmailAddressNotVerified;
+            return Contracts.UpdateNotificationSettingsError.EmailAddressNotVerified;
          }
 
          if (userData.NotificationSetting is null)
@@ -68,7 +67,7 @@ namespace Crypter.Core.Features.UserSettings.NotificationSettings
          await dataContext.SaveChangesAsync();
 
          return await UserNotificationSettingsQueries.GetUserNotificationSettingsAsync(dataContext, userId)
-            .ToEitherAsync(UpdateNotificationSettingsError.UnknownError);
+            .ToEitherAsync(Contracts.UpdateNotificationSettingsError.UnknownError);
       }
 
       internal static async Task ResetUserNotificationSettingsAsync(DataContext dataContext, Guid userId, bool saveChanges)

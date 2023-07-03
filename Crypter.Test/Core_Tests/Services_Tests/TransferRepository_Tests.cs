@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Enums;
-using Crypter.Common.Monads;
-using Crypter.Core.Repositories;
-using Crypter.Core.Settings;
-using Microsoft.Extensions.Options;
-using NUnit.Framework;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Crypter.Common.Enums;
+using Crypter.Core.Repositories;
+using Crypter.Core.Settings;
+using EasyMonads;
+using Microsoft.Extensions.Options;
+using NUnit.Framework;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {
@@ -40,7 +40,6 @@ namespace Crypter.Test.Core_Tests.Services_Tests
    internal class TransferRepository_Tests
    {
       private TransferRepository _sut;
-      private string _storageLocation;
 
       [OneTimeSetUp]
       public void OneTimeSetup()
@@ -50,14 +49,10 @@ namespace Crypter.Test.Core_Tests.Services_Tests
 
       private void SetupRepository()
       {
-         _storageLocation = OperatingSystem.IsLinux()
-            ? "/home/runner/work/Crypter/crypter_files"
-            : "C:\\crypter_files";
-
          TransferStorageSettings settings = new TransferStorageSettings
          {
             AllocatedGB = 1,
-            Location = _storageLocation
+            Location = AssemblySetup.FileStorageLocation
          };
          IOptions<TransferStorageSettings> options = Options.Create(settings);
          _sut = new TransferRepository(options);
@@ -66,7 +61,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
       [OneTimeTearDown]
       public void OneTimeTearDown()
       {
-         Directory.Delete(_storageLocation, true);
+         Directory.Delete(AssemblySetup.FileStorageLocation, true);
       }
 
       [TestCase(TransferUserType.Anonymous)]

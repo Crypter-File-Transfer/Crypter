@@ -24,15 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Models;
 using Crypter.Web.Repositories;
 using Microsoft.JSInterop;
 using Moq;
 using NUnit.Framework;
-using System;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Crypter.Test.Web_Tests
 {

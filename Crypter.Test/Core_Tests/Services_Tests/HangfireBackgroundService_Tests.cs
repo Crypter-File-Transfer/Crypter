@@ -24,48 +24,55 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Threading.Tasks;
+using Crypter.Core;
 using Crypter.Core.Models;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
 using Hangfire;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NUnit.Framework;
-using System;
-using System.Threading.Tasks;
 
 namespace Crypter.Test.Core_Tests.Services_Tests
 {
    [TestFixture]
    public class HangfireBackgroundService_Tests
    {
-      private TestDataContext _testContext;
+      private WebApplicationFactory<Program> _factory;
+      private IServiceScope _scope;
+      private DataContext _dataContext;
+      
       private ICryptoProvider _cryptoProvider;
       private Mock<IBackgroundJobClient> _backgroundJobClientMock;
       private Mock<IEmailService> _emailServiceMock;
       private Mock<ITransferRepository> _transferStorageMock;
 
-      [OneTimeSetUp]
-      public void SetupOnce()
-      {
-         _testContext = new TestDataContext(GetType().Name);
-         _testContext.EnsureCreated();
-      }
-
       [SetUp]
-      public void Setup()
+      public async Task SetupTestAsync()
       {
          _cryptoProvider = new DefaultCryptoProvider();
          _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
          _emailServiceMock = new Mock<IEmailService>();
          _transferStorageMock = new Mock<ITransferRepository>();
+         
+         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+         await AssemblySetup.InitializeRespawnerAsync();
+         
+         _scope = _factory.Services.CreateScope();
+         _dataContext = _scope.ServiceProvider.GetRequiredService<DataContext>();
       }
-
+      
       [TearDown]
-      public void Teardown()
+      public async Task TeardownTestAsync()
       {
-         _testContext.Reset();
+         _scope.Dispose();
+         await _factory.DisposeAsync();
+         await AssemblySetup.ResetServerDataAsync();
       }
 
       [Test]
@@ -76,7 +83,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
                It.IsAny<UserEmailAddressVerificationParameters>()))
             .ReturnsAsync((UserEmailAddressVerificationParameters parameters) => true);
 
-         HangfireBackgroundService sut = new HangfireBackgroundService(_testContext, _backgroundJobClientMock.Object, _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
+         HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _backgroundJobClientMock.Object, _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
          await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
          _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>()), Times.Never);
@@ -91,7 +98,7 @@ namespace Crypter.Test.Core_Tests.Services_Tests
                It.IsAny<int>()))
             .ReturnsAsync((UserRecoveryParameters parameters, int expirationMinutes) => true);
 
-         HangfireBackgroundService sut = new HangfireBackgroundService(_testContext, _backgroundJobClientMock.Object, _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
+         HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _backgroundJobClientMock.Object, _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
          await sut.SendRecoveryEmailAsync("foo@test.com");
 
          _emailServiceMock.Verify(x => x.SendAccountRecoveryLinkAsync(It.IsAny<UserRecoveryParameters>(), It.IsAny<int>()), Times.Never);

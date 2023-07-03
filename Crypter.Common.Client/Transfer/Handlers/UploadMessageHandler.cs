@@ -24,17 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Transfer.Handlers.Base;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
-using Crypter.Common.Monads;
 using Crypter.Crypto.Common;
-using System;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Transfer.Handlers
 {

@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Runtime.Versioning;
 using BlazorSodium.Sodium;
 using BlazorSodium.Sodium.Models;
 using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
-using System;
-using System.Runtime.Versioning;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers
 {

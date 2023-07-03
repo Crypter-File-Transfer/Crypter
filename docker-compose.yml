@@ -39,6 +39,6 @@ services:
       CADDY_TLS_VOLUME: ${CADDY_TLS_VOLUME}
       CADDY_MAX_REQUEST_BODY: ${CADDY_MAX_REQUEST_BODY}
     volumes:
-      - ./Containers/Caddy/data:/data
+      - ./Volumes/Caddy/data:/data
       - ${CADDY_TLS_VOLUME}:/mnt/tls
     restart: always

@@ -24,20 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using BenchmarkDotNet.Attributes;
-using Crypter.Benchmarks.Config;
-using Crypter.Benchmarks.Core_Benchmarks.Old_Implementations;
-using Crypter.Common.Enums;
-using Crypter.Core.Models;
-using Crypter.Core.Services;
-using Crypter.Core.Settings;
-using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Crypter.Benchmarks.Core_Benchmarks
 {
    /*

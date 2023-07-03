@@ -24,12 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Client.Interfaces.Repositories;
-using Crypter.Common.Client.Models;
-using Crypter.Common.Contracts;
-using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Monads;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -40,6 +34,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Interfaces.HttpClients;
+using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Models;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients
 {

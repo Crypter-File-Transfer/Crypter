@@ -24,18 +24,18 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Exceptions;
-using Crypter.Common.Monads;
-using Crypter.Core.Identity;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using Crypter.Common.Exceptions;
+using Crypter.Core.Identity;
+using EasyMonads;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Crypter.Core.Services
 {

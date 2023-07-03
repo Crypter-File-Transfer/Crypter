@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.StreamGenericHash;
-using Geralt;
 using System;
 using System.Runtime.Versioning;
+using Crypter.Crypto.Common.StreamGenericHash;
+using Geralt;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {
@@ -43,7 +43,7 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
          _state = new IncrementalBLAKE2b(checked((int)hashLength), key);
       }
 
-      public byte[] Finalize()
+      public byte[] Complete()
       {
          byte[] buffer = new byte[_hashLength];
          _state.Finalize(buffer);

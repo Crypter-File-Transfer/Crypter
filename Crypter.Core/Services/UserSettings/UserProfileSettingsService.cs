@@ -24,12 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
-using Crypter.Common.Monads;
-using Crypter.Core.Features.UserSettings.ProfileSettings;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+using Crypter.Core.Features.UserSettings.ProfileSettings;
+using EasyMonads;
 
 namespace Crypter.Core.Services.UserSettings
 {

@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Enums;
-using Crypter.Common.Monads;
 using System;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Enums;
+using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Repositories
 {

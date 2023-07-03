@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Crypto.Common.GenericHash;
-using Geralt;
 using System;
 using System.Runtime.Versioning;
 using System.Text;
+using Crypter.Crypto.Common.GenericHash;
+using Geralt;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
 {

@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Monads;
 using Crypter.Common.Primitives.Enums;
 using Crypter.Common.Primitives.ValidationHandlers;
+using EasyMonads;
 using ValueOf;
 
 namespace Crypter.Common.Primitives
