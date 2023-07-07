@@ -67,13 +67,13 @@ namespace Crypter.Core
                npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName, DataContext.SchemaName);
             })
             .LogTo(
-            filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
-            logger: (eventData) =>
-            {
-               ExecutionStrategyEventData retryEventData = eventData as ExecutionStrategyEventData;
-               IReadOnlyList<Exception> exceptions = retryEventData.ExceptionsEncountered;
-               logger.LogWarning("Retry #{count} with delay {delay} due to error: {error}", exceptions.Count, retryEventData.Delay, exceptions[exceptions.Count - 1].Message);
-            });
+                filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
+                logger: (eventData) =>
+                {
+                   ExecutionStrategyEventData retryEventData = eventData as ExecutionStrategyEventData;
+                   IReadOnlyList<Exception> exceptions = retryEventData.ExceptionsEncountered;
+                   logger.LogWarning("Retry #{count} with delay {delay} due to error: {error}", exceptions.Count, retryEventData.Delay, exceptions[exceptions.Count - 1].Message);
+                });
          });
 
          services.TryAddSingleton<IPasswordHashService, PasswordHashService>();
