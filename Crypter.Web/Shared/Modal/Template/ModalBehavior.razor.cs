@@ -35,16 +35,13 @@ namespace Crypter.Web.Shared.Modal.Template
 
       private const string _modalDisplayNone = "none;";
       private const string _modalDisplayBlock = "block;";
-      private const string _modalClassShow = "Show";
 
       protected bool Show = false;
       protected string ModalDisplay = _modalDisplayNone;
-      protected string ModalClass = string.Empty;
 
       public void Open()
       {
          ModalDisplay = _modalDisplayBlock;
-         ModalClass = _modalClassShow;
          Show = true;
          StateHasChanged();
       }
@@ -52,7 +49,6 @@ namespace Crypter.Web.Shared.Modal.Template
       public void Close()
       {
          ModalDisplay = _modalDisplayNone;
-         ModalClass = string.Empty;
          Show = false;
          StateHasChanged();
       }
