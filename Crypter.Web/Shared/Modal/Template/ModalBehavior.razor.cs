@@ -38,7 +38,6 @@ namespace Crypter.Web.Shared.Modal.Template
 
       protected bool Show = false;
       protected string ModalDisplay = _modalDisplayNone;
-      protected string ModalClass = string.Empty;
 
       public void Open()
       {
@@ -50,7 +49,6 @@ namespace Crypter.Web.Shared.Modal.Template
       public void Close()
       {
          ModalDisplay = _modalDisplayNone;
-         ModalClass = string.Empty;
          Show = false;
          StateHasChanged();
       }
