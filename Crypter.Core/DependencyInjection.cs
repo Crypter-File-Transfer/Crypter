@@ -66,9 +66,13 @@ namespace Crypter.Core
                npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), new string[] { "57P01" });
                npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName, DataContext.SchemaName);
             })
-            .LogTo(log =>
+            .LogTo(
+            filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
+            logger: (eventData) =>
             {
-               logger.LogInformation(log);
+               ExecutionStrategyEventData retryEventData = eventData as ExecutionStrategyEventData;
+               IReadOnlyList<Exception> exceptions = retryEventData.ExceptionsEncountered;
+               logger.LogWarning("Retry #{count} with delay {delay} due to error: {error}", exceptions.Count, retryEventData.Delay, exceptions[exceptions.Count - 1].Message);
             });
          });
 

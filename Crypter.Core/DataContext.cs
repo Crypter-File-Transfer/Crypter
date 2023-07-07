@@ -37,8 +37,6 @@ namespace Crypter.Core
    {
       public const string SchemaName = "crypter";
 
-      //private readonly ILogger<DataContext> _logger;
-
       /// <summary>
       /// This constructor is used during migrations.
       /// </summary>
