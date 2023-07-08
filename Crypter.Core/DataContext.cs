@@ -37,30 +37,12 @@ namespace Crypter.Core
    {
       public const string SchemaName = "crypter";
 
-      private readonly ILogger<DataContext> _logger;
-
       /// <summary>
       /// This constructor is used during migrations.
       /// </summary>
       /// <param name="options"></param>
-      public DataContext(DbContextOptions<DataContext> options, ILogger<DataContext> logger)
-         : base(options)
+      public DataContext(DbContextOptions<DataContext> options) : base(options)
       {
-         _logger = logger;
-      }
-
-      protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-      {
-         optionsBuilder.LogTo(
-            filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
-            logger: (eventData) =>
-            {
-               ExecutionStrategyEventData retryEventData = eventData as ExecutionStrategyEventData;
-               IReadOnlyList<Exception> exceptions = retryEventData.ExceptionsEncountered;
-               _logger.LogWarning("Retry #{count} with delay {delay} due to error: {error}", exceptions.Count, retryEventData.Delay, exceptions[exceptions.Count - 1].Message);
-            });
-
-         base.OnConfiguring(optionsBuilder);
       }
 
       public DbSet<UserEntity> Users { get; set; }
