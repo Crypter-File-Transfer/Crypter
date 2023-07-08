@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Repositories;
@@ -36,9 +37,11 @@ using Crypter.Crypto.Providers.Default;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Crypter.Core
 {
@@ -53,13 +56,24 @@ namespace Crypter.Core
          string defaultConnectionString,
          string hangfireConnectionString)
       {
-         services.AddDbContext<DataContext>(optionsBuilder =>
+         var serviceProvider = services.BuildServiceProvider();
+         var logger = serviceProvider.GetRequiredService<ILogger<DataContext>>();
+
+         services.AddDbContextPool<DataContext>(optionsBuilder =>
          {
             optionsBuilder.UseNpgsql(defaultConnectionString, npgsqlOptionsBuilder =>
             {
                npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), new string[] { "57P01" });
                npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName, DataContext.SchemaName);
-            });
+            })
+            .LogTo(
+                filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
+                logger: (eventData) =>
+                {
+                   ExecutionStrategyEventData retryEventData = eventData as ExecutionStrategyEventData;
+                   IReadOnlyList<Exception> exceptions = retryEventData.ExceptionsEncountered;
+                   logger.LogWarning("Retry #{count} with delay {delay} due to error: {error}", exceptions.Count, retryEventData.Delay, exceptions[exceptions.Count - 1].Message);
+                });
          });
 
          services.TryAddSingleton<IPasswordHashService, PasswordHashService>();
