@@ -16,6 +16,7 @@
       <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="7.0.8" />
       <PackageReference Include="MimeKit" Version="4.1.0" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.4" />
+      <PackageReference Include="ScottBrady.IdentityModel" Version="3.0.0" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.31.0" />
    </ItemGroup>
 

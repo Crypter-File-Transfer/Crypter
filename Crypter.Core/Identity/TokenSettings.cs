@@ -31,6 +31,7 @@ namespace Crypter.Core.Identity
       public string Audience { get; set; }
       public string Issuer { get; set; }
       public string SecretKey { get; set; }
+      public string PrivateKey { get; set; }
       public int AuthenticationTokenLifetimeMinutes { get; set; }
       public int SessionTokenLifetimeMinutes { get; set; }
       public int DeviceTokenLifetimeDays { get; set; }

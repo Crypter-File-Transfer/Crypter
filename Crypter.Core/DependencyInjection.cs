@@ -121,6 +121,7 @@ namespace Crypter.Core
             options.Audience = tokenSettings.Audience;
             options.Issuer = tokenSettings.Issuer;
             options.SecretKey = tokenSettings.SecretKey;
+            options.PrivateKey = tokenSettings.PrivateKey;
             options.AuthenticationTokenLifetimeMinutes = tokenSettings.AuthenticationTokenLifetimeMinutes;
             options.SessionTokenLifetimeMinutes = tokenSettings.SessionTokenLifetimeMinutes;
             options.DeviceTokenLifetimeDays = tokenSettings.DeviceTokenLifetimeDays;
