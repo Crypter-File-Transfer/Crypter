@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
    <PropertyGroup>
       <TargetFramework>net7.0</TargetFramework>
@@ -13,7 +13,7 @@
       <PackageReference Include="Hangfire.PostgreSql" Version="1.19.12" />
       <PackageReference Include="Hashids.net" Version="1.7.0" />
       <PackageReference Include="MailKit" Version="4.1.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="7.0.8" />
+      <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="7.0.10" />
       <PackageReference Include="MimeKit" Version="4.1.0" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.4" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.31.0" />
