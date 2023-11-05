@@ -12,3 +12,4 @@ jobs:
     uses: crypter-file-transfer/crypter/.github/workflows/build-and-push-web.yml@bfc392b2e3522630eede8fecd019a00e032839aa
     with:
       environment-name: production
+      github-token: ${{ secrets.GITHUB_TOKEN }}
