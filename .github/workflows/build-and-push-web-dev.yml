@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-and-push-web-to-development:
-    uses: crypter-file-transfer/crypter/.github/workflows/build-and-push-web.yml@bfc392b2e3522630eede8fecd019a00e032839aa
+    uses: crypter-file-transfer/crypter/.github/workflows/build-and-push-web.yml@f72a58c7d0f7486c74a551131ce57b6ebc4ba475
     with:
       environment-name: development
       github-token: ${{ secrets.GITHUB_TOKEN }}
