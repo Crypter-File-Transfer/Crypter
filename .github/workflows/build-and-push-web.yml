@@ -1,11 +1,11 @@
-name: Release web application to GitHub Container Registry
+name: Reusable workflow to push an image of Crypter.Web to a GitHub Container Registry
 
 on:
-  release:
-    types:
-    - published
-
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      environment-name:
+        required: true
+        type: string
 
 env:
   registry: ghcr.io/${{ github.repository_owner }}
@@ -18,7 +18,7 @@ jobs:
       packages: write
     env:
       project_root: Crypter.Web/
-      image_name: crypter_web
+    environment: ${{ inputs.environment-name }}
 
     steps:
       - name: Checkout repository
@@ -43,7 +43,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.registry }}/${{ env.image_name }}
+          images: ${{ env.registry }}/${{ env.WEB_IMAGE_NAME }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
