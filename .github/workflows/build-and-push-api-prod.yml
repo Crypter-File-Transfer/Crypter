@@ -1,0 +1,14 @@
+﻿name: Push a production image of Crypter.API to GitHub Container Registry
+
+on: 
+  release:
+    types:
+      - published
+        
+  workflow_dispatch:
+    
+jobs:
+  build-and-push-api-to-production:
+    uses: crypter-file-transfer/crypter/.github/workflows/build-and-push.api.yml@2b75721acbd0d9ee7aa235a286c094571d06aa73
+    with:
+      environment-name: production
