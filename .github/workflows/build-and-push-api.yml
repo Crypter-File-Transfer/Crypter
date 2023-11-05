@@ -6,9 +6,9 @@ on:
       environment-name:
         required: true
         type: string
-      github-token:
+    secrets:
+      GHCR_TOKEN:
         required: true
-        type: string
 
 env:
   registry: ghcr.io/${{ github.repository_owner }}
@@ -35,7 +35,7 @@ jobs:
         with:
           registry: ${{ env.registry }}
           username: ${{ github.actor }}
-          password: ${{ inputs.github-token }}
+          password: ${{ inputs.GHCR_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
