@@ -1,14 +1,11 @@
-name: Release API to GitHub Container Registry
+name: Reusable workflow to push and image of Crypter.API to a GitHub Container Registry
 
 on:
-  release:
-    types:
-    - published
-
-  workflow_dispatch:
-
-env:
-  registry: ghcr.io/${{ github.repository_owner }}
+  workflow_call:
+    inputs:
+      environment-name:
+        required: true
+        type: string
 
 jobs:
   build-and-push-api:
@@ -18,6 +15,7 @@ jobs:
       packages: write
     env:
       project_root: Crypter.API/
+    environment: ${{ inputs.environment-name }}
 
     steps:
       - name: Checkout repository
