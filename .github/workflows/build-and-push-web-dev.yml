@@ -1,0 +1,14 @@
+﻿name: Push a development image of Crypter.Web to GitHub Container Registry
+
+on:
+  release:
+    types:
+      - published
+  
+  workflow_dispatch:
+
+jobs:
+  build-and-push-web-to-development:
+    uses: crypter-file-transfer/crypter/.github/workflows/build-and-push-web.yml@bfc392b2e3522630eede8fecd019a00e032839aa
+    with:
+      environment-name: development
