@@ -9,8 +9,9 @@ on:
     
 jobs:
   build-and-push-api-to-production:
-    uses: crypter-file-transfer/crypter/.github/workflows/build-and-push-api.yml@5a16782df8c673d58dbc853187a358fc1c60f017
+    uses: crypter-file-transfer/crypter/.github/workflows/build-and-push-api.yml@e798fb43d75ec725a57ce3ecdf537152d81ec3d6
     with:
       environment-name: production
-    secrets:
-      GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: read
+      packages: write
