@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-and-push-api-to-development:
-    uses: crypter-file-transfer/crypter/.github/workflows/build-and-push-api.yml@e798fb43d75ec725a57ce3ecdf537152d81ec3d6
+    uses: crypter-file-transfer/crypter/.github/workflows/build-and-push-api.yml@8a138986332ce4ec444df9a2010a2ce42812859f
     with:
       environment-name: development
     permissions:
