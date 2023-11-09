@@ -1,10 +1,6 @@
 ﻿name: Push a development image of Crypter.API to GitHub Container Registry
 
 on:
-  release:
-    types:
-      - published
-  
   workflow_dispatch:
 
 jobs:
