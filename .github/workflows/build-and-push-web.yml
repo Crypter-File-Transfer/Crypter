@@ -1,24 +1,33 @@
-name: Reusable workflow to push an image of Crypter.Web to a GitHub Container Registry
+name: Build and push an image of Crypter.Web to GitHub Container Registry
 
 on:
-  workflow_call:
+  release:
+    types:
+      - published
+        
+  workflow_dispatch:
     inputs:
-      environment-name:
+      environment:
+        description: 'Define the environment name'
         required: true
-        type: string
+        type: choice
+        options:
+          - production
+          - development
 
 env:
   registry: ghcr.io/${{ github.repository_owner }}
 
 jobs:
-  build-and-push-web:
+  build-and-push-web-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     env:
       project_root: Crypter.Web/
-    environment: ${{ inputs.environment-name }}
+    environment:
+      name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.environment) || 'production' }}
 
     steps:
       - name: Checkout repository
