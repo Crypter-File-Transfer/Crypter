@@ -1,4 +1,4 @@
-name: Deploy web container to the production server
+name: Deploy the current version of Crypter to a specific environment
 
 on:
   workflow_dispatch:
