@@ -62,7 +62,6 @@ jobs:
 
       - name: Push latest Docker Compose override file if deploying to Development server
         if: github.event.inputs.environment == 'development'
-        run: echo "Pushing docker-compose.override.yml"
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
