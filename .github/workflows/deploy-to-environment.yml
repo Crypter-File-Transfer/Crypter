@@ -1,0 +1,124 @@
+name: Deploy the current version of Crypter to a specific environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Define the environment name'
+        required: true
+        type: choice
+        options:
+          - production
+          - development
+
+jobs:
+  deploy-web-container:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Stop service
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          script: systemctl --user stop crypter.service
+          script_stop: true
+
+      - name: Push new systemctl service file
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          source: Environments/${{ github.event.inputs.environment }}/crypter.service
+          target: .config/systemd/user/
+
+      - name: Reload systemctl daemon
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          script: systemctl --user daemon-reload
+
+      - name: Push latest Docker Compose file
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          source: docker-compose.yml
+          target: crypter-web-container/
+
+      - name: Push latest Docker Compose override file if deploying to Development server
+        if: github.event.inputs.environment == 'development'
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          source: docker-compose.override.yml
+          target: crypter-web-container/
+
+      - name: Pull latest images
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          script: docker compose --project-directory crypter-web-container --profile web pull
+          script_stop: true
+
+      - name: Start local database if deploying to Development server
+        if: github.event.inputs.environment == 'development'
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          script: docker compose --project-directory crypter-web-container --profile db up -d
+          script_stop: true
+
+      - name: Migrate database
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          script: docker compose --project-directory crypter-web-container --profile web run api /app/efbundle
+          script_stop: true
+
+      - name: Stop local database if deploying to Development server
+        if: github.event.inputs.environment == 'development'
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          script: docker compose --project-directory crypter-web-container --profile db down
+          script_stop: true
+
+      - name: Start service
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          script: systemctl --user start crypter.service
+          script_stop: true
