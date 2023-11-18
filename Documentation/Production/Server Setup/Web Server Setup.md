@@ -21,3 +21,9 @@ Locate the `.env` file at the root of this repository, [here](../../../.env).
 Copy the file to the home directory of the SSH user. For example: `/home/<github username>/crypter-web-container/.env`
 
 Scan and update the values in the file to ensure they are correct for the environment.
+
+## Enable linger
+
+Enable linger to be sure the user service owned by the SSH user automatically starts after a power cycle.
+
+`loginctl enable-linger <github username>`
