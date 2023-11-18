@@ -28,7 +28,11 @@ jobs:
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: systemctl --user is-active --quiet crypter.service && systemctl --user stop crypter.service
+          script: |
+            if [ "$(systemctl --user is-active crypter.service)" = "active" ]; then
+              echo "Stopping service"
+              systemctl --user stop crypter.service;
+            fi
           script_stop: true
 
       - name: Push new systemctl service file
