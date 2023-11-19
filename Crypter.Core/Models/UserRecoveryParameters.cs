@@ -27,25 +27,24 @@
 using System;
 using Crypter.Common.Primitives;
 
-namespace Crypter.Core.Models
-{
-   public class UserRecoveryParameters
-   {
-      public Guid UserId { get; init; }
-      public Username Username { get; init; }
-      public EmailAddress EmailAddress { get; init; }
-      public Guid RecoveryCode { get; init; }
-      public byte[] Signature { get; init; }
-      public byte[] VerificationKey { get; init; }
+namespace Crypter.Core.Models;
 
-      public UserRecoveryParameters(Guid userId, Username username, EmailAddress emailAddress, Guid recoveryCode, byte[] signature, byte[] verificationKey)
-      {
-         UserId = userId;
-         Username = username;
-         EmailAddress = emailAddress;
-         RecoveryCode = recoveryCode;
-         Signature = signature;
-         VerificationKey = verificationKey;
-      }
+public class UserRecoveryParameters
+{
+   public Guid UserId { get; init; }
+   public Username Username { get; init; }
+   public EmailAddress EmailAddress { get; init; }
+   public Guid RecoveryCode { get; init; }
+   public byte[] Signature { get; init; }
+   public byte[] VerificationKey { get; init; }
+
+   public UserRecoveryParameters(Guid userId, Username username, EmailAddress emailAddress, Guid recoveryCode, byte[] signature, byte[] verificationKey)
+   {
+      UserId = userId;
+      Username = username;
+      EmailAddress = emailAddress;
+      RecoveryCode = recoveryCode;
+      Signature = signature;
+      VerificationKey = verificationKey;
    }
 }

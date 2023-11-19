@@ -29,23 +29,22 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
-namespace Crypter.Web.Services
+namespace Crypter.Web.Services;
+
+[SupportedOSPlatform("browser")]
+public static partial class BrowserDownloadFileService
 {
-   [SupportedOSPlatform("browser")]
-   public static partial class BrowserDownloadFileService
+   public static async Task InitializeAsync()
    {
-      public static async Task InitializeAsync()
-      {
-         await JSHost.ImportAsync("downloadFileModule", "../js/downloadFileModule.js");
-      }
-
-      [JSImport("createBlob", "downloadFileModule")]
-      public static partial void CopyBufferToJavaScript(string fileName, string contentType, [JSMarshalAs<JSType.MemoryView>] Span<byte> fileBytes);
-
-      [JSImport("download", "downloadFileModule")]
-      public static partial void Download();
-
-      [JSImport("reset", "downloadFileModule")]
-      public static partial void Reset();
+      await JSHost.ImportAsync("downloadFileModule", "../js/downloadFileModule.js");
    }
+
+   [JSImport("createBlob", "downloadFileModule")]
+   public static partial void CopyBufferToJavaScript(string fileName, string contentType, [JSMarshalAs<JSType.MemoryView>] Span<byte> fileBytes);
+
+   [JSImport("download", "downloadFileModule")]
+   public static partial void Download();
+
+   [JSImport("reset", "downloadFileModule")]
+   public static partial void Reset();
 }

@@ -39,78 +39,77 @@ using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 
-namespace Crypter.Core.Features.UserSettings.ContactInfoSettings
+namespace Crypter.Core.Features.UserSettings.ContactInfoSettings;
+
+internal static class UserContactInfoSettingsCommands
 {
-   internal static class UserContactInfoSettingsCommands
+   internal static async Task<Either<Contracts.UpdateContactInfoSettingsError, Contracts.ContactInfoSettings>> UpdateContactInfoSettingsAsync(DataContext dataContext, IPasswordHashService passwordHashService, ServerPasswordSettings serverPasswordSettings, Guid userId, Contracts.UpdateContactInfoSettingsRequest request)
    {
-      internal static async Task<Either<Contracts.UpdateContactInfoSettingsError, Contracts.ContactInfoSettings>> UpdateContactInfoSettingsAsync(DataContext dataContext, IPasswordHashService passwordHashService, ServerPasswordSettings serverPasswordSettings, Guid userId, Contracts.UpdateContactInfoSettingsRequest request)
+      if (!UserAuthenticationValidators.ValidatePassword(request.CurrentPassword))
       {
-         if (!UserAuthenticationValidators.ValidatePassword(request.CurrentPassword))
-         {
-            return Contracts.UpdateContactInfoSettingsError.InvalidPassword;
-         }
-
-         bool noEmailAddressProvided = string.IsNullOrEmpty(request.EmailAddress);
-         bool validEmailAddressProvided = EmailAddress.TryFrom(request.EmailAddress, out EmailAddress validEmailAddress);
-         bool validEmailAddressOption = noEmailAddressProvided || validEmailAddressProvided;
-         if (!validEmailAddressOption)
-         {
-            return Contracts.UpdateContactInfoSettingsError.InvalidEmailAddress;
-         }
-
-         Maybe<EmailAddress> newEmailAddress = validEmailAddressProvided
-            ? validEmailAddress
-            : Maybe<EmailAddress>.None;
-
-         UserEntity user = await dataContext.Users
-            .Where(x => x.Id == userId)
-            .FirstOrDefaultAsync();
-
-         if (user is null)
-         {
-            return Contracts.UpdateContactInfoSettingsError.UserNotFound;
-         }
-
-         if (user.ClientPasswordVersion != serverPasswordSettings.ClientVersion
-            || user.ServerPasswordVersion != passwordHashService.LatestServerPasswordVersion)
-         {
-            return Contracts.UpdateContactInfoSettingsError.PasswordNeedsMigration;
-         }
-
-         bool correctPasswordProvided = passwordHashService.VerifySecurePasswordHash(request.CurrentPassword, user.PasswordHash, user.PasswordSalt, passwordHashService.LatestServerPasswordVersion);
-         if (!correctPasswordProvided)
-         {
-            return Contracts.UpdateContactInfoSettingsError.InvalidPassword;
-         }
-
-         if (user.EmailAddress != newEmailAddress.Match(() => string.Empty, x => x.Value))
-         {
-            bool isEmailAddressAvailableForUser = await newEmailAddress.MatchAsync(
-               () => true,
-               async x => await dataContext.Users.IsEmailAddressAvailableAsync(validEmailAddress));
-
-            if (!isEmailAddressAvailableForUser)
-            {
-               return Contracts.UpdateContactInfoSettingsError.EmailAddressUnavailable;
-            }
-
-            user.EmailAddress = newEmailAddress.Match(
-               () => string.Empty,
-               x => x.Value);
-            user.EmailVerified = false;
-
-            await UserEmailVerificationCommands.DeleteUserEmailVerificationEntity(dataContext, userId, false);
-
-            if (newEmailAddress.IsNone)
-            {
-               await UserNotificationSettingsCommands.ResetUserNotificationSettingsAsync(dataContext, userId, false);
-            }
-
-            await dataContext.SaveChangesAsync();
-         }
-
-         return await UserContactInfoSettingsQueries.GetContactInfoSettingsAsync(dataContext, userId)
-            .ToEitherAsync(Contracts.UpdateContactInfoSettingsError.UnknownError);
+         return Contracts.UpdateContactInfoSettingsError.InvalidPassword;
       }
+
+      bool noEmailAddressProvided = string.IsNullOrEmpty(request.EmailAddress);
+      bool validEmailAddressProvided = EmailAddress.TryFrom(request.EmailAddress, out EmailAddress validEmailAddress);
+      bool validEmailAddressOption = noEmailAddressProvided || validEmailAddressProvided;
+      if (!validEmailAddressOption)
+      {
+         return Contracts.UpdateContactInfoSettingsError.InvalidEmailAddress;
+      }
+
+      Maybe<EmailAddress> newEmailAddress = validEmailAddressProvided
+         ? validEmailAddress
+         : Maybe<EmailAddress>.None;
+
+      UserEntity user = await dataContext.Users
+         .Where(x => x.Id == userId)
+         .FirstOrDefaultAsync();
+
+      if (user is null)
+      {
+         return Contracts.UpdateContactInfoSettingsError.UserNotFound;
+      }
+
+      if (user.ClientPasswordVersion != serverPasswordSettings.ClientVersion
+          || user.ServerPasswordVersion != passwordHashService.LatestServerPasswordVersion)
+      {
+         return Contracts.UpdateContactInfoSettingsError.PasswordNeedsMigration;
+      }
+
+      bool correctPasswordProvided = passwordHashService.VerifySecurePasswordHash(request.CurrentPassword, user.PasswordHash, user.PasswordSalt, passwordHashService.LatestServerPasswordVersion);
+      if (!correctPasswordProvided)
+      {
+         return Contracts.UpdateContactInfoSettingsError.InvalidPassword;
+      }
+
+      if (user.EmailAddress != newEmailAddress.Match(() => string.Empty, x => x.Value))
+      {
+         bool isEmailAddressAvailableForUser = await newEmailAddress.MatchAsync(
+            () => true,
+            async x => await dataContext.Users.IsEmailAddressAvailableAsync(validEmailAddress));
+
+         if (!isEmailAddressAvailableForUser)
+         {
+            return Contracts.UpdateContactInfoSettingsError.EmailAddressUnavailable;
+         }
+
+         user.EmailAddress = newEmailAddress.Match(
+            () => string.Empty,
+            x => x.Value);
+         user.EmailVerified = false;
+
+         await UserEmailVerificationCommands.DeleteUserEmailVerificationEntity(dataContext, userId, false);
+
+         if (newEmailAddress.IsNone)
+         {
+            await UserNotificationSettingsCommands.ResetUserNotificationSettingsAsync(dataContext, userId, false);
+         }
+
+         await dataContext.SaveChangesAsync();
+      }
+
+      return await UserContactInfoSettingsQueries.GetContactInfoSettingsAsync(dataContext, userId)
+         .ToEitherAsync(Contracts.UpdateContactInfoSettingsError.UnknownError);
    }
 }

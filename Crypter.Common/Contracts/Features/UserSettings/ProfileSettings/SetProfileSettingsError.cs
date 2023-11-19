@@ -24,10 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings.ProfileSettings
+namespace Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+
+public enum SetProfileSettingsError
 {
-   public enum SetProfileSettingsError
-   {
-      UnknownError
-   }
+   UnknownError
 }

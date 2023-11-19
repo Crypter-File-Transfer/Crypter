@@ -26,11 +26,10 @@
 
 using System;
 
-namespace Crypter.Crypto.Common.StreamGenericHash
+namespace Crypter.Crypto.Common.StreamGenericHash;
+
+public interface IStreamGenericHashFactory
 {
-   public interface IStreamGenericHashFactory
-   {
-      uint KeySize { get; }
-      IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default);
-   }
+   uint KeySize { get; }
+   IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default);
 }

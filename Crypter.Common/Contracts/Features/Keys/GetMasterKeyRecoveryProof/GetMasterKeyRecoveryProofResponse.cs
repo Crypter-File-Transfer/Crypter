@@ -24,15 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Keys
-{
-   public class GetMasterKeyRecoveryProofResponse
-   {
-      public byte[] Proof { get; init; }
+namespace Crypter.Common.Contracts.Features.Keys;
 
-      public GetMasterKeyRecoveryProofResponse(byte[] proof)
-      {
-         Proof = proof;
-      }
+public class GetMasterKeyRecoveryProofResponse
+{
+   public byte[] Proof { get; init; }
+
+   public GetMasterKeyRecoveryProofResponse(byte[] proof)
+   {
+      Proof = proof;
    }
 }

@@ -26,18 +26,17 @@
 
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.Metrics
-{
-   public class PublicStorageMetricsResponse
-   {
-      public long Allocated { get; set; }
-      public long Available { get; set; }
+namespace Crypter.Common.Contracts.Features.Metrics;
 
-      [JsonConstructor]
-      public PublicStorageMetricsResponse(long allocated, long available)
-      {
-         Allocated = allocated;
-         Available = available;
-      }
+public class PublicStorageMetricsResponse
+{
+   public long Allocated { get; set; }
+   public long Available { get; set; }
+
+   [JsonConstructor]
+   public PublicStorageMetricsResponse(long allocated, long available)
+   {
+      Allocated = allocated;
+      Available = available;
    }
 }

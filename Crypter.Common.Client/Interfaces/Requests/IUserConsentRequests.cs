@@ -27,10 +27,9 @@
 using System.Threading.Tasks;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Requests
+namespace Crypter.Common.Client.Interfaces.Requests;
+
+public interface IUserConsentRequests
 {
-   public interface IUserConsentRequests
-   {
-      Task<Maybe<Unit>> ConsentToRecoveryKeyRisksAsync();
-   }
+   Task<Maybe<Unit>> ConsentToRecoveryKeyRisksAsync();
 }

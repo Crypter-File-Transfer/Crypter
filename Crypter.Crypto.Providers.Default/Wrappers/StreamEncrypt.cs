@@ -31,38 +31,37 @@ using Crypter.Crypto.Common.StreamEncryption;
 using Geralt;
 using static Geralt.IncrementalXChaCha20Poly1305;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
+namespace Crypter.Crypto.Providers.Default.Wrappers;
+
+[UnsupportedOSPlatform("browser")]
+public class StreamEncrypt : IStreamEncrypt
 {
-   [UnsupportedOSPlatform("browser")]
-   public class StreamEncrypt : IStreamEncrypt
+   private readonly IPadding _padding;
+   private readonly int _padSize;
+   private IncrementalXChaCha20Poly1305 _state;
+
+   public uint KeySize { get => IncrementalXChaCha20Poly1305.KeySize; }
+   public uint TagSize { get => IncrementalXChaCha20Poly1305.TagSize; }
+
+   public StreamEncrypt(IPadding padding, int padSize)
    {
-      private readonly IPadding _padding;
-      private readonly int _padSize;
-      private IncrementalXChaCha20Poly1305 _state;
+      _padding = padding;
+      _padSize = padSize;
+   }
 
-      public uint KeySize { get => IncrementalXChaCha20Poly1305.KeySize; }
-      public uint TagSize { get => IncrementalXChaCha20Poly1305.TagSize; }
+   public byte[] GenerateHeader(ReadOnlySpan<byte> key)
+   {
+      byte[] header = new byte[HeaderSize];
+      _state = new IncrementalXChaCha20Poly1305(false, header, key);
+      return header;
+   }
 
-      public StreamEncrypt(IPadding padding, int padSize)
-      {
-         _padding = padding;
-         _padSize = padSize;
-      }
-
-      public byte[] GenerateHeader(ReadOnlySpan<byte> key)
-      {
-         byte[] header = new byte[HeaderSize];
-         _state = new IncrementalXChaCha20Poly1305(false, header, key);
-         return header;
-      }
-
-      public byte[] Push(byte[] plaintext, bool final)
-      {
-         ChunkFlag chunkFlag = final ? ChunkFlag.Final : ChunkFlag.Message;
-         byte[] paddedPlaintext = _padding.Pad(plaintext, _padSize);
-         byte[] ciphertext = new byte[paddedPlaintext.Length + TagSize];
-         _state.Push(ciphertext, paddedPlaintext, chunkFlag);
-         return ciphertext;
-      }
+   public byte[] Push(byte[] plaintext, bool final)
+   {
+      ChunkFlag chunkFlag = final ? ChunkFlag.Final : ChunkFlag.Message;
+      byte[] paddedPlaintext = _padding.Pad(plaintext, _padSize);
+      byte[] ciphertext = new byte[paddedPlaintext.Length + TagSize];
+      _state.Push(ciphertext, paddedPlaintext, chunkFlag);
+      return ciphertext;
    }
 }

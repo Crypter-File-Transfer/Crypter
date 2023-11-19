@@ -38,90 +38,89 @@ using Crypter.Common.Infrastructure;
 using Crypter.Crypto.Common.StreamEncryption;
 using EasyMonads;
 
-namespace Crypter.Common.Client.HttpClients.Requests
+namespace Crypter.Common.Client.HttpClients.Requests;
+
+public class MessageTransferRequests : IMessageTransferRequests
 {
-   public class MessageTransferRequests : IMessageTransferRequests
+   private readonly ICrypterHttpClient _crypterHttpClient;
+   private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+
+   public MessageTransferRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
    {
-      private readonly ICrypterHttpClient _crypterHttpClient;
-      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+      _crypterHttpClient = crypterHttpClient;
+      _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+   }
 
-      public MessageTransferRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
+   public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<string> recipientUsername, UploadMessageTransferRequest uploadRequest, Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication)
+   {
+      string url = recipientUsername.Match(
+         () => "api/message/transfer",
+         x => $"api/message/transfer?username={x}");
+
+      ICrypterHttpClient service = withAuthentication
+         ? _crypterAuthenticatedHttpClient
+         : _crypterHttpClient;
+
+      HttpRequestMessage requestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
       {
-         _crypterHttpClient = crypterHttpClient;
-         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
-      }
-
-      public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<string> recipientUsername, UploadMessageTransferRequest uploadRequest, Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication)
-      {
-         string url = recipientUsername.Match(
-            () => "api/message/transfer",
-            x => $"api/message/transfer?username={x}");
-
-         ICrypterHttpClient service = withAuthentication
-            ? _crypterAuthenticatedHttpClient
-            : _crypterHttpClient;
-
-         HttpRequestMessage requestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
+         Content = new MultipartFormDataContent
          {
-            Content = new MultipartFormDataContent
-            {
-               { new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"), "Data" },
-               { new StreamContent(encryptionStreamOpener()), "Ciphertext", "Ciphertext" }
-            }
-         };
+            { new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"), "Data" },
+            { new StreamContent(encryptionStreamOpener()), "Ciphertext", "Ciphertext" }
+         }
+      };
 
-         return await service.SendAsync<UploadTransferResponse>(requestFactory)
-            .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
-      }
+      return await service.SendAsync<UploadTransferResponse>(requestFactory)
+         .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
+   }
 
-      public Task<Maybe<List<UserReceivedMessageDTO>>> GetReceivedMessagesAsync()
-      {
-         string url = "api/message/transfer/received";
-         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserReceivedMessageDTO>>(url);
-      }
+   public Task<Maybe<List<UserReceivedMessageDTO>>> GetReceivedMessagesAsync()
+   {
+      string url = "api/message/transfer/received";
+      return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserReceivedMessageDTO>>(url);
+   }
 
-      public Task<Maybe<List<UserSentMessageDTO>>> GetSentMessagesAsync()
-      {
-         string url = "api/message/transfer/sent";
-         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserSentMessageDTO>>(url);
-      }
+   public Task<Maybe<List<UserSentMessageDTO>>> GetSentMessagesAsync()
+   {
+      string url = "api/message/transfer/sent";
+      return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserSentMessageDTO>>(url);
+   }
 
-      public Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetAnonymousMessagePreviewAsync(string hashId)
-      {
-         string url = $"api/message/transfer/preview/anonymous?id={hashId}";
-         return _crypterHttpClient.GetEitherAsync<MessageTransferPreviewResponse>(url)
-            .ExtractErrorCode<TransferPreviewError, MessageTransferPreviewResponse>();
-      }
+   public Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetAnonymousMessagePreviewAsync(string hashId)
+   {
+      string url = $"api/message/transfer/preview/anonymous?id={hashId}";
+      return _crypterHttpClient.GetEitherAsync<MessageTransferPreviewResponse>(url)
+         .ExtractErrorCode<TransferPreviewError, MessageTransferPreviewResponse>();
+   }
 
-      public Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetUserMessagePreviewAsync(string hashId, bool withAuthentication)
-      {
-         string url = $"api/message/transfer/preview/user?id={hashId}";
+   public Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetUserMessagePreviewAsync(string hashId, bool withAuthentication)
+   {
+      string url = $"api/message/transfer/preview/user?id={hashId}";
 
-         ICrypterHttpClient client = withAuthentication
-            ? _crypterAuthenticatedHttpClient
-            : _crypterHttpClient;
+      ICrypterHttpClient client = withAuthentication
+         ? _crypterAuthenticatedHttpClient
+         : _crypterHttpClient;
 
-         return client.GetEitherAsync<MessageTransferPreviewResponse>(url)
-            .ExtractErrorCode<TransferPreviewError, MessageTransferPreviewResponse>();
-      }
+      return client.GetEitherAsync<MessageTransferPreviewResponse>(url)
+         .ExtractErrorCode<TransferPreviewError, MessageTransferPreviewResponse>();
+   }
 
-      public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetAnonymousMessageCiphertextAsync(string hashId, byte[] proof)
-      {
-         string url = $"api/message/transfer/ciphertext/anonymous?id={hashId}&proof={UrlSafeEncoder.EncodeBytesUrlSafe(proof)}";
-         return _crypterHttpClient.GetStreamResponseAsync(url)
-            .ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>();
-      }
+   public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetAnonymousMessageCiphertextAsync(string hashId, byte[] proof)
+   {
+      string url = $"api/message/transfer/ciphertext/anonymous?id={hashId}&proof={UrlSafeEncoder.EncodeBytesUrlSafe(proof)}";
+      return _crypterHttpClient.GetStreamResponseAsync(url)
+         .ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>();
+   }
 
-      public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetUserMessageCiphertextAsync(string hashId, byte[] proof, bool withAuthentication)
-      {
-         string url = $"api/message/transfer/ciphertext/user?id={hashId}&proof={UrlSafeEncoder.EncodeBytesUrlSafe(proof)}";
+   public Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetUserMessageCiphertextAsync(string hashId, byte[] proof, bool withAuthentication)
+   {
+      string url = $"api/message/transfer/ciphertext/user?id={hashId}&proof={UrlSafeEncoder.EncodeBytesUrlSafe(proof)}";
 
-         ICrypterHttpClient client = withAuthentication
-            ? _crypterAuthenticatedHttpClient
-            : _crypterHttpClient;
+      ICrypterHttpClient client = withAuthentication
+         ? _crypterAuthenticatedHttpClient
+         : _crypterHttpClient;
 
-         return client.GetStreamResponseAsync(url)
-            .ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>();
-      }
+      return client.GetStreamResponseAsync(url)
+         .ExtractErrorCode<DownloadTransferCiphertextError, StreamDownloadResponse>();
    }
 }

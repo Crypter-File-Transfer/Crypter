@@ -29,32 +29,31 @@ using Crypter.Web.Shared.Modal.Template;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared.Modal
+namespace Crypter.Web.Shared.Modal;
+
+public partial class BasicModalBase : ComponentBase
 {
-   public partial class BasicModalBase : ComponentBase
+   protected string Subject;
+   protected string Message;
+   protected string PrimaryButtonText;
+   protected string SecondaryButtonText;
+
+   protected Maybe<EventCallback<bool>> ModalClosedCallback;
+   protected ModalBehavior ModalBehaviorRef;
+
+   public void Open(string subject, string message, string primaryButtonText, Maybe<string> secondaryButtonText, Maybe<EventCallback<bool>> modalClosedCallback)
    {
-      protected string Subject;
-      protected string Message;
-      protected string PrimaryButtonText;
-      protected string SecondaryButtonText;
+      Subject = subject;
+      Message = message;
+      PrimaryButtonText = primaryButtonText;
+      ModalClosedCallback = modalClosedCallback;
 
-      protected Maybe<EventCallback<bool>> ModalClosedCallback;
-      protected ModalBehavior ModalBehaviorRef;
+      ModalBehaviorRef.Open();
+   }
 
-      public void Open(string subject, string message, string primaryButtonText, Maybe<string> secondaryButtonText, Maybe<EventCallback<bool>> modalClosedCallback)
-      {
-         Subject = subject;
-         Message = message;
-         PrimaryButtonText = primaryButtonText;
-         ModalClosedCallback = modalClosedCallback;
-
-         ModalBehaviorRef.Open();
-      }
-
-      public async Task CloseAsync(bool modalClosedInTheAffirmative)
-      {
-         await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync(modalClosedInTheAffirmative));
-         ModalBehaviorRef.Close();
-      }
+   public async Task CloseAsync(bool modalClosedInTheAffirmative)
+   {
+      await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync(modalClosedInTheAffirmative));
+      ModalBehaviorRef.Close();
    }
 }

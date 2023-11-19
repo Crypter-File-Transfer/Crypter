@@ -34,31 +34,30 @@ using Crypter.Crypto.Common.DigitalSignature;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Features.UserEmailVerification
+namespace Crypter.Core.Features.UserEmailVerification;
+
+internal static class UserEmailVerificationQueries
 {
-   internal static class UserEmailVerificationQueries
+   internal static async Task<Maybe<UserEmailAddressVerificationParameters>> GenerateVerificationParametersAsync(DataContext dataContext, ICryptoProvider cryptoProvider, Guid userId)
    {
-      internal static async Task<Maybe<UserEmailAddressVerificationParameters>> GenerateVerificationParametersAsync(DataContext dataContext, ICryptoProvider cryptoProvider, Guid userId)
+      var user = await dataContext.Users
+         .Where(x => x.Id == userId)
+         .Where(x => !string.IsNullOrEmpty(x.EmailAddress))
+         .Where(x => !x.EmailVerified)
+         .Where(x => x.EmailVerification == null)
+         .Select(x => new { x.Id, x.EmailAddress })
+         .FirstOrDefaultAsync();
+
+      if (user is null || !EmailAddress.TryFrom(user.EmailAddress, out EmailAddress validEmailAddress))
       {
-         var user = await dataContext.Users
-            .Where(x => x.Id == userId)
-            .Where(x => !string.IsNullOrEmpty(x.EmailAddress))
-            .Where(x => !x.EmailVerified)
-            .Where(x => x.EmailVerification == null)
-            .Select(x => new { x.Id, x.EmailAddress })
-            .FirstOrDefaultAsync();
-
-         if (user is null || !EmailAddress.TryFrom(user.EmailAddress, out EmailAddress validEmailAddress))
-         {
-            return Maybe<UserEmailAddressVerificationParameters>.None;
-         }
-
-         Guid verificationCode = Guid.NewGuid();
-         Ed25519KeyPair keys = cryptoProvider.DigitalSignature.GenerateKeyPair();
-
-         byte[] signature = cryptoProvider.DigitalSignature.GenerateSignature(keys.PrivateKey, verificationCode.ToByteArray());
-
-         return new UserEmailAddressVerificationParameters(userId, validEmailAddress, verificationCode, signature, keys.PublicKey);
+         return Maybe<UserEmailAddressVerificationParameters>.None;
       }
+
+      Guid verificationCode = Guid.NewGuid();
+      Ed25519KeyPair keys = cryptoProvider.DigitalSignature.GenerateKeyPair();
+
+      byte[] signature = cryptoProvider.DigitalSignature.GenerateSignature(keys.PrivateKey, verificationCode.ToByteArray());
+
+      return new UserEmailAddressVerificationParameters(userId, validEmailAddress, verificationCode, signature, keys.PublicKey);
    }
 }

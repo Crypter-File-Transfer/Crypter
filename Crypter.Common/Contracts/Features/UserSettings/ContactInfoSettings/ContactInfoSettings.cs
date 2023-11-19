@@ -24,17 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings
-{
-   public class ContactInfoSettings
-   {
-      public string EmailAddress { get; init; }
-      public bool EmailAddressVerified { get; init; }
+namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 
-      public ContactInfoSettings(string emailAddress, bool emailAddressVerified)
-      {
-         EmailAddress = emailAddress;
-         EmailAddressVerified = emailAddressVerified;
-      }
+public class ContactInfoSettings
+{
+   public string EmailAddress { get; init; }
+   public bool EmailAddressVerified { get; init; }
+
+   public ContactInfoSettings(string emailAddress, bool emailAddressVerified)
+   {
+      EmailAddress = emailAddress;
+      EmailAddressVerified = emailAddressVerified;
    }
 }

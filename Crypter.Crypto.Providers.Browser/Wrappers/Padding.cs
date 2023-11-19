@@ -28,19 +28,18 @@ using System;
 using System.Runtime.Versioning;
 using Crypter.Crypto.Common.Padding;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
-{
-   [SupportedOSPlatform("browser")]
-   public class Padding : IPadding
-   {
-      public byte[] Pad(ReadOnlySpan<byte> block, int blockSize)
-      {
-         return BlazorSodium.Sodium.Padding.Pad(block.ToArray(), (uint)blockSize);
-      }
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
 
-      public byte[] Unpad(ReadOnlySpan<byte> block, int blockSize)
-      {
-         return BlazorSodium.Sodium.Padding.Unpad(block.ToArray(), (uint)blockSize);
-      }
+[SupportedOSPlatform("browser")]
+public class Padding : IPadding
+{
+   public byte[] Pad(ReadOnlySpan<byte> block, int blockSize)
+   {
+      return BlazorSodium.Sodium.Padding.Pad(block.ToArray(), (uint)blockSize);
+   }
+
+   public byte[] Unpad(ReadOnlySpan<byte> block, int blockSize)
+   {
+      return BlazorSodium.Sodium.Padding.Unpad(block.ToArray(), (uint)blockSize);
    }
 }

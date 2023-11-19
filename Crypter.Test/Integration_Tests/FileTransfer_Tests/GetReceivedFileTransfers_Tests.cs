@@ -37,57 +37,56 @@ using Crypter.Crypto.Common.StreamEncryption;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.FileTransfer_Tests
+namespace Crypter.Test.Integration_Tests.FileTransfer_Tests;
+
+[TestFixture]
+internal class GetReceivedFileTransfers_Tests
 {
-   [TestFixture]
-   internal class GetReceivedFileTransfers_Tests
-   {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-      private ITokenRepository _clientTokenRepository;
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+   private ITokenRepository _clientTokenRepository;
    
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
-      {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
       
-      [Test]
-      public async Task Get_Received_File_Transfer_Works()
+   [Test]
+   public async Task Get_Received_File_Transfer_Works()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+      InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
+      var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
+      (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+      UploadFileTransferRequest uploadFileTransferRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+      var uploadFileTransferResponse = await _client.FileTransfer.UploadFileTransferAsync(TestData.DefaultUsername, uploadFileTransferRequest, encryptionStreamOpener, false);
 
-         InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
-         var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
+      var response = await _client.FileTransfer.GetReceivedFilesAsync();
+      List<UserReceivedFileDTO> result = response.SomeOrDefault(null);
 
-         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
-         UploadFileTransferRequest uploadFileTransferRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var uploadFileTransferResponse = await _client.FileTransfer.UploadFileTransferAsync(TestData.DefaultUsername, uploadFileTransferRequest, encryptionStreamOpener, false);
-
-         var response = await _client.FileTransfer.GetReceivedFilesAsync();
-         List<UserReceivedFileDTO> result = response.SomeOrDefault(null);
-
-         Assert.True(response.IsSome);
-         Assert.AreEqual(1, result.Count);
-      }
+      Assert.True(response.IsSome);
+      Assert.AreEqual(1, result.Count);
    }
 }

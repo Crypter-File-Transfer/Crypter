@@ -26,17 +26,16 @@
 
 using Crypter.Common.Enums;
 
-namespace Crypter.Common.Client.Models
-{
-   public class TokenObject
-   {
-      public TokenType TokenType { get; set; }
-      public string Token { get; set; }
+namespace Crypter.Common.Client.Models;
 
-      public TokenObject(TokenType tokenType, string token)
-      {
-         TokenType = tokenType;
-         Token = token;
-      }
+public class TokenObject
+{
+   public TokenType TokenType { get; set; }
+   public string Token { get; set; }
+
+   public TokenObject(TokenType tokenType, string token)
+   {
+      TokenType = tokenType;
+      Token = token;
    }
 }

@@ -38,85 +38,84 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers;
+
+[ApiController]
+[Route("api/user/contact")]
+public class UserContactController : CrypterControllerBase
 {
-   [ApiController]
-   [Route("api/user/contact")]
-   public class UserContactController : CrypterControllerBase
+   private readonly IUserContactsService _userContactsService;
+   private readonly ITokenService _tokenService;
+
+   public UserContactController(IUserContactsService userContactsService, ITokenService tokenService)
    {
-      private readonly IUserContactsService _userContactsService;
-      private readonly ITokenService _tokenService;
+      _userContactsService = userContactsService;
+      _tokenService = tokenService;
+   }
 
-      public UserContactController(IUserContactsService userContactsService, ITokenService tokenService)
-      {
-         _userContactsService = userContactsService;
-         _tokenService = tokenService;
-      }
+   /// <summary>
+   /// Get a list of user contacts.
+   /// </summary>
+   /// <param name="cancellationToken"></param>
+   /// <returns></returns>
+   [HttpGet]
+   [Authorize]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserContact>))]
+   [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+   public async Task<IActionResult> GetUserContactsAsync(CancellationToken cancellationToken)
+   {
+      Guid userId = _tokenService.ParseUserId(User);
+      List<UserContact> result = await _userContactsService.GetUserContactsAsync(userId, cancellationToken);
+      return Ok(result);
+   }
 
-      /// <summary>
-      /// Get a list of user contacts.
-      /// </summary>
-      /// <param name="cancellationToken"></param>
-      /// <returns></returns>
-      [HttpGet]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserContact>))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetUserContactsAsync(CancellationToken cancellationToken)
+   /// <summary>
+   /// Add a user as a contact.
+   /// </summary>
+   /// <param name="username"></param>
+   /// <returns></returns>
+   [HttpPost]
+   [Authorize]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserContact))]
+   [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+   [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+   [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+   [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+   public async Task<IActionResult> AddUserContactAsync([FromQuery] string username)
+   {
+      IActionResult MakeErrorResponse(AddUserContactError error)
       {
-         Guid userId = _tokenService.ParseUserId(User);
-         List<UserContact> result = await _userContactsService.GetUserContactsAsync(userId, cancellationToken);
-         return Ok(result);
-      }
-
-      /// <summary>
-      /// Add a user as a contact.
-      /// </summary>
-      /// <param name="username"></param>
-      /// <returns></returns>
-      [HttpPost]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserContact))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> AddUserContactAsync([FromQuery] string username)
-      {
-         IActionResult MakeErrorResponse(AddUserContactError error)
-         {
 #pragma warning disable CS8524
-            return error switch
-            {
-               AddUserContactError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               AddUserContactError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
-               AddUserContactError.InvalidUser => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
-            };
+         return error switch
+         {
+            AddUserContactError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+            AddUserContactError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+            AddUserContactError.InvalidUser => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+         };
 #pragma warning restore CS8524
-         }
-
-         Guid userId = _tokenService.ParseUserId(User);
-         return await _userContactsService.UpsertUserContactAsync(userId, username)
-            .MatchAsync(
-               MakeErrorResponse,
-               Ok,
-               MakeErrorResponse(AddUserContactError.UnknownError));
       }
 
-      /// <summary>
-      /// Remove a user from contacts.
-      /// </summary>
-      /// <param name="username"></param>
-      /// <returns></returns>
-      [HttpDelete]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> RemoveUserContactAsync([FromQuery] string username)
-      {
-         Guid userId = _tokenService.ParseUserId(User);
-         await _userContactsService.RemoveUserContactAsync(userId, username);
-         return Ok();
-      }
+      Guid userId = _tokenService.ParseUserId(User);
+      return await _userContactsService.UpsertUserContactAsync(userId, username)
+         .MatchAsync(
+            MakeErrorResponse,
+            Ok,
+            MakeErrorResponse(AddUserContactError.UnknownError));
+   }
+
+   /// <summary>
+   /// Remove a user from contacts.
+   /// </summary>
+   /// <param name="username"></param>
+   /// <returns></returns>
+   [HttpDelete]
+   [Authorize]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
+   [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+   public async Task<IActionResult> RemoveUserContactAsync([FromQuery] string username)
+   {
+      Guid userId = _tokenService.ParseUserId(User);
+      await _userContactsService.RemoveUserContactAsync(userId, username);
+      return Ok();
    }
 }

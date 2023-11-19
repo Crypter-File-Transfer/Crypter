@@ -27,23 +27,22 @@
 using System;
 using Crypter.Common.Primitives;
 
-namespace Crypter.Core.Models
-{
-   public class UserEmailAddressVerificationParameters
-   {
-      public Guid UserId { get; init; }
-      public EmailAddress EmailAddress { get; init; }
-      public Guid VerificationCode { get; init; }
-      public byte[] Signature { get; init; }
-      public byte[] VerificationKey { get; init; }
+namespace Crypter.Core.Models;
 
-      public UserEmailAddressVerificationParameters(Guid userId, EmailAddress emailAddress, Guid verificationCode, byte[] signature, byte[] verificationKey)
-      {
-         UserId = userId;
-         EmailAddress = emailAddress;
-         VerificationCode = verificationCode;
-         Signature = signature;
-         VerificationKey = verificationKey;
-      }
+public class UserEmailAddressVerificationParameters
+{
+   public Guid UserId { get; init; }
+   public EmailAddress EmailAddress { get; init; }
+   public Guid VerificationCode { get; init; }
+   public byte[] Signature { get; init; }
+   public byte[] VerificationKey { get; init; }
+
+   public UserEmailAddressVerificationParameters(Guid userId, EmailAddress emailAddress, Guid verificationCode, byte[] signature, byte[] verificationKey)
+   {
+      UserId = userId;
+      EmailAddress = emailAddress;
+      VerificationCode = verificationCode;
+      Signature = signature;
+      VerificationKey = verificationKey;
    }
 }

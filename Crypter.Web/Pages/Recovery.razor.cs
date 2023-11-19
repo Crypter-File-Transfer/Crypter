@@ -35,96 +35,95 @@ using Crypter.Web.Helpers;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public class RecoveryBase : ComponentBase
 {
-   public class RecoveryBase : ComponentBase
+   [Inject]
+   NavigationManager NavigationManager { get; set; }
+
+   [Inject]
+   protected IUserRecoveryService UserRecoveryService { get; set; }
+
+   private string RecoveryCode;
+
+   private string RecoverySignature;
+
+   protected bool RecoveryKeySwitch = true;
+
+   protected Username Username { get; set; }
+   protected string NewPassword { get; set; }
+   protected string NewPasswordConfirm { get; set; }
+   protected string RecoveryKeyInput { get; set; }
+
+   protected bool RecoverySucceeded { get; set; }
+
+   protected string RecoveryErrorMessage { get; set; }
+   protected string RecoveryKeyErrorMessage { get; set; }
+
+   protected override void OnInitialized()
    {
-      [Inject]
-      NavigationManager NavigationManager { get; set; }
+      NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
 
-      [Inject]
-      protected IUserRecoveryService UserRecoveryService { get; set; }
+      bool validPageLanding = !string.IsNullOrEmpty(queryParameters["username"])
+                              && !string.IsNullOrEmpty(queryParameters["code"])
+                              && !string.IsNullOrEmpty(queryParameters["signature"]);
 
-      private string RecoveryCode;
-
-      private string RecoverySignature;
-
-      protected bool RecoveryKeySwitch = true;
-
-      protected Username Username { get; set; }
-      protected string NewPassword { get; set; }
-      protected string NewPasswordConfirm { get; set; }
-      protected string RecoveryKeyInput { get; set; }
-
-      protected bool RecoverySucceeded { get; set; }
-
-      protected string RecoveryErrorMessage { get; set; }
-      protected string RecoveryKeyErrorMessage { get; set; }
-
-      protected override void OnInitialized()
+      if (!validPageLanding)
       {
-         NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
-
-         bool validPageLanding = !string.IsNullOrEmpty(queryParameters["username"])
-            && !string.IsNullOrEmpty(queryParameters["code"])
-            && !string.IsNullOrEmpty(queryParameters["signature"]);
-
-         if (!validPageLanding)
-         {
-            NavigationManager.NavigateTo("/");
-            return;
-         }
-
-         string decodedUsername = UrlSafeEncoder.DecodeStringUrlSafe(queryParameters["username"]);
-         if (Username.TryFrom(decodedUsername, out Username validUsername))
-         {
-            Username = validUsername;
-         }
-         else
-         {
-            NavigationManager.NavigateTo("/");
-            return;
-         }
-
-         RecoveryCode = queryParameters["code"];
-         RecoverySignature = queryParameters["signature"];
+         NavigationManager.NavigateTo("/");
+         return;
       }
 
-      public async Task SubmitRecoveryAsync()
+      string decodedUsername = UrlSafeEncoder.DecodeStringUrlSafe(queryParameters["username"]);
+      if (Username.TryFrom(decodedUsername, out Username validUsername))
       {
-         if (NewPassword != NewPasswordConfirm)
-         {
-            RecoveryErrorMessage = "Passwords do not match.";
-            return;
-         }
+         Username = validUsername;
+      }
+      else
+      {
+         NavigationManager.NavigateTo("/");
+         return;
+      }
 
-         if (!Password.TryFrom(NewPassword, out  Password validPassword))
-         {
-            RecoveryErrorMessage = "Invalid password.";
-            return;
-         }
+      RecoveryCode = queryParameters["code"];
+      RecoverySignature = queryParameters["signature"];
+   }
 
-         Either<SubmitRecoveryError, Maybe<RecoveryKey>> recoveryResult = RecoveryKeySwitch
-            ? await RecoveryKey.FromBase64String(RecoveryKeyInput)
-               .ToEither(SubmitRecoveryError.WrongRecoveryKey)
-               .BindAsync(async x => await UserRecoveryService.SubmitRecoveryRequestAsync(RecoveryCode, RecoverySignature, Username, validPassword, x))
-            : await UserRecoveryService.SubmitRecoveryRequestAsync(RecoveryCode, RecoverySignature, Username, validPassword, Maybe<RecoveryKey>.None);
+   public async Task SubmitRecoveryAsync()
+   {
+      if (NewPassword != NewPasswordConfirm)
+      {
+         RecoveryErrorMessage = "Passwords do not match.";
+         return;
+      }
+
+      if (!Password.TryFrom(NewPassword, out  Password validPassword))
+      {
+         RecoveryErrorMessage = "Invalid password.";
+         return;
+      }
+
+      Either<SubmitRecoveryError, Maybe<RecoveryKey>> recoveryResult = RecoveryKeySwitch
+         ? await RecoveryKey.FromBase64String(RecoveryKeyInput)
+            .ToEither(SubmitRecoveryError.WrongRecoveryKey)
+            .BindAsync(async x => await UserRecoveryService.SubmitRecoveryRequestAsync(RecoveryCode, RecoverySignature, Username, validPassword, x))
+         : await UserRecoveryService.SubmitRecoveryRequestAsync(RecoveryCode, RecoverySignature, Username, validPassword, Maybe<RecoveryKey>.None);
 
 #pragma warning disable CS8524
-         recoveryResult.DoLeftOrNeither(
-            errorCode => RecoveryErrorMessage = errorCode switch
-            {
-               SubmitRecoveryError.UnknownError => "An unknown error occurred.",
-               SubmitRecoveryError.InvalidUsername => "Invalid username.",
-               SubmitRecoveryError.RecoveryNotFound => "This recovery link is expired. Request a new recovery link and try again.",
-               SubmitRecoveryError.WrongRecoveryKey => "The recovery key you provided is invalid.",
-               SubmitRecoveryError.InvalidMasterKey => "Invalid master key information.",
-               SubmitRecoveryError.PasswordHashFailure => "A cryptographic error occurred while securing your new password. This device or browser may not be supported."
-            },
-            () => RecoveryErrorMessage = "An unknown error occurred.");
+      recoveryResult.DoLeftOrNeither(
+         errorCode => RecoveryErrorMessage = errorCode switch
+         {
+            SubmitRecoveryError.UnknownError => "An unknown error occurred.",
+            SubmitRecoveryError.InvalidUsername => "Invalid username.",
+            SubmitRecoveryError.RecoveryNotFound => "This recovery link is expired. Request a new recovery link and try again.",
+            SubmitRecoveryError.WrongRecoveryKey => "The recovery key you provided is invalid.",
+            SubmitRecoveryError.InvalidMasterKey => "Invalid master key information.",
+            SubmitRecoveryError.PasswordHashFailure => "A cryptographic error occurred while securing your new password. This device or browser may not be supported."
+         },
+         () => RecoveryErrorMessage = "An unknown error occurred.");
 #pragma warning restore CS8524
 
-         RecoverySucceeded = recoveryResult.IsRight;
-      }
+      RecoverySucceeded = recoveryResult.IsRight;
    }
 }

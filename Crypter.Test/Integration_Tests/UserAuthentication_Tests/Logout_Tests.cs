@@ -35,59 +35,58 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
+namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests;
+
+[TestFixture]
+internal class Logout_Tests
 {
-   [TestFixture]
-   internal class Logout_Tests
-   {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-      private ITokenRepository _clientTokenRepository;
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+   private ITokenRepository _clientTokenRepository;
    
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
+
+   [TestCase(TokenType.Session)]
+   [TestCase(TokenType.Device)]
+   public async Task Logout_Works(TokenType refreshTokenType)
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, refreshTokenType);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, refreshTokenType);
+      });
 
-      [TestCase(TokenType.Session)]
-      [TestCase(TokenType.Device)]
-      public async Task Logout_Works(TokenType refreshTokenType)
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+      using IServiceScope scope = _factory.Services.CreateScope();
+      DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+      bool databaseHasTokenBeforeLogout = await dataContext.UserTokens.AnyAsync();
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, refreshTokenType);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+      var result = await _client.UserAuthentication.LogoutAsync();
 
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, refreshTokenType);
-         });
+      bool databaseHasTokenAfterlogout = await dataContext.UserTokens.AnyAsync();
 
-         using IServiceScope scope = _factory.Services.CreateScope();
-         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-         bool databaseHasTokenBeforeLogout = await dataContext.UserTokens.AnyAsync();
-
-         var result = await _client.UserAuthentication.LogoutAsync();
-
-         bool databaseHasTokenAfterlogout = await dataContext.UserTokens.AnyAsync();
-
-         Assert.True(registrationResult.IsRight);
-         Assert.True(loginResult.IsRight);
-         Assert.True(databaseHasTokenBeforeLogout);
-         Assert.True(result.IsRight);
-         Assert.False(databaseHasTokenAfterlogout);
-      }
+      Assert.True(registrationResult.IsRight);
+      Assert.True(loginResult.IsRight);
+      Assert.True(databaseHasTokenBeforeLogout);
+      Assert.True(result.IsRight);
+      Assert.False(databaseHasTokenAfterlogout);
    }
 }

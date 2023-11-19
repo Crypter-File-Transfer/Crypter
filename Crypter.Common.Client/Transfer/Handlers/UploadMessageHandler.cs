@@ -36,33 +36,32 @@ using Crypter.Common.Enums;
 using Crypter.Crypto.Common;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Transfer.Handlers
+namespace Crypter.Common.Client.Transfer.Handlers;
+
+public class UploadMessageHandler : UploadHandler
 {
-   public class UploadMessageHandler : UploadHandler
+   private Func<MemoryStream> _messageStreamOpener;
+   private string _messageSubject;
+   private int _messageSize;
+
+   public UploadMessageHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
+      : base(crypterApiClient, cryptoProvider, transferSettings)
+   { }
+
+   internal void SetTransferInfo(string messageSubject, string messageBody, int expirationHours)
    {
-      private Func<MemoryStream> _messageStreamOpener;
-      private string _messageSubject;
-      private int _messageSize;
+      _messageSubject = messageSubject;
+      byte[] messageBytes = Encoding.UTF8.GetBytes(messageBody);
+      _messageStreamOpener = () => new MemoryStream(messageBytes);
+      _messageSize = messageBytes.Length;
+      _expirationHours = expirationHours;
+   }
 
-      public UploadMessageHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
-         : base(crypterApiClient, cryptoProvider, transferSettings)
-      { }
-
-      internal void SetTransferInfo(string messageSubject, string messageBody, int expirationHours)
-      {
-         _messageSubject = messageSubject;
-         byte[] messageBytes = Encoding.UTF8.GetBytes(messageBody);
-         _messageStreamOpener = () => new MemoryStream(messageBytes);
-         _messageSize = messageBytes.Length;
-         _expirationHours = expirationHours;
-      }
-
-      public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
-      {
-         var (encryptionStreamOpener, senderPublicKey, proof) = GetEncryptionInfo(_messageStreamOpener, _messageSize);
-         UploadMessageTransferRequest request = new UploadMessageTransferRequest(_messageSubject, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
-         return _crypterApiClient.MessageTransfer.UploadMessageTransferAsync(_recipientUsername, request, encryptionStreamOpener, _senderDefined)
-            .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.Message, x.UserType, _recipientKeySeed));
-      }
+   public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
+   {
+      var (encryptionStreamOpener, senderPublicKey, proof) = GetEncryptionInfo(_messageStreamOpener, _messageSize);
+      UploadMessageTransferRequest request = new UploadMessageTransferRequest(_messageSubject, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
+      return _crypterApiClient.MessageTransfer.UploadMessageTransferAsync(_recipientUsername, request, encryptionStreamOpener, _senderDefined)
+         .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.Message, x.UserType, _recipientKeySeed));
    }
 }

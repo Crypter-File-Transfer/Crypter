@@ -24,10 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Client.Models
+namespace Crypter.Common.Client.Models;
+
+public class ClientApiSettings
 {
-   public class ClientApiSettings
-   {
-      public string ApiBaseUrl { get; set; }
-   }
+   public string ApiBaseUrl { get; set; }
 }

@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Keys
+namespace Crypter.Common.Contracts.Features.Keys;
+
+public enum InsertKeyPairError
 {
-   public enum InsertKeyPairError
-   {
-      UnknownError,
-      KeyPairAlreadyExists
-   }
+   UnknownError,
+   KeyPairAlreadyExists
 }

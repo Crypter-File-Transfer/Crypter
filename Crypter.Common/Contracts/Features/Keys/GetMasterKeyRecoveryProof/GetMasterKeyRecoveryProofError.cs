@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Keys
+namespace Crypter.Common.Contracts.Features.Keys;
+
+public enum GetMasterKeyRecoveryProofError
 {
-   public enum GetMasterKeyRecoveryProofError
-   {
-      UnknownError,
-      NotFound,
-      InvalidCredentials
-   }
+   UnknownError,
+   NotFound,
+   InvalidCredentials
 }

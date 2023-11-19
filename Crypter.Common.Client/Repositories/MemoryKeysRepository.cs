@@ -29,48 +29,47 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Repositories;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Repositories
+namespace Crypter.Common.Client.Repositories;
+
+public class MemoryKeysRepository : IUserKeysRepository
 {
-   public class MemoryKeysRepository : IUserKeysRepository
+   private const string _masterKeyLiteral = "master";
+   private const string _privateKeyLiteral = "private";
+
+   private readonly Dictionary<string, byte[]> _repository;
+
+   public MemoryKeysRepository()
    {
-      private const string _masterKeyLiteral = "master";
-      private const string _privateKeyLiteral = "private";
+      _repository = new Dictionary<string, byte[]>();
+   }
 
-      private readonly Dictionary<string, byte[]> _repository;
+   public Task<Maybe<byte[]>> GetMasterKeyAsync()
+   {
+      Maybe<byte[]> key = _repository.ContainsKey(_masterKeyLiteral)
+         ? _repository[_masterKeyLiteral]
+         : Maybe<byte[]>.None;
 
-      public MemoryKeysRepository()
-      {
-         _repository = new Dictionary<string, byte[]>();
-      }
+      return key.AsTask();
+   }
 
-      public Task<Maybe<byte[]>> GetMasterKeyAsync()
-      {
-         Maybe<byte[]> key = _repository.ContainsKey(_masterKeyLiteral)
-            ? _repository[_masterKeyLiteral]
-            : Maybe<byte[]>.None;
+   public Task<Maybe<byte[]>> GetPrivateKeyAsync()
+   {
+      Maybe<byte[]> key = _repository.ContainsKey(_privateKeyLiteral)
+         ? _repository[_privateKeyLiteral]
+         : Maybe<byte[]>.None;
 
-         return key.AsTask();
-      }
+      return key.AsTask();
+   }
 
-      public Task<Maybe<byte[]>> GetPrivateKeyAsync()
-      {
-         Maybe<byte[]> key = _repository.ContainsKey(_privateKeyLiteral)
-            ? _repository[_privateKeyLiteral]
-            : Maybe<byte[]>.None;
+   public Task<Unit> StoreMasterKeyAsync(byte[] masterKey, bool trustDevice)
+   {
+      _repository[_masterKeyLiteral] = masterKey;
+      return Unit.Default.AsTask();
+   }
 
-         return key.AsTask();
-      }
-
-      public Task<Unit> StoreMasterKeyAsync(byte[] masterKey, bool trustDevice)
-      {
-         _repository[_masterKeyLiteral] = masterKey;
-         return Unit.Default.AsTask();
-      }
-
-      public Task<Unit> StorePrivateKeyAsync(byte[] privateKey, bool trustDevice)
-      {
-         _repository[_privateKeyLiteral] = privateKey;
-         return Unit.Default.AsTask();
-      }
+   public Task<Unit> StorePrivateKeyAsync(byte[] privateKey, bool trustDevice)
+   {
+      _repository[_privateKeyLiteral] = privateKey;
+      return Unit.Default.AsTask();
    }
 }

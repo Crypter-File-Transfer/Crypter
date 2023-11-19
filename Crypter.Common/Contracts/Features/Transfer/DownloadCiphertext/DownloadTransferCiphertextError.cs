@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Transfer
+namespace Crypter.Common.Contracts.Features.Transfer;
+
+public enum DownloadTransferCiphertextError
 {
-   public enum DownloadTransferCiphertextError
-   {
-      UnknownError,
-      NotFound,
-      InvalidRecipientProof
-   }
+   UnknownError,
+   NotFound,
+   InvalidRecipientProof
 }

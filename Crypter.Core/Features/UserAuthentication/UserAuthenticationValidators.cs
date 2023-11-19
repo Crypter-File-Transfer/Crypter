@@ -24,13 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Features.UserAuthentication
+namespace Crypter.Core.Features.UserAuthentication;
+
+internal static class UserAuthenticationValidators
 {
-   internal static class UserAuthenticationValidators
+   internal static bool ValidatePassword(byte[] password)
    {
-      internal static bool ValidatePassword(byte[] password)
-      {
-         return password?.Length > 0;
-      }
+      return password?.Length > 0;
    }
 }

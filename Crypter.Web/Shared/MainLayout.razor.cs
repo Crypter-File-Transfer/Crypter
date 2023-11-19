@@ -37,94 +37,93 @@ using Crypter.Web.Shared.Modal;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared
+namespace Crypter.Web.Shared;
+
+[SupportedOSPlatform("browser")]
+public partial class MainLayoutBase : LayoutComponentBase, IDisposable
 {
-   [SupportedOSPlatform("browser")]
-   public partial class MainLayoutBase : LayoutComponentBase, IDisposable
+   [Inject]
+   private IBlazorSodiumService BlazorSodiumService { get; set; }
+
+   [Inject]
+   private IUserSessionService UserSessionService { get; set; }
+
+   [Inject]
+   private IUserKeysService UserKeysService { get; set; }
+
+   [Inject]
+   private IUserPasswordService UserPasswordService { get; set; }
+
+   [Inject]
+   private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
+
+   public BasicModal BasicModal { get; protected set; }
+   public RecoveryKeyModal RecoveryKeyModal { get; protected set; }
+   public TransferSuccessModal TransferSuccessModal { get; protected set; }
+   public SpinnerModal SpinnerModal { get; protected set; }
+
+   protected bool ServicesInitialized { get; set; }
+
+   protected override async Task OnInitializedAsync()
    {
-      [Inject]
-      private IBlazorSodiumService BlazorSodiumService { get; set; }
+      UserSessionService.UserLoggedInEventHandler += HandleUserLoggedInEvent;
+      UserPasswordService.PasswordHashBeginEventHandler += ShowPasswordHashingModal;
+      UserPasswordService.PasswordHashEndEventHandler += ClosePasswordHashingModal;
+      await BrowserRepository.InitializeAsync();
 
-      [Inject]
-      private IUserSessionService UserSessionService { get; set; }
-
-      [Inject]
-      private IUserKeysService UserKeysService { get; set; }
-
-      [Inject]
-      private IUserPasswordService UserPasswordService { get; set; }
-
-      [Inject]
-      private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
-
-      public BasicModal BasicModal { get; protected set; }
-      public RecoveryKeyModal RecoveryKeyModal { get; protected set; }
-      public TransferSuccessModal TransferSuccessModal { get; protected set; }
-      public SpinnerModal SpinnerModal { get; protected set; }
-
-      protected bool ServicesInitialized { get; set; }
-
-      protected override async Task OnInitializedAsync()
+      await Task.WhenAll(new Task[]
       {
-         UserSessionService.UserLoggedInEventHandler += HandleUserLoggedInEvent;
-         UserPasswordService.PasswordHashBeginEventHandler += ShowPasswordHashingModal;
-         UserPasswordService.PasswordHashEndEventHandler += ClosePasswordHashingModal;
-         await BrowserRepository.InitializeAsync();
+         BlazorSodiumService.InitializeAsync(),
+         BrowserDownloadFileService.InitializeAsync()
+      });
 
-         await Task.WhenAll(new Task[]
+      ServicesInitialized = true;
+   }
+
+   private async void HandleUserLoggedInEvent(object sender, UserLoggedInEventArgs args)
+   {
+      await UserPasswordService.DeriveUserCredentialKeyAsync(args.Username, args.Password, UserPasswordService.CurrentPasswordVersion)
+         .IfSomeAsync(async credentialKey =>
          {
-            BlazorSodiumService.InitializeAsync(),
-            BrowserDownloadFileService.InitializeAsync()
-         });
-
-         ServicesInitialized = true;
-      }
-
-      private async void HandleUserLoggedInEvent(object sender, UserLoggedInEventArgs args)
-      {
-         await UserPasswordService.DeriveUserCredentialKeyAsync(args.Username, args.Password, UserPasswordService.CurrentPasswordVersion)
-            .IfSomeAsync(async credentialKey =>
+            if (args.UploadNewKeys)
             {
-               if (args.UploadNewKeys)
-               {
-                  await UserKeysService.UploadNewKeysAsync(args.VersionedPassword, credentialKey, args.RememberUser);
-               }
-               else
-               {
-                  await UserKeysService.DownloadExistingKeysAsync(credentialKey, args.RememberUser);
-               }
+               await UserKeysService.UploadNewKeysAsync(args.VersionedPassword, credentialKey, args.RememberUser);
+            }
+            else
+            {
+               await UserKeysService.DownloadExistingKeysAsync(credentialKey, args.RememberUser);
+            }
 
-               if (args.ShowRecoveryKeyModal)
-               {
-                  await RecoveryKeyModal.OpenAsync(args.Username, args.VersionedPassword);
-               }
-            });
-      }
+            if (args.ShowRecoveryKeyModal)
+            {
+               await RecoveryKeyModal.OpenAsync(args.Username, args.VersionedPassword);
+            }
+         });
+   }
 
-      private void ShowPasswordHashingModal(object sender, PasswordHashBeginEventArgs args)
+   private void ShowPasswordHashingModal(object sender, PasswordHashBeginEventArgs args)
+   {
+      switch (args.HashType)
       {
-         switch (args.HashType)
-         {
-            case PasswordHashType.AuthenticationKey:
-               SpinnerModal.Open("Securing your Password", "Please wait while your password is securely hashed. Your real password is never provided to the server.", Maybe<EventCallback>.None);
-               break;
-            case PasswordHashType.CredentialKey:
-               SpinnerModal.Open("Calculating Encryption Key", "Please wait while your personal encryption key is calculated.", Maybe<EventCallback>.None);
-               break;
-         }
+         case PasswordHashType.AuthenticationKey:
+            SpinnerModal.Open("Securing your Password", "Please wait while your password is securely hashed. Your real password is never provided to the server.", Maybe<EventCallback>.None);
+            break;
+         case PasswordHashType.CredentialKey:
+            SpinnerModal.Open("Calculating Encryption Key", "Please wait while your personal encryption key is calculated.", Maybe<EventCallback>.None);
+            break;
       }
+   }
 
-      private async void ClosePasswordHashingModal(object sender, PasswordHashEndEventArgs args)
-      {
-         await SpinnerModal.CloseAsync();
-      }
+   private async void ClosePasswordHashingModal(object sender, PasswordHashEndEventArgs args)
+   {
+      await SpinnerModal.CloseAsync();
+   }
 
-      public void Dispose()
-      {
-         UserSessionService.UserLoggedInEventHandler -= HandleUserLoggedInEvent;
-         UserPasswordService.PasswordHashBeginEventHandler -= ShowPasswordHashingModal;
-         UserPasswordService.PasswordHashEndEventHandler -= ClosePasswordHashingModal;
-         GC.SuppressFinalize(this);
-      }
+   public void Dispose()
+   {
+      UserSessionService.UserLoggedInEventHandler -= HandleUserLoggedInEvent;
+      UserPasswordService.PasswordHashBeginEventHandler -= ShowPasswordHashingModal;
+      UserPasswordService.PasswordHashEndEventHandler -= ClosePasswordHashingModal;
+      GC.SuppressFinalize(this);
    }
 }

@@ -30,36 +30,35 @@ using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
-namespace Crypter.Web.Shared.Modal
+namespace Crypter.Web.Shared.Modal;
+
+public partial class TranferSuccessModalBase : ComponentBase
 {
-   public partial class TranferSuccessModalBase : ComponentBase
+   [Inject]
+   private IJSRuntime JSRuntime { get; set; }
+
+   protected string DownloadUrl;
+   protected int ExpirationHours;
+
+   protected Maybe<EventCallback> ModalClosedCallback { get; set; }
+   protected ModalBehavior ModalBehaviorRef { get; set; }
+
+   public void Open(string downloadUrl, int expirationHours, Maybe<EventCallback> modalClosedCallback)
    {
-      [Inject]
-      private IJSRuntime JSRuntime { get; set; }
+      DownloadUrl = downloadUrl;
+      ExpirationHours = expirationHours;
+      ModalClosedCallback = modalClosedCallback;
+      ModalBehaviorRef.Open();
+   }
 
-      protected string DownloadUrl;
-      protected int ExpirationHours;
+   public async Task CloseAsync()
+   {
+      await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
+      ModalBehaviorRef.Close();
+   }
 
-      protected Maybe<EventCallback> ModalClosedCallback { get; set; }
-      protected ModalBehavior ModalBehaviorRef { get; set; }
-
-      public void Open(string downloadUrl, int expirationHours, Maybe<EventCallback> modalClosedCallback)
-      {
-         DownloadUrl = downloadUrl;
-         ExpirationHours = expirationHours;
-         ModalClosedCallback = modalClosedCallback;
-         ModalBehaviorRef.Open();
-      }
-
-      public async Task CloseAsync()
-      {
-         await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
-         ModalBehaviorRef.Close();
-      }
-
-      protected async Task CopyToClipboardAsync()
-      {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", DownloadUrl);
-      }
+   protected async Task CopyToClipboardAsync()
+   {
+      await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", DownloadUrl);
    }
 }

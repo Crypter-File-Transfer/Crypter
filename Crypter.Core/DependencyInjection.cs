@@ -43,113 +43,112 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
-namespace Crypter.Core
-{
-   public static class DependencyInjection
-   {
-      public static IServiceCollection AddCrypterCore(this IServiceCollection services,
-         EmailSettings emailSettings,
-         HashIdSettings hashIdSettings,
-         ServerPasswordSettings serverPasswordSettings,
-         TokenSettings tokenSettings,
-         TransferStorageSettings transferStorageSettings,
-         string defaultConnectionString,
-         string hangfireConnectionString)
-      {
-         var serviceProvider = services.BuildServiceProvider();
-         var logger = serviceProvider.GetRequiredService<ILogger<DataContext>>();
+namespace Crypter.Core;
 
-         services.AddDbContextPool<DataContext>(optionsBuilder =>
-         {
-            optionsBuilder.UseNpgsql(defaultConnectionString, npgsqlOptionsBuilder =>
+public static class DependencyInjection
+{
+   public static IServiceCollection AddCrypterCore(this IServiceCollection services,
+      EmailSettings emailSettings,
+      HashIdSettings hashIdSettings,
+      ServerPasswordSettings serverPasswordSettings,
+      TokenSettings tokenSettings,
+      TransferStorageSettings transferStorageSettings,
+      string defaultConnectionString,
+      string hangfireConnectionString)
+   {
+      var serviceProvider = services.BuildServiceProvider();
+      var logger = serviceProvider.GetRequiredService<ILogger<DataContext>>();
+
+      services.AddDbContextPool<DataContext>(optionsBuilder =>
+      {
+         optionsBuilder.UseNpgsql(defaultConnectionString, npgsqlOptionsBuilder =>
             {
                npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), new string[] { "57P01" });
                npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName, DataContext.SchemaName);
             })
             .LogTo(
-                filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
-                logger: (eventData) =>
-                {
-                   ExecutionStrategyEventData retryEventData = eventData as ExecutionStrategyEventData;
-                   IReadOnlyList<Exception> exceptions = retryEventData.ExceptionsEncountered;
-                   logger.LogWarning("Retry #{count} with delay {delay} due to error: {error}", exceptions.Count, retryEventData.Delay, exceptions[exceptions.Count - 1].Message);
-                });
-         });
+               filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
+               logger: (eventData) =>
+               {
+                  ExecutionStrategyEventData retryEventData = eventData as ExecutionStrategyEventData;
+                  IReadOnlyList<Exception> exceptions = retryEventData.ExceptionsEncountered;
+                  logger.LogWarning("Retry #{count} with delay {delay} due to error: {error}", exceptions.Count, retryEventData.Delay, exceptions[exceptions.Count - 1].Message);
+               });
+      });
 
-         services.TryAddSingleton<IPasswordHashService, PasswordHashService>();
-         services.TryAddSingleton<ICryptoProvider, DefaultCryptoProvider>();
+      services.TryAddSingleton<IPasswordHashService, PasswordHashService>();
+      services.TryAddSingleton<ICryptoProvider, DefaultCryptoProvider>();
 
-         services.TryAddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
-         services.TryAddScoped<IServerMetricsService, ServerMetricsService>();
-         services.TryAddScoped<ITransferDownloadService, TransferDownloadService>();
-         services.TryAddScoped<ITransferUploadService, TransferUploadService>();
-         services.TryAddScoped<IUserAuthenticationService, UserAuthenticationService>();
-         services.TryAddScoped<IUserContactsService, UserContactsService>();
-         services.TryAddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
-         services.TryAddScoped<IUserKeysService, UserKeysService>();
-         services.TryAddScoped<IUserRecoveryService, UserRecoveryService>();
-         services.TryAddScoped<IUserService, UserService>();
-         services.TryAddScoped<IUserTransferService, UserTransferService>();
-         services.TryAddScoped<IUserProfileSettingsService, UserProfileSettingsService>();
-         services.TryAddScoped<IUserContactInfoSettingsService, UserContactInfoSettingsService>();
-         services.TryAddScoped<IUserNotificationSettingsService, UserNotificationSettingService>();
-         services.TryAddScoped<IUserPrivacySettingsService, UserPrivacySettingsService>();
+      services.TryAddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
+      services.TryAddScoped<IServerMetricsService, ServerMetricsService>();
+      services.TryAddScoped<ITransferDownloadService, TransferDownloadService>();
+      services.TryAddScoped<ITransferUploadService, TransferUploadService>();
+      services.TryAddScoped<IUserAuthenticationService, UserAuthenticationService>();
+      services.TryAddScoped<IUserContactsService, UserContactsService>();
+      services.TryAddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
+      services.TryAddScoped<IUserKeysService, UserKeysService>();
+      services.TryAddScoped<IUserRecoveryService, UserRecoveryService>();
+      services.TryAddScoped<IUserService, UserService>();
+      services.TryAddScoped<IUserTransferService, UserTransferService>();
+      services.TryAddScoped<IUserProfileSettingsService, UserProfileSettingsService>();
+      services.TryAddScoped<IUserContactInfoSettingsService, UserContactInfoSettingsService>();
+      services.TryAddScoped<IUserNotificationSettingsService, UserNotificationSettingService>();
+      services.TryAddScoped<IUserPrivacySettingsService, UserPrivacySettingsService>();
 
-         services.AddEmailService(options =>
-         {
-            options.Enabled = emailSettings.Enabled;
-            options.From = emailSettings.From;
-            options.Username = emailSettings.Username;
-            options.Password = emailSettings.Password;
-            options.Host = emailSettings.Host;
-            options.Port = emailSettings.Port;
-         });
-
-         services.AddHashIdService(options =>
-         {
-            options.Salt = hashIdSettings.Salt;
-         });
-
-         services.AddUserAuthenticationService(options =>
-         {
-            options.ClientVersion = serverPasswordSettings.ClientVersion;
-            options.ServerVersions = serverPasswordSettings.ServerVersions;
-         });
-
-         services.AddTokenService(options =>
-         {
-            options.Audience = tokenSettings.Audience;
-            options.Issuer = tokenSettings.Issuer;
-            options.SecretKey = tokenSettings.SecretKey;
-            options.AuthenticationTokenLifetimeMinutes = tokenSettings.AuthenticationTokenLifetimeMinutes;
-            options.SessionTokenLifetimeMinutes = tokenSettings.SessionTokenLifetimeMinutes;
-            options.DeviceTokenLifetimeDays = tokenSettings.DeviceTokenLifetimeDays;
-         });
-
-         services.AddTransferRepository(options =>
-         {
-            options.AllocatedGB = transferStorageSettings.AllocatedGB;
-            options.Location = transferStorageSettings.Location;
-         });
-
-         services.AddHangfire(config => config
-            .UsePostgreSqlStorage(options =>
-            {
-               options.UseNpgsqlConnection(hangfireConnectionString);
-            })
-            .UseRecommendedSerializerSettings());
-
-         return services;
-      }
-
-      public static IServiceCollection AddBackgroundServer(this IServiceCollection services, HangfireSettings hangfireSettings)
+      services.AddEmailService(options =>
       {
-         services.AddHangfireServer(options =>
-         {
-            options.WorkerCount = hangfireSettings.Workers;
-         });
+         options.Enabled = emailSettings.Enabled;
+         options.From = emailSettings.From;
+         options.Username = emailSettings.Username;
+         options.Password = emailSettings.Password;
+         options.Host = emailSettings.Host;
+         options.Port = emailSettings.Port;
+      });
 
-         return services;
-      }
+      services.AddHashIdService(options =>
+      {
+         options.Salt = hashIdSettings.Salt;
+      });
+
+      services.AddUserAuthenticationService(options =>
+      {
+         options.ClientVersion = serverPasswordSettings.ClientVersion;
+         options.ServerVersions = serverPasswordSettings.ServerVersions;
+      });
+
+      services.AddTokenService(options =>
+      {
+         options.Audience = tokenSettings.Audience;
+         options.Issuer = tokenSettings.Issuer;
+         options.SecretKey = tokenSettings.SecretKey;
+         options.AuthenticationTokenLifetimeMinutes = tokenSettings.AuthenticationTokenLifetimeMinutes;
+         options.SessionTokenLifetimeMinutes = tokenSettings.SessionTokenLifetimeMinutes;
+         options.DeviceTokenLifetimeDays = tokenSettings.DeviceTokenLifetimeDays;
+      });
+
+      services.AddTransferRepository(options =>
+      {
+         options.AllocatedGB = transferStorageSettings.AllocatedGB;
+         options.Location = transferStorageSettings.Location;
+      });
+
+      services.AddHangfire(config => config
+         .UsePostgreSqlStorage(options =>
+         {
+            options.UseNpgsqlConnection(hangfireConnectionString);
+         })
+         .UseRecommendedSerializerSettings());
+
+      return services;
+   }
+
+   public static IServiceCollection AddBackgroundServer(this IServiceCollection services, HangfireSettings hangfireSettings)
+   {
+      services.AddHangfireServer(options =>
+      {
+         options.WorkerCount = hangfireSettings.Workers;
+      });
+
+      return services;
    }
 }

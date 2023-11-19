@@ -26,30 +26,29 @@
 
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.Users
-{
-   public class UserProfileDTO
-   {
-      public string Username { get; set; }
-      public string Alias { get; set; }
-      public string About { get; set; }
-      public bool AllowKeyExchangeRequests { get; set; }
-      public bool ReceivesMessages { get; set; }
-      public bool ReceivesFiles { get; set; }
-      public byte[] PublicKey { get; set; }
-      public bool EmailVerified { get; set; }
+namespace Crypter.Common.Contracts.Features.Users;
 
-      [JsonConstructor]
-      public UserProfileDTO(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, byte[] publicKey, bool emailVerified)
-      {
-         Username = username;
-         Alias = alias;
-         About = about;
-         AllowKeyExchangeRequests = allowKeyExchangeRequests;
-         ReceivesMessages = receivesMessages;
-         ReceivesFiles = receivesFiles;
-         PublicKey = publicKey;
-         EmailVerified = emailVerified;
-      }
+public class UserProfileDTO
+{
+   public string Username { get; set; }
+   public string Alias { get; set; }
+   public string About { get; set; }
+   public bool AllowKeyExchangeRequests { get; set; }
+   public bool ReceivesMessages { get; set; }
+   public bool ReceivesFiles { get; set; }
+   public byte[] PublicKey { get; set; }
+   public bool EmailVerified { get; set; }
+
+   [JsonConstructor]
+   public UserProfileDTO(string username, string alias, string about, bool allowKeyExchangeRequests, bool receivesMessages, bool receivesFiles, byte[] publicKey, bool emailVerified)
+   {
+      Username = username;
+      Alias = alias;
+      About = about;
+      AllowKeyExchangeRequests = allowKeyExchangeRequests;
+      ReceivesMessages = receivesMessages;
+      ReceivesFiles = receivesFiles;
+      PublicKey = publicKey;
+      EmailVerified = emailVerified;
    }
 }

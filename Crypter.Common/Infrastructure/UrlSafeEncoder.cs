@@ -27,38 +27,37 @@
 using System;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Crypter.Common.Infrastructure
+namespace Crypter.Common.Infrastructure;
+
+public class UrlSafeEncoder
 {
-   public class UrlSafeEncoder
+   public static string EncodeStringUrlSafe(string value)
    {
-      public static string EncodeStringUrlSafe(string value)
-      {
-         return Base64UrlEncoder.Encode(value);
-      }
+      return Base64UrlEncoder.Encode(value);
+   }
 
-      public static string DecodeStringUrlSafe(string value)
-      {
-         return Base64UrlEncoder.Decode(value);
-      }
+   public static string DecodeStringUrlSafe(string value)
+   {
+      return Base64UrlEncoder.Decode(value);
+   }
 
-      public static string EncodeGuidUrlSafe(Guid code)
-      {
-         return Base64UrlEncoder.Encode(code.ToByteArray());
-      }
+   public static string EncodeGuidUrlSafe(Guid code)
+   {
+      return Base64UrlEncoder.Encode(code.ToByteArray());
+   }
 
-      public static Guid DecodeGuidFromUrlSafe(string code)
-      {
-         return new Guid(Base64UrlEncoder.DecodeBytes(code));
-      }
+   public static Guid DecodeGuidFromUrlSafe(string code)
+   {
+      return new Guid(Base64UrlEncoder.DecodeBytes(code));
+   }
 
-      public static string EncodeBytesUrlSafe(byte[] signature)
-      {
-         return Base64UrlEncoder.Encode(signature);
-      }
+   public static string EncodeBytesUrlSafe(byte[] signature)
+   {
+      return Base64UrlEncoder.Encode(signature);
+   }
 
-      public static byte[] DecodeBytesFromUrlSafe(string signature)
-      {
-         return Base64UrlEncoder.DecodeBytes(signature);
-      }
+   public static byte[] DecodeBytesFromUrlSafe(string signature)
+   {
+      return Base64UrlEncoder.DecodeBytes(signature);
    }
 }

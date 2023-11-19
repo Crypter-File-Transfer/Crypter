@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Client.Transfer.Models
+namespace Crypter.Common.Client.Transfer.Models;
+
+public class TransferSettings
 {
-   public class TransferSettings
-   {
-      public short MaximumTransferSizeMiB { get; set; }
-      public int MaxReadSize { get; set; }
-      public int PadSize { get; set; }
-   }
+   public short MaximumTransferSizeMiB { get; set; }
+   public int MaxReadSize { get; set; }
+   public int PadSize { get; set; }
 }

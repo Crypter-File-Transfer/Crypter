@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Client.Enums
+namespace Crypter.Common.Client.Enums;
+
+public enum BrowserStorageLocation
 {
-   public enum BrowserStorageLocation
-   {
-      Memory,
-      SessionStorage,
-      LocalStorage
-   }
+   Memory,
+   SessionStorage,
+   LocalStorage
 }

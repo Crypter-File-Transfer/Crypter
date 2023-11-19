@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Client.Transfer.Handlers.Base
+namespace Crypter.Common.Client.Transfer.Handlers.Base;
+
+public interface IUserUploadHandler
 {
-   public interface IUserUploadHandler
-   {
-      void SetSenderInfo(byte[] privateKey);
-      void SetRecipientInfo(string username, byte[] publicKey);
-   }
+   void SetSenderInfo(byte[] privateKey);
+   void SetRecipientInfo(string username, byte[] publicKey);
 }

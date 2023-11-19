@@ -30,69 +30,68 @@ using Crypter.Common.Enums;
 using Crypter.Core.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Features.Transfer
+namespace Crypter.Core.Features.Transfer;
+
+internal static class TransferCommands
 {
-   internal static class TransferCommands
+   internal static async Task DeleteTransferAsync(DataContext dataContext, ITransferRepository transferRepository, Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferStorage)
    {
-      internal static async Task DeleteTransferAsync(DataContext dataContext, ITransferRepository transferRepository, Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferStorage)
+      bool entityFound = false;
+
+      switch (itemType)
       {
-         bool entityFound = false;
+         case TransferItemType.Message:
+            switch (userType)
+            {
+               case TransferUserType.Anonymous:
+                  var anonymousEntity = await dataContext.AnonymousMessageTransfers.FirstOrDefaultAsync(x => x.Id == itemId);
+                  if (anonymousEntity is not null)
+                  {
+                     dataContext.AnonymousMessageTransfers.Remove(anonymousEntity);
+                     entityFound = true;
+                  }
+                  break;
+               case TransferUserType.User:
+                  var userEntity = await dataContext.UserMessageTransfers.FirstOrDefaultAsync(x => x.Id == itemId);
+                  if (userEntity is not null)
+                  {
+                     dataContext.UserMessageTransfers.Remove(userEntity);
+                     entityFound = true;
+                  }
+                  break;
+            }
+            break;
+         case TransferItemType.File:
+            switch (userType)
+            {
+               case TransferUserType.Anonymous:
+                  var anonymousEntity = await dataContext.AnonymousFileTransfers.FirstOrDefaultAsync(x => x.Id == itemId);
+                  if (anonymousEntity is not null)
+                  {
+                     dataContext.AnonymousFileTransfers.Remove(anonymousEntity);
+                     entityFound = true;
+                  }
+                  break;
+               case TransferUserType.User:
+                  var userEntity = await dataContext.UserFileTransfers.FirstOrDefaultAsync(x => x.Id == itemId);
+                  if (userEntity is not null)
+                  {
+                     dataContext.UserFileTransfers.Remove(userEntity);
+                     entityFound = true;
+                  }
+                  break;
+            }
+            break;
+      }
 
-         switch (itemType)
-         {
-            case TransferItemType.Message:
-               switch (userType)
-               {
-                  case TransferUserType.Anonymous:
-                     var anonymousEntity = await dataContext.AnonymousMessageTransfers.FirstOrDefaultAsync(x => x.Id == itemId);
-                     if (anonymousEntity is not null)
-                     {
-                        dataContext.AnonymousMessageTransfers.Remove(anonymousEntity);
-                        entityFound = true;
-                     }
-                     break;
-                  case TransferUserType.User:
-                     var userEntity = await dataContext.UserMessageTransfers.FirstOrDefaultAsync(x => x.Id == itemId);
-                     if (userEntity is not null)
-                     {
-                        dataContext.UserMessageTransfers.Remove(userEntity);
-                        entityFound = true;
-                     }
-                     break;
-               }
-               break;
-            case TransferItemType.File:
-               switch (userType)
-               {
-                  case TransferUserType.Anonymous:
-                     var anonymousEntity = await dataContext.AnonymousFileTransfers.FirstOrDefaultAsync(x => x.Id == itemId);
-                     if (anonymousEntity is not null)
-                     {
-                        dataContext.AnonymousFileTransfers.Remove(anonymousEntity);
-                        entityFound = true;
-                     }
-                     break;
-                  case TransferUserType.User:
-                     var userEntity = await dataContext.UserFileTransfers.FirstOrDefaultAsync(x => x.Id == itemId);
-                     if (userEntity is not null)
-                     {
-                        dataContext.UserFileTransfers.Remove(userEntity);
-                        entityFound = true;
-                     }
-                     break;
-               }
-               break;
-         }
+      if (entityFound)
+      {
+         await dataContext.SaveChangesAsync();
+      }
 
-         if (entityFound)
-         {
-            await dataContext.SaveChangesAsync();
-         }
-
-         if (deleteFromTransferStorage)
-         {
-            transferRepository.DeleteTransfer(itemId, itemType, userType);
-         }
+      if (deleteFromTransferStorage)
+      {
+         transferRepository.DeleteTransfer(itemId, itemType, userType);
       }
    }
 }

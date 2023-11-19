@@ -27,15 +27,14 @@
 using System;
 using Crypter.Common.Enums;
 
-namespace Crypter.Web.Models
+namespace Crypter.Web.Models;
+
+public class UserSentItem
 {
-   public class UserSentItem
-   {
-      public string HashId { get; set; }
-      public string Name { get; set; }
-      public string RecipientUsername { get; set; }
-      public string RecipientAlias { get; set; }
-      public DateTime ExpirationUTC { get; set; }
-      public TransferItemType ItemType { get; set; }
-   }
+   public string HashId { get; set; }
+   public string Name { get; set; }
+   public string RecipientUsername { get; set; }
+   public string RecipientAlias { get; set; }
+   public DateTime ExpirationUTC { get; set; }
+   public TransferItemType ItemType { get; set; }
 }

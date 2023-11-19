@@ -26,13 +26,12 @@
 
 using System.Security.Cryptography;
 
-namespace Crypter.Crypto.Common.CryptoHash
+namespace Crypter.Crypto.Common.CryptoHash;
+
+public class CryptoHash : ICryptoHash
 {
-   public class CryptoHash : ICryptoHash
+   public byte[] GenerateSha512(byte[] input)
    {
-      public byte[] GenerateSha512(byte[] input)
-      {
-         return SHA512.HashData(input);
-      }
+      return SHA512.HashData(input);
    }
 }

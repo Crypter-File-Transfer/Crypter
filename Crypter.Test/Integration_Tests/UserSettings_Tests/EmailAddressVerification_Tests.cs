@@ -41,60 +41,59 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.UserSettings_Tests
+namespace Crypter.Test.Integration_Tests.UserSettings_Tests;
+
+[TestFixture]
+internal class EmailAddressVerification_Tests
 {
-   [TestFixture]
-   internal class EmailAddressVerification_Tests
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+
+   private ICryptoProvider _mockCryptoProvider;
+   private DefaultCryptoProvider _cryptoProvider;
+   private Ed25519KeyPair _emailVerificationKeyPair;
+
+   [OneTimeSetUp]
+   public void SetupFixture()
    {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-
-      private ICryptoProvider _mockCryptoProvider;
-      private DefaultCryptoProvider _cryptoProvider;
-      private Ed25519KeyPair _emailVerificationKeyPair;
-
-      [OneTimeSetUp]
-      public void SetupFixture()
-      {
-         _cryptoProvider = new DefaultCryptoProvider();
-         _emailVerificationKeyPair = _cryptoProvider.DigitalSignature.GenerateKeyPair();
-         _mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_emailVerificationKeyPair).Object;
-      }
+      _cryptoProvider = new DefaultCryptoProvider();
+      _emailVerificationKeyPair = _cryptoProvider.DigitalSignature.GenerateKeyPair();
+      _mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_emailVerificationKeyPair).Object;
+   }
       
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         ICryptoProvider mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_emailVerificationKeyPair).Object;
-         IServiceCollection overrideServices = new ServiceCollection();
-         overrideServices.AddSingleton(mockCryptoProvider);
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      ICryptoProvider mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_emailVerificationKeyPair).Object;
+      IServiceCollection overrideServices = new ServiceCollection();
+      overrideServices.AddSingleton(mockCryptoProvider);
 
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync(true, overrideServices);
-         (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-      }
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync(true, overrideServices);
+      (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+   }
 
-      [Test]
-      public async Task Email_Address_Verification_Works_Async()
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword, TestData.DefaultEmailAdress);
-         Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+   [Test]
+   public async Task Email_Address_Verification_Works_Async()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword, TestData.DefaultEmailAdress);
+      Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         // Allow the background service to "send" the verification email and save the email verification data
-         await Task.Delay(5000);
+      // Allow the background service to "send" the verification email and save the email verification data
+      await Task.Delay(5000);
 
-         using IServiceScope scope = _factory.Services.CreateScope();
-         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-         UserEmailVerificationEntity verificationData = await dataContext.UserEmailVerifications
-            .Where(x => x.User.Username == TestData.DefaultUsername)
-            .FirstAsync();
+      using IServiceScope scope = _factory.Services.CreateScope();
+      DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+      UserEmailVerificationEntity verificationData = await dataContext.UserEmailVerifications
+         .Where(x => x.User.Username == TestData.DefaultUsername)
+         .FirstAsync();
 
-         string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(verificationData.Code);
-         byte[] signedVerificationCode = _cryptoProvider.DigitalSignature.GenerateSignature(_emailVerificationKeyPair.PrivateKey, verificationData.Code.ToByteArray());
-         string encodedSignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedVerificationCode);
+      string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(verificationData.Code);
+      byte[] signedVerificationCode = _cryptoProvider.DigitalSignature.GenerateSignature(_emailVerificationKeyPair.PrivateKey, verificationData.Code.ToByteArray());
+      string encodedSignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedVerificationCode);
 
-         VerifyEmailAddressRequest request = new VerifyEmailAddressRequest(encodedVerificationCode, encodedSignature);
-         Either<VerifyEmailAddressError, Unit> result = await _client.UserSetting.VerifyUserEmailAddressAsync(request);
+      VerifyEmailAddressRequest request = new VerifyEmailAddressRequest(encodedVerificationCode, encodedSignature);
+      Either<VerifyEmailAddressError, Unit> result = await _client.UserSetting.VerifyUserEmailAddressAsync(request);
 
-         Assert.True(result.IsRight);
-      }
+      Assert.True(result.IsRight);
    }
 }

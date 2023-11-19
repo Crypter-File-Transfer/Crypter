@@ -26,26 +26,25 @@
 
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.Transfer
-{
-   public class UploadFileTransferRequest
-   {
-      public string Filename { get; init; }
-      public string ContentType { get; init; }
-      public byte[] PublicKey { get; init; }
-      public byte[] KeyExchangeNonce { get; init; }
-      public byte[] Proof { get; init; }
-      public int LifetimeHours { get; init; }
+namespace Crypter.Common.Contracts.Features.Transfer;
 
-      [JsonConstructor]
-      public UploadFileTransferRequest(string fileName, string contentType, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, int lifetimeHours)
-      {
-         Filename = fileName;
-         ContentType = contentType;
-         PublicKey = publicKey;
-         KeyExchangeNonce = keyExchangeNonce;
-         Proof = proof;
-         LifetimeHours = lifetimeHours;
-      }
+public class UploadFileTransferRequest
+{
+   public string Filename { get; init; }
+   public string ContentType { get; init; }
+   public byte[] PublicKey { get; init; }
+   public byte[] KeyExchangeNonce { get; init; }
+   public byte[] Proof { get; init; }
+   public int LifetimeHours { get; init; }
+
+   [JsonConstructor]
+   public UploadFileTransferRequest(string fileName, string contentType, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, int lifetimeHours)
+   {
+      Filename = fileName;
+      ContentType = contentType;
+      PublicKey = publicKey;
+      KeyExchangeNonce = keyExchangeNonce;
+      Proof = proof;
+      LifetimeHours = lifetimeHours;
    }
 }

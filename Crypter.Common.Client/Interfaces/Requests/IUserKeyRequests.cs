@@ -28,14 +28,13 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Keys;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Requests
+namespace Crypter.Common.Client.Interfaces.Requests;
+
+public interface IUserKeyRequests
 {
-   public interface IUserKeyRequests
-   {
-      Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
-      Task<Either<InsertMasterKeyError, Unit>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
-      Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request);
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync();
-      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request);
-   }
+   Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
+   Task<Either<InsertMasterKeyError, Unit>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
+   Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request);
+   Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync();
+   Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request);
 }

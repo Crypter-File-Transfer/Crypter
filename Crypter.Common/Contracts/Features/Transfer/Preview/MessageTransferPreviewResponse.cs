@@ -27,32 +27,31 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.Transfer
-{
-   public class MessageTransferPreviewResponse
-   {
-      public string Subject { get; init; }
-      public long Size { get; init; }
-      public string Sender { get; init; }
-      public string SenderAlias { get; init; }
-      public string Recipient { get; init; }
-      public byte[] PublicKey { get; init; }
-      public byte[] KeyExchangeNonce { get; init; }
-      public DateTime CreationUTC { get; init; }
-      public DateTime ExpirationUTC { get; init; }
+namespace Crypter.Common.Contracts.Features.Transfer;
 
-      [JsonConstructor]
-      public MessageTransferPreviewResponse(string subject, long size, string sender, string senderAlias, string recipient, byte[] publicKey, byte[] keyExchangeNonce, DateTime creationUTC, DateTime expirationUTC)
-      {
-         Subject = subject;
-         Size = size;
-         Sender = sender;
-         SenderAlias = senderAlias;
-         Recipient = recipient;
-         PublicKey = publicKey;
-         KeyExchangeNonce = keyExchangeNonce;
-         CreationUTC = creationUTC;
-         ExpirationUTC = expirationUTC;
-      }
+public class MessageTransferPreviewResponse
+{
+   public string Subject { get; init; }
+   public long Size { get; init; }
+   public string Sender { get; init; }
+   public string SenderAlias { get; init; }
+   public string Recipient { get; init; }
+   public byte[] PublicKey { get; init; }
+   public byte[] KeyExchangeNonce { get; init; }
+   public DateTime CreationUTC { get; init; }
+   public DateTime ExpirationUTC { get; init; }
+
+   [JsonConstructor]
+   public MessageTransferPreviewResponse(string subject, long size, string sender, string senderAlias, string recipient, byte[] publicKey, byte[] keyExchangeNonce, DateTime creationUTC, DateTime expirationUTC)
+   {
+      Subject = subject;
+      Size = size;
+      Sender = sender;
+      SenderAlias = senderAlias;
+      Recipient = recipient;
+      PublicKey = publicKey;
+      KeyExchangeNonce = keyExchangeNonce;
+      CreationUTC = creationUTC;
+      ExpirationUTC = expirationUTC;
    }
 }

@@ -26,23 +26,22 @@
 
 using System;
 
-namespace Crypter.Common.Contracts.Features.Transfer
-{
-   public class UserReceivedMessageDTO
-   {
-      public string HashId { get; set; }
-      public string Subject { get; set; }
-      public string SenderUsername { get; set; }
-      public string SenderAlias { get; set; }
-      public DateTime ExpirationUTC { get; set; }
+namespace Crypter.Common.Contracts.Features.Transfer;
 
-      public UserReceivedMessageDTO(string hashId, string subject, string senderUsername, string senderAlias, DateTime expirationUTC)
-      {
-         HashId = hashId;
-         Subject = subject;
-         SenderUsername = senderUsername;
-         SenderAlias = senderAlias;
-         ExpirationUTC = expirationUTC;
-      }
+public class UserReceivedMessageDTO
+{
+   public string HashId { get; set; }
+   public string Subject { get; set; }
+   public string SenderUsername { get; set; }
+   public string SenderAlias { get; set; }
+   public DateTime ExpirationUTC { get; set; }
+
+   public UserReceivedMessageDTO(string hashId, string subject, string senderUsername, string senderAlias, DateTime expirationUTC)
+   {
+      HashId = hashId;
+      Subject = subject;
+      SenderUsername = senderUsername;
+      SenderAlias = senderAlias;
+      ExpirationUTC = expirationUTC;
    }
 }

@@ -35,34 +35,33 @@ using Crypter.Common.Enums;
 using Crypter.Crypto.Common;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Transfer.Handlers
+namespace Crypter.Common.Client.Transfer.Handlers;
+
+public class UploadFileHandler : UploadHandler
 {
-   public class UploadFileHandler : UploadHandler
+   private Func<Stream> _fileStreamOpener;
+   private string _fileName;
+   private long _fileSize;
+   private string _fileContentType;
+
+   public UploadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
+      : base(crypterApiClient, cryptoProvider, transferSettings)
+   { }
+
+   internal void SetTransferInfo(Func<Stream> fileStreamOpener, string fileName, long fileSize, string fileContentType, int expirationHours)
    {
-      private Func<Stream> _fileStreamOpener;
-      private string _fileName;
-      private long _fileSize;
-      private string _fileContentType;
+      _fileStreamOpener = fileStreamOpener;
+      _fileName = fileName;
+      _fileSize = fileSize;
+      _fileContentType = fileContentType;
+      _expirationHours = expirationHours;
+   }
 
-      public UploadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
-         : base(crypterApiClient, cryptoProvider, transferSettings)
-      { }
-
-      internal void SetTransferInfo(Func<Stream> fileStreamOpener, string fileName, long fileSize, string fileContentType, int expirationHours)
-      {
-         _fileStreamOpener = fileStreamOpener;
-         _fileName = fileName;
-         _fileSize = fileSize;
-         _fileContentType = fileContentType;
-         _expirationHours = expirationHours;
-      }
-
-      public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
-      {
-         var (encryptionStreamOpener, senderPublicKey, proof) = GetEncryptionInfo(_fileStreamOpener, _fileSize);
-         UploadFileTransferRequest request = new UploadFileTransferRequest(_fileName, _fileContentType, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
-         return _crypterApiClient.FileTransfer.UploadFileTransferAsync(_recipientUsername, request, encryptionStreamOpener, _senderDefined)
-            .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.File, x.UserType, _recipientKeySeed));
-      }
+   public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
+   {
+      var (encryptionStreamOpener, senderPublicKey, proof) = GetEncryptionInfo(_fileStreamOpener, _fileSize);
+      UploadFileTransferRequest request = new UploadFileTransferRequest(_fileName, _fileContentType, senderPublicKey, _keyExchangeNonce, proof, _expirationHours);
+      return _crypterApiClient.FileTransfer.UploadFileTransferAsync(_recipientUsername, request, encryptionStreamOpener, _senderDefined)
+         .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x => new UploadHandlerResponse(x.HashId, _expirationHours, TransferItemType.File, x.UserType, _recipientKeySeed));
    }
 }

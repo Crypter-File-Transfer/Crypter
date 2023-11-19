@@ -26,10 +26,9 @@
 
 using System;
 
-namespace Crypter.Crypto.Common.ConstantTime
+namespace Crypter.Crypto.Common.ConstantTime;
+
+public interface IConstantTime
 {
-   public interface IConstantTime
-   {
-      bool Equals(ReadOnlySpan<byte> left, ReadOnlySpan<byte> right);
-   }
+   bool Equals(ReadOnlySpan<byte> left, ReadOnlySpan<byte> right);
 }

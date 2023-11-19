@@ -26,18 +26,17 @@
 
 using System;
 
-namespace Crypter.Crypto.Common.KeyExchange
+namespace Crypter.Crypto.Common.KeyExchange;
+
+public interface IKeyExchange
 {
-   public interface IKeyExchange
-   {
-      uint SeedSize { get; }
-      uint NonceSize { get; }
-      uint ProofSize { get; }
-      X25519KeyPair GenerateKeyPair();
-      X25519KeyPair GenerateKeyPairDeterministic(ReadOnlySpan<byte> seed);
-      byte[] GeneratePublicKey(ReadOnlySpan<byte> privateKey);
-      byte[] GenerateSharedKey(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> publicKey);
-      (byte[] encryptionKey, byte[] proof) GenerateEncryptionKey(uint keySize, ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> nonce);
-      (byte[] decryptionKey, byte[] proof) GenerateDecryptionKey(uint keySize, ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> nonce);
-   }
+   uint SeedSize { get; }
+   uint NonceSize { get; }
+   uint ProofSize { get; }
+   X25519KeyPair GenerateKeyPair();
+   X25519KeyPair GenerateKeyPairDeterministic(ReadOnlySpan<byte> seed);
+   byte[] GeneratePublicKey(ReadOnlySpan<byte> privateKey);
+   byte[] GenerateSharedKey(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> publicKey);
+   (byte[] encryptionKey, byte[] proof) GenerateEncryptionKey(uint keySize, ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> nonce);
+   (byte[] decryptionKey, byte[] proof) GenerateDecryptionKey(uint keySize, ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> nonce);
 }

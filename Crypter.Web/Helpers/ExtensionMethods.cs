@@ -29,18 +29,17 @@ using System.Collections.Specialized;
 using System.Web;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Helpers
-{
-   public static class ExtensionMethods
-   {
-      public static NameValueCollection GetQueryParameters(this NavigationManager navigationManager)
-      {
-         return HttpUtility.ParseQueryString(new Uri(navigationManager.Uri).Query);
-      }
+namespace Crypter.Web.Helpers;
 
-      public static string GetQueryParameter(this NavigationManager navigationManager, string key)
-      {
-         return navigationManager.GetQueryParameters()[key];
-      }
+public static class ExtensionMethods
+{
+   public static NameValueCollection GetQueryParameters(this NavigationManager navigationManager)
+   {
+      return HttpUtility.ParseQueryString(new Uri(navigationManager.Uri).Query);
+   }
+
+   public static string GetQueryParameter(this NavigationManager navigationManager, string key)
+   {
+      return navigationManager.GetQueryParameters()[key];
    }
 }

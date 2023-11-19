@@ -26,12 +26,11 @@
 
 using System;
 
-namespace Crypter.Common.Infrastructure
+namespace Crypter.Common.Infrastructure;
+
+public class InvalidEnumValueException : ApplicationException
 {
-   public class InvalidEnumValueException : ApplicationException
-   {
-      public InvalidEnumValueException(string value, Type enumType)
-         : base($"'{value}' is not a valid value for {enumType.Name}")
-      { }
-   }
+   public InvalidEnumValueException(string value, Type enumType)
+      : base($"'{value}' is not a valid value for {enumType.Name}")
+   { }
 }

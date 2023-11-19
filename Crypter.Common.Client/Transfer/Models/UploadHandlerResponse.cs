@@ -27,23 +27,22 @@
 using Crypter.Common.Enums;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Transfer.Models
-{
-   public class UploadHandlerResponse
-   {
-      public string TransferId { get; init; }
-      public int ExpirationHours { get; init; }
-      public TransferItemType ItemType { get; init; }
-      public TransferUserType UserType { get; init; }
-      public Maybe<byte[]> RecipientKeySeed { get; init; }
+namespace Crypter.Common.Client.Transfer.Models;
 
-      public UploadHandlerResponse(string transferId, int expirationHours, TransferItemType itemType, TransferUserType userType, Maybe<byte[]> recipientKeySeed)
-      {
-         TransferId = transferId;
-         ExpirationHours = expirationHours;
-         ItemType = itemType;
-         UserType = userType;
-         RecipientKeySeed = recipientKeySeed;
-      }
+public class UploadHandlerResponse
+{
+   public string TransferId { get; init; }
+   public int ExpirationHours { get; init; }
+   public TransferItemType ItemType { get; init; }
+   public TransferUserType UserType { get; init; }
+   public Maybe<byte[]> RecipientKeySeed { get; init; }
+
+   public UploadHandlerResponse(string transferId, int expirationHours, TransferItemType itemType, TransferUserType userType, Maybe<byte[]> recipientKeySeed)
+   {
+      TransferId = transferId;
+      ExpirationHours = expirationHours;
+      ItemType = itemType;
+      UserType = userType;
+      RecipientKeySeed = recipientKeySeed;
    }
 }

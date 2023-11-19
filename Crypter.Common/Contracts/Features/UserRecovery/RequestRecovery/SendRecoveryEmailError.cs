@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserRecovery.RequestRecovery
+namespace Crypter.Common.Contracts.Features.UserRecovery.RequestRecovery;
+
+public enum SendRecoveryEmailError
 {
-   public enum SendRecoveryEmailError
-   {
-      UnknownError,
-      InvalidEmailAddress
-   }
+   UnknownError,
+   InvalidEmailAddress
 }

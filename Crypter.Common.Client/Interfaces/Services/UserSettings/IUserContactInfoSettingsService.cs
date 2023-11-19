@@ -31,13 +31,12 @@ using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Services.UserSettings
-{
-   public interface IUserContactInfoSettingsService
-   {
-      Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync();
-      Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Maybe<EmailAddress> emailAddress, Password currentPassword);
+namespace Crypter.Common.Client.Interfaces.Services.UserSettings;
 
-      event EventHandler<UserContactInfoChangedEventArgs> UserContactInfoChangedEventHandler;
-   }
+public interface IUserContactInfoSettingsService
+{
+   Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync();
+   Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Maybe<EmailAddress> emailAddress, Password currentPassword);
+
+   event EventHandler<UserContactInfoChangedEventArgs> UserContactInfoChangedEventHandler;
 }

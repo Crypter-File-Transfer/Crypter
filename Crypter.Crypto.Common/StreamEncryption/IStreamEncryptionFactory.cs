@@ -26,13 +26,12 @@
 
 using System;
 
-namespace Crypter.Crypto.Common.StreamEncryption
+namespace Crypter.Crypto.Common.StreamEncryption;
+
+public interface IStreamEncryptionFactory
 {
-   public interface IStreamEncryptionFactory
-   {
-      uint KeySize { get; }
-      uint TagSize { get; }
-      IStreamEncrypt NewEncryptionStream(int padSize);
-      IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header);
-   }
+   uint KeySize { get; }
+   uint TagSize { get; }
+   IStreamEncrypt NewEncryptionStream(int padSize);
+   IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header);
 }

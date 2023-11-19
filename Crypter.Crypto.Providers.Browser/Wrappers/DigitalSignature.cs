@@ -29,25 +29,24 @@ using System.Runtime.Versioning;
 using BlazorSodium.Sodium;
 using Crypter.Crypto.Common.DigitalSignature;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
+
+[SupportedOSPlatform("browser")]
+public class DigitalSignature : IDigitalSignature
 {
-   [SupportedOSPlatform("browser")]
-   public class DigitalSignature : IDigitalSignature
+   public Ed25519KeyPair GenerateKeyPair()
    {
-      public Ed25519KeyPair GenerateKeyPair()
-      {
-         BlazorSodium.Sodium.Models.Ed25519KeyPair keyPair = PublicKeySignature.Crypto_Sign_KeyPair();
-         return new Ed25519KeyPair(keyPair.PrivateKey, keyPair.PublicKey);
-      }
+      BlazorSodium.Sodium.Models.Ed25519KeyPair keyPair = PublicKeySignature.Crypto_Sign_KeyPair();
+      return new Ed25519KeyPair(keyPair.PrivateKey, keyPair.PublicKey);
+   }
 
-      public byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message)
-      {
-         return PublicKeySignature.Crypto_Sign_Detached(message.ToArray(), privateKey.ToArray());
-      }
+   public byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message)
+   {
+      return PublicKeySignature.Crypto_Sign_Detached(message.ToArray(), privateKey.ToArray());
+   }
 
-      public bool VerifySignature(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> message, ReadOnlySpan<byte> signature)
-      {
-         return PublicKeySignature.Crypto_Sign_Verify_Detached(signature.ToArray(), message.ToArray(), publicKey.ToArray());
-      }
+   public bool VerifySignature(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> message, ReadOnlySpan<byte> signature)
+   {
+      return PublicKeySignature.Crypto_Sign_Verify_Detached(signature.ToArray(), message.ToArray(), publicKey.ToArray());
    }
 }

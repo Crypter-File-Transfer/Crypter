@@ -24,13 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Transfer
+namespace Crypter.Common.Contracts.Features.Transfer;
+
+public enum UploadTransferError
 {
-   public enum UploadTransferError
-   {
-      UnknownError,
-      InvalidRequestedLifetimeHours,
-      OutOfSpace,
-      RecipientNotFound
-   }
+   UnknownError,
+   InvalidRequestedLifetimeHours,
+   OutOfSpace,
+   RecipientNotFound
 }

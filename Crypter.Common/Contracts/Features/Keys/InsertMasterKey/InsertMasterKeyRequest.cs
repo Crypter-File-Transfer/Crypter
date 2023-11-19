@@ -24,21 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Keys
-{
-   public class InsertMasterKeyRequest
-   {
-      public byte[] Password { get; init; }
-      public byte[] EncryptedKey { get; init; }
-      public byte[] Nonce { get; init; }
-      public byte[] RecoveryProof { get; init; }
+namespace Crypter.Common.Contracts.Features.Keys;
 
-      public InsertMasterKeyRequest(byte[] password, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof)
-      {
-         Password = password;
-         EncryptedKey = encryptedKey;
-         Nonce = nonce;
-         RecoveryProof = recoveryProof;
-      }
+public class InsertMasterKeyRequest
+{
+   public byte[] Password { get; init; }
+   public byte[] EncryptedKey { get; init; }
+   public byte[] Nonce { get; init; }
+   public byte[] RecoveryProof { get; init; }
+
+   public InsertMasterKeyRequest(byte[] password, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof)
+   {
+      Password = password;
+      EncryptedKey = encryptedKey;
+      Nonce = nonce;
+      RecoveryProof = recoveryProof;
    }
 }

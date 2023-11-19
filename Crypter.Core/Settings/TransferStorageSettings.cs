@@ -27,19 +27,18 @@
 using System;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Crypter.Core.Settings
-{
-   public static class TransferStorageExtensions
-   {
-      public static void AddTransferStorage(this IServiceCollection services, Action<TransferStorageSettings> options = null)
-      {
-         services.Configure(options);
-      }
-   }
+namespace Crypter.Core.Settings;
 
-   public class TransferStorageSettings
+public static class TransferStorageExtensions
+{
+   public static void AddTransferStorage(this IServiceCollection services, Action<TransferStorageSettings> options = null)
    {
-      public int AllocatedGB { get; set; }
-      public string Location { get; set; }
+      services.Configure(options);
    }
+}
+
+public class TransferStorageSettings
+{
+   public int AllocatedGB { get; set; }
+   public string Location { get; set; }
 }

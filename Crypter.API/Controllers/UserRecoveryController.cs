@@ -36,66 +36,65 @@ using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers;
+
+[ApiController]
+[Route("api/user/recovery")]
+public class UserRecoveryController : CrypterControllerBase
 {
-   [ApiController]
-   [Route("api/user/recovery")]
-   public class UserRecoveryController : CrypterControllerBase
+   private readonly IBackgroundJobClient _backgroundJobClient;
+   private readonly IHangfireBackgroundService _hangfireBackgroundService;
+   private readonly IUserRecoveryService _userRecoveryService;
+
+   public UserRecoveryController(IBackgroundJobClient backgroundJobClient, IHangfireBackgroundService hangfireBackgroundService, IUserRecoveryService userRecoveryService)
    {
-      private readonly IBackgroundJobClient _backgroundJobClient;
-      private readonly IHangfireBackgroundService _hangfireBackgroundService;
-      private readonly IUserRecoveryService _userRecoveryService;
+      _backgroundJobClient = backgroundJobClient;
+      _hangfireBackgroundService = hangfireBackgroundService;
+      _userRecoveryService = userRecoveryService;
+   }
 
-      public UserRecoveryController(IBackgroundJobClient backgroundJobClient, IHangfireBackgroundService hangfireBackgroundService, IUserRecoveryService userRecoveryService)
+   [HttpGet]
+   [ProducesResponseType(StatusCodes.Status202Accepted, Type = typeof(void))]
+   [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+   [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+   public IActionResult SendRecoveryEmail([FromQuery] string emailAddress)
+   {
+      if (EmailAddress.TryFrom(emailAddress, out EmailAddress validEmailAddress))
       {
-         _backgroundJobClient = backgroundJobClient;
-         _hangfireBackgroundService = hangfireBackgroundService;
-         _userRecoveryService = userRecoveryService;
+         _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendRecoveryEmailAsync(validEmailAddress.Value));
+         return Accepted();
       }
-
-      [HttpGet]
-      [ProducesResponseType(StatusCodes.Status202Accepted, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public IActionResult SendRecoveryEmail([FromQuery] string emailAddress)
+      else
       {
-         if (EmailAddress.TryFrom(emailAddress, out EmailAddress validEmailAddress))
-         {
-            _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendRecoveryEmailAsync(validEmailAddress.Value));
-            return Accepted();
-         }
-         else
-         {
-            return MakeErrorResponseBase(HttpStatusCode.BadRequest, SendRecoveryEmailError.InvalidEmailAddress);
-         }
+         return MakeErrorResponseBase(HttpStatusCode.BadRequest, SendRecoveryEmailError.InvalidEmailAddress);
       }
+   }
 
-      [HttpPost]
-      [ProducesResponseType(StatusCodes.Status202Accepted, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> SubmitRecoveryAsync([FromBody] SubmitRecoveryRequest request)
+   [HttpPost]
+   [ProducesResponseType(StatusCodes.Status202Accepted, Type = typeof(void))]
+   [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+   [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
+   public async Task<IActionResult> SubmitRecoveryAsync([FromBody] SubmitRecoveryRequest request)
+   {
+      IActionResult MakeErrorResponse(SubmitRecoveryError error)
       {
-         IActionResult MakeErrorResponse(SubmitRecoveryError error)
-         {
 #pragma warning disable CS8524
-            return error switch
-            {
-               SubmitRecoveryError.PasswordHashFailure
+         return error switch
+         {
+            SubmitRecoveryError.PasswordHashFailure
                or SubmitRecoveryError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-               SubmitRecoveryError.InvalidUsername
-                  or SubmitRecoveryError.WrongRecoveryKey
-                  or SubmitRecoveryError.InvalidMasterKey => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
-               SubmitRecoveryError.RecoveryNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
-            };
+            SubmitRecoveryError.InvalidUsername
+               or SubmitRecoveryError.WrongRecoveryKey
+               or SubmitRecoveryError.InvalidMasterKey => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
+            SubmitRecoveryError.RecoveryNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+         };
 #pragma warning restore CS8524
-         }
-
-         return await _userRecoveryService.PerformRecoveryAsync(request)
-            .MatchAsync(
-               MakeErrorResponse,
-               _ => Accepted(),
-               MakeErrorResponse(SubmitRecoveryError.UnknownError));
       }
+
+      return await _userRecoveryService.PerformRecoveryAsync(request)
+         .MatchAsync(
+            MakeErrorResponse,
+            _ => Accepted(),
+            MakeErrorResponse(SubmitRecoveryError.UnknownError));
    }
 }

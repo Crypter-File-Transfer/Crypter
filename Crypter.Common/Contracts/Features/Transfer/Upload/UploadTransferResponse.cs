@@ -28,20 +28,19 @@ using System;
 using System.Text.Json.Serialization;
 using Crypter.Common.Enums;
 
-namespace Crypter.Common.Contracts.Features.Transfer
-{
-   public class UploadTransferResponse
-   {
-      public string HashId { get; set; }
-      public DateTime ExpirationUTC { get; set; }
-      public TransferUserType UserType { get; set; }
+namespace Crypter.Common.Contracts.Features.Transfer;
 
-      [JsonConstructor]
-      public UploadTransferResponse(string hashId, DateTime expirationUTC, TransferUserType userType)
-      {
-         HashId = hashId;
-         ExpirationUTC = expirationUTC;
-         UserType = userType;
-      }
+public class UploadTransferResponse
+{
+   public string HashId { get; set; }
+   public DateTime ExpirationUTC { get; set; }
+   public TransferUserType UserType { get; set; }
+
+   [JsonConstructor]
+   public UploadTransferResponse(string hashId, DateTime expirationUTC, TransferUserType userType)
+   {
+      HashId = hashId;
+      ExpirationUTC = expirationUTC;
+      UserType = userType;
    }
 }

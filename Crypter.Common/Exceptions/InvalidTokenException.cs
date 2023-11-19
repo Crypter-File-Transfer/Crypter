@@ -26,9 +26,8 @@
 
 using System;
 
-namespace Crypter.Common.Exceptions
+namespace Crypter.Common.Exceptions;
+
+public class InvalidTokenException : ApplicationException
 {
-   public class InvalidTokenException : ApplicationException
-   {
-   }
 }

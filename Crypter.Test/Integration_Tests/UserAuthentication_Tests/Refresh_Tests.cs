@@ -38,106 +38,105 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
+namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests;
+
+[TestFixture]
+internal class Refresh_Tests
 {
-   [TestFixture]
-   internal class Refresh_Tests
-   {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-      private ITokenRepository _clientTokenRepository;
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+   private ITokenRepository _clientTokenRepository;
    
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
+
+   [TestCase(TokenType.Session)]
+   [TestCase(TokenType.Device)]
+   public async Task Refresh_Works(TokenType refreshTokenType)
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, refreshTokenType);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, refreshTokenType);
+      });
 
-      [TestCase(TokenType.Session)]
-      [TestCase(TokenType.Device)]
-      public async Task Refresh_Works(TokenType refreshTokenType)
+      var result = await _client.UserAuthentication.RefreshSessionAsync();
+
+      Assert.True(registrationResult.IsRight);
+      Assert.True(loginResult.IsRight);
+      Assert.True(result.IsRight);
+   }
+
+   [Test]
+   public async Task Refresh_Fails_Expired_Token()
+   {
+      IConfiguration apiConfiguration = SettingsReader.GetTestSettings();
+      TokenSettings apiTokenSettings = apiConfiguration.GetSection("TokenSettings").Get<TokenSettings>();
+
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, refreshTokenType);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+      await Task.Delay(apiTokenSettings.SessionTokenLifetimeMinutes * 60000);
+      var result = await _client.UserAuthentication.RefreshSessionAsync();
 
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, refreshTokenType);
-         });
+      Assert.True(registrationResult.IsRight);
+      Assert.True(loginResult.IsRight);
+      Assert.True(result.IsLeft);
+   }
 
-         var result = await _client.UserAuthentication.RefreshSessionAsync();
+   [Test]
+   public async Task Refresh_Fails_Deleted_Token()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         Assert.True(registrationResult.IsRight);
-         Assert.True(loginResult.IsRight);
-         Assert.True(result.IsRight);
-      }
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-      [Test]
-      public async Task Refresh_Fails_Expired_Token()
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         IConfiguration apiConfiguration = SettingsReader.GetTestSettings();
-         TokenSettings apiTokenSettings = apiConfiguration.GetSection("TokenSettings").Get<TokenSettings>();
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+      using IServiceScope scope = _factory.Services.CreateScope();
+      DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
+      UserTokenEntity refreshTokenEntity = await dataContext.UserTokens
+         .SingleOrDefaultAsync();
+      dataContext.UserTokens.Remove(refreshTokenEntity);
+      await dataContext.SaveChangesAsync();
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+      var result = await _client.UserAuthentication.RefreshSessionAsync();
 
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
-
-         await Task.Delay(apiTokenSettings.SessionTokenLifetimeMinutes * 60000);
-         var result = await _client.UserAuthentication.RefreshSessionAsync();
-
-         Assert.True(registrationResult.IsRight);
-         Assert.True(loginResult.IsRight);
-         Assert.True(result.IsLeft);
-      }
-
-      [Test]
-      public async Task Refresh_Fails_Deleted_Token()
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
-
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
-
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
-
-         using IServiceScope scope = _factory.Services.CreateScope();
-         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-         UserTokenEntity refreshTokenEntity = await dataContext.UserTokens
-            .SingleOrDefaultAsync();
-         dataContext.UserTokens.Remove(refreshTokenEntity);
-         await dataContext.SaveChangesAsync();
-
-         var result = await _client.UserAuthentication.RefreshSessionAsync();
-
-         Assert.True(registrationResult.IsRight);
-         Assert.True(loginResult.IsRight);
-         Assert.True(result.IsLeft);
-      }
+      Assert.True(registrationResult.IsRight);
+      Assert.True(loginResult.IsRight);
+      Assert.True(result.IsLeft);
    }
 }

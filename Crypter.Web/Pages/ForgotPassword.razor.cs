@@ -28,32 +28,31 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public partial class ForgotPassword : ComponentBase
 {
-   public partial class ForgotPassword : ComponentBase
+   [Inject]
+   protected IUserRecoveryService _userRecoveryService { get; init; }
+
+   protected string EmailAddress { get; set; } = string.Empty;
+   protected string ErrorMessage { get; set; } = string.Empty;
+   protected string EmailAddressInvalidClassPlaceholder { get; set; } = string.Empty;
+   protected bool Success { get; set; } = false;
+
+   protected async Task SubmitAsync()
    {
-      [Inject]
-      protected IUserRecoveryService _userRecoveryService { get; init; }
-
-      protected string EmailAddress { get; set; } = string.Empty;
-      protected string ErrorMessage { get; set; } = string.Empty;
-      protected string EmailAddressInvalidClassPlaceholder { get; set; } = string.Empty;
-      protected bool Success { get; set; } = false;
-
-      protected async Task SubmitAsync()
+      if (Common.Primitives.EmailAddress.TryFrom(EmailAddress, out Common.Primitives.EmailAddress validEmailAddress))
       {
-         if (Common.Primitives.EmailAddress.TryFrom(EmailAddress, out Common.Primitives.EmailAddress validEmailAddress))
-         {
-            EmailAddressInvalidClassPlaceholder = string.Empty;
-            ErrorMessage = string.Empty;
-            await _userRecoveryService.RequestRecoveryEmailAsync(validEmailAddress);
-            Success = true;
-         }
-         else
-         {
-            EmailAddressInvalidClassPlaceholder = "is-invalid";
-            ErrorMessage = "Invalid email address";
-         }
+         EmailAddressInvalidClassPlaceholder = string.Empty;
+         ErrorMessage = string.Empty;
+         await _userRecoveryService.RequestRecoveryEmailAsync(validEmailAddress);
+         Success = true;
+      }
+      else
+      {
+         EmailAddressInvalidClassPlaceholder = "is-invalid";
+         ErrorMessage = "Invalid email address";
       }
    }
 }

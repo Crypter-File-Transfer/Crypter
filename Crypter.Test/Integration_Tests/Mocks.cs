@@ -30,46 +30,45 @@ using Crypter.Crypto.Common.DigitalSignature;
 using Crypter.Crypto.Providers.Default.Wrappers;
 using Moq;
 
-namespace Crypter.Test.Integration_Tests
+namespace Crypter.Test.Integration_Tests;
+
+internal static class Mocks
 {
-   internal static class Mocks
+   internal static Mock<ICryptoProvider> CreateDeterministicCryptoProvider(Ed25519KeyPair keyPairToReturn)
    {
-      internal static Mock<ICryptoProvider> CreateDeterministicCryptoProvider(Ed25519KeyPair keyPairToReturn)
+      Mock<ICryptoProvider> cryptoProviderMock = new Mock<ICryptoProvider>(MockBehavior.Strict)
       {
-         Mock<ICryptoProvider> cryptoProviderMock = new Mock<ICryptoProvider>(MockBehavior.Strict)
-         {
-            CallBase = true
-         };
+         CallBase = true
+      };
 
-         cryptoProviderMock.Setup(x => x.ConstantTime)
-            .Returns(new ConstantTime());
+      cryptoProviderMock.Setup(x => x.ConstantTime)
+         .Returns(new ConstantTime());
 
-         cryptoProviderMock.Setup(x => x.CryptoHash)
-            .Returns(new CryptoHash());
+      cryptoProviderMock.Setup(x => x.CryptoHash)
+         .Returns(new CryptoHash());
 
-         cryptoProviderMock.Setup(x => x.DigitalSignature)
-            .Returns(new DigitalSignature());
+      cryptoProviderMock.Setup(x => x.DigitalSignature)
+         .Returns(new DigitalSignature());
 
-         cryptoProviderMock.Setup(x => x.GenericHash)
-            .Returns(new GenericHash());
+      cryptoProviderMock.Setup(x => x.GenericHash)
+         .Returns(new GenericHash());
 
-         cryptoProviderMock.Setup(x => x.Padding)
-            .Returns(new Padding());
+      cryptoProviderMock.Setup(x => x.Padding)
+         .Returns(new Padding());
 
-         cryptoProviderMock.Setup(x => x.Random)
-            .Returns(new Random());
+      cryptoProviderMock.Setup(x => x.Random)
+         .Returns(new Random());
 
-         Mock<DigitalSignature> digitalSignatureMock = new Mock<DigitalSignature>
-         {
-            CallBase = true
-         };
-         digitalSignatureMock.Setup(x => x.GenerateKeyPair())
-            .Returns(keyPairToReturn);
+      Mock<DigitalSignature> digitalSignatureMock = new Mock<DigitalSignature>
+      {
+         CallBase = true
+      };
+      digitalSignatureMock.Setup(x => x.GenerateKeyPair())
+         .Returns(keyPairToReturn);
 
-         cryptoProviderMock.Setup(x => x.DigitalSignature)
-            .Returns(digitalSignatureMock.Object);
+      cryptoProviderMock.Setup(x => x.DigitalSignature)
+         .Returns(digitalSignatureMock.Object);
 
-         return cryptoProviderMock;
-      }
+      return cryptoProviderMock;
    }
 }

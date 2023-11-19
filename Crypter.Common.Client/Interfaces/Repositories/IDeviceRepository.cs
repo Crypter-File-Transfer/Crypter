@@ -29,23 +29,22 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Enums;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Repositories
-{
-   /// <summary>
-   /// An interface for storing all types of data on the client device.
-   /// </summary>
-   /// <typeparam name="TLocation"></typeparam>
-   public interface IDeviceRepository<TLocation>
-      where TLocation : System.Enum
-   {
-      Task InitializeAsync();
-      Task<Maybe<TValue>> GetItemAsync<TValue>(DeviceStorageObjectType itemType);
-      bool HasItem(DeviceStorageObjectType itemType);
-      Maybe<TLocation> GetItemLocation(DeviceStorageObjectType itemType);
-      Task<Unit> SetItemAsync<TValue>(DeviceStorageObjectType itemType, TValue value, TLocation location);
-      Task<Unit> RemoveItemAsync(DeviceStorageObjectType itemType);
-      Task<Unit> RecycleAsync();
+namespace Crypter.Common.Client.Interfaces.Repositories;
 
-      event EventHandler InitializedEventHandler;
-   }
+/// <summary>
+/// An interface for storing all types of data on the client device.
+/// </summary>
+/// <typeparam name="TLocation"></typeparam>
+public interface IDeviceRepository<TLocation>
+   where TLocation : System.Enum
+{
+   Task InitializeAsync();
+   Task<Maybe<TValue>> GetItemAsync<TValue>(DeviceStorageObjectType itemType);
+   bool HasItem(DeviceStorageObjectType itemType);
+   Maybe<TLocation> GetItemLocation(DeviceStorageObjectType itemType);
+   Task<Unit> SetItemAsync<TValue>(DeviceStorageObjectType itemType, TValue value, TLocation location);
+   Task<Unit> RemoveItemAsync(DeviceStorageObjectType itemType);
+   Task<Unit> RecycleAsync();
+
+   event EventHandler InitializedEventHandler;
 }

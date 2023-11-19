@@ -28,28 +28,27 @@ using System;
 using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
+namespace Crypter.Crypto.Providers.Default.Wrappers;
+
+public class StreamEncryptionFactory : IStreamEncryptionFactory
 {
-   public class StreamEncryptionFactory : IStreamEncryptionFactory
+   private readonly IPadding _padding;
+
+   public uint KeySize { get => Geralt.IncrementalXChaCha20Poly1305.KeySize; }
+   public uint TagSize { get => Geralt.IncrementalXChaCha20Poly1305.TagSize; }
+
+   public StreamEncryptionFactory(IPadding padding)
    {
-      private readonly IPadding _padding;
+      _padding = padding;
+   }
 
-      public uint KeySize { get => Geralt.IncrementalXChaCha20Poly1305.KeySize; }
-      public uint TagSize { get => Geralt.IncrementalXChaCha20Poly1305.TagSize; }
+   public IStreamEncrypt NewEncryptionStream(int padSize)
+   {
+      return new StreamEncrypt(_padding, padSize);
+   }
 
-      public StreamEncryptionFactory(IPadding padding)
-      {
-         _padding = padding;
-      }
-
-      public IStreamEncrypt NewEncryptionStream(int padSize)
-      {
-         return new StreamEncrypt(_padding, padSize);
-      }
-
-      public IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
-      {
-         return new StreamDecrypt(_padding, key, header);
-      }
+   public IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
+   {
+      return new StreamDecrypt(_padding, key, header);
    }
 }

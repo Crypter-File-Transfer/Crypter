@@ -26,17 +26,16 @@
 
 using Crypter.Common.Primitives;
 
-namespace Crypter.Common.Client.Events
-{
-   public class UserPasswordTestSuccessEventArgs
-   {
-      public Username Username { get; init; }
-      public Password Password { get; init; }
+namespace Crypter.Common.Client.Events;
 
-      public UserPasswordTestSuccessEventArgs(Username username, Password password)
-      {
-         Username = username;
-         Password = password;
-      }
+public class UserPasswordTestSuccessEventArgs
+{
+   public Username Username { get; init; }
+   public Password Password { get; init; }
+
+   public UserPasswordTestSuccessEventArgs(Username username, Password password)
+   {
+      Username = username;
+      Password = password;
    }
 }

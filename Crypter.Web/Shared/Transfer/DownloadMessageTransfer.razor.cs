@@ -30,91 +30,90 @@ using Crypter.Common.Contracts.Features.Transfer;
 using EasyMonads;
 using Microsoft.AspNetCore.Components.Web;
 
-namespace Crypter.Web.Shared.Transfer
+namespace Crypter.Web.Shared.Transfer;
+
+public partial class DownloadMessageTransferBase : DownloadTransferBase
 {
-   public partial class DownloadMessageTransferBase : DownloadTransferBase
+   protected string Subject = string.Empty;
+   protected string PlaintextMessage = string.Empty;
+   protected long MessageSize = 0;
+
+   private DownloadMessageHandler _downloadHandler;
+
+   protected override async Task OnInitializedAsync()
    {
-      protected string Subject = string.Empty;
-      protected string PlaintextMessage = string.Empty;
-      protected long MessageSize = 0;
+      await PrepareMessagePreviewAsync();
+      FinishedLoading = true;
+   }
 
-      private DownloadMessageHandler _downloadHandler;
-
-      protected override async Task OnInitializedAsync()
+   protected async Task PrepareMessagePreviewAsync()
+   {
+      _downloadHandler = TransferHandlerFactory.CreateDownloadMessageHandler(TransferHashId, UserType);
+      var previewResponse = await _downloadHandler.DownloadPreviewAsync();
+      previewResponse.DoRight(x =>
       {
-         await PrepareMessagePreviewAsync();
-         FinishedLoading = true;
-      }
+         Subject = x.Subject;
+         Created = x.CreationUTC.ToLocalTime();
+         Expiration = x.ExpirationUTC.ToLocalTime();
+         MessageSize = x.Size;
+         SenderUsername = x.Sender;
+         SpecificRecipient = !string.IsNullOrEmpty(x.Recipient);
+      });
 
-      protected async Task PrepareMessagePreviewAsync()
+      ItemFound = previewResponse.IsRight;
+   }
+
+   protected async Task OnDecryptClickedAsync(MouseEventArgs _)
+   {
+      DecryptionInProgress = true;
+
+      Maybe<byte[]> recipientPrivateKey = SpecificRecipient
+         ? UserKeysService.PrivateKey
+         : DeriveRecipientPrivateKeyFromUrlSeed();
+
+      recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key.");
+      await recipientPrivateKey.IfSomeAsync(async x =>
       {
-         _downloadHandler = TransferHandlerFactory.CreateDownloadMessageHandler(TransferHashId, UserType);
-         var previewResponse = await _downloadHandler.DownloadPreviewAsync();
-         previewResponse.DoRight(x =>
-         {
-            Subject = x.Subject;
-            Created = x.CreationUTC.ToLocalTime();
-            Expiration = x.ExpirationUTC.ToLocalTime();
-            MessageSize = x.Size;
-            SenderUsername = x.Sender;
-            SpecificRecipient = !string.IsNullOrEmpty(x.Recipient);
-         });
+         _downloadHandler.SetRecipientInfo(x);
 
-         ItemFound = previewResponse.IsRight;
-      }
+         await SetProgressMessage(_decryptingLiteral);
+         var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
 
-      protected async Task OnDecryptClickedAsync(MouseEventArgs _)
-      {
-         DecryptionInProgress = true;
-
-         Maybe<byte[]> recipientPrivateKey = SpecificRecipient
-            ? UserKeysService.PrivateKey
-            : DeriveRecipientPrivateKeyFromUrlSeed();
-
-         recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key.");
-         await recipientPrivateKey.IfSomeAsync(async x =>
-         {
-            _downloadHandler.SetRecipientInfo(x);
-
-            await SetProgressMessage(_decryptingLiteral);
-            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
-
-            decryptionResponse.DoLeftOrNeither(
+         decryptionResponse.DoLeftOrNeither(
             x => HandleDownloadError(x),
             () => HandleDownloadError());
 
-            decryptionResponse.DoRight(x =>
-            {
-               PlaintextMessage = x;
-               DecryptionComplete = true;
-            });
-         });
-
-         DecryptionInProgress = false;
-         StateHasChanged();
-      }
-
-      protected async Task SetProgressMessage(string message)
-      {
-         DecryptionStatusMessage = message;
-         StateHasChanged();
-         await Task.Delay(400);
-      }
-
-      private void HandleDownloadError(DownloadTransferCiphertextError error = DownloadTransferCiphertextError.UnknownError)
-      {
-         switch (error)
+         decryptionResponse.DoRight(x =>
          {
-            case DownloadTransferCiphertextError.NotFound:
-               ErrorMessage = "Message not found";
-               break;
-            case DownloadTransferCiphertextError.UnknownError:
-               ErrorMessage = "An error occurred";
-               break;
-            case DownloadTransferCiphertextError.InvalidRecipientProof:
-               ErrorMessage = "Invalid decryption key";
-               break;
-         }
+            PlaintextMessage = x;
+            DecryptionComplete = true;
+         });
+      });
+
+      DecryptionInProgress = false;
+      StateHasChanged();
+   }
+
+   protected async Task SetProgressMessage(string message)
+   {
+      DecryptionStatusMessage = message;
+      StateHasChanged();
+      await Task.Delay(400);
+   }
+
+   private void HandleDownloadError(DownloadTransferCiphertextError error = DownloadTransferCiphertextError.UnknownError)
+   {
+      switch (error)
+      {
+         case DownloadTransferCiphertextError.NotFound:
+            ErrorMessage = "Message not found";
+            break;
+         case DownloadTransferCiphertextError.UnknownError:
+            ErrorMessage = "An error occurred";
+            break;
+         case DownloadTransferCiphertextError.InvalidRecipientProof:
+            ErrorMessage = "Invalid decryption key";
+            break;
       }
    }
 }

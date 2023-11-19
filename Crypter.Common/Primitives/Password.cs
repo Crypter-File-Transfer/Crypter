@@ -29,41 +29,40 @@ using Crypter.Common.Primitives.ValidationHandlers;
 using EasyMonads;
 using ValueOf;
 
-namespace Crypter.Common.Primitives
+namespace Crypter.Common.Primitives;
+
+public class Password : ValueOf<string, Password>
 {
-   public class Password : ValueOf<string, Password>
+   /// <summary>
+   /// Do not use this.
+   /// </summary>
+   public Password()
    {
-      /// <summary>
-      /// Do not use this.
-      /// </summary>
-      public Password()
+   }
+
+   protected override void Validate()
+   {
+      StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
+   }
+
+   protected override bool TryValidate()
+   {
+      return CheckValidation(Value)
+         .IsNone;
+   }
+
+   public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+   {
+      if (value is null)
       {
+         return StringPrimitiveValidationFailure.IsNull;
       }
 
-      protected override void Validate()
+      if (string.IsNullOrWhiteSpace(value))
       {
-         StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
+         return StringPrimitiveValidationFailure.IsEmpty;
       }
 
-      protected override bool TryValidate()
-      {
-         return CheckValidation(Value)
-            .IsNone;
-      }
-
-      public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
-      {
-         if (value is null)
-         {
-            return StringPrimitiveValidationFailure.IsNull;
-         }
-
-         if (string.IsNullOrWhiteSpace(value))
-         {
-            return StringPrimitiveValidationFailure.IsEmpty;
-         }
-
-         return Maybe<StringPrimitiveValidationFailure>.None;
-      }
+      return Maybe<StringPrimitiveValidationFailure>.None;
    }
 }

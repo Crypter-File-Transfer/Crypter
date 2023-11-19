@@ -28,23 +28,22 @@ using System;
 using System.Runtime.Versioning;
 using Crypter.Crypto.Common.Padding;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
-{
-   [UnsupportedOSPlatform("browser")]
-   public class Padding : IPadding
-   {
-      public byte[] Pad(ReadOnlySpan<byte> block, int blockSize)
-      {
-         int bufferSize = Geralt.Padding.GetPaddedLength(block.Length, blockSize);
-         byte[] buffer = new byte[bufferSize];
-         Geralt.Padding.Pad(buffer, block, blockSize);
-         return buffer;
-      }
+namespace Crypter.Crypto.Providers.Default.Wrappers;
 
-      public byte[] Unpad(ReadOnlySpan<byte> block, int blockSize)
-      {
-         int unpaddedLength = Geralt.Padding.GetUnpaddedLength(block, blockSize);
-         return block[..unpaddedLength].ToArray();
-      }
+[UnsupportedOSPlatform("browser")]
+public class Padding : IPadding
+{
+   public byte[] Pad(ReadOnlySpan<byte> block, int blockSize)
+   {
+      int bufferSize = Geralt.Padding.GetPaddedLength(block.Length, blockSize);
+      byte[] buffer = new byte[bufferSize];
+      Geralt.Padding.Pad(buffer, block, blockSize);
+      return buffer;
+   }
+
+   public byte[] Unpad(ReadOnlySpan<byte> block, int blockSize)
+   {
+      int unpaddedLength = Geralt.Padding.GetUnpaddedLength(block, blockSize);
+      return block[..unpaddedLength].ToArray();
    }
 }

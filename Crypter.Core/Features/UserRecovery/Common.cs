@@ -30,30 +30,29 @@ using System.Text;
 using Crypter.Common.Primitives;
 using Crypter.Crypto.Common;
 
-namespace Crypter.Core.Features.UserRecovery
+namespace Crypter.Core.Features.UserRecovery;
+
+internal static class Common
 {
-   internal static class Common
+   internal static byte[] CombineRecoveryCodeWithUsername(Guid recoveryCode, Username username)
    {
-      internal static byte[] CombineRecoveryCodeWithUsername(Guid recoveryCode, Username username)
-      {
-         byte[] recoveryCodeBytes = recoveryCode.ToByteArray();
-         byte[] usernameBytes = Encoding.UTF8.GetBytes(username.Value);
+      byte[] recoveryCodeBytes = recoveryCode.ToByteArray();
+      byte[] usernameBytes = Encoding.UTF8.GetBytes(username.Value);
 
-         return recoveryCodeBytes.Concat(usernameBytes).ToArray();
-      }
+      return recoveryCodeBytes.Concat(usernameBytes).ToArray();
+   }
 
-      internal static bool VerifyRecoverySignature(ICryptoProvider cryptoProvider, ReadOnlySpan<byte> publicKey, Guid recoveryCode, Username username, ReadOnlySpan<byte> signature)
-      {
-         byte[] data = CombineRecoveryCodeWithUsername(recoveryCode, username);
-         return cryptoProvider.DigitalSignature.VerifySignature(publicKey, data, signature);
-      }
+   internal static bool VerifyRecoverySignature(ICryptoProvider cryptoProvider, ReadOnlySpan<byte> publicKey, Guid recoveryCode, Username username, ReadOnlySpan<byte> signature)
+   {
+      byte[] data = CombineRecoveryCodeWithUsername(recoveryCode, username);
+      return cryptoProvider.DigitalSignature.VerifySignature(publicKey, data, signature);
+   }
 
-      internal static bool RecoveryCodesMatch(ICryptoProvider cryptoProvider, Guid left, Guid right)
-      {
-         byte[] leftBytes = left.ToByteArray();
-         byte[] rightBytes = right.ToByteArray();
+   internal static bool RecoveryCodesMatch(ICryptoProvider cryptoProvider, Guid left, Guid right)
+   {
+      byte[] leftBytes = left.ToByteArray();
+      byte[] rightBytes = right.ToByteArray();
 
-         return cryptoProvider.ConstantTime.Equals(leftBytes, rightBytes);
-      }
+      return cryptoProvider.ConstantTime.Equals(leftBytes, rightBytes);
    }
 }

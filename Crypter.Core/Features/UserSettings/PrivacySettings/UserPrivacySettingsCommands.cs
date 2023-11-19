@@ -31,31 +31,30 @@ using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 
-namespace Crypter.Core.Features.UserSettings.PrivacySettings
+namespace Crypter.Core.Features.UserSettings.PrivacySettings;
+
+internal static class UserPrivacySettingsCommands
 {
-   internal static class UserPrivacySettingsCommands
+   internal static async Task<Either<Contracts.SetPrivacySettingsError, Contracts.PrivacySettings>> SetPrivacySettingsAsync(DataContext dataContext, Guid userId, Contracts.PrivacySettings request)
    {
-      internal static async Task<Either<Contracts.SetPrivacySettingsError, Contracts.PrivacySettings>> SetPrivacySettingsAsync(DataContext dataContext, Guid userId, Contracts.PrivacySettings request)
+      var userPrivacySettings = await dataContext.UserPrivacySettings
+         .FirstOrDefaultAsync(x => x.Owner == userId);
+
+      if (userPrivacySettings is null)
       {
-         var userPrivacySettings = await dataContext.UserPrivacySettings
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (userPrivacySettings is null)
-         {
-            var newPrivacySettings = new UserPrivacySettingEntity(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission);
-            dataContext.UserPrivacySettings.Add(newPrivacySettings);
-         }
-         else
-         {
-            userPrivacySettings.AllowKeyExchangeRequests = request.AllowKeyExchangeRequests;
-            userPrivacySettings.Visibility = request.VisibilityLevel;
-            userPrivacySettings.ReceiveFiles = request.FileTransferPermission;
-            userPrivacySettings.ReceiveMessages = request.MessageTransferPermission;
-         }
-
-         await dataContext.SaveChangesAsync();
-         return await UserPrivacySettingsQueries.GetPrivacySettingsAsync(dataContext, userId)
-            .ToEitherAsync(Contracts.SetPrivacySettingsError.UnknownError);
+         var newPrivacySettings = new UserPrivacySettingEntity(userId, request.AllowKeyExchangeRequests, request.VisibilityLevel, request.FileTransferPermission, request.MessageTransferPermission);
+         dataContext.UserPrivacySettings.Add(newPrivacySettings);
       }
+      else
+      {
+         userPrivacySettings.AllowKeyExchangeRequests = request.AllowKeyExchangeRequests;
+         userPrivacySettings.Visibility = request.VisibilityLevel;
+         userPrivacySettings.ReceiveFiles = request.FileTransferPermission;
+         userPrivacySettings.ReceiveMessages = request.MessageTransferPermission;
+      }
+
+      await dataContext.SaveChangesAsync();
+      return await UserPrivacySettingsQueries.GetPrivacySettingsAsync(dataContext, userId)
+         .ToEitherAsync(Contracts.SetPrivacySettingsError.UnknownError);
    }
 }

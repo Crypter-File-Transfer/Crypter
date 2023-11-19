@@ -27,11 +27,10 @@
 using System;
 using EasyMonads;
 
-namespace Crypter.Crypto.Common.PasswordHash
+namespace Crypter.Crypto.Common.PasswordHash;
+
+public interface IPasswordHash
 {
-   public interface IPasswordHash
-   {
-      uint SaltSize { get; }
-      Either<Exception, byte[]> GenerateKey(string password, ReadOnlySpan<byte> salt, uint outputLength, OpsLimit opsLimit, MemLimit memLimit);
-   }
+   uint SaltSize { get; }
+   Either<Exception, byte[]> GenerateKey(string password, ReadOnlySpan<byte> salt, uint outputLength, OpsLimit opsLimit, MemLimit memLimit);
 }

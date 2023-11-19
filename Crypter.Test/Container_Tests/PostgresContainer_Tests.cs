@@ -32,85 +32,84 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Npgsql;
 using NUnit.Framework;
 
-namespace Crypter.Test.Container_Tests
+namespace Crypter.Test.Container_Tests;
+
+[TestFixture]
+internal class PostgresContainer_Tests
 {
-   [TestFixture]
-   internal class PostgresContainer_Tests
+   private WebApplicationFactory<Program> _factory;
+
+   [SetUp]
+   public async Task SetupTestAsync()
    {
-      private WebApplicationFactory<Program> _factory;
-
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-      }
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+   }
+
+   [Test]
+   public void Crypter_Database_Connection_Works()
+   {
+      using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.CrypterConnectionString);
+      Assert.DoesNotThrowAsync(() => connection.OpenAsync());
+      Assert.DoesNotThrowAsync(() => connection.CloseAsync());
+   }
+
+   [Test]
+   public void Hangfire_Database_Connection_Works()
+   {
+      using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.HangfireConnectionString);
+      Assert.DoesNotThrowAsync(() => connection.OpenAsync());
+      Assert.DoesNotThrowAsync(() => connection.CloseAsync());
+   }
+
+   [Test]
+   public async Task Crypter_User_Cannot_Connect_To_Hangfire_Database()
+   {
+      PostgresContainerSettings postgresSettings = ContainerService.GetPostgresContainerSettings();
+
+      using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.CrypterConnectionString);
+      await connection.OpenAsync();
+
+      const string query = "SELECT has_database_privilege(@Username, @DatabaseName, 'CONNECT');";
+      var parameters = new
       {
-         await _factory.DisposeAsync();
-      }
+         Username = postgresSettings.CrypterUserName,
+         DatabaseName = postgresSettings.HangfireDatabaseName
+      };
+         
+      IEnumerable<bool> results = await connection.QueryAsync<bool>(query, parameters);
+      bool canConnect = results.First();
 
-      [Test]
-      public void Crypter_Database_Connection_Works()
+      Assert.False(canConnect);
+         
+      await connection.CloseAsync();
+   }
+
+   [Test]
+   public async Task Hangfire_User_Cannot_Connect_To_Crypter_Database()
+   {
+      PostgresContainerSettings postgresSettings = ContainerService.GetPostgresContainerSettings();
+         
+      using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.HangfireConnectionString);
+      await connection.OpenAsync();
+         
+      const string query = "SELECT has_database_privilege(@Username, @DatabaseName, 'CONNECT');";
+      var parameters = new
       {
-         using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.CrypterConnectionString);
-         Assert.DoesNotThrowAsync(() => connection.OpenAsync());
-         Assert.DoesNotThrowAsync(() => connection.CloseAsync());
-      }
-
-      [Test]
-      public void Hangfire_Database_Connection_Works()
-      {
-         using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.HangfireConnectionString);
-         Assert.DoesNotThrowAsync(() => connection.OpenAsync());
-         Assert.DoesNotThrowAsync(() => connection.CloseAsync());
-      }
-
-      [Test]
-      public async Task Crypter_User_Cannot_Connect_To_Hangfire_Database()
-      {
-         PostgresContainerSettings postgresSettings = ContainerService.GetPostgresContainerSettings();
-
-         using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.CrypterConnectionString);
-         await connection.OpenAsync();
-
-         const string query = "SELECT has_database_privilege(@Username, @DatabaseName, 'CONNECT');";
-         var parameters = new
-         {
-            Username = postgresSettings.CrypterUserName,
-            DatabaseName = postgresSettings.HangfireDatabaseName
-         };
+         Username = postgresSettings.HangfireUserName,
+         DatabaseName = postgresSettings.CrypterDatabaseName
+      };
          
-         IEnumerable<bool> results = await connection.QueryAsync<bool>(query, parameters);
-         bool canConnect = results.First();
+      IEnumerable<bool> results = await connection.QueryAsync<bool>(query, parameters);
+      bool canConnect = results.First();
 
-         Assert.False(canConnect);
+      Assert.False(canConnect);
          
-         await connection.CloseAsync();
-      }
-
-      [Test]
-      public async Task Hangfire_User_Cannot_Connect_To_Crypter_Database()
-      {
-         PostgresContainerSettings postgresSettings = ContainerService.GetPostgresContainerSettings();
-         
-         using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.HangfireConnectionString);
-         await connection.OpenAsync();
-         
-         const string query = "SELECT has_database_privilege(@Username, @DatabaseName, 'CONNECT');";
-         var parameters = new
-         {
-            Username = postgresSettings.HangfireUserName,
-            DatabaseName = postgresSettings.CrypterDatabaseName
-         };
-         
-         IEnumerable<bool> results = await connection.QueryAsync<bool>(query, parameters);
-         bool canConnect = results.First();
-
-         Assert.False(canConnect);
-         
-         await connection.CloseAsync();
-      }
+      await connection.CloseAsync();
    }
 }

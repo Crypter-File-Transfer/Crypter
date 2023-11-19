@@ -32,16 +32,15 @@ using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 
-namespace Crypter.Core.Features.UserSettings.NotificationSettings
+namespace Crypter.Core.Features.UserSettings.NotificationSettings;
+
+internal static class UserNotificationSettingsQueries
 {
-   internal static class UserNotificationSettingsQueries
+   internal static async Task<Maybe<Contracts.NotificationSettings>> GetUserNotificationSettingsAsync(DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
    {
-      internal static async Task<Maybe<Contracts.NotificationSettings>> GetUserNotificationSettingsAsync(DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
-      {
-         return await Maybe<Contracts.NotificationSettings>.FromAsync(dataContext.UserNotificationSettings
-            .Where(x => x.Owner == userId)
-            .Select(x => new Contracts.NotificationSettings(x.EmailNotifications, x.EnableTransferNotifications))
-            .FirstOrDefaultAsync(cancellationToken));
-      }
+      return await Maybe<Contracts.NotificationSettings>.FromAsync(dataContext.UserNotificationSettings
+         .Where(x => x.Owner == userId)
+         .Select(x => new Contracts.NotificationSettings(x.EmailNotifications, x.EnableTransferNotifications))
+         .FirstOrDefaultAsync(cancellationToken));
    }
 }

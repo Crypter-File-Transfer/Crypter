@@ -32,34 +32,33 @@ using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using EasyMonads;
 
-namespace Crypter.Common.Client.HttpClients.Requests
+namespace Crypter.Common.Client.HttpClients.Requests;
+
+public class UserContactRequests : IUserContactRequests
 {
-   public class UserContactRequests : IUserContactRequests
+   private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+
+   public UserContactRequests(ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
    {
-      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+      _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+   }
 
-      public UserContactRequests(ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
-      {
-         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
-      }
+   public Task<Maybe<List<UserContact>>> GetUserContactsAsync()
+   {
+      string url = "api/user/contact";
+      return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserContact>>(url);
+   }
 
-      public Task<Maybe<List<UserContact>>> GetUserContactsAsync()
-      {
-         string url = "api/user/contact";
-         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserContact>>(url);
-      }
+   public Task<Either<AddUserContactError, UserContact>> AddUserContactAsync(string contactUsername)
+   {
+      string url = $"api/user/contact?username={contactUsername}";
+      return _crypterAuthenticatedHttpClient.PostEitherAsync<UserContact>(url, false)
+         .ExtractErrorCode<AddUserContactError, UserContact>();
+   }
 
-      public Task<Either<AddUserContactError, UserContact>> AddUserContactAsync(string contactUsername)
-      {
-         string url = $"api/user/contact?username={contactUsername}";
-         return _crypterAuthenticatedHttpClient.PostEitherAsync<UserContact>(url, false)
-            .ExtractErrorCode<AddUserContactError, UserContact>();
-      }
-
-      public Task<Maybe<Unit>> RemoveUserContactAsync(string contactUsername)
-      {
-         string url = $"api/user/contact?username={contactUsername}";
-         return _crypterAuthenticatedHttpClient.DeleteUnitResponseAsync(url);
-      }
+   public Task<Maybe<Unit>> RemoveUserContactAsync(string contactUsername)
+   {
+      string url = $"api/user/contact?username={contactUsername}";
+      return _crypterAuthenticatedHttpClient.DeleteUnitResponseAsync(url);
    }
 }

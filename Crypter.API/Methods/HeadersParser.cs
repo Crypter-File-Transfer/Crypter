@@ -26,14 +26,13 @@
 
 using Microsoft.AspNetCore.Http;
 
-namespace Crypter.API.Methods
+namespace Crypter.API.Methods;
+
+public class HeadersParser
 {
-   public class HeadersParser
+   public static string GetUserAgent(IHeaderDictionary headers)
    {
-      public static string GetUserAgent(IHeaderDictionary headers)
-      {
-         headers.TryGetValue("User-Agent", out var someUserAgent);
-         return someUserAgent.ToString() ?? "Unknown device";
-      }
+      headers.TryGetValue("User-Agent", out var someUserAgent);
+      return someUserAgent.ToString() ?? "Unknown device";
    }
 }

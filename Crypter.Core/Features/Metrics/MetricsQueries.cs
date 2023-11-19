@@ -32,34 +32,33 @@ using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Core.Settings;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Features.Metrics
+namespace Crypter.Core.Features.Metrics;
+
+internal static class MetricsQueries
 {
-   internal static class MetricsQueries
+   internal static async Task<PublicStorageMetricsResponse> GetAggregateDiskMetricsAsync(DataContext dataContext, TransferStorageSettings transferStorageSettings, CancellationToken cancellationToken = default)
    {
-      internal static async Task<PublicStorageMetricsResponse> GetAggregateDiskMetricsAsync(DataContext dataContext, TransferStorageSettings transferStorageSettings, CancellationToken cancellationToken = default)
-      {
-         IQueryable<long> anonymousMessageSizes = dataContext.AnonymousMessageTransfers
-            .Select(x => x.Size);
+      IQueryable<long> anonymousMessageSizes = dataContext.AnonymousMessageTransfers
+         .Select(x => x.Size);
 
-         IQueryable<long> userMessageSizes = dataContext.UserMessageTransfers
-            .Select(x => x.Size);
+      IQueryable<long> userMessageSizes = dataContext.UserMessageTransfers
+         .Select(x => x.Size);
 
-         IQueryable<long> anonymousFileSizes = dataContext.AnonymousFileTransfers
-            .Select(x => x.Size);
+      IQueryable<long> anonymousFileSizes = dataContext.AnonymousFileTransfers
+         .Select(x => x.Size);
 
-         IQueryable<long> userFileSizes = dataContext.UserFileTransfers
-            .Select(x => x.Size);
+      IQueryable<long> userFileSizes = dataContext.UserFileTransfers
+         .Select(x => x.Size);
 
-         long usedBytes = await anonymousMessageSizes
-            .Concat(userMessageSizes)
-            .Concat(anonymousFileSizes)
-            .Concat(userFileSizes)
-            .SumAsync(cancellationToken);
+      long usedBytes = await anonymousMessageSizes
+         .Concat(userMessageSizes)
+         .Concat(anonymousFileSizes)
+         .Concat(userFileSizes)
+         .SumAsync(cancellationToken);
 
-         long allocatedBytes = transferStorageSettings.AllocatedGB * Convert.ToInt64(Math.Pow(2, 30));
-         long freeBytes = allocatedBytes - usedBytes;
+      long allocatedBytes = transferStorageSettings.AllocatedGB * Convert.ToInt64(Math.Pow(2, 30));
+      long freeBytes = allocatedBytes - usedBytes;
 
-         return new PublicStorageMetricsResponse(allocatedBytes, freeBytes);
-      }
+      return new PublicStorageMetricsResponse(allocatedBytes, freeBytes);
    }
 }

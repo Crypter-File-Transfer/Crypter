@@ -30,11 +30,10 @@ using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Requests
+namespace Crypter.Common.Client.Interfaces.Requests;
+
+public interface IUserRecoveryRequests
 {
-   public interface IUserRecoveryRequests
-   {
-      Task<Either<SendRecoveryEmailError, Unit>> SendRecoveryEmailAsync(EmailAddress emailAddress);
-      Task<Either<SubmitRecoveryError, Unit>> SubmitRecoveryAsync(SubmitRecoveryRequest request);
-   }
+   Task<Either<SendRecoveryEmailError, Unit>> SendRecoveryEmailAsync(EmailAddress emailAddress);
+   Task<Either<SubmitRecoveryError, Unit>> SubmitRecoveryAsync(SubmitRecoveryRequest request);
 }

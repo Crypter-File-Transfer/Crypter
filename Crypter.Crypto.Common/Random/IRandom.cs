@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Crypto.Common.Random
+namespace Crypter.Crypto.Common.Random;
+
+public interface IRandom
 {
-   public interface IRandom
-   {
-      uint GenerateRandomNumber();
-      byte[] GenerateRandomBytes(int size);
-   }
+   uint GenerateRandomNumber();
+   byte[] GenerateRandomBytes(int size);
 }

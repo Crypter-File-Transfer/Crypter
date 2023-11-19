@@ -29,29 +29,28 @@ using System.Runtime.Versioning;
 using Crypter.Crypto.Common.DigitalSignature;
 using Geralt;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
+namespace Crypter.Crypto.Providers.Default.Wrappers;
+
+[UnsupportedOSPlatform("browser")]
+public class DigitalSignature : IDigitalSignature
 {
-   [UnsupportedOSPlatform("browser")]
-   public class DigitalSignature : IDigitalSignature
+   public virtual Ed25519KeyPair GenerateKeyPair()
    {
-      public virtual Ed25519KeyPair GenerateKeyPair()
-      {
-         byte[] privateKey = new byte[Ed25519.PrivateKeySize];
-         byte[] publicKey = new byte[Ed25519.PublicKeySize];
-         Ed25519.GenerateKeyPair(publicKey, privateKey);
-         return new Ed25519KeyPair(privateKey, publicKey);
-      }
+      byte[] privateKey = new byte[Ed25519.PrivateKeySize];
+      byte[] publicKey = new byte[Ed25519.PublicKeySize];
+      Ed25519.GenerateKeyPair(publicKey, privateKey);
+      return new Ed25519KeyPair(privateKey, publicKey);
+   }
 
-      public byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message)
-      {
-         byte[] signature = new byte[Ed25519.SignatureSize];
-         Ed25519.Sign(signature, message, privateKey);
-         return signature;
-      }
+   public byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message)
+   {
+      byte[] signature = new byte[Ed25519.SignatureSize];
+      Ed25519.Sign(signature, message, privateKey);
+      return signature;
+   }
 
-      public bool VerifySignature(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> message, ReadOnlySpan<byte> signature)
-      {
-         return Ed25519.Verify(signature, message, publicKey);
-      }
+   public bool VerifySignature(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> message, ReadOnlySpan<byte> signature)
+   {
+      return Ed25519.Verify(signature, message, publicKey);
    }
 }

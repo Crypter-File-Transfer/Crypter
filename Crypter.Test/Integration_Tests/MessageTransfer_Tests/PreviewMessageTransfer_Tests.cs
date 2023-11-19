@@ -36,116 +36,115 @@ using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests
+namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests;
+
+[TestFixture]
+internal class PreviewMessageTransfer_Tests
 {
-   [TestFixture]
-   internal class PreviewMessageTransfer_Tests
-   {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-      private ITokenRepository _clientTokenRepository;
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+   private ITokenRepository _clientTokenRepository;
    
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
+
+   [Test]
+   public async Task Preview_Anonymous_Message_Transfer_Works()
+   {
+      (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+      UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+      var uploadResult = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request, encryptionStreamOpener, false);
+
+      string uploadId = uploadResult
+         .Map(x => x.HashId)
+         .RightOrDefault(null);
+
+      var result = await _client.MessageTransfer.GetAnonymousMessagePreviewAsync(uploadId);
+
+      Assert.True(uploadResult.IsRight);
+      Assert.True(result.IsRight);
+   }
+
+   [TestCase(true, false)]
+   [TestCase(false, true)]
+   [TestCase(true, true)]
+   public async Task Preview_User_Message_Transfer_Works(bool senderDefined, bool recipientDefined)
+   {
+      Maybe<string> senderUsername = senderDefined
+         ? TestData.DefaultUsername
+         : Maybe<string>.None;
+      const string senderPassword = TestData.DefaultPassword;
+
+      Maybe<string> recipientUsername = recipientDefined
+         ? "Samwise"
+         : Maybe<string>.None;
+      const string recipientPassword = "dropping_eaves";
+
+      Assert.True((senderDefined == false && senderUsername.IsNone)
+                  || (senderDefined && senderUsername.IsSome));
+
+      await senderUsername.IfSomeAsync(async username =>
       {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, senderPassword);
+         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-      [Test]
-      public async Task Preview_Anonymous_Message_Transfer_Works()
-      {
-         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
-         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var uploadResult = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request, encryptionStreamOpener, false);
+         LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword, TokenType.Session);
+         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-         string uploadId = uploadResult
-            .Map(x => x.HashId)
-            .RightOrDefault(null);
-
-         var result = await _client.MessageTransfer.GetAnonymousMessagePreviewAsync(uploadId);
-
-         Assert.True(uploadResult.IsRight);
-         Assert.True(result.IsRight);
-      }
-
-      [TestCase(true, false)]
-      [TestCase(false, true)]
-      [TestCase(true, true)]
-      public async Task Preview_User_Message_Transfer_Works(bool senderDefined, bool recipientDefined)
-      {
-         Maybe<string> senderUsername = senderDefined
-            ? TestData.DefaultUsername
-            : Maybe<string>.None;
-         const string senderPassword = TestData.DefaultPassword;
-
-         Maybe<string> recipientUsername = recipientDefined
-            ? "Samwise"
-            : Maybe<string>.None;
-         const string recipientPassword = "dropping_eaves";
-
-         Assert.True((senderDefined == false && senderUsername.IsNone)
-            || (senderDefined && senderUsername.IsSome));
-
-         await senderUsername.IfSomeAsync(async username =>
+         await loginResult.DoRightAsync(async loginResponse =>
          {
-            RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, senderPassword);
-            var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
-
-            LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword, TokenType.Session);
-            var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
-
-            await loginResult.DoRightAsync(async loginResponse =>
-            {
-               await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-               await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-            });
-
-            Assert.True(registrationResult.IsRight);
-            Assert.True(loginResult.IsRight);
+            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
 
-         Assert.True((recipientDefined == false && recipientUsername.IsNone)
-            || (recipientDefined && recipientUsername.IsSome));
+         Assert.True(registrationResult.IsRight);
+         Assert.True(loginResult.IsRight);
+      });
 
-         await recipientUsername.IfSomeAsync(async username =>
+      Assert.True((recipientDefined == false && recipientUsername.IsNone)
+                  || (recipientDefined && recipientUsername.IsSome));
+
+      await recipientUsername.IfSomeAsync(async username =>
+      {
+         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, recipientPassword);
+         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+      });
+
+      (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
+      UploadMessageTransferRequest uploadRequest = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+      var uploadResult = await _client.MessageTransfer.UploadMessageTransferAsync(recipientUsername, uploadRequest, encryptionStreamOpener, senderDefined);
+
+      await recipientUsername.IfSomeAsync(async username =>
+      {
+         LoginRequest loginRequest = TestData.GetLoginRequest(username, recipientPassword, TokenType.Session);
+         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+         await loginResult.DoRightAsync(async loginResponse =>
          {
-            RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, recipientPassword);
-            var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
          });
+      });
 
-         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
-         UploadMessageTransferRequest uploadRequest = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-         var uploadResult = await _client.MessageTransfer.UploadMessageTransferAsync(recipientUsername, uploadRequest, encryptionStreamOpener, senderDefined);
+      string uploadId = uploadResult
+         .Map(x => x.HashId)
+         .RightOrDefault(null);
 
-         await recipientUsername.IfSomeAsync(async username =>
-         {
-            LoginRequest loginRequest = TestData.GetLoginRequest(username, recipientPassword, TokenType.Session);
-            var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+      var result = await _client.MessageTransfer.GetUserMessagePreviewAsync(uploadId, recipientDefined);
 
-            await loginResult.DoRightAsync(async loginResponse =>
-            {
-               await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-               await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-            });
-         });
-
-         string uploadId = uploadResult
-            .Map(x => x.HashId)
-            .RightOrDefault(null);
-
-         var result = await _client.MessageTransfer.GetUserMessagePreviewAsync(uploadId, recipientDefined);
-
-         Assert.True(uploadResult.IsRight);
-         Assert.True(result.IsRight);
-      }
+      Assert.True(uploadResult.IsRight);
+      Assert.True(result.IsRight);
    }
 }

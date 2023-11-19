@@ -30,74 +30,73 @@ using System.IO;
 using System.Threading.Tasks;
 using EasyMonads;
 
-namespace Crypter.Common.Streams
+namespace Crypter.Common.Streams;
+
+public static class StreamCopy
 {
-   public static class StreamCopy
+   public static async Task<MemoryStream> StreamToMemoryStream(Stream stream, long streamLength, int bufferSize, Maybe<Func<double, Task>> progressFunc)
    {
-      public static async Task<MemoryStream> StreamToMemoryStream(Stream stream, long streamLength, int bufferSize, Maybe<Func<double, Task>> progressFunc)
+      await progressFunc.IfSomeAsync(async func => await func.Invoke(0.0));
+
+      MemoryStream outputStream = new MemoryStream();
+
+      long totalBytesRead = 0;
+      int bytesRead = 0;
+      do
       {
-         await progressFunc.IfSomeAsync(async func => await func.Invoke(0.0));
+         byte[] buffer = new byte[bufferSize];
+         bytesRead = await stream.ReadAsync(buffer);
+         totalBytesRead += bytesRead;
 
-         MemoryStream outputStream = new MemoryStream();
-
-         long totalBytesRead = 0;
-         int bytesRead = 0;
-         do
+         if (bytesRead > 0)
          {
-            byte[] buffer = new byte[bufferSize];
-            bytesRead = await stream.ReadAsync(buffer);
-            totalBytesRead += bytesRead;
+            await outputStream.WriteAsync(buffer.AsMemory()[..bytesRead]);
 
-            if (bytesRead > 0)
+            await progressFunc.IfSomeAsync(async func =>
             {
-               await outputStream.WriteAsync(buffer.AsMemory()[..bytesRead]);
+               double progress = (double)totalBytesRead / streamLength;
+               await func.Invoke(progress);
+            });
+         }
+      } while (bytesRead > 0);
 
-               await progressFunc.IfSomeAsync(async func =>
-               {
-                  double progress = (double)totalBytesRead / streamLength;
-                  await func.Invoke(progress);
-               });
-            }
-         } while (bytesRead > 0);
+      await progressFunc.IfSomeAsync(async func => await func.Invoke(1.0));
+      outputStream.Position = 0;
+      return outputStream;
+   }
 
-         await progressFunc.IfSomeAsync(async func => await func.Invoke(1.0));
-         outputStream.Position = 0;
-         return outputStream;
-      }
+   public static async Task<List<byte[]>> StreamToBytePartitions(Stream stream, long streamLength, int partitionSize, Maybe<Func<double, Task>> progressFunc)
+   {
+      await progressFunc.IfSomeAsync(async func => await func.Invoke(0.0));
 
-      public static async Task<List<byte[]>> StreamToBytePartitions(Stream stream, long streamLength, int partitionSize, Maybe<Func<double, Task>> progressFunc)
+      List<byte[]> outputBytes = new List<byte[]>();
+
+      int bytesRead = 0;
+      do
       {
-         await progressFunc.IfSomeAsync(async func => await func.Invoke(0.0));
+         byte[] buffer = new byte[partitionSize];
+         bytesRead = await stream.ReadAsync(buffer);
 
-         List<byte[]> outputBytes = new List<byte[]>();
-
-         int bytesRead = 0;
-         do
+         if (bytesRead > 0)
          {
-            byte[] buffer = new byte[partitionSize];
-            bytesRead = await stream.ReadAsync(buffer);
-
-            if (bytesRead > 0)
+            if (bytesRead < partitionSize)
             {
-               if (bytesRead < partitionSize)
-               {
-                  outputBytes.Add(buffer[..bytesRead]);
-               }
-               else
-               {
-                  outputBytes.Add(buffer);
-               }
-
-               await progressFunc.IfSomeAsync(async func =>
-               {
-                  double progress = (double)bytesRead / streamLength;
-                  await func.Invoke(progress);
-               });
+               outputBytes.Add(buffer[..bytesRead]);
             }
-         } while (bytesRead > 0);
+            else
+            {
+               outputBytes.Add(buffer);
+            }
 
-         await progressFunc.IfSomeAsync(async func => await func.Invoke(1.0));
-         return outputBytes;
-      }
+            await progressFunc.IfSomeAsync(async func =>
+            {
+               double progress = (double)bytesRead / streamLength;
+               await func.Invoke(progress);
+            });
+         }
+      } while (bytesRead > 0);
+
+      await progressFunc.IfSomeAsync(async func => await func.Invoke(1.0));
+      return outputBytes;
    }
 }

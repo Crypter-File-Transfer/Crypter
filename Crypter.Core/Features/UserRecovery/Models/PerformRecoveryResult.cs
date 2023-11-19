@@ -26,19 +26,18 @@
 
 using System;
 
-namespace Crypter.Core.Features.UserRecovery.Models
-{
-   internal class PerformRecoveryResult
-   {
-      public Guid UserId { get; set; }
-      public bool DeleteUserKeys { get; set; }
-      public bool DeleteUserReceivedTransfers { get; set; }
+namespace Crypter.Core.Features.UserRecovery.Models;
 
-      public PerformRecoveryResult(Guid userId, bool deleteUserKeys, bool deleteUserReceivedTransfers)
-      {
-         UserId = userId;
-         DeleteUserKeys = deleteUserKeys;
-         DeleteUserReceivedTransfers = deleteUserReceivedTransfers;
-      }
+internal class PerformRecoveryResult
+{
+   public Guid UserId { get; set; }
+   public bool DeleteUserKeys { get; set; }
+   public bool DeleteUserReceivedTransfers { get; set; }
+
+   public PerformRecoveryResult(Guid userId, bool deleteUserKeys, bool deleteUserReceivedTransfers)
+   {
+      UserId = userId;
+      DeleteUserKeys = deleteUserKeys;
+      DeleteUserReceivedTransfers = deleteUserReceivedTransfers;
    }
 }

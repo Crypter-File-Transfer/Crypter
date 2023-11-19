@@ -29,55 +29,54 @@ using Crypter.Common.Primitives.ValidationHandlers;
 using EasyMonads;
 using ValueOf;
 
-namespace Crypter.Common.Primitives
+namespace Crypter.Common.Primitives;
+
+public class EmailAddress : ValueOf<string, EmailAddress>
 {
-   public class EmailAddress : ValueOf<string, EmailAddress>
+   /// <summary>
+   /// Do not use this.
+   /// </summary>
+   public EmailAddress()
    {
-      /// <summary>
-      /// Do not use this.
-      /// </summary>
-      public EmailAddress()
+   }
+
+   protected override void Validate()
+   {
+      StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
+   }
+
+   protected override bool TryValidate()
+   {
+      return CheckValidation(Value)
+         .IsNone;
+   }
+
+   public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+   {
+      if (value is null)
       {
+         return StringPrimitiveValidationFailure.IsNull;
       }
 
-      protected override void Validate()
+      if (string.IsNullOrWhiteSpace(value))
       {
-         StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
+         return StringPrimitiveValidationFailure.IsEmpty;
       }
 
-      protected override bool TryValidate()
+      if (value.Trim().EndsWith('.'))
       {
-         return CheckValidation(Value)
-            .IsNone;
+         return StringPrimitiveValidationFailure.Invalid;
       }
 
-      public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+      try
       {
-         if (value is null)
-         {
-            return StringPrimitiveValidationFailure.IsNull;
-         }
-
-         if (string.IsNullOrWhiteSpace(value))
-         {
-            return StringPrimitiveValidationFailure.IsEmpty;
-         }
-
-         if (value.Trim().EndsWith('.'))
-         {
-            return StringPrimitiveValidationFailure.Invalid;
-         }
-
-         try
-         {
-            var addr = new System.Net.Mail.MailAddress(value);
-         }
-         catch
-         {
-            return StringPrimitiveValidationFailure.Invalid;
-         }
-
-         return Maybe<StringPrimitiveValidationFailure>.None;
+         var addr = new System.Net.Mail.MailAddress(value);
       }
+      catch
+      {
+         return StringPrimitiveValidationFailure.Invalid;
+      }
+
+      return Maybe<StringPrimitiveValidationFailure>.None;
    }
 }

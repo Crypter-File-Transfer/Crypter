@@ -27,16 +27,15 @@
 using System.Threading.Tasks;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Repositories
+namespace Crypter.Common.Client.Interfaces.Repositories;
+
+/// <summary>
+/// Simple abstraction over IDeviceRepository
+/// </summary>
+public interface IUserKeysRepository
 {
-   /// <summary>
-   /// Simple abstraction over IDeviceRepository
-   /// </summary>
-   public interface IUserKeysRepository
-   {
-      Task<Maybe<byte[]>> GetMasterKeyAsync();
-      Task<Maybe<byte[]>> GetPrivateKeyAsync();
-      Task<Unit> StorePrivateKeyAsync(byte[] privateKey, bool trustDevice);
-      Task<Unit> StoreMasterKeyAsync(byte[] masterKey, bool trustDevice);
-   }
+   Task<Maybe<byte[]>> GetMasterKeyAsync();
+   Task<Maybe<byte[]>> GetPrivateKeyAsync();
+   Task<Unit> StorePrivateKeyAsync(byte[] privateKey, bool trustDevice);
+   Task<Unit> StoreMasterKeyAsync(byte[] masterKey, bool trustDevice);
 }

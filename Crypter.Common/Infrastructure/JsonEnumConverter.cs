@@ -28,46 +28,45 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Infrastructure
+namespace Crypter.Common.Infrastructure;
+
+public class JsonEnumConverter<T> : JsonConverter<T>
+   where T : notnull, Enum
 {
-   public class JsonEnumConverter<T> : JsonConverter<T>
-      where T : notnull, Enum
+   public override bool CanConvert(Type typeToConvert)
    {
-      public override bool CanConvert(Type typeToConvert)
+      return typeToConvert == typeof(T);
+   }
+
+   public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+   {
+      // Try reading the value as an integer
+      try
       {
-         return typeToConvert == typeof(T);
+         if (reader.TryGetInt32(out int intValue))
+         {
+            return Enum.IsDefined(typeToConvert, intValue)
+               ? (T)(object)intValue
+               : throw new InvalidEnumValueException(intValue.ToString(), typeof(T));
+         }
+      }
+      catch (InvalidOperationException)
+      {
+         // Eat this exception and try reading the value as a string
       }
 
-      public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-      {
-         // Try reading the value as an integer
-         try
-         {
-            if (reader.TryGetInt32(out int intValue))
-            {
-               return Enum.IsDefined(typeToConvert, intValue)
-                  ? (T)(object)intValue
-                  : throw new InvalidEnumValueException(intValue.ToString(), typeof(T));
-            }
-         }
-         catch (InvalidOperationException)
-         {
-            // Eat this exception and try reading the value as a string
-         }
+      // Try reading the value as a string
+      string enumStringValue = reader.GetString();
+      return Enum.TryParse(typeToConvert, enumStringValue, true, out object enumValue)
+         ? (T)enumValue
+         : throw new InvalidEnumValueException(enumStringValue, typeof(T));
+   }
 
-         // Try reading the value as a string
-         string enumStringValue = reader.GetString();
-         return Enum.TryParse(typeToConvert, enumStringValue, true, out object enumValue)
-            ? (T)enumValue
-            : throw new InvalidEnumValueException(enumStringValue, typeof(T));
-      }
-
-      public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+   public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+   {
+      if (value is not null && value is Enum sourceEnum)
       {
-         if (value is not null && value is Enum sourceEnum)
-         {
-            writer.WriteNumberValue((int)(object)sourceEnum);
-         }
+         writer.WriteNumberValue((int)(object)sourceEnum);
       }
    }
 }

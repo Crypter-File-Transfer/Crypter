@@ -28,51 +28,50 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts
+namespace Crypter.Common.Contracts;
+
+public class ErrorResponse
 {
-   public class ErrorResponse
+   public string Message { get; } = "An error occurred.";
+   public int Status { get; }
+   public List<ErrorResponseItem> Errors { get; }
+
+   public ErrorResponse(int status, List<ErrorResponseItem> errors)
    {
-      public string Message { get; } = "An error occurred.";
-      public int Status { get; }
-      public List<ErrorResponseItem> Errors { get; }
-
-      public ErrorResponse(int status, List<ErrorResponseItem> errors)
-      {
-         Status = status;
-         Errors = errors;
-      }
-
-      public ErrorResponse(int status, Enum errorCode)
-      {
-         Status = status;
-         Errors = new List<ErrorResponseItem> { new ErrorResponseItem(errorCode) };
-      }
-
-      [JsonConstructor]
-      public ErrorResponse(string message, int status, List<ErrorResponseItem> errors)
-      {
-         Message = message;
-         Status = status;
-         Errors = errors;
-      }
+      Status = status;
+      Errors = errors;
    }
 
-   public class ErrorResponseItem
+   public ErrorResponse(int status, Enum errorCode)
    {
-      public int ErrorCode { get; }
-      public string ErrorMessage { get; }
+      Status = status;
+      Errors = new List<ErrorResponseItem> { new ErrorResponseItem(errorCode) };
+   }
 
-      public ErrorResponseItem(Enum errorCode)
-      {
-         ErrorCode = Convert.ToInt32(errorCode);
-         ErrorMessage = errorCode.ToString();
-      }
+   [JsonConstructor]
+   public ErrorResponse(string message, int status, List<ErrorResponseItem> errors)
+   {
+      Message = message;
+      Status = status;
+      Errors = errors;
+   }
+}
 
-      [JsonConstructor]
-      public ErrorResponseItem(int errorCode, string errorMessage)
-      {
-         ErrorCode = errorCode;
-         ErrorMessage = errorMessage;
-      }
+public class ErrorResponseItem
+{
+   public int ErrorCode { get; }
+   public string ErrorMessage { get; }
+
+   public ErrorResponseItem(Enum errorCode)
+   {
+      ErrorCode = Convert.ToInt32(errorCode);
+      ErrorMessage = errorCode.ToString();
+   }
+
+   [JsonConstructor]
+   public ErrorResponseItem(int errorCode, string errorMessage)
+   {
+      ErrorCode = errorCode;
+      ErrorMessage = errorMessage;
    }
 }

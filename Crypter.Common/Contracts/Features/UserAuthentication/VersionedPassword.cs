@@ -26,18 +26,17 @@
 
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication
-{
-   public class VersionedPassword
-   {
-      public byte[] Password { get; init; }
-      public short Version { get; init; }
+namespace Crypter.Common.Contracts.Features.UserAuthentication;
 
-      [JsonConstructor]
-      public VersionedPassword(byte[] password, short version)
-      {
-         Password = password;
-         Version = version;
-      }
+public class VersionedPassword
+{
+   public byte[] Password { get; init; }
+   public short Version { get; init; }
+
+   [JsonConstructor]
+   public VersionedPassword(byte[] password, short version)
+   {
+      Password = password;
+      Version = version;
    }
 }

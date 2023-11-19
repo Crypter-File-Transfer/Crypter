@@ -29,41 +29,40 @@ using Crypter.Core.Entities.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserKeyPairEntity : IUserPublicKeyPair
 {
-   public class UserKeyPairEntity : IUserPublicKeyPair
+   public Guid Owner { get; set; }
+   public byte[] PrivateKey { get; set; }
+   public byte[] PublicKey { get; set; }
+   public byte[] Nonce { get; set; }
+   public DateTime Created { get; set; }
+
+   public UserEntity User { get; set; }
+
+   public UserKeyPairEntity(Guid owner, byte[] privateKey, byte[] publicKey, byte[] nonce, DateTime created)
    {
-      public Guid Owner { get; set; }
-      public byte[] PrivateKey { get; set; }
-      public byte[] PublicKey { get; set; }
-      public byte[] Nonce { get; set; }
-      public DateTime Created { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserKeyPairEntity(Guid owner, byte[] privateKey, byte[] publicKey, byte[] nonce, DateTime created)
-      {
-         Owner = owner;
-         PrivateKey = privateKey;
-         PublicKey = publicKey;
-         Nonce = nonce;
-         Created = created;
-      }
+      Owner = owner;
+      PrivateKey = privateKey;
+      PublicKey = publicKey;
+      Nonce = nonce;
+      Created = created;
    }
+}
 
-   public class UserKeyPairEntityConfiguration : IEntityTypeConfiguration<UserKeyPairEntity>
+public class UserKeyPairEntityConfiguration : IEntityTypeConfiguration<UserKeyPairEntity>
+{
+   public void Configure(EntityTypeBuilder<UserKeyPairEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserKeyPairEntity> builder)
-      {
-         builder.ToTable("UserKeyPair");
+      builder.ToTable("UserKeyPair");
 
-         builder.HasKey(x => x.Owner);
+      builder.HasKey(x => x.Owner);
 
-         builder.HasOne(x => x.User)
-            .WithOne(x => x.KeyPair)
-            .HasForeignKey<UserKeyPairEntity>(x => x.Owner)
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.User)
+         .WithOne(x => x.KeyPair)
+         .HasForeignKey<UserKeyPairEntity>(x => x.Owner)
+         .IsRequired(false)
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

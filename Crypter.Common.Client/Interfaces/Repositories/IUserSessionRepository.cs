@@ -28,14 +28,13 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Models;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Repositories
+namespace Crypter.Common.Client.Interfaces.Repositories;
+
+/// <summary>
+/// Simple abstraction over IDeviceRepository
+/// </summary>
+public interface IUserSessionRepository
 {
-   /// <summary>
-   /// Simple abstraction over IDeviceRepository
-   /// </summary>
-   public interface IUserSessionRepository
-   {
-      Task<Maybe<UserSession>> GetUserSessionAsync();
-      Task StoreUserSessionAsync(UserSession userSession, bool rememberUser);
-   }
+   Task<Maybe<UserSession>> GetUserSessionAsync();
+   Task StoreUserSessionAsync(UserSession userSession, bool rememberUser);
 }

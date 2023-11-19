@@ -30,44 +30,43 @@ using Crypter.Common.Primitives.ValidationHandlers;
 using EasyMonads;
 using ValueOf;
 
-namespace Crypter.Common.Primitives
+namespace Crypter.Common.Primitives;
+
+public class Base64String : ValueOf<string, Base64String>
 {
-   public class Base64String : ValueOf<string, Base64String>
+   /// <summary>
+   /// Do not use this.
+   /// </summary>
+   public Base64String()
    {
-      /// <summary>
-      /// Do not use this.
-      /// </summary>
-      public Base64String()
+   }
+
+   protected override void Validate()
+   {
+      StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
+   }
+
+   protected override bool TryValidate()
+   {
+      return CheckValidation(Value)
+         .IsNone;
+   }
+
+   public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+   {
+      if (value is null)
       {
+         return StringPrimitiveValidationFailure.IsNull;
       }
 
-      protected override void Validate()
+      if (string.IsNullOrWhiteSpace(value))
       {
-         StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
+         return StringPrimitiveValidationFailure.IsEmpty;
       }
 
-      protected override bool TryValidate()
-      {
-         return CheckValidation(Value)
-            .IsNone;
-      }
-
-      public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
-      {
-         if (value is null)
-         {
-            return StringPrimitiveValidationFailure.IsNull;
-         }
-
-         if (string.IsNullOrWhiteSpace(value))
-         {
-            return StringPrimitiveValidationFailure.IsEmpty;
-         }
-
-         Span<byte> buffer = new(new byte[value.Length]);
-         return Convert.TryFromBase64String(value, buffer, out int _)
-            ? Maybe<StringPrimitiveValidationFailure>.None
-            : StringPrimitiveValidationFailure.Invalid;
-      }
+      Span<byte> buffer = new(new byte[value.Length]);
+      return Convert.TryFromBase64String(value, buffer, out int _)
+         ? Maybe<StringPrimitiveValidationFailure>.None
+         : StringPrimitiveValidationFailure.Invalid;
    }
 }

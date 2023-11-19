@@ -34,100 +34,99 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.JSInterop;
 
-namespace Crypter.Web.Shared
+namespace Crypter.Web.Shared;
+
+public partial class NavigationBase : ComponentBase, IDisposable
 {
-   public partial class NavigationBase : ComponentBase, IDisposable
+   [Inject]
+   protected IJSRuntime JSRuntime { get; set; }
+
+   [Inject]
+   protected NavigationManager NavigationManager { get; set; }
+
+   [Inject]
+   protected IUserSessionService UserSessionService { get; set; }
+
+   [Inject]
+   protected IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
+
+   protected UploadFileTransferModal FileTransferModal { get; set; }
+
+   protected UploadMessageTransferModal MessageTransferModal { get; set; }
+
+   protected bool ShowNavigation = false;
+   protected bool ShowUserNavigation = false;
+   protected string Username = string.Empty;
+   protected string ProfileUrl = string.Empty;
+   protected string SearchKeyword = string.Empty;
+
+   protected override void OnInitialized()
    {
-      [Inject]
-      protected IJSRuntime JSRuntime { get; set; }
+      NavigationManager.LocationChanged += HandleLocationChanged;
+      UserSessionService.ServiceInitializedEventHandler += UserSessionStateChangedEventHandler;
+      UserSessionService.UserLoggedInEventHandler += UserSessionStateChangedEventHandler;
+      UserSessionService.UserLoggedOutEventHandler += UserSessionStateChangedEventHandler;
+   }
 
-      [Inject]
-      protected NavigationManager NavigationManager { get; set; }
+   protected void HandleUserSessionStateChanged()
+   {
+      ShowUserNavigation = UserSessionService.Session.IsSome;
+      Username = UserSessionService.Session.Match(
+         () => "",
+         session => session.Username);
+      ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
+      ShowNavigation = true;
+      StateHasChanged();
+   }
 
-      [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
+   protected async Task OnLogoutClicked()
+   {
+      await UserSessionService.LogoutAsync();
+      await BrowserRepository.RecycleAsync();
+      NavigationManager.NavigateTo("/");
+   }
 
-      [Inject]
-      protected IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
-
-      protected UploadFileTransferModal FileTransferModal { get; set; }
-
-      protected UploadMessageTransferModal MessageTransferModal { get; set; }
-
-      protected bool ShowNavigation = false;
-      protected bool ShowUserNavigation = false;
-      protected string Username = string.Empty;
-      protected string ProfileUrl = string.Empty;
-      protected string SearchKeyword = string.Empty;
-
-      protected override void OnInitialized()
+   protected void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+   {
+      InvokeAsync(async () =>
       {
-         NavigationManager.LocationChanged += HandleLocationChanged;
-         UserSessionService.ServiceInitializedEventHandler += UserSessionStateChangedEventHandler;
-         UserSessionService.UserLoggedInEventHandler += UserSessionStateChangedEventHandler;
-         UserSessionService.UserLoggedOutEventHandler += UserSessionStateChangedEventHandler;
-      }
-
-      protected void HandleUserSessionStateChanged()
-      {
-         ShowUserNavigation = UserSessionService.Session.IsSome;
-         Username = UserSessionService.Session.Match(
-            () => "",
-            session => session.Username);
-         ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
-         ShowNavigation = true;
-         StateHasChanged();
-      }
-
-      protected async Task OnLogoutClicked()
-      {
-         await UserSessionService.LogoutAsync();
-         await BrowserRepository.RecycleAsync();
-         NavigationManager.NavigateTo("/");
-      }
-
-      protected void HandleLocationChanged(object sender, LocationChangedEventArgs e)
-      {
-         InvokeAsync(async () =>
-         {
-            await CollapseNavigationMenuAsync();
-         });
-      }
-
-      protected void UserSessionStateChangedEventHandler(object sender, EventArgs _)
-      {
-         HandleUserSessionStateChanged();
-      }
-
-      protected async Task OnEncryptFileClicked()
-      {
-         FileTransferModal.Open();
          await CollapseNavigationMenuAsync();
-      }
+      });
+   }
 
-      protected async Task OnEncryptMessageClicked()
-      {
-         MessageTransferModal.Open();
-         await CollapseNavigationMenuAsync();
-      }
+   protected void UserSessionStateChangedEventHandler(object sender, EventArgs _)
+   {
+      HandleUserSessionStateChanged();
+   }
 
-      protected async Task CollapseNavigationMenuAsync()
-      {
-         await JSRuntime.InvokeVoidAsync("Crypter.CollapseNavBar");
-      }
+   protected async Task OnEncryptFileClicked()
+   {
+      FileTransferModal.Open();
+      await CollapseNavigationMenuAsync();
+   }
 
-      protected void OnSearchClicked()
-      {
-         NavigationManager.NavigateTo($"/user/search?query={SearchKeyword}");
-      }
+   protected async Task OnEncryptMessageClicked()
+   {
+      MessageTransferModal.Open();
+      await CollapseNavigationMenuAsync();
+   }
 
-      public void Dispose()
-      {
-         NavigationManager.LocationChanged -= HandleLocationChanged;
-         UserSessionService.ServiceInitializedEventHandler -= UserSessionStateChangedEventHandler;
-         UserSessionService.UserLoggedInEventHandler -= UserSessionStateChangedEventHandler;
-         UserSessionService.UserLoggedOutEventHandler -= UserSessionStateChangedEventHandler;
-         GC.SuppressFinalize(this);
-      }
+   protected async Task CollapseNavigationMenuAsync()
+   {
+      await JSRuntime.InvokeVoidAsync("Crypter.CollapseNavBar");
+   }
+
+   protected void OnSearchClicked()
+   {
+      NavigationManager.NavigateTo($"/user/search?query={SearchKeyword}");
+   }
+
+   public void Dispose()
+   {
+      NavigationManager.LocationChanged -= HandleLocationChanged;
+      UserSessionService.ServiceInitializedEventHandler -= UserSessionStateChangedEventHandler;
+      UserSessionService.UserLoggedInEventHandler -= UserSessionStateChangedEventHandler;
+      UserSessionService.UserLoggedOutEventHandler -= UserSessionStateChangedEventHandler;
+      GC.SuppressFinalize(this);
    }
 }

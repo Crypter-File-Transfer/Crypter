@@ -31,166 +31,165 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Crypter.Crypto.Common.StreamEncryption
+namespace Crypter.Crypto.Common.StreamEncryption;
+
+public class DecryptionStream : Stream
 {
-   public class DecryptionStream : Stream
+   private const int _lengthBufferSize = sizeof(int);
+
+   private readonly IStreamDecrypt _streamDecrypt;
+   private readonly Stream _ciphertextStream;
+   private readonly long _ciphertextStreamSize;
+
+   private long _ciphertextReadPosition = 0;
+   private bool _finishedReadingCiphertext = false;
+
+   public DecryptionStream(Stream ciphertextStream, long streamSize, Span<byte> decryptionKey, IStreamEncryptionFactory streamEncryptionFactory)
    {
-      private const int _lengthBufferSize = sizeof(int);
+      _ciphertextStream = ciphertextStream;
+      _ciphertextStreamSize = streamSize;
+      Span<byte> lengthBuffer = stackalloc byte[_lengthBufferSize];
+      _ciphertextReadPosition += ciphertextStream.Read(lengthBuffer);
+      int headerSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+      Span<byte> headerBuffer = stackalloc byte[headerSize];
+      _ciphertextReadPosition += ciphertextStream.Read(headerBuffer);
 
-      private readonly IStreamDecrypt _streamDecrypt;
-      private readonly Stream _ciphertextStream;
-      private readonly long _ciphertextStreamSize;
+      _streamDecrypt = streamEncryptionFactory.NewDecryptionStream(decryptionKey, headerBuffer);
+   }
 
-      private long _ciphertextReadPosition = 0;
-      private bool _finishedReadingCiphertext = false;
+   public override bool CanRead => true;
 
-      public DecryptionStream(Stream ciphertextStream, long streamSize, Span<byte> decryptionKey, IStreamEncryptionFactory streamEncryptionFactory)
+   public override bool CanSeek => false;
+
+   public override bool CanWrite => false;
+
+   public override long Length => throw new NotImplementedException();
+
+   public override long Position
+   {
+      get { throw new NotSupportedException(); }
+      set { throw new NotSupportedException(); }
+   }
+
+   public override int Read(byte[] buffer, int offset, int count)
+   {
+      byte[] lengthBuffer = new byte[_lengthBufferSize];
+      int lengthBytesRead = _ciphertextStream.Read(lengthBuffer);
+      if (lengthBytesRead == 0)
       {
-         _ciphertextStream = ciphertextStream;
-         _ciphertextStreamSize = streamSize;
-         Span<byte> lengthBuffer = stackalloc byte[_lengthBufferSize];
-         _ciphertextReadPosition += ciphertextStream.Read(lengthBuffer);
-         int headerSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
-         Span<byte> headerBuffer = stackalloc byte[headerSize];
-         _ciphertextReadPosition += ciphertextStream.Read(headerBuffer);
-
-         _streamDecrypt = streamEncryptionFactory.NewDecryptionStream(decryptionKey, headerBuffer);
+         return 0;
       }
 
-      public override bool CanRead => true;
+      _ciphertextReadPosition += lengthBytesRead;
+      int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+      int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
+      AssertBuffersize(buffer.Length, plaintextChunkSize);
 
-      public override bool CanSeek => false;
+      byte[] ciphertextBuffer = new byte[ciphertextChunkSize];
+      int bytesRead = _ciphertextStream.Read(ciphertextBuffer, 0, ciphertextChunkSize);
+      _ciphertextReadPosition += bytesRead;
+      _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
 
-      public override bool CanWrite => false;
+      byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer, plaintextChunkSize, out bool final);
+      AssertFinal(final);
+      plaintext.CopyTo(buffer.AsMemory());
+      return plaintext.Length;
+   }
 
-      public override long Length => throw new NotImplementedException();
-
-      public override long Position
+   public override int Read(Span<byte> buffer)
+   {
+      Span<byte> lengthBuffer = new byte[_lengthBufferSize];
+      int lengthBytesRead = _ciphertextStream.Read(lengthBuffer);
+      if (lengthBytesRead == 0)
       {
-         get { throw new NotSupportedException(); }
-         set { throw new NotSupportedException(); }
+         return 0;
       }
 
-      public override int Read(byte[] buffer, int offset, int count)
+      _ciphertextReadPosition += lengthBytesRead;
+      int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+      int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
+      AssertBuffersize(buffer.Length, plaintextChunkSize);
+
+      Span<byte> ciphertextBuffer = new byte[ciphertextChunkSize];
+      int bytesRead = _ciphertextStream.Read(ciphertextBuffer);
+      _ciphertextReadPosition += bytesRead;
+      _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
+
+      byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer, plaintextChunkSize, out bool final);
+      AssertFinal(final);
+      plaintext.CopyTo(buffer);
+      return plaintext.Length;
+   }
+
+   public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+   {
+      byte[] lengthBuffer = new byte[_lengthBufferSize];
+      int lengthBytesRead = await _ciphertextStream.ReadAsync(lengthBuffer.AsMemory(), cancellationToken);
+      if (lengthBytesRead == 0)
       {
-         byte[] lengthBuffer = new byte[_lengthBufferSize];
-         int lengthBytesRead = _ciphertextStream.Read(lengthBuffer);
-         if (lengthBytesRead == 0)
-         {
-            return 0;
-         }
-
-         _ciphertextReadPosition += lengthBytesRead;
-         int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
-         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
-         AssertBuffersize(buffer.Length, plaintextChunkSize);
-
-         byte[] ciphertextBuffer = new byte[ciphertextChunkSize];
-         int bytesRead = _ciphertextStream.Read(ciphertextBuffer, 0, ciphertextChunkSize);
-         _ciphertextReadPosition += bytesRead;
-         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
-
-         byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer, plaintextChunkSize, out bool final);
-         AssertFinal(final);
-         plaintext.CopyTo(buffer.AsMemory());
-         return plaintext.Length;
+         return 0;
       }
 
-      public override int Read(Span<byte> buffer)
+      _ciphertextReadPosition += lengthBytesRead;
+      int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+      int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
+      AssertBuffersize(buffer.Length, plaintextChunkSize);
+
+      byte[] ciphertextBuffer = new byte[ciphertextChunkSize];
+      int bytesRead = await _ciphertextStream.ReadAsync(ciphertextBuffer.AsMemory((int)_ciphertextReadPosition, ciphertextChunkSize), cancellationToken);
+      _ciphertextReadPosition += bytesRead;
+      _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
+
+      byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer, plaintextChunkSize, out bool final);
+      AssertFinal(final);
+      plaintext.CopyTo(buffer);
+      return plaintext.Length;
+   }
+
+   public override void Flush()
+   {
+      throw new NotImplementedException();
+   }
+
+   public override long Seek(long offset, SeekOrigin origin)
+   {
+      throw new NotImplementedException();
+   }
+
+   public override void SetLength(long value)
+   {
+      throw new NotImplementedException();
+   }
+
+   public override void Write(byte[] buffer, int offset, int count)
+   {
+      throw new NotImplementedException();
+   }
+
+   private static void AssertBuffersize(int bufferSize, int chunkSize)
+   {
+      if (bufferSize < chunkSize)
       {
-         Span<byte> lengthBuffer = new byte[_lengthBufferSize];
-         int lengthBytesRead = _ciphertextStream.Read(lengthBuffer);
-         if (lengthBytesRead == 0)
-         {
-            return 0;
-         }
-
-         _ciphertextReadPosition += lengthBytesRead;
-         int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
-         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
-         AssertBuffersize(buffer.Length, plaintextChunkSize);
-
-         Span<byte> ciphertextBuffer = new byte[ciphertextChunkSize];
-         int bytesRead = _ciphertextStream.Read(ciphertextBuffer);
-         _ciphertextReadPosition += bytesRead;
-         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
-
-         byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer, plaintextChunkSize, out bool final);
-         AssertFinal(final);
-         plaintext.CopyTo(buffer);
-         return plaintext.Length;
+         throw new ArgumentOutOfRangeException($"buffer size must be greater than or equal {chunkSize}");
       }
+   }
 
-      public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+   private void AssertFinal(bool final)
+   {
+      bool endOfStream = _finishedReadingCiphertext || _ciphertextReadPosition == _ciphertextStreamSize;
+      if (endOfStream && !final)
       {
-         byte[] lengthBuffer = new byte[_lengthBufferSize];
-         int lengthBytesRead = await _ciphertextStream.ReadAsync(lengthBuffer.AsMemory(), cancellationToken);
-         if (lengthBytesRead == 0)
-         {
-            return 0;
-         }
-
-         _ciphertextReadPosition += lengthBytesRead;
-         int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
-         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
-         AssertBuffersize(buffer.Length, plaintextChunkSize);
-
-         byte[] ciphertextBuffer = new byte[ciphertextChunkSize];
-         int bytesRead = await _ciphertextStream.ReadAsync(ciphertextBuffer.AsMemory((int)_ciphertextReadPosition, ciphertextChunkSize), cancellationToken);
-         _ciphertextReadPosition += bytesRead;
-         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
-
-         byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer, plaintextChunkSize, out bool final);
-         AssertFinal(final);
-         plaintext.CopyTo(buffer);
-         return plaintext.Length;
+         throw new CryptographicException("Did not reach 'final' block as expected");
       }
-
-      public override void Flush()
+      else if (final && !endOfStream)
       {
-         throw new NotImplementedException();
+         throw new CryptographicException("Unexpected 'final' block");
       }
+   }
 
-      public override long Seek(long offset, SeekOrigin origin)
-      {
-         throw new NotImplementedException();
-      }
-
-      public override void SetLength(long value)
-      {
-         throw new NotImplementedException();
-      }
-
-      public override void Write(byte[] buffer, int offset, int count)
-      {
-         throw new NotImplementedException();
-      }
-
-      private static void AssertBuffersize(int bufferSize, int chunkSize)
-      {
-         if (bufferSize < chunkSize)
-         {
-            throw new ArgumentOutOfRangeException($"buffer size must be greater than or equal {chunkSize}");
-         }
-      }
-
-      private void AssertFinal(bool final)
-      {
-         bool endOfStream = _finishedReadingCiphertext || _ciphertextReadPosition == _ciphertextStreamSize;
-         if (endOfStream && !final)
-         {
-            throw new CryptographicException("Did not reach 'final' block as expected");
-         }
-         else if (final && !endOfStream)
-         {
-            throw new CryptographicException("Unexpected 'final' block");
-         }
-      }
-
-      protected override void Dispose(bool disposing)
-      {
-         _ciphertextStream.Dispose();
-         base.Dispose(disposing);
-      }
+   protected override void Dispose(bool disposing)
+   {
+      _ciphertextStream.Dispose();
+      base.Dispose(disposing);
    }
 }

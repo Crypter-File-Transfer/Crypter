@@ -36,115 +36,114 @@ using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Services
+namespace Crypter.Common.Client.Services;
+
+public class UserContactsService : IUserContactsService, IDisposable
 {
-   public class UserContactsService : IUserContactsService, IDisposable
+   private readonly ICrypterApiClient _crypterApiClient;
+   private readonly IUserSessionService _userSessionService;
+   private IDictionary<string, UserContact> _contacts;
+
+   private readonly SemaphoreSlim _fetchMutex = new(1);
+
+   public UserContactsService(ICrypterApiClient crypterApiClient, IUserSessionService userSessionService)
    {
-      private readonly ICrypterApiClient _crypterApiClient;
-      private readonly IUserSessionService _userSessionService;
-      private IDictionary<string, UserContact> _contacts;
+      _crypterApiClient = crypterApiClient;
+      _userSessionService = userSessionService;
+      _userSessionService.ServiceInitializedEventHandler += OnSessionServiceInitialized;
+      _userSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
+      _userSessionService.UserLoggedOutEventHandler += OnUserLoggedOut;
+   }
 
-      private readonly SemaphoreSlim _fetchMutex = new(1);
+   public async Task<IReadOnlyCollection<UserContact>> GetContactsAsync()
+   {
+      await LoadContactsAsync(true);
+      return _contacts.Values.ToList();
+   }
 
-      public UserContactsService(ICrypterApiClient crypterApiClient, IUserSessionService userSessionService)
+   public async Task<bool> IsContactAsync(string contactUsername)
+   {
+      await LoadContactsAsync();
+      return _contacts.ContainsKey(contactUsername.ToLower());
+   }
+
+   public async Task<Either<AddUserContactError, UserContact>> AddContactAsync(string contactUsername)
+   {
+      await LoadContactsAsync();
+      string lowerContactUsername = contactUsername.ToLower();
+      if (_contacts.ContainsKey(lowerContactUsername))
       {
-         _crypterApiClient = crypterApiClient;
-         _userSessionService = userSessionService;
-         _userSessionService.ServiceInitializedEventHandler += OnSessionServiceInitialized;
-         _userSessionService.UserLoggedInEventHandler += OnUserLoggedIn;
-         _userSessionService.UserLoggedOutEventHandler += OnUserLoggedOut;
+         return Either<AddUserContactError, UserContact>.FromRight(_contacts[lowerContactUsername]);
       }
 
-      public async Task<IReadOnlyCollection<UserContact>> GetContactsAsync()
+      return await _crypterApiClient.UserContact.AddUserContactAsync(lowerContactUsername)
+         .DoRightAsync(x => _contacts.Add(lowerContactUsername, x));
+   }
+
+   public async Task RemoveContactAsync(string contactUsername)
+   {
+      await LoadContactsAsync();
+      string lowerContactUsername = contactUsername.ToLower();
+      var response = await _crypterApiClient.UserContact.RemoveUserContactAsync(lowerContactUsername);
+      response.IfSome(_ => _contacts.Remove(lowerContactUsername));
+   }
+
+   private async Task<Dictionary<string, UserContact>> FetchContactsAsync()
+   {
+      return await _crypterApiClient.UserContact.GetUserContactsAsync()
+         .MapAsync(x => x.ToDictionary(y => y.Username.ToLower()))
+         .SomeOrDefaultAsync(new Dictionary<string, UserContact>());
+   }
+
+   private async Task LoadContactsAsync(bool refresh = false)
+   {
+      if (_contacts is not null && !refresh)
       {
-         await LoadContactsAsync(true);
-         return _contacts.Values.ToList();
+         return;
       }
 
-      public async Task<bool> IsContactAsync(string contactUsername)
+      await _fetchMutex.WaitAsync().ConfigureAwait(false);
+      try
       {
-         await LoadContactsAsync();
-         return _contacts.ContainsKey(contactUsername.ToLower());
-      }
-
-      public async Task<Either<AddUserContactError, UserContact>> AddContactAsync(string contactUsername)
-      {
-         await LoadContactsAsync();
-         string lowerContactUsername = contactUsername.ToLower();
-         if (_contacts.ContainsKey(lowerContactUsername))
+         bool isLoggedIn = await _userSessionService.IsLoggedInAsync().ConfigureAwait(false);
+         if (isLoggedIn && (_contacts is null || refresh))
          {
-            return Either<AddUserContactError, UserContact>.FromRight(_contacts[lowerContactUsername]);
-         }
-
-         return await _crypterApiClient.UserContact.AddUserContactAsync(lowerContactUsername)
-            .DoRightAsync(x => _contacts.Add(lowerContactUsername, x));
-      }
-
-      public async Task RemoveContactAsync(string contactUsername)
-      {
-         await LoadContactsAsync();
-         string lowerContactUsername = contactUsername.ToLower();
-         var response = await _crypterApiClient.UserContact.RemoveUserContactAsync(lowerContactUsername);
-         response.IfSome(_ => _contacts.Remove(lowerContactUsername));
-      }
-
-      private async Task<Dictionary<string, UserContact>> FetchContactsAsync()
-      {
-         return await _crypterApiClient.UserContact.GetUserContactsAsync()
-            .MapAsync(x => x.ToDictionary(y => y.Username.ToLower()))
-            .SomeOrDefaultAsync(new Dictionary<string, UserContact>());
-      }
-
-      private async Task LoadContactsAsync(bool refresh = false)
-      {
-         if (_contacts is not null && !refresh)
-         {
-            return;
-         }
-
-         await _fetchMutex.WaitAsync().ConfigureAwait(false);
-         try
-         {
-            bool isLoggedIn = await _userSessionService.IsLoggedInAsync().ConfigureAwait(false);
-            if (isLoggedIn && (_contacts is null || refresh))
-            {
-               _contacts = await FetchContactsAsync();
-            }
-         }
-         finally
-         {
-            _fetchMutex.Release();
+            _contacts = await FetchContactsAsync();
          }
       }
-
-      private async void OnSessionServiceInitialized(object sender, UserSessionServiceInitializedEventArgs args)
+      finally
       {
-         if (args.IsLoggedIn)
-         {
-            await LoadContactsAsync();
-         }
-         else
-         {
-            _contacts = null;
-         }
+         _fetchMutex.Release();
       }
+   }
 
-      private async void OnUserLoggedIn(object sender, UserLoggedInEventArgs _)
+   private async void OnSessionServiceInitialized(object sender, UserSessionServiceInitializedEventArgs args)
+   {
+      if (args.IsLoggedIn)
       {
          await LoadContactsAsync();
       }
-
-      private void OnUserLoggedOut(object sender, EventArgs _)
+      else
       {
          _contacts = null;
       }
+   }
 
-      public void Dispose()
-      {
-         _userSessionService.ServiceInitializedEventHandler -= OnSessionServiceInitialized;
-         _userSessionService.UserLoggedInEventHandler -= OnUserLoggedIn;
-         _userSessionService.UserLoggedOutEventHandler -= OnUserLoggedOut;
-         GC.SuppressFinalize(this);
-      }
+   private async void OnUserLoggedIn(object sender, UserLoggedInEventArgs _)
+   {
+      await LoadContactsAsync();
+   }
+
+   private void OnUserLoggedOut(object sender, EventArgs _)
+   {
+      _contacts = null;
+   }
+
+   public void Dispose()
+   {
+      _userSessionService.ServiceInitializedEventHandler -= OnSessionServiceInitialized;
+      _userSessionService.UserLoggedInEventHandler -= OnUserLoggedIn;
+      _userSessionService.UserLoggedOutEventHandler -= OnUserLoggedOut;
+      GC.SuppressFinalize(this);
    }
 }

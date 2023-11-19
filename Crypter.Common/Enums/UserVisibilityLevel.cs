@@ -27,14 +27,13 @@
 using System.Text.Json.Serialization;
 using Crypter.Common.Infrastructure;
 
-namespace Crypter.Common.Enums
+namespace Crypter.Common.Enums;
+
+[JsonConverter(typeof(JsonEnumConverter<UserVisibilityLevel>))]
+public enum UserVisibilityLevel
 {
-   [JsonConverter(typeof(JsonEnumConverter<UserVisibilityLevel>))]
-   public enum UserVisibilityLevel
-   {
-      None,
-      Contacts,
-      Authenticated,
-      Everyone
-   }
+   None,
+   Contacts,
+   Authenticated,
+   Everyone
 }

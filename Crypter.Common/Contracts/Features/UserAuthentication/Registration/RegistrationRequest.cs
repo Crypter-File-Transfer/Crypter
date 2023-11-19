@@ -28,29 +28,28 @@ using System.Text.Json.Serialization;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication
+namespace Crypter.Common.Contracts.Features.UserAuthentication;
+
+public class RegistrationRequest
 {
-   public class RegistrationRequest
+   public string Username { get; set; }
+   public VersionedPassword VersionedPassword { get; set; }
+   public string EmailAddress { get; set; }
+
+   [JsonConstructor]
+   public RegistrationRequest(string username, VersionedPassword versionedPassword, string emailAddress = null)
    {
-      public string Username { get; set; }
-      public VersionedPassword VersionedPassword { get; set; }
-      public string EmailAddress { get; set; }
+      Username = username;
+      VersionedPassword = versionedPassword;
+      EmailAddress = emailAddress;
+   }
 
-      [JsonConstructor]
-      public RegistrationRequest(string username, VersionedPassword versionedPassword, string emailAddress = null)
-      {
-         Username = username;
-         VersionedPassword = versionedPassword;
-         EmailAddress = emailAddress;
-      }
-
-      public RegistrationRequest(Username username, VersionedPassword versionedPassword, Maybe<EmailAddress> emailAddress)
-      {
-         Username = username.Value;
-         VersionedPassword = versionedPassword;
-         EmailAddress = emailAddress.Match(
-            () => null,
-            some => some.Value);
-      }
+   public RegistrationRequest(Username username, VersionedPassword versionedPassword, Maybe<EmailAddress> emailAddress)
+   {
+      Username = username.Value;
+      VersionedPassword = versionedPassword;
+      EmailAddress = emailAddress.Match(
+         () => null,
+         some => some.Value);
    }
 }

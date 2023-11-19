@@ -35,76 +35,75 @@ using Crypter.Crypto.Common;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Services
+namespace Crypter.Core.Services;
+
+public interface IUserEmailVerificationService
 {
-   public interface IUserEmailVerificationService
+   Task<Maybe<UserEmailAddressVerificationParameters>> GenerateVerificationParametersAsync(Guid userId);
+   Task SaveVerificationParametersAsync(UserEmailAddressVerificationParameters parameters);
+   Task<bool> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request);
+}
+
+public class UserEmailVerificationService : IUserEmailVerificationService
+{
+   private readonly DataContext _dataContext;
+   private readonly ICryptoProvider _cryptoProvider;
+
+   public UserEmailVerificationService(DataContext dataContext, ICryptoProvider cryptoProvider)
    {
-      Task<Maybe<UserEmailAddressVerificationParameters>> GenerateVerificationParametersAsync(Guid userId);
-      Task SaveVerificationParametersAsync(UserEmailAddressVerificationParameters parameters);
-      Task<bool> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request);
+      _dataContext = dataContext;
+      _cryptoProvider = cryptoProvider;
    }
 
-   public class UserEmailVerificationService : IUserEmailVerificationService
+   public Task<Maybe<UserEmailAddressVerificationParameters>> GenerateVerificationParametersAsync(Guid userId)
    {
-      private readonly DataContext _dataContext;
-      private readonly ICryptoProvider _cryptoProvider;
+      return UserEmailVerificationQueries.GenerateVerificationParametersAsync(_dataContext, _cryptoProvider, userId);
+   }
 
-      public UserEmailVerificationService(DataContext dataContext, ICryptoProvider cryptoProvider)
+   public async Task SaveVerificationParametersAsync(UserEmailAddressVerificationParameters parameters)
+   {
+      UserEmailVerificationEntity newEntity = new UserEmailVerificationEntity(parameters.UserId, parameters.VerificationCode, parameters.VerificationKey, DateTime.UtcNow);
+      _dataContext.UserEmailVerifications.Add(newEntity);
+      await _dataContext.SaveChangesAsync();
+   }
+
+   public async Task<bool> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request)
+   {
+      Guid verificationCode;
+      try
       {
-         _dataContext = dataContext;
-         _cryptoProvider = cryptoProvider;
+         verificationCode = UrlSafeEncoder.DecodeGuidFromUrlSafe(request.Code);
+      }
+      catch (Exception)
+      {
+         return false;
       }
 
-      public Task<Maybe<UserEmailAddressVerificationParameters>> GenerateVerificationParametersAsync(Guid userId)
+      var verificationEntity = await _dataContext.UserEmailVerifications
+         .FirstOrDefaultAsync(x => x.Code == verificationCode);
+
+      if (verificationEntity is null)
       {
-         return UserEmailVerificationQueries.GenerateVerificationParametersAsync(_dataContext, _cryptoProvider, userId);
+         return false;
       }
 
-      public async Task SaveVerificationParametersAsync(UserEmailAddressVerificationParameters parameters)
+      byte[] signature = UrlSafeEncoder.DecodeBytesFromUrlSafe(request.Signature);
+      if (!_cryptoProvider.DigitalSignature.VerifySignature(verificationEntity.VerificationKey, verificationCode.ToByteArray(), signature))
       {
-         UserEmailVerificationEntity newEntity = new UserEmailVerificationEntity(parameters.UserId, parameters.VerificationCode, parameters.VerificationKey, DateTime.UtcNow);
-         _dataContext.UserEmailVerifications.Add(newEntity);
-         await _dataContext.SaveChangesAsync();
+         return false;
       }
 
-      public async Task<bool> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request)
+      var user = await _dataContext.Users
+         .FirstOrDefaultAsync(x => x.Id == verificationEntity.Owner);
+
+      if (user is not null)
       {
-         Guid verificationCode;
-         try
-         {
-            verificationCode = UrlSafeEncoder.DecodeGuidFromUrlSafe(request.Code);
-         }
-         catch (Exception)
-         {
-            return false;
-         }
-
-         var verificationEntity = await _dataContext.UserEmailVerifications
-            .FirstOrDefaultAsync(x => x.Code == verificationCode);
-
-         if (verificationEntity is null)
-         {
-            return false;
-         }
-
-         byte[] signature = UrlSafeEncoder.DecodeBytesFromUrlSafe(request.Signature);
-         if (!_cryptoProvider.DigitalSignature.VerifySignature(verificationEntity.VerificationKey, verificationCode.ToByteArray(), signature))
-         {
-            return false;
-         }
-
-         var user = await _dataContext.Users
-            .FirstOrDefaultAsync(x => x.Id == verificationEntity.Owner);
-
-         if (user is not null)
-         {
-            user.EmailVerified = true;
-         }
-
-         _dataContext.UserEmailVerifications.Remove(verificationEntity);
-         await _dataContext.SaveChangesAsync();
-
-         return true;
+         user.EmailVerified = true;
       }
+
+      _dataContext.UserEmailVerifications.Remove(verificationEntity);
+      await _dataContext.SaveChangesAsync();
+
+      return true;
    }
 }

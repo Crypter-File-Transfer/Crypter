@@ -28,11 +28,10 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Services.UserSettings
+namespace Crypter.Common.Client.Interfaces.Services.UserSettings;
+
+public interface IUserNotificationSettingsService
 {
-   public interface IUserNotificationSettingsService
-   {
-      Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync();
-      Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings);
-   }
+   Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync();
+   Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings);
 }

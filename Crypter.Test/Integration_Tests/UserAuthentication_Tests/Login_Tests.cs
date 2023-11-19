@@ -32,80 +32,79 @@ using Crypter.Common.Contracts.Features.UserAuthentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
+namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests;
+
+[TestFixture]
+internal class Login_Tests
 {
-   [TestFixture]
-   internal class Login_Tests
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+
+   [SetUp]
+   public async Task SetupTestAsync()
    {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
-      {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
 
-      [Test]
-      public async Task Login_Works()
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+   [Test]
+   public async Task Login_Works()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var result = await _client.UserAuthentication.LoginAsync(loginRequest);
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var result = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-         Assert.True(registrationResult.IsRight);
-         Assert.True(result.IsRight);
-      }
+      Assert.True(registrationResult.IsRight);
+      Assert.True(result.IsRight);
+   }
 
-      [Test]
-      public async Task Login_Fails_Invalid_Username()
-      {
-         LoginRequest request = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var result = await _client.UserAuthentication.LoginAsync(request);
+   [Test]
+   public async Task Login_Fails_Invalid_Username()
+   {
+      LoginRequest request = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var result = await _client.UserAuthentication.LoginAsync(request);
 
-         Assert.True(result.IsLeft);
-      }
+      Assert.True(result.IsLeft);
+   }
 
-      [Test]
-      public async Task Login_Fails_Invalid_Password()
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+   [Test]
+   public async Task Login_Fails_Invalid_Password()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         VersionedPassword invalidPassword = new VersionedPassword("invalid"u8.ToArray(), 1);
-         loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
-         var result = await _client.UserAuthentication.LoginAsync(loginRequest);
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      VersionedPassword invalidPassword = new VersionedPassword("invalid"u8.ToArray(), 1);
+      loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
+      var result = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-         Assert.True(registrationResult.IsRight);
-         Assert.True(result.IsLeft);
-      }
+      Assert.True(registrationResult.IsRight);
+      Assert.True(result.IsLeft);
+   }
 
-      [Test]
-      public async Task Login_Fails_Invalid_Password_Version()
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+   [Test]
+   public async Task Login_Fails_Invalid_Password_Version()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         VersionedPassword correctPassword = loginRequest.VersionedPasswords.First();
-         VersionedPassword invalidPassword = new VersionedPassword(correctPassword.Password, (short)(correctPassword.Version - 1));
-         loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
-         var result = await _client.UserAuthentication.LoginAsync(loginRequest);
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      VersionedPassword correctPassword = loginRequest.VersionedPasswords.First();
+      VersionedPassword invalidPassword = new VersionedPassword(correctPassword.Password, (short)(correctPassword.Version - 1));
+      loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
+      var result = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-         Assert.True(registrationResult.IsRight);
-         Assert.True(result.IsLeft);
-      }
+      Assert.True(registrationResult.IsRight);
+      Assert.True(result.IsLeft);
    }
 }

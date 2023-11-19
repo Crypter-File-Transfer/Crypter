@@ -28,11 +28,10 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Services.UserSettings
+namespace Crypter.Common.Client.Interfaces.Services.UserSettings;
+
+public interface IUserPrivacySettingsService
 {
-   public interface IUserPrivacySettingsService
-   {
-      Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync();
-      Task<Either<SetPrivacySettingsError, PrivacySettings>> UpdatePrivacySettingsAsync(PrivacySettings newPrivacySettings);
-   }
+   Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync();
+   Task<Either<SetPrivacySettingsError, PrivacySettings>> UpdatePrivacySettingsAsync(PrivacySettings newPrivacySettings);
 }

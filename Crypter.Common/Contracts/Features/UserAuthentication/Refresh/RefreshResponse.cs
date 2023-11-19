@@ -27,20 +27,19 @@
 using System.Text.Json.Serialization;
 using Crypter.Common.Enums;
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication
-{
-   public class RefreshResponse
-   {
-      public string AuthenticationToken { get; set; }
-      public string RefreshToken { get; set; }
-      public TokenType RefreshTokenType { get; set; }
+namespace Crypter.Common.Contracts.Features.UserAuthentication;
 
-      [JsonConstructor]
-      public RefreshResponse(string authenticationToken, string refreshToken, TokenType refreshTokenType)
-      {
-         AuthenticationToken = authenticationToken;
-         RefreshToken = refreshToken;
-         RefreshTokenType = refreshTokenType;
-      }
+public class RefreshResponse
+{
+   public string AuthenticationToken { get; set; }
+   public string RefreshToken { get; set; }
+   public TokenType RefreshTokenType { get; set; }
+
+   [JsonConstructor]
+   public RefreshResponse(string authenticationToken, string refreshToken, TokenType refreshTokenType)
+   {
+      AuthenticationToken = authenticationToken;
+      RefreshToken = refreshToken;
+      RefreshTokenType = refreshTokenType;
    }
 }

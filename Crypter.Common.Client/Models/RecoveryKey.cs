@@ -29,38 +29,37 @@ using System.Text;
 using System.Text.Json;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Models
+namespace Crypter.Common.Client.Models;
+
+public class RecoveryKey
 {
-   public class RecoveryKey
+   public byte[] MasterKey { get; set; }
+   public byte[] Proof { get; set; }
+
+   public RecoveryKey(byte[] masterKey, byte[] proof)
    {
-      public byte[] MasterKey { get; set; }
-      public byte[] Proof { get; set; }
+      MasterKey = masterKey;
+      Proof = proof;
+   }
 
-      public RecoveryKey(byte[] masterKey, byte[] proof)
+   public string ToBase64String()
+   {
+      string json = JsonSerializer.Serialize(this);
+      byte[] bytes = Encoding.UTF8.GetBytes(json);
+      return Convert.ToBase64String(bytes);
+   }
+
+   public static Maybe<RecoveryKey> FromBase64String(string encodedRecoveryKey)
+   {
+      try
       {
-         MasterKey = masterKey;
-         Proof = proof;
+         byte[] bytes = Convert.FromBase64String(encodedRecoveryKey);
+         string json = Encoding.UTF8.GetString(bytes);
+         return JsonSerializer.Deserialize<RecoveryKey>(json);
       }
-
-      public string ToBase64String()
+      catch (Exception)
       {
-         string json = JsonSerializer.Serialize(this);
-         byte[] bytes = Encoding.UTF8.GetBytes(json);
-         return Convert.ToBase64String(bytes);
-      }
-
-      public static Maybe<RecoveryKey> FromBase64String(string encodedRecoveryKey)
-      {
-         try
-         {
-            byte[] bytes = Convert.FromBase64String(encodedRecoveryKey);
-            string json = Encoding.UTF8.GetString(bytes);
-            return JsonSerializer.Deserialize<RecoveryKey>(json);
-         }
-         catch (Exception)
-         {
-            return Maybe<RecoveryKey>.None;
-         }
+         return Maybe<RecoveryKey>.None;
       }
    }
 }

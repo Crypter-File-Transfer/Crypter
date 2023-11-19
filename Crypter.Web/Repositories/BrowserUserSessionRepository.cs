@@ -31,31 +31,30 @@ using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Models;
 using EasyMonads;
 
-namespace Crypter.Web.Repositories
+namespace Crypter.Web.Repositories;
+
+public class BrowserUserSessionRepository : IUserSessionRepository
 {
-   public class BrowserUserSessionRepository : IUserSessionRepository
+   private readonly IDeviceRepository<BrowserStorageLocation> _browserRepository;
+   private readonly IReadOnlyDictionary<bool, BrowserStorageLocation> _trustDeviceStorageMap;
+
+   public BrowserUserSessionRepository(IDeviceRepository<BrowserStorageLocation> browserRepository)
    {
-      private readonly IDeviceRepository<BrowserStorageLocation> _browserRepository;
-      private readonly IReadOnlyDictionary<bool, BrowserStorageLocation> _trustDeviceStorageMap;
-
-      public BrowserUserSessionRepository(IDeviceRepository<BrowserStorageLocation> browserRepository)
+      _browserRepository = browserRepository;
+      _trustDeviceStorageMap = new Dictionary<bool, BrowserStorageLocation>
       {
-         _browserRepository = browserRepository;
-         _trustDeviceStorageMap = new Dictionary<bool, BrowserStorageLocation>
-         {
-            { false, BrowserStorageLocation.SessionStorage },
-            { true, BrowserStorageLocation.LocalStorage }
-         };
-      }
+         { false, BrowserStorageLocation.SessionStorage },
+         { true, BrowserStorageLocation.LocalStorage }
+      };
+   }
 
-      public Task<Maybe<UserSession>> GetUserSessionAsync()
-      {
-         return _browserRepository.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession);
-      }
+   public Task<Maybe<UserSession>> GetUserSessionAsync()
+   {
+      return _browserRepository.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession);
+   }
 
-      public async Task StoreUserSessionAsync(UserSession userSession, bool trustDevice)
-      {
-         await _browserRepository.SetItemAsync(DeviceStorageObjectType.UserSession, userSession, _trustDeviceStorageMap[trustDevice]);
-      }
+   public async Task StoreUserSessionAsync(UserSession userSession, bool trustDevice)
+   {
+      await _browserRepository.SetItemAsync(DeviceStorageObjectType.UserSession, userSession, _trustDeviceStorageMap[trustDevice]);
    }
 }

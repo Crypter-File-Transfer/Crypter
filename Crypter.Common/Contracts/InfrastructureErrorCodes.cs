@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts
+namespace Crypter.Common.Contracts;
+
+public enum InfrastructureErrorCode
 {
-   public enum InfrastructureErrorCode
-   {
-      UnknownErrorCode = 100,
-      InvalidModelStateErrorCode = 101,
-      InvalidEnumValueErrorCode = 102
-   }
+   UnknownErrorCode = 100,
+   InvalidModelStateErrorCode = 101,
+   InvalidEnumValueErrorCode = 102
 }

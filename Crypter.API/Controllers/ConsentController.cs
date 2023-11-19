@@ -31,30 +31,29 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers;
+
+[ApiController]
+[Route("api/user/consent")]
+public class ConsentController : CrypterControllerBase
 {
-   [ApiController]
-   [Route("api/user/consent")]
-   public class ConsentController : CrypterControllerBase
+   private readonly ITokenService _tokenService;
+   private readonly IUserService _userService;
+
+   public ConsentController(ITokenService tokenService, IUserService userService)
    {
-      private readonly ITokenService _tokenService;
-      private readonly IUserService _userService;
+      _tokenService = tokenService;
+      _userService = userService;
+   }
 
-      public ConsentController(ITokenService tokenService, IUserService userService)
-      {
-         _tokenService = tokenService;
-         _userService = userService;
-      }
-
-      [HttpPost("recovery-key-risk")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> ConsentToRecoveryKeyRisksAsync()
-      {
-         Guid userId = _tokenService.ParseUserId(User);
-         await _userService.SaveUserAcknowledgementOfRecoveryKeyRisksAsync(userId);
-         return Ok();
-      }
+   [HttpPost("recovery-key-risk")]
+   [Authorize]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
+   [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+   public async Task<IActionResult> ConsentToRecoveryKeyRisksAsync()
+   {
+      Guid userId = _tokenService.ParseUserId(User);
+      await _userService.SaveUserAcknowledgementOfRecoveryKeyRisksAsync(userId);
+      return Ok();
    }
 }

@@ -28,29 +28,28 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public partial class LoginBase : ComponentBase
 {
-   public partial class LoginBase : ComponentBase
+   [Inject]
+   protected NavigationManager NavigationManager { get; set; }
+
+   [Inject]
+   protected IUserSessionService UserSessionService { get; set; }
+
+   protected bool Loading = true;
+
+   private const string _userLandingPage = "/user/transfers";
+
+   protected override async Task OnInitializedAsync()
    {
-      [Inject]
-      protected NavigationManager NavigationManager { get; set; }
-
-      [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
-
-      protected bool Loading = true;
-
-      private const string _userLandingPage = "/user/transfers";
-
-      protected override async Task OnInitializedAsync()
+      if (await UserSessionService.IsLoggedInAsync())
       {
-         if (await UserSessionService.IsLoggedInAsync())
-         {
-            NavigationManager.NavigateTo(_userLandingPage);
-            return;
-         }
-
-         Loading = false;
+         NavigationManager.NavigateTo(_userLandingPage);
+         return;
       }
+
+      Loading = false;
    }
 }

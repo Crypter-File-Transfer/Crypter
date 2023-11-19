@@ -31,43 +31,42 @@ using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public partial class UserContactsBase : AuthenticatedPageBase
 {
-   public partial class UserContactsBase : AuthenticatedPageBase
+   [Inject]
+   protected IUserContactsService UserContactsService { get; set; }
+
+   protected bool Loading = true;
+
+   protected IReadOnlyCollection<UserContact> Contacts { get; set; }
+
+   protected override async Task OnInitializedAsync()
    {
-      [Inject]
-      protected IUserContactsService UserContactsService { get; set; }
+      await base.OnInitializedAsync();
+      Loading = false;
+   }
 
-      protected bool Loading = true;
-
-      protected IReadOnlyCollection<UserContact> Contacts { get; set; }
-
-      protected override async Task OnInitializedAsync()
+   protected override async Task OnAfterRenderAsync(bool firstRender)
+   {
+      if (firstRender && await UserSessionService.IsLoggedInAsync())
       {
-         await base.OnInitializedAsync();
-         Loading = false;
-      }
-
-      protected override async Task OnAfterRenderAsync(bool firstRender)
-      {
-         if (firstRender && await UserSessionService.IsLoggedInAsync())
-         {
-            Contacts = await UserContactsService.GetContactsAsync();
-            StateHasChanged();
-         }
-      }
-
-      protected static string GetDisplayName(string username, string alias)
-      {
-         return string.IsNullOrEmpty(alias)
-            ? username
-            : $"{alias} ({username})";
-      }
-
-      protected async Task RemoveContactAsync(string contactUsername)
-      {
-         await UserContactsService.RemoveContactAsync(contactUsername);
          Contacts = await UserContactsService.GetContactsAsync();
+         StateHasChanged();
       }
+   }
+
+   protected static string GetDisplayName(string username, string alias)
+   {
+      return string.IsNullOrEmpty(alias)
+         ? username
+         : $"{alias} ({username})";
+   }
+
+   protected async Task RemoveContactAsync(string contactUsername)
+   {
+      await UserContactsService.RemoveContactAsync(contactUsername);
+      Contacts = await UserContactsService.GetContactsAsync();
    }
 }

@@ -32,41 +32,40 @@ using Crypter.Web.Helpers;
 using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public partial class VerifyBase : ComponentBase
 {
-   public partial class VerifyBase : ComponentBase
+   [Inject]
+   NavigationManager NavigationManager { get; set; }
+
+   [Inject]
+   protected ICrypterApiClient CrypterApiService { get; set; }
+
+   protected EmailVerificationParams EmailVerificationParams = new();
+
+   protected bool EmailVerificationInProgress = true;
+   protected bool EmailVerificationSuccess = false;
+
+   protected override async Task OnInitializedAsync()
    {
-      [Inject]
-      NavigationManager NavigationManager { get; set; }
+      ParseVerificationParamsFromUri();
+      await VerifyEmailAddressAsync();
+   }
 
-      [Inject]
-      protected ICrypterApiClient CrypterApiService { get; set; }
+   protected void ParseVerificationParamsFromUri()
+   {
+      NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
+      EmailVerificationParams.Code = queryParameters["code"];
+      EmailVerificationParams.Signature = queryParameters["signature"];
+   }
 
-      protected EmailVerificationParams EmailVerificationParams = new();
+   protected async Task VerifyEmailAddressAsync()
+   {
+      var verificationResponse = await CrypterApiService.UserSetting.VerifyUserEmailAddressAsync(
+         new VerifyEmailAddressRequest(EmailVerificationParams.Code, EmailVerificationParams.Signature));
 
-      protected bool EmailVerificationInProgress = true;
-      protected bool EmailVerificationSuccess = false;
-
-      protected override async Task OnInitializedAsync()
-      {
-         ParseVerificationParamsFromUri();
-         await VerifyEmailAddressAsync();
-      }
-
-      protected void ParseVerificationParamsFromUri()
-      {
-         NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
-         EmailVerificationParams.Code = queryParameters["code"];
-         EmailVerificationParams.Signature = queryParameters["signature"];
-      }
-
-      protected async Task VerifyEmailAddressAsync()
-      {
-         var verificationResponse = await CrypterApiService.UserSetting.VerifyUserEmailAddressAsync(
-            new VerifyEmailAddressRequest(EmailVerificationParams.Code, EmailVerificationParams.Signature));
-
-         EmailVerificationSuccess = verificationResponse.IsRight;
-         EmailVerificationInProgress = false;
-      }
+      EmailVerificationSuccess = verificationResponse.IsRight;
+      EmailVerificationInProgress = false;
    }
 }

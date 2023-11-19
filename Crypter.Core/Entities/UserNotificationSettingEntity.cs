@@ -28,37 +28,36 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserNotificationSettingEntity
 {
-   public class UserNotificationSettingEntity
+   public Guid Owner { get; set; }
+   public bool EnableTransferNotifications { get; set; }
+   public bool EmailNotifications { get; set; }
+
+   public UserEntity User { get; set; }
+
+   public UserNotificationSettingEntity(Guid owner, bool enableTransferNotifications, bool emailNotifications)
    {
-      public Guid Owner { get; set; }
-      public bool EnableTransferNotifications { get; set; }
-      public bool EmailNotifications { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserNotificationSettingEntity(Guid owner, bool enableTransferNotifications, bool emailNotifications)
-      {
-         Owner = owner;
-         EnableTransferNotifications = enableTransferNotifications;
-         EmailNotifications = emailNotifications;
-      }
+      Owner = owner;
+      EnableTransferNotifications = enableTransferNotifications;
+      EmailNotifications = emailNotifications;
    }
+}
 
-   public class UserNotificationSettingEntityConfiguration : IEntityTypeConfiguration<UserNotificationSettingEntity>
+public class UserNotificationSettingEntityConfiguration : IEntityTypeConfiguration<UserNotificationSettingEntity>
+{
+   public void Configure(EntityTypeBuilder<UserNotificationSettingEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserNotificationSettingEntity> builder)
-      {
-         builder.ToTable("UserNotificationSetting");
+      builder.ToTable("UserNotificationSetting");
 
-         builder.HasKey(x => x.Owner);
+      builder.HasKey(x => x.Owner);
 
-         builder.HasOne(x => x.User)
-            .WithOne(x => x.NotificationSetting)
-            .HasForeignKey<UserNotificationSettingEntity>(x => x.Owner)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.User)
+         .WithOne(x => x.NotificationSetting)
+         .HasForeignKey<UserNotificationSettingEntity>(x => x.Owner)
+         .IsRequired()
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

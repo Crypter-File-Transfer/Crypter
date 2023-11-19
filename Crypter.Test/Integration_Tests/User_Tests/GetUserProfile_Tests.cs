@@ -35,55 +35,54 @@ using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.User_Tests
+namespace Crypter.Test.Integration_Tests.User_Tests;
+
+[TestFixture]
+internal class GetUserProfile_Tests
 {
-   [TestFixture]
-   internal class GetUserProfile_Tests
-   {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-      private ITokenRepository _clientTokenRepository;
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+   private ITokenRepository _clientTokenRepository;
    
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
+
+   [Test]
+   public async Task Get_User_Profile_Works_Async()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-      [Test]
-      public async Task Get_User_Profile_Works_Async()
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+      InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
+      var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+      Either<GetUserProfileError, UserProfileDTO> response = await _client.User.GetUserProfileAsync(TestData.DefaultUsername, false);
 
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
+      UserProfileDTO result = response.RightOrDefault(null);
 
-         InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
-         var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
-
-         Either<GetUserProfileError, UserProfileDTO> response = await _client.User.GetUserProfileAsync(TestData.DefaultUsername, false);
-
-         UserProfileDTO result = response.RightOrDefault(null);
-
-         Assert.True(loginResult.IsRight);
-         Assert.True(response.IsRight);
-         Assert.AreEqual(TestData.DefaultUsername, result.Username);
-      }
+      Assert.True(loginResult.IsRight);
+      Assert.True(response.IsRight);
+      Assert.AreEqual(TestData.DefaultUsername, result.Username);
    }
 }

@@ -31,29 +31,28 @@ using BlazorSodium.Sodium.Models;
 using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
+
+[SupportedOSPlatform("browser")]
+public class StreamDecrypt : IStreamDecrypt
 {
-   [SupportedOSPlatform("browser")]
-   public class StreamDecrypt : IStreamDecrypt
+   private readonly IPadding _padding;
+   private readonly StateAddress _stateAddress;
+
+   public StreamDecrypt(IPadding padding, ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
    {
-      private readonly IPadding _padding;
-      private readonly StateAddress _stateAddress;
+      _padding = padding;
+      _stateAddress = SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Init_Pull(header.ToArray(), key.ToArray());
+   }
 
-      public StreamDecrypt(IPadding padding, ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
-      {
-         _padding = padding;
-         _stateAddress = SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Init_Pull(header.ToArray(), key.ToArray());
-      }
+   public uint KeySize => SecretStream.KEY_BYTES;
 
-      public uint KeySize => SecretStream.KEY_BYTES;
+   public uint TagSize => SecretStream.A_BYTES;
 
-      public uint TagSize => SecretStream.A_BYTES;
-
-      public byte[] Pull(ReadOnlySpan<byte> ciphertext, int paddingBlockSize, out bool final)
-      {
-         SecretStreamPullData pullData = SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Pull(_stateAddress, ciphertext.ToArray());
-         final = pullData.Tag == SecretStream.TAG_FINAL;
-         return _padding.Unpad(pullData.Message.AsSpan(), paddingBlockSize);
-      }
+   public byte[] Pull(ReadOnlySpan<byte> ciphertext, int paddingBlockSize, out bool final)
+   {
+      SecretStreamPullData pullData = SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Pull(_stateAddress, ciphertext.ToArray());
+      final = pullData.Tag == SecretStream.TAG_FINAL;
+      return _padding.Unpad(pullData.Message.AsSpan(), paddingBlockSize);
    }
 }

@@ -39,118 +39,118 @@ using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Services
+namespace Crypter.Common.Client.Services;
+
+public class UserSessionService<TStorageLocation> : IUserSessionService, IDisposable
+   where TStorageLocation : Enum
 {
-   public class UserSessionService<TStorageLocation> : IUserSessionService, IDisposable
-      where TStorageLocation : Enum
+   private readonly ICrypterApiClient _crypterApiClient;
+   private readonly IUserPasswordService _userPasswordService;
+   private readonly IDeviceRepository<TStorageLocation> _deviceRepository;
+   private readonly IUserSessionRepository _userSessionRepository;
+   private readonly ITokenRepository _tokenRepository;
+
+   // Events
+   private EventHandler<UserSessionServiceInitializedEventArgs> _serviceInitializedEventHandler;
+   private EventHandler<UserLoggedInEventArgs> _userLoggedInEventHandler;
+   private EventHandler _userLoggedOutEventHandler;
+   private EventHandler<UserPasswordTestSuccessEventArgs> _userPasswordTestSuccessEventHandler;
+
+   // Configuration
+   private readonly IReadOnlyDictionary<bool, TokenType> _trustDeviceRefreshTokenTypeMap;
+
+   // Private state
+   private bool _isInitialized = false;
+   private readonly SemaphoreSlim _initializationMutex = new(1);
+
+   // Public properties
+   public Maybe<UserSession> Session { get; protected set; } = Maybe<UserSession>.None;
+
+   public UserSessionService(ICrypterApiClient crypterApiClient, IUserSessionRepository userSessionRepository, ITokenRepository tokenRepository, IDeviceRepository<TStorageLocation> deviceRepository, IUserPasswordService userPasswordService)
    {
-      private readonly ICrypterApiClient _crypterApiClient;
-      private readonly IUserPasswordService _userPasswordService;
-      private readonly IDeviceRepository<TStorageLocation> _deviceRepository;
-      private readonly IUserSessionRepository _userSessionRepository;
-      private readonly ITokenRepository _tokenRepository;
+      _crypterApiClient = crypterApiClient;
+      _userSessionRepository = userSessionRepository;
+      _tokenRepository = tokenRepository;
+      _deviceRepository = deviceRepository;
+      _userPasswordService = userPasswordService;
 
-      // Events
-      private EventHandler<UserSessionServiceInitializedEventArgs> _serviceInitializedEventHandler;
-      private EventHandler<UserLoggedInEventArgs> _userLoggedInEventHandler;
-      private EventHandler _userLoggedOutEventHandler;
-      private EventHandler<UserPasswordTestSuccessEventArgs> _userPasswordTestSuccessEventHandler;
-
-      // Configuration
-      private readonly IReadOnlyDictionary<bool, TokenType> _trustDeviceRefreshTokenTypeMap;
-
-      // Private state
-      private bool _isInitialized = false;
-      private readonly SemaphoreSlim _initializationMutex = new(1);
-
-      // Public properties
-      public Maybe<UserSession> Session { get; protected set; } = Maybe<UserSession>.None;
-
-      public UserSessionService(ICrypterApiClient crypterApiClient, IUserSessionRepository userSessionRepository, ITokenRepository tokenRepository, IDeviceRepository<TStorageLocation> deviceRepository, IUserPasswordService userPasswordService)
+      _trustDeviceRefreshTokenTypeMap = new Dictionary<bool, TokenType>
       {
-         _crypterApiClient = crypterApiClient;
-         _userSessionRepository = userSessionRepository;
-         _tokenRepository = tokenRepository;
-         _deviceRepository = deviceRepository;
-         _userPasswordService = userPasswordService;
+         { false, TokenType.Session },
+         { true, TokenType.Device }
+      };
 
-         _trustDeviceRefreshTokenTypeMap = new Dictionary<bool, TokenType>
-         {
-            { false, TokenType.Session },
-            { true, TokenType.Device }
-         };
+      _deviceRepository.InitializedEventHandler += OnDeviceRepositoryInitializedAsync;
+      _crypterApiClient.RefreshTokenRejectedEventHandler += OnRefreshTokenRejectedByApi;
+   }
 
-         _deviceRepository.InitializedEventHandler += OnDeviceRepositoryInitializedAsync;
-         _crypterApiClient.RefreshTokenRejectedEventHandler += OnRefreshTokenRejectedByApi;
-      }
-
-      private async Task InitializeAsync()
-      {
-         await _initializationMutex.WaitAsync().ConfigureAwait(false);
-         try
-         {
-            if (!_isInitialized)
-            {
-               var preExistingSession = await _userSessionRepository.GetUserSessionAsync();
-               await preExistingSession.IfSomeAsync(async session =>
-               {
-                  if (session.Schema == UserSession.LATEST_SCHEMA)
-                  {
-                     await _crypterApiClient.UserAuthentication.RefreshSessionAsync().DoRightAsync(async x =>
-                     {
-                        await _tokenRepository.StoreAuthenticationTokenAsync(x.AuthenticationToken);
-                        await _tokenRepository.StoreRefreshTokenAsync(x.RefreshToken, x.RefreshTokenType);
-                        Session = session;
-                     });
-                  }
-                  else
-                  {
-                     await LogoutAsync();
-                  }
-               });
-
-               HandleServiceInitializedEvent();
-               _isInitialized = true;
-            }
-         }
-         finally
-         {
-            _initializationMutex.Release();
-         }
-      }
-
-      public async Task<bool> IsLoggedInAsync()
+   private async Task InitializeAsync()
+   {
+      await _initializationMutex.WaitAsync().ConfigureAwait(false);
+      try
       {
          if (!_isInitialized)
          {
-            await InitializeAsync();
-         }
+            var preExistingSession = await _userSessionRepository.GetUserSessionAsync();
+            await preExistingSession.IfSomeAsync(async session =>
+            {
+               if (session.Schema == UserSession.LATEST_SCHEMA)
+               {
+                  await _crypterApiClient.UserAuthentication.RefreshSessionAsync().DoRightAsync(async x =>
+                  {
+                     await _tokenRepository.StoreAuthenticationTokenAsync(x.AuthenticationToken);
+                     await _tokenRepository.StoreRefreshTokenAsync(x.RefreshToken, x.RefreshTokenType);
+                     Session = session;
+                  });
+               }
+               else
+               {
+                  await LogoutAsync();
+               }
+            });
 
-         return Session.IsSome;
+            HandleServiceInitializedEvent();
+            _isInitialized = true;
+         }
+      }
+      finally
+      {
+         _initializationMutex.Release();
+      }
+   }
+
+   public async Task<bool> IsLoggedInAsync()
+   {
+      if (!_isInitialized)
+      {
+         await InitializeAsync();
       }
 
-      public Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser)
-      {
-         return _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .MatchAsync(
+      return Session.IsSome;
+   }
+
+   public Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser)
+   {
+      return _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
+         .MatchAsync(
             () => LoginError.PasswordHashFailure,
             async versionedPassword =>
             {
                List<VersionedPassword> versionedPasswords = new List<VersionedPassword> { versionedPassword };
                var loginTask = from loginResponse in LoginRecursiveAsync(username, password, versionedPasswords, _trustDeviceRefreshTokenTypeMap[rememberUser])
-                               from unit0 in Either<LoginError, Unit>.FromRightAsync(StoreSessionInfo(loginResponse, rememberUser))
-                               select loginResponse;
+                  from unit0 in Either<LoginError, Unit>.FromRightAsync(StoreSessionInfo(loginResponse, rememberUser))
+                  select loginResponse;
 
                Either<LoginError, LoginResponse> loginResult = await loginTask;
                loginResult.DoRight(x => HandleUserLoggedInEvent(username, password, versionedPassword, rememberUser, x.UploadNewKeys, x.ShowRecoveryKey));
                return loginResult.Map(_ => Unit.Default);
             });
-      }
+   }
 
-      private Task<Either<LoginError, LoginResponse>> LoginRecursiveAsync(Username username, Password password, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
-      {
-         return SendLoginRequestAsync(username, versionedPasswords, refreshTokenType)
-            .MatchAsync(
+   private Task<Either<LoginError, LoginResponse>> LoginRecursiveAsync(Username username, Password password, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+   {
+      return SendLoginRequestAsync(username, versionedPasswords, refreshTokenType)
+         .MatchAsync(
             async error =>
             {
                int oldestPasswordVersionAttempted = versionedPasswords.Min(x => x.Version);
@@ -158,12 +158,12 @@ namespace Crypter.Common.Client.Services
                {
                   return await _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, password, oldestPasswordVersionAttempted - 1)
                      .MatchAsync(
-                     () => LoginError.PasswordHashFailure,
-                     async previousVersionedPassword =>
-                     {
-                        versionedPasswords.Add(previousVersionedPassword);
-                        return await LoginRecursiveAsync(username, password, versionedPasswords, refreshTokenType);
-                     });
+                        () => LoginError.PasswordHashFailure,
+                        async previousVersionedPassword =>
+                        {
+                           versionedPasswords.Add(previousVersionedPassword);
+                           return await LoginRecursiveAsync(username, password, versionedPasswords, refreshTokenType);
+                        });
                }
                else
                {
@@ -172,121 +172,120 @@ namespace Crypter.Common.Client.Services
             },
             response => response,
             LoginError.UnknownError);
-      }
+   }
 
-      public async Task<Unit> LogoutAsync()
-      {
-         await _crypterApiClient.UserAuthentication.LogoutAsync();
-         return await RecycleAsync();
-      }
+   public async Task<Unit> LogoutAsync()
+   {
+      await _crypterApiClient.UserAuthentication.LogoutAsync();
+      return await RecycleAsync();
+   }
 
-      private async Task<Unit> RecycleAsync()
-      {
-         Session = Maybe<UserSession>.None;
-         await _deviceRepository.RecycleAsync();
-         HandleUserLoggedOutEvent();
-         return Unit.Default;
-      }
+   private async Task<Unit> RecycleAsync()
+   {
+      Session = Maybe<UserSession>.None;
+      await _deviceRepository.RecycleAsync();
+      HandleUserLoggedOutEvent();
+      return Unit.Default;
+   }
 
-      #region Events
+   #region Events
 
-      private async void OnDeviceRepositoryInitializedAsync(object sender, EventArgs _) =>
-         await InitializeAsync();
+   private async void OnDeviceRepositoryInitializedAsync(object sender, EventArgs _) =>
+      await InitializeAsync();
 
-      private async void OnRefreshTokenRejectedByApi(object sender, EventArgs _) =>
-         await RecycleAsync();
+   private async void OnRefreshTokenRejectedByApi(object sender, EventArgs _) =>
+      await RecycleAsync();
 
-      private void HandleServiceInitializedEvent() =>
-         _serviceInitializedEventHandler?.Invoke(this, new UserSessionServiceInitializedEventArgs(Session.IsSome));
+   private void HandleServiceInitializedEvent() =>
+      _serviceInitializedEventHandler?.Invoke(this, new UserSessionServiceInitializedEventArgs(Session.IsSome));
 
-      private void HandleUserLoggedInEvent(Username username, Password password, VersionedPassword versionedPassword, bool rememberUser, bool uploadNewKeys, bool showRecoveryKeyModal) =>
-         _userLoggedInEventHandler?.Invoke(this, new UserLoggedInEventArgs(username, password, versionedPassword, rememberUser, uploadNewKeys, showRecoveryKeyModal));
+   private void HandleUserLoggedInEvent(Username username, Password password, VersionedPassword versionedPassword, bool rememberUser, bool uploadNewKeys, bool showRecoveryKeyModal) =>
+      _userLoggedInEventHandler?.Invoke(this, new UserLoggedInEventArgs(username, password, versionedPassword, rememberUser, uploadNewKeys, showRecoveryKeyModal));
 
-      private void HandleUserLoggedOutEvent() =>
-         _userLoggedOutEventHandler?.Invoke(this, EventArgs.Empty);
+   private void HandleUserLoggedOutEvent() =>
+      _userLoggedOutEventHandler?.Invoke(this, EventArgs.Empty);
 
-      private void HandleTestPasswordSuccessEvent(Username username, Password password) =>
-         _userPasswordTestSuccessEventHandler?.Invoke(this, new UserPasswordTestSuccessEventArgs(username, password));
+   private void HandleTestPasswordSuccessEvent(Username username, Password password) =>
+      _userPasswordTestSuccessEventHandler?.Invoke(this, new UserPasswordTestSuccessEventArgs(username, password));
 
-      public event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler
-      {
-         add => _serviceInitializedEventHandler = (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Combine(_serviceInitializedEventHandler, value);
-         remove => _serviceInitializedEventHandler = (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Remove(_serviceInitializedEventHandler, value);
-      }
+   public event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler
+   {
+      add => _serviceInitializedEventHandler = (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Combine(_serviceInitializedEventHandler, value);
+      remove => _serviceInitializedEventHandler = (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Remove(_serviceInitializedEventHandler, value);
+   }
 
-      public event EventHandler<UserLoggedInEventArgs> UserLoggedInEventHandler
-      {
-         add => _userLoggedInEventHandler = (EventHandler<UserLoggedInEventArgs>)Delegate.Combine(_userLoggedInEventHandler, value);
-         remove => _userLoggedInEventHandler = (EventHandler<UserLoggedInEventArgs>)Delegate.Remove(_userLoggedInEventHandler, value);
-      }
+   public event EventHandler<UserLoggedInEventArgs> UserLoggedInEventHandler
+   {
+      add => _userLoggedInEventHandler = (EventHandler<UserLoggedInEventArgs>)Delegate.Combine(_userLoggedInEventHandler, value);
+      remove => _userLoggedInEventHandler = (EventHandler<UserLoggedInEventArgs>)Delegate.Remove(_userLoggedInEventHandler, value);
+   }
 
-      public event EventHandler UserLoggedOutEventHandler
-      {
-         add => _userLoggedOutEventHandler = (EventHandler)Delegate.Combine(_userLoggedOutEventHandler, value);
-         remove => _userLoggedOutEventHandler = (EventHandler)Delegate.Remove(_userLoggedOutEventHandler, value);
-      }
+   public event EventHandler UserLoggedOutEventHandler
+   {
+      add => _userLoggedOutEventHandler = (EventHandler)Delegate.Combine(_userLoggedOutEventHandler, value);
+      remove => _userLoggedOutEventHandler = (EventHandler)Delegate.Remove(_userLoggedOutEventHandler, value);
+   }
 
-      public event EventHandler<UserPasswordTestSuccessEventArgs> UserPasswordTestSuccessEventHandler
-      {
-         add => _userPasswordTestSuccessEventHandler = (EventHandler<UserPasswordTestSuccessEventArgs>)Delegate.Combine(_userPasswordTestSuccessEventHandler, value);
-         remove => _userPasswordTestSuccessEventHandler = (EventHandler<UserPasswordTestSuccessEventArgs>)Delegate.Remove(_userPasswordTestSuccessEventHandler, value);
-      }
+   public event EventHandler<UserPasswordTestSuccessEventArgs> UserPasswordTestSuccessEventHandler
+   {
+      add => _userPasswordTestSuccessEventHandler = (EventHandler<UserPasswordTestSuccessEventArgs>)Delegate.Combine(_userPasswordTestSuccessEventHandler, value);
+      remove => _userPasswordTestSuccessEventHandler = (EventHandler<UserPasswordTestSuccessEventArgs>)Delegate.Remove(_userPasswordTestSuccessEventHandler, value);
+   }
 
-      #endregion
+   #endregion
 
-      private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
-      {
-         LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType);
-         return _crypterApiClient.UserAuthentication.LoginAsync(loginRequest);
-      }
+   private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+   {
+      LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType);
+      return _crypterApiClient.UserAuthentication.LoginAsync(loginRequest);
+   }
 
-      private Task<Either<PasswordChallengeError, Unit>> SendTestPasswordRequestAsync(Username username, Password password)
-      {
-         return _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .MatchAsync(
+   private Task<Either<PasswordChallengeError, Unit>> SendTestPasswordRequestAsync(Username username, Password password)
+   {
+      return _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
+         .MatchAsync(
             () => PasswordChallengeError.PasswordHashFailure,
             versionedPassword =>
             {
                PasswordChallengeRequest testRequest = new PasswordChallengeRequest(versionedPassword.Password);
                return _crypterApiClient.UserAuthentication.PasswordChallengeAsync(testRequest);
             });
-      }
+   }
 
-      public async Task<bool> TestPasswordAsync(Password password)
+   public async Task<bool> TestPasswordAsync(Password password)
+   {
+      Username username = Session.Match(
+         () => throw new InvalidOperationException("Invalid session"),
+         x => Username.From(x.Username));
+
+      var response = await SendTestPasswordRequestAsync(username, password);
+
+      if (response.IsRight)
       {
-         Username username = Session.Match(
-            () => throw new InvalidOperationException("Invalid session"),
-            x => Username.From(x.Username));
-
-         var response = await SendTestPasswordRequestAsync(username, password);
-
-         if (response.IsRight)
-         {
-            HandleTestPasswordSuccessEvent(username, password);
-         }
-         return response.IsRight;
+         HandleTestPasswordSuccessEvent(username, password);
       }
+      return response.IsRight;
+   }
 
 
-      private Task<Unit> StoreSessionInfo(LoginResponse response, bool rememberUser)
+   private Task<Unit> StoreSessionInfo(LoginResponse response, bool rememberUser)
+   {
+      var sessionInfo = new UserSession(response.Username, rememberUser, UserSession.LATEST_SCHEMA);
+      Session = sessionInfo;
+
+      return Task.Run(async () =>
       {
-         var sessionInfo = new UserSession(response.Username, rememberUser, UserSession.LATEST_SCHEMA);
-         Session = sessionInfo;
+         await _userSessionRepository.StoreUserSessionAsync(sessionInfo, rememberUser);
+         await _tokenRepository.StoreAuthenticationTokenAsync(response.AuthenticationToken);
+         await _tokenRepository.StoreRefreshTokenAsync(response.RefreshToken, _trustDeviceRefreshTokenTypeMap[rememberUser]);
+         return Unit.Default;
+      });
+   }
 
-         return Task.Run(async () =>
-         {
-            await _userSessionRepository.StoreUserSessionAsync(sessionInfo, rememberUser);
-            await _tokenRepository.StoreAuthenticationTokenAsync(response.AuthenticationToken);
-            await _tokenRepository.StoreRefreshTokenAsync(response.RefreshToken, _trustDeviceRefreshTokenTypeMap[rememberUser]);
-            return Unit.Default;
-         });
-      }
-
-      public void Dispose()
-      {
-         _deviceRepository.InitializedEventHandler -= OnDeviceRepositoryInitializedAsync;
-         _crypterApiClient.RefreshTokenRejectedEventHandler -= OnRefreshTokenRejectedByApi;
-         GC.SuppressFinalize(this);
-      }
+   public void Dispose()
+   {
+      _deviceRepository.InitializedEventHandler -= OnDeviceRepositoryInitializedAsync;
+      _crypterApiClient.RefreshTokenRejectedEventHandler -= OnRefreshTokenRejectedByApi;
+      GC.SuppressFinalize(this);
    }
 }

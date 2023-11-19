@@ -35,85 +35,84 @@ using Crypter.Core.Extensions;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Services
+namespace Crypter.Core.Services;
+
+public interface IUserService
 {
-   public interface IUserService
+   Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken = default);
+   Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken = default);
+   Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken = default);
+   Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default);
+   Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
+   Task DeleteUserEntityAsync(Guid id);
+}
+
+public class UserService : IUserService
+{
+   private readonly DataContext _context;
+
+   public UserService(DataContext context)
    {
-      Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken = default);
-      Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken = default);
-      Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken = default);
-      Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default);
-      Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
-      Task DeleteUserEntityAsync(Guid id);
+      _context = context;
    }
 
-   public class UserService : IUserService
+   public async Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken = default)
    {
-      private readonly DataContext _context;
+      return await _context.Users
+         .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+   }
 
-      public UserService(DataContext context)
+   public async Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken = default)
+   {
+      return await _context.Users
+         .FirstOrDefaultAsync(x => x.Username == username, cancellationToken);
+   }
+
+   public Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken = default)
+   {
+      Guid? visitorId = userId.Match<Guid?>(
+         () => null,
+         x => x);
+
+      return Maybe<UserProfileDTO>.FromAsync(_context.Users
+         .Where(x => x.Username == username)
+         .Where(LinqUserExpressions.UserProfileIsComplete())
+         .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(visitorId))
+         .Select(LinqUserExpressions.ToUserProfileDTOForVisitor(visitorId))
+         .FirstOrDefaultAsync(cancellationToken));
+   }
+
+   public Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default)
+   {
+      string lowerKeyword = keyword.ToLower();
+
+      return _context.Users
+         .Where(x => x.Username.StartsWith(lowerKeyword)
+                     || x.Profile.Alias.ToLower().StartsWith(lowerKeyword))
+         .Where(LinqUserExpressions.UserProfileIsComplete())
+         .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(userId))
+         .OrderBy(x => x.Username)
+         .Skip(index)
+         .Take(count)
+         .Select(x => new UserSearchResult(x.Username, x.Profile.Alias))
+         .ToListAsync(cancellationToken);
+   }
+
+   public async Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId)
+   {
+      UserConsentEntity newConsent = new UserConsentEntity(userId, ConsentType.RecoveryKeyRisks, true, DateTime.UtcNow);
+      _context.UserConsents.Add(newConsent);
+      await _context.SaveChangesAsync();
+      return Unit.Default;
+   }
+
+   public async Task DeleteUserEntityAsync(Guid id)
+   {
+      var user = await GetUserEntityAsync(id);
+      await user.IfSomeAsync(async x =>
       {
-         _context = context;
-      }
-
-      public async Task<Maybe<UserEntity>> GetUserEntityAsync(Guid id, CancellationToken cancellationToken = default)
-      {
-         return await _context.Users
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-      }
-
-      public async Task<Maybe<UserEntity>> GetUserEntityAsync(string username, CancellationToken cancellationToken = default)
-      {
-         return await _context.Users
-            .FirstOrDefaultAsync(x => x.Username == username, cancellationToken);
-      }
-
-      public Task<Maybe<UserProfileDTO>> GetUserProfileAsync(Maybe<Guid> userId, string username, CancellationToken cancellationToken = default)
-      {
-         Guid? visitorId = userId.Match<Guid?>(
-            () => null,
-            x => x);
-
-         return Maybe<UserProfileDTO>.FromAsync(_context.Users
-            .Where(x => x.Username == username)
-            .Where(LinqUserExpressions.UserProfileIsComplete())
-            .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(visitorId))
-            .Select(LinqUserExpressions.ToUserProfileDTOForVisitor(visitorId))
-            .FirstOrDefaultAsync(cancellationToken));
-      }
-
-      public Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count, CancellationToken cancellationToken = default)
-      {
-         string lowerKeyword = keyword.ToLower();
-
-         return _context.Users
-            .Where(x => x.Username.StartsWith(lowerKeyword)
-               || x.Profile.Alias.ToLower().StartsWith(lowerKeyword))
-            .Where(LinqUserExpressions.UserProfileIsComplete())
-            .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(userId))
-            .OrderBy(x => x.Username)
-            .Skip(index)
-            .Take(count)
-            .Select(x => new UserSearchResult(x.Username, x.Profile.Alias))
-            .ToListAsync(cancellationToken);
-      }
-
-      public async Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId)
-      {
-         UserConsentEntity newConsent = new UserConsentEntity(userId, ConsentType.RecoveryKeyRisks, true, DateTime.UtcNow);
-         _context.UserConsents.Add(newConsent);
+         _context.Users.Remove(x);
          await _context.SaveChangesAsync();
-         return Unit.Default;
-      }
-
-      public async Task DeleteUserEntityAsync(Guid id)
-      {
-         var user = await GetUserEntityAsync(id);
-         await user.IfSomeAsync(async x =>
-         {
-            _context.Users.Remove(x);
-            await _context.SaveChangesAsync();
-         });
-      }
+      });
    }
 }

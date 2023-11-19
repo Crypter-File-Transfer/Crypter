@@ -30,41 +30,40 @@ using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Interfaces.Repositories;
 using EasyMonads;
 
-namespace Crypter.Web.Repositories
+namespace Crypter.Web.Repositories;
+
+public class BrowserUserKeysRepository : IUserKeysRepository
 {
-   public class BrowserUserKeysRepository : IUserKeysRepository
+   private readonly IDeviceRepository<BrowserStorageLocation> _browserRepository;
+   private readonly IReadOnlyDictionary<bool, BrowserStorageLocation> _trustDeviceStorageMap;
+
+   public BrowserUserKeysRepository(IDeviceRepository<BrowserStorageLocation> browserRepository)
    {
-      private readonly IDeviceRepository<BrowserStorageLocation> _browserRepository;
-      private readonly IReadOnlyDictionary<bool, BrowserStorageLocation> _trustDeviceStorageMap;
-
-      public BrowserUserKeysRepository(IDeviceRepository<BrowserStorageLocation> browserRepository)
+      _browserRepository = browserRepository;
+      _trustDeviceStorageMap = new Dictionary<bool, BrowserStorageLocation>
       {
-         _browserRepository = browserRepository;
-         _trustDeviceStorageMap = new Dictionary<bool, BrowserStorageLocation>
-         {
-            { false, BrowserStorageLocation.SessionStorage },
-            { true, BrowserStorageLocation.LocalStorage }
-         };
-      }
+         { false, BrowserStorageLocation.SessionStorage },
+         { true, BrowserStorageLocation.LocalStorage }
+      };
+   }
 
-      public Task<Maybe<byte[]>> GetMasterKeyAsync()
-      {
-         return _browserRepository.GetItemAsync<byte[]>(DeviceStorageObjectType.MasterKey);
-      }
+   public Task<Maybe<byte[]>> GetMasterKeyAsync()
+   {
+      return _browserRepository.GetItemAsync<byte[]>(DeviceStorageObjectType.MasterKey);
+   }
 
-      public Task<Maybe<byte[]>> GetPrivateKeyAsync()
-      {
-         return _browserRepository.GetItemAsync<byte[]>(DeviceStorageObjectType.PrivateKey);
-      }
+   public Task<Maybe<byte[]>> GetPrivateKeyAsync()
+   {
+      return _browserRepository.GetItemAsync<byte[]>(DeviceStorageObjectType.PrivateKey);
+   }
 
-      public Task<Unit> StoreMasterKeyAsync(byte[] masterKey, bool trustDevice)
-      {
-         return _browserRepository.SetItemAsync(DeviceStorageObjectType.MasterKey, masterKey, _trustDeviceStorageMap[trustDevice]);
-      }
+   public Task<Unit> StoreMasterKeyAsync(byte[] masterKey, bool trustDevice)
+   {
+      return _browserRepository.SetItemAsync(DeviceStorageObjectType.MasterKey, masterKey, _trustDeviceStorageMap[trustDevice]);
+   }
 
-      public Task<Unit> StorePrivateKeyAsync(byte[] privateKey, bool trustDevice)
-      {
-         return _browserRepository.SetItemAsync(DeviceStorageObjectType.PrivateKey, privateKey, _trustDeviceStorageMap[trustDevice]);
-      }
+   public Task<Unit> StorePrivateKeyAsync(byte[] privateKey, bool trustDevice)
+   {
+      return _browserRepository.SetItemAsync(DeviceStorageObjectType.PrivateKey, privateKey, _trustDeviceStorageMap[trustDevice]);
    }
 }

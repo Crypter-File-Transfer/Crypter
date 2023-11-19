@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings.PrivacySettings
+namespace Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
+
+public enum GetPrivacySettingsError
 {
-   public enum GetPrivacySettingsError
-   {
-      UnknownError,
-      NotFound
-   }
+   UnknownError,
+   NotFound
 }

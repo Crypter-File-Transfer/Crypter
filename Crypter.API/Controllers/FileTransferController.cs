@@ -40,110 +40,109 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers;
+
+[ApiController]
+[Route("api/file/transfer")]
+public class FileTransferController : TransferControllerBase
 {
-   [ApiController]
-   [Route("api/file/transfer")]
-   public class FileTransferController : TransferControllerBase
+   public FileTransferController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService, IUserTransferService userTransferService)
+      : base(transferDownloadService, transferUploadService, tokenService, userTransferService) { }
+
+   [HttpPost]
+   [MaybeAuthorize]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+   [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+   public async Task<IActionResult> UploadFileTransferAsync([FromQuery] string username, [FromForm] UploadFileTransferReceipt request)
    {
-      public FileTransferController(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService, IUserTransferService userTransferService)
-         : base(transferDownloadService, transferUploadService, tokenService, userTransferService) { }
+      Maybe<Guid> senderId = _tokenService.TryParseUserId(User);
+      Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
+         ? Maybe<string>.None
+         : username;
+      using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
 
-      [HttpPost]
-      [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> UploadFileTransferAsync([FromQuery] string username, [FromForm] UploadFileTransferReceipt request)
-      {
-         Maybe<Guid> senderId = _tokenService.TryParseUserId(User);
-         Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
-            ? Maybe<string>.None
-            : username;
-         using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
+      return await _transferUploadService.UploadFileTransferAsync(senderId, maybeUsername, request.Data, ciphertextStream)
+         .MatchAsync(
+            left: MakeErrorResponse,
+            right: Ok,
+            neither: MakeErrorResponse(UploadTransferError.UnknownError));
+   }
 
-         return await _transferUploadService.UploadFileTransferAsync(senderId, maybeUsername, request.Data, ciphertextStream)
-            .MatchAsync(
-               left: MakeErrorResponse,
-               right: Ok,
-               neither: MakeErrorResponse(UploadTransferError.UnknownError));
-      }
+   [HttpGet("received")]
+   [Authorize]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserReceivedFileDTO>))]
+   [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+   public async Task<IActionResult> GetReceivedFilesAsync(CancellationToken cancellationToken)
+   {
+      Guid userId = _tokenService.ParseUserId(User);
+      List<UserReceivedFileDTO> result = await _userTransferService.GetUserReceivedFilesAsync(userId, cancellationToken);
+      return Ok(result);
+   }
 
-      [HttpGet("received")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserReceivedFileDTO>))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetReceivedFilesAsync(CancellationToken cancellationToken)
-      {
-         Guid userId = _tokenService.ParseUserId(User);
-         List<UserReceivedFileDTO> result = await _userTransferService.GetUserReceivedFilesAsync(userId, cancellationToken);
-         return Ok(result);
-      }
+   [HttpGet("sent")]
+   [Authorize]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserSentFileDTO>))]
+   [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+   public async Task<IActionResult> GetSentFilesAsync(CancellationToken cancellationToken)
+   {
+      Guid userId = _tokenService.ParseUserId(User);
+      List<UserSentFileDTO> result = await _userTransferService.GetUserSentFilesAsync(userId, cancellationToken);
+      return Ok(result);
+   }
 
-      [HttpGet("sent")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserSentFileDTO>))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> GetSentFilesAsync(CancellationToken cancellationToken)
-      {
-         Guid userId = _tokenService.ParseUserId(User);
-         List<UserSentFileDTO> result = await _userTransferService.GetUserSentFilesAsync(userId, cancellationToken);
-         return Ok(result);
-      }
+   [HttpGet("preview/anonymous")]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
+   [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+   public async Task<IActionResult> GetAnonymousFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
+   {
+      return await _transferDownloadService.GetAnonymousFilePreviewAsync(id, cancellationToken)
+         .MatchAsync(
+            MakeErrorResponse,
+            Ok,
+            MakeErrorResponse(TransferPreviewError.UnknownError));
+   }
 
-      [HttpGet("preview/anonymous")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetAnonymousFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
-      {
-         return await _transferDownloadService.GetAnonymousFilePreviewAsync(id, cancellationToken)
-            .MatchAsync(
-               MakeErrorResponse,
-               Ok,
-               MakeErrorResponse(TransferPreviewError.UnknownError));
-      }
+   [HttpGet("preview/user")]
+   [MaybeAuthorize]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
+   [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+   public async Task<IActionResult> GetUserFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
+   {
+      Maybe<Guid> userId = _tokenService.TryParseUserId(User);
+      return await _transferDownloadService.GetUserFilePreviewAsync(id, userId, cancellationToken)
+         .MatchAsync(
+            left: MakeErrorResponse,
+            right: Ok,
+            neither: MakeErrorResponse(TransferPreviewError.UnknownError));
+   }
 
-      [HttpGet("preview/user")]
-      [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(MessageTransferPreviewResponse))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
-      {
-         Maybe<Guid> userId = _tokenService.TryParseUserId(User);
-         return await _transferDownloadService.GetUserFilePreviewAsync(id, userId, cancellationToken)
-            .MatchAsync(
-               left: MakeErrorResponse,
-               right: Ok,
-               neither: MakeErrorResponse(TransferPreviewError.UnknownError));
-      }
+   [HttpGet("ciphertext/anonymous")]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
+   [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+   [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+   public async Task<IActionResult> GetAnonymousFileCiphertextAsync([FromQuery] string id, [FromQuery] string proof)
+   {
+      return await DecodeProof(proof)
+         .BindAsync(async decodedProof => await _transferDownloadService.GetAnonymousFileCiphertextAsync(id, decodedProof))
+         .MatchAsync(
+            MakeErrorResponse,
+            x => new FileStreamResult(x, "application/octet-stream"),
+            MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
+   }
 
-      [HttpGet("ciphertext/anonymous")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetAnonymousFileCiphertextAsync([FromQuery] string id, [FromQuery] string proof)
-      {
-         return await DecodeProof(proof)
-            .BindAsync(async decodedProof => await _transferDownloadService.GetAnonymousFileCiphertextAsync(id, decodedProof))
-            .MatchAsync(
-               MakeErrorResponse,
-               x => new FileStreamResult(x, "application/octet-stream"),
-               MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
-      }
-
-      [HttpGet("ciphertext/user")]
-      [MaybeAuthorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
-      [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserFileCiphertextAsync([FromQuery] string id, [FromQuery] string proof)
-      {
-         Maybe<Guid> userId = _tokenService.TryParseUserId(User);
-         return await DecodeProof(proof)
-            .BindAsync(async decodedProof => await _transferDownloadService.GetUserFileCiphertextAsync(id, decodedProof, userId))
-            .MatchAsync(
-               MakeErrorResponse,
-               x => new FileStreamResult(x, "application/octet-stream"),
-               MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
-      }
+   [HttpGet("ciphertext/user")]
+   [MaybeAuthorize]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
+   [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+   [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+   public async Task<IActionResult> GetUserFileCiphertextAsync([FromQuery] string id, [FromQuery] string proof)
+   {
+      Maybe<Guid> userId = _tokenService.TryParseUserId(User);
+      return await DecodeProof(proof)
+         .BindAsync(async decodedProof => await _transferDownloadService.GetUserFileCiphertextAsync(id, decodedProof, userId))
+         .MatchAsync(
+            MakeErrorResponse,
+            x => new FileStreamResult(x, "application/octet-stream"),
+            MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
    }
 }

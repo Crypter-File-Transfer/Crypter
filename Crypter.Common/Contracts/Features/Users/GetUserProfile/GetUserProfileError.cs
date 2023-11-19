@@ -24,10 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Users
+namespace Crypter.Common.Contracts.Features.Users;
+
+public enum GetUserProfileError
 {
-   public enum GetUserProfileError
-   {
-      NotFound
-   }
+   NotFound
 }

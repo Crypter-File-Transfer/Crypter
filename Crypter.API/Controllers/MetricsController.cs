@@ -31,24 +31,23 @@ using Crypter.Core.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers;
+
+[Route("api/metrics")]
+public class MetricsController : CrypterControllerBase
 {
-   [Route("api/metrics")]
-   public class MetricsController : CrypterControllerBase
+   private readonly IServerMetricsService _serverMetricsService;
+
+   public MetricsController(IServerMetricsService serverMetricsService)
    {
-      private readonly IServerMetricsService _serverMetricsService;
+      _serverMetricsService = serverMetricsService;
+   }
 
-      public MetricsController(IServerMetricsService serverMetricsService)
-      {
-         _serverMetricsService = serverMetricsService;
-      }
-
-      [HttpGet("storage/public")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PublicStorageMetricsResponse))]
-      public async Task<IActionResult> GetPublicStorageMetricsAsync(CancellationToken cancellationToken)
-      {
-         PublicStorageMetricsResponse result = await _serverMetricsService.GetAggregateDiskMetricsAsync(cancellationToken);
-         return Ok(result);
-      }
+   [HttpGet("storage/public")]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PublicStorageMetricsResponse))]
+   public async Task<IActionResult> GetPublicStorageMetricsAsync(CancellationToken cancellationToken)
+   {
+      PublicStorageMetricsResponse result = await _serverMetricsService.GetAggregateDiskMetricsAsync(cancellationToken);
+      return Ok(result);
    }
 }

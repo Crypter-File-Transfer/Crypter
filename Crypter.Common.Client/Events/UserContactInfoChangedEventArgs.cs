@@ -28,17 +28,16 @@ using System;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Events
-{
-   public class UserContactInfoChangedEventArgs : EventArgs
-   {
-      public Maybe<EmailAddress> EmailAddress { get; init; }
-      public bool EmailAddressVerified { get; init; }
+namespace Crypter.Common.Client.Events;
 
-      public UserContactInfoChangedEventArgs(Maybe<EmailAddress> emailAddress, bool emailAddressVerified)
-      {
-         EmailAddress = emailAddress;
-         EmailAddressVerified = emailAddressVerified;
-      }
+public class UserContactInfoChangedEventArgs : EventArgs
+{
+   public Maybe<EmailAddress> EmailAddress { get; init; }
+   public bool EmailAddressVerified { get; init; }
+
+   public UserContactInfoChangedEventArgs(Maybe<EmailAddress> emailAddress, bool emailAddressVerified)
+   {
+      EmailAddress = emailAddress;
+      EmailAddressVerified = emailAddressVerified;
    }
 }

@@ -28,17 +28,16 @@ using System.Collections.Generic;
 using Crypter.Web.Models;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared
+namespace Crypter.Web.Shared;
+
+public partial class UserSentItemsComponentBase : ComponentBase
 {
-   public partial class UserSentItemsComponentBase : ComponentBase
-   {
-      [Inject]
-      protected NavigationManager NavigationManager { get; set; }
+   [Inject]
+   protected NavigationManager NavigationManager { get; set; }
 
-      [Parameter]
-      public IEnumerable<UserSentItem> Items { get; set; }
+   [Parameter]
+   public IEnumerable<UserSentItem> Items { get; set; }
 
-      [Parameter]
-      public EventCallback<IEnumerable<UserSentItem>> ItemsChanged { get; set; }
-   }
+   [Parameter]
+   public EventCallback<IEnumerable<UserSentItem>> ItemsChanged { get; set; }
 }

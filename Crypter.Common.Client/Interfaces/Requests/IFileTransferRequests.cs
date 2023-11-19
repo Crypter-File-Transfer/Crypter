@@ -32,16 +32,15 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Crypto.Common.StreamEncryption;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Requests
+namespace Crypter.Common.Client.Interfaces.Requests;
+
+public interface IFileTransferRequests
 {
-   public interface IFileTransferRequests
-   {
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<string> recipientUsername, UploadFileTransferRequest uploadRequest, Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication);
-      Task<Maybe<List<UserReceivedFileDTO>>> GetReceivedFilesAsync();
-      Task<Maybe<List<UserSentFileDTO>>> GetSentFilesAsync();
-      Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetAnonymousFilePreviewAsync(string hashId);
-      Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetUserFilePreviewAsync(string hashId, bool withAuthentication);
-      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetAnonymousFileCiphertextAsync(string hashId, byte[] proof);
-      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetUserFileCiphertextAsync(string hashId, byte[] proof, bool withAuthentication);
-   }
+   Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<string> recipientUsername, UploadFileTransferRequest uploadRequest, Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication);
+   Task<Maybe<List<UserReceivedFileDTO>>> GetReceivedFilesAsync();
+   Task<Maybe<List<UserSentFileDTO>>> GetSentFilesAsync();
+   Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetAnonymousFilePreviewAsync(string hashId);
+   Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetUserFilePreviewAsync(string hashId, bool withAuthentication);
+   Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetAnonymousFileCiphertextAsync(string hashId, byte[] proof);
+   Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetUserFileCiphertextAsync(string hashId, byte[] proof, bool withAuthentication);
 }

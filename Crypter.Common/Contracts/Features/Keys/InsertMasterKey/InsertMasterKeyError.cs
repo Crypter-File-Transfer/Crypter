@@ -24,13 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Keys
+namespace Crypter.Common.Contracts.Features.Keys;
+
+public enum InsertMasterKeyError
 {
-   public enum InsertMasterKeyError
-   {
-      UnknownError,
-      Conflict,
-      InvalidPassword,
-      InvalidMasterKey
-   }
+   UnknownError,
+   Conflict,
+   InvalidPassword,
+   InvalidMasterKey
 }

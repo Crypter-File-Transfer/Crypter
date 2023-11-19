@@ -32,16 +32,15 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Crypto.Common.StreamEncryption;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Requests
+namespace Crypter.Common.Client.Interfaces.Requests;
+
+public interface IMessageTransferRequests
 {
-   public interface IMessageTransferRequests
-   {
-      Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<string> recipientUsername, UploadMessageTransferRequest uploadRequest, Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication);
-      Task<Maybe<List<UserReceivedMessageDTO>>> GetReceivedMessagesAsync();
-      Task<Maybe<List<UserSentMessageDTO>>> GetSentMessagesAsync();
-      Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetAnonymousMessagePreviewAsync(string hashId);
-      Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetUserMessagePreviewAsync(string hashId, bool withAuthentication);
-      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetAnonymousMessageCiphertextAsync(string hashId, byte[] proof);
-      Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetUserMessageCiphertextAsync(string hashId, byte[] proof, bool withAuthentication);
-   }
+   Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<string> recipientUsername, UploadMessageTransferRequest uploadRequest, Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication);
+   Task<Maybe<List<UserReceivedMessageDTO>>> GetReceivedMessagesAsync();
+   Task<Maybe<List<UserSentMessageDTO>>> GetSentMessagesAsync();
+   Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetAnonymousMessagePreviewAsync(string hashId);
+   Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetUserMessagePreviewAsync(string hashId, bool withAuthentication);
+   Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetAnonymousMessageCiphertextAsync(string hashId, byte[] proof);
+   Task<Either<DownloadTransferCiphertextError, StreamDownloadResponse>> GetUserMessageCiphertextAsync(string hashId, byte[] proof, bool withAuthentication);
 }

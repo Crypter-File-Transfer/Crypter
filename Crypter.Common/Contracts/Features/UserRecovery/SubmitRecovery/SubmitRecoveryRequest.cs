@@ -26,39 +26,38 @@
 
 using Crypter.Common.Contracts.Features.UserAuthentication;
 
-namespace Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery
+namespace Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
+
+public class SubmitRecoveryRequest
 {
-   public class SubmitRecoveryRequest
-   {
-      public string Username { get; set; }
-      public string RecoveryCode { get; set; }
-      public string RecoverySignature { get; set; }
-      public VersionedPassword VersionedPassword { get; set; }
-      public ReplacementMasterKeyInformation ReplacementMasterKeyInformation { get; set; }
+   public string Username { get; set; }
+   public string RecoveryCode { get; set; }
+   public string RecoverySignature { get; set; }
+   public VersionedPassword VersionedPassword { get; set; }
+   public ReplacementMasterKeyInformation ReplacementMasterKeyInformation { get; set; }
 
-      public SubmitRecoveryRequest(string username, string recoveryCode, string recoverySignature, VersionedPassword versionedPassword, ReplacementMasterKeyInformation replacementMasterKeyInformation = null)
-      {
-         Username = username;
-         RecoveryCode = recoveryCode;
-         RecoverySignature = recoverySignature;
-         VersionedPassword = versionedPassword;
-         ReplacementMasterKeyInformation = replacementMasterKeyInformation;
-      }
+   public SubmitRecoveryRequest(string username, string recoveryCode, string recoverySignature, VersionedPassword versionedPassword, ReplacementMasterKeyInformation replacementMasterKeyInformation = null)
+   {
+      Username = username;
+      RecoveryCode = recoveryCode;
+      RecoverySignature = recoverySignature;
+      VersionedPassword = versionedPassword;
+      ReplacementMasterKeyInformation = replacementMasterKeyInformation;
    }
+}
 
-   public class ReplacementMasterKeyInformation
+public class ReplacementMasterKeyInformation
+{
+   public byte[] CurrentRecoveryProof { get; set; }
+   public byte[] NewRecoveryProof { get; init; }
+   public byte[] EncryptedKey { get; set; }
+   public byte[] Nonce { get; init; }
+
+   public ReplacementMasterKeyInformation(byte[] currentRecoveryProof, byte[] newRecoveryProof, byte[] encryptedKey, byte[] nonce)
    {
-      public byte[] CurrentRecoveryProof { get; set; }
-      public byte[] NewRecoveryProof { get; init; }
-      public byte[] EncryptedKey { get; set; }
-      public byte[] Nonce { get; init; }
-
-      public ReplacementMasterKeyInformation(byte[] currentRecoveryProof, byte[] newRecoveryProof, byte[] encryptedKey, byte[] nonce)
-      {
-         CurrentRecoveryProof = currentRecoveryProof;
-         NewRecoveryProof = newRecoveryProof;
-         EncryptedKey = encryptedKey;
-         Nonce = nonce;
-      }
+      CurrentRecoveryProof = currentRecoveryProof;
+      NewRecoveryProof = newRecoveryProof;
+      EncryptedKey = encryptedKey;
+      Nonce = nonce;
    }
 }

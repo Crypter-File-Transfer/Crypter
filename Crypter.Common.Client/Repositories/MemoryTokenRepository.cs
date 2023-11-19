@@ -31,57 +31,56 @@ using Crypter.Common.Client.Models;
 using Crypter.Common.Enums;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Repositories
+namespace Crypter.Common.Client.Repositories;
+
+public class MemoryTokenRepository : ITokenRepository
 {
-   public class MemoryTokenRepository : ITokenRepository
+   private const string _authTokenLiteral = "authToken";
+   private const string _refreshTokenLiteral = "refreshToken";
+   private readonly Dictionary<string, object> _repository;
+
+   public MemoryTokenRepository()
    {
-      private const string _authTokenLiteral = "authToken";
-      private const string _refreshTokenLiteral = "refreshToken";
-      private readonly Dictionary<string, object> _repository;
+      _repository = new Dictionary<string, object>();
+   }
 
-      public MemoryTokenRepository()
+   public Task<Maybe<TokenObject>> GetAuthenticationTokenAsync()
+   {
+      if (_repository.TryGetValue(_authTokenLiteral, out object value))
       {
-         _repository = new Dictionary<string, object>();
+         return Maybe<TokenObject>.From((TokenObject)value).AsTask();
       }
+      else
+      {
+         return Maybe<TokenObject>.None.AsTask();
+      }
+   }
 
-      public Task<Maybe<TokenObject>> GetAuthenticationTokenAsync()
+   public Task<Maybe<TokenObject>> GetRefreshTokenAsync()
+   {
+      if (_repository.TryGetValue(_refreshTokenLiteral, out object value))
       {
-         if (_repository.TryGetValue(_authTokenLiteral, out object value))
-         {
-            return Maybe<TokenObject>.From((TokenObject)value).AsTask();
-         }
-         else
-         {
-            return Maybe<TokenObject>.None.AsTask();
-         }
+         return Maybe<TokenObject>.From((TokenObject)value).AsTask();
       }
+      else
+      {
+         return Maybe<TokenObject>.None.AsTask();
+      }
+   }
 
-      public Task<Maybe<TokenObject>> GetRefreshTokenAsync()
-      {
-         if (_repository.TryGetValue(_refreshTokenLiteral, out object value))
-         {
-            return Maybe<TokenObject>.From((TokenObject)value).AsTask();
-         }
-         else
-         {
-            return Maybe<TokenObject>.None.AsTask();
-         }
-      }
+   public Task<Unit> StoreAuthenticationTokenAsync(string token)
+   {
+      _repository.Remove(_authTokenLiteral);
+      TokenObject tokenObject = new TokenObject(TokenType.Authentication, token);
+      _repository.Add(_authTokenLiteral, tokenObject);
+      return Unit.Default.AsTask();
+   }
 
-      public Task<Unit> StoreAuthenticationTokenAsync(string token)
-      {
-         _repository.Remove(_authTokenLiteral);
-         TokenObject tokenObject = new TokenObject(TokenType.Authentication, token);
-         _repository.Add(_authTokenLiteral, tokenObject);
-         return Unit.Default.AsTask();
-      }
-
-      public Task<Unit> StoreRefreshTokenAsync(string token, TokenType tokenType)
-      {
-         _repository.Remove(_refreshTokenLiteral);
-         TokenObject tokenObject = new TokenObject(tokenType, token);
-         _repository.Add(_refreshTokenLiteral, tokenObject);
-         return Unit.Default.AsTask();
-      }
+   public Task<Unit> StoreRefreshTokenAsync(string token, TokenType tokenType)
+   {
+      _repository.Remove(_refreshTokenLiteral);
+      TokenObject tokenObject = new TokenObject(tokenType, token);
+      _repository.Add(_refreshTokenLiteral, tokenObject);
+      return Unit.Default.AsTask();
    }
 }

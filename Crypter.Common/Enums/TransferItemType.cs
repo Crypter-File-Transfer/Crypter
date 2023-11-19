@@ -27,12 +27,11 @@
 using System.Text.Json.Serialization;
 using Crypter.Common.Infrastructure;
 
-namespace Crypter.Common.Enums
+namespace Crypter.Common.Enums;
+
+[JsonConverter(typeof(JsonEnumConverter<TransferItemType>))]
+public enum TransferItemType
 {
-   [JsonConverter(typeof(JsonEnumConverter<TransferItemType>))]
-   public enum TransferItemType
-   {
-      Message,
-      File
-   }
+   Message,
+   File
 }

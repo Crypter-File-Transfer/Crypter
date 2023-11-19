@@ -26,13 +26,12 @@
 
 using System;
 
-namespace Crypter.Core.Entities.Interfaces
+namespace Crypter.Core.Entities.Interfaces;
+
+public interface IUserTransfer : ITransferBase
 {
-   public interface IUserTransfer : ITransferBase
-   {
-      Guid? SenderId { get; set; }
-      Guid? RecipientId { get; set; }
-      public UserEntity Sender { get; set; }
-      public UserEntity Recipient { get; set; }
-   }
+   Guid? SenderId { get; set; }
+   Guid? RecipientId { get; set; }
+   public UserEntity Sender { get; set; }
+   public UserEntity Recipient { get; set; }
 }

@@ -26,20 +26,19 @@
 
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.Keys
-{
-   public class InsertKeyPairRequest
-   {
-      public byte[] EncryptedPrivateKey { get; set; }
-      public byte[] PublicKey { get; set; }
-      public byte[] Nonce { get; set; }
+namespace Crypter.Common.Contracts.Features.Keys;
 
-      [JsonConstructor]
-      public InsertKeyPairRequest(byte[] encryptedPrivateKey, byte[] publicKey, byte[] nonce)
-      {
-         EncryptedPrivateKey = encryptedPrivateKey;
-         PublicKey = publicKey;
-         Nonce = nonce;
-      }
+public class InsertKeyPairRequest
+{
+   public byte[] EncryptedPrivateKey { get; set; }
+   public byte[] PublicKey { get; set; }
+   public byte[] Nonce { get; set; }
+
+   [JsonConstructor]
+   public InsertKeyPairRequest(byte[] encryptedPrivateKey, byte[] publicKey, byte[] nonce)
+   {
+      EncryptedPrivateKey = encryptedPrivateKey;
+      PublicKey = publicKey;
+      Nonce = nonce;
    }
 }

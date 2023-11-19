@@ -31,27 +31,26 @@ using Crypter.Core.Features.Metrics;
 using Crypter.Core.Settings;
 using Microsoft.Extensions.Options;
 
-namespace Crypter.Core.Services
+namespace Crypter.Core.Services;
+
+public interface IServerMetricsService
 {
-   public interface IServerMetricsService
+   Task<PublicStorageMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken = default);
+}
+
+public class ServerMetricsService : IServerMetricsService
+{
+   private readonly DataContext _context;
+   private readonly TransferStorageSettings _transferStorageSettings;
+
+   public ServerMetricsService(DataContext context, IOptions<TransferStorageSettings> transferStorageSettings)
    {
-      Task<PublicStorageMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken = default);
+      _context = context;
+      _transferStorageSettings = transferStorageSettings.Value;
    }
 
-   public class ServerMetricsService : IServerMetricsService
+   public Task<PublicStorageMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken = default)
    {
-      private readonly DataContext _context;
-      private readonly TransferStorageSettings _transferStorageSettings;
-
-      public ServerMetricsService(DataContext context, IOptions<TransferStorageSettings> transferStorageSettings)
-      {
-         _context = context;
-         _transferStorageSettings = transferStorageSettings.Value;
-      }
-
-      public Task<PublicStorageMetricsResponse> GetAggregateDiskMetricsAsync(CancellationToken cancellationToken = default)
-      {
-         return MetricsQueries.GetAggregateDiskMetricsAsync(_context, _transferStorageSettings, cancellationToken);
-      }
+      return MetricsQueries.GetAggregateDiskMetricsAsync(_context, _transferStorageSettings, cancellationToken);
    }
 }

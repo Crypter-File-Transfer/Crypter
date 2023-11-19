@@ -31,31 +31,30 @@ using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Core.Features.UserSettings.NotificationSettings;
 using EasyMonads;
 
-namespace Crypter.Core.Services.UserSettings
+namespace Crypter.Core.Services.UserSettings;
+
+public interface IUserNotificationSettingsService
 {
-   public interface IUserNotificationSettingsService
+   Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+   Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(Guid userId, NotificationSettings request);
+}
+
+public class UserNotificationSettingService : IUserNotificationSettingsService
+{
+   private readonly DataContext _dataContext;
+
+   public UserNotificationSettingService(DataContext context)
    {
-      Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(Guid userId, NotificationSettings request);
+      _dataContext = context;
    }
 
-   public class UserNotificationSettingService : IUserNotificationSettingsService
+   public async Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
    {
-      private readonly DataContext _dataContext;
+      return await UserNotificationSettingsQueries.GetUserNotificationSettingsAsync(_dataContext, userId, cancellationToken);
+   }
 
-      public UserNotificationSettingService(DataContext context)
-      {
-         _dataContext = context;
-      }
-
-      public async Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
-      {
-         return await UserNotificationSettingsQueries.GetUserNotificationSettingsAsync(_dataContext, userId, cancellationToken);
-      }
-
-      public async Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(Guid userId, NotificationSettings request)
-      {
-         return await UserNotificationSettingsCommands.UpdateNotificationSettingsAsync(_dataContext, userId, request);
-      }
+   public async Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(Guid userId, NotificationSettings request)
+   {
+      return await UserNotificationSettingsCommands.UpdateNotificationSettingsAsync(_dataContext, userId, request);
    }
 }

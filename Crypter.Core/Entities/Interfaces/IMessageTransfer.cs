@@ -24,10 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Entities.Interfaces
+namespace Crypter.Core.Entities.Interfaces;
+
+public interface IMessageTransfer : ITransferBase
 {
-   public interface IMessageTransfer : ITransferBase
-   {
-      string Subject { get; set; }
-   }
+   string Subject { get; set; }
 }

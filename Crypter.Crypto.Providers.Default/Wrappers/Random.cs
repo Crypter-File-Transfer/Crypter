@@ -29,20 +29,19 @@ using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using Crypter.Crypto.Common.Random;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
-{
-   [UnsupportedOSPlatform("browser")]
-   public class Random : IRandom
-   {
-      public byte[] GenerateRandomBytes(int size)
-      {
-         return RandomNumberGenerator.GetBytes(size);
-      }
+namespace Crypter.Crypto.Providers.Default.Wrappers;
 
-      public uint GenerateRandomNumber()
-      {
-         byte[] randomBytes = RandomNumberGenerator.GetBytes(4);
-         return BitConverter.ToUInt32(randomBytes, 0);
-      }
+[UnsupportedOSPlatform("browser")]
+public class Random : IRandom
+{
+   public byte[] GenerateRandomBytes(int size)
+   {
+      return RandomNumberGenerator.GetBytes(size);
+   }
+
+   public uint GenerateRandomNumber()
+   {
+      byte[] randomBytes = RandomNumberGenerator.GetBytes(4);
+      return BitConverter.ToUInt32(randomBytes, 0);
    }
 }

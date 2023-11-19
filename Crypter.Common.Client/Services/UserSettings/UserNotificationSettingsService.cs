@@ -32,49 +32,48 @@ using Crypter.Common.Client.Interfaces.Services.UserSettings;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Services.UserSettings
+namespace Crypter.Common.Client.Services.UserSettings;
+
+public class UserNotificationSettingsService : IUserNotificationSettingsService, IDisposable
 {
-   public class UserNotificationSettingsService : IUserNotificationSettingsService, IDisposable
+   private readonly ICrypterApiClient _crypterApiClient;
+   private readonly IUserSessionService _userSessionService;
+
+   private Maybe<NotificationSettings> _notificationSettings;
+
+   public UserNotificationSettingsService(ICrypterApiClient crypterApiClient, IUserSessionService userSessionService)
    {
-      private readonly ICrypterApiClient _crypterApiClient;
-      private readonly IUserSessionService _userSessionService;
+      _crypterApiClient = crypterApiClient;
+      _userSessionService = userSessionService;
 
-      private Maybe<NotificationSettings> _notificationSettings;
+      _userSessionService.UserLoggedOutEventHandler += Recycle;
+   }
 
-      public UserNotificationSettingsService(ICrypterApiClient crypterApiClient, IUserSessionService userSessionService)
+   public async Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync()
+   {
+      if (_notificationSettings.IsNone)
       {
-         _crypterApiClient = crypterApiClient;
-         _userSessionService = userSessionService;
-
-         _userSessionService.UserLoggedOutEventHandler += Recycle;
+         _notificationSettings = await _crypterApiClient.UserSetting.GetNotificationSettingsAsync();
       }
 
-      public async Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync()
-      {
-         if (_notificationSettings.IsNone)
-         {
-            _notificationSettings = await _crypterApiClient.UserSetting.GetNotificationSettingsAsync();
-         }
+      return _notificationSettings;
+   }
 
-         return _notificationSettings;
-      }
+   public async Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings)
+   {
+      Either<UpdateNotificationSettingsError, NotificationSettings> result = await _crypterApiClient.UserSetting.UpdateNotificationSettingsAsync(newNotificationSettings);
+      _notificationSettings = result.ToMaybe();
+      return result;
+   }
 
-      public async Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings)
-      {
-         Either<UpdateNotificationSettingsError, NotificationSettings> result = await _crypterApiClient.UserSetting.UpdateNotificationSettingsAsync(newNotificationSettings);
-         _notificationSettings = result.ToMaybe();
-         return result;
-      }
+   private void Recycle(object sender, EventArgs _)
+   {
+      _notificationSettings = Maybe<NotificationSettings>.None;
+   }
 
-      private void Recycle(object sender, EventArgs _)
-      {
-         _notificationSettings = Maybe<NotificationSettings>.None;
-      }
-
-      public void Dispose()
-      {
-         _userSessionService.UserLoggedOutEventHandler -= Recycle;
-         GC.SuppressFinalize(this);
-      }
+   public void Dispose()
+   {
+      _userSessionService.UserLoggedOutEventHandler -= Recycle;
+      GC.SuppressFinalize(this);
    }
 }

@@ -36,133 +36,132 @@ using Crypter.Core.Features.Keys;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Services
-{
-   public interface IUserKeysService
-   {
-      Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken = default);
-      Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, bool allowReplacement);
-      Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId, InsertKeyPairRequest request);
+namespace Crypter.Core.Services;
 
-      Task DeleteUserKeysAsync(Guid userId);
+public interface IUserKeysService
+{
+   Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken = default);
+   Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken = default);
+   Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, bool allowReplacement);
+   Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId, CancellationToken cancellationToken = default);
+   Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId, InsertKeyPairRequest request);
+
+   Task DeleteUserKeysAsync(Guid userId);
+}
+
+public class UserKeysService : IUserKeysService
+{
+   private readonly DataContext _context;
+   private readonly IUserAuthenticationService _userAuthenticationService;
+
+   public UserKeysService(DataContext context, IUserAuthenticationService userAuthenticationService)
+   {
+      _context = context;
+      _userAuthenticationService = userAuthenticationService;
    }
 
-   public class UserKeysService : IUserKeysService
+   public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken = default)
    {
-      private readonly DataContext _context;
-      private readonly IUserAuthenticationService _userAuthenticationService;
+      return Either<GetMasterKeyError, GetMasterKeyResponse>.FromRightAsync(
+         _context.UserMasterKeys
+            .Where(x => x.Owner == userId)
+            .Select(x => new GetMasterKeyResponse(x.EncryptedKey, x.Nonce))
+            .FirstOrDefaultAsync(cancellationToken), GetMasterKeyError.NotFound);
+   }
 
-      public UserKeysService(DataContext context, IUserAuthenticationService userAuthenticationService)
-      {
-         _context = context;
-         _userAuthenticationService = userAuthenticationService;
-      }
-
-      public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId, CancellationToken cancellationToken = default)
-      {
-         return Either<GetMasterKeyError, GetMasterKeyResponse>.FromRightAsync(
-            _context.UserMasterKeys
-               .Where(x => x.Owner == userId)
-               .Select(x => new GetMasterKeyResponse(x.EncryptedKey, x.Nonce))
-               .FirstOrDefaultAsync(cancellationToken), GetMasterKeyError.NotFound);
-      }
-
-      public async Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken = default)
-      {
-         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new PasswordChallengeRequest(request.Password), cancellationToken);
-         return await testPasswordResult.MatchAsync<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>>(
-            error => GetMasterKeyRecoveryProofError.InvalidCredentials,
-            async _ =>
-            {
-               var recoveryProof = await _context.UserMasterKeys
-                  .Where(x => x.Owner == userId)
-                  .Select(x => x.RecoveryProof)
-                  .FirstOrDefaultAsync(cancellationToken);
-
-               return recoveryProof is null
-                  ? GetMasterKeyRecoveryProofError.NotFound
-                  : new GetMasterKeyRecoveryProofResponse(recoveryProof);
-            },
-            GetMasterKeyRecoveryProofError.UnknownError);
-      }
-
-      public async Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, bool allowReplacement)
-      {
-         if (!MasterKeyValidators.ValidateMasterKeyInformation(request.EncryptedKey, request.Nonce, request.RecoveryProof))
+   public async Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken = default)
+   {
+      var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new PasswordChallengeRequest(request.Password), cancellationToken);
+      return await testPasswordResult.MatchAsync<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>>(
+         error => GetMasterKeyRecoveryProofError.InvalidCredentials,
+         async _ =>
          {
-            return InsertMasterKeyError.InvalidMasterKey;
-         }
-
-         var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new PasswordChallengeRequest(request.Password));
-         return await testPasswordResult.MatchAsync<Either<InsertMasterKeyError, Unit>>(
-            error => InsertMasterKeyError.InvalidPassword,
-            async _ =>
-            {
-               var masterKeyEntity = await _context.UserMasterKeys
-                  .FirstOrDefaultAsync(x => x.Owner == userId);
-
-               if (masterKeyEntity is not null && !allowReplacement)
-               {
-                  return InsertMasterKeyError.Conflict;
-               }
-
-               DateTime now = DateTime.UtcNow;
-               var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.Nonce, request.RecoveryProof, now, now);
-               _context.UserMasterKeys.Add(newEntity);
-
-               await _context.SaveChangesAsync();
-               return Unit.Default;
-            },
-            InsertMasterKeyError.UnknownError);
-      }
-
-
-      public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId, CancellationToken cancellationToken = default)
-      {
-         return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
-            _context.UserKeyPairs
+            var recoveryProof = await _context.UserMasterKeys
                .Where(x => x.Owner == userId)
-               .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.Nonce))
-               .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
+               .Select(x => x.RecoveryProof)
+               .FirstOrDefaultAsync(cancellationToken);
+
+            return recoveryProof is null
+               ? GetMasterKeyRecoveryProofError.NotFound
+               : new GetMasterKeyRecoveryProofResponse(recoveryProof);
+         },
+         GetMasterKeyRecoveryProofError.UnknownError);
+   }
+
+   public async Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request, bool allowReplacement)
+   {
+      if (!MasterKeyValidators.ValidateMasterKeyInformation(request.EncryptedKey, request.Nonce, request.RecoveryProof))
+      {
+         return InsertMasterKeyError.InvalidMasterKey;
       }
 
-      public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId, InsertKeyPairRequest request)
-      {
-         var keyPairEntity = await _context.UserKeyPairs
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (keyPairEntity is null)
+      var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId, new PasswordChallengeRequest(request.Password));
+      return await testPasswordResult.MatchAsync<Either<InsertMasterKeyError, Unit>>(
+         error => InsertMasterKeyError.InvalidPassword,
+         async _ =>
          {
-            var newEntity = new UserKeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.Nonce, DateTime.UtcNow);
-            _context.UserKeyPairs.Add(newEntity);
+            var masterKeyEntity = await _context.UserMasterKeys
+               .FirstOrDefaultAsync(x => x.Owner == userId);
+
+            if (masterKeyEntity is not null && !allowReplacement)
+            {
+               return InsertMasterKeyError.Conflict;
+            }
+
+            DateTime now = DateTime.UtcNow;
+            var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.Nonce, request.RecoveryProof, now, now);
+            _context.UserMasterKeys.Add(newEntity);
+
             await _context.SaveChangesAsync();
-         }
+            return Unit.Default;
+         },
+         InsertMasterKeyError.UnknownError);
+   }
 
-         return keyPairEntity is null
-            ? new InsertKeyPairResponse()
-            : InsertKeyPairError.KeyPairAlreadyExists;
-      }
 
-      public async Task DeleteUserKeysAsync(Guid userId)
+   public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId, CancellationToken cancellationToken = default)
+   {
+      return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
+         _context.UserKeyPairs
+            .Where(x => x.Owner == userId)
+            .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.Nonce))
+            .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
+   }
+
+   public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId, InsertKeyPairRequest request)
+   {
+      var keyPairEntity = await _context.UserKeyPairs
+         .FirstOrDefaultAsync(x => x.Owner == userId);
+
+      if (keyPairEntity is null)
       {
-         UserMasterKeyEntity masterKey = await _context.UserMasterKeys
-            .Where(x => x.Owner == userId)
-            .FirstOrDefaultAsync();
-
-         if (masterKey is not null)
-         {
-            _context.Remove(masterKey);
-         }
-
-         List<UserKeyPairEntity> keyPairs = await _context.UserKeyPairs
-            .Where(x => x.Owner == userId)
-            .ToListAsync();
-
-         _context.RemoveRange(keyPairs);
-
+         var newEntity = new UserKeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.Nonce, DateTime.UtcNow);
+         _context.UserKeyPairs.Add(newEntity);
          await _context.SaveChangesAsync();
       }
+
+      return keyPairEntity is null
+         ? new InsertKeyPairResponse()
+         : InsertKeyPairError.KeyPairAlreadyExists;
+   }
+
+   public async Task DeleteUserKeysAsync(Guid userId)
+   {
+      UserMasterKeyEntity masterKey = await _context.UserMasterKeys
+         .Where(x => x.Owner == userId)
+         .FirstOrDefaultAsync();
+
+      if (masterKey is not null)
+      {
+         _context.Remove(masterKey);
+      }
+
+      List<UserKeyPairEntity> keyPairs = await _context.UserKeyPairs
+         .Where(x => x.Owner == userId)
+         .ToListAsync();
+
+      _context.RemoveRange(keyPairs);
+
+      await _context.SaveChangesAsync();
    }
 }

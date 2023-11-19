@@ -27,15 +27,14 @@
 using System.Text.Json.Serialization;
 using Crypter.Common.Infrastructure;
 
-namespace Crypter.Common.Enums
+namespace Crypter.Common.Enums;
+
+[JsonConverter(typeof(JsonEnumConverter<UserItemTransferPermission>))]
+public enum UserItemTransferPermission
 {
-   [JsonConverter(typeof(JsonEnumConverter<UserItemTransferPermission>))]
-   public enum UserItemTransferPermission
-   {
-      None,
-      ExchangedKeys,
-      Contacts,
-      Authenticated,
-      Everyone
-   }
+   None,
+   ExchangedKeys,
+   Contacts,
+   Authenticated,
+   Everyone
 }

@@ -31,42 +31,41 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 
-namespace Crypter.Core
+namespace Crypter.Core;
+
+public class DataContext : DbContext
 {
-   public class DataContext : DbContext
+   public const string SchemaName = "crypter";
+
+   /// <summary>
+   /// This constructor is used during migrations.
+   /// </summary>
+   /// <param name="options"></param>
+   public DataContext(DbContextOptions<DataContext> options) : base(options)
    {
-      public const string SchemaName = "crypter";
+   }
 
-      /// <summary>
-      /// This constructor is used during migrations.
-      /// </summary>
-      /// <param name="options"></param>
-      public DataContext(DbContextOptions<DataContext> options) : base(options)
-      {
-      }
+   public DbSet<UserEntity> Users { get; set; }
+   public DbSet<UserProfileEntity> UserProfiles { get; set; }
+   public DbSet<UserKeyPairEntity> UserKeyPairs { get; set; }
+   public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; set; }
+   public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; set; }
+   public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; set; }
+   public DbSet<UserTokenEntity> UserTokens { get; set; }
+   public DbSet<UserContactEntity> UserContacts { get; set; }
+   public DbSet<AnonymousFileTransferEntity> AnonymousFileTransfers { get; set; }
+   public DbSet<AnonymousMessageTransferEntity> AnonymousMessageTransfers { get; set; }
+   public DbSet<UserFileTransferEntity> UserFileTransfers { get; set; }
+   public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; set; }
+   public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; set; }
+   public DbSet<UserMasterKeyEntity> UserMasterKeys { get; set; }
+   public DbSet<UserConsentEntity> UserConsents { get; set; }
+   public DbSet<UserRecoveryEntity> UserRecoveries { get; set; }
 
-      public DbSet<UserEntity> Users { get; set; }
-      public DbSet<UserProfileEntity> UserProfiles { get; set; }
-      public DbSet<UserKeyPairEntity> UserKeyPairs { get; set; }
-      public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; set; }
-      public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; set; }
-      public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; set; }
-      public DbSet<UserTokenEntity> UserTokens { get; set; }
-      public DbSet<UserContactEntity> UserContacts { get; set; }
-      public DbSet<AnonymousFileTransferEntity> AnonymousFileTransfers { get; set; }
-      public DbSet<AnonymousMessageTransferEntity> AnonymousMessageTransfers { get; set; }
-      public DbSet<UserFileTransferEntity> UserFileTransfers { get; set; }
-      public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; set; }
-      public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; set; }
-      public DbSet<UserMasterKeyEntity> UserMasterKeys { get; set; }
-      public DbSet<UserConsentEntity> UserConsents { get; set; }
-      public DbSet<UserRecoveryEntity> UserRecoveries { get; set; }
-
-      protected override void OnModelCreating(ModelBuilder builder)
-      {
-         builder.HasPostgresExtension("citext")
-            .HasDefaultSchema(SchemaName)
-            .ApplyConfigurationsFromAssembly(typeof(DataContext).Assembly);
-      }
+   protected override void OnModelCreating(ModelBuilder builder)
+   {
+      builder.HasPostgresExtension("citext")
+         .HasDefaultSchema(SchemaName)
+         .ApplyConfigurationsFromAssembly(typeof(DataContext).Assembly);
    }
 }

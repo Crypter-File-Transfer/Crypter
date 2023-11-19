@@ -28,48 +28,47 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserMasterKeyEntity
 {
-   public class UserMasterKeyEntity
+   public Guid Owner { get; set; }
+   public byte[] EncryptedKey { get; set; }
+   public byte[] Nonce { get; set; }
+   public byte[] RecoveryProof { get; set; }
+   public DateTime Updated { get; set; }
+   public DateTime Created { get; set; }
+
+   public UserEntity User { get; set; }
+
+   public UserMasterKeyEntity(Guid owner, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof, DateTime updated, DateTime created)
    {
-      public Guid Owner { get; set; }
-      public byte[] EncryptedKey { get; set; }
-      public byte[] Nonce { get; set; }
-      public byte[] RecoveryProof { get; set; }
-      public DateTime Updated { get; set; }
-      public DateTime Created { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserMasterKeyEntity(Guid owner, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof, DateTime updated, DateTime created)
-      {
-         Owner = owner;
-         EncryptedKey = encryptedKey;
-         Nonce = nonce;
-         RecoveryProof = recoveryProof;
-         Updated = updated;
-         Created = created;
-      }
+      Owner = owner;
+      EncryptedKey = encryptedKey;
+      Nonce = nonce;
+      RecoveryProof = recoveryProof;
+      Updated = updated;
+      Created = created;
    }
+}
 
-   public class UserMasterKeyEntityConfiguration : IEntityTypeConfiguration<UserMasterKeyEntity>
+public class UserMasterKeyEntityConfiguration : IEntityTypeConfiguration<UserMasterKeyEntity>
+{
+   public void Configure(EntityTypeBuilder<UserMasterKeyEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserMasterKeyEntity> builder)
-      {
-         builder.ToTable("UserMasterKey");
+      builder.ToTable("UserMasterKey");
 
-         builder.HasKey(x => x.Owner);
+      builder.HasKey(x => x.Owner);
 
-         builder.Property(x => x.EncryptedKey)
-            .IsRequired();
+      builder.Property(x => x.EncryptedKey)
+         .IsRequired();
 
-         builder.Property(x => x.Nonce)
-            .IsRequired();
+      builder.Property(x => x.Nonce)
+         .IsRequired();
 
-         builder.HasOne(x => x.User)
-            .WithOne(x => x.MasterKey)
-            .HasForeignKey<UserMasterKeyEntity>(x => x.Owner)
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.User)
+         .WithOne(x => x.MasterKey)
+         .HasForeignKey<UserMasterKeyEntity>(x => x.Owner)
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

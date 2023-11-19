@@ -30,97 +30,96 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Transfer.Handlers;
 using Microsoft.AspNetCore.Components.Forms;
 
-namespace Crypter.Web.Shared.Transfer
+namespace Crypter.Web.Shared.Transfer;
+
+public partial class UploadFileTransferBase : UploadTransferBase, IDisposable
 {
-   public partial class UploadFileTransferBase : UploadTransferBase, IDisposable
+   protected IBrowserFile SelectedFile;
+
+   // Settings
+   protected const int MaxFileCount = 1;
+   protected long MaxFileSizeBytes = 0;
+
+   // UI
+   protected string DropClass = string.Empty;
+
+   // Strings
+   private const string _dropzoneDrag = "dropzone-drag";
+   private const string _noFileSelected = "No file selected.";
+
+   protected override void OnInitialized()
    {
-      protected IBrowserFile SelectedFile;
+      MaxFileSizeBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
+   }
 
-      // Settings
-      protected const int MaxFileCount = 1;
-      protected long MaxFileSizeBytes = 0;
+   protected void HandleDragEnter()
+   {
+      DropClass = _dropzoneDrag;
+   }
 
-      // UI
-      protected string DropClass = string.Empty;
+   protected void HandleDragLeave()
+   {
+      DropClass = string.Empty;
+   }
 
-      // Strings
-      private const string _dropzoneDrag = "dropzone-drag";
-      private const string _noFileSelected = "No file selected.";
+   protected void HandleFileInputChange(InputFileChangeEventArgs e)
+   {
+      DropClass = string.Empty;
+      ErrorMessage = string.Empty;
 
-      protected override void OnInitialized()
+      var file = e.File;
+
+      if (file is null)
       {
-         MaxFileSizeBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
+         ErrorMessage = _noFileSelected;
+         return;
       }
 
-      protected void HandleDragEnter()
+      if (file.Size > MaxFileSizeBytes)
       {
-         DropClass = _dropzoneDrag;
+         ErrorMessage = $"The max file size is {UploadSettings.MaximumTransferSizeMiB} MB.";
+         return;
       }
 
-      protected void HandleDragLeave()
+      SelectedFile = file;
+   }
+
+   protected async Task OnEncryptClicked()
+   {
+      if (SelectedFile is null)
       {
-         DropClass = string.Empty;
+         ErrorMessage = _noFileSelected;
+         return;
       }
 
-      protected void HandleFileInputChange(InputFileChangeEventArgs e)
-      {
-         DropClass = string.Empty;
-         ErrorMessage = string.Empty;
+      EncryptionInProgress = true;
+      ErrorMessage = string.Empty;
 
-         var file = e.File;
+      await SetProgressMessage("Encrypting file");
 
-         if (file is null)
-         {
-            ErrorMessage = _noFileSelected;
-            return;
-         }
+      Stream fileStreamOpener()
+         => SelectedFile.OpenReadStream(SelectedFile.Size);
 
-         if (file.Size > MaxFileSizeBytes)
-         {
-            ErrorMessage = $"The max file size is {UploadSettings.MaximumTransferSizeMiB} MB.";
-            return;
-         }
+      UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(fileStreamOpener, SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours);
 
-         SelectedFile = file;
-      }
+      SetHandlerUserInfo(fileUploader);
+      var uploadResponse = await fileUploader.UploadAsync();
+      await HandleUploadResponse(uploadResponse);
+      Dispose();
+   }
 
-      protected async Task OnEncryptClicked()
-      {
-         if (SelectedFile is null)
-         {
-            ErrorMessage = _noFileSelected;
-            return;
-         }
+   protected async Task SetProgressMessage(string message)
+   {
+      UploadStatusMessage = message;
+      StateHasChanged();
+      await Task.Delay(400);
+   }
 
-         EncryptionInProgress = true;
-         ErrorMessage = string.Empty;
-
-         await SetProgressMessage("Encrypting file");
-
-         Stream fileStreamOpener()
-            => SelectedFile.OpenReadStream(SelectedFile.Size);
-
-         UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(fileStreamOpener, SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours);
-
-         SetHandlerUserInfo(fileUploader);
-         var uploadResponse = await fileUploader.UploadAsync();
-         await HandleUploadResponse(uploadResponse);
-         Dispose();
-      }
-
-      protected async Task SetProgressMessage(string message)
-      {
-         UploadStatusMessage = message;
-         StateHasChanged();
-         await Task.Delay(400);
-      }
-
-      public void Dispose()
-      {
-         SelectedFile = null;
-         EncryptionInProgress = false;
-         DropClass = string.Empty;
-         GC.SuppressFinalize(this);
-      }
+   public void Dispose()
+   {
+      SelectedFile = null;
+      EncryptionInProgress = false;
+      DropClass = string.Empty;
+      GC.SuppressFinalize(this);
    }
 }

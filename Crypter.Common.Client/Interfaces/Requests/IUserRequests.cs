@@ -29,11 +29,10 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Users;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Requests
+namespace Crypter.Common.Client.Interfaces.Requests;
+
+public interface IUserRequests
 {
-   public interface IUserRequests
-   {
-      Task<Either<GetUserProfileError, UserProfileDTO>> GetUserProfileAsync(string username, bool withAuthentication);
-      Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters);
-   }
+   Task<Either<GetUserProfileError, UserProfileDTO>> GetUserProfileAsync(string username, bool withAuthentication);
+   Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters);
 }

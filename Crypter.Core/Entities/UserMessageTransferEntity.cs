@@ -29,65 +29,64 @@ using Crypter.Core.Entities.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserMessageTransferEntity : IUserTransfer, IMessageTransfer
 {
-   public class UserMessageTransferEntity : IUserTransfer, IMessageTransfer
+   public Guid Id { get; set; }
+   public long Size { get; set; }
+   public byte[] PublicKey { get; set; }
+   public byte[] KeyExchangeNonce { get; set; }
+   public byte[] Proof { get; set; }
+   public DateTime Created { get; set; }
+   public DateTime Expiration { get; set; }
+
+   // IUserTransfer
+   public Guid? SenderId { get; set; }
+   public Guid? RecipientId { get; set; }
+
+   public UserEntity Sender { get; set; }
+   public UserEntity Recipient { get; set; }
+
+   // IMessageTransfer
+   public string Subject { get; set; }
+
+   public UserMessageTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string subject = "")
    {
-      public Guid Id { get; set; }
-      public long Size { get; set; }
-      public byte[] PublicKey { get; set; }
-      public byte[] KeyExchangeNonce { get; set; }
-      public byte[] Proof { get; set; }
-      public DateTime Created { get; set; }
-      public DateTime Expiration { get; set; }
-
-      // IUserTransfer
-      public Guid? SenderId { get; set; }
-      public Guid? RecipientId { get; set; }
-
-      public UserEntity Sender { get; set; }
-      public UserEntity Recipient { get; set; }
-
-      // IMessageTransfer
-      public string Subject { get; set; }
-
-      public UserMessageTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string subject = "")
-      {
-         Id = id;
-         Size = size;
-         PublicKey = publicKey;
-         KeyExchangeNonce = keyExchangeNonce;
-         Proof = proof;
-         Created = created;
-         Expiration = expiration;
-         SenderId = senderId;
-         RecipientId = recipientId;
-         Subject = subject;
-      }
+      Id = id;
+      Size = size;
+      PublicKey = publicKey;
+      KeyExchangeNonce = keyExchangeNonce;
+      Proof = proof;
+      Created = created;
+      Expiration = expiration;
+      SenderId = senderId;
+      RecipientId = recipientId;
+      Subject = subject;
    }
+}
 
-   public class UserMessageTransferEntityConfiguration : IEntityTypeConfiguration<UserMessageTransferEntity>
+public class UserMessageTransferEntityConfiguration : IEntityTypeConfiguration<UserMessageTransferEntity>
+{
+   public void Configure(EntityTypeBuilder<UserMessageTransferEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserMessageTransferEntity> builder)
-      {
-         builder.ToTable("UserMessageTransfer");
+      builder.ToTable("UserMessageTransfer");
 
-         builder.HasKey(x => x.Id);
+      builder.HasKey(x => x.Id);
 
-         builder.Property(x => x.SenderId)
-            .HasColumnName("Sender");
+      builder.Property(x => x.SenderId)
+         .HasColumnName("Sender");
 
-         builder.Property(x => x.RecipientId)
-            .HasColumnName("Recipient");
+      builder.Property(x => x.RecipientId)
+         .HasColumnName("Recipient");
 
-         builder.Property(x => x.PublicKey)
-            .IsRequired(false);
+      builder.Property(x => x.PublicKey)
+         .IsRequired(false);
 
-         builder.Property(x => x.Proof)
-            .IsRequired();
+      builder.Property(x => x.Proof)
+         .IsRequired();
 
-         builder.Property(x => x.Subject)
-            .IsRequired();
-      }
+      builder.Property(x => x.Subject)
+         .IsRequired();
    }
 }

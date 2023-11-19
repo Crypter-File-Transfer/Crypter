@@ -37,53 +37,52 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers;
+
+[ApiController]
+[Route("api/user")]
+public class UserController : CrypterControllerBase
 {
-   [ApiController]
-   [Route("api/user")]
-   public class UserController : CrypterControllerBase
+   private readonly IUserService _userService;
+   private readonly ITokenService _tokenService;
+
+   public UserController(IUserService userService, ITokenService tokenService)
    {
-      private readonly IUserService _userService;
-      private readonly ITokenService _tokenService;
+      _userService = userService;
+      _tokenService = tokenService;
+   }
 
-      public UserController(IUserService userService, ITokenService tokenService)
+   [HttpGet("profile")]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserProfileDTO))]
+   [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+   [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+   public async Task<IActionResult> GetUserProfileAsync([FromQuery] string username, CancellationToken cancellationToken)
+   {
+      IActionResult MakeErrorResponse(GetUserProfileError error)
       {
-         _userService = userService;
-         _tokenService = tokenService;
-      }
-
-      [HttpGet("profile")]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserProfileDTO))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-      public async Task<IActionResult> GetUserProfileAsync([FromQuery] string username, CancellationToken cancellationToken)
-      {
-         IActionResult MakeErrorResponse(GetUserProfileError error)
-         {
 #pragma warning disable CS8524
-            return error switch
-            {
-               GetUserProfileError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
-            };
+         return error switch
+         {
+            GetUserProfileError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+         };
 #pragma warning restore CS8524
-         }
-
-         Maybe<Guid> userId = _tokenService.TryParseUserId(User);
-         return await _userService.GetUserProfileAsync(userId, username, cancellationToken)
-            .MatchAsync(
-               () => MakeErrorResponse(GetUserProfileError.NotFound),
-               Ok);
       }
 
-      [HttpGet("search")]
-      [Authorize]
-      [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserSearchResult>))]
-      [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-      public async Task<IActionResult> SearchUsersAsync([FromQuery] string keyword, [FromQuery] int index, [FromQuery] int count, CancellationToken cancellationToken)
-      {
-         Guid userId = _tokenService.ParseUserId(User);
-         List<UserSearchResult> results = await _userService.SearchForUsersAsync(userId, keyword, index, count, cancellationToken);
-         return Ok(results);
-      }
+      Maybe<Guid> userId = _tokenService.TryParseUserId(User);
+      return await _userService.GetUserProfileAsync(userId, username, cancellationToken)
+         .MatchAsync(
+            () => MakeErrorResponse(GetUserProfileError.NotFound),
+            Ok);
+   }
+
+   [HttpGet("search")]
+   [Authorize]
+   [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserSearchResult>))]
+   [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+   public async Task<IActionResult> SearchUsersAsync([FromQuery] string keyword, [FromQuery] int index, [FromQuery] int count, CancellationToken cancellationToken)
+   {
+      Guid userId = _tokenService.ParseUserId(User);
+      List<UserSearchResult> results = await _userService.SearchForUsersAsync(userId, keyword, index, count, cancellationToken);
+      return Ok(results);
    }
 }

@@ -29,12 +29,11 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.API.Contracts
+namespace Crypter.API.Contracts;
+
+public class UploadFileTransferReceipt
 {
-   public class UploadFileTransferReceipt
-   {
-      [ModelBinder(BinderType = typeof(FormDataJsonBinder))]
-      public UploadFileTransferRequest Data { get; set; }
-      public IFormFile Ciphertext { get; set; }
-   }
+   [ModelBinder(BinderType = typeof(FormDataJsonBinder))]
+   public UploadFileTransferRequest Data { get; set; }
+   public IFormFile Ciphertext { get; set; }
 }

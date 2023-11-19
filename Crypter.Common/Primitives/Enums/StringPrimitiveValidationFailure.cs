@@ -24,15 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Primitives.Enums
+namespace Crypter.Common.Primitives.Enums;
+
+public enum StringPrimitiveValidationFailure
 {
-   public enum StringPrimitiveValidationFailure
-   {
-      Invalid,
-      IsNull,
-      IsEmpty,
-      TooLong,
-      TooShort,
-      InvalidCharacters
-   }
+   Invalid,
+   IsNull,
+   IsEmpty,
+   TooLong,
+   TooShort,
+   InvalidCharacters
 }

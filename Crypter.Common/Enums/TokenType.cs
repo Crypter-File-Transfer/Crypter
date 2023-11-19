@@ -27,13 +27,12 @@
 using System.Text.Json.Serialization;
 using Crypter.Common.Infrastructure;
 
-namespace Crypter.Common.Enums
+namespace Crypter.Common.Enums;
+
+[JsonConverter(typeof(JsonEnumConverter<TokenType>))]
+public enum TokenType
 {
-   [JsonConverter(typeof(JsonEnumConverter<TokenType>))]
-   public enum TokenType
-   {
-      Authentication,
-      Session,
-      Device
-   }
+   Authentication,
+   Session,
+   Device
 }

@@ -29,43 +29,42 @@ using Crypter.Common.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserTokenEntity
 {
-   public class UserTokenEntity
+   public Guid Id { get; set; }
+   public Guid Owner { get; set; }
+   public string Description { get; set; }
+   public TokenType Type { get; set; }
+   public DateTime Created { get; set; }
+   public DateTime Expiration { get; set; }
+
+   public UserEntity User { get; set; }
+
+   public UserTokenEntity(Guid id, Guid owner, string description, TokenType type, DateTime created, DateTime expiration)
    {
-      public Guid Id { get; set; }
-      public Guid Owner { get; set; }
-      public string Description { get; set; }
-      public TokenType Type { get; set; }
-      public DateTime Created { get; set; }
-      public DateTime Expiration { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserTokenEntity(Guid id, Guid owner, string description, TokenType type, DateTime created, DateTime expiration)
-      {
-         Id = id;
-         Owner = owner;
-         Description = description;
-         Type = type;
-         Created = created;
-         Expiration = expiration;
-      }
+      Id = id;
+      Owner = owner;
+      Description = description;
+      Type = type;
+      Created = created;
+      Expiration = expiration;
    }
+}
 
-   public class UserTokenEntityConfiguration : IEntityTypeConfiguration<UserTokenEntity>
+public class UserTokenEntityConfiguration : IEntityTypeConfiguration<UserTokenEntity>
+{
+   public void Configure(EntityTypeBuilder<UserTokenEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserTokenEntity> builder)
-      {
-         builder.ToTable("UserToken");
+      builder.ToTable("UserToken");
 
-         builder.HasKey(x => x.Id);
+      builder.HasKey(x => x.Id);
 
-         builder.HasOne(x => x.User)
-            .WithMany(x => x.Tokens)
-            .HasForeignKey(x => x.Owner)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.User)
+         .WithMany(x => x.Tokens)
+         .HasForeignKey(x => x.Owner)
+         .IsRequired()
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

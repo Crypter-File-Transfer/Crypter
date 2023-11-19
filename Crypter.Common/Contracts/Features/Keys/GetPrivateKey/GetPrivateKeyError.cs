@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Keys
+namespace Crypter.Common.Contracts.Features.Keys;
+
+public enum GetPrivateKeyError
 {
-   public enum GetPrivateKeyError
-   {
-      UnkownError,
-      NotFound
-   }
+   UnkownError,
+   NotFound
 }

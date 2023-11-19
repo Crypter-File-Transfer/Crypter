@@ -31,34 +31,33 @@ using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.Metrics_Tests
+namespace Crypter.Test.Integration_Tests.Metrics_Tests;
+
+[TestFixture]
+internal class PublicStorage_Tests
 {
-   [TestFixture]
-   internal class PublicStorage_Tests
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+
+   [SetUp]
+   public async Task SetupTestAsync()
    {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
-      {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
 
-      [Test]
-      public async Task Get_Public_Storage_Metrics_Works()
-      {
-         Maybe<PublicStorageMetricsResponse> result = await _client.Metrics.GetPublicStorageMetricsAsync();
-         Assert.True(result.IsSome);
-      }
+   [Test]
+   public async Task Get_Public_Storage_Metrics_Works()
+   {
+      Maybe<PublicStorageMetricsResponse> result = await _client.Metrics.GetPublicStorageMetricsAsync();
+      Assert.True(result.IsSome);
    }
 }

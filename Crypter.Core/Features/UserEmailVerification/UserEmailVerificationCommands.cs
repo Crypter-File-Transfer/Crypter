@@ -30,31 +30,30 @@ using Crypter.Core.Entities;
 using Crypter.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Features.UserEmailVerification
+namespace Crypter.Core.Features.UserEmailVerification;
+
+internal static class UserEmailVerificationCommands
 {
-   internal static class UserEmailVerificationCommands
+   internal static Task SaveVerificationParametersAsync(DataContext dataContext, UserEmailAddressVerificationParameters parameters)
    {
-      internal static Task SaveVerificationParametersAsync(DataContext dataContext, UserEmailAddressVerificationParameters parameters)
+      UserEmailVerificationEntity newEntity = new UserEmailVerificationEntity(parameters.UserId, parameters.VerificationCode, parameters.VerificationKey, DateTime.UtcNow);
+      dataContext.UserEmailVerifications.Add(newEntity);
+      return dataContext.SaveChangesAsync();
+   }
+
+   internal static async Task DeleteUserEmailVerificationEntity(DataContext dataContext, Guid userId, bool saveChanges)
+   {
+      UserEmailVerificationEntity foundEntity = await dataContext.UserEmailVerifications
+         .FirstOrDefaultAsync(x => x.Owner == userId);
+
+      if (foundEntity is not null)
       {
-         UserEmailVerificationEntity newEntity = new UserEmailVerificationEntity(parameters.UserId, parameters.VerificationCode, parameters.VerificationKey, DateTime.UtcNow);
-         dataContext.UserEmailVerifications.Add(newEntity);
-         return dataContext.SaveChangesAsync();
+         dataContext.UserEmailVerifications.Remove(foundEntity);
       }
 
-      internal static async Task DeleteUserEmailVerificationEntity(DataContext dataContext, Guid userId, bool saveChanges)
+      if (saveChanges)
       {
-         UserEmailVerificationEntity foundEntity = await dataContext.UserEmailVerifications
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (foundEntity is not null)
-         {
-            dataContext.UserEmailVerifications.Remove(foundEntity);
-         }
-
-         if (saveChanges)
-         {
-            await dataContext.SaveChangesAsync();
-         }
+         await dataContext.SaveChangesAsync();
       }
    }
 }

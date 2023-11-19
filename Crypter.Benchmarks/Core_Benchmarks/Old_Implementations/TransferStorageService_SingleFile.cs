@@ -24,114 +24,113 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Benchmarks.Core_Benchmarks.Old_Implementations
+namespace Crypter.Benchmarks.Core_Benchmarks.Old_Implementations;
+
+/*
+public class TransferStorageService_SingleFile : ITransferStorageService
 {
-   /*
-   public class TransferStorageService_SingleFile : ITransferStorageService
+   private readonly TransferStorageSettings _transferStorageSettings;
+   private const string _ciphertextFilename = "ciphertext";
+   private const string _headerFilename = "header";
+
+   public TransferStorageService_SingleFile(IOptions<TransferStorageSettings> transferStorageSettings)
    {
-      private readonly TransferStorageSettings _transferStorageSettings;
-      private const string _ciphertextFilename = "ciphertext";
-      private const string _headerFilename = "header";
+      _transferStorageSettings = transferStorageSettings.Value;
+   }
 
-      public TransferStorageService_SingleFile(IOptions<TransferStorageSettings> transferStorageSettings)
+   public async Task<bool> SaveTransferAsync(TransferStorageParameters data, CancellationToken cancellationToken)
+   {
+      string itemDirectory = GetItemDirectory(data.Id, data.ItemType, data.UserType);
+      string ciphertextPath = Path.Join(itemDirectory, _ciphertextFilename);
+      string headerPath = Path.Join(itemDirectory, _headerFilename);
+
+      try
       {
-         _transferStorageSettings = transferStorageSettings.Value;
-      }
+         Directory.CreateDirectory(itemDirectory);
+         await File.WriteAllBytesAsync(headerPath, data.Header, cancellationToken);
 
-      public async Task<bool> SaveTransferAsync(TransferStorageParameters data, CancellationToken cancellationToken)
-      {
-         string itemDirectory = GetItemDirectory(data.Id, data.ItemType, data.UserType);
-         string ciphertextPath = Path.Join(itemDirectory, _ciphertextFilename);
-         string headerPath = Path.Join(itemDirectory, _headerFilename);
-
-         try
-         {
-            Directory.CreateDirectory(itemDirectory);
-            await File.WriteAllBytesAsync(headerPath, data.Header, cancellationToken);
-
-            byte[] sizeBuffer = new byte[4];
-            BinaryPrimitives.WriteInt32LittleEndian(sizeBuffer, data.Ciphertext.Count);
-
-            FileStream ciphertextStream = File.OpenWrite(ciphertextPath);
-            await ciphertextStream.WriteAsync(sizeBuffer, cancellationToken);
-            foreach (byte[] chunk in data.Ciphertext)
-            {
-               BinaryPrimitives.WriteInt32LittleEndian(sizeBuffer, chunk.Length);
-               await ciphertextStream.WriteAsync(sizeBuffer, cancellationToken);
-               await ciphertextStream.WriteAsync(chunk, cancellationToken);
-            }
-
-            await ciphertextStream.FlushAsync(cancellationToken);
-            ciphertextStream.Close();
-         }
-         catch (OperationCanceledException)
-         {
-            DeleteDirectoryIfExists(itemDirectory);
-            throw;
-         }
-         catch (Exception)
-         {
-            // todo - log something
-            DeleteDirectoryIfExists(itemDirectory);
-            return false;
-         }
-
-         return true;
-      }
-
-      public async Task<Maybe<TransferStorageParameters>> ReadTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, CancellationToken cancellationToken)
-      {
-         string itemDirectory = GetItemDirectory(id, itemType, userType);
-         string ciphertextPath = Path.Join(itemDirectory, _ciphertextFilename);
-         string headerPath = Path.Join(itemDirectory, _headerFilename);
-
-         byte[] headerBytes = await File.ReadAllBytesAsync(headerPath, cancellationToken);
-
-         FileStream ciphertextStream = File.OpenRead(ciphertextPath);
          byte[] sizeBuffer = new byte[4];
-         int totalBytesRead = await ciphertextStream.ReadAsync(sizeBuffer.AsMemory(0, 4), cancellationToken);
-         int chunkCount = BinaryPrimitives.ReadInt32LittleEndian(sizeBuffer);
-         List<byte[]> ciphertextChunks = new List<byte[]>(chunkCount);
+         BinaryPrimitives.WriteInt32LittleEndian(sizeBuffer, data.Ciphertext.Count);
 
-         while (totalBytesRead < ciphertextStream.Length)
+         FileStream ciphertextStream = File.OpenWrite(ciphertextPath);
+         await ciphertextStream.WriteAsync(sizeBuffer, cancellationToken);
+         foreach (byte[] chunk in data.Ciphertext)
          {
-            totalBytesRead += await ciphertextStream.ReadAsync(sizeBuffer.AsMemory(0, 4), cancellationToken);
-            int chunkSize = BinaryPrimitives.ReadInt32LittleEndian(sizeBuffer);
-            byte[] ciphertextBuffer = new byte[chunkSize];
-            totalBytesRead += await ciphertextStream.ReadAsync(ciphertextBuffer.AsMemory(0, chunkSize), cancellationToken);
-            ciphertextChunks.Add(ciphertextBuffer);
+            BinaryPrimitives.WriteInt32LittleEndian(sizeBuffer, chunk.Length);
+            await ciphertextStream.WriteAsync(sizeBuffer, cancellationToken);
+            await ciphertextStream.WriteAsync(chunk, cancellationToken);
          }
+
+         await ciphertextStream.FlushAsync(cancellationToken);
          ciphertextStream.Close();
-
-         return new TransferStorageParameters(id, itemType, userType, headerBytes, ciphertextChunks);
       }
-
-      public void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType)
+      catch (OperationCanceledException)
       {
-         var itemDirectory = GetItemDirectory(id, itemType, userType);
          DeleteDirectoryIfExists(itemDirectory);
+         throw;
+      }
+      catch (Exception)
+      {
+         // todo - log something
+         DeleteDirectoryIfExists(itemDirectory);
+         return false;
       }
 
-      private string GetItemDirectory(Guid id, TransferItemType itemType, TransferUserType userType)
-      {
-         string[] pathParts = new string[]
-         {
-            _transferStorageSettings.Location,
-            userType.ToString().ToLower(),
-            itemType.ToString().ToLower(),
-            id.ToString()
-         };
+      return true;
+   }
 
-         return Path.Join(pathParts);
+   public async Task<Maybe<TransferStorageParameters>> ReadTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, CancellationToken cancellationToken)
+   {
+      string itemDirectory = GetItemDirectory(id, itemType, userType);
+      string ciphertextPath = Path.Join(itemDirectory, _ciphertextFilename);
+      string headerPath = Path.Join(itemDirectory, _headerFilename);
+
+      byte[] headerBytes = await File.ReadAllBytesAsync(headerPath, cancellationToken);
+
+      FileStream ciphertextStream = File.OpenRead(ciphertextPath);
+      byte[] sizeBuffer = new byte[4];
+      int totalBytesRead = await ciphertextStream.ReadAsync(sizeBuffer.AsMemory(0, 4), cancellationToken);
+      int chunkCount = BinaryPrimitives.ReadInt32LittleEndian(sizeBuffer);
+      List<byte[]> ciphertextChunks = new List<byte[]>(chunkCount);
+
+      while (totalBytesRead < ciphertextStream.Length)
+      {
+         totalBytesRead += await ciphertextStream.ReadAsync(sizeBuffer.AsMemory(0, 4), cancellationToken);
+         int chunkSize = BinaryPrimitives.ReadInt32LittleEndian(sizeBuffer);
+         byte[] ciphertextBuffer = new byte[chunkSize];
+         totalBytesRead += await ciphertextStream.ReadAsync(ciphertextBuffer.AsMemory(0, chunkSize), cancellationToken);
+         ciphertextChunks.Add(ciphertextBuffer);
       }
+      ciphertextStream.Close();
 
-      private static void DeleteDirectoryIfExists(string path)
+      return new TransferStorageParameters(id, itemType, userType, headerBytes, ciphertextChunks);
+   }
+
+   public void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType)
+   {
+      var itemDirectory = GetItemDirectory(id, itemType, userType);
+      DeleteDirectoryIfExists(itemDirectory);
+   }
+
+   private string GetItemDirectory(Guid id, TransferItemType itemType, TransferUserType userType)
+   {
+      string[] pathParts = new string[]
       {
-         if (Directory.Exists(path))
-         {
-            Directory.Delete(path, true);
-         }
+         _transferStorageSettings.Location,
+         userType.ToString().ToLower(),
+         itemType.ToString().ToLower(),
+         id.ToString()
+      };
+
+      return Path.Join(pathParts);
+   }
+
+   private static void DeleteDirectoryIfExists(string path)
+   {
+      if (Directory.Exists(path))
+      {
+         Directory.Delete(path, true);
       }
    }
-   */
 }
+*/

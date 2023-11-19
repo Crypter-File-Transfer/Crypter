@@ -32,41 +32,40 @@ using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.Users;
 using EasyMonads;
 
-namespace Crypter.Common.Client.HttpClients.Requests
+namespace Crypter.Common.Client.HttpClients.Requests;
+
+public class UserRequests : IUserRequests
 {
-   public class UserRequests : IUserRequests
+   private readonly ICrypterHttpClient _crypterHttpClient;
+   private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+
+   public UserRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
    {
-      private readonly ICrypterHttpClient _crypterHttpClient;
-      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+      _crypterHttpClient = crypterHttpClient;
+      _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+   }
 
-      public UserRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
-      {
-         _crypterHttpClient = crypterHttpClient;
-         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
-      }
+   public Task<Either<GetUserProfileError, UserProfileDTO>> GetUserProfileAsync(string username, bool withAuthentication)
+   {
+      string url = $"api/user/profile/?username={username}";
+      ICrypterHttpClient client = withAuthentication
+         ? _crypterAuthenticatedHttpClient
+         : _crypterHttpClient;
 
-      public Task<Either<GetUserProfileError, UserProfileDTO>> GetUserProfileAsync(string username, bool withAuthentication)
-      {
-         string url = $"api/user/profile/?username={username}";
-         ICrypterHttpClient client = withAuthentication
-            ? _crypterAuthenticatedHttpClient
-            : _crypterHttpClient;
+      return client.GetEitherAsync<UserProfileDTO>(url)
+         .ExtractErrorCode<GetUserProfileError, UserProfileDTO>();
+   }
 
-         return client.GetEitherAsync<UserProfileDTO>(url)
-            .ExtractErrorCode<GetUserProfileError, UserProfileDTO>();
-      }
+   public Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters)
+   {
+      StringBuilder urlBuilder = new StringBuilder("api/user/search/?keyword=");
+      urlBuilder.Append(searchParameters.Keyword);
+      urlBuilder.Append("&index=");
+      urlBuilder.Append(searchParameters.Index);
+      urlBuilder.Append("&count=");
+      urlBuilder.Append(searchParameters.Count);
+      string url = urlBuilder.ToString();
 
-      public Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters)
-      {
-         StringBuilder urlBuilder = new StringBuilder("api/user/search/?keyword=");
-         urlBuilder.Append(searchParameters.Keyword);
-         urlBuilder.Append("&index=");
-         urlBuilder.Append(searchParameters.Index);
-         urlBuilder.Append("&count=");
-         urlBuilder.Append(searchParameters.Count);
-         string url = urlBuilder.ToString();
-
-         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserSearchResult>>(url);
-      }
+      return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserSearchResult>>(url);
    }
 }

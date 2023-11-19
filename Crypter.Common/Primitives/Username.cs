@@ -30,53 +30,52 @@ using Crypter.Common.Primitives.ValidationHandlers;
 using EasyMonads;
 using ValueOf;
 
-namespace Crypter.Common.Primitives
+namespace Crypter.Common.Primitives;
+
+public class Username : ValueOf<string, Username>
 {
-   public class Username : ValueOf<string, Username>
+   private static readonly Regex _validCharacters = new(@"^[a-zA-Z0-9_\-]+$");
+
+   /// <summary>
+   /// Do not use this.
+   /// </summary>
+   public Username()
    {
-      private static readonly Regex _validCharacters = new(@"^[a-zA-Z0-9_\-]+$");
+   }
 
-      /// <summary>
-      /// Do not use this.
-      /// </summary>
-      public Username()
+   protected override void Validate()
+   {
+      StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
+   }
+
+   protected override bool TryValidate()
+   {
+      return CheckValidation(Value)
+         .IsNone;
+   }
+
+   public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+   {
+      if (value is null)
       {
+         return StringPrimitiveValidationFailure.IsNull;
       }
 
-      protected override void Validate()
+      if (string.IsNullOrWhiteSpace(value))
       {
-         StringPrimitiveValidationHandler.ThrowIfInvalid(CheckValidation, Value);
+         return StringPrimitiveValidationFailure.IsEmpty;
       }
 
-      protected override bool TryValidate()
+      if (value.Length > 32)
       {
-         return CheckValidation(Value)
-            .IsNone;
+         return StringPrimitiveValidationFailure.TooLong;
       }
 
-      public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+      if (!_validCharacters.IsMatch(value))
       {
-         if (value is null)
-         {
-            return StringPrimitiveValidationFailure.IsNull;
-         }
-
-         if (string.IsNullOrWhiteSpace(value))
-         {
-            return StringPrimitiveValidationFailure.IsEmpty;
-         }
-
-         if (value.Length > 32)
-         {
-            return StringPrimitiveValidationFailure.TooLong;
-         }
-
-         if (!_validCharacters.IsMatch(value))
-         {
-            return StringPrimitiveValidationFailure.InvalidCharacters;
-         }
-
-         return Maybe<StringPrimitiveValidationFailure>.None;
+         return StringPrimitiveValidationFailure.InvalidCharacters;
       }
+
+      return Maybe<StringPrimitiveValidationFailure>.None;
    }
 }

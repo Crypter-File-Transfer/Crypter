@@ -26,15 +26,14 @@
 
 using Crypter.Common.Client.Enums;
 
-namespace Crypter.Common.Client.Events
-{
-   public class PasswordHashBeginEventArgs
-   {
-      public PasswordHashType HashType { get; init; }
+namespace Crypter.Common.Client.Events;
 
-      public PasswordHashBeginEventArgs(PasswordHashType hashType)
-      {
-         HashType = hashType;
-      }
+public class PasswordHashBeginEventArgs
+{
+   public PasswordHashType HashType { get; init; }
+
+   public PasswordHashBeginEventArgs(PasswordHashType hashType)
+   {
+      HashType = hashType;
    }
 }

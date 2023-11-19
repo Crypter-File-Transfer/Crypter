@@ -31,27 +31,26 @@ using Crypter.Core.Settings;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
-namespace Crypter.Test.Core_Tests.Services_Tests
+namespace Crypter.Test.Core_Tests.Services_Tests;
+
+[TestFixture]
+public class EmailService_Tests
 {
-   [TestFixture]
-   public class EmailService_Tests
+   private IOptions<EmailSettings> _defaultEmailSettings;
+
+   [OneTimeSetUp]
+   public void OneTimeSetup()
    {
-      private IOptions<EmailSettings> _defaultEmailSettings;
+      EmailSettings settings = new EmailSettings();
+      _defaultEmailSettings = Options.Create(settings);
+   }
 
-      [OneTimeSetUp]
-      public void OneTimeSetup()
-      {
-         EmailSettings settings = new EmailSettings();
-         _defaultEmailSettings = Options.Create(settings);
-      }
-
-      [Test]
-      public async Task ServiceDisabled_SendAsync_ReturnsTrue()
-      {
-         var sut = new EmailService(_defaultEmailSettings);
-         var emailAddress = EmailAddress.From("jack@crypter.dev");
-         var result = await sut.SendAsync("foo", "bar", emailAddress);
-         Assert.IsTrue(result);
-      }
+   [Test]
+   public async Task ServiceDisabled_SendAsync_ReturnsTrue()
+   {
+      var sut = new EmailService(_defaultEmailSettings);
+      var emailAddress = EmailAddress.From("jack@crypter.dev");
+      var result = await sut.SendAsync("foo", "bar", emailAddress);
+      Assert.IsTrue(result);
    }
 }

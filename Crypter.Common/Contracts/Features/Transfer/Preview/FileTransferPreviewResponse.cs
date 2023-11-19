@@ -27,34 +27,33 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.Transfer
-{
-   public class FileTransferPreviewResponse
-   {
-      public string FileName { get; init; }
-      public string ContentType { get; init; }
-      public long Size { get; init; }
-      public string Sender { get; init; }
-      public string SenderAlias { get; init; }
-      public string Recipient { get; init; }
-      public byte[] PublicKey { get; init; }
-      public byte[] KeyExchangeNonce { get; init; }
-      public DateTime CreationUTC { get; init; }
-      public DateTime ExpirationUTC { get; init; }
+namespace Crypter.Common.Contracts.Features.Transfer;
 
-      [JsonConstructor]
-      public FileTransferPreviewResponse(string fileName, string contentType, long size, string sender, string senderAlias, string recipient, byte[] publicKey, byte[] keyExchangeNonce, DateTime creationUTC, DateTime expirationUTC)
-      {
-         FileName = fileName;
-         ContentType = contentType;
-         Size = size;
-         Sender = sender;
-         SenderAlias = senderAlias;
-         Recipient = recipient;
-         PublicKey = publicKey;
-         KeyExchangeNonce = keyExchangeNonce;
-         CreationUTC = creationUTC;
-         ExpirationUTC = expirationUTC;
-      }
+public class FileTransferPreviewResponse
+{
+   public string FileName { get; init; }
+   public string ContentType { get; init; }
+   public long Size { get; init; }
+   public string Sender { get; init; }
+   public string SenderAlias { get; init; }
+   public string Recipient { get; init; }
+   public byte[] PublicKey { get; init; }
+   public byte[] KeyExchangeNonce { get; init; }
+   public DateTime CreationUTC { get; init; }
+   public DateTime ExpirationUTC { get; init; }
+
+   [JsonConstructor]
+   public FileTransferPreviewResponse(string fileName, string contentType, long size, string sender, string senderAlias, string recipient, byte[] publicKey, byte[] keyExchangeNonce, DateTime creationUTC, DateTime expirationUTC)
+   {
+      FileName = fileName;
+      ContentType = contentType;
+      Size = size;
+      Sender = sender;
+      SenderAlias = senderAlias;
+      Recipient = recipient;
+      PublicKey = publicKey;
+      KeyExchangeNonce = keyExchangeNonce;
+      CreationUTC = creationUTC;
+      ExpirationUTC = expirationUTC;
    }
 }

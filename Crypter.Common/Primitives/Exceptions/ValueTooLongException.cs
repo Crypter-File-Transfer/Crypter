@@ -24,9 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Primitives.Exceptions
+namespace Crypter.Common.Primitives.Exceptions;
+
+public class ValueTooLongException : ValueInvalidException
 {
-   public class ValueTooLongException : ValueInvalidException
-   {
-   }
 }

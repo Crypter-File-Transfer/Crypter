@@ -31,30 +31,29 @@ using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 
-namespace Crypter.Core.Features.UserSettings.ProfileSettings
+namespace Crypter.Core.Features.UserSettings.ProfileSettings;
+
+internal static class UserProfileSettingsCommands
 {
-   internal static class UserProfileSettingsCommands
+   public static async Task<Either<Contracts.SetProfileSettingsError, Contracts.ProfileSettings>> SetProfileSettingsAsync(DataContext dataContext, Guid userId, Contracts.ProfileSettings request)
    {
-      public static async Task<Either<Contracts.SetProfileSettingsError, Contracts.ProfileSettings>> SetProfileSettingsAsync(DataContext dataContext, Guid userId, Contracts.ProfileSettings request)
+      UserProfileEntity userProfile = await dataContext.UserProfiles
+         .FirstOrDefaultAsync(x => x.Owner == userId);
+
+      if (userProfile is null)
       {
-         UserProfileEntity userProfile = await dataContext.UserProfiles
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-         if (userProfile is null)
-         {
-            UserProfileEntity newUserProfile = new UserProfileEntity(userId, request.Alias, request.About, string.Empty);
-            dataContext.UserProfiles.Add(newUserProfile);
-         }
-         else
-         {
-            userProfile.About = request.About;
-            userProfile.Alias = request.Alias;
-         }
-
-         await dataContext.SaveChangesAsync();
-
-         return await UserProfileSettingsQueries.GetProfileSettingsAsync(dataContext, userId)
-            .ToEitherAsync(Contracts.SetProfileSettingsError.UnknownError);
+         UserProfileEntity newUserProfile = new UserProfileEntity(userId, request.Alias, request.About, string.Empty);
+         dataContext.UserProfiles.Add(newUserProfile);
       }
+      else
+      {
+         userProfile.About = request.About;
+         userProfile.Alias = request.Alias;
+      }
+
+      await dataContext.SaveChangesAsync();
+
+      return await UserProfileSettingsQueries.GetProfileSettingsAsync(dataContext, userId)
+         .ToEitherAsync(Contracts.SetProfileSettingsError.UnknownError);
    }
 }

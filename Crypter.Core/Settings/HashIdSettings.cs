@@ -24,10 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Settings
+namespace Crypter.Core.Settings;
+
+public class HashIdSettings
 {
-   public class HashIdSettings
-   {
-      public string Salt { get; set; }
-   }
+   public string Salt { get; set; }
 }

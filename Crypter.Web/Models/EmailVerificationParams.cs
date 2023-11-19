@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Web.Models
+namespace Crypter.Web.Models;
+
+public class EmailVerificationParams
 {
-   public class EmailVerificationParams
-   {
-      public string Code { get; set; }
-      public string Signature { get; set; }
-   }
+   public string Code { get; set; }
+   public string Signature { get; set; }
 }

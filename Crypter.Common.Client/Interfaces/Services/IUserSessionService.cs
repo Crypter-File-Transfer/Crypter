@@ -32,20 +32,19 @@ using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Services
+namespace Crypter.Common.Client.Interfaces.Services;
+
+public interface IUserSessionService
 {
-   public interface IUserSessionService
-   {
-      Maybe<UserSession> Session { get; }
+   Maybe<UserSession> Session { get; }
 
-      Task<bool> IsLoggedInAsync();
-      Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser);
-      Task<bool> TestPasswordAsync(Password password);
-      Task<Unit> LogoutAsync();
+   Task<bool> IsLoggedInAsync();
+   Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser);
+   Task<bool> TestPasswordAsync(Password password);
+   Task<Unit> LogoutAsync();
 
-      event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler;
-      event EventHandler<UserLoggedInEventArgs> UserLoggedInEventHandler;
-      event EventHandler UserLoggedOutEventHandler;
-      event EventHandler<UserPasswordTestSuccessEventArgs> UserPasswordTestSuccessEventHandler;
-   }
+   event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler;
+   event EventHandler<UserLoggedInEventArgs> UserLoggedInEventHandler;
+   event EventHandler UserLoggedOutEventHandler;
+   event EventHandler<UserPasswordTestSuccessEventArgs> UserPasswordTestSuccessEventHandler;
 }

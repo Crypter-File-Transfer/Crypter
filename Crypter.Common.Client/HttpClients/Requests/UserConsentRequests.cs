@@ -29,21 +29,20 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Requests;
 using EasyMonads;
 
-namespace Crypter.Common.Client.HttpClients.Requests
+namespace Crypter.Common.Client.HttpClients.Requests;
+
+public class UserConsentRequests : IUserConsentRequests
 {
-   public class UserConsentRequests : IUserConsentRequests
+   private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+
+   public UserConsentRequests(ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
    {
-      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+      _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+   }
 
-      public UserConsentRequests(ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
-      {
-         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
-      }
-
-      public Task<Maybe<Unit>> ConsentToRecoveryKeyRisksAsync()
-      {
-         string url = "api/user/consent/recovery-key-risk";
-         return _crypterAuthenticatedHttpClient.PostMaybeUnitResponseAsync(url);
-      }
+   public Task<Maybe<Unit>> ConsentToRecoveryKeyRisksAsync()
+   {
+      string url = "api/user/consent/recovery-key-risk";
+      return _crypterAuthenticatedHttpClient.PostMaybeUnitResponseAsync(url);
    }
 }

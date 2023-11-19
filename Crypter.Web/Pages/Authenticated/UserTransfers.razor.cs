@@ -34,92 +34,91 @@ using Crypter.Web.Models;
 using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public partial class UserTransfersBase : AuthenticatedPageBase
 {
-   public partial class UserTransfersBase : AuthenticatedPageBase
+   [Inject]
+   protected ICrypterApiClient CrypterApiService { get; set; }
+
+   protected bool Loading = true;
+
+   protected IEnumerable<UserSentItem> Sent;
+   protected IEnumerable<UserReceivedItem> Received;
+
+   protected override async Task OnInitializedAsync()
    {
-      [Inject]
-      protected ICrypterApiClient CrypterApiService { get; set; }
-
-      protected bool Loading = true;
-
-      protected IEnumerable<UserSentItem> Sent;
-      protected IEnumerable<UserReceivedItem> Received;
-
-      protected override async Task OnInitializedAsync()
+      await base.OnInitializedAsync();
+      if (UserSessionService.Session.IsNone)
       {
-         await base.OnInitializedAsync();
-         if (UserSessionService.Session.IsNone)
-         {
-            return;
-         }
-
-         Loading = false;
-
-         Sent = await GetUserSentItems();
-         Received = await GetUserReceivedItems();
+         return;
       }
 
-      protected async Task<IEnumerable<UserSentItem>> GetUserSentItems()
-      {
-         var maybeSentMessages = await CrypterApiService.MessageTransfer.GetSentMessagesAsync();
-         var sentMessages = maybeSentMessages.SomeOrDefault(new List<UserSentMessageDTO>());
+      Loading = false;
 
-         var maybeSentFiles = await CrypterApiService.FileTransfer.GetSentFilesAsync();
-         var sentFiles = maybeSentFiles.SomeOrDefault(new List<UserSentFileDTO>());
+      Sent = await GetUserSentItems();
+      Received = await GetUserReceivedItems();
+   }
 
-         return sentMessages
+   protected async Task<IEnumerable<UserSentItem>> GetUserSentItems()
+   {
+      var maybeSentMessages = await CrypterApiService.MessageTransfer.GetSentMessagesAsync();
+      var sentMessages = maybeSentMessages.SomeOrDefault(new List<UserSentMessageDTO>());
+
+      var maybeSentFiles = await CrypterApiService.FileTransfer.GetSentFilesAsync();
+      var sentFiles = maybeSentFiles.SomeOrDefault(new List<UserSentFileDTO>());
+
+      return sentMessages
+         .Select(x => new UserSentItem
+         {
+            HashId = x.HashId,
+            Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
+            RecipientUsername = x.RecipientUsername,
+            RecipientAlias = x.RecipientAlias,
+            ItemType = TransferItemType.Message,
+            ExpirationUTC = x.ExpirationUTC
+         })
+         .Concat(sentFiles
             .Select(x => new UserSentItem
             {
                HashId = x.HashId,
-               Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
+               Name = x.FileName,
                RecipientUsername = x.RecipientUsername,
                RecipientAlias = x.RecipientAlias,
-               ItemType = TransferItemType.Message,
+               ItemType = TransferItemType.File,
                ExpirationUTC = x.ExpirationUTC
-            })
-            .Concat(sentFiles
-               .Select(x => new UserSentItem
-               {
-                  HashId = x.HashId,
-                  Name = x.FileName,
-                  RecipientUsername = x.RecipientUsername,
-                  RecipientAlias = x.RecipientAlias,
-                  ItemType = TransferItemType.File,
-                  ExpirationUTC = x.ExpirationUTC
-               }))
-            .OrderBy(x => x.ExpirationUTC);
-      }
+            }))
+         .OrderBy(x => x.ExpirationUTC);
+   }
 
-      protected async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
-      {
-         var maybeReceivedMessages = await CrypterApiService.MessageTransfer.GetReceivedMessagesAsync();
-         var receivedMessages = maybeReceivedMessages.SomeOrDefault(new List<UserReceivedMessageDTO>());
+   protected async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
+   {
+      var maybeReceivedMessages = await CrypterApiService.MessageTransfer.GetReceivedMessagesAsync();
+      var receivedMessages = maybeReceivedMessages.SomeOrDefault(new List<UserReceivedMessageDTO>());
 
-         var maybeReceivedFiles = await CrypterApiService.FileTransfer.GetReceivedFilesAsync();
-         var receivedFiles = maybeReceivedFiles.SomeOrDefault(new List<UserReceivedFileDTO>());
+      var maybeReceivedFiles = await CrypterApiService.FileTransfer.GetReceivedFilesAsync();
+      var receivedFiles = maybeReceivedFiles.SomeOrDefault(new List<UserReceivedFileDTO>());
 
-         return receivedMessages
+      return receivedMessages
+         .Select(x => new UserReceivedItem
+         {
+            HashId = x.HashId,
+            Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
+            SenderUsername = x.SenderUsername,
+            SenderAlias = x.SenderAlias,
+            ItemType = TransferItemType.Message,
+            ExpirationUTC = x.ExpirationUTC
+         })
+         .Concat(receivedFiles
             .Select(x => new UserReceivedItem
             {
                HashId = x.HashId,
-               Name = string.IsNullOrEmpty(x.Subject) ? "{no subject}" : x.Subject,
+               Name = x.FileName,
                SenderUsername = x.SenderUsername,
                SenderAlias = x.SenderAlias,
-               ItemType = TransferItemType.Message,
+               ItemType = TransferItemType.File,
                ExpirationUTC = x.ExpirationUTC
-            })
-            .Concat(receivedFiles
-               .Select(x => new UserReceivedItem
-               {
-                  HashId = x.HashId,
-                  Name = x.FileName,
-                  SenderUsername = x.SenderUsername,
-                  SenderAlias = x.SenderAlias,
-                  ItemType = TransferItemType.File,
-                  ExpirationUTC = x.ExpirationUTC
-               }))
-            .OrderBy(x => x.ExpirationUTC);
-      }
+            }))
+         .OrderBy(x => x.ExpirationUTC);
    }
 }

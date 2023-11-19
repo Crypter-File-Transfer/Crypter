@@ -32,93 +32,92 @@ using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
-namespace Crypter.Test
+namespace Crypter.Test;
+
+internal class ContainerService : IAsyncDisposable
 {
-   internal class ContainerService : IAsyncDisposable
-   {
-      public string CrypterConnectionString { get; private set; }
-      public string HangfireConnectionString { get; private set; }
+   public string CrypterConnectionString { get; private set; }
+   public string HangfireConnectionString { get; private set; }
       
-      private PostgreSqlContainer _postgresContainer;
+   private PostgreSqlContainer _postgresContainer;
 
-      internal async Task StartPostgresContainerAsync()
-      {
-         PostgresContainerSettings containerSettings = GetPostgresContainerSettings();
+   internal async Task StartPostgresContainerAsync()
+   {
+      PostgresContainerSettings containerSettings = GetPostgresContainerSettings();
          
-         _postgresContainer = new PostgreSqlBuilder()
-            .WithImage(containerSettings.Image)
-            .WithPassword(containerSettings.SuperPassword)
-            .WithPortBinding(containerSettings.ContainerPort, true)
-            .WithBindMount(GetPostgresInitVolume(), "/docker-entrypoint-initdb.d")
-            .WithEnvironment("POSTGRES_C_PASSWORD", containerSettings.CrypterUserPassword)
-            .WithEnvironment("POSTGRES_HF_PASSWORD", containerSettings.HangfireUserPassword)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilCommandIsCompleted("pg_isready -h 'localhost' -p '5432'"))
-            .Build();
+      _postgresContainer = new PostgreSqlBuilder()
+         .WithImage(containerSettings.Image)
+         .WithPassword(containerSettings.SuperPassword)
+         .WithPortBinding(containerSettings.ContainerPort, true)
+         .WithBindMount(GetPostgresInitVolume(), "/docker-entrypoint-initdb.d")
+         .WithEnvironment("POSTGRES_C_PASSWORD", containerSettings.CrypterUserPassword)
+         .WithEnvironment("POSTGRES_HF_PASSWORD", containerSettings.HangfireUserPassword)
+         .WithWaitStrategy(Wait.ForUnixContainer().UntilCommandIsCompleted("pg_isready -h 'localhost' -p '5432'"))
+         .Build();
 
-         await _postgresContainer.StartAsync();
+      await _postgresContainer.StartAsync();
 
-         NpgsqlConnectionStringBuilder crypterConnectionStringBuilder = new NpgsqlConnectionStringBuilder
-         {
-            Host = _postgresContainer.Hostname,
-            Port = _postgresContainer.GetMappedPublicPort(containerSettings.ContainerPort),
-            Database = containerSettings.CrypterDatabaseName,
-            Username = containerSettings.CrypterUserName,
-            Password = containerSettings.CrypterUserPassword
-         };
-
-         CrypterConnectionString = crypterConnectionStringBuilder.ConnectionString;
-
-         NpgsqlConnectionStringBuilder hangfireConnectionStringBuilder = new NpgsqlConnectionStringBuilder
-         {
-            Host = _postgresContainer.Hostname,
-            Port = _postgresContainer.GetMappedPublicPort(containerSettings.ContainerPort),
-            Database = containerSettings.HangfireDatabaseName,
-            Username = containerSettings.HangfireUserName,
-            Password = containerSettings.HangfireUserPassword
-         };
-
-         HangfireConnectionString = hangfireConnectionStringBuilder.ConnectionString;
-      }
-
-      public async ValueTask DisposeAsync()
+      NpgsqlConnectionStringBuilder crypterConnectionStringBuilder = new NpgsqlConnectionStringBuilder
       {
-         if (_postgresContainer is not null)
-         {
-            await _postgresContainer.StopAsync();
-         }
-      }
-      
-      internal static PostgresContainerSettings GetPostgresContainerSettings()
-      {
-         return SettingsReader.GetTestSettings()
-            .GetSection("IntegrationTestingOnly:PostgresContainer")
-            .Get<PostgresContainerSettings>();
-      }
-      
-      private static string GetPostgresInitVolume()
-      {
-         DirectoryInfo repoDirectory = SettingsReader.GetRepoPath();
+         Host = _postgresContainer.Hostname,
+         Port = _postgresContainer.GetMappedPublicPort(containerSettings.ContainerPort),
+         Database = containerSettings.CrypterDatabaseName,
+         Username = containerSettings.CrypterUserName,
+         Password = containerSettings.CrypterUserPassword
+      };
 
-         string postgresInitVolume = Path.Join(repoDirectory.FullName, "Volumes", "PostgreSQL", "postgres-init-files");
-         if (!Path.Exists(postgresInitVolume))
-         {
-            throw new FileNotFoundException("Failed to find the ./Volumes/PostgreSQL/postgres-init-files directory.");
-         }
+      CrypterConnectionString = crypterConnectionStringBuilder.ConnectionString;
 
-         return postgresInitVolume;
-      }
+      NpgsqlConnectionStringBuilder hangfireConnectionStringBuilder = new NpgsqlConnectionStringBuilder
+      {
+         Host = _postgresContainer.Hostname,
+         Port = _postgresContainer.GetMappedPublicPort(containerSettings.ContainerPort),
+         Database = containerSettings.HangfireDatabaseName,
+         Username = containerSettings.HangfireUserName,
+         Password = containerSettings.HangfireUserPassword
+      };
+
+      HangfireConnectionString = hangfireConnectionStringBuilder.ConnectionString;
    }
 
-   internal class PostgresContainerSettings
+   public async ValueTask DisposeAsync()
    {
-      public string Image { get; init; }
-      public int ContainerPort { get; init; }
-      public string SuperPassword { get; init; }
-      public string CrypterDatabaseName { get; init; }
-      public string CrypterUserName { get; init; }
-      public string CrypterUserPassword { get; init; }
-      public string HangfireDatabaseName { get; init; }
-      public string HangfireUserName { get; init; }
-      public string HangfireUserPassword { get; init; }
+      if (_postgresContainer is not null)
+      {
+         await _postgresContainer.StopAsync();
+      }
    }
+      
+   internal static PostgresContainerSettings GetPostgresContainerSettings()
+   {
+      return SettingsReader.GetTestSettings()
+         .GetSection("IntegrationTestingOnly:PostgresContainer")
+         .Get<PostgresContainerSettings>();
+   }
+      
+   private static string GetPostgresInitVolume()
+   {
+      DirectoryInfo repoDirectory = SettingsReader.GetRepoPath();
+
+      string postgresInitVolume = Path.Join(repoDirectory.FullName, "Volumes", "PostgreSQL", "postgres-init-files");
+      if (!Path.Exists(postgresInitVolume))
+      {
+         throw new FileNotFoundException("Failed to find the ./Volumes/PostgreSQL/postgres-init-files directory.");
+      }
+
+      return postgresInitVolume;
+   }
+}
+
+internal class PostgresContainerSettings
+{
+   public string Image { get; init; }
+   public int ContainerPort { get; init; }
+   public string SuperPassword { get; init; }
+   public string CrypterDatabaseName { get; init; }
+   public string CrypterUserName { get; init; }
+   public string CrypterUserPassword { get; init; }
+   public string HangfireDatabaseName { get; init; }
+   public string HangfireUserName { get; init; }
+   public string HangfireUserPassword { get; init; }
 }

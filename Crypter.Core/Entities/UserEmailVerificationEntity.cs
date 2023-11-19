@@ -28,42 +28,41 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserEmailVerificationEntity
 {
-   public class UserEmailVerificationEntity
+   public Guid Owner { get; set; }
+   public Guid Code { get; set; }
+   public byte[] VerificationKey { get; set; }
+   public DateTime Created { get; set; }
+
+   public UserEntity User { get; set; }
+
+   public UserEmailVerificationEntity(Guid owner, Guid code, byte[] verificationKey, DateTime created)
    {
-      public Guid Owner { get; set; }
-      public Guid Code { get; set; }
-      public byte[] VerificationKey { get; set; }
-      public DateTime Created { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserEmailVerificationEntity(Guid owner, Guid code, byte[] verificationKey, DateTime created)
-      {
-         Owner = owner;
-         Code = code;
-         VerificationKey = verificationKey;
-         Created = created;
-      }
+      Owner = owner;
+      Code = code;
+      VerificationKey = verificationKey;
+      Created = created;
    }
+}
 
-   public class UserEmailVerificationEntityConfiguration : IEntityTypeConfiguration<UserEmailVerificationEntity>
+public class UserEmailVerificationEntityConfiguration : IEntityTypeConfiguration<UserEmailVerificationEntity>
+{
+   public void Configure(EntityTypeBuilder<UserEmailVerificationEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserEmailVerificationEntity> builder)
-      {
-         builder.ToTable("UserEmailVerification");
+      builder.ToTable("UserEmailVerification");
 
-         builder.HasKey(x => x.Owner);
+      builder.HasKey(x => x.Owner);
 
-         builder.HasIndex(x => x.Code)
-            .IsUnique();
+      builder.HasIndex(x => x.Code)
+         .IsUnique();
 
-         builder.HasOne(x => x.User)
-            .WithOne(x => x.EmailVerification)
-            .HasForeignKey<UserEmailVerificationEntity>(x => x.Owner)
-            .IsRequired(false)
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.User)
+         .WithOne(x => x.EmailVerification)
+         .HasForeignKey<UserEmailVerificationEntity>(x => x.Owner)
+         .IsRequired(false)
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

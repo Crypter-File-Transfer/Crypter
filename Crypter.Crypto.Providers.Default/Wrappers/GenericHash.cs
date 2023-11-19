@@ -30,44 +30,43 @@ using System.Text;
 using Crypter.Crypto.Common.GenericHash;
 using Geralt;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
+namespace Crypter.Crypto.Providers.Default.Wrappers;
+
+[UnsupportedOSPlatform("browser")]
+public class GenericHash : IGenericHash
 {
-   [UnsupportedOSPlatform("browser")]
-   public class GenericHash : IGenericHash
+   public uint KeySize { get => BLAKE2b.KeySize; }
+
+   public byte[] GenerateHash(uint size, ReadOnlySpan<byte> data, ReadOnlySpan<byte> key = default)
    {
-      public uint KeySize { get => BLAKE2b.KeySize; }
+      byte[] buffer = new byte[size];
 
-      public byte[] GenerateHash(uint size, ReadOnlySpan<byte> data, ReadOnlySpan<byte> key = default)
+      if (key == default)
       {
-         byte[] buffer = new byte[size];
-
-         if (key == default)
-         {
-            BLAKE2b.ComputeHash(buffer, data);
-         }
-         else
-         {
-            BLAKE2b.ComputeTag(buffer, data, key);
-         }
-
-         return buffer;
+         BLAKE2b.ComputeHash(buffer, data);
+      }
+      else
+      {
+         BLAKE2b.ComputeTag(buffer, data, key);
       }
 
-      public byte[] GenerateHash(uint size, string data, ReadOnlySpan<byte> key = default)
+      return buffer;
+   }
+
+   public byte[] GenerateHash(uint size, string data, ReadOnlySpan<byte> key = default)
+   {
+      byte[] buffer = new byte[size];
+      byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+
+      if (key == default)
       {
-         byte[] buffer = new byte[size];
-         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-
-         if (key == default)
-         {
-            BLAKE2b.ComputeHash(buffer, dataBytes);
-         }
-         else
-         {
-            BLAKE2b.ComputeTag(buffer, dataBytes, key);
-         }
-
-         return buffer;
+         BLAKE2b.ComputeHash(buffer, dataBytes);
       }
+      else
+      {
+         BLAKE2b.ComputeTag(buffer, dataBytes, key);
+      }
+
+      return buffer;
    }
 }

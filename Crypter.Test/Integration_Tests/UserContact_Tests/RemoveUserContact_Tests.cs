@@ -32,76 +32,75 @@ using Crypter.Common.Enums;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.UserContact_Tests
+namespace Crypter.Test.Integration_Tests.UserContact_Tests;
+
+[TestFixture]
+internal class RemoveUserContact_Tests
 {
-   [TestFixture]
-   internal class RemoveUserContact_Tests
-   {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-      private ITokenRepository _clientTokenRepository;
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+   private ITokenRepository _clientTokenRepository;
    
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
+
+   [Test]
+   public async Task Remove_User_Contact_Works_Async()
+   {
+      const string contactUsername = "Samwise";
+      const string contactPassword = "dropping_no_eaves";
+
+      RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+
+      LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+
+      await userLoginResult.DoRightAsync(async loginResponse =>
       {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-      [Test]
-      public async Task Remove_User_Contact_Works_Async()
+      var initialContactsResult = await _client.UserContact.GetUserContactsAsync();
+
+      RegistrationRequest contactRegistrationRequest = TestData.GetRegistrationRequest(contactUsername, contactPassword);
+      var contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
+
+      var addContactResult = await _client.UserContact.AddUserContactAsync(contactUsername);
+      var secondContactsResult = await _client.UserContact.GetUserContactsAsync();
+
+      var removeContactResult = await _client.UserContact.RemoveUserContactAsync(contactUsername);
+      var finalContactsResult = await _client.UserContact.GetUserContactsAsync();
+
+      Assert.True(userRegistrationResult.IsRight);
+      Assert.True(userLoginResult.IsRight);
+      Assert.True(initialContactsResult.IsSome);
+      initialContactsResult.IfSome(x => Assert.AreEqual(0, x.Count));
+
+      Assert.True(contactRegistrationResult.IsRight);
+      Assert.True(addContactResult.IsRight);
+      Assert.True(secondContactsResult.IsSome);
+      secondContactsResult.IfSome(x =>
       {
-         const string contactUsername = "Samwise";
-         const string contactPassword = "dropping_no_eaves";
+         Assert.AreEqual(1, x.Count);
+         Assert.AreEqual(contactUsername, x[0].Username);
+      });
 
-         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
-
-         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
-
-         await userLoginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
-
-         var initialContactsResult = await _client.UserContact.GetUserContactsAsync();
-
-         RegistrationRequest contactRegistrationRequest = TestData.GetRegistrationRequest(contactUsername, contactPassword);
-         var contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
-
-         var addContactResult = await _client.UserContact.AddUserContactAsync(contactUsername);
-         var secondContactsResult = await _client.UserContact.GetUserContactsAsync();
-
-         var removeContactResult = await _client.UserContact.RemoveUserContactAsync(contactUsername);
-         var finalContactsResult = await _client.UserContact.GetUserContactsAsync();
-
-         Assert.True(userRegistrationResult.IsRight);
-         Assert.True(userLoginResult.IsRight);
-         Assert.True(initialContactsResult.IsSome);
-         initialContactsResult.IfSome(x => Assert.AreEqual(0, x.Count));
-
-         Assert.True(contactRegistrationResult.IsRight);
-         Assert.True(addContactResult.IsRight);
-         Assert.True(secondContactsResult.IsSome);
-         secondContactsResult.IfSome(x =>
-         {
-            Assert.AreEqual(1, x.Count);
-            Assert.AreEqual(contactUsername, x[0].Username);
-         });
-
-         Assert.True(removeContactResult.IsSome);
-         Assert.True(finalContactsResult.IsSome);
-         finalContactsResult.IfSome(x => Assert.AreEqual(0, x.Count));
-      }
+      Assert.True(removeContactResult.IsSome);
+      Assert.True(finalContactsResult.IsSome);
+      finalContactsResult.IfSome(x => Assert.AreEqual(0, x.Count));
    }
 }

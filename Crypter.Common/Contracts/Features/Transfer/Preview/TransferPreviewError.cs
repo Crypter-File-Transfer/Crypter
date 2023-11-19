@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Transfer
+namespace Crypter.Common.Contracts.Features.Transfer;
+
+public enum TransferPreviewError
 {
-   public enum TransferPreviewError
-   {
-      UnknownError,
-      NotFound
-   }
+   UnknownError,
+   NotFound
 }

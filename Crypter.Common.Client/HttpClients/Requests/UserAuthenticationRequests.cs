@@ -31,57 +31,56 @@ using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using EasyMonads;
 
-namespace Crypter.Common.Client.HttpClients.Requests
+namespace Crypter.Common.Client.HttpClients.Requests;
+
+public class UserAuthenticationRequests : IUserAuthenticationRequests
 {
-   public class UserAuthenticationRequests : IUserAuthenticationRequests
+   private readonly ICrypterHttpClient _crypterHttpClient;
+   private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+   private readonly EventHandler _refreshTokenRejectedHandler;
+
+   public UserAuthenticationRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient, EventHandler refreshTokenRejectedHandler)
    {
-      private readonly ICrypterHttpClient _crypterHttpClient;
-      private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
-      private readonly EventHandler _refreshTokenRejectedHandler;
+      _crypterHttpClient = crypterHttpClient;
+      _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+      _refreshTokenRejectedHandler = refreshTokenRejectedHandler;
+   }
 
-      public UserAuthenticationRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient, EventHandler refreshTokenRejectedHandler)
-      {
-         _crypterHttpClient = crypterHttpClient;
-         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
-         _refreshTokenRejectedHandler = refreshTokenRejectedHandler;
-      }
+   public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest registerRequest)
+   {
+      string url = "api/user/authentication/register";
+      return _crypterHttpClient.PostEitherUnitResponseAsync(url, registerRequest)
+         .ExtractErrorCode<RegistrationError, Unit>();
+   }
 
-      public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest registerRequest)
-      {
-         string url = "api/user/authentication/register";
-         return _crypterHttpClient.PostEitherUnitResponseAsync(url, registerRequest)
-            .ExtractErrorCode<RegistrationError, Unit>();
-      }
+   public Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest)
+   {
+      string url = "api/user/authentication/login";
+      return _crypterHttpClient.PostEitherAsync<LoginRequest, LoginResponse>(url, loginRequest)
+         .ExtractErrorCode<LoginError, LoginResponse>();
+   }
 
-      public Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest)
-      {
-         string url = "api/user/authentication/login";
-         return _crypterHttpClient.PostEitherAsync<LoginRequest, LoginResponse>(url, loginRequest)
-            .ExtractErrorCode<LoginError, LoginResponse>();
-      }
+   public async Task<Either<RefreshError, RefreshResponse>> RefreshSessionAsync()
+   {
+      string url = "api/user/authentication/refresh";
+      Either<RefreshError, RefreshResponse> response = await _crypterAuthenticatedHttpClient.GetEitherAsync<RefreshResponse>(url, true)
+         .ExtractErrorCode<RefreshError, RefreshResponse>();
 
-      public async Task<Either<RefreshError, RefreshResponse>> RefreshSessionAsync()
-      {
-         string url = "api/user/authentication/refresh";
-         Either<RefreshError, RefreshResponse> response = await _crypterAuthenticatedHttpClient.GetEitherAsync<RefreshResponse>(url, true)
-            .ExtractErrorCode<RefreshError, RefreshResponse>();
+      response.DoLeftOrNeither(() => _refreshTokenRejectedHandler?.Invoke(this, EventArgs.Empty));
+      return response;
+   }
 
-         response.DoLeftOrNeither(() => _refreshTokenRejectedHandler?.Invoke(this, EventArgs.Empty));
-         return response;
-      }
+   public Task<Either<PasswordChallengeError, Unit>> PasswordChallengeAsync(PasswordChallengeRequest testPasswordRequest)
+   {
+      string url = "api/user/authentication/password/challenge";
+      return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, testPasswordRequest)
+         .ExtractErrorCode<PasswordChallengeError, Unit>();
+   }
 
-      public Task<Either<PasswordChallengeError, Unit>> PasswordChallengeAsync(PasswordChallengeRequest testPasswordRequest)
-      {
-         string url = "api/user/authentication/password/challenge";
-         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, testPasswordRequest)
-            .ExtractErrorCode<PasswordChallengeError, Unit>();
-      }
-
-      public Task<Either<LogoutError, Unit>> LogoutAsync()
-      {
-         string url = "api/user/authentication/logout";
-         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, true)
-            .ExtractErrorCode<LogoutError, Unit>();
-      }
+   public Task<Either<LogoutError, Unit>> LogoutAsync()
+   {
+      string url = "api/user/authentication/logout";
+      return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, true)
+         .ExtractErrorCode<LogoutError, Unit>();
    }
 }

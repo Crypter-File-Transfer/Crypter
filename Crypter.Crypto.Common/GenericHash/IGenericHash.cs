@@ -26,12 +26,11 @@
 
 using System;
 
-namespace Crypter.Crypto.Common.GenericHash
+namespace Crypter.Crypto.Common.GenericHash;
+
+public interface IGenericHash
 {
-   public interface IGenericHash
-   {
-      uint KeySize { get; }
-      byte[] GenerateHash(uint size, ReadOnlySpan<byte> data, ReadOnlySpan<byte> key = default);
-      byte[] GenerateHash(uint size, string data, ReadOnlySpan<byte> key = default);
-   }
+   uint KeySize { get; }
+   byte[] GenerateHash(uint size, ReadOnlySpan<byte> data, ReadOnlySpan<byte> key = default);
+   byte[] GenerateHash(uint size, string data, ReadOnlySpan<byte> key = default);
 }

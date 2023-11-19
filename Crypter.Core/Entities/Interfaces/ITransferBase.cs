@@ -26,16 +26,15 @@
 
 using System;
 
-namespace Crypter.Core.Entities.Interfaces
+namespace Crypter.Core.Entities.Interfaces;
+
+public interface ITransferBase
 {
-   public interface ITransferBase
-   {
-      public Guid Id { get; set; }
-      public long Size { get; set; }
-      public byte[] PublicKey { get; set; }
-      public byte[] KeyExchangeNonce { get; set; }
-      public byte[] Proof { get; set; }
-      public DateTime Created { get; set; }
-      public DateTime Expiration { get; set; }
-   }
+   public Guid Id { get; set; }
+   public long Size { get; set; }
+   public byte[] PublicKey { get; set; }
+   public byte[] KeyExchangeNonce { get; set; }
+   public byte[] Proof { get; set; }
+   public DateTime Created { get; set; }
+   public DateTime Expiration { get; set; }
 }

@@ -27,12 +27,11 @@
 using System.Text.Json.Serialization;
 using Crypter.Common.Infrastructure;
 
-namespace Crypter.Common.Enums
+namespace Crypter.Common.Enums;
+
+[JsonConverter(typeof(JsonEnumConverter<TransferUserType>))]
+public enum TransferUserType
 {
-   [JsonConverter(typeof(JsonEnumConverter<TransferUserType>))]
-   public enum TransferUserType
-   {
-      Anonymous,
-      User
-   }
+   Anonymous,
+   User
 }

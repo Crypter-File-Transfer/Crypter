@@ -28,41 +28,40 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserRecoveryEntity
 {
-   public class UserRecoveryEntity
+   public Guid Owner { get; set; }
+   public Guid Code { get; set; }
+   public byte[] VerificationKey { get; set; }
+   public DateTime Created { get; set; }
+
+   public UserEntity User { get; set; }
+
+   public UserRecoveryEntity(Guid owner, Guid code, byte[] verificationKey, DateTime created)
    {
-      public Guid Owner { get; set; }
-      public Guid Code { get; set; }
-      public byte[] VerificationKey { get; set; }
-      public DateTime Created { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserRecoveryEntity(Guid owner, Guid code, byte[] verificationKey, DateTime created)
-      {
-         Owner = owner;
-         Code = code;
-         VerificationKey = verificationKey;
-         Created = created;
-      }
+      Owner = owner;
+      Code = code;
+      VerificationKey = verificationKey;
+      Created = created;
    }
+}
 
-   public class UserRecoveryEntityConfiguration : IEntityTypeConfiguration<UserRecoveryEntity>
+public class UserRecoveryEntityConfiguration : IEntityTypeConfiguration<UserRecoveryEntity>
+{
+   public void Configure(EntityTypeBuilder<UserRecoveryEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserRecoveryEntity> builder)
-      {
-         builder.ToTable("UserRecovery");
+      builder.ToTable("UserRecovery");
 
-         builder.HasKey(x => x.Owner);
+      builder.HasKey(x => x.Owner);
 
-         builder.HasIndex(x => x.Code)
-            .IsUnique();
+      builder.HasIndex(x => x.Code)
+         .IsUnique();
 
-         builder.HasOne(x => x.User)
-            .WithOne(x => x.Recovery)
-            .HasForeignKey<UserRecoveryEntity>(x => x.Owner)
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.User)
+         .WithOne(x => x.Recovery)
+         .HasForeignKey<UserRecoveryEntity>(x => x.Owner)
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

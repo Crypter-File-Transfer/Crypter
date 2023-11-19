@@ -31,57 +31,56 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
-namespace Crypter.Core.Services
+namespace Crypter.Core.Services;
+
+public interface IHashIdService
 {
-   public interface IHashIdService
+   string Encode(Guid id);
+   Guid Decode(string hash);
+}
+
+public static class HashIdServiceExtensions
+{
+   public static void AddHashIdService(this IServiceCollection services, Action<HashIdSettings> settings)
    {
-      string Encode(Guid id);
-      Guid Decode(string hash);
+      if (settings is null)
+      {
+         throw new ArgumentNullException(nameof(settings));
+      }
+
+      services.Configure(settings);
+      services.TryAddSingleton<IHashIdService, HashIdService>();
+   }
+}
+
+public class HashIdService : IHashIdService
+{
+   private readonly Hashids _lib;
+
+   public HashIdService(IOptions<HashIdSettings> settings)
+   {
+      _lib = new Hashids(settings.Value.Salt);
    }
 
-   public static class HashIdServiceExtensions
+   public string Encode(Guid id)
    {
-      public static void AddHashIdService(this IServiceCollection services, Action<HashIdSettings> settings)
-      {
-         if (settings is null)
-         {
-            throw new ArgumentNullException(nameof(settings));
-         }
-
-         services.Configure(settings);
-         services.TryAddSingleton<IHashIdService, HashIdService>();
-      }
+      byte[] bytes = id.ToByteArray();
+      string hexString = BitConverter.ToString(bytes).Replace("-", "");
+      return _lib.EncodeHex(hexString);
    }
 
-   public class HashIdService : IHashIdService
+   public Guid Decode(string hash)
    {
-      private readonly Hashids _lib;
+      string hexString = _lib.DecodeHex(hash);
 
-      public HashIdService(IOptions<HashIdSettings> settings)
+      int byteCount = hexString.Length / 2;
+      byte[] bytes = new byte[byteCount];
+
+      for (int i = 0; i < byteCount; i++)
       {
-         _lib = new Hashids(settings.Value.Salt);
+         bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
       }
 
-      public string Encode(Guid id)
-      {
-         byte[] bytes = id.ToByteArray();
-         string hexString = BitConverter.ToString(bytes).Replace("-", "");
-         return _lib.EncodeHex(hexString);
-      }
-
-      public Guid Decode(string hash)
-      {
-         string hexString = _lib.DecodeHex(hash);
-
-         int byteCount = hexString.Length / 2;
-         byte[] bytes = new byte[byteCount];
-
-         for (int i = 0; i < byteCount; i++)
-         {
-            bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
-         }
-
-         return new Guid(bytes);
-      }
+      return new Guid(bytes);
    }
 }

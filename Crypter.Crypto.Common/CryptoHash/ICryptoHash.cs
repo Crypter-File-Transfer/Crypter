@@ -24,10 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Crypto.Common.CryptoHash
+namespace Crypter.Crypto.Common.CryptoHash;
+
+public interface ICryptoHash
 {
-   public interface ICryptoHash
-   {
-      byte[] GenerateSha512(byte[] input);
-   }
+   byte[] GenerateSha512(byte[] input);
 }

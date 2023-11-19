@@ -24,13 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Benchmarks
+namespace Crypter.Benchmarks;
+
+internal class Program
 {
-   internal class Program
+   internal static void Main(string[] args)
    {
-      internal static void Main(string[] args)
-      {
-         //BenchmarkRunner.Run<TransferStorageService_Benchmarks>();
-      }
+      //BenchmarkRunner.Run<TransferStorageService_Benchmarks>();
    }
 }

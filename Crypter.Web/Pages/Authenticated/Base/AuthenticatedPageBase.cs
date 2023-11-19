@@ -28,29 +28,28 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages.Authenticated.Base
+namespace Crypter.Web.Pages.Authenticated.Base;
+
+public partial class AuthenticatedPageBase : ComponentBase
 {
-   public partial class AuthenticatedPageBase : ComponentBase
+   [Inject]
+   protected NavigationManager NavigationManager { get; set; }
+
+   [Inject]
+   protected IUserSessionService UserSessionService { get; set; }
+
+   private const string _loginPage = "/login";
+
+   protected override async Task OnInitializedAsync()
    {
-      [Inject]
-      protected NavigationManager NavigationManager { get; set; }
-
-      [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
-
-      private const string _loginPage = "/login";
-
-      protected override async Task OnInitializedAsync()
+      if (!await UserSessionService.IsLoggedInAsync())
       {
-         if (!await UserSessionService.IsLoggedInAsync())
-         {
-            string returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-            string redirect = string.IsNullOrWhiteSpace(returnUrl)
-               ? _loginPage
-               : $"{_loginPage}/?returnUrl={returnUrl}";
+         string returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+         string redirect = string.IsNullOrWhiteSpace(returnUrl)
+            ? _loginPage
+            : $"{_loginPage}/?returnUrl={returnUrl}";
 
-            NavigationManager.NavigateTo(redirect);
-         }
+         NavigationManager.NavigateTo(redirect);
       }
    }
 }

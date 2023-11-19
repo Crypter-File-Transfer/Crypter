@@ -32,69 +32,68 @@ using Crypter.Core.Services;
 using EasyMonads;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.API.Controllers.Base
+namespace Crypter.API.Controllers.Base;
+
+public abstract class TransferControllerBase : CrypterControllerBase
 {
-   public abstract class TransferControllerBase : CrypterControllerBase
+   protected readonly ITransferDownloadService _transferDownloadService;
+   protected readonly ITransferUploadService _transferUploadService;
+   protected readonly ITokenService _tokenService;
+   protected readonly IUserTransferService _userTransferService;
+
+   public TransferControllerBase(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService, IUserTransferService userTransferService)
    {
-      protected readonly ITransferDownloadService _transferDownloadService;
-      protected readonly ITransferUploadService _transferUploadService;
-      protected readonly ITokenService _tokenService;
-      protected readonly IUserTransferService _userTransferService;
+      _transferDownloadService = transferDownloadService;
+      _transferUploadService = transferUploadService;
+      _tokenService = tokenService;
+      _userTransferService = userTransferService;
+   }
 
-      public TransferControllerBase(ITransferDownloadService transferDownloadService, ITransferUploadService transferUploadService, ITokenService tokenService, IUserTransferService userTransferService)
+   protected Either<DownloadTransferCiphertextError, byte[]> DecodeProof(string base64EncodedProof)
+   {
+      try
       {
-         _transferDownloadService = transferDownloadService;
-         _transferUploadService = transferUploadService;
-         _tokenService = tokenService;
-         _userTransferService = userTransferService;
+         return UrlSafeEncoder.DecodeBytesFromUrlSafe(base64EncodedProof);
       }
-
-      protected Either<DownloadTransferCiphertextError, byte[]> DecodeProof(string base64EncodedProof)
+      catch (Exception)
       {
-         try
-         {
-            return UrlSafeEncoder.DecodeBytesFromUrlSafe(base64EncodedProof);
-         }
-         catch (Exception)
-         {
-            return DownloadTransferCiphertextError.InvalidRecipientProof;
-         }
+         return DownloadTransferCiphertextError.InvalidRecipientProof;
       }
+   }
 
-      protected IActionResult MakeErrorResponse(UploadTransferError error)
-      {
+   protected IActionResult MakeErrorResponse(UploadTransferError error)
+   {
 #pragma warning disable CS8524
-         return error switch
-         {
-            UploadTransferError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-            UploadTransferError.InvalidRequestedLifetimeHours
-               or UploadTransferError.OutOfSpace => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
-            UploadTransferError.RecipientNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
-         };
-#pragma warning restore CS8524
-      }
-
-      protected IActionResult MakeErrorResponse(TransferPreviewError error)
+      return error switch
       {
-#pragma warning disable CS8524
-         return error switch
-         {
-            TransferPreviewError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-            TransferPreviewError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
-         };
+         UploadTransferError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+         UploadTransferError.InvalidRequestedLifetimeHours
+            or UploadTransferError.OutOfSpace => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
+         UploadTransferError.RecipientNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+      };
 #pragma warning restore CS8524
-      }
+   }
 
-      protected IActionResult MakeErrorResponse(DownloadTransferCiphertextError error)
-      {
+   protected IActionResult MakeErrorResponse(TransferPreviewError error)
+   {
 #pragma warning disable CS8524
-         return error switch
-         {
-            DownloadTransferCiphertextError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-            DownloadTransferCiphertextError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
-            DownloadTransferCiphertextError.InvalidRecipientProof => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
-         };
+      return error switch
+      {
+         TransferPreviewError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+         TransferPreviewError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+      };
 #pragma warning restore CS8524
-      }
+   }
+
+   protected IActionResult MakeErrorResponse(DownloadTransferCiphertextError error)
+   {
+#pragma warning disable CS8524
+      return error switch
+      {
+         DownloadTransferCiphertextError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+         DownloadTransferCiphertextError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+         DownloadTransferCiphertextError.InvalidRecipientProof => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+      };
+#pragma warning restore CS8524
    }
 }

@@ -29,32 +29,31 @@ using System.Runtime.Versioning;
 using BlazorSodium.Sodium.Models;
 using Crypter.Crypto.Common.StreamGenericHash;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
+
+[SupportedOSPlatform("browser")]
+public class StreamGenericHash : IStreamGenericHash
 {
-   [SupportedOSPlatform("browser")]
-   public class StreamGenericHash : IStreamGenericHash
+   private readonly uint _hashLength;
+   private readonly StateAddress _stateAddress;
+
+   public StreamGenericHash(uint hashLength, ReadOnlySpan<byte> key = default)
    {
-      private readonly uint _hashLength;
-      private readonly StateAddress _stateAddress;
+      _hashLength = hashLength;
+      byte[] keyBytes = key == default
+         ? null
+         : key.ToArray();
 
-      public StreamGenericHash(uint hashLength, ReadOnlySpan<byte> key = default)
-      {
-         _hashLength = hashLength;
-         byte[] keyBytes = key == default
-            ? null
-            : key.ToArray();
+      _stateAddress = BlazorSodium.Sodium.GenericHash.Crypto_GenericHash_Init(_hashLength, keyBytes);
+   }
 
-         _stateAddress = BlazorSodium.Sodium.GenericHash.Crypto_GenericHash_Init(_hashLength, keyBytes);
-      }
+   public byte[] Complete()
+   {
+      return BlazorSodium.Sodium.GenericHash.Crypto_GenericHash_Final(_stateAddress, _hashLength);
+   }
 
-      public byte[] Complete()
-      {
-         return BlazorSodium.Sodium.GenericHash.Crypto_GenericHash_Final(_stateAddress, _hashLength);
-      }
-
-      public void Update(ReadOnlySpan<byte> data)
-      {
-         BlazorSodium.Sodium.GenericHash.Crypto_GenericHash_Update(_stateAddress, data.ToArray());
-      }
+   public void Update(ReadOnlySpan<byte> data)
+   {
+      BlazorSodium.Sodium.GenericHash.Crypto_GenericHash_Update(_stateAddress, data.ToArray());
    }
 }

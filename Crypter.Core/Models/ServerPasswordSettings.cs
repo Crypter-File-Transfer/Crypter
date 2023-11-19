@@ -27,11 +27,10 @@
 using System.Collections.Generic;
 using Crypter.Core.Identity;
 
-namespace Crypter.Core.Models
+namespace Crypter.Core.Models;
+
+public class ServerPasswordSettings
 {
-   public class ServerPasswordSettings
-   {
-      public short ClientVersion { get; set; }
-      public List<PasswordVersion> ServerVersions { get; set; }
-   }
+   public short ClientVersion { get; set; }
+   public List<PasswordVersion> ServerVersions { get; set; }
 }

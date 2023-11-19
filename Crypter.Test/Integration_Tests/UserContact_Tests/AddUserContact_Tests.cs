@@ -32,101 +32,100 @@ using Crypter.Common.Enums;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.UserContact_Tests
+namespace Crypter.Test.Integration_Tests.UserContact_Tests;
+
+[TestFixture]
+internal class AddUserContact_Tests
 {
-   [TestFixture]
-   internal class AddUserContact_Tests
-   {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-      private ITokenRepository _clientTokenRepository;
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+   private ITokenRepository _clientTokenRepository;
    
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
+
+   [Test]
+   public async Task Add_User_Contact_Works_Async()
+   {
+      const string contactUsername = "Samwise";
+      const string contactPassword = "dropping_no_eaves";
+
+      RegistrationRequest contactRegistrationRequest = TestData.GetRegistrationRequest(contactUsername, contactPassword);
+      var contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
+
+      RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+
+      LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+
+      await userLoginResult.DoRightAsync(async loginResponse =>
       {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-      [Test]
-      public async Task Add_User_Contact_Works_Async()
+      var result = await _client.UserContact.AddUserContactAsync(contactUsername);
+
+      Assert.True(contactRegistrationResult.IsRight);
+      Assert.True(userRegistrationResult.IsRight);
+      Assert.True(userLoginResult.IsRight);
+      Assert.True(result.IsRight);
+   }
+
+   [TestCase]
+   public async Task Add_User_Contact_Fails_For_Same_User_Async()
+   {
+      RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+
+      LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+
+      await userLoginResult.DoRightAsync(async loginResponse =>
       {
-         const string contactUsername = "Samwise";
-         const string contactPassword = "dropping_no_eaves";
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-         RegistrationRequest contactRegistrationRequest = TestData.GetRegistrationRequest(contactUsername, contactPassword);
-         var contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
+      var result = await _client.UserContact.AddUserContactAsync(TestData.DefaultUsername);
 
-         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+      Assert.True(userRegistrationResult.IsRight);
+      Assert.True(userLoginResult.IsRight);
+      Assert.True(result.IsLeft);
+   }
 
-         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+   [TestCase]
+   public async Task Add_User_Contact_Fails_For_User_Not_Found_Async()
+   {
+      RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
-         await userLoginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
+      LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
 
-         var result = await _client.UserContact.AddUserContactAsync(contactUsername);
-
-         Assert.True(contactRegistrationResult.IsRight);
-         Assert.True(userRegistrationResult.IsRight);
-         Assert.True(userLoginResult.IsRight);
-         Assert.True(result.IsRight);
-      }
-
-      [TestCase]
-      public async Task Add_User_Contact_Fails_For_Same_User_Async()
+      await userLoginResult.DoRightAsync(async loginResponse =>
       {
-         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+      var result = await _client.UserContact.AddUserContactAsync("Tom_Bombadil");
 
-         await userLoginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
-
-         var result = await _client.UserContact.AddUserContactAsync(TestData.DefaultUsername);
-
-         Assert.True(userRegistrationResult.IsRight);
-         Assert.True(userLoginResult.IsRight);
-         Assert.True(result.IsLeft);
-      }
-
-      [TestCase]
-      public async Task Add_User_Contact_Fails_For_User_Not_Found_Async()
-      {
-         RegistrationRequest userRegistrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
-
-         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
-
-         await userLoginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
-
-         var result = await _client.UserContact.AddUserContactAsync("Tom_Bombadil");
-
-         Assert.True(userRegistrationResult.IsRight);
-         Assert.True(userLoginResult.IsRight);
-         Assert.True(result.IsLeft);
-      }
+      Assert.True(userRegistrationResult.IsRight);
+      Assert.True(userLoginResult.IsRight);
+      Assert.True(result.IsLeft);
    }
 }

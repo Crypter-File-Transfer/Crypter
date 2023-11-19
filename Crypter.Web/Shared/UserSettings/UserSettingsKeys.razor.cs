@@ -33,56 +33,55 @@ using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
-namespace Crypter.Web.Shared.UserSettings
+namespace Crypter.Web.Shared.UserSettings;
+
+public partial class UserSettingsKeysBase : ComponentBase, IDisposable
 {
-   public partial class UserSettingsKeysBase : ComponentBase, IDisposable
+   [Inject]
+   private IUserSessionService UserSessionService { get; set; }
+
+   [Inject]
+   private IUserKeysService UserKeysService { get; set; }
+
+   [Inject]
+   private IUserRecoveryService UserRecoveryService { get; set; }
+
+   [Inject]
+   protected IJSRuntime JSRuntime { get; set; }
+
+   protected PasswordModal PasswordModal { get; set; }
+
+   protected string PrivateKey = string.Empty;
+   protected string RecoveryKey = string.Empty;
+
+   protected override void OnInitialized()
    {
-      [Inject]
-      private IUserSessionService UserSessionService { get; set; }
+      PrivateKey = UserKeysService.PrivateKey.Match(
+         () => "",
+         Convert.ToHexString);
 
-      [Inject]
-      private IUserKeysService UserKeysService { get; set; }
+      UserSessionService.UserPasswordTestSuccessEventHandler += OnPasswordTestSuccess;
+   }
 
-      [Inject]
-      private IUserRecoveryService UserRecoveryService { get; set; }
+   private async void OnPasswordTestSuccess(object sender, UserPasswordTestSuccessEventArgs args)
+   {
+      RecoveryKey = await UserKeysService.MasterKey
+         .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, args.Username, args.Password))
+         .MatchAsync(
+            () => "An error occurred",
+            x => x.ToBase64String());
 
-      [Inject]
-      protected IJSRuntime JSRuntime { get; set; }
+      await InvokeAsync(StateHasChanged);
+   }
 
-      protected PasswordModal PasswordModal { get; set; }
+   protected async Task CopyRecoveryKeyToClipboardAsync()
+   {
+      await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyCopyTooltip" });
+   }
 
-      protected string PrivateKey = string.Empty;
-      protected string RecoveryKey = string.Empty;
-
-      protected override void OnInitialized()
-      {
-         PrivateKey = UserKeysService.PrivateKey.Match(
-            () => "",
-            Convert.ToHexString);
-
-         UserSessionService.UserPasswordTestSuccessEventHandler += OnPasswordTestSuccess;
-      }
-
-      private async void OnPasswordTestSuccess(object sender, UserPasswordTestSuccessEventArgs args)
-      {
-         RecoveryKey = await UserKeysService.MasterKey
-            .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, args.Username, args.Password))
-            .MatchAsync(
-               () => "An error occurred",
-               x => x.ToBase64String());
-
-         await InvokeAsync(StateHasChanged);
-      }
-
-      protected async Task CopyRecoveryKeyToClipboardAsync()
-      {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyCopyTooltip" });
-      }
-
-      public void Dispose()
-      {
-         UserSessionService.UserPasswordTestSuccessEventHandler -= OnPasswordTestSuccess;
-         GC.SuppressFinalize(this);
-      }
+   public void Dispose()
+   {
+      UserSessionService.UserPasswordTestSuccessEventHandler -= OnPasswordTestSuccess;
+      GC.SuppressFinalize(this);
    }
 }

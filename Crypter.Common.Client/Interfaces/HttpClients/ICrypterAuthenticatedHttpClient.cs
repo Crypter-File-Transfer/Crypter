@@ -28,29 +28,28 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.HttpClients
+namespace Crypter.Common.Client.Interfaces.HttpClients;
+
+public interface ICrypterAuthenticatedHttpClient : ICrypterHttpClient
 {
-   public interface ICrypterAuthenticatedHttpClient : ICrypterHttpClient
-   {
-      Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri, bool useRefreshToken = false)
-         where TResponse : class;
+   Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri, bool useRefreshToken = false)
+      where TResponse : class;
 
-      Task<Either<ErrorResponse, TResponse>> PutEitherAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
-         where TRequest : class;
+   Task<Either<ErrorResponse, TResponse>> PutEitherAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
+      where TRequest : class;
 
-      Task<Either<ErrorResponse, Unit>> PutEitherUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)
-         where TRequest : class;
+   Task<Either<ErrorResponse, Unit>> PutEitherUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)
+      where TRequest : class;
 
-      Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TResponse>(string uri, bool useRefreshToken = false)
-         where TResponse : class;
+   Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TResponse>(string uri, bool useRefreshToken = false)
+      where TResponse : class;
 
-      Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
-         where TRequest : class
-         where TResponse : class;
+   Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body, bool useRefreshToken = false)
+      where TRequest : class
+      where TResponse : class;
 
-      Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri, bool useRefreshToken = false);
+   Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri, bool useRefreshToken = false);
 
-      Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)
-         where TRequest : class;
-   }
+   Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body, bool useRefreshToken = false)
+      where TRequest : class;
 }

@@ -30,34 +30,33 @@ using Crypter.Core.Settings;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
-namespace Crypter.Test.Core_Tests.Services_Tests
+namespace Crypter.Test.Core_Tests.Services_Tests;
+
+[TestFixture]
+public class HashIdService_Tests
 {
-   [TestFixture]
-   public class HashIdService_Tests
+   private HashIdService _sut;
+
+   [OneTimeSetUp]
+   public void SetupOnce()
    {
-      private HashIdService _sut;
-
-      [OneTimeSetUp]
-      public void SetupOnce()
+      HashIdSettings settings = new HashIdSettings()
       {
-         HashIdSettings settings = new HashIdSettings()
-         {
-            Salt = "test"
-         };
-         IOptions<HashIdSettings> options = Options.Create(settings);
+         Salt = "test"
+      };
+      IOptions<HashIdSettings> options = Options.Create(settings);
 
-         _sut = new HashIdService(options);
-      }
+      _sut = new HashIdService(options);
+   }
 
-      [Test]
-      public void HashIdService_Works()
-      {
-         Guid guid = Guid.NewGuid();
+   [Test]
+   public void HashIdService_Works()
+   {
+      Guid guid = Guid.NewGuid();
 
-         string hash = _sut.Encode(guid);
-         Guid decodedHash = _sut.Decode(hash);
+      string hash = _sut.Encode(guid);
+      Guid decodedHash = _sut.Decode(hash);
 
-         Assert.AreEqual(guid, decodedHash);
-      }
+      Assert.AreEqual(guid, decodedHash);
    }
 }

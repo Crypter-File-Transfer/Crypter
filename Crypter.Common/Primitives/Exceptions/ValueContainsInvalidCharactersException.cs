@@ -24,9 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Primitives.Exceptions
+namespace Crypter.Common.Primitives.Exceptions;
+
+public class ValueContainsInvalidCharactersException : ValueInvalidException
 {
-   public class ValueContainsInvalidCharactersException : ValueInvalidException
-   {
-   }
 }

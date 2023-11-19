@@ -31,36 +31,35 @@ using BlazorSodium.Sodium.Models;
 using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
+
+[SupportedOSPlatform("browser")]
+public class StreamEncrypt : IStreamEncrypt
 {
-   [SupportedOSPlatform("browser")]
-   public class StreamEncrypt : IStreamEncrypt
+   private readonly IPadding _padding;
+   private readonly int _padSize;
+   private StateAddress _stateAddress;
+
+   public uint KeySize { get => SecretStream.KEY_BYTES; }
+   public uint TagSize { get => SecretStream.A_BYTES; }
+
+   public StreamEncrypt(IPadding padding, int padSize)
    {
-      private readonly IPadding _padding;
-      private readonly int _padSize;
-      private StateAddress _stateAddress;
+      _padding = padding;
+      _padSize = padSize;
+   }
 
-      public uint KeySize { get => SecretStream.KEY_BYTES; }
-      public uint TagSize { get => SecretStream.A_BYTES; }
+   public byte[] GenerateHeader(ReadOnlySpan<byte> key)
+   {
+      SecretStreamPushData initData = SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Init_Push(key.ToArray());
+      _stateAddress = initData.StateAddress;
+      return initData.Header;
+   }
 
-      public StreamEncrypt(IPadding padding, int padSize)
-      {
-         _padding = padding;
-         _padSize = padSize;
-      }
-
-      public byte[] GenerateHeader(ReadOnlySpan<byte> key)
-      {
-         SecretStreamPushData initData = SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Init_Push(key.ToArray());
-         _stateAddress = initData.StateAddress;
-         return initData.Header;
-      }
-
-      public byte[] Push(byte[] plaintext, bool final)
-      {
-         uint tag = final ? SecretStream.TAG_FINAL : SecretStream.TAG_MESSAGE;
-         byte[] paddedPlaintext = _padding.Pad(plaintext, _padSize);
-         return SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Push(_stateAddress, paddedPlaintext, tag);
-      }
+   public byte[] Push(byte[] plaintext, bool final)
+   {
+      uint tag = final ? SecretStream.TAG_FINAL : SecretStream.TAG_MESSAGE;
+      byte[] paddedPlaintext = _padding.Pad(plaintext, _padSize);
+      return SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Push(_stateAddress, paddedPlaintext, tag);
    }
 }

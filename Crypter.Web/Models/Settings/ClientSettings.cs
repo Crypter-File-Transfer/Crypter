@@ -27,15 +27,14 @@
 using Crypter.Common.Client.Models;
 using Crypter.Common.Client.Transfer.Models;
 
-namespace Crypter.Web.Models.Settings
+namespace Crypter.Web.Models.Settings;
+
+/// <summary>
+/// Caution!  Do not add secrets here!
+/// These settings are available to the client.
+/// </summary>
+public class ClientSettings
 {
-   /// <summary>
-   /// Caution!  Do not add secrets here!
-   /// These settings are available to the client.
-   /// </summary>
-   public class ClientSettings
-   {
-      public ClientApiSettings ApiSettings { get; set; }
-      public TransferSettings TransferSettings { get; set; }
-   }
+   public ClientApiSettings ApiSettings { get; set; }
+   public TransferSettings TransferSettings { get; set; }
 }

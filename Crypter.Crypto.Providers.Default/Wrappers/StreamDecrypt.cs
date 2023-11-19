@@ -29,23 +29,22 @@ using System.Runtime.Versioning;
 using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
+namespace Crypter.Crypto.Providers.Default.Wrappers;
+
+[UnsupportedOSPlatform("browser")]
+public class StreamDecrypt : IStreamDecrypt
 {
-   [UnsupportedOSPlatform("browser")]
-   public class StreamDecrypt : IStreamDecrypt
+   public StreamDecrypt(IPadding padding, ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
    {
-      public StreamDecrypt(IPadding padding, ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
-      {
 
-      }
+   }
 
-      public uint KeySize => Geralt.IncrementalXChaCha20Poly1305.KeySize;
+   public uint KeySize => Geralt.IncrementalXChaCha20Poly1305.KeySize;
 
-      public uint TagSize => Geralt.IncrementalXChaCha20Poly1305.TagSize;
+   public uint TagSize => Geralt.IncrementalXChaCha20Poly1305.TagSize;
 
-      public byte[] Pull(ReadOnlySpan<byte> ciphertext, int blockSize, out bool final)
-      {
-         throw new NotImplementedException();
-      }
+   public byte[] Pull(ReadOnlySpan<byte> ciphertext, int blockSize, out bool final)
+   {
+      throw new NotImplementedException();
    }
 }

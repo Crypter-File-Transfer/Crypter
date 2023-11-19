@@ -29,30 +29,29 @@ using System.Runtime.Versioning;
 using Crypter.Crypto.Common.StreamGenericHash;
 using Geralt;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
+namespace Crypter.Crypto.Providers.Default.Wrappers;
+
+[UnsupportedOSPlatform("browser")]
+public class StreamGenericHash : IStreamGenericHash
 {
-   [UnsupportedOSPlatform("browser")]
-   public class StreamGenericHash : IStreamGenericHash
+   private readonly uint _hashLength;
+   private readonly IncrementalBLAKE2b _state;
+
+   public StreamGenericHash(uint hashLength, ReadOnlySpan<byte> key = default)
    {
-      private readonly uint _hashLength;
-      private readonly IncrementalBLAKE2b _state;
+      _hashLength = hashLength;
+      _state = new IncrementalBLAKE2b(checked((int)hashLength), key);
+   }
 
-      public StreamGenericHash(uint hashLength, ReadOnlySpan<byte> key = default)
-      {
-         _hashLength = hashLength;
-         _state = new IncrementalBLAKE2b(checked((int)hashLength), key);
-      }
+   public byte[] Complete()
+   {
+      byte[] buffer = new byte[_hashLength];
+      _state.Finalize(buffer);
+      return buffer;
+   }
 
-      public byte[] Complete()
-      {
-         byte[] buffer = new byte[_hashLength];
-         _state.Finalize(buffer);
-         return buffer;
-      }
-
-      public void Update(ReadOnlySpan<byte> data)
-      {
-         _state.Update(data);
-      }
+   public void Update(ReadOnlySpan<byte> data)
+   {
+      _state.Update(data);
    }
 }

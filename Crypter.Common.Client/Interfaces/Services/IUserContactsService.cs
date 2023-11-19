@@ -30,13 +30,12 @@ using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Services
+namespace Crypter.Common.Client.Interfaces.Services;
+
+public interface IUserContactsService
 {
-   public interface IUserContactsService
-   {
-      Task<IReadOnlyCollection<UserContact>> GetContactsAsync();
-      Task<bool> IsContactAsync(string contactUsername);
-      Task<Either<AddUserContactError, UserContact>> AddContactAsync(string contactUsername);
-      Task RemoveContactAsync(string contactUsername);
-   }
+   Task<IReadOnlyCollection<UserContact>> GetContactsAsync();
+   Task<bool> IsContactAsync(string contactUsername);
+   Task<Either<AddUserContactError, UserContact>> AddContactAsync(string contactUsername);
+   Task RemoveContactAsync(string contactUsername);
 }

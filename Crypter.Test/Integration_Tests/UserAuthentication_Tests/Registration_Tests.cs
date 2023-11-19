@@ -30,69 +30,68 @@ using Crypter.Common.Contracts.Features.UserAuthentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
+namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests;
+
+[TestFixture]
+internal class Registration_Tests
 {
-   [TestFixture]
-   internal class Registration_Tests
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+
+   [SetUp]
+   public async Task SetupTestAsync()
    {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
-      {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
 
-      [TestCase(TestData.DefaultEmailAdress)]
-      [TestCase(null)]
-      public async Task Register_User_Works(string emailAddress)
-      {
-         RegistrationRequest request = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword, emailAddress);
-         var result = await _client.UserAuthentication.RegisterAsync(request);
+   [TestCase(TestData.DefaultEmailAdress)]
+   [TestCase(null)]
+   public async Task Register_User_Works(string emailAddress)
+   {
+      RegistrationRequest request = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword, emailAddress);
+      var result = await _client.UserAuthentication.RegisterAsync(request);
 
-         Assert.True(result.IsRight);
-      }
+      Assert.True(result.IsRight);
+   }
 
-      [TestCase("FOO", "foo")]
-      [TestCase("foo", "FOO")]
-      public async Task Register_User_Fails_For_Duplicate_Username(string initialUsername, string duplicateUsername)
-      {
-         VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
+   [TestCase("FOO", "foo")]
+   [TestCase("foo", "FOO")]
+   public async Task Register_User_Fails_For_Duplicate_Username(string initialUsername, string duplicateUsername)
+   {
+      VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
 
-         RegistrationRequest initialRequest = new RegistrationRequest(initialUsername, password, null);
-         var initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
+      RegistrationRequest initialRequest = new RegistrationRequest(initialUsername, password, null);
+      var initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
 
-         RegistrationRequest secondRequest = new RegistrationRequest(duplicateUsername, password, null);
-         var secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
+      RegistrationRequest secondRequest = new RegistrationRequest(duplicateUsername, password, null);
+      var secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
 
-         Assert.True(initialResult.IsRight);
-         Assert.True(secondResult.IsLeft);
-      }
+      Assert.True(initialResult.IsRight);
+      Assert.True(secondResult.IsLeft);
+   }
 
-      [TestCase("FOO@foo.com", "foo@foo.com")]
-      [TestCase("foo@foo.com", "FOO@foo.com")]
-      public async Task Register_User_Fails_For_Duplicate_Email_Address(string initialEmailAddress, string duplicateEmailAddress)
-      {
-         VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
+   [TestCase("FOO@foo.com", "foo@foo.com")]
+   [TestCase("foo@foo.com", "FOO@foo.com")]
+   public async Task Register_User_Fails_For_Duplicate_Email_Address(string initialEmailAddress, string duplicateEmailAddress)
+   {
+      VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
 
-         RegistrationRequest initialRequest = new RegistrationRequest("first", password, initialEmailAddress);
-         var initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
+      RegistrationRequest initialRequest = new RegistrationRequest("first", password, initialEmailAddress);
+      var initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
 
-         RegistrationRequest secondRequest = new RegistrationRequest("second", password, duplicateEmailAddress);
-         var secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
+      RegistrationRequest secondRequest = new RegistrationRequest("second", password, duplicateEmailAddress);
+      var secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
 
-         Assert.True(initialResult.IsRight);
-         Assert.True(secondResult.IsLeft);
-      }
+      Assert.True(initialResult.IsRight);
+      Assert.True(secondResult.IsLeft);
    }
 }

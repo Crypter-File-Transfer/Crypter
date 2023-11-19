@@ -29,29 +29,28 @@ using System.Runtime.Versioning;
 using Crypter.Crypto.Common.Padding;
 using Crypter.Crypto.Common.StreamEncryption;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
+
+[SupportedOSPlatform("browser")]
+public class StreamEncryptionFactory : IStreamEncryptionFactory
 {
-   [SupportedOSPlatform("browser")]
-   public class StreamEncryptionFactory : IStreamEncryptionFactory
+   private readonly IPadding _padding;
+
+   public uint KeySize { get => 32; }
+   public uint TagSize { get => 17; }
+
+   public StreamEncryptionFactory(IPadding padding)
    {
-      private readonly IPadding _padding;
+      _padding = padding;
+   }
 
-      public uint KeySize { get => 32; }
-      public uint TagSize { get => 17; }
+   public IStreamEncrypt NewEncryptionStream(int padSize)
+   {
+      return new StreamEncrypt(_padding, padSize);
+   }
 
-      public StreamEncryptionFactory(IPadding padding)
-      {
-         _padding = padding;
-      }
-
-      public IStreamEncrypt NewEncryptionStream(int padSize)
-      {
-         return new StreamEncrypt(_padding, padSize);
-      }
-
-      public IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
-      {
-         return new StreamDecrypt(_padding, key, header);
-      }
+   public IStreamDecrypt NewDecryptionStream(ReadOnlySpan<byte> key, ReadOnlySpan<byte> header)
+   {
+      return new StreamDecrypt(_padding, key, header);
    }
 }

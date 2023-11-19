@@ -36,57 +36,56 @@ using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.User_Tests
+namespace Crypter.Test.Integration_Tests.User_Tests;
+
+[TestFixture]
+internal class UserSearch_Tests
 {
-   [TestFixture]
-   internal class UserSearch_Tests
-   {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-      private ITokenRepository _clientTokenRepository;
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+   private ITokenRepository _clientTokenRepository;
    
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
+
+   [Test]
+   public async Task User_Search_Works_Async()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-      [Test]
-      public async Task User_Search_Works_Async()
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+      InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
+      var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+      UserSearchParameters searchParameters = new UserSearchParameters(TestData.DefaultUsername, 0, 10);
+      Maybe<List<UserSearchResult>> response = await _client.User.GetUserSearchResultsAsync(searchParameters);
 
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
+      List<UserSearchResult> results = response.SomeOrDefault(null);
 
-         InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
-         var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
-
-         UserSearchParameters searchParameters = new UserSearchParameters(TestData.DefaultUsername, 0, 10);
-         Maybe<List<UserSearchResult>> response = await _client.User.GetUserSearchResultsAsync(searchParameters);
-
-         List<UserSearchResult> results = response.SomeOrDefault(null);
-
-         Assert.True(loginResult.IsRight);
-         Assert.True(response.IsSome);
-         Assert.AreEqual(1, results.Count);
-         Assert.AreEqual(TestData.DefaultUsername, results[0].Username);
-      }
+      Assert.True(loginResult.IsRight);
+      Assert.True(response.IsSome);
+      Assert.AreEqual(1, results.Count);
+      Assert.AreEqual(TestData.DefaultUsername, results[0].Username);
    }
 }

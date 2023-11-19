@@ -28,59 +28,58 @@ using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Exceptions;
 using NUnit.Framework;
 
-namespace Crypter.Test.Common_Tests.Primitive_Tests
+namespace Crypter.Test.Common_Tests.Primitive_Tests;
+
+[TestFixture]
+[Parallelizable]
+public class EmailAddress_Tests
 {
-   [TestFixture]
-   [Parallelizable]
-   public class EmailAddress_Tests
+   [TestCase(null)]
+   public void Null_Email_Addresses_Are_Invalid(string emailAddress)
    {
-      [TestCase(null)]
-      public void Null_Email_Addresses_Are_Invalid(string emailAddress)
-      {
-         Assert.Throws<ValueNullException>(() => EmailAddress.From(emailAddress));
+      Assert.Throws<ValueNullException>(() => EmailAddress.From(emailAddress));
 
-         bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("")]
-      [TestCase(" ")]
-      [TestCase("   ")]
-      public void Empty_Email_Addresses_Are_Invalid(string emailAddress)
-      {
-         Assert.Throws<ValueEmptyException>(() => EmailAddress.From(emailAddress));
+   [TestCase("")]
+   [TestCase(" ")]
+   [TestCase("   ")]
+   public void Empty_Email_Addresses_Are_Invalid(string emailAddress)
+   {
+      Assert.Throws<ValueEmptyException>(() => EmailAddress.From(emailAddress));
 
-         bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("hello@crypter.dev.")]
-      [TestCase("@crypter.dev")]
-      public void Invalid_Email_Addresses_Are_Invalid(string emailAddress)
-      {
-         Assert.Throws<ValueInvalidException>(() => EmailAddress.From(emailAddress));
+   [TestCase("hello@crypter.dev.")]
+   [TestCase("@crypter.dev")]
+   public void Invalid_Email_Addresses_Are_Invalid(string emailAddress)
+   {
+      Assert.Throws<ValueInvalidException>(() => EmailAddress.From(emailAddress));
 
-         bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("jack@crypter.dev")]
-      [TestCase("no-reply@crypter.dev")]
-      [TestCase("anyone@gmail.com")]
-      public void Valid_Email_Addresses_Are_Valid(string emailAddress)
-      {
-         Assert.DoesNotThrow(() => EmailAddress.From(emailAddress));
-         var validEmailAddress = EmailAddress.From(emailAddress);
-         Assert.IsNotNull(validEmailAddress);
-         Assert.AreEqual(emailAddress, validEmailAddress.Value);
+   [TestCase("jack@crypter.dev")]
+   [TestCase("no-reply@crypter.dev")]
+   [TestCase("anyone@gmail.com")]
+   public void Valid_Email_Addresses_Are_Valid(string emailAddress)
+   {
+      Assert.DoesNotThrow(() => EmailAddress.From(emailAddress));
+      var validEmailAddress = EmailAddress.From(emailAddress);
+      Assert.IsNotNull(validEmailAddress);
+      Assert.AreEqual(emailAddress, validEmailAddress.Value);
 
-         bool shouldBeTrue = EmailAddress.TryFrom(emailAddress, out var newValidEmailAddress);
-         Assert.IsTrue(shouldBeTrue);
-         Assert.IsNotNull(newValidEmailAddress);
-         Assert.AreEqual(emailAddress, newValidEmailAddress.Value);
-      }
+      bool shouldBeTrue = EmailAddress.TryFrom(emailAddress, out var newValidEmailAddress);
+      Assert.IsTrue(shouldBeTrue);
+      Assert.IsNotNull(newValidEmailAddress);
+      Assert.AreEqual(emailAddress, newValidEmailAddress.Value);
    }
 }

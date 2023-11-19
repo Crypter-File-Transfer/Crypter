@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Identity
+namespace Crypter.Core.Identity;
+
+public class PasswordVersion
 {
-   public class PasswordVersion
-   {
-      public short Version { get; init; }
-      public string Algorithm { get; init; }
-      public int Iterations { get; init; }
-   }
+   public short Version { get; init; }
+   public string Algorithm { get; init; }
+   public int Iterations { get; init; }
 }

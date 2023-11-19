@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings.NotificationSettings
+namespace Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
+
+public enum UpdateNotificationSettingsError
 {
-   public enum UpdateNotificationSettingsError
-   {
-      UnknownError,
-      EmailAddressNotVerified
-   }
+   UnknownError,
+   EmailAddressNotVerified
 }

@@ -28,65 +28,64 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+/// <summary>
+/// 
+/// </summary>
+/// <remarks>
+/// Ideally this class would not have an 'Id', but this is required in order to use Entity Framework.
+/// EF does not track keyless entities; it cannot even perform INSERT operations on them.
+/// 
+/// The 'Id' property is configured as an "Identity" column in the ModelBuilder.
+/// The database engine will take care of assigning this value.
+/// </remarks>
+public class UserConsentEntity
 {
-   /// <summary>
-   /// 
-   /// </summary>
-   /// <remarks>
-   /// Ideally this class would not have an 'Id', but this is required in order to use Entity Framework.
-   /// EF does not track keyless entities; it cannot even perform INSERT operations on them.
-   /// 
-   /// The 'Id' property is configured as an "Identity" column in the ModelBuilder.
-   /// The database engine will take care of assigning this value.
-   /// </remarks>
-   public class UserConsentEntity
+   public long Id { get; set; }
+   public Guid Owner { get; set; }
+   public ConsentType ConsentType { get; set; }
+   public DateTime Created { get; set; }
+   public DateTime? Deactivated { get; set; }
+   public bool Active { get; set; }
+
+   public UserEntity User { get; set; }
+
+   public UserConsentEntity(Guid owner, ConsentType consentType, bool active, DateTime created, DateTime? deactivated = null)
    {
-      public long Id { get; set; }
-      public Guid Owner { get; set; }
-      public ConsentType ConsentType { get; set; }
-      public DateTime Created { get; set; }
-      public DateTime? Deactivated { get; set; }
-      public bool Active { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserConsentEntity(Guid owner, ConsentType consentType, bool active, DateTime created, DateTime? deactivated = null)
-      {
-         Owner = owner;
-         ConsentType = consentType;
-         Active = active;
-         Created = created;
-         Deactivated = deactivated;
-      }
+      Owner = owner;
+      ConsentType = consentType;
+      Active = active;
+      Created = created;
+      Deactivated = deactivated;
    }
+}
 
-   public enum ConsentType
+public enum ConsentType
+{
+   TermsOfService,
+   PrivacyPolicy,
+   RecoveryKeyRisks
+}
+
+public class UserConsentEntityConfiguration : IEntityTypeConfiguration<UserConsentEntity>
+{
+   public void Configure(EntityTypeBuilder<UserConsentEntity> builder)
    {
-      TermsOfService,
-      PrivacyPolicy,
-      RecoveryKeyRisks
-   }
+      builder.ToTable("UserConsent");
 
-   public class UserConsentEntityConfiguration : IEntityTypeConfiguration<UserConsentEntity>
-   {
-      public void Configure(EntityTypeBuilder<UserConsentEntity> builder)
-      {
-         builder.ToTable("UserConsent");
+      builder.HasKey(x => x.Id);
 
-         builder.HasKey(x => x.Id);
+      builder.Property(x => x.Id)
+         .UseIdentityAlwaysColumn();
 
-         builder.Property(x => x.Id)
-            .UseIdentityAlwaysColumn();
+      builder.Property(x => x.Active);
 
-         builder.Property(x => x.Active);
+      builder.HasIndex(x => x.Owner);
 
-         builder.HasIndex(x => x.Owner);
-
-         builder.HasOne(x => x.User)
-            .WithMany(x => x.Consents)
-            .HasForeignKey(x => x.Owner)
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.User)
+         .WithMany(x => x.Consents)
+         .HasForeignKey(x => x.Owner)
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

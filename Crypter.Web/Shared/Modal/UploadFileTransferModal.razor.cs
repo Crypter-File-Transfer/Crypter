@@ -30,37 +30,36 @@ using Crypter.Web.Shared.Transfer;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared.Modal
+namespace Crypter.Web.Shared.Modal;
+
+public partial class UploadFileTransferModalBase : ComponentBase
 {
-   public partial class UploadFileTransferModalBase : ComponentBase
+   [Parameter]
+   public string InstanceId { get; set; }
+
+   [Parameter]
+   public Maybe<string> RecipientUsername { get; set; }
+
+   [Parameter]
+   public Maybe<byte[]> RecipientPublicKey { get; set; }
+
+   [Parameter]
+   public EventCallback ModalClosedCallback { get; set; }
+
+   protected ModalBehavior ModalBehaviorRef;
+   protected UploadFileTransfer UploadComponent;
+
+   protected int ExpirationHours;
+
+   public void Open()
    {
-      [Parameter]
-      public string InstanceId { get; set; }
+      ModalBehaviorRef.Open();
+   }
 
-      [Parameter]
-      public Maybe<string> RecipientUsername { get; set; }
-
-      [Parameter]
-      public Maybe<byte[]> RecipientPublicKey { get; set; }
-
-      [Parameter]
-      public EventCallback ModalClosedCallback { get; set; }
-
-      protected ModalBehavior ModalBehaviorRef;
-      protected UploadFileTransfer UploadComponent;
-
-      protected int ExpirationHours;
-
-      public void Open()
-      {
-         ModalBehaviorRef.Open();
-      }
-
-      public async Task CloseAsync()
-      {
-         UploadComponent.Dispose();
-         await ModalClosedCallback.InvokeAsync();
-         ModalBehaviorRef.Close();
-      }
+   public async Task CloseAsync()
+   {
+      UploadComponent.Dispose();
+      await ModalClosedCallback.InvokeAsync();
+      ModalBehaviorRef.Close();
    }
 }

@@ -28,39 +28,38 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserProfileEntity
 {
-   public class UserProfileEntity
+   public Guid Owner { get; set; }
+   public string Alias { get; set; }
+   public string About { get; set; }
+   public string Image { get; set; }
+
+   public UserEntity User { get; set; }
+
+   public UserProfileEntity(Guid owner, string alias, string about, string image)
    {
-      public Guid Owner { get; set; }
-      public string Alias { get; set; }
-      public string About { get; set; }
-      public string Image { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserProfileEntity(Guid owner, string alias, string about, string image)
-      {
-         Owner = owner;
-         Alias = alias;
-         About = about;
-         Image = image;
-      }
+      Owner = owner;
+      Alias = alias;
+      About = about;
+      Image = image;
    }
+}
 
-   public class UserProfileEntityConfiguration : IEntityTypeConfiguration<UserProfileEntity>
+public class UserProfileEntityConfiguration : IEntityTypeConfiguration<UserProfileEntity>
+{
+   public void Configure(EntityTypeBuilder<UserProfileEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserProfileEntity> builder)
-      {
-         builder.ToTable("UserProfile");
+      builder.ToTable("UserProfile");
 
-         builder.HasKey(x => x.Owner);
+      builder.HasKey(x => x.Owner);
 
-         builder.HasOne(x => x.User)
-            .WithOne(x => x.Profile)
-            .HasForeignKey<UserProfileEntity>(x => x.Owner)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.User)
+         .WithOne(x => x.Profile)
+         .HasForeignKey<UserProfileEntity>(x => x.Owner)
+         .IsRequired()
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

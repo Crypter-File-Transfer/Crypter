@@ -28,19 +28,18 @@ using System.Runtime.Versioning;
 using BlazorSodium.Sodium;
 using Crypter.Crypto.Common.Random;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
-{
-   [SupportedOSPlatform("browser")]
-   public class Random : IRandom
-   {
-      public byte[] GenerateRandomBytes(int size)
-      {
-         return RandomBytes.RandomBytes_Buf((uint)size);
-      }
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
 
-      public uint GenerateRandomNumber()
-      {
-         return RandomBytes.RandomBytes_Random();
-      }
+[SupportedOSPlatform("browser")]
+public class Random : IRandom
+{
+   public byte[] GenerateRandomBytes(int size)
+   {
+      return RandomBytes.RandomBytes_Buf((uint)size);
+   }
+
+   public uint GenerateRandomNumber()
+   {
+      return RandomBytes.RandomBytes_Random();
    }
 }

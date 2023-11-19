@@ -32,22 +32,21 @@ using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Requests
+namespace Crypter.Common.Client.Interfaces.Requests;
+
+public interface IUserSettingRequests
 {
-   public interface IUserSettingRequests
-   {
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(ProfileSettings newProfileSettings);
+   Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
+   Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(ProfileSettings newProfileSettings);
 
-      Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync();
-      Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(UpdateContactInfoSettingsRequest newContactInfoSettings);
+   Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync();
+   Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(UpdateContactInfoSettingsRequest newContactInfoSettings);
 
-      Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync();
-      Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings);
+   Task<Maybe<NotificationSettings>> GetNotificationSettingsAsync();
+   Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings);
 
-      Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync();
-      Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(PrivacySettings newPrivacySettings);
+   Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync();
+   Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(PrivacySettings newPrivacySettings);
 
-      Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
-   }
+   Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo);
 }

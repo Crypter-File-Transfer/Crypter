@@ -24,16 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication
+namespace Crypter.Common.Contracts.Features.UserAuthentication;
+
+public enum LoginError
 {
-   public enum LoginError
-   {
-      UnknownError,
-      InvalidUsername,
-      InvalidPassword,
-      InvalidTokenTypeRequested,
-      ExcessiveFailedLoginAttempts,
-      InvalidPasswordVersion,
-      PasswordHashFailure
-   }
+   UnknownError,
+   InvalidUsername,
+   InvalidPassword,
+   InvalidTokenTypeRequested,
+   ExcessiveFailedLoginAttempts,
+   InvalidPasswordVersion,
+   PasswordHashFailure
 }

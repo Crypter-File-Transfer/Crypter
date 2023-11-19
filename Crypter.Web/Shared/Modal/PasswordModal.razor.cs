@@ -29,60 +29,59 @@ using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared.Modal
+namespace Crypter.Web.Shared.Modal;
+
+public class PasswordModalBase : ComponentBase
 {
-   public class PasswordModalBase : ComponentBase
+   [Inject]
+   private IUserSessionService UserSessionService { get; set; }
+
+   [Parameter]
+   public EventCallback<bool> ModalClosedCallback { get; set; }
+
+   protected ModalBehavior ModalBehaviorRef { get; set; }
+
+   protected string Username;
+   protected string Password;
+   protected bool PasswordTestFailed;
+
+   public void Open()
    {
-      [Inject]
-      private IUserSessionService UserSessionService { get; set; }
+      Username = UserSessionService.Session.Match(
+         () => string.Empty,
+         x => x.Username);
 
-      [Parameter]
-      public EventCallback<bool> ModalClosedCallback { get; set; }
+      ModalBehaviorRef.Open();
+   }
 
-      protected ModalBehavior ModalBehaviorRef { get; set; }
+   public async Task CloseAsync(bool success)
+   {
+      await ModalClosedCallback.InvokeAsync(success);
+      ModalBehaviorRef.Close();
+   }
 
-      protected string Username;
-      protected string Password;
-      protected bool PasswordTestFailed;
-
-      public void Open()
+   public async Task<bool> TestPasswordAsync()
+   {
+      if (!Common.Primitives.Password.TryFrom(Password, out var password))
       {
-         Username = UserSessionService.Session.Match(
-            () => string.Empty,
-            x => x.Username);
-
-         ModalBehaviorRef.Open();
+         return false;
       }
 
-      public async Task CloseAsync(bool success)
+      return await UserSessionService.TestPasswordAsync(password);
+   }
+
+   public async Task OnSubmitClickedAsync()
+   {
+      if (await TestPasswordAsync())
       {
-         await ModalClosedCallback.InvokeAsync(success);
-         ModalBehaviorRef.Close();
+         await CloseAsync(true);
       }
 
-      public async Task<bool> TestPasswordAsync()
-      {
-         if (!Common.Primitives.Password.TryFrom(Password, out var password))
-         {
-            return false;
-         }
+      PasswordTestFailed = true;
+   }
 
-         return await UserSessionService.TestPasswordAsync(password);
-      }
-
-      public async Task OnSubmitClickedAsync()
-      {
-         if (await TestPasswordAsync())
-         {
-            await CloseAsync(true);
-         }
-
-         PasswordTestFailed = true;
-      }
-
-      public async Task OnCancelClickedAsync()
-      {
-         await CloseAsync(false);
-      }
+   public async Task OnCancelClickedAsync()
+   {
+      await CloseAsync(false);
    }
 }

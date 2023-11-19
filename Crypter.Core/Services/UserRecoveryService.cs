@@ -35,66 +35,65 @@ using Crypter.Crypto.Common;
 using EasyMonads;
 using Hangfire;
 
-namespace Crypter.Core.Services
+namespace Crypter.Core.Services;
+
+public interface IUserRecoveryService
 {
-   public interface IUserRecoveryService
+   Task<Maybe<UserRecoveryParameters>> GenerateRecoveryParametersAsync(string emailAddress);
+   byte[] GenerateRecoverySignature(ReadOnlySpan<byte> privateKey, Guid recoveryCode, Username username);
+   Task DeleteSavedRecoveryParametersAsync(Guid userId);
+   Task<Either<SubmitRecoveryError, Unit>> PerformRecoveryAsync(SubmitRecoveryRequest recoveryRequest);
+}
+
+public class UserRecoveryService : IUserRecoveryService
+{
+   private readonly DataContext _dataContext;
+   private readonly IBackgroundJobClient _backgroundJobClient;
+   private readonly ICryptoProvider _cryptoProvider;
+   private readonly IPasswordHashService _passwordHashService;
+   private readonly IUserKeysService _userKeysService;
+   private readonly IUserTransferService _userTransferService;
+
+   public UserRecoveryService(DataContext context, IBackgroundJobClient backgroundJobClient, ICryptoProvider cryptoProvider, IPasswordHashService passwordHashService, IUserKeysService userKeysService, IUserTransferService userTransferService)
    {
-      Task<Maybe<UserRecoveryParameters>> GenerateRecoveryParametersAsync(string emailAddress);
-      byte[] GenerateRecoverySignature(ReadOnlySpan<byte> privateKey, Guid recoveryCode, Username username);
-      Task DeleteSavedRecoveryParametersAsync(Guid userId);
-      Task<Either<SubmitRecoveryError, Unit>> PerformRecoveryAsync(SubmitRecoveryRequest recoveryRequest);
+      _dataContext = context;
+      _backgroundJobClient = backgroundJobClient;
+      _cryptoProvider = cryptoProvider;
+      _passwordHashService = passwordHashService;
+      _userKeysService = userKeysService;
+      _userTransferService = userTransferService;
    }
 
-   public class UserRecoveryService : IUserRecoveryService
+   public Task<Maybe<UserRecoveryParameters>> GenerateRecoveryParametersAsync(string emailAddress)
    {
-      private readonly DataContext _dataContext;
-      private readonly IBackgroundJobClient _backgroundJobClient;
-      private readonly ICryptoProvider _cryptoProvider;
-      private readonly IPasswordHashService _passwordHashService;
-      private readonly IUserKeysService _userKeysService;
-      private readonly IUserTransferService _userTransferService;
+      return UserRecoveryQueries.GenerateRecoveryParametersAsync(_dataContext, _cryptoProvider, emailAddress);
+   }
 
-      public UserRecoveryService(DataContext context, IBackgroundJobClient backgroundJobClient, ICryptoProvider cryptoProvider, IPasswordHashService passwordHashService, IUserKeysService userKeysService, IUserTransferService userTransferService)
-      {
-         _dataContext = context;
-         _backgroundJobClient = backgroundJobClient;
-         _cryptoProvider = cryptoProvider;
-         _passwordHashService = passwordHashService;
-         _userKeysService = userKeysService;
-         _userTransferService = userTransferService;
-      }
+   public byte[] GenerateRecoverySignature(ReadOnlySpan<byte> privateKey, Guid recoveryCode, Username username)
+   {
+      return UserRecoveryQueries.GenerateRecoverySignature(_cryptoProvider, privateKey, recoveryCode, username);
+   }
 
-      public Task<Maybe<UserRecoveryParameters>> GenerateRecoveryParametersAsync(string emailAddress)
-      {
-         return UserRecoveryQueries.GenerateRecoveryParametersAsync(_dataContext, _cryptoProvider, emailAddress);
-      }
+   public Task DeleteSavedRecoveryParametersAsync(Guid userId)
+   {
+      return UserRecoveryCommands.DeleteRecoveryParametersAsync(_dataContext, userId);
+   }
 
-      public byte[] GenerateRecoverySignature(ReadOnlySpan<byte> privateKey, Guid recoveryCode, Username username)
-      {
-         return UserRecoveryQueries.GenerateRecoverySignature(_cryptoProvider, privateKey, recoveryCode, username);
-      }
-
-      public Task DeleteSavedRecoveryParametersAsync(Guid userId)
-      {
-         return UserRecoveryCommands.DeleteRecoveryParametersAsync(_dataContext, userId);
-      }
-
-      public Task<Either<SubmitRecoveryError, Unit>> PerformRecoveryAsync(SubmitRecoveryRequest recoveryRequest)
-      {
-         return UserRecoveryCommands.PerformRecoveryAsync(_dataContext, _cryptoProvider, _passwordHashService, recoveryRequest)
-            .DoRightAsync(x =>
+   public Task<Either<SubmitRecoveryError, Unit>> PerformRecoveryAsync(SubmitRecoveryRequest recoveryRequest)
+   {
+      return UserRecoveryCommands.PerformRecoveryAsync(_dataContext, _cryptoProvider, _passwordHashService, recoveryRequest)
+         .DoRightAsync(x =>
+         {
+            if (x.DeleteUserKeys)
             {
-               if (x.DeleteUserKeys)
-               {
-                  _backgroundJobClient.Enqueue(() => _userKeysService.DeleteUserKeysAsync(x.UserId));
-               }
+               _backgroundJobClient.Enqueue(() => _userKeysService.DeleteUserKeysAsync(x.UserId));
+            }
 
-               if (x.DeleteUserReceivedTransfers)
-               {
-                  _backgroundJobClient.Enqueue(() => _userTransferService.DeleteReceivedTransfersAsync(x.UserId));
-               }
-            })
-            .MapAsync<SubmitRecoveryError, PerformRecoveryResult, Unit>(_ => Unit.Default);
-      }
+            if (x.DeleteUserReceivedTransfers)
+            {
+               _backgroundJobClient.Enqueue(() => _userTransferService.DeleteReceivedTransfersAsync(x.UserId));
+            }
+         })
+         .MapAsync<SubmitRecoveryError, PerformRecoveryResult, Unit>(_ => Unit.Default);
    }
 }

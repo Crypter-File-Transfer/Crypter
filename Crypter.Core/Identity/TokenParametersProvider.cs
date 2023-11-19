@@ -27,25 +27,24 @@
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Crypter.Core.Identity
+namespace Crypter.Core.Identity;
+
+public static class TokenParametersProvider
 {
-   public static class TokenParametersProvider
+   public static TokenValidationParameters GetTokenValidationParameters(TokenSettings tokenSettings)
    {
-      public static TokenValidationParameters GetTokenValidationParameters(TokenSettings tokenSettings)
+      return new TokenValidationParameters
       {
-         return new TokenValidationParameters
-         {
-            ValidateAudience = true,
-            ValidAudience = tokenSettings.Audience,
-            ValidIssuer = tokenSettings.Issuer,
-            ValidateIssuer = true,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSettings.SecretKey)),
-            ValidateLifetime = true,
-            ClockSkew = TokenValidationParameters.DefaultClockSkew,
-            RequireExpirationTime = true,
-            ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 }
-         };
-      }
+         ValidateAudience = true,
+         ValidAudience = tokenSettings.Audience,
+         ValidIssuer = tokenSettings.Issuer,
+         ValidateIssuer = true,
+         ValidateIssuerSigningKey = true,
+         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSettings.SecretKey)),
+         ValidateLifetime = true,
+         ClockSkew = TokenValidationParameters.DefaultClockSkew,
+         RequireExpirationTime = true,
+         ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 }
+      };
    }
 }

@@ -31,121 +31,120 @@ using Crypter.Common.Primitives;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared.UserSettings
+namespace Crypter.Web.Shared.UserSettings;
+
+public partial class UserSettingsContactInfoBase : ComponentBase
 {
-   public partial class UserSettingsContactInfoBase : ComponentBase
+   [Inject]
+   protected IUserContactInfoSettingsService UserContactInfoSettingsService { get; set; }
+
+   protected string EmailAddress { get; set; } = string.Empty;
+   protected string EmailAddressEdit { get; set; } = string.Empty;
+
+   protected bool EmailAddressVerified { get; set; } = false;
+
+   protected string Password { get; set; } = string.Empty;
+
+   protected bool IsDataReady { get; set; } = false;
+   protected bool IsEditing { get; set; } = false;
+
+   protected string EmailAddressError = string.Empty;
+   protected string PasswordError = string.Empty;
+   protected string GenericError = string.Empty;
+
+   protected override async Task OnInitializedAsync()
    {
-      [Inject]
-      protected IUserContactInfoSettingsService UserContactInfoSettingsService { get; set; }
-
-      protected string EmailAddress { get; set; } = string.Empty;
-      protected string EmailAddressEdit { get; set; } = string.Empty;
-
-      protected bool EmailAddressVerified { get; set; } = false;
-
-      protected string Password { get; set; } = string.Empty;
-
-      protected bool IsDataReady { get; set; } = false;
-      protected bool IsEditing { get; set; } = false;
-
-      protected string EmailAddressError = string.Empty;
-      protected string PasswordError = string.Empty;
-      protected string GenericError = string.Empty;
-
-      protected override async Task OnInitializedAsync()
-      {
-         await UserContactInfoSettingsService.GetContactInfoSettingsAsync()
-            .IfSomeAsync(x =>
-            {
-               EmailAddress = x.EmailAddress;
-               EmailAddressEdit = x.EmailAddress;
-
-               EmailAddressVerified = x.EmailAddressVerified;
-            });
-
-         IsDataReady = true;
-      }
-
-      protected void OnEditClicked()
-      {
-         IsEditing = true;
-      }
-
-      protected void OnCancelClicked()
-      {
-         ResetErrors();
-         Password = string.Empty;
-         EmailAddressEdit = EmailAddress;
-         IsEditing = false;
-      }
-
-      private void ResetErrors()
-      {
-         EmailAddressError = string.Empty;
-         PasswordError = string.Empty;
-         GenericError = string.Empty;
-      }
-
-      protected async Task OnSaveClickedAsync()
-      {
-         ResetErrors();
-
-         if (!Common.Primitives.Password.TryFrom(Password, out var password))
+      await UserContactInfoSettingsService.GetContactInfoSettingsAsync()
+         .IfSomeAsync(x =>
          {
-            PasswordError = "Enter your current password";
-            return;
-         }
+            EmailAddress = x.EmailAddress;
+            EmailAddressEdit = x.EmailAddress;
 
-         bool someEmailAddress = !string.IsNullOrEmpty(EmailAddressEdit);
-         bool validEmailAddress = Common.Primitives.EmailAddress.TryFrom(EmailAddressEdit, out var emailAddress);
+            EmailAddressVerified = x.EmailAddressVerified;
+         });
 
-         if (someEmailAddress && !validEmailAddress)
-         {
-            EmailAddressError = "You must either enter a valid email address or provide a blank value";
-            return;
-         }
+      IsDataReady = true;
+   }
 
-         Maybe<EmailAddress> newEmailAddress = validEmailAddress
-            ? emailAddress
-            : Maybe<EmailAddress>.None;
+   protected void OnEditClicked()
+   {
+      IsEditing = true;
+   }
 
-         await UserContactInfoSettingsService.UpdateContactInfoSettingsAsync(emailAddress, password)
-            .DoRightAsync(x =>
-            {
-               EmailAddress = x.EmailAddress;
-               EmailAddressEdit = x.EmailAddress;
+   protected void OnCancelClicked()
+   {
+      ResetErrors();
+      Password = string.Empty;
+      EmailAddressEdit = EmailAddress;
+      IsEditing = false;
+   }
 
-               EmailAddressVerified = x.EmailAddressVerified;
-            })
-            .DoLeftOrNeitherAsync(
-               HandleContactInfoUpdateError,
-               () => HandleContactInfoUpdateError());
+   private void ResetErrors()
+   {
+      EmailAddressError = string.Empty;
+      PasswordError = string.Empty;
+      GenericError = string.Empty;
+   }
 
-         Password = string.Empty;
-         IsEditing = false;
+   protected async Task OnSaveClickedAsync()
+   {
+      ResetErrors();
+
+      if (!Common.Primitives.Password.TryFrom(Password, out var password))
+      {
+         PasswordError = "Enter your current password";
+         return;
       }
 
-      private void HandleContactInfoUpdateError(UpdateContactInfoSettingsError error = UpdateContactInfoSettingsError.UnknownError)
+      bool someEmailAddress = !string.IsNullOrEmpty(EmailAddressEdit);
+      bool validEmailAddress = Common.Primitives.EmailAddress.TryFrom(EmailAddressEdit, out var emailAddress);
+
+      if (someEmailAddress && !validEmailAddress)
       {
-         switch (error)
+         EmailAddressError = "You must either enter a valid email address or provide a blank value";
+         return;
+      }
+
+      Maybe<EmailAddress> newEmailAddress = validEmailAddress
+         ? emailAddress
+         : Maybe<EmailAddress>.None;
+
+      await UserContactInfoSettingsService.UpdateContactInfoSettingsAsync(emailAddress, password)
+         .DoRightAsync(x =>
          {
-            case UpdateContactInfoSettingsError.UnknownError:
-            case UpdateContactInfoSettingsError.UserNotFound:
-               GenericError = "An error occurred";
-               break;
-            case UpdateContactInfoSettingsError.EmailAddressUnavailable:
-               EmailAddressError = "Email address unavailable";
-               break;
-            case UpdateContactInfoSettingsError.InvalidEmailAddress:
-               EmailAddressError = "Invalid email address";
-               break;
-            case UpdateContactInfoSettingsError.InvalidPassword:
-               PasswordError = "Incorrect password";
-               break;
-            case UpdateContactInfoSettingsError.PasswordHashFailure:
-               PasswordError = "A cryptographic error occured. This device or browser may not be supported.";
-               break;
-         }
+            EmailAddress = x.EmailAddress;
+            EmailAddressEdit = x.EmailAddress;
+
+            EmailAddressVerified = x.EmailAddressVerified;
+         })
+         .DoLeftOrNeitherAsync(
+            HandleContactInfoUpdateError,
+            () => HandleContactInfoUpdateError());
+
+      Password = string.Empty;
+      IsEditing = false;
+   }
+
+   private void HandleContactInfoUpdateError(UpdateContactInfoSettingsError error = UpdateContactInfoSettingsError.UnknownError)
+   {
+      switch (error)
+      {
+         case UpdateContactInfoSettingsError.UnknownError:
+         case UpdateContactInfoSettingsError.UserNotFound:
+            GenericError = "An error occurred";
+            break;
+         case UpdateContactInfoSettingsError.EmailAddressUnavailable:
+            EmailAddressError = "Email address unavailable";
+            break;
+         case UpdateContactInfoSettingsError.InvalidEmailAddress:
+            EmailAddressError = "Invalid email address";
+            break;
+         case UpdateContactInfoSettingsError.InvalidPassword:
+            PasswordError = "Incorrect password";
+            break;
+         case UpdateContactInfoSettingsError.PasswordHashFailure:
+            PasswordError = "A cryptographic error occured. This device or browser may not be supported.";
+            break;
       }
    }
 }

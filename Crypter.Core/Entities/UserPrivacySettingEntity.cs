@@ -29,41 +29,40 @@ using Crypter.Common.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserPrivacySettingEntity
 {
-   public class UserPrivacySettingEntity
+   public Guid Owner { get; set; }
+   public bool AllowKeyExchangeRequests { get; set; }
+   public UserVisibilityLevel Visibility { get; set; }
+   public UserItemTransferPermission ReceiveFiles { get; set; }
+   public UserItemTransferPermission ReceiveMessages { get; set; }
+
+   public UserEntity User { get; set; }
+
+   public UserPrivacySettingEntity(Guid owner, bool allowKeyExchangeRequests, UserVisibilityLevel visibility, UserItemTransferPermission receiveFiles, UserItemTransferPermission receiveMessages)
    {
-      public Guid Owner { get; set; }
-      public bool AllowKeyExchangeRequests { get; set; }
-      public UserVisibilityLevel Visibility { get; set; }
-      public UserItemTransferPermission ReceiveFiles { get; set; }
-      public UserItemTransferPermission ReceiveMessages { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserPrivacySettingEntity(Guid owner, bool allowKeyExchangeRequests, UserVisibilityLevel visibility, UserItemTransferPermission receiveFiles, UserItemTransferPermission receiveMessages)
-      {
-         Owner = owner;
-         AllowKeyExchangeRequests = allowKeyExchangeRequests;
-         Visibility = visibility;
-         ReceiveFiles = receiveFiles;
-         ReceiveMessages = receiveMessages;
-      }
+      Owner = owner;
+      AllowKeyExchangeRequests = allowKeyExchangeRequests;
+      Visibility = visibility;
+      ReceiveFiles = receiveFiles;
+      ReceiveMessages = receiveMessages;
    }
+}
 
-   public class UserPrivacySettingEntityConfiguration : IEntityTypeConfiguration<UserPrivacySettingEntity>
+public class UserPrivacySettingEntityConfiguration : IEntityTypeConfiguration<UserPrivacySettingEntity>
+{
+   public void Configure(EntityTypeBuilder<UserPrivacySettingEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserPrivacySettingEntity> builder)
-      {
-         builder.ToTable("UserPrivacySetting");
+      builder.ToTable("UserPrivacySetting");
 
-         builder.HasKey(x => x.Owner);
+      builder.HasKey(x => x.Owner);
 
-         builder.HasOne(x => x.User)
-            .WithOne(x => x.PrivacySetting)
-            .HasForeignKey<UserPrivacySettingEntity>(x => x.Owner)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.User)
+         .WithOne(x => x.PrivacySetting)
+         .HasForeignKey<UserPrivacySettingEntity>(x => x.Owner)
+         .IsRequired()
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

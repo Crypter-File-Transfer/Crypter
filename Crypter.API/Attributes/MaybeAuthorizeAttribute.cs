@@ -31,31 +31,30 @@ using EasyMonads;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Crypter.API.Attributes
+namespace Crypter.API.Attributes;
+
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+internal class MaybeAuthorizeAttribute : Attribute, IAuthorizationFilter
 {
-   [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
-   internal class MaybeAuthorizeAttribute : Attribute, IAuthorizationFilter
+   public void OnAuthorization(AuthorizationFilterContext context)
    {
-      public void OnAuthorization(AuthorizationFilterContext context)
+      string authorization = context.HttpContext.Request.Headers.Authorization;
+      bool authorizationProvided = !string.IsNullOrEmpty(authorization);
+
+      if (authorizationProvided)
       {
-         string authorization = context.HttpContext.Request.Headers.Authorization;
-         bool authorizationProvided = !string.IsNullOrEmpty(authorization);
-
-         if (authorizationProvided)
+         string[] authorizationParts = authorization.Split(' ');
+         if (authorizationParts.Length != 2 || authorizationParts[0].ToLower() != "bearer")
          {
-            string[] authorizationParts = authorization.Split(' ');
-            if (authorizationParts.Length != 2 || authorizationParts[0].ToLower() != "bearer")
-            {
-               context.Result = new UnauthorizedResult();
-               return;
-            }
-
-            ITokenService tokenService = (ITokenService)context.HttpContext.RequestServices.GetService(typeof(ITokenService));
-            Maybe<ClaimsPrincipal> maybeClaims = tokenService.ValidateToken(authorizationParts[1]);
-
-            maybeClaims.IfSome(x => context.HttpContext.User = x);
-            maybeClaims.IfNone(() => context.Result = new UnauthorizedResult());
+            context.Result = new UnauthorizedResult();
+            return;
          }
+
+         ITokenService tokenService = (ITokenService)context.HttpContext.RequestServices.GetService(typeof(ITokenService));
+         Maybe<ClaimsPrincipal> maybeClaims = tokenService.ValidateToken(authorizationParts[1]);
+
+         maybeClaims.IfSome(x => context.HttpContext.User = x);
+         maybeClaims.IfNone(() => context.Result = new UnauthorizedResult());
       }
    }
 }

@@ -24,17 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings.ProfileSettings
-{
-   public class ProfileSettings
-   {
-      public string Alias { get; init; }
-      public string About { get; init; }
+namespace Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 
-      public ProfileSettings(string alias, string about)
-      {
-         Alias = alias;
-         About = about;
-      }
+public class ProfileSettings
+{
+   public string Alias { get; init; }
+   public string About { get; init; }
+
+   public ProfileSettings(string alias, string about)
+   {
+      Alias = alias;
+      About = about;
    }
 }

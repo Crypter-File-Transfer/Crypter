@@ -32,49 +32,48 @@ using Crypter.Common.Client.Interfaces.Services.UserSettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Services.UserSettings
+namespace Crypter.Common.Client.Services.UserSettings;
+
+public class UserProfileSettingsService : IUserProfileSettingsService, IDisposable
 {
-   public class UserProfileSettingsService : IUserProfileSettingsService, IDisposable
+   private readonly ICrypterApiClient _crypterApiClient;
+   private readonly IUserSessionService _userSessionService;
+
+   private Maybe<ProfileSettings> _profileSettings;
+
+   public UserProfileSettingsService(ICrypterApiClient crypterApiClient, IUserSessionService userSessionService)
    {
-      private readonly ICrypterApiClient _crypterApiClient;
-      private readonly IUserSessionService _userSessionService;
+      _crypterApiClient = crypterApiClient;
+      _userSessionService = userSessionService;
 
-      private Maybe<ProfileSettings> _profileSettings;
+      _userSessionService.UserLoggedOutEventHandler += Recycle;
+   }
 
-      public UserProfileSettingsService(ICrypterApiClient crypterApiClient, IUserSessionService userSessionService)
+   public async Task<Maybe<ProfileSettings>> GetProfileSettingsAsync()
+   {
+      if (_profileSettings.IsNone)
       {
-         _crypterApiClient = crypterApiClient;
-         _userSessionService = userSessionService;
-
-         _userSessionService.UserLoggedOutEventHandler += Recycle;
+         _profileSettings = await _crypterApiClient.UserSetting.GetProfileSettingsAsync();
       }
 
-      public async Task<Maybe<ProfileSettings>> GetProfileSettingsAsync()
-      {
-         if (_profileSettings.IsNone)
-         {
-            _profileSettings = await _crypterApiClient.UserSetting.GetProfileSettingsAsync();
-         }
+      return _profileSettings;
+   }
 
-         return _profileSettings;
-      }
+   public async Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(ProfileSettings newProfileSettings)
+   {
+      Either<SetProfileSettingsError, ProfileSettings> result = await _crypterApiClient.UserSetting.SetProfileSettingsAsync(newProfileSettings);
+      _profileSettings = result.ToMaybe();
+      return result;
+   }
 
-      public async Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(ProfileSettings newProfileSettings)
-      {
-         Either<SetProfileSettingsError, ProfileSettings> result = await _crypterApiClient.UserSetting.SetProfileSettingsAsync(newProfileSettings);
-         _profileSettings = result.ToMaybe();
-         return result;
-      }
+   private void Recycle(object sender, EventArgs _)
+   {
+      _profileSettings = Maybe<ProfileSettings>.None;
+   }
 
-      private void Recycle(object sender, EventArgs _)
-      {
-         _profileSettings = Maybe<ProfileSettings>.None;
-      }
-
-      public void Dispose()
-      {
-         _userSessionService.UserLoggedOutEventHandler -= Recycle;
-         GC.SuppressFinalize(this);
-      }
+   public void Dispose()
+   {
+      _userSessionService.UserLoggedOutEventHandler -= Recycle;
+      GC.SuppressFinalize(this);
    }
 }

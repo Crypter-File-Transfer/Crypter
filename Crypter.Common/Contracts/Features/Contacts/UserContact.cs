@@ -24,17 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Contacts
-{
-   public class UserContact
-   {
-      public string Username { get; init; }
-      public string Alias { get; init; }
+namespace Crypter.Common.Contracts.Features.Contacts;
 
-      public UserContact(string username, string alias)
-      {
-         Username = username;
-         Alias = alias;
-      }
+public class UserContact
+{
+   public string Username { get; init; }
+   public string Alias { get; init; }
+
+   public UserContact(string username, string alias)
+   {
+      Username = username;
+      Alias = alias;
    }
 }

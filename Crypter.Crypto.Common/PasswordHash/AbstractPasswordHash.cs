@@ -27,39 +27,38 @@
 using System;
 using EasyMonads;
 
-namespace Crypter.Crypto.Common.PasswordHash
+namespace Crypter.Crypto.Common.PasswordHash;
+
+public abstract class AbstractPasswordHash : IPasswordHash
 {
-   public abstract class AbstractPasswordHash : IPasswordHash
+   public uint SaltSize { get => Constants.SALT_BYTES; }
+
+   public Either<Exception, byte[]> GenerateKey(string password, ReadOnlySpan<byte> salt, uint outputLength, OpsLimit opsLimit, MemLimit memLimit)
    {
-      public uint SaltSize { get => Constants.SALT_BYTES; }
-
-      public Either<Exception, byte[]> GenerateKey(string password, ReadOnlySpan<byte> salt, uint outputLength, OpsLimit opsLimit, MemLimit memLimit)
+#pragma warning disable CS8524
+      uint opsLimitNum = opsLimit switch
       {
-#pragma warning disable CS8524
-         uint opsLimitNum = opsLimit switch
-         {
-            OpsLimit.Minimum => Constants.OPSLIMIT_MIN,
-            OpsLimit.Interactive => Constants.OPSLIMIT_INTERACTIVE,
-            OpsLimit.Moderate => Constants.OPSLIMIT_MODERATE,
-            OpsLimit.Sensitive => Constants.OPSLIMIT_SENSITIVE,
-            OpsLimit.Maximum => Constants.OPSLIMIT_MAX
-         };
+         OpsLimit.Minimum => Constants.OPSLIMIT_MIN,
+         OpsLimit.Interactive => Constants.OPSLIMIT_INTERACTIVE,
+         OpsLimit.Moderate => Constants.OPSLIMIT_MODERATE,
+         OpsLimit.Sensitive => Constants.OPSLIMIT_SENSITIVE,
+         OpsLimit.Maximum => Constants.OPSLIMIT_MAX
+      };
 #pragma warning restore CS8524
 
 #pragma warning disable CS8524
-         uint memLimitNum = memLimit switch
-         {
-            MemLimit.Minimum => Constants.MEMLIMIT_MIN,
-            MemLimit.Interactive => Constants.MEMLIMIT_INTERACTIVE,
-            MemLimit.Moderate => Constants.MEMLIMIT_MODERATE,
-            MemLimit.Sensitive => Constants.MEMLIMIT_SENSITIVE,
-            MemLimit.Maximum => Constants.MEMLIMIT_MAX
-         };
+      uint memLimitNum = memLimit switch
+      {
+         MemLimit.Minimum => Constants.MEMLIMIT_MIN,
+         MemLimit.Interactive => Constants.MEMLIMIT_INTERACTIVE,
+         MemLimit.Moderate => Constants.MEMLIMIT_MODERATE,
+         MemLimit.Sensitive => Constants.MEMLIMIT_SENSITIVE,
+         MemLimit.Maximum => Constants.MEMLIMIT_MAX
+      };
 #pragma warning restore CS8524
 
-         return HashImplementation(password, salt, outputLength, opsLimitNum, memLimitNum);
-      }
-
-      protected abstract Either<Exception, byte[]> HashImplementation(string password, ReadOnlySpan<byte> salt, uint outputLength, uint opsLimit, uint memLimit);
+      return HashImplementation(password, salt, outputLength, opsLimitNum, memLimitNum);
    }
+
+   protected abstract Either<Exception, byte[]> HashImplementation(string password, ReadOnlySpan<byte> salt, uint outputLength, uint opsLimit, uint memLimit);
 }

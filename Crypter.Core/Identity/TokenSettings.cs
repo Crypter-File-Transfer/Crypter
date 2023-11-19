@@ -24,15 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Identity
+namespace Crypter.Core.Identity;
+
+public class TokenSettings
 {
-   public class TokenSettings
-   {
-      public string Audience { get; set; }
-      public string Issuer { get; set; }
-      public string SecretKey { get; set; }
-      public int AuthenticationTokenLifetimeMinutes { get; set; }
-      public int SessionTokenLifetimeMinutes { get; set; }
-      public int DeviceTokenLifetimeDays { get; set; }
-   }
+   public string Audience { get; set; }
+   public string Issuer { get; set; }
+   public string SecretKey { get; set; }
+   public int AuthenticationTokenLifetimeMinutes { get; set; }
+   public int SessionTokenLifetimeMinutes { get; set; }
+   public int DeviceTokenLifetimeDays { get; set; }
 }

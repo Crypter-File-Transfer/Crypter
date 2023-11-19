@@ -29,36 +29,35 @@ using Crypter.Common.Primitives.Enums;
 using Crypter.Common.Primitives.Exceptions;
 using EasyMonads;
 
-namespace Crypter.Common.Primitives.ValidationHandlers
+namespace Crypter.Common.Primitives.ValidationHandlers;
+
+public static class StringPrimitiveValidationHandler
 {
-   public static class StringPrimitiveValidationHandler
+   /// <summary>
+   /// Throw an exception if the provided value contains a validation error.
+   /// </summary>
+   /// <param name="validator"></param>
+   /// <param name="value"></param>
+   /// <exception cref="ValueNullException"></exception>
+   /// <exception cref="ValueEmptyException"></exception>
+   /// <exception cref="ValueTooLongException"></exception>
+   /// <exception cref="ValueTooShortException"></exception>
+   /// <exception cref="ValueContainsInvalidCharactersException"></exception>
+   /// <exception cref="ValueInvalidException"></exception>
+   public static void ThrowIfInvalid(Func<string, Maybe<StringPrimitiveValidationFailure>> validator, string value)
    {
-      /// <summary>
-      /// Throw an exception if the provided value contains a validation error.
-      /// </summary>
-      /// <param name="validator"></param>
-      /// <param name="value"></param>
-      /// <exception cref="ValueNullException"></exception>
-      /// <exception cref="ValueEmptyException"></exception>
-      /// <exception cref="ValueTooLongException"></exception>
-      /// <exception cref="ValueTooShortException"></exception>
-      /// <exception cref="ValueContainsInvalidCharactersException"></exception>
-      /// <exception cref="ValueInvalidException"></exception>
-      public static void ThrowIfInvalid(Func<string, Maybe<StringPrimitiveValidationFailure>> validator, string value)
+      var validationResult = validator(value);
+      validationResult.IfSome(invalidReason =>
       {
-         var validationResult = validator(value);
-         validationResult.IfSome(invalidReason =>
+         throw invalidReason switch
          {
-            throw invalidReason switch
-            {
-               StringPrimitiveValidationFailure.IsNull => new ValueNullException(),
-               StringPrimitiveValidationFailure.IsEmpty => new ValueEmptyException(),
-               StringPrimitiveValidationFailure.TooLong => new ValueTooLongException(),
-               StringPrimitiveValidationFailure.TooShort => new ValueTooShortException(),
-               StringPrimitiveValidationFailure.InvalidCharacters => new ValueContainsInvalidCharactersException(),
-               _ => new ValueInvalidException(),
-            };
-         });
-      }
+            StringPrimitiveValidationFailure.IsNull => new ValueNullException(),
+            StringPrimitiveValidationFailure.IsEmpty => new ValueEmptyException(),
+            StringPrimitiveValidationFailure.TooLong => new ValueTooLongException(),
+            StringPrimitiveValidationFailure.TooShort => new ValueTooShortException(),
+            StringPrimitiveValidationFailure.InvalidCharacters => new ValueContainsInvalidCharactersException(),
+            _ => new ValueInvalidException(),
+         };
+      });
    }
 }

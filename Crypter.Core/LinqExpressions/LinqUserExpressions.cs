@@ -32,65 +32,64 @@ using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Enums;
 using Crypter.Core.Entities;
 
-namespace Crypter.Core.Extensions
+namespace Crypter.Core.Extensions;
+
+public static class LinqUserExpressions
 {
-   public static class LinqUserExpressions
+   public static Expression<Func<UserEntity, bool>> UserPrivacyAllowsVisitor(Guid? visitorId)
    {
-      public static Expression<Func<UserEntity, bool>> UserPrivacyAllowsVisitor(Guid? visitorId)
-      {
-         return (x) => x.Id == visitorId
-            || x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
-            || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && visitorId != null)
-            || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts && x.Contacts.Any(y => y.ContactId == visitorId));
-      }
+      return (x) => x.Id == visitorId
+                    || x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
+                    || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && visitorId != null)
+                    || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts && x.Contacts.Any(y => y.ContactId == visitorId));
+   }
 
-      public static Expression<Func<UserEntity, UserContact>> ToUserContactDTO(Guid? visitorId)
-      {
-         return (x) => x.Id == visitorId
-            || x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
-            || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && visitorId != null)
-            || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts && x.Contacts.Any(y => y.ContactId == visitorId))
-            ? new UserContact(x.Username, x.Profile.Alias)
-            : new UserContact("{ Private }", string.Empty);
-      }
+   public static Expression<Func<UserEntity, UserContact>> ToUserContactDTO(Guid? visitorId)
+   {
+      return (x) => x.Id == visitorId
+                    || x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
+                    || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && visitorId != null)
+                    || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts && x.Contacts.Any(y => y.ContactId == visitorId))
+         ? new UserContact(x.Username, x.Profile.Alias)
+         : new UserContact("{ Private }", string.Empty);
+   }
 
-      public static Expression<Func<UserEntity, bool>> UserProfileIsComplete()
-      {
-         return (x) => x.Profile != null
-            && x.KeyPair != null
-            && x.PrivacySetting != null;
-      }
+   public static Expression<Func<UserEntity, bool>> UserProfileIsComplete()
+   {
+      return (x) => x.Profile != null
+                    && x.KeyPair != null
+                    && x.PrivacySetting != null;
+   }
 
-      public static Expression<Func<UserEntity, UserProfileDTO>> ToUserProfileDTOForVisitor(Guid? visitorId)
-      {
-         return (x) => new UserProfileDTO(
-            x.Username,
-            x.Profile.Alias,
-            x.Profile.About,
-            x.PrivacySetting.AllowKeyExchangeRequests,
-            x.Id == visitorId
-               || x.PrivacySetting.ReceiveMessages == UserItemTransferPermission.Everyone
-               || (x.PrivacySetting.ReceiveMessages == UserItemTransferPermission.Authenticated && visitorId != null)
-               || (x.PrivacySetting.ReceiveMessages == UserItemTransferPermission.Contacts && x.Contacts.Any(y => y.ContactId == visitorId)),
-            x.Id == visitorId
-               || x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Everyone
-               || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Authenticated && visitorId != null)
-               || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Contacts && x.Contacts.Any(y => y.ContactId == visitorId)),
-            x.KeyPair.PublicKey,
-            x.EmailVerified);
-      }
+   public static Expression<Func<UserEntity, UserProfileDTO>> ToUserProfileDTOForVisitor(Guid? visitorId)
+   {
+      return (x) => new UserProfileDTO(
+         x.Username,
+         x.Profile.Alias,
+         x.Profile.About,
+         x.PrivacySetting.AllowKeyExchangeRequests,
+         x.Id == visitorId
+         || x.PrivacySetting.ReceiveMessages == UserItemTransferPermission.Everyone
+         || (x.PrivacySetting.ReceiveMessages == UserItemTransferPermission.Authenticated && visitorId != null)
+         || (x.PrivacySetting.ReceiveMessages == UserItemTransferPermission.Contacts && x.Contacts.Any(y => y.ContactId == visitorId)),
+         x.Id == visitorId
+         || x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Everyone
+         || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Authenticated && visitorId != null)
+         || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Contacts && x.Contacts.Any(y => y.ContactId == visitorId)),
+         x.KeyPair.PublicKey,
+         x.EmailVerified);
+   }
 
-      public static Expression<Func<UserEntity, bool>> UserReceivesEmailNotifications()
-      {
-         return (x) => x.EmailVerified
-            && x.NotificationSetting != null
-            && x.NotificationSetting.EnableTransferNotifications
-            && x.NotificationSetting.EmailNotifications;
-      }
+   public static Expression<Func<UserEntity, bool>> UserReceivesEmailNotifications()
+   {
+      return (x) => x.EmailVerified
+                    && x.NotificationSetting != null
+                    && x.NotificationSetting.EnableTransferNotifications
+                    && x.NotificationSetting.EmailNotifications;
+   }
 
-      public static Expression<Func<T, bool>> Inverse<T>(this Expression<Func<T, bool>> e)
-      {
-         return Expression.Lambda<Func<T, bool>>(Expression.Not(e.Body), e.Parameters[0]);
-      }
+   public static Expression<Func<T, bool>> Inverse<T>(this Expression<Func<T, bool>> e)
+   {
+      return Expression.Lambda<Func<T, bool>>(Expression.Not(e.Body), e.Parameters[0]);
    }
 }

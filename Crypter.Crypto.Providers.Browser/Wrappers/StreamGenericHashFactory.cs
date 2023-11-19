@@ -28,16 +28,15 @@ using System;
 using System.Runtime.Versioning;
 using Crypter.Crypto.Common.StreamGenericHash;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
-{
-   [SupportedOSPlatform("browser")]
-   public class StreamGenericHashFactory : IStreamGenericHashFactory
-   {
-      public uint KeySize { get => BlazorSodium.Sodium.GenericHash.KEY_BYTES; }
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
 
-      public IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default)
-      {
-         return new StreamGenericHash(hashLength, key);
-      }
+[SupportedOSPlatform("browser")]
+public class StreamGenericHashFactory : IStreamGenericHashFactory
+{
+   public uint KeySize { get => BlazorSodium.Sodium.GenericHash.KEY_BYTES; }
+
+   public IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default)
+   {
+      return new StreamGenericHash(hashLength, key);
    }
 }

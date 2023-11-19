@@ -37,131 +37,130 @@ using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public partial class SearchBase : AuthenticatedPageBase, IDisposable
 {
-   public partial class SearchBase : AuthenticatedPageBase, IDisposable
+   [Inject]
+   protected ICrypterApiClient CrypterApiService { get; set; }
+
+   [Inject]
+   protected IUserContactsService UserContactsService { get; set; }
+
+   protected bool Loading = true;
+   protected string SessionUsernameLowercase = string.Empty;
+   protected UserSearchParameters SearchParameters;
+   protected List<ContactSearchResult> SearchResults;
+
+   protected override async Task OnInitializedAsync()
    {
-      [Inject]
-      protected ICrypterApiClient CrypterApiService { get; set; }
-
-      [Inject]
-      protected IUserContactsService UserContactsService { get; set; }
-
-      protected bool Loading = true;
-      protected string SessionUsernameLowercase = string.Empty;
-      protected UserSearchParameters SearchParameters;
-      protected List<ContactSearchResult> SearchResults;
-
-      protected override async Task OnInitializedAsync()
+      await base.OnInitializedAsync();
+      bool isLoggedIn = await UserSessionService.IsLoggedInAsync();
+      if (!isLoggedIn)
       {
-         await base.OnInitializedAsync();
-         bool isLoggedIn = await UserSessionService.IsLoggedInAsync();
-         if (!isLoggedIn)
-         {
-            return;
-         }
-
-         SearchParameters = new UserSearchParameters(string.Empty, 0, 20);
-         NavigationManager.LocationChanged += HandleLocationChanged;
-         SessionUsernameLowercase = UserSessionService.Session.Match(
-            () => string.Empty,
-            x => x.Username.ToLower());
-         ParseSearchParamsFromUri();
-         Loading = false;
-         await PerformSearchAsync();
+         return;
       }
 
-      protected async Task PerformSearchAsync()
-      {
-         if (string.IsNullOrEmpty(SearchParameters.Keyword))
-         {
-            return;
-         }
+      SearchParameters = new UserSearchParameters(string.Empty, 0, 20);
+      NavigationManager.LocationChanged += HandleLocationChanged;
+      SessionUsernameLowercase = UserSessionService.Session.Match(
+         () => string.Empty,
+         x => x.Username.ToLower());
+      ParseSearchParamsFromUri();
+      Loading = false;
+      await PerformSearchAsync();
+   }
 
-         SearchResults = await CrypterApiService.User.GetUserSearchResultsAsync(SearchParameters)
-            .BindAsync<List<UserSearchResult>, List<ContactSearchResult>>(async searchResults =>
-            {
-               bool[] contactLookupTasks = await Task.WhenAll(
-                  searchResults.Select(x =>
+   protected async Task PerformSearchAsync()
+   {
+      if (string.IsNullOrEmpty(SearchParameters.Keyword))
+      {
+         return;
+      }
+
+      SearchResults = await CrypterApiService.User.GetUserSearchResultsAsync(SearchParameters)
+         .BindAsync<List<UserSearchResult>, List<ContactSearchResult>>(async searchResults =>
+         {
+            bool[] contactLookupTasks = await Task.WhenAll(
+               searchResults.Select(x =>
                      UserContactsService.IsContactAsync(x.Username))
                   .ToList());
                
-               return contactLookupTasks.Zip(searchResults.Select(x => x))
-                  .Select(x => new ContactSearchResult(x.Second.Username, x.Second.Alias, x.First))
-                  .ToList();
-            }).SomeOrDefaultAsync(null);
+            return contactLookupTasks.Zip(searchResults.Select(x => x))
+               .Select(x => new ContactSearchResult(x.Second.Username, x.Second.Alias, x.First))
+               .ToList();
+         }).SomeOrDefaultAsync(null);
+   }
+
+   protected void OnSearchClicked()
+   {
+      NavigationManager.NavigateTo($"/user/search?query={SearchParameters.Keyword}");
+   }
+
+   protected void ParseSearchParamsFromUri()
+   {
+      string query = NavigationManager.GetQueryParameter("query");
+      if (!string.IsNullOrEmpty(query))
+      {
+         SearchParameters.Keyword = query;
       }
 
-      protected void OnSearchClicked()
-      {
-         NavigationManager.NavigateTo($"/user/search?query={SearchParameters.Keyword}");
-      }
+      StateHasChanged();
+   }
 
-      protected void ParseSearchParamsFromUri()
+   protected void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+   {
+      if (e.Location.Contains("/user/search"))
       {
-         string query = NavigationManager.GetQueryParameter("query");
-         if (!string.IsNullOrEmpty(query))
+         ParseSearchParamsFromUri();
+         InvokeAsync(async () =>
          {
-            SearchParameters.Keyword = query;
-         }
-
-         StateHasChanged();
+            await PerformSearchAsync();
+            StateHasChanged();
+         });
       }
+   }
 
-      protected void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+   protected async Task AddContactAsync(string contactUsername)
+   {
+      bool contactAdded = (await UserContactsService.AddContactAsync(contactUsername))
+         .IsRight;
+
+      if (contactAdded)
       {
-         if (e.Location.Contains("/user/search"))
+         ContactSearchResult addedContact = SearchResults
+            .Where(x => x.Username == contactUsername)
+            .FirstOrDefault();
+
+         if (addedContact is not null)
          {
-            ParseSearchParamsFromUri();
-            InvokeAsync(async () =>
-            {
-               await PerformSearchAsync();
-               StateHasChanged();
-            });
+            addedContact.IsContact = true;
          }
       }
 
-      protected async Task AddContactAsync(string contactUsername)
+      StateHasChanged();
+   }
+
+   protected static string GetDisplayName(string username, string alias)
+   {
+      return string.IsNullOrEmpty(alias)
+         ? username
+         : $"{alias} ({username})";
+   }
+
+   public void Dispose()
+   {
+      NavigationManager.LocationChanged -= HandleLocationChanged;
+      GC.SuppressFinalize(this);
+   }
+
+   protected class ContactSearchResult : UserSearchResult
+   {
+      public bool IsContact { get; set; }
+
+      public ContactSearchResult(string username, string alias, bool isContact) : base(username, alias)
       {
-         bool contactAdded = (await UserContactsService.AddContactAsync(contactUsername))
-            .IsRight;
-
-         if (contactAdded)
-         {
-            ContactSearchResult addedContact = SearchResults
-               .Where(x => x.Username == contactUsername)
-               .FirstOrDefault();
-
-            if (addedContact is not null)
-            {
-               addedContact.IsContact = true;
-            }
-         }
-
-         StateHasChanged();
-      }
-
-      protected static string GetDisplayName(string username, string alias)
-      {
-         return string.IsNullOrEmpty(alias)
-            ? username
-            : $"{alias} ({username})";
-      }
-
-      public void Dispose()
-      {
-         NavigationManager.LocationChanged -= HandleLocationChanged;
-         GC.SuppressFinalize(this);
-      }
-
-      protected class ContactSearchResult : UserSearchResult
-      {
-         public bool IsContact { get; set; }
-
-         public ContactSearchResult(string username, string alias, bool isContact) : base(username, alias)
-         {
-            IsContact = isContact;
-         }
+         IsContact = isContact;
       }
    }
 }

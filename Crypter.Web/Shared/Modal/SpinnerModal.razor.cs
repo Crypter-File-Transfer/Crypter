@@ -29,29 +29,28 @@ using Crypter.Web.Shared.Modal.Template;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared.Modal
+namespace Crypter.Web.Shared.Modal;
+
+public partial class SpinnerModalBase : ComponentBase
 {
-   public partial class SpinnerModalBase : ComponentBase
+   protected string Subject;
+   protected string Message;
+
+   protected Maybe<EventCallback> ModalClosedCallback { get; set; }
+   protected ModalBehavior ModalBehaviorRef;
+
+   public void Open(string subject, string message, Maybe<EventCallback> modalClosedCallback)
    {
-      protected string Subject;
-      protected string Message;
+      Subject = subject;
+      Message = message;
+      ModalClosedCallback = modalClosedCallback;
 
-      protected Maybe<EventCallback> ModalClosedCallback { get; set; }
-      protected ModalBehavior ModalBehaviorRef;
+      ModalBehaviorRef.Open();
+   }
 
-      public void Open(string subject, string message, Maybe<EventCallback> modalClosedCallback)
-      {
-         Subject = subject;
-         Message = message;
-         ModalClosedCallback = modalClosedCallback;
-
-         ModalBehaviorRef.Open();
-      }
-
-      public async Task CloseAsync()
-      {
-         await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
-         ModalBehaviorRef.Close();
-      }
+   public async Task CloseAsync()
+   {
+      await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
+      ModalBehaviorRef.Close();
    }
 }

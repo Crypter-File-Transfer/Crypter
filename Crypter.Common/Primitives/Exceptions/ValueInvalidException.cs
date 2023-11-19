@@ -26,9 +26,8 @@
 
 using System;
 
-namespace Crypter.Common.Primitives.Exceptions
+namespace Crypter.Common.Primitives.Exceptions;
+
+public class ValueInvalidException : ApplicationException
 {
-   public class ValueInvalidException : ApplicationException
-   {
-   }
 }

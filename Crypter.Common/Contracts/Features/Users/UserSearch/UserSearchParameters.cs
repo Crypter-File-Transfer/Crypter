@@ -24,19 +24,18 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Users
-{
-   public class UserSearchParameters
-   {
-      public string Keyword { get; set; }
-      public int Index { get; set; }
-      public int Count { get; set; }
+namespace Crypter.Common.Contracts.Features.Users;
 
-      public UserSearchParameters(string keyword, int index, int count)
-      {
-         Keyword = keyword;
-         Index = index;
-         Count = count;
-      }
+public class UserSearchParameters
+{
+   public string Keyword { get; set; }
+   public int Index { get; set; }
+   public int Count { get; set; }
+
+   public UserSearchParameters(string keyword, int index, int count)
+   {
+      Keyword = keyword;
+      Index = index;
+      Count = count;
    }
 }

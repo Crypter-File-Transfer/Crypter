@@ -27,24 +27,23 @@
 using System.Text.Json.Serialization;
 using Crypter.Common.Primitives;
 
-namespace Crypter.Common.Contracts.Features.Keys
+namespace Crypter.Common.Contracts.Features.Keys;
+
+public class GetMasterKeyRecoveryProofRequest
 {
-   public class GetMasterKeyRecoveryProofRequest
+   public string Username { get; init; }
+   public byte[] Password { get; init; }
+
+   [JsonConstructor]
+   public GetMasterKeyRecoveryProofRequest(string username, byte[] password)
    {
-      public string Username { get; init; }
-      public byte[] Password { get; init; }
+      Username = username;
+      Password = password;
+   }
 
-      [JsonConstructor]
-      public GetMasterKeyRecoveryProofRequest(string username, byte[] password)
-      {
-         Username = username;
-         Password = password;
-      }
-
-      public GetMasterKeyRecoveryProofRequest(Username username, byte[] password)
-      {
-         Username = username.Value;
-         Password = password;
-      }
+   public GetMasterKeyRecoveryProofRequest(Username username, byte[] password)
+   {
+      Username = username.Value;
+      Password = password;
    }
 }

@@ -27,15 +27,14 @@
 using System;
 using Crypter.Crypto.Common.StreamGenericHash;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
-{
-   public class StreamGenericHashFactory : IStreamGenericHashFactory
-   {
-      public uint KeySize => throw new NotImplementedException();
+namespace Crypter.Crypto.Providers.Default.Wrappers;
 
-      public IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default)
-      {
-         return new StreamGenericHash(hashLength, key);
-      }
+public class StreamGenericHashFactory : IStreamGenericHashFactory
+{
+   public uint KeySize => throw new NotImplementedException();
+
+   public IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default)
+   {
+      return new StreamGenericHash(hashLength, key);
    }
 }

@@ -35,99 +35,98 @@ using Crypter.Common.Enums;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests
+namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests;
+
+[TestFixture]
+internal class PasswordChallenge_Tests
 {
-   [TestFixture]
-   internal class PasswordChallenge_Tests
-   {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-      private ITokenRepository _clientTokenRepository;
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+   private ITokenRepository _clientTokenRepository;
    
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
+
+   [Test]
+   public async Task Password_Challenge_Works()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-      [Test]
-      public async Task Password_Challenge_Works()
+      PasswordChallengeRequest request = new PasswordChallengeRequest(registrationRequest.VersionedPassword.Password);
+      var result = await _client.UserAuthentication.PasswordChallengeAsync(request);
+
+      Assert.True(registrationResult.IsRight);
+      Assert.True(loginResult.IsRight);
+      Assert.True(result.IsRight);
+   }
+
+   [Test]
+   public async Task Password_Challenge_Fails_Not_Authenticated()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+      PasswordChallengeRequest request = new PasswordChallengeRequest(registrationRequest.VersionedPassword.Password);
+      using HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, "api/user/authentication/password/challenge")
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+         Content = JsonContent.Create(request)
+      };
+      using HttpClient rawClient = _factory.CreateClient();
+      HttpResponseMessage response = await rawClient.SendAsync(requestMessage);
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+      Assert.True(registrationResult.IsRight);
+      Assert.AreEqual(response.StatusCode, HttpStatusCode.Unauthorized);
+   }
 
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
+   [Test]
+   public async Task Password_Challenge_Fails_Wrong_Password()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-         PasswordChallengeRequest request = new PasswordChallengeRequest(registrationRequest.VersionedPassword.Password);
-         var result = await _client.UserAuthentication.PasswordChallengeAsync(request);
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-         Assert.True(registrationResult.IsRight);
-         Assert.True(loginResult.IsRight);
-         Assert.True(result.IsRight);
-      }
-
-      [Test]
-      public async Task Password_Challenge_Fails_Not_Authenticated()
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-         PasswordChallengeRequest request = new PasswordChallengeRequest(registrationRequest.VersionedPassword.Password);
-         using HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, "api/user/authentication/password/challenge")
-         {
-            Content = JsonContent.Create(request)
-         };
-         using HttpClient rawClient = _factory.CreateClient();
-         HttpResponseMessage response = await rawClient.SendAsync(requestMessage);
+      byte[] wrongPassword = new byte[registrationRequest.VersionedPassword.Password.Length];
+      registrationRequest.VersionedPassword.Password.CopyTo(wrongPassword, 0);
+      wrongPassword[0] = (byte)(wrongPassword[0] == 0x01
+         ? 0x02
+         : 0x01);
 
-         Assert.True(registrationResult.IsRight);
-         Assert.AreEqual(response.StatusCode, HttpStatusCode.Unauthorized);
-      }
+      PasswordChallengeRequest request = new PasswordChallengeRequest(wrongPassword);
+      var result = await _client.UserAuthentication.PasswordChallengeAsync(request);
 
-      [Test]
-      public async Task Password_Challenge_Fails_Wrong_Password()
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
-
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
-
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
-
-         byte[] wrongPassword = new byte[registrationRequest.VersionedPassword.Password.Length];
-         registrationRequest.VersionedPassword.Password.CopyTo(wrongPassword, 0);
-         wrongPassword[0] = (byte)(wrongPassword[0] == 0x01
-            ? 0x02
-            : 0x01);
-
-         PasswordChallengeRequest request = new PasswordChallengeRequest(wrongPassword);
-         var result = await _client.UserAuthentication.PasswordChallengeAsync(request);
-
-         Assert.True(registrationResult.IsRight);
-         Assert.True(loginResult.IsRight);
-         Assert.AreNotEqual(registrationRequest.VersionedPassword.Password, wrongPassword);
-         Assert.True(result.IsLeft);
-      }
+      Assert.True(registrationResult.IsRight);
+      Assert.True(loginResult.IsRight);
+      Assert.AreNotEqual(registrationRequest.VersionedPassword.Password, wrongPassword);
+      Assert.True(result.IsLeft);
    }
 }

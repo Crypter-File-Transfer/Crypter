@@ -28,37 +28,36 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserFailedLoginEntity
 {
-   public class UserFailedLoginEntity
+   public Guid Id { get; set; }
+   public Guid Owner { get; set; }
+   public DateTime Date { get; set; }
+
+   public UserEntity User { get; set; }
+
+   public UserFailedLoginEntity(Guid id, Guid owner, DateTime date)
    {
-      public Guid Id { get; set; }
-      public Guid Owner { get; set; }
-      public DateTime Date { get; set; }
-
-      public UserEntity User { get; set; }
-
-      public UserFailedLoginEntity(Guid id, Guid owner, DateTime date)
-      {
-         Id = id;
-         Owner = owner;
-         Date = date;
-      }
+      Id = id;
+      Owner = owner;
+      Date = date;
    }
+}
 
-   public class UserFailedLoginEntityConfiguration : IEntityTypeConfiguration<UserFailedLoginEntity>
+public class UserFailedLoginEntityConfiguration : IEntityTypeConfiguration<UserFailedLoginEntity>
+{
+   public void Configure(EntityTypeBuilder<UserFailedLoginEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserFailedLoginEntity> builder)
-      {
-         builder.ToTable("UserFailedLogin");
+      builder.ToTable("UserFailedLogin");
 
-         builder.HasKey(x => x.Id);
+      builder.HasKey(x => x.Id);
 
-         builder.HasOne(x => x.User)
-            .WithMany(x => x.FailedLoginAttempts)
-            .HasForeignKey(x => x.Owner)
-            .IsRequired(true)
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.User)
+         .WithMany(x => x.FailedLoginAttempts)
+         .HasForeignKey(x => x.Owner)
+         .IsRequired(true)
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

@@ -32,59 +32,58 @@ using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 
-namespace Crypter.Core.Features.UserSettings.NotificationSettings
+namespace Crypter.Core.Features.UserSettings.NotificationSettings;
+
+internal static class UserNotificationSettingsCommands
 {
-   internal static class UserNotificationSettingsCommands
+   internal static async Task<Either<Contracts.UpdateNotificationSettingsError, Contracts.NotificationSettings>> UpdateNotificationSettingsAsync(DataContext dataContext, Guid userId, Contracts.NotificationSettings request)
    {
-      internal static async Task<Either<Contracts.UpdateNotificationSettingsError, Contracts.NotificationSettings>> UpdateNotificationSettingsAsync(DataContext dataContext, Guid userId, Contracts.NotificationSettings request)
+      var userData = await dataContext.Users
+         .Where(x => x.Id == userId)
+         .Select(x => new { x.EmailVerified, x.NotificationSetting })
+         .FirstOrDefaultAsync();
+
+      if (userData is null)
       {
-         var userData = await dataContext.Users
-            .Where(x => x.Id == userId)
-            .Select(x => new { x.EmailVerified, x.NotificationSetting })
-            .FirstOrDefaultAsync();
-
-         if (userData is null)
-         {
-            return Contracts.UpdateNotificationSettingsError.UnknownError;
-         }
-
-         if (!userData.EmailVerified && request.EmailNotifications)
-         {
-            return Contracts.UpdateNotificationSettingsError.EmailAddressNotVerified;
-         }
-
-         if (userData.NotificationSetting is null)
-         {
-            UserNotificationSettingEntity newNotificationSettings = new UserNotificationSettingEntity(userId, request.NotifyOnTransferReceived, request.EmailNotifications);
-            dataContext.UserNotificationSettings.Add(newNotificationSettings);
-         }
-         else
-         {
-            userData.NotificationSetting.EmailNotifications = request.EmailNotifications;
-            userData.NotificationSetting.EnableTransferNotifications = request.NotifyOnTransferReceived;
-         
-         }
-         await dataContext.SaveChangesAsync();
-
-         return await UserNotificationSettingsQueries.GetUserNotificationSettingsAsync(dataContext, userId)
-            .ToEitherAsync(Contracts.UpdateNotificationSettingsError.UnknownError);
+         return Contracts.UpdateNotificationSettingsError.UnknownError;
       }
 
-      internal static async Task ResetUserNotificationSettingsAsync(DataContext dataContext, Guid userId, bool saveChanges)
+      if (!userData.EmailVerified && request.EmailNotifications)
       {
-         UserNotificationSettingEntity foundEntity = await dataContext.UserNotificationSettings
-            .FirstOrDefaultAsync(x => x.Owner == userId);
+         return Contracts.UpdateNotificationSettingsError.EmailAddressNotVerified;
+      }
 
-         if (foundEntity is not null)
-         {
-            foundEntity.EnableTransferNotifications = false;
-            foundEntity.EmailNotifications = false;
-         }
+      if (userData.NotificationSetting is null)
+      {
+         UserNotificationSettingEntity newNotificationSettings = new UserNotificationSettingEntity(userId, request.NotifyOnTransferReceived, request.EmailNotifications);
+         dataContext.UserNotificationSettings.Add(newNotificationSettings);
+      }
+      else
+      {
+         userData.NotificationSetting.EmailNotifications = request.EmailNotifications;
+         userData.NotificationSetting.EnableTransferNotifications = request.NotifyOnTransferReceived;
+         
+      }
+      await dataContext.SaveChangesAsync();
 
-         if (saveChanges)
-         {
-            await dataContext.SaveChangesAsync();
-         }
+      return await UserNotificationSettingsQueries.GetUserNotificationSettingsAsync(dataContext, userId)
+         .ToEitherAsync(Contracts.UpdateNotificationSettingsError.UnknownError);
+   }
+
+   internal static async Task ResetUserNotificationSettingsAsync(DataContext dataContext, Guid userId, bool saveChanges)
+   {
+      UserNotificationSettingEntity foundEntity = await dataContext.UserNotificationSettings
+         .FirstOrDefaultAsync(x => x.Owner == userId);
+
+      if (foundEntity is not null)
+      {
+         foundEntity.EnableTransferNotifications = false;
+         foundEntity.EmailNotifications = false;
+      }
+
+      if (saveChanges)
+      {
+         await dataContext.SaveChangesAsync();
       }
    }
 }

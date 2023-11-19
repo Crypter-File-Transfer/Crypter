@@ -27,13 +27,12 @@
 using System;
 using Crypter.Crypto.Common.ConstantTime;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
+namespace Crypter.Crypto.Providers.Default.Wrappers;
+
+public class ConstantTime : IConstantTime
 {
-   public class ConstantTime : IConstantTime
+   public bool Equals(ReadOnlySpan<byte> left, ReadOnlySpan<byte> right)
    {
-      public bool Equals(ReadOnlySpan<byte> left, ReadOnlySpan<byte> right)
-      {
-         return Geralt.ConstantTime.Equals(left, right);
-      }
+      return Geralt.ConstantTime.Equals(left, right);
    }
 }

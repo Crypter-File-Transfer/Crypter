@@ -29,38 +29,37 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Crypter.API.Configuration
+namespace Crypter.API.Configuration;
+
+public static class SwaggerConfiguration
 {
-   public static class SwaggerConfiguration
+   internal static void AddSwaggerGenOptions(this SwaggerGenOptions options)
    {
-      internal static void AddSwaggerGenOptions(this SwaggerGenOptions options)
+      OpenApiSecurityScheme securityDefinition = new()
       {
-         OpenApiSecurityScheme securityDefinition = new()
-         {
-            Name = "Bearer",
-            BearerFormat = "JWT",
-            Scheme = "bearer",
-            Description = "Specify the authorization token.",
-            In = ParameterLocation.Header,
-            Type = SecuritySchemeType.Http
-         };
+         Name = "Bearer",
+         BearerFormat = "JWT",
+         Scheme = "bearer",
+         Description = "Specify the authorization token.",
+         In = ParameterLocation.Header,
+         Type = SecuritySchemeType.Http
+      };
 
-         OpenApiSecurityScheme securityScheme = new()
+      OpenApiSecurityScheme securityScheme = new()
+      {
+         Reference = new OpenApiReference()
          {
-            Reference = new OpenApiReference()
-            {
-               Id = "jwt_auth",
-               Type = ReferenceType.SecurityScheme
-            }
-         };
+            Id = "jwt_auth",
+            Type = ReferenceType.SecurityScheme
+         }
+      };
 
-         OpenApiSecurityRequirement securityRequirements = new()
-         {
-             {securityScheme, Array.Empty<string>()},
-         };
+      OpenApiSecurityRequirement securityRequirements = new()
+      {
+         {securityScheme, Array.Empty<string>()},
+      };
 
-         options.AddSecurityDefinition("jwt_auth", securityDefinition);
-         options.AddSecurityRequirement(securityRequirements);
-      }
+      options.AddSecurityDefinition("jwt_auth", securityDefinition);
+      options.AddSecurityRequirement(securityRequirements);
    }
 }

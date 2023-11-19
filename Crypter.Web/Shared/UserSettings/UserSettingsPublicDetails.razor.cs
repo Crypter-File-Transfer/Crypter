@@ -30,62 +30,61 @@ using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared.UserSettings
+namespace Crypter.Web.Shared.UserSettings;
+
+public partial class UserSettingsPublicDetailsBase : ComponentBase
 {
-   public partial class UserSettingsPublicDetailsBase : ComponentBase
+   [Inject]
+   protected IUserProfileSettingsService UserProfileSettingsService { get; set; }
+
+   protected string Alias { get; set; } = string.Empty;
+   protected string AliasEdit { get; set; } = string.Empty;
+
+   protected string About { get; set; } = string.Empty;
+   protected string AboutEdit { get; set; } = string.Empty;
+
+   protected bool IsDataReady { get; set; } = false;
+   protected bool IsEditing { get; set; } = false;
+
+   protected override async Task OnInitializedAsync()
    {
-      [Inject]
-      protected IUserProfileSettingsService UserProfileSettingsService { get; set; }
+      await UserProfileSettingsService.GetProfileSettingsAsync()
+         .IfSomeAsync(x =>
+         {
+            Alias = x.Alias;
+            AliasEdit = x.Alias;
 
-      protected string Alias { get; set; } = string.Empty;
-      protected string AliasEdit { get; set; } = string.Empty;
+            About = x.About;
+            AboutEdit = x.About;
+         });
 
-      protected string About { get; set; } = string.Empty;
-      protected string AboutEdit { get; set; } = string.Empty;
+      IsDataReady = true;
+   }
 
-      protected bool IsDataReady { get; set; } = false;
-      protected bool IsEditing { get; set; } = false;
+   protected void OnEditClicked()
+   {
+      AliasEdit = Alias;
+      AboutEdit = About;
+      IsEditing = true;
+   }
 
-      protected override async Task OnInitializedAsync()
-      {
-         await UserProfileSettingsService.GetProfileSettingsAsync()
-            .IfSomeAsync(x =>
-            {
-               Alias = x.Alias;
-               AliasEdit = x.Alias;
+   protected void OnCancelClicked()
+   {
+      AliasEdit = Alias;
+      AboutEdit = About;
+      IsEditing = false;
+   }
 
-               About = x.About;
-               AboutEdit = x.About;
-            });
+   protected async Task OnSaveClickedAsync()
+   {
+      var request = new ProfileSettings(AliasEdit, AboutEdit);
+      await UserProfileSettingsService.SetProfileSettingsAsync(request)
+         .DoRightAsync(x =>
+         {
+            Alias = x.Alias;
+            About = x.About;
+         });
 
-         IsDataReady = true;
-      }
-
-      protected void OnEditClicked()
-      {
-         AliasEdit = Alias;
-         AboutEdit = About;
-         IsEditing = true;
-      }
-
-      protected void OnCancelClicked()
-      {
-         AliasEdit = Alias;
-         AboutEdit = About;
-         IsEditing = false;
-      }
-
-      protected async Task OnSaveClickedAsync()
-      {
-         var request = new ProfileSettings(AliasEdit, AboutEdit);
-         await UserProfileSettingsService.SetProfileSettingsAsync(request)
-            .DoRightAsync(x =>
-            {
-               Alias = x.Alias;
-               About = x.About;
-            });
-
-         IsEditing = false;
-      }
+      IsEditing = false;
    }
 }

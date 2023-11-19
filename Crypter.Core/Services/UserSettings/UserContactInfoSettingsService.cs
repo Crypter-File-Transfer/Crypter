@@ -34,49 +34,48 @@ using EasyMonads;
 using Hangfire;
 using Microsoft.Extensions.Options;
 
-namespace Crypter.Core.Services.UserSettings
+namespace Crypter.Core.Services.UserSettings;
+
+public interface IUserContactInfoSettingsService
 {
-   public interface IUserContactInfoSettingsService
+   Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+   Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Guid userId, UpdateContactInfoSettingsRequest request);
+}
+
+public class UserContactInfoSettingsService : IUserContactInfoSettingsService
+{
+   private readonly DataContext _context;
+   private readonly IPasswordHashService _passwordHashService;
+   private readonly ServerPasswordSettings _serverPasswordSettings;
+   private readonly IBackgroundJobClient _backgroundJobClient;
+   private readonly IHangfireBackgroundService _hangfireBackgroundService;
+
+   public UserContactInfoSettingsService(DataContext context, IPasswordHashService passwordHashService, IOptions<ServerPasswordSettings> serverPasswordSettings, IBackgroundJobClient backgroundJobClient, IHangfireBackgroundService hangfireBackgroundService)
    {
-      Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Guid userId, UpdateContactInfoSettingsRequest request);
+      _context = context;
+      _passwordHashService = passwordHashService;
+      _serverPasswordSettings = serverPasswordSettings.Value;
+      _backgroundJobClient = backgroundJobClient;
+      _hangfireBackgroundService = hangfireBackgroundService;
    }
 
-   public class UserContactInfoSettingsService : IUserContactInfoSettingsService
+   public Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
    {
-      private readonly DataContext _context;
-      private readonly IPasswordHashService _passwordHashService;
-      private readonly ServerPasswordSettings _serverPasswordSettings;
-      private readonly IBackgroundJobClient _backgroundJobClient;
-      private readonly IHangfireBackgroundService _hangfireBackgroundService;
+      return UserContactInfoSettingsQueries.GetContactInfoSettingsAsync(_context, userId, cancellationToken);
+   }
 
-      public UserContactInfoSettingsService(DataContext context, IPasswordHashService passwordHashService, IOptions<ServerPasswordSettings> serverPasswordSettings, IBackgroundJobClient backgroundJobClient, IHangfireBackgroundService hangfireBackgroundService)
-      {
-         _context = context;
-         _passwordHashService = passwordHashService;
-         _serverPasswordSettings = serverPasswordSettings.Value;
-         _backgroundJobClient = backgroundJobClient;
-         _hangfireBackgroundService = hangfireBackgroundService;
-      }
+   public Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Guid userId, UpdateContactInfoSettingsRequest request)
+   {
+      return UserContactInfoSettingsCommands.UpdateContactInfoSettingsAsync(_context, _passwordHashService, _serverPasswordSettings, userId, request)
+         .DoRightAsync(x =>
+         {
+            bool sendVerificationEmail = !string.IsNullOrEmpty(x.EmailAddress)
+                                         && !x.EmailAddressVerified;
 
-      public Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
-      {
-         return UserContactInfoSettingsQueries.GetContactInfoSettingsAsync(_context, userId, cancellationToken);
-      }
-
-      public Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Guid userId, UpdateContactInfoSettingsRequest request)
-      {
-         return UserContactInfoSettingsCommands.UpdateContactInfoSettingsAsync(_context, _passwordHashService, _serverPasswordSettings, userId, request)
-            .DoRightAsync(x =>
+            if (sendVerificationEmail)
             {
-               bool sendVerificationEmail = !string.IsNullOrEmpty(x.EmailAddress)
-                  && !x.EmailAddressVerified;
-
-               if (sendVerificationEmail)
-               {
-                  _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId));
-               }
-            });
-      }
+               _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId));
+            }
+         });
    }
 }

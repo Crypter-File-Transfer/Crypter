@@ -26,21 +26,20 @@
 
 using System;
 
-namespace Crypter.Core.Identity
-{
-   public class RefreshTokenData
-   {
-      public string Token { get; init; }
-      public Guid TokenId { get; init; }
-      public DateTime Created { get; init; }
-      public DateTime Expiration { get; init; }
+namespace Crypter.Core.Identity;
 
-      public RefreshTokenData(string token, Guid tokenId, DateTime created, DateTime expiration)
-      {
-         Token = token;
-         TokenId = tokenId;
-         Created = created;
-         Expiration = expiration;
-      }
+public class RefreshTokenData
+{
+   public string Token { get; init; }
+   public Guid TokenId { get; init; }
+   public DateTime Created { get; init; }
+   public DateTime Expiration { get; init; }
+
+   public RefreshTokenData(string token, Guid tokenId, DateTime created, DateTime expiration)
+   {
+      Token = token;
+      TokenId = tokenId;
+      Created = created;
+      Expiration = expiration;
    }
 }

@@ -28,10 +28,9 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Metrics;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Requests
+namespace Crypter.Common.Client.Interfaces.Requests;
+
+public interface IMetricsRequests
 {
-   public interface IMetricsRequests
-   {
-      Task<Maybe<PublicStorageMetricsResponse>> GetPublicStorageMetricsAsync();
-   }
+   Task<Maybe<PublicStorageMetricsResponse>> GetPublicStorageMetricsAsync();
 }

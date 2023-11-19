@@ -31,38 +31,37 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Infrastructure;
 using Microsoft.AspNetCore.Http;
 
-namespace Crypter.API.Middleware
+namespace Crypter.API.Middleware;
+
+public class ExceptionHandlerMiddleware
 {
-   public class ExceptionHandlerMiddleware
+   private readonly RequestDelegate _next;
+
+   public ExceptionHandlerMiddleware(RequestDelegate next)
    {
-      private readonly RequestDelegate _next;
+      _next = next;
+   }
 
-      public ExceptionHandlerMiddleware(RequestDelegate next)
+   public async Task Invoke(HttpContext context)
+   {
+      try
       {
-         _next = next;
+         await _next(context);
       }
-
-      public async Task Invoke(HttpContext context)
+      catch (InvalidEnumValueException ex)
       {
-         try
-         {
-            await _next(context);
-         }
-         catch (InvalidEnumValueException ex)
-         {
-            HttpResponse response = context.Response;
-            response.ContentType = "application/json";
-            response.StatusCode = StatusCodes.Status400BadRequest;
+         HttpResponse response = context.Response;
+         response.ContentType = "application/json";
+         response.StatusCode = StatusCodes.Status400BadRequest;
 
-            ErrorResponseItem errorItem = new ErrorResponseItem((int)InfrastructureErrorCode.InvalidEnumValueErrorCode, ex.Message);
-            ErrorResponse errorResponse = new ErrorResponse((int)HttpStatusCode.BadRequest, new List<ErrorResponseItem> { errorItem });
-            await response.WriteAsJsonAsync(errorResponse);
-         }
-         catch (TaskCanceledException)
-         {
-            context.Response.StatusCode = StatusCodes.Status408RequestTimeout;
-            await context.Response.CompleteAsync();
-         }
+         ErrorResponseItem errorItem = new ErrorResponseItem((int)InfrastructureErrorCode.InvalidEnumValueErrorCode, ex.Message);
+         ErrorResponse errorResponse = new ErrorResponse((int)HttpStatusCode.BadRequest, new List<ErrorResponseItem> { errorItem });
+         await response.WriteAsJsonAsync(errorResponse);
+      }
+      catch (TaskCanceledException)
+      {
+         context.Response.StatusCode = StatusCodes.Status408RequestTimeout;
+         await context.Response.CompleteAsync();
       }
    }
 }

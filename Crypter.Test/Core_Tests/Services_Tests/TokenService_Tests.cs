@@ -30,104 +30,103 @@ using Crypter.Core.Services;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
-namespace Crypter.Test.Core_Tests.Services_Tests
+namespace Crypter.Test.Core_Tests.Services_Tests;
+
+[TestFixture]
+public class TokenService_Tests
 {
-   [TestFixture]
-   public class TokenService_Tests
+   private IOptions<TokenSettings> _tokenSettings;
+
+   [OneTimeSetUp]
+   public void OneTimeSetup()
    {
-      private IOptions<TokenSettings> _tokenSettings;
-
-      [OneTimeSetUp]
-      public void OneTimeSetup()
+      TokenSettings tokenSettings = new TokenSettings
       {
-         TokenSettings tokenSettings = new TokenSettings
-         {
-            Audience = "The Fellowship",
-            Issuer = "Legolas",
-            SecretKey = "They're taking the hobbits to Isengard!",
-            AuthenticationTokenLifetimeMinutes = 5,
-            SessionTokenLifetimeMinutes = 30,
-            DeviceTokenLifetimeDays = 5
-         };
+         Audience = "The Fellowship",
+         Issuer = "Legolas",
+         SecretKey = "They're taking the hobbits to Isengard!",
+         AuthenticationTokenLifetimeMinutes = 5,
+         SessionTokenLifetimeMinutes = 30,
+         DeviceTokenLifetimeDays = 5
+      };
 
-         _tokenSettings = Options.Create(tokenSettings);
-      }
+      _tokenSettings = Options.Create(tokenSettings);
+   }
 
-      [Test]
-      public void Can_Create_And_Validate_Authentication_Token()
+   [Test]
+   public void Can_Create_And_Validate_Authentication_Token()
+   {
+      var userId = Guid.NewGuid();
+
+      var sut = new TokenService(_tokenSettings);
+      var token = sut.NewAuthenticationToken(userId);
+
+      Assert.IsNotNull(token);
+      Assert.IsNotEmpty(token);
+
+      var maybeClaimsPrincipal = sut.ValidateToken(token);
+      maybeClaimsPrincipal.IfNone(Assert.Fail);
+      maybeClaimsPrincipal.IfSome(x =>
       {
-         var userId = Guid.NewGuid();
+         Assert.IsNotNull(x);
+         var parsedUserId = sut.ParseUserId(x);
+         Assert.AreEqual(userId, parsedUserId);
+      });
+   }
 
-         var sut = new TokenService(_tokenSettings);
-         var token = sut.NewAuthenticationToken(userId);
+   [Test]
+   public void Can_Create_And_Validate_Session_Token()
+   {
+      var userId = Guid.NewGuid();
 
-         Assert.IsNotNull(token);
-         Assert.IsNotEmpty(token);
+      var sut = new TokenService(_tokenSettings);
+      var tokenCreatedUTC = DateTime.UtcNow;
+      var expectedTokenExpiration = tokenCreatedUTC.AddMinutes(_tokenSettings.Value.SessionTokenLifetimeMinutes);
+      var tokenData = sut.NewSessionToken(userId);
 
-         var maybeClaimsPrincipal = sut.ValidateToken(token);
-         maybeClaimsPrincipal.IfNone(Assert.Fail);
-         maybeClaimsPrincipal.IfSome(x =>
-         {
-            Assert.IsNotNull(x);
-            var parsedUserId = sut.ParseUserId(x);
-            Assert.AreEqual(userId, parsedUserId);
-         });
-      }
+      Assert.IsNotNull(tokenData);
+      Assert.IsNotEmpty(tokenData.Token);
+      Assert.AreEqual(expectedTokenExpiration.Ticks, tokenData.Expiration.Ticks, TimeSpan.TicksPerSecond);
 
-      [Test]
-      public void Can_Create_And_Validate_Session_Token()
+      var maybeClaimsPrincipal = sut.ValidateToken(tokenData.Token);
+      maybeClaimsPrincipal.IfNone(Assert.Fail);
+      maybeClaimsPrincipal.IfSome(claimsPrincipal =>
       {
-         var userId = Guid.NewGuid();
+         Assert.IsNotNull(claimsPrincipal);
 
-         var sut = new TokenService(_tokenSettings);
-         var tokenCreatedUTC = DateTime.UtcNow;
-         var expectedTokenExpiration = tokenCreatedUTC.AddMinutes(_tokenSettings.Value.SessionTokenLifetimeMinutes);
-         var tokenData = sut.NewSessionToken(userId);
+         var parsedUserId = sut.ParseUserId(claimsPrincipal);
+         Assert.AreEqual(userId, parsedUserId);
 
-         Assert.IsNotNull(tokenData);
-         Assert.IsNotEmpty(tokenData.Token);
-         Assert.AreEqual(expectedTokenExpiration.Ticks, tokenData.Expiration.Ticks, TimeSpan.TicksPerSecond);
+         var maybeTokenId = sut.TryParseTokenId(claimsPrincipal);
+         maybeTokenId.IfNone(Assert.Fail);
+      });
+   }
 
-         var maybeClaimsPrincipal = sut.ValidateToken(tokenData.Token);
-         maybeClaimsPrincipal.IfNone(Assert.Fail);
-         maybeClaimsPrincipal.IfSome(claimsPrincipal =>
-         {
-            Assert.IsNotNull(claimsPrincipal);
+   [Test]
+   public void Can_Create_And_Validate_Device_Token()
+   {
+      var userId = Guid.NewGuid();
 
-            var parsedUserId = sut.ParseUserId(claimsPrincipal);
-            Assert.AreEqual(userId, parsedUserId);
+      var sut = new TokenService(_tokenSettings);
+      var tokenCreatedUTC = DateTime.UtcNow;
+      var expectedTokenExpiration = tokenCreatedUTC.AddDays(_tokenSettings.Value.DeviceTokenLifetimeDays);
+      var tokenData = sut.NewDeviceToken(userId);
 
-            var maybeTokenId = sut.TryParseTokenId(claimsPrincipal);
-            maybeTokenId.IfNone(Assert.Fail);
-         });
-      }
+      Assert.IsNotNull(tokenData);
+      Assert.IsNotEmpty(tokenData.Token);
+      Assert.AreEqual(expectedTokenExpiration.Ticks, tokenData.Expiration.Ticks, TimeSpan.TicksPerSecond);
 
-      [Test]
-      public void Can_Create_And_Validate_Device_Token()
+      var maybeClaimsPrincipal = sut.ValidateToken(tokenData.Token);
+      maybeClaimsPrincipal.IfNone(Assert.Fail);
+      maybeClaimsPrincipal.IfSome(claimsPrincipal =>
       {
-         var userId = Guid.NewGuid();
+         Assert.IsNotNull(claimsPrincipal);
 
-         var sut = new TokenService(_tokenSettings);
-         var tokenCreatedUTC = DateTime.UtcNow;
-         var expectedTokenExpiration = tokenCreatedUTC.AddDays(_tokenSettings.Value.DeviceTokenLifetimeDays);
-         var tokenData = sut.NewDeviceToken(userId);
+         var parsedUserId = sut.ParseUserId(claimsPrincipal);
+         Assert.AreEqual(userId, parsedUserId);
 
-         Assert.IsNotNull(tokenData);
-         Assert.IsNotEmpty(tokenData.Token);
-         Assert.AreEqual(expectedTokenExpiration.Ticks, tokenData.Expiration.Ticks, TimeSpan.TicksPerSecond);
-
-         var maybeClaimsPrincipal = sut.ValidateToken(tokenData.Token);
-         maybeClaimsPrincipal.IfNone(Assert.Fail);
-         maybeClaimsPrincipal.IfSome(claimsPrincipal =>
-         {
-            Assert.IsNotNull(claimsPrincipal);
-
-            var parsedUserId = sut.ParseUserId(claimsPrincipal);
-            Assert.AreEqual(userId, parsedUserId);
-
-            var maybeTokenId = sut.TryParseTokenId(claimsPrincipal);
-            maybeTokenId.IfNone(Assert.Fail);
-         });
-      }
+         var maybeTokenId = sut.TryParseTokenId(claimsPrincipal);
+         maybeTokenId.IfNone(Assert.Fail);
+      });
    }
 }

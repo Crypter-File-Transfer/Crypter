@@ -24,38 +24,37 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Crypto.Common.PasswordHash
+namespace Crypter.Crypto.Common.PasswordHash;
+
+public static class Constants
 {
-   public static class Constants
-   {
-      // Algorithms
-      public const int DEFAULT = ALG_ARGON2ID13;
-      public const int ALG_ARGON2I13 = 1;
-      public const int ALG_ARGON2ID13 = 2;
+   // Algorithms
+   public const int DEFAULT = ALG_ARGON2ID13;
+   public const int ALG_ARGON2I13 = 1;
+   public const int ALG_ARGON2ID13 = 2;
 
-      // Output constraints
-      public const uint BYTES_MIN = 16U;
-      public const uint BYTES_MAX = 4294967295U;
+   // Output constraints
+   public const uint BYTES_MIN = 16U;
+   public const uint BYTES_MAX = 4294967295U;
 
-      // Password constraints
-      public const uint PASSWORD_MIN = 0U;
-      public const uint PASSWORD_MAX = 4294967295U;
+   // Password constraints
+   public const uint PASSWORD_MIN = 0U;
+   public const uint PASSWORD_MAX = 4294967295U;
 
-      // Salt constraints
-      public const uint SALT_BYTES = 16U;
+   // Salt constraints
+   public const uint SALT_BYTES = 16U;
 
-      // MemLimits
-      public const int MEMLIMIT_MIN = 8192;
-      public const int MEMLIMIT_INTERACTIVE = 67108864;
-      public const int MEMLIMIT_MODERATE = 268435456;
-      public const int MEMLIMIT_SENSITIVE = 1073741824;
-      public const int MEMLIMIT_MAX = 2147483647;
+   // MemLimits
+   public const int MEMLIMIT_MIN = 8192;
+   public const int MEMLIMIT_INTERACTIVE = 67108864;
+   public const int MEMLIMIT_MODERATE = 268435456;
+   public const int MEMLIMIT_SENSITIVE = 1073741824;
+   public const int MEMLIMIT_MAX = 2147483647;
 
-      // OpsLimits
-      public const uint OPSLIMIT_MIN = 1U;
-      public const uint OPSLIMIT_INTERACTIVE = 2U;
-      public const uint OPSLIMIT_MODERATE = 3U;
-      public const uint OPSLIMIT_SENSITIVE = 4U;
-      public const uint OPSLIMIT_MAX = 4294967295U;
-   }
+   // OpsLimits
+   public const uint OPSLIMIT_MIN = 1U;
+   public const uint OPSLIMIT_INTERACTIVE = 2U;
+   public const uint OPSLIMIT_MODERATE = 3U;
+   public const uint OPSLIMIT_SENSITIVE = 4U;
+   public const uint OPSLIMIT_MAX = 4294967295U;
 }

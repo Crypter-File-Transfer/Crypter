@@ -24,17 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Crypto.Common.DigitalSignature
-{
-   public class Ed25519KeyPair
-   {
-      public byte[] PrivateKey { get; init; }
-      public byte[] PublicKey { get; init; }
+namespace Crypter.Crypto.Common.DigitalSignature;
 
-      public Ed25519KeyPair(byte[] privateKey, byte[] publicKey)
-      {
-         PrivateKey = privateKey;
-         PublicKey = publicKey;
-      }
+public class Ed25519KeyPair
+{
+   public byte[] PrivateKey { get; init; }
+   public byte[] PublicKey { get; init; }
+
+   public Ed25519KeyPair(byte[] privateKey, byte[] publicKey)
+   {
+      PrivateKey = privateKey;
+      PublicKey = publicKey;
    }
 }

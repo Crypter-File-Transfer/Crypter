@@ -26,21 +26,20 @@
 
 using Crypter.Common.Enums;
 
-namespace Crypter.Common.Contracts.Features.UserSettings.PrivacySettings
-{
-   public class PrivacySettings
-   {
-      public bool AllowKeyExchangeRequests { get; set; }
-      public UserVisibilityLevel VisibilityLevel { get; set; }
-      public UserItemTransferPermission MessageTransferPermission { get; set; }
-      public UserItemTransferPermission FileTransferPermission { get; set; }
+namespace Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 
-      public PrivacySettings(bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission)
-      {
-         AllowKeyExchangeRequests = allowKeyExchangeRequests;
-         VisibilityLevel = visibilityLevel;
-         MessageTransferPermission = messageTransferPermission;
-         FileTransferPermission = fileTransferPermission;
-      }
+public class PrivacySettings
+{
+   public bool AllowKeyExchangeRequests { get; set; }
+   public UserVisibilityLevel VisibilityLevel { get; set; }
+   public UserItemTransferPermission MessageTransferPermission { get; set; }
+   public UserItemTransferPermission FileTransferPermission { get; set; }
+
+   public PrivacySettings(bool allowKeyExchangeRequests, UserVisibilityLevel visibilityLevel, UserItemTransferPermission messageTransferPermission, UserItemTransferPermission fileTransferPermission)
+   {
+      AllowKeyExchangeRequests = allowKeyExchangeRequests;
+      VisibilityLevel = visibilityLevel;
+      MessageTransferPermission = messageTransferPermission;
+      FileTransferPermission = fileTransferPermission;
    }
 }

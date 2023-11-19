@@ -26,12 +26,11 @@
 
 using System;
 
-namespace Crypter.Crypto.Common.DigitalSignature
+namespace Crypter.Crypto.Common.DigitalSignature;
+
+public interface IDigitalSignature
 {
-   public interface IDigitalSignature
-   {
-      Ed25519KeyPair GenerateKeyPair();
-      byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message);
-      bool VerifySignature(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> message, ReadOnlySpan<byte> signature);
-   }
+   Ed25519KeyPair GenerateKeyPair();
+   byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message);
+   bool VerifySignature(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> message, ReadOnlySpan<byte> signature);
 }

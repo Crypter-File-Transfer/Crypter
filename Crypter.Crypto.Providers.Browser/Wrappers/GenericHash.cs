@@ -28,21 +28,20 @@ using System;
 using System.Runtime.Versioning;
 using Crypter.Crypto.Common.GenericHash;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
+
+[SupportedOSPlatform("browser")]
+public class GenericHash : IGenericHash
 {
-   [SupportedOSPlatform("browser")]
-   public class GenericHash : IGenericHash
+   public uint KeySize { get => BlazorSodium.Sodium.GenericHash.KEY_BYTES; }
+
+   public byte[] GenerateHash(uint size, ReadOnlySpan<byte> data, ReadOnlySpan<byte> key = default)
    {
-      public uint KeySize { get => BlazorSodium.Sodium.GenericHash.KEY_BYTES; }
+      return BlazorSodium.Sodium.GenericHash.Crypto_GenericHash(size, data.ToArray(), key.ToArray());
+   }
 
-      public byte[] GenerateHash(uint size, ReadOnlySpan<byte> data, ReadOnlySpan<byte> key = default)
-      {
-         return BlazorSodium.Sodium.GenericHash.Crypto_GenericHash(size, data.ToArray(), key.ToArray());
-      }
-
-      public byte[] GenerateHash(uint size, string data, ReadOnlySpan<byte> key = default)
-      {
-         return BlazorSodium.Sodium.GenericHash.Crypto_GenericHash(size, data, key.ToArray());
-      }
+   public byte[] GenerateHash(uint size, string data, ReadOnlySpan<byte> key = default)
+   {
+      return BlazorSodium.Sodium.GenericHash.Crypto_GenericHash(size, data, key.ToArray());
    }
 }

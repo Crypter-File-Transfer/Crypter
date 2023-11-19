@@ -24,14 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Crypto.Common.PasswordHash
+namespace Crypter.Crypto.Common.PasswordHash;
+
+public enum MemLimit
 {
-   public enum MemLimit
-   {
-      Minimum,
-      Interactive,
-      Moderate,
-      Sensitive,
-      Maximum
-   }
+   Minimum,
+   Interactive,
+   Moderate,
+   Sensitive,
+   Maximum
 }

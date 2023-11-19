@@ -36,20 +36,19 @@ using Crypter.Crypto.Common.Random;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Crypto.Common.StreamGenericHash;
 
-namespace Crypter.Crypto.Common
+namespace Crypter.Crypto.Common;
+
+public interface ICryptoProvider
 {
-   public interface ICryptoProvider
-   {
-      IConstantTime ConstantTime { get; }
-      ICryptoHash CryptoHash { get; }
-      IDigitalSignature DigitalSignature { get; }
-      IEncryption Encryption { get; }
-      IGenericHash GenericHash { get; }
-      IKeyExchange KeyExchange { get; }
-      IPadding Padding { get; }
-      IPasswordHash PasswordHash { get; }
-      IRandom Random { get; }
-      IStreamEncryptionFactory StreamEncryptionFactory { get; }
-      IStreamGenericHashFactory StreamGenericHashFactory { get; }
-   }
+   IConstantTime ConstantTime { get; }
+   ICryptoHash CryptoHash { get; }
+   IDigitalSignature DigitalSignature { get; }
+   IEncryption Encryption { get; }
+   IGenericHash GenericHash { get; }
+   IKeyExchange KeyExchange { get; }
+   IPadding Padding { get; }
+   IPasswordHash PasswordHash { get; }
+   IRandom Random { get; }
+   IStreamEncryptionFactory StreamEncryptionFactory { get; }
+   IStreamGenericHashFactory StreamGenericHashFactory { get; }
 }

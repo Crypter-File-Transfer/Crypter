@@ -31,119 +31,118 @@ using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserEntity
 {
-   public class UserEntity
+   public Guid Id { get; set; }
+   public string Username { get; set; }
+   public string EmailAddress { get; set; }
+   public byte[] PasswordHash { get; set; }
+   public byte[] PasswordSalt { get; set; }
+   public short ServerPasswordVersion { get; set; }
+   public short ClientPasswordVersion { get; set; }
+   public bool EmailVerified { get; set; }
+   public DateTime Created { get; set; }
+   public DateTime LastLogin { get; set; }
+
+   public UserProfileEntity Profile { get; set; }
+   public UserPrivacySettingEntity PrivacySetting { get; set; }
+   public UserRecoveryEntity Recovery { get; set; }
+   public UserEmailVerificationEntity EmailVerification { get; set; }
+   public UserNotificationSettingEntity NotificationSetting { get; set; }
+   public UserKeyPairEntity KeyPair { get; set; }
+   public UserMasterKeyEntity MasterKey { get; set; }
+   public List<UserTokenEntity> Tokens { get; set; }
+   public List<UserContactEntity> Contacts { get; set; }
+   public List<UserContactEntity> Contactors { get; set; }
+   public List<UserFileTransferEntity> SentFileTransfers { get; set; }
+   public List<UserFileTransferEntity> ReceivedFileTransfers { get; set; }
+   public List<UserMessageTransferEntity> SentMessageTransfers { get; set; }
+   public List<UserMessageTransferEntity> ReceivedMessageTransfers { get; set; }
+   public List<UserFailedLoginEntity> FailedLoginAttempts { get; set; }
+   public List<UserConsentEntity> Consents { get; set; }
+
+   /// <summary>
+   /// Please avoid using this.
+   /// This is only intended to be used by Entity Framework.
+   /// </summary>
+   public UserEntity(Guid id, string username, string emailAddress, byte[] passwordHash, byte[] passwordSalt, short serverPasswordVersion, short clientPasswordVersion, bool emailVerified, DateTime created, DateTime lastLogin)
    {
-      public Guid Id { get; set; }
-      public string Username { get; set; }
-      public string EmailAddress { get; set; }
-      public byte[] PasswordHash { get; set; }
-      public byte[] PasswordSalt { get; set; }
-      public short ServerPasswordVersion { get; set; }
-      public short ClientPasswordVersion { get; set; }
-      public bool EmailVerified { get; set; }
-      public DateTime Created { get; set; }
-      public DateTime LastLogin { get; set; }
-
-      public UserProfileEntity Profile { get; set; }
-      public UserPrivacySettingEntity PrivacySetting { get; set; }
-      public UserRecoveryEntity Recovery { get; set; }
-      public UserEmailVerificationEntity EmailVerification { get; set; }
-      public UserNotificationSettingEntity NotificationSetting { get; set; }
-      public UserKeyPairEntity KeyPair { get; set; }
-      public UserMasterKeyEntity MasterKey { get; set; }
-      public List<UserTokenEntity> Tokens { get; set; }
-      public List<UserContactEntity> Contacts { get; set; }
-      public List<UserContactEntity> Contactors { get; set; }
-      public List<UserFileTransferEntity> SentFileTransfers { get; set; }
-      public List<UserFileTransferEntity> ReceivedFileTransfers { get; set; }
-      public List<UserMessageTransferEntity> SentMessageTransfers { get; set; }
-      public List<UserMessageTransferEntity> ReceivedMessageTransfers { get; set; }
-      public List<UserFailedLoginEntity> FailedLoginAttempts { get; set; }
-      public List<UserConsentEntity> Consents { get; set; }
-
-      /// <summary>
-      /// Please avoid using this.
-      /// This is only intended to be used by Entity Framework.
-      /// </summary>
-      public UserEntity(Guid id, string username, string emailAddress, byte[] passwordHash, byte[] passwordSalt, short serverPasswordVersion, short clientPasswordVersion, bool emailVerified, DateTime created, DateTime lastLogin)
-      {
-         Id = id;
-         Username = username;
-         EmailAddress = emailAddress;
-         PasswordHash = passwordHash;
-         PasswordSalt = passwordSalt;
-         ServerPasswordVersion = serverPasswordVersion;
-         ClientPasswordVersion = clientPasswordVersion;
-         EmailVerified = emailVerified;
-         Created = created;
-         LastLogin = lastLogin;
-      }
-
-      public UserEntity(Guid id, Username username, Maybe<EmailAddress> emailAddress, byte[] passwordHash, byte[] passwordSalt, short serverPasswordVersion, short clientPasswordVersion, bool emailVerified, DateTime created, DateTime lastLogin)
-      {
-         Id = id;
-         Username = username.Value;
-         EmailAddress = emailAddress.Match(
-            () => null,
-            some => some.Value);
-         PasswordHash = passwordHash;
-         PasswordSalt = passwordSalt;
-         ServerPasswordVersion = serverPasswordVersion;
-         ClientPasswordVersion = clientPasswordVersion;
-         EmailVerified = emailVerified;
-         Created = created;
-         LastLogin = lastLogin;
-      }
+      Id = id;
+      Username = username;
+      EmailAddress = emailAddress;
+      PasswordHash = passwordHash;
+      PasswordSalt = passwordSalt;
+      ServerPasswordVersion = serverPasswordVersion;
+      ClientPasswordVersion = clientPasswordVersion;
+      EmailVerified = emailVerified;
+      Created = created;
+      LastLogin = lastLogin;
    }
 
-   public class UserEntityConfiguration : IEntityTypeConfiguration<UserEntity>
+   public UserEntity(Guid id, Username username, Maybe<EmailAddress> emailAddress, byte[] passwordHash, byte[] passwordSalt, short serverPasswordVersion, short clientPasswordVersion, bool emailVerified, DateTime created, DateTime lastLogin)
    {
-      public void Configure(EntityTypeBuilder<UserEntity> builder)
-      {
-         builder.ToTable("User");
+      Id = id;
+      Username = username.Value;
+      EmailAddress = emailAddress.Match(
+         () => null,
+         some => some.Value);
+      PasswordHash = passwordHash;
+      PasswordSalt = passwordSalt;
+      ServerPasswordVersion = serverPasswordVersion;
+      ClientPasswordVersion = clientPasswordVersion;
+      EmailVerified = emailVerified;
+      Created = created;
+      LastLogin = lastLogin;
+   }
+}
 
-         builder.HasKey(x => x.Id);
+public class UserEntityConfiguration : IEntityTypeConfiguration<UserEntity>
+{
+   public void Configure(EntityTypeBuilder<UserEntity> builder)
+   {
+      builder.ToTable("User");
 
-         builder.Property(x => x.Username)
-            .HasColumnType("citext");
+      builder.HasKey(x => x.Id);
 
-         builder.Property(x => x.EmailAddress)
-            .HasColumnType("citext");
+      builder.Property(x => x.Username)
+         .HasColumnType("citext");
 
-         builder.Property(x => x.ServerPasswordVersion)
-            .IsRequired()
-            .HasDefaultValue(0);
+      builder.Property(x => x.EmailAddress)
+         .HasColumnType("citext");
 
-         builder.Property(x => x.ClientPasswordVersion)
-            .IsRequired()
-            .HasDefaultValue(0);
+      builder.Property(x => x.ServerPasswordVersion)
+         .IsRequired()
+         .HasDefaultValue(0);
 
-         builder.HasMany(x => x.Contacts)
-            .WithOne(x => x.Owner);
+      builder.Property(x => x.ClientPasswordVersion)
+         .IsRequired()
+         .HasDefaultValue(0);
 
-         builder.HasMany(x => x.SentFileTransfers)
-            .WithOne(x => x.Sender)
-            .HasForeignKey(x => x.SenderId);
+      builder.HasMany(x => x.Contacts)
+         .WithOne(x => x.Owner);
 
-         builder.HasMany(x => x.ReceivedFileTransfers)
-            .WithOne(x => x.Recipient)
-            .HasForeignKey(x => x.RecipientId);
+      builder.HasMany(x => x.SentFileTransfers)
+         .WithOne(x => x.Sender)
+         .HasForeignKey(x => x.SenderId);
 
-         builder.HasMany(x => x.SentMessageTransfers)
-            .WithOne(x => x.Sender)
-            .HasForeignKey(x => x.SenderId);
+      builder.HasMany(x => x.ReceivedFileTransfers)
+         .WithOne(x => x.Recipient)
+         .HasForeignKey(x => x.RecipientId);
 
-         builder.HasMany(x => x.ReceivedMessageTransfers)
-            .WithOne(x => x.Recipient)
-            .HasForeignKey(x => x.RecipientId);
+      builder.HasMany(x => x.SentMessageTransfers)
+         .WithOne(x => x.Sender)
+         .HasForeignKey(x => x.SenderId);
 
-         builder.HasIndex(x => x.Username)
-            .IsUnique();
+      builder.HasMany(x => x.ReceivedMessageTransfers)
+         .WithOne(x => x.Recipient)
+         .HasForeignKey(x => x.RecipientId);
 
-         builder.HasIndex(x => x.EmailAddress)
-            .IsUnique();
-      }
+      builder.HasIndex(x => x.Username)
+         .IsUnique();
+
+      builder.HasIndex(x => x.EmailAddress)
+         .IsUnique();
    }
 }

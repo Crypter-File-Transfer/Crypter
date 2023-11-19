@@ -28,49 +28,48 @@ using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Exceptions;
 using NUnit.Framework;
 
-namespace Crypter.Test.Common_Tests.Primitive_Tests
+namespace Crypter.Test.Common_Tests.Primitive_Tests;
+
+[TestFixture]
+[Parallelizable]
+public class Password_Tests
 {
-   [TestFixture]
-   [Parallelizable]
-   public class Password_Tests
+   [TestCase(null)]
+   public void Null_Passwords_Are_Invalid(string password)
    {
-      [TestCase(null)]
-      public void Null_Passwords_Are_Invalid(string password)
-      {
-         Assert.Throws<ValueNullException>(() => Password.From(password));
+      Assert.Throws<ValueNullException>(() => Password.From(password));
 
-         bool shouldBeFalse = Password.TryFrom(password, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = Password.TryFrom(password, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("")]
-      [TestCase(" ")]
-      [TestCase("   ")]
-      public void Empty_Passwords_Are_Invalid(string password)
-      {
-         Assert.Throws<ValueEmptyException>(() => Password.From(password));
+   [TestCase("")]
+   [TestCase(" ")]
+   [TestCase("   ")]
+   public void Empty_Passwords_Are_Invalid(string password)
+   {
+      Assert.Throws<ValueEmptyException>(() => Password.From(password));
 
-         bool shouldBeFalse = Password.TryFrom(password, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = Password.TryFrom(password, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("a")]
-      [TestCase(" whitespace ")]
-      [TestCase("12345")]
-      [TestCase("!@#$%^&")]
-      public void Valid_Passwords_Are_Valid(string password)
-      {
-         Assert.DoesNotThrow(() => Password.From(password));
-         var validPassword = Password.From(password);
-         Assert.IsNotNull(validPassword);
-         Assert.AreEqual(password, validPassword.Value);
+   [TestCase("a")]
+   [TestCase(" whitespace ")]
+   [TestCase("12345")]
+   [TestCase("!@#$%^&")]
+   public void Valid_Passwords_Are_Valid(string password)
+   {
+      Assert.DoesNotThrow(() => Password.From(password));
+      var validPassword = Password.From(password);
+      Assert.IsNotNull(validPassword);
+      Assert.AreEqual(password, validPassword.Value);
 
-         bool shouldBeTrue = Password.TryFrom(password, out var newValidPassword);
-         Assert.IsTrue(shouldBeTrue);
-         Assert.IsNotNull(newValidPassword);
-         Assert.AreEqual(password, newValidPassword.Value);
-      }
+      bool shouldBeTrue = Password.TryFrom(password, out var newValidPassword);
+      Assert.IsTrue(shouldBeTrue);
+      Assert.IsNotNull(newValidPassword);
+      Assert.AreEqual(password, newValidPassword.Value);
    }
 }

@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings
+namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+
+public enum GetContactInfoSettingsError
 {
-   public enum GetContactInfoSettingsError
-   {
-      UnknownError,
-      NotFound
-   }
+   UnknownError,
+   NotFound
 }

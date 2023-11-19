@@ -28,16 +28,15 @@ using Crypter.Core.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Crypter.API.Configuration
+namespace Crypter.API.Configuration;
+
+internal static class JwtBearerConfiguration
 {
-   internal static class JwtBearerConfiguration
+   internal static AuthenticationBuilder AddJwtBearerConfiguration(this AuthenticationBuilder builder, TokenSettings tokenSettings)
    {
-      internal static AuthenticationBuilder AddJwtBearerConfiguration(this AuthenticationBuilder builder, TokenSettings tokenSettings)
+      return builder.AddJwtBearer(options =>
       {
-         return builder.AddJwtBearer(options =>
-         {
-            options.TokenValidationParameters = TokenParametersProvider.GetTokenValidationParameters(tokenSettings);
-         });
-      }
+         options.TokenValidationParameters = TokenParametersProvider.GetTokenValidationParameters(tokenSettings);
+      });
    }
 }

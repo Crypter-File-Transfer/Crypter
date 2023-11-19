@@ -29,27 +29,26 @@ using System.Text.Json.Serialization;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication
+namespace Crypter.Common.Contracts.Features.UserAuthentication;
+
+public class LoginRequest
 {
-   public class LoginRequest
+   public string Username { get; set; }
+   public List<VersionedPassword> VersionedPasswords { get; set; }
+   public TokenType RefreshTokenType { get; set; }
+
+   [JsonConstructor]
+   public LoginRequest(string username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
    {
-      public string Username { get; set; }
-      public List<VersionedPassword> VersionedPasswords { get; set; }
-      public TokenType RefreshTokenType { get; set; }
+      Username = username;
+      VersionedPasswords = versionedPasswords;
+      RefreshTokenType = refreshTokenType;
+   }
 
-      [JsonConstructor]
-      public LoginRequest(string username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
-      {
-         Username = username;
-         VersionedPasswords = versionedPasswords;
-         RefreshTokenType = refreshTokenType;
-      }
-
-      public LoginRequest(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
-      {
-         Username = username.Value;
-         VersionedPasswords = versionedPasswords;
-         RefreshTokenType = refreshTokenType;
-      }
+   public LoginRequest(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+   {
+      Username = username.Value;
+      VersionedPasswords = versionedPasswords;
+      RefreshTokenType = refreshTokenType;
    }
 }

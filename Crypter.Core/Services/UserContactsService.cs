@@ -36,82 +36,81 @@ using Crypter.Core.Extensions;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Services
+namespace Crypter.Core.Services;
+
+public interface IUserContactsService
 {
-   public interface IUserContactsService
+   Task<List<UserContact>> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken = default);
+   Task<Either<AddUserContactError, UserContact>> UpsertUserContactAsync(Guid userId, string contactUsername);
+   Task<Unit> RemoveUserContactAsync(Guid userId, string contactUsername);
+}
+
+public class UserContactsService : IUserContactsService
+{
+   private readonly DataContext _context;
+
+   public UserContactsService(DataContext context)
    {
-      Task<List<UserContact>> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Either<AddUserContactError, UserContact>> UpsertUserContactAsync(Guid userId, string contactUsername);
-      Task<Unit> RemoveUserContactAsync(Guid userId, string contactUsername);
+      _context = context;
    }
 
-   public class UserContactsService : IUserContactsService
+   public async Task<Either<AddUserContactError, UserContact>> UpsertUserContactAsync(Guid userId, string contactUsername)
    {
-      private readonly DataContext _context;
+      string lowerContactUsername = contactUsername.ToLower();
 
-      public UserContactsService(DataContext context)
+      var foundUser = await _context.Users
+         .Where(x => x.Username.ToLower() == lowerContactUsername)
+         .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(userId))
+         .Select(x => new { x.Id, x.Username, x.Profile.Alias })
+         .FirstOrDefaultAsync();
+
+      if (foundUser is null)
       {
-         _context = context;
+         return AddUserContactError.NotFound;
       }
 
-      public async Task<Either<AddUserContactError, UserContact>> UpsertUserContactAsync(Guid userId, string contactUsername)
+      if (userId == foundUser.Id)
       {
-         string lowerContactUsername = contactUsername.ToLower();
-
-         var foundUser = await _context.Users
-            .Where(x => x.Username.ToLower() == lowerContactUsername)
-            .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(userId))
-            .Select(x => new { x.Id, x.Username, x.Profile.Alias })
-            .FirstOrDefaultAsync();
-
-         if (foundUser is null)
-         {
-            return AddUserContactError.NotFound;
-         }
-
-         if (userId == foundUser.Id)
-         {
-            return AddUserContactError.InvalidUser;
-         }
-
-         bool contactExists = await _context.UserContacts
-            .Where(x => x.OwnerId == userId)
-            .Where(x => x.ContactId == foundUser.Id)
-            .AnyAsync();
-
-         if (!contactExists)
-         {
-            UserContactEntity newContactEntity = new UserContactEntity(userId, foundUser.Id);
-            _context.UserContacts.Add(newContactEntity);
-            await _context.SaveChangesAsync();
-         }
-
-         return new UserContact(foundUser.Username, foundUser.Alias);
+         return AddUserContactError.InvalidUser;
       }
 
-      public Task<List<UserContact>> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken = default)
+      bool contactExists = await _context.UserContacts
+         .Where(x => x.OwnerId == userId)
+         .Where(x => x.ContactId == foundUser.Id)
+         .AnyAsync();
+
+      if (!contactExists)
       {
-         return _context.UserContacts
-            .Where(x => x.OwnerId == userId)
-            .Select(x => x.Contact)
-            .Select(LinqUserExpressions.ToUserContactDTO(userId))
-            .ToListAsync(cancellationToken);
+         UserContactEntity newContactEntity = new UserContactEntity(userId, foundUser.Id);
+         _context.UserContacts.Add(newContactEntity);
+         await _context.SaveChangesAsync();
       }
 
-      public async Task<Unit> RemoveUserContactAsync(Guid userId, string contactUsername)
+      return new UserContact(foundUser.Username, foundUser.Alias);
+   }
+
+   public Task<List<UserContact>> GetUserContactsAsync(Guid userId, CancellationToken cancellationToken = default)
+   {
+      return _context.UserContacts
+         .Where(x => x.OwnerId == userId)
+         .Select(x => x.Contact)
+         .Select(LinqUserExpressions.ToUserContactDTO(userId))
+         .ToListAsync(cancellationToken);
+   }
+
+   public async Task<Unit> RemoveUserContactAsync(Guid userId, string contactUsername)
+   {
+      string lowerContactUsername = contactUsername.ToLower();
+
+      UserContactEntity contactEntity = await _context.UserContacts
+         .FirstOrDefaultAsync(x => x.OwnerId == userId && x.Contact.Username.ToLower() == lowerContactUsername);
+
+      if (contactEntity is not null)
       {
-         string lowerContactUsername = contactUsername.ToLower();
-
-         UserContactEntity contactEntity = await _context.UserContacts
-            .FirstOrDefaultAsync(x => x.OwnerId == userId && x.Contact.Username.ToLower() == lowerContactUsername);
-
-         if (contactEntity is not null)
-         {
-            _context.UserContacts.Remove(contactEntity);
-            await _context.SaveChangesAsync();
-         }
-
-         return Unit.Default;
+         _context.UserContacts.Remove(contactEntity);
+         await _context.SaveChangesAsync();
       }
+
+      return Unit.Default;
    }
 }

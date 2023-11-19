@@ -26,15 +26,14 @@
 
 using System;
 
-namespace Crypter.Crypto.Common.Encryption
+namespace Crypter.Crypto.Common.Encryption;
+
+public interface IEncryption
 {
-   public interface IEncryption
-   {
-      uint KeySize { get; }
-      uint NonceSize { get; }
-      byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> plaintext);
-      byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, string plaintext);
-      byte[] Decrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext);
-      string DecryptToString(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext);
-   }
+   uint KeySize { get; }
+   uint NonceSize { get; }
+   byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> plaintext);
+   byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, string plaintext);
+   byte[] Decrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext);
+   string DecryptToString(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext);
 }

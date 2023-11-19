@@ -34,126 +34,125 @@ using Crypter.Web.Models.Forms;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared
+namespace Crypter.Web.Shared;
+
+public partial class LoginComponentBase : ComponentBase
 {
-   public partial class LoginComponentBase : ComponentBase
+   [Inject]
+   protected NavigationManager NavigationManager { get; set; }
+
+   [Inject]
+   protected IUserSessionService UserSessionService { get; set; }
+
+   private const string _userLandingPage = "/user/transfers";
+   private const string _invalidClassName = "is-invalid";
+
+   protected LoginForm LoginModel;
+
+   protected bool LoginAttemptFailed;
+   protected string LoginAttemptErrorMessage;
+
+   protected string UsernameInvalidClassPlaceholder;
+   protected string UsernameValidationErrorMessage;
+
+   protected string PasswordInvalidClassPlaceholder;
+   protected string PasswordValidationErrorMessage;
+
+   protected override void OnInitialized()
    {
-      [Inject]
-      protected NavigationManager NavigationManager { get; set; }
-
-      [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
-
-      private const string _userLandingPage = "/user/transfers";
-      private const string _invalidClassName = "is-invalid";
-
-      protected LoginForm LoginModel;
-
-      protected bool LoginAttemptFailed;
-      protected string LoginAttemptErrorMessage;
-
-      protected string UsernameInvalidClassPlaceholder;
-      protected string UsernameValidationErrorMessage;
-
-      protected string PasswordInvalidClassPlaceholder;
-      protected string PasswordValidationErrorMessage;
-
-      protected override void OnInitialized()
+      LoginModel = new LoginForm()
       {
-         LoginModel = new LoginForm()
+         RememberMe = true
+      };
+   }
+
+   protected async Task SubmitLoginAsync()
+   {
+      var loginTask = from username in ValidateUsername().ToEither(LoginError.InvalidUsername).AsTask()
+         from password in ValidatePassword().ToEither(LoginError.InvalidPassword).AsTask()
+         from loginResult in UserSessionService.LoginAsync(username, password, LoginModel.RememberMe)
+         select loginResult;
+
+      var loginTaskResult = await loginTask;
+
+      loginTaskResult.DoLeftOrNeither(
+         left => HandleLoginFailure(left),
+         () => HandleLoginFailure(LoginError.UnknownError));
+
+
+      loginTaskResult.DoRight(_ =>
+      {
+         string returnUrl = NavigationManager.GetQueryParameter("returnUrl") ?? _userLandingPage;
+         NavigationManager.NavigateTo(returnUrl);
+      });
+   }
+
+   private Maybe<Username> ValidateUsername()
+   {
+      var validationResult = Username.CheckValidation(LoginModel.Username);
+
+      validationResult.IfNone(() =>
+      {
+         UsernameInvalidClassPlaceholder = "";
+         UsernameValidationErrorMessage = "";
+      });
+
+      validationResult.IfSome(error =>
+      {
+         UsernameInvalidClassPlaceholder = _invalidClassName;
+         UsernameValidationErrorMessage = error switch
          {
-            RememberMe = true
+            StringPrimitiveValidationFailure.IsNull
+               or StringPrimitiveValidationFailure.IsEmpty => "Please enter your username",
+            _ => "Invalid username"
          };
-      }
+      });
 
-      protected async Task SubmitLoginAsync()
+      return validationResult.Match(
+         () => Username.From(LoginModel.Username),
+         _ => Maybe<Username>.None);
+   }
+
+   private Maybe<Password> ValidatePassword()
+   {
+      var validationResult = Password.CheckValidation(LoginModel.Password);
+
+      validationResult.IfNone(() =>
       {
-         var loginTask = from username in ValidateUsername().ToEither(LoginError.InvalidUsername).AsTask()
-                         from password in ValidatePassword().ToEither(LoginError.InvalidPassword).AsTask()
-                         from loginResult in UserSessionService.LoginAsync(username, password, LoginModel.RememberMe)
-                         select loginResult;
+         PasswordInvalidClassPlaceholder = "";
+         PasswordValidationErrorMessage = "";
+      });
 
-         var loginTaskResult = await loginTask;
-
-         loginTaskResult.DoLeftOrNeither(
-            left => HandleLoginFailure(left),
-            () => HandleLoginFailure(LoginError.UnknownError));
-
-
-         loginTaskResult.DoRight(_ =>
-         {
-            string returnUrl = NavigationManager.GetQueryParameter("returnUrl") ?? _userLandingPage;
-            NavigationManager.NavigateTo(returnUrl);
-         });
-      }
-
-      private Maybe<Username> ValidateUsername()
+      validationResult.IfSome(error =>
       {
-         var validationResult = Username.CheckValidation(LoginModel.Username);
-
-         validationResult.IfNone(() =>
+         PasswordInvalidClassPlaceholder = _invalidClassName;
+         PasswordValidationErrorMessage = error switch
          {
-            UsernameInvalidClassPlaceholder = "";
-            UsernameValidationErrorMessage = "";
-         });
+            StringPrimitiveValidationFailure.IsNull
+               or StringPrimitiveValidationFailure.IsEmpty => "Please enter your password",
+            _ => "Invalid password"
+         };
+      });
 
-         validationResult.IfSome(error =>
-         {
-            UsernameInvalidClassPlaceholder = _invalidClassName;
-            UsernameValidationErrorMessage = error switch
-            {
-               StringPrimitiveValidationFailure.IsNull
-                  or StringPrimitiveValidationFailure.IsEmpty => "Please enter your username",
-               _ => "Invalid username"
-            };
-         });
+      return validationResult.Match(
+         () => Password.From(LoginModel.Password),
+         _ => Maybe<Password>.None);
+   }
 
-         return validationResult.Match(
-            () => Username.From(LoginModel.Username),
-            _ => Maybe<Username>.None);
-      }
-
-      private Maybe<Password> ValidatePassword()
-      {
-         var validationResult = Password.CheckValidation(LoginModel.Password);
-
-         validationResult.IfNone(() =>
-         {
-            PasswordInvalidClassPlaceholder = "";
-            PasswordValidationErrorMessage = "";
-         });
-
-         validationResult.IfSome(error =>
-         {
-            PasswordInvalidClassPlaceholder = _invalidClassName;
-            PasswordValidationErrorMessage = error switch
-            {
-               StringPrimitiveValidationFailure.IsNull
-                  or StringPrimitiveValidationFailure.IsEmpty => "Please enter your password",
-               _ => "Invalid password"
-            };
-         });
-
-         return validationResult.Match(
-           () => Password.From(LoginModel.Password),
-           _ => Maybe<Password>.None);
-      }
-
-      private void HandleLoginFailure(LoginError error)
-      {
-         LoginAttemptFailed = true;
+   private void HandleLoginFailure(LoginError error)
+   {
+      LoginAttemptFailed = true;
 #pragma warning disable CS8524
-         LoginAttemptErrorMessage = error switch
-         {
-            LoginError.UnknownError
-               or LoginError.InvalidTokenTypeRequested => "An unknown error occurred",
-            LoginError.InvalidUsername
-               or LoginError.InvalidPassword => "Invalid username or password",
-            LoginError.ExcessiveFailedLoginAttempts => "Too many failed login attempts. Try again later.",
-            LoginError.PasswordHashFailure => "A cryptographic error occurred while logging you in. This device or browser may not be supported.",
-            LoginError.InvalidPasswordVersion => "Wrong password version"
-         };
+      LoginAttemptErrorMessage = error switch
+      {
+         LoginError.UnknownError
+            or LoginError.InvalidTokenTypeRequested => "An unknown error occurred",
+         LoginError.InvalidUsername
+            or LoginError.InvalidPassword => "Invalid username or password",
+         LoginError.ExcessiveFailedLoginAttempts => "Too many failed login attempts. Try again later.",
+         LoginError.PasswordHashFailure => "A cryptographic error occurred while logging you in. This device or browser may not be supported.",
+         LoginError.InvalidPasswordVersion => "Wrong password version"
+      };
 #pragma warning restore CS8524
-      }
    }
 }

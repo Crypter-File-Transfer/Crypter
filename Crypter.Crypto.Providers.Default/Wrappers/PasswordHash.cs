@@ -31,17 +31,16 @@ using Crypter.Crypto.Common.PasswordHash;
 using EasyMonads;
 using Geralt;
 
-namespace Crypter.Crypto.Providers.Default.Wrappers
+namespace Crypter.Crypto.Providers.Default.Wrappers;
+
+[UnsupportedOSPlatform("browser")]
+public class PasswordHash : AbstractPasswordHash
 {
-   [UnsupportedOSPlatform("browser")]
-   public class PasswordHash : AbstractPasswordHash
+   protected override Either<Exception, byte[]> HashImplementation(string password, ReadOnlySpan<byte> salt, uint outputLength, uint opsLimit, uint memLimit)
    {
-      protected override Either<Exception, byte[]> HashImplementation(string password, ReadOnlySpan<byte> salt, uint outputLength, uint opsLimit, uint memLimit)
-      {
-         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-         byte[] buffer = new byte[outputLength];
-         Argon2id.DeriveKey(buffer, passwordBytes, salt, checked((int)opsLimit), checked((int)memLimit));
-         return buffer;
-      }
+      byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+      byte[] buffer = new byte[outputLength];
+      Argon2id.DeriveKey(buffer, passwordBytes, salt, checked((int)opsLimit), checked((int)memLimit));
+      return buffer;
    }
 }

@@ -26,11 +26,10 @@
 
 using System;
 
-namespace Crypter.Crypto.Common.Padding
+namespace Crypter.Crypto.Common.Padding;
+
+public interface IPadding
 {
-   public interface IPadding
-   {
-      byte[] Pad(ReadOnlySpan<byte> block, int blockSize);
-      byte[] Unpad(ReadOnlySpan<byte> block, int blockSize);
-   }
+   byte[] Pad(ReadOnlySpan<byte> block, int blockSize);
+   byte[] Unpad(ReadOnlySpan<byte> block, int blockSize);
 }

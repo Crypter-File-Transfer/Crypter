@@ -35,57 +35,56 @@ using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
-namespace Crypter.Web.Shared.Modal
+namespace Crypter.Web.Shared.Modal;
+
+public partial class RecoveryKeyModalBase : ComponentBase
 {
-   public partial class RecoveryKeyModalBase : ComponentBase
+   [Inject]
+   protected IJSRuntime JSRuntime { get; set; }
+
+   [Inject]
+   protected ICrypterApiClient CrypterApiService { get; set; }
+
+   [Inject]
+   protected IUserKeysService UserKeysService { get; set; }
+
+   [Inject]
+   protected IUserRecoveryService UserRecoveryService { get; set; }
+
+   protected string RecoveryKey;
+
+   protected ModalBehavior ModalBehaviorRef { get; set; }
+
+   public async Task OpenAsync(Username username, Password password)
    {
-      [Inject]
-      protected IJSRuntime JSRuntime { get; set; }
+      RecoveryKey = await UserKeysService.MasterKey
+         .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, username, password))
+         .MatchAsync(
+            () => "An error occurred",
+            x => x.ToBase64String());
 
-      [Inject]
-      protected ICrypterApiClient CrypterApiService { get; set; }
+      ModalBehaviorRef.Open();
+   }
 
-      [Inject]
-      protected IUserKeysService UserKeysService { get; set; }
+   public async Task OpenAsync(Username username, VersionedPassword versionedPassword)
+   {
+      RecoveryKey = await UserKeysService.MasterKey
+         .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, username, versionedPassword))
+         .MatchAsync(
+            () => "An error occurred",
+            x => x.ToBase64String());
 
-      [Inject]
-      protected IUserRecoveryService UserRecoveryService { get; set; }
+      ModalBehaviorRef.Open();
+   }
 
-      protected string RecoveryKey;
+   protected async Task CopyRecoveryKeyToClipboardAsync()
+   {
+      await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyModalCopyTooltip" });
+   }
 
-      protected ModalBehavior ModalBehaviorRef { get; set; }
-
-      public async Task OpenAsync(Username username, Password password)
-      {
-         RecoveryKey = await UserKeysService.MasterKey
-            .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, username, password))
-            .MatchAsync(
-               () => "An error occurred",
-               x => x.ToBase64String());
-
-         ModalBehaviorRef.Open();
-      }
-
-      public async Task OpenAsync(Username username, VersionedPassword versionedPassword)
-      {
-         RecoveryKey = await UserKeysService.MasterKey
-            .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, username, versionedPassword))
-            .MatchAsync(
-               () => "An error occurred",
-               x => x.ToBase64String());
-
-         ModalBehaviorRef.Open();
-      }
-
-      protected async Task CopyRecoveryKeyToClipboardAsync()
-      {
-         await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", new object[] { RecoveryKey, "recoveryKeyModalCopyTooltip" });
-      }
-
-      public async Task OnAcknowledgedClickedAsync()
-      {
-         await CrypterApiService.UserConsent.ConsentToRecoveryKeyRisksAsync();
-         ModalBehaviorRef.Close();
-      }
+   public async Task OnAcknowledgedClickedAsync()
+   {
+      await CrypterApiService.UserConsent.ConsentToRecoveryKeyRisksAsync();
+      ModalBehaviorRef.Close();
    }
 }

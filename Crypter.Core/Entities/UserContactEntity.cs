@@ -28,48 +28,47 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserContactEntity
 {
-   public class UserContactEntity
+   public Guid OwnerId { get; set; }
+   public Guid ContactId { get; set; }
+
+   public UserEntity Owner { get; set; }
+   public UserEntity Contact { get; set; }
+
+   public UserContactEntity(Guid ownerId, Guid contactId)
    {
-      public Guid OwnerId { get; set; }
-      public Guid ContactId { get; set; }
-
-      public UserEntity Owner { get; set; }
-      public UserEntity Contact { get; set; }
-
-      public UserContactEntity(Guid ownerId, Guid contactId)
-      {
-         OwnerId = ownerId;
-         ContactId = contactId;
-      }
+      OwnerId = ownerId;
+      ContactId = contactId;
    }
+}
 
-   public class UserContactEntityConfiguration : IEntityTypeConfiguration<UserContactEntity>
+public class UserContactEntityConfiguration : IEntityTypeConfiguration<UserContactEntity>
+{
+   public void Configure(EntityTypeBuilder<UserContactEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserContactEntity> builder)
-      {
-         builder.ToTable("UserContact");
+      builder.ToTable("UserContact");
 
-         builder.HasKey(x => new { x.OwnerId, x.ContactId });
+      builder.HasKey(x => new { x.OwnerId, x.ContactId });
 
-         builder.Property(x => x.OwnerId)
-            .HasColumnName("Owner");
+      builder.Property(x => x.OwnerId)
+         .HasColumnName("Owner");
 
-         builder.Property(x => x.ContactId)
-            .HasColumnName("Contact");
+      builder.Property(x => x.ContactId)
+         .HasColumnName("Contact");
 
-         builder.HasOne(x => x.Owner)
-            .WithMany(x => x.Contacts)
-            .HasForeignKey(x => x.OwnerId)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
+      builder.HasOne(x => x.Owner)
+         .WithMany(x => x.Contacts)
+         .HasForeignKey(x => x.OwnerId)
+         .IsRequired()
+         .OnDelete(DeleteBehavior.Cascade);
 
-         builder.HasOne(x => x.Contact)
-            .WithMany(x => x.Contactors)
-            .HasForeignKey(x => x.ContactId)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
-      }
+      builder.HasOne(x => x.Contact)
+         .WithMany(x => x.Contactors)
+         .HasForeignKey(x => x.ContactId)
+         .IsRequired()
+         .OnDelete(DeleteBehavior.Cascade);
    }
 }

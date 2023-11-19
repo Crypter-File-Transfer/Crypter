@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Identity
+namespace Crypter.Core.Identity;
+
+public class SecurePasswordHashOutput
 {
-   public class SecurePasswordHashOutput
-   {
-      public byte[] Hash { get; set; }
-      public byte[] Salt { get; set; }
-   }
+   public byte[] Hash { get; set; }
+   public byte[] Salt { get; set; }
 }

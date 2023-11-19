@@ -29,50 +29,49 @@ using Crypter.Core.Entities.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class AnonymousMessageTransferEntity : IMessageTransfer
 {
-   public class AnonymousMessageTransferEntity : IMessageTransfer
+   public Guid Id { get; set; }
+   public long Size { get; set; }
+   public byte[] PublicKey { get; set; }
+   public byte[] KeyExchangeNonce { get; set; }
+   public byte[] Proof { get; set; }
+   public DateTime Created { get; set; }
+   public DateTime Expiration { get; set; }
+
+   // IMessageTransfer
+   public string Subject { get; set; }
+
+   public AnonymousMessageTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, string subject = "")
    {
-      public Guid Id { get; set; }
-      public long Size { get; set; }
-      public byte[] PublicKey { get; set; }
-      public byte[] KeyExchangeNonce { get; set; }
-      public byte[] Proof { get; set; }
-      public DateTime Created { get; set; }
-      public DateTime Expiration { get; set; }
-
-      // IMessageTransfer
-      public string Subject { get; set; }
-
-      public AnonymousMessageTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, string subject = "")
-      {
-         Id = id;
-         Size = size;
-         PublicKey = publicKey;
-         KeyExchangeNonce = keyExchangeNonce;
-         Proof = proof;
-         Created = created;
-         Expiration = expiration;
-         Subject = subject;
-      }
+      Id = id;
+      Size = size;
+      PublicKey = publicKey;
+      KeyExchangeNonce = keyExchangeNonce;
+      Proof = proof;
+      Created = created;
+      Expiration = expiration;
+      Subject = subject;
    }
+}
 
-   public class AnonymousMessageTransferEntityConfiguration : IEntityTypeConfiguration<AnonymousMessageTransferEntity>
+public class AnonymousMessageTransferEntityConfiguration : IEntityTypeConfiguration<AnonymousMessageTransferEntity>
+{
+   public void Configure(EntityTypeBuilder<AnonymousMessageTransferEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<AnonymousMessageTransferEntity> builder)
-      {
-         builder.ToTable("AnonymousMessageTransfer");
+      builder.ToTable("AnonymousMessageTransfer");
 
-         builder.HasKey(x => x.Id);
+      builder.HasKey(x => x.Id);
 
-         builder.Property(x => x.PublicKey)
-            .IsRequired();
+      builder.Property(x => x.PublicKey)
+         .IsRequired();
 
-         builder.Property(x => x.Proof)
-            .IsRequired();
+      builder.Property(x => x.Proof)
+         .IsRequired();
 
-         builder.Property(x => x.Subject)
-            .IsRequired();
-      }
+      builder.Property(x => x.Subject)
+         .IsRequired();
    }
 }

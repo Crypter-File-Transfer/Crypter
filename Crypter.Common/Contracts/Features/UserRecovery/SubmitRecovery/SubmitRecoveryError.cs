@@ -24,15 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery
+namespace Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
+
+public enum SubmitRecoveryError
 {
-   public enum SubmitRecoveryError
-   {
-      UnknownError,
-      InvalidUsername,
-      RecoveryNotFound,
-      WrongRecoveryKey,
-      InvalidMasterKey,
-      PasswordHashFailure,
-   }
+   UnknownError,
+   InvalidUsername,
+   RecoveryNotFound,
+   WrongRecoveryKey,
+   InvalidMasterKey,
+   PasswordHashFailure,
 }

@@ -32,59 +32,58 @@ using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Crypter.Web.Shared.Transfer
+namespace Crypter.Web.Shared.Transfer;
+
+public partial class DownloadTransferBase : ComponentBase
 {
-   public partial class DownloadTransferBase : ComponentBase
+   [Inject]
+   private NavigationManager NavigationManager { get; set; }
+
+   [Inject]
+   protected IUserSessionService UserSessionService { get; set; }
+
+   [Inject]
+   protected IUserKeysService UserKeysService { get; set; }
+
+   [Inject]
+   protected TransferHandlerFactory TransferHandlerFactory { get; set; }
+
+   [Inject]
+   protected Crypto.Common.ICryptoProvider CryptoProvider { get; set; }
+
+   [Parameter]
+   public string TransferHashId { get; set; }
+
+   [Parameter]
+   public TransferUserType UserType { get; set; }
+
+   protected bool FinishedLoading = false;
+   protected bool ItemFound = false;
+   protected bool DecryptionInProgress = false;
+   protected bool DecryptionComplete = false;
+   protected string ErrorMessage = string.Empty;
+   protected string DecryptionStatusMessage = string.Empty;
+
+   protected bool SpecificRecipient = false;
+   protected string SenderUsername = string.Empty;
+   protected DateTime Created = DateTime.MinValue;
+   protected DateTime Expiration = DateTime.MinValue;
+
+   protected const string _decryptingLiteral = "Decrypting";
+
+   protected Maybe<byte[]> DeriveRecipientPrivateKeyFromUrlSeed()
    {
-      [Inject]
-      private NavigationManager NavigationManager { get; set; }
+      int hashLocation = NavigationManager.Uri.IndexOf('#');
+      string encodedSeed = NavigationManager.Uri[(hashLocation + 1)..];
 
-      [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
-
-      [Inject]
-      protected IUserKeysService UserKeysService { get; set; }
-
-      [Inject]
-      protected TransferHandlerFactory TransferHandlerFactory { get; set; }
-
-      [Inject]
-      protected Crypto.Common.ICryptoProvider CryptoProvider { get; set; }
-
-      [Parameter]
-      public string TransferHashId { get; set; }
-
-      [Parameter]
-      public TransferUserType UserType { get; set; }
-
-      protected bool FinishedLoading = false;
-      protected bool ItemFound = false;
-      protected bool DecryptionInProgress = false;
-      protected bool DecryptionComplete = false;
-      protected string ErrorMessage = string.Empty;
-      protected string DecryptionStatusMessage = string.Empty;
-
-      protected bool SpecificRecipient = false;
-      protected string SenderUsername = string.Empty;
-      protected DateTime Created = DateTime.MinValue;
-      protected DateTime Expiration = DateTime.MinValue;
-
-      protected const string _decryptingLiteral = "Decrypting";
-
-      protected Maybe<byte[]> DeriveRecipientPrivateKeyFromUrlSeed()
+      try
       {
-         int hashLocation = NavigationManager.Uri.IndexOf('#');
-         string encodedSeed = NavigationManager.Uri[(hashLocation + 1)..];
-
-         try
-         {
-            byte[] seed = Base64UrlEncoder.DecodeBytes(encodedSeed);
-            return CryptoProvider.KeyExchange.GenerateKeyPairDeterministic(seed).PrivateKey;
-         }
-         catch (Exception)
-         {
-            return Maybe<byte[]>.None;
-         }
+         byte[] seed = Base64UrlEncoder.DecodeBytes(encodedSeed);
+         return CryptoProvider.KeyExchange.GenerateKeyPairDeterministic(seed).PrivateKey;
+      }
+      catch (Exception)
+      {
+         return Maybe<byte[]>.None;
       }
    }
 }

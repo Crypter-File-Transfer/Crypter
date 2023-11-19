@@ -27,21 +27,20 @@
 using System;
 using Crypter.Common.Client.Interfaces.Requests;
 
-namespace Crypter.Common.Client.Interfaces.HttpClients
-{
-   public interface ICrypterApiClient
-   {
-      event EventHandler RefreshTokenRejectedEventHandler;
+namespace Crypter.Common.Client.Interfaces.HttpClients;
 
-      IFileTransferRequests FileTransfer { get; }
-      IMessageTransferRequests MessageTransfer { get; }
-      IMetricsRequests Metrics { get; }
-      IUserRequests User { get; }
-      IUserAuthenticationRequests UserAuthentication { get; }
-      IUserConsentRequests UserConsent { get; }
-      IUserContactRequests UserContact { get; }
-      IUserKeyRequests UserKey { get; }
-      IUserRecoveryRequests UserRecovery { get; }
-      IUserSettingRequests UserSetting { get; }
-   }
+public interface ICrypterApiClient
+{
+   event EventHandler RefreshTokenRejectedEventHandler;
+
+   IFileTransferRequests FileTransfer { get; }
+   IMessageTransferRequests MessageTransfer { get; }
+   IMetricsRequests Metrics { get; }
+   IUserRequests User { get; }
+   IUserAuthenticationRequests UserAuthentication { get; }
+   IUserConsentRequests UserConsent { get; }
+   IUserContactRequests UserContact { get; }
+   IUserKeyRequests UserKey { get; }
+   IUserRecoveryRequests UserRecovery { get; }
+   IUserSettingRequests UserSetting { get; }
 }

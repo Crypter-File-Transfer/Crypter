@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Entities.Interfaces
+namespace Crypter.Core.Entities.Interfaces;
+
+public interface IFileTransfer : ITransferBase
 {
-   public interface IFileTransfer : ITransferBase
-   {
-      string FileName { get; set; }
-      string ContentType { get; set; }
-   }
+   string FileName { get; set; }
+   string ContentType { get; set; }
 }

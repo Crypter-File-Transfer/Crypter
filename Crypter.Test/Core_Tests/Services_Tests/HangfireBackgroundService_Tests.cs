@@ -38,70 +38,69 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NUnit.Framework;
 
-namespace Crypter.Test.Core_Tests.Services_Tests
+namespace Crypter.Test.Core_Tests.Services_Tests;
+
+[TestFixture]
+public class HangfireBackgroundService_Tests
 {
-   [TestFixture]
-   public class HangfireBackgroundService_Tests
+   private WebApplicationFactory<Program> _factory;
+   private IServiceScope _scope;
+   private DataContext _dataContext;
+      
+   private ICryptoProvider _cryptoProvider;
+   private Mock<IBackgroundJobClient> _backgroundJobClientMock;
+   private Mock<IEmailService> _emailServiceMock;
+   private Mock<ITransferRepository> _transferStorageMock;
+
+   [SetUp]
+   public async Task SetupTestAsync()
    {
-      private WebApplicationFactory<Program> _factory;
-      private IServiceScope _scope;
-      private DataContext _dataContext;
-      
-      private ICryptoProvider _cryptoProvider;
-      private Mock<IBackgroundJobClient> _backgroundJobClientMock;
-      private Mock<IEmailService> _emailServiceMock;
-      private Mock<ITransferRepository> _transferStorageMock;
-
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _cryptoProvider = new DefaultCryptoProvider();
-         _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
-         _emailServiceMock = new Mock<IEmailService>();
-         _transferStorageMock = new Mock<ITransferRepository>();
+      _cryptoProvider = new DefaultCryptoProvider();
+      _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
+      _emailServiceMock = new Mock<IEmailService>();
+      _transferStorageMock = new Mock<ITransferRepository>();
          
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         await AssemblySetup.InitializeRespawnerAsync();
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      await AssemblySetup.InitializeRespawnerAsync();
          
-         _scope = _factory.Services.CreateScope();
-         _dataContext = _scope.ServiceProvider.GetRequiredService<DataContext>();
-      }
+      _scope = _factory.Services.CreateScope();
+      _dataContext = _scope.ServiceProvider.GetRequiredService<DataContext>();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
-      {
-         _scope.Dispose();
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      _scope.Dispose();
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
 
-      [Test]
-      public async Task Verification_Email_Not_Sent_Without_Verification_Parameters()
-      {
-         _emailServiceMock
-            .Setup(x => x.SendEmailVerificationAsync(
-               It.IsAny<UserEmailAddressVerificationParameters>()))
-            .ReturnsAsync((UserEmailAddressVerificationParameters parameters) => true);
+   [Test]
+   public async Task Verification_Email_Not_Sent_Without_Verification_Parameters()
+   {
+      _emailServiceMock
+         .Setup(x => x.SendEmailVerificationAsync(
+            It.IsAny<UserEmailAddressVerificationParameters>()))
+         .ReturnsAsync((UserEmailAddressVerificationParameters parameters) => true);
 
-         HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _backgroundJobClientMock.Object, _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
-         await sut.SendEmailVerificationAsync(Guid.NewGuid());
+      HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _backgroundJobClientMock.Object, _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
+      await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
-         _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>()), Times.Never);
-      }
+      _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>()), Times.Never);
+   }
 
-      [Test]
-      public async Task Recovery_Email_Not_Sent_Without_Recovery_Parameters()
-      {
-         _emailServiceMock
-            .Setup(x => x.SendAccountRecoveryLinkAsync(
-               It.IsAny<UserRecoveryParameters>(),
-               It.IsAny<int>()))
-            .ReturnsAsync((UserRecoveryParameters parameters, int expirationMinutes) => true);
+   [Test]
+   public async Task Recovery_Email_Not_Sent_Without_Recovery_Parameters()
+   {
+      _emailServiceMock
+         .Setup(x => x.SendAccountRecoveryLinkAsync(
+            It.IsAny<UserRecoveryParameters>(),
+            It.IsAny<int>()))
+         .ReturnsAsync((UserRecoveryParameters parameters, int expirationMinutes) => true);
 
-         HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _backgroundJobClientMock.Object, _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
-         await sut.SendRecoveryEmailAsync("foo@test.com");
+      HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _backgroundJobClientMock.Object, _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
+      await sut.SendRecoveryEmailAsync("foo@test.com");
 
-         _emailServiceMock.Verify(x => x.SendAccountRecoveryLinkAsync(It.IsAny<UserRecoveryParameters>(), It.IsAny<int>()), Times.Never);
-      }
+      _emailServiceMock.Verify(x => x.SendAccountRecoveryLinkAsync(It.IsAny<UserRecoveryParameters>(), It.IsAny<int>()), Times.Never);
    }
 }

@@ -32,36 +32,35 @@ using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.UserRecovery_Tests
+namespace Crypter.Test.Integration_Tests.UserRecovery_Tests;
+
+[TestFixture]
+internal class SendRecoveryEmail_Tests
 {
-   [TestFixture]
-   internal class SendRecoveryEmail_Tests
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+
+   [SetUp]
+   public async Task SetupTestAsync()
    {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
-      {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
 
-      [Test]
-      public async Task Send_Recovery_Email_Works()
-      {
-         EmailAddress emailAddress = EmailAddress.From(TestData.DefaultEmailAdress);
-         Either<SendRecoveryEmailError, Unit> result = await _client.UserRecovery.SendRecoveryEmailAsync(emailAddress);
+   [Test]
+   public async Task Send_Recovery_Email_Works()
+   {
+      EmailAddress emailAddress = EmailAddress.From(TestData.DefaultEmailAdress);
+      Either<SendRecoveryEmailError, Unit> result = await _client.UserRecovery.SendRecoveryEmailAsync(emailAddress);
 
-         Assert.True(result.IsRight);
-      }
+      Assert.True(result.IsRight);
    }
 }

@@ -31,31 +31,30 @@ using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Core.Features.UserSettings.PrivacySettings;
 using EasyMonads;
 
-namespace Crypter.Core.Services.UserSettings
+namespace Crypter.Core.Services.UserSettings;
+
+public interface IUserPrivacySettingsService
 {
-   public interface IUserPrivacySettingsService
+   Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+   Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(Guid userId, PrivacySettings request);
+}
+
+public class UserPrivacySettingsService : IUserPrivacySettingsService
+{
+   private readonly DataContext _context;
+
+   public UserPrivacySettingsService(DataContext context)
    {
-      Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(Guid userId, PrivacySettings request);
+      _context = context;
    }
 
-   public class UserPrivacySettingsService : IUserPrivacySettingsService
+   public async Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default)
    {
-      private readonly DataContext _context;
+      return await UserPrivacySettingsQueries.GetPrivacySettingsAsync(_context, userId, cancellationToken);
+   }
 
-      public UserPrivacySettingsService(DataContext context)
-      {
-         _context = context;
-      }
-
-      public async Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync(Guid userId, CancellationToken cancellationToken = default)
-      {
-         return await UserPrivacySettingsQueries.GetPrivacySettingsAsync(_context, userId, cancellationToken);
-      }
-
-      public async Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(Guid userId, PrivacySettings request)
-      {
-         return await UserPrivacySettingsCommands.SetPrivacySettingsAsync(_context, userId, request);
-      }
+   public async Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(Guid userId, PrivacySettings request)
+   {
+      return await UserPrivacySettingsCommands.SetPrivacySettingsAsync(_context, userId, request);
    }
 }

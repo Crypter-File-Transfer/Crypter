@@ -29,62 +29,61 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public partial class UserProfileBase : ComponentBase
 {
-   public partial class UserProfileBase : ComponentBase
+   [Inject]
+   private ICrypterApiClient CrypterApiService { get; set; }
+
+   [Inject]
+   private IUserSessionService UserSessionService { get; set; }
+
+   [Parameter]
+   public string Username { get; set; }
+
+   protected Shared.Modal.UploadFileTransferModal FileModal { get; set; }
+   protected Shared.Modal.UploadMessageTransferModal MessageModal { get; set; }
+
+   protected bool Loading;
+   protected bool IsProfileAvailable;
+   protected string Alias;
+   protected string About;
+   protected string ProperUsername;
+   protected bool AllowsFiles;
+   protected bool AllowsMessages;
+   protected byte[] UserPublicKey;
+   protected bool EmailVerified;
+
+   protected override void OnInitialized()
    {
-      [Inject]
-      private ICrypterApiClient CrypterApiService { get; set; }
+      Loading = true;
+   }
 
-      [Inject]
-      private IUserSessionService UserSessionService { get; set; }
+   protected override async Task OnParametersSetAsync()
+   {
+      Loading = true;
+      await PrepareUserProfileAsync();
+      Loading = false;
+   }
 
-      [Parameter]
-      public string Username { get; set; }
-
-      protected Shared.Modal.UploadFileTransferModal FileModal { get; set; }
-      protected Shared.Modal.UploadMessageTransferModal MessageModal { get; set; }
-
-      protected bool Loading;
-      protected bool IsProfileAvailable;
-      protected string Alias;
-      protected string About;
-      protected string ProperUsername;
-      protected bool AllowsFiles;
-      protected bool AllowsMessages;
-      protected byte[] UserPublicKey;
-      protected bool EmailVerified;
-
-      protected override void OnInitialized()
+   protected async Task PrepareUserProfileAsync()
+   {
+      bool isLoggedIn = await UserSessionService.IsLoggedInAsync();
+      var response = await CrypterApiService.User.GetUserProfileAsync(Username, isLoggedIn);
+      response.DoRight(x =>
       {
-         Loading = true;
-      }
+         Alias = x.Alias;
+         About = x.About;
+         ProperUsername = x.Username;
+         AllowsFiles = x.ReceivesFiles;
+         AllowsMessages = x.ReceivesMessages;
+         UserPublicKey = x.PublicKey;
+         EmailVerified = x.EmailVerified;
+      });
 
-      protected override async Task OnParametersSetAsync()
-      {
-         Loading = true;
-         await PrepareUserProfileAsync();
-         Loading = false;
-      }
-
-      protected async Task PrepareUserProfileAsync()
-      {
-         bool isLoggedIn = await UserSessionService.IsLoggedInAsync();
-         var response = await CrypterApiService.User.GetUserProfileAsync(Username, isLoggedIn);
-         response.DoRight(x =>
-         {
-            Alias = x.Alias;
-            About = x.About;
-            ProperUsername = x.Username;
-            AllowsFiles = x.ReceivesFiles;
-            AllowsMessages = x.ReceivesMessages;
-            UserPublicKey = x.PublicKey;
-            EmailVerified = x.EmailVerified;
-         });
-
-         IsProfileAvailable = response.Match(
-            false,
-            right => right.PublicKey is not null);
-      }
+      IsProfileAvailable = response.Match(
+         false,
+         right => right.PublicKey is not null);
    }
 }

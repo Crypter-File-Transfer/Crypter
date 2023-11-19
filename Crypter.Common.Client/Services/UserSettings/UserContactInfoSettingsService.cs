@@ -34,86 +34,85 @@ using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Services.UserSettings
+namespace Crypter.Common.Client.Services.UserSettings;
+
+public class UserContactInfoSettingsService : IUserContactInfoSettingsService, IDisposable
 {
-   public class UserContactInfoSettingsService : IUserContactInfoSettingsService, IDisposable
+   private readonly ICrypterApiClient _crypterApiClient;
+   private readonly IUserPasswordService _userPasswordService;
+   private readonly IUserSessionService _userSessionService;
+
+   private Maybe<ContactInfoSettings> _contactInfoSettings;
+
+   private EventHandler<UserContactInfoChangedEventArgs> _userContactInfoChangedEventHandler;
+
+   public UserContactInfoSettingsService(ICrypterApiClient crypterApiClient, IUserPasswordService userPasswordService, IUserSessionService userSessionService)
    {
-      private readonly ICrypterApiClient _crypterApiClient;
-      private readonly IUserPasswordService _userPasswordService;
-      private readonly IUserSessionService _userSessionService;
+      _crypterApiClient = crypterApiClient;
+      _userPasswordService = userPasswordService;
+      _userSessionService = userSessionService;
 
-      private Maybe<ContactInfoSettings> _contactInfoSettings;
+      _userSessionService.UserLoggedOutEventHandler += Recycle;
+   }
 
-      private EventHandler<UserContactInfoChangedEventArgs> _userContactInfoChangedEventHandler;
-
-      public UserContactInfoSettingsService(ICrypterApiClient crypterApiClient, IUserPasswordService userPasswordService, IUserSessionService userSessionService)
+   public async Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync()
+   {
+      if (_contactInfoSettings.IsNone)
       {
-         _crypterApiClient = crypterApiClient;
-         _userPasswordService = userPasswordService;
-         _userSessionService = userSessionService;
-
-         _userSessionService.UserLoggedOutEventHandler += Recycle;
+         _contactInfoSettings = await _crypterApiClient.UserSetting.GetContactInfoSettingsAsync();
       }
 
-      public async Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync()
-      {
-         if (_contactInfoSettings.IsNone)
-         {
-            _contactInfoSettings = await _crypterApiClient.UserSetting.GetContactInfoSettingsAsync();
-         }
+      return _contactInfoSettings;
+   }
 
-         return _contactInfoSettings;
+   public async Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Maybe<EmailAddress> emailAddress, Password currentPassword)
+   {
+      string rawUsername = _userSessionService.Session.Match(
+         () => string.Empty,
+         x => x.Username);
+
+      if (!Username.TryFrom(rawUsername, out Username username))
+      {
+         return UpdateContactInfoSettingsError.InvalidUsername;
       }
 
-      public async Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Maybe<EmailAddress> emailAddress, Password currentPassword)
-      {
-         string rawUsername = _userSessionService.Session.Match(
-            () => string.Empty,
-            x => x.Username);
-
-         if (!Username.TryFrom(rawUsername, out Username username))
+      return await _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, currentPassword, _userPasswordService.CurrentPasswordVersion)
+         .ToEitherAsync(UpdateContactInfoSettingsError.PasswordHashFailure)
+         .MapAsync(async x =>
          {
-            return UpdateContactInfoSettingsError.InvalidUsername;
-         }
+            UpdateContactInfoSettingsRequest request = new UpdateContactInfoSettingsRequest(emailAddress, x.Password);
+            Either<UpdateContactInfoSettingsError, ContactInfoSettings> response = await _crypterApiClient.UserSetting.UpdateContactInfoSettingsAsync(request);
+            _contactInfoSettings = response.ToMaybe();
 
-         return await _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, currentPassword, _userPasswordService.CurrentPasswordVersion)
-            .ToEitherAsync(UpdateContactInfoSettingsError.PasswordHashFailure)
-            .MapAsync(async x =>
+            response.DoRight(updatedContactInfoSettings =>
             {
-               UpdateContactInfoSettingsRequest request = new UpdateContactInfoSettingsRequest(emailAddress, x.Password);
-               Either<UpdateContactInfoSettingsError, ContactInfoSettings> response = await _crypterApiClient.UserSetting.UpdateContactInfoSettingsAsync(request);
-               _contactInfoSettings = response.ToMaybe();
-
-               response.DoRight(updatedContactInfoSettings =>
-               {
-                  Maybe<EmailAddress> newEmailAddress = EmailAddress.TryFrom(updatedContactInfoSettings.EmailAddress, out EmailAddress newValidEmailAddress)
-                     ? newValidEmailAddress
-                     : Maybe<EmailAddress>.None;
-                  HandleUserContactInfoChangedEvent(newEmailAddress, updatedContactInfoSettings.EmailAddressVerified);
-               });
-
-               return response;
+               Maybe<EmailAddress> newEmailAddress = EmailAddress.TryFrom(updatedContactInfoSettings.EmailAddress, out EmailAddress newValidEmailAddress)
+                  ? newValidEmailAddress
+                  : Maybe<EmailAddress>.None;
+               HandleUserContactInfoChangedEvent(newEmailAddress, updatedContactInfoSettings.EmailAddressVerified);
             });
-      }
 
-      public event EventHandler<UserContactInfoChangedEventArgs> UserContactInfoChangedEventHandler
-      {
-         add => _userContactInfoChangedEventHandler = (EventHandler<UserContactInfoChangedEventArgs>)Delegate.Combine(_userContactInfoChangedEventHandler, value);
-         remove => _userContactInfoChangedEventHandler = (EventHandler<UserContactInfoChangedEventArgs>)Delegate.Remove(_userContactInfoChangedEventHandler, value);
-      }
+            return response;
+         });
+   }
 
-      private void HandleUserContactInfoChangedEvent(Maybe<EmailAddress> emailAddress, bool emailAddressVerified) =>
-         _userContactInfoChangedEventHandler?.Invoke(this, new UserContactInfoChangedEventArgs(emailAddress, emailAddressVerified));
+   public event EventHandler<UserContactInfoChangedEventArgs> UserContactInfoChangedEventHandler
+   {
+      add => _userContactInfoChangedEventHandler = (EventHandler<UserContactInfoChangedEventArgs>)Delegate.Combine(_userContactInfoChangedEventHandler, value);
+      remove => _userContactInfoChangedEventHandler = (EventHandler<UserContactInfoChangedEventArgs>)Delegate.Remove(_userContactInfoChangedEventHandler, value);
+   }
 
-      private void Recycle(object sender, EventArgs _)
-      {
-         _contactInfoSettings = Maybe<ContactInfoSettings>.None;
-      }
+   private void HandleUserContactInfoChangedEvent(Maybe<EmailAddress> emailAddress, bool emailAddressVerified) =>
+      _userContactInfoChangedEventHandler?.Invoke(this, new UserContactInfoChangedEventArgs(emailAddress, emailAddressVerified));
 
-      public void Dispose()
-      {
-         _userSessionService.UserLoggedOutEventHandler -= Recycle;
-         GC.SuppressFinalize(this);
-      }
+   private void Recycle(object sender, EventArgs _)
+   {
+      _contactInfoSettings = Maybe<ContactInfoSettings>.None;
+   }
+
+   public void Dispose()
+   {
+      _userSessionService.UserLoggedOutEventHandler -= Recycle;
+      GC.SuppressFinalize(this);
    }
 }

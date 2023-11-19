@@ -30,34 +30,33 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.HttpClients
+namespace Crypter.Common.Client.Interfaces.HttpClients;
+
+public interface ICrypterHttpClient
 {
-   public interface ICrypterHttpClient
-   {
-      Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri)
-         where TResponse : class;
+   Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri)
+      where TResponse : class;
 
-      Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri)
-         where TResponse : class;
+   Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri)
+      where TResponse : class;
 
-      Task<Either<ErrorResponse, Unit>> GetEitherUnitResponseAsync(string uri);
+   Task<Either<ErrorResponse, Unit>> GetEitherUnitResponseAsync(string uri);
 
-      Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(string uri);
+   Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(string uri);
 
-      Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body)
-         where TRequest : class
-         where TResponse : class;
+   Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body)
+      where TRequest : class
+      where TResponse : class;
 
-      Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri);
+   Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri);
 
-      Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri);
+   Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri);
 
-      Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body)
-         where TRequest : class;
+   Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body)
+      where TRequest : class;
 
-      Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri);
+   Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri);
 
-      Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)
-         where TResponse : class;
-   }
+   Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)
+      where TResponse : class;
 }

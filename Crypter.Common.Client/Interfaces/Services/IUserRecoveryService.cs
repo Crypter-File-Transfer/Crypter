@@ -31,29 +31,28 @@ using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Services
+namespace Crypter.Common.Client.Interfaces.Services;
+
+public interface IUserRecoveryService
 {
-   public interface IUserRecoveryService
-   {
-      /// <summary>
-      /// Derive a recovery key from the provided parameters.
-      /// </summary>
-      /// <param name="masterKey"></param>
-      /// <param name="username"></param>
-      /// <param name="password">A valid, plaintext password.</param>
-      /// <returns></returns>
-      Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, Password password);
+   /// <summary>
+   /// Derive a recovery key from the provided parameters.
+   /// </summary>
+   /// <param name="masterKey"></param>
+   /// <param name="username"></param>
+   /// <param name="password">A valid, plaintext password.</param>
+   /// <returns></returns>
+   Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, Password password);
 
-      /// <summary>
-      /// Derivce a recovery key from the provided parameters.
-      /// </summary>
-      /// <param name="masterKey"></param>
-      /// <param name="username"></param>
-      /// <param name="versionedPassword">A hashed password.</param>
-      /// <returns></returns>
-      Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, VersionedPassword versionedPassword);
+   /// <summary>
+   /// Derivce a recovery key from the provided parameters.
+   /// </summary>
+   /// <param name="masterKey"></param>
+   /// <param name="username"></param>
+   /// <param name="versionedPassword">A hashed password.</param>
+   /// <returns></returns>
+   Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, VersionedPassword versionedPassword);
 
-      Task RequestRecoveryEmailAsync(EmailAddress emailAddress);
-      Task<Either<SubmitRecoveryError, Maybe<RecoveryKey>>> SubmitRecoveryRequestAsync(string recoveryCode, string recoverySignature, Username username, Password newPassword, Maybe<RecoveryKey> recoveryProof);
-   }
+   Task RequestRecoveryEmailAsync(EmailAddress emailAddress);
+   Task<Either<SubmitRecoveryError, Maybe<RecoveryKey>>> SubmitRecoveryRequestAsync(string recoveryCode, string recoverySignature, Username username, Password newPassword, Maybe<RecoveryKey> recoveryProof);
 }

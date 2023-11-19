@@ -34,98 +34,97 @@ using Crypter.Crypto.Common.KeyExchange;
 using Crypter.Crypto.Common.StreamEncryption;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Transfer.Handlers.Base
+namespace Crypter.Common.Client.Transfer.Handlers.Base;
+
+public class UploadHandler : IUserUploadHandler
 {
-   public class UploadHandler : IUserUploadHandler
+   protected readonly ICrypterApiClient _crypterApiClient;
+   protected readonly ICryptoProvider _cryptoProvider;
+   protected readonly TransferSettings _transferSettings;
+
+   protected TransferUserType _transferUserType = TransferUserType.Anonymous;
+
+   protected int _expirationHours;
+
+   protected bool _senderDefined = false;
+
+   protected byte[] _keyExchangeNonce;
+   protected Maybe<byte[]> _senderPrivateKey = Maybe<byte[]>.None;
+
+   protected Maybe<string> _recipientUsername = Maybe<string>.None;
+   protected Maybe<byte[]> _recipientKeySeed = Maybe<byte[]>.None;
+
+   protected Maybe<byte[]> _recipientPrivateKey = Maybe<byte[]>.None;
+   protected Maybe<byte[]> _recipientPublicKey = Maybe<byte[]>.None;
+
+   public UploadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
    {
-      protected readonly ICrypterApiClient _crypterApiClient;
-      protected readonly ICryptoProvider _cryptoProvider;
-      protected readonly TransferSettings _transferSettings;
+      _crypterApiClient = crypterApiClient;
+      _cryptoProvider = cryptoProvider;
+      _transferSettings = transferSettings;
 
-      protected TransferUserType _transferUserType = TransferUserType.Anonymous;
+      _keyExchangeNonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.KeyExchange.NonceSize);
+   }
 
-      protected int _expirationHours;
+   public void SetSenderInfo(byte[] privateKey)
+   {
+      _senderDefined = true;
+      _transferUserType = TransferUserType.User;
+      _senderPrivateKey = privateKey;
+   }
 
-      protected bool _senderDefined = false;
+   public void SetRecipientInfo(string username, byte[] publicKey)
+   {
+      _transferUserType = TransferUserType.User;
+      _recipientUsername = username;
+      _recipientPublicKey = publicKey;
+   }
 
-      protected byte[] _keyExchangeNonce;
-      protected Maybe<byte[]> _senderPrivateKey = Maybe<byte[]>.None;
+   protected void CreateEphemeralSenderKeys()
+   {
+      X25519KeyPair senderX25519KeyPair = _cryptoProvider.KeyExchange.GenerateKeyPair();
+      _senderPrivateKey = senderX25519KeyPair.PrivateKey;
+   }
 
-      protected Maybe<string> _recipientUsername = Maybe<string>.None;
-      protected Maybe<byte[]> _recipientKeySeed = Maybe<byte[]>.None;
+   protected void CreateEphemeralRecipientKeys()
+   {
+      Span<byte> seed = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.KeyExchange.SeedSize);
+      _recipientKeySeed = seed.ToArray();
+      X25519KeyPair recipientKeyPair = _cryptoProvider.KeyExchange.GenerateKeyPairDeterministic(seed);
+      _recipientPrivateKey = recipientKeyPair.PrivateKey;
+      _recipientPublicKey = recipientKeyPair.PublicKey;
+   }
 
-      protected Maybe<byte[]> _recipientPrivateKey = Maybe<byte[]>.None;
-      protected Maybe<byte[]> _recipientPublicKey = Maybe<byte[]>.None;
-
-      public UploadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, TransferSettings transferSettings)
+   protected (Func<EncryptionStream> encryptionStreamOpener, byte[] senderPublicKey, byte[] proof) GetEncryptionInfo(Func<Stream> plaintextStreamOpener, long streamSize)
+   {
+      if (_recipientUsername.IsNone)
       {
-         _crypterApiClient = crypterApiClient;
-         _cryptoProvider = cryptoProvider;
-         _transferSettings = transferSettings;
-
-         _keyExchangeNonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.KeyExchange.NonceSize);
+         CreateEphemeralRecipientKeys();
       }
 
-      public void SetSenderInfo(byte[] privateKey)
+      if (!_senderDefined)
       {
-         _senderDefined = true;
-         _transferUserType = TransferUserType.User;
-         _senderPrivateKey = privateKey;
+         CreateEphemeralSenderKeys();
       }
 
-      public void SetRecipientInfo(string username, byte[] publicKey)
-      {
-         _transferUserType = TransferUserType.User;
-         _recipientUsername = username;
-         _recipientPublicKey = publicKey;
-      }
+      byte[] senderPrivateKey = _senderPrivateKey.Match(
+         () => throw new Exception("Missing sender private key"),
+         x => x);
 
-      protected void CreateEphemeralSenderKeys()
-      {
-         X25519KeyPair senderX25519KeyPair = _cryptoProvider.KeyExchange.GenerateKeyPair();
-         _senderPrivateKey = senderX25519KeyPair.PrivateKey;
-      }
+      byte[] recipientPublicKey = _recipientPublicKey.Match(
+         () => throw new Exception("Missing recipient public key"),
+         x => x);
 
-      protected void CreateEphemeralRecipientKeys()
-      {
-         Span<byte> seed = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.KeyExchange.SeedSize);
-         _recipientKeySeed = seed.ToArray();
-         X25519KeyPair recipientKeyPair = _cryptoProvider.KeyExchange.GenerateKeyPairDeterministic(seed);
-         _recipientPrivateKey = recipientKeyPair.PrivateKey;
-         _recipientPublicKey = recipientKeyPair.PublicKey;
-      }
+      byte[] senderPublicKey = _cryptoProvider.KeyExchange.GeneratePublicKey(senderPrivateKey);
+      (byte[] encryptionKey, byte[] proof) = _cryptoProvider.KeyExchange.GenerateEncryptionKey(_cryptoProvider.StreamEncryptionFactory.KeySize, senderPrivateKey, recipientPublicKey, _keyExchangeNonce);
 
-      protected (Func<EncryptionStream> encryptionStreamOpener, byte[] senderPublicKey, byte[] proof) GetEncryptionInfo(Func<Stream> plaintextStreamOpener, long streamSize)
-      {
-         if (_recipientUsername.IsNone)
-         {
-            CreateEphemeralRecipientKeys();
-         }
+      byte[] senderPublicKeyToUpload = _senderDefined
+         ? null
+         : senderPublicKey;
 
-         if (!_senderDefined)
-         {
-            CreateEphemeralSenderKeys();
-         }
+      EncryptionStream encryptionStreamOpener()
+         => new EncryptionStream(plaintextStreamOpener(), streamSize, encryptionKey, _cryptoProvider.StreamEncryptionFactory, _transferSettings.MaxReadSize, _transferSettings.PadSize);
 
-         byte[] senderPrivateKey = _senderPrivateKey.Match(
-            () => throw new Exception("Missing sender private key"),
-            x => x);
-
-         byte[] recipientPublicKey = _recipientPublicKey.Match(
-            () => throw new Exception("Missing recipient public key"),
-            x => x);
-
-         byte[] senderPublicKey = _cryptoProvider.KeyExchange.GeneratePublicKey(senderPrivateKey);
-         (byte[] encryptionKey, byte[] proof) = _cryptoProvider.KeyExchange.GenerateEncryptionKey(_cryptoProvider.StreamEncryptionFactory.KeySize, senderPrivateKey, recipientPublicKey, _keyExchangeNonce);
-
-         byte[] senderPublicKeyToUpload = _senderDefined
-            ? null
-            : senderPublicKey;
-
-         EncryptionStream encryptionStreamOpener()
-            => new EncryptionStream(plaintextStreamOpener(), streamSize, encryptionKey, _cryptoProvider.StreamEncryptionFactory, _transferSettings.MaxReadSize, _transferSettings.PadSize);
-
-         return (encryptionStreamOpener, senderPublicKeyToUpload, proof);
-      }
+      return (encryptionStreamOpener, senderPublicKeyToUpload, proof);
    }
 }

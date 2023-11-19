@@ -27,23 +27,22 @@
 using System;
 using System.IO;
 
-namespace Crypter.Common.Contracts
+namespace Crypter.Common.Contracts;
+
+public class StreamDownloadResponse : IDisposable
 {
-   public class StreamDownloadResponse : IDisposable
+   public Stream Stream { get; init; }
+   public long StreamSize { get; init; }
+
+   public StreamDownloadResponse(Stream stream, long size)
    {
-      public Stream Stream { get; init; }
-      public long StreamSize { get; init; }
+      Stream = stream;
+      StreamSize = size;
+   }
 
-      public StreamDownloadResponse(Stream stream, long size)
-      {
-         Stream = stream;
-         StreamSize = size;
-      }
-
-      public void Dispose()
-      {
-         Stream.Dispose();
-         GC.SuppressFinalize(this);
-      }
+   public void Dispose()
+   {
+      Stream.Dispose();
+      GC.SuppressFinalize(this);
    }
 }

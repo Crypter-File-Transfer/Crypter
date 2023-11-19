@@ -24,15 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Client.Events
-{
-   public class PasswordHashEndEventArgs
-   {
-      public bool Success { get; init; }
+namespace Crypter.Common.Client.Events;
 
-      public PasswordHashEndEventArgs(bool success)
-      {
-         Success = success;
-      }
+public class PasswordHashEndEventArgs
+{
+   public bool Success { get; init; }
+
+   public PasswordHashEndEventArgs(bool success)
+   {
+      Success = success;
    }
 }

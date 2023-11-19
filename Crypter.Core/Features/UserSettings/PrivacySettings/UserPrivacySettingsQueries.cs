@@ -32,16 +32,15 @@ using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 
-namespace Crypter.Core.Features.UserSettings.PrivacySettings
+namespace Crypter.Core.Features.UserSettings.PrivacySettings;
+
+internal static class UserPrivacySettingsQueries
 {
-   internal static class UserPrivacySettingsQueries
+   internal static async Task<Maybe<Contracts.PrivacySettings>> GetPrivacySettingsAsync(DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
    {
-      internal static async Task<Maybe<Contracts.PrivacySettings>> GetPrivacySettingsAsync(DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
-      {
-         return await Maybe<Contracts.PrivacySettings>.FromAsync(dataContext.UserPrivacySettings
-            .Where(x => x.Owner == userId)
-            .Select(x => new Contracts.PrivacySettings(x.AllowKeyExchangeRequests, x.Visibility, x.ReceiveMessages, x.ReceiveFiles))
-            .FirstOrDefaultAsync(cancellationToken));
-      }
+      return await Maybe<Contracts.PrivacySettings>.FromAsync(dataContext.UserPrivacySettings
+         .Where(x => x.Owner == userId)
+         .Select(x => new Contracts.PrivacySettings(x.AllowKeyExchangeRequests, x.Visibility, x.ReceiveMessages, x.ReceiveFiles))
+         .FirstOrDefaultAsync(cancellationToken));
    }
 }

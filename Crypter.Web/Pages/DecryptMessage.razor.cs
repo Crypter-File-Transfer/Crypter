@@ -28,26 +28,25 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public partial class DecryptMessageBase : ComponentBase
 {
-   public partial class DecryptMessageBase : ComponentBase
+   [Parameter]
+   public string TransferHashId { get; set; }
+
+   [Parameter]
+   public int UserType { get; set; }
+
+   [Inject]
+   protected IUserSessionService UserSessionService { get; set; }
+
+   protected bool Loading { get; set; }
+
+   protected override async Task OnInitializedAsync()
    {
-      [Parameter]
-      public string TransferHashId { get; set; }
-
-      [Parameter]
-      public int UserType { get; set; }
-
-      [Inject]
-      protected IUserSessionService UserSessionService { get; set; }
-
-      protected bool Loading { get; set; }
-
-      protected override async Task OnInitializedAsync()
-      {
-         Loading = true;
-         await UserSessionService.IsLoggedInAsync();
-         Loading = false;
-      }
+      Loading = true;
+      await UserSessionService.IsLoggedInAsync();
+      Loading = false;
    }
 }

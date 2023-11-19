@@ -26,14 +26,13 @@
 
 using System;
 
-namespace Crypter.Core.Entities.Interfaces
+namespace Crypter.Core.Entities.Interfaces;
+
+public interface IUserPublicKeyPair
 {
-   public interface IUserPublicKeyPair
-   {
-      public Guid Owner { get; set; }
-      public byte[] PrivateKey { get; set; }
-      public byte[] PublicKey { get; set; }
-      public byte[] Nonce { get; set; }
-      public DateTime Created { get; set; }
-   }
+   public Guid Owner { get; set; }
+   public byte[] PrivateKey { get; set; }
+   public byte[] PublicKey { get; set; }
+   public byte[] Nonce { get; set; }
+   public DateTime Created { get; set; }
 }

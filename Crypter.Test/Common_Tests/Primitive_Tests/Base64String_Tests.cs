@@ -28,60 +28,59 @@ using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Exceptions;
 using NUnit.Framework;
 
-namespace Crypter.Test.Common_Tests.Primitive_Tests
+namespace Crypter.Test.Common_Tests.Primitive_Tests;
+
+[TestFixture]
+[Parallelizable]
+public class Base64String_Tests
 {
-   [TestFixture]
-   [Parallelizable]
-   public class Base64String_Tests
+   [TestCase(null)]
+   public void Null_Value_Is_Invalid(string value)
    {
-      [TestCase(null)]
-      public void Null_Value_Is_Invalid(string value)
-      {
-         Assert.Throws<ValueNullException>(() => Base64String.From(value));
+      Assert.Throws<ValueNullException>(() => Base64String.From(value));
 
-         bool shouldBeFalse = Base64String.TryFrom(value, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = Base64String.TryFrom(value, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("")]
-      [TestCase(" ")]
-      [TestCase("   ")]
-      public void Empty_Values_Are_Invalid(string value)
-      {
-         Assert.Throws<ValueEmptyException>(() => Base64String.From(value));
+   [TestCase("")]
+   [TestCase(" ")]
+   [TestCase("   ")]
+   public void Empty_Values_Are_Invalid(string value)
+   {
+      Assert.Throws<ValueEmptyException>(() => Base64String.From(value));
 
-         bool shouldBeFalse = Base64String.TryFrom(value, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = Base64String.TryFrom(value, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("jellyfish")]
-      [TestCase("jellyfish=")]
-      [TestCase("jellyfish==")]
-      public void Invalid_Base64_Strings_Are_Invalid(string value)
-      {
-         Assert.Throws<ValueInvalidException>(() => Base64String.From(value));
+   [TestCase("jellyfish")]
+   [TestCase("jellyfish=")]
+   [TestCase("jellyfish==")]
+   public void Invalid_Base64_Strings_Are_Invalid(string value)
+   {
+      Assert.Throws<ValueInvalidException>(() => Base64String.From(value));
 
-         bool shouldBeFalse = Base64String.TryFrom(value, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = Base64String.TryFrom(value, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("amVsbHlmaXNo")]
-      [TestCase("dHVuZHJhIHRvYWQ=")]
-      [TestCase("Y3J5cHRlcg==")]
-      public void Valid_Base64_Strings_Are_Valid(string value)
-      {
-         Assert.DoesNotThrow(() => Base64String.From(value));
-         var validBase64 = Base64String.From(value);
-         Assert.IsNotNull(validBase64);
-         Assert.AreEqual(value, validBase64.Value);
+   [TestCase("amVsbHlmaXNo")]
+   [TestCase("dHVuZHJhIHRvYWQ=")]
+   [TestCase("Y3J5cHRlcg==")]
+   public void Valid_Base64_Strings_Are_Valid(string value)
+   {
+      Assert.DoesNotThrow(() => Base64String.From(value));
+      var validBase64 = Base64String.From(value);
+      Assert.IsNotNull(validBase64);
+      Assert.AreEqual(value, validBase64.Value);
 
-         bool shouldBeTrue = Base64String.TryFrom(value, out var newValidBase64);
-         Assert.IsTrue(shouldBeTrue);
-         Assert.IsNotNull(newValidBase64);
-         Assert.AreEqual(value, newValidBase64.Value);
-      }
+      bool shouldBeTrue = Base64String.TryFrom(value, out var newValidBase64);
+      Assert.IsTrue(shouldBeTrue);
+      Assert.IsNotNull(newValidBase64);
+      Assert.AreEqual(value, newValidBase64.Value);
    }
 }

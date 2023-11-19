@@ -28,11 +28,10 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Services.UserSettings
+namespace Crypter.Common.Client.Interfaces.Services.UserSettings;
+
+public interface IUserProfileSettingsService
 {
-   public interface IUserProfileSettingsService
-   {
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
-      Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(ProfileSettings newProfileSettings);
-   }
+   Task<Maybe<ProfileSettings>> GetProfileSettingsAsync();
+   Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(ProfileSettings newProfileSettings);
 }

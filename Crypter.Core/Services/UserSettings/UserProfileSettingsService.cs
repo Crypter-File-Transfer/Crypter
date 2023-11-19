@@ -31,31 +31,30 @@ using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Core.Features.UserSettings.ProfileSettings;
 using EasyMonads;
 
-namespace Crypter.Core.Services.UserSettings
+namespace Crypter.Core.Services.UserSettings;
+
+public interface IUserProfileSettingsService
 {
-   public interface IUserProfileSettingsService
+   Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
+   Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(Guid userId, ProfileSettings request);
+}
+
+public class UserProfileSettingsService : IUserProfileSettingsService
+{
+   private readonly DataContext _context;
+
+   public UserProfileSettingsService(DataContext context)
    {
-      Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
-      Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(Guid userId, ProfileSettings request);
+      _context = context;
    }
 
-   public class UserProfileSettingsService : IUserProfileSettingsService
+   public async Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
    {
-      private readonly DataContext _context;
+      return await UserProfileSettingsQueries.GetProfileSettingsAsync(_context, userId, cancellationToken);
+   }
 
-      public UserProfileSettingsService(DataContext context)
-      {
-         _context = context;
-      }
-
-      public async Task<Maybe<ProfileSettings>> GetProfileSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
-      {
-         return await UserProfileSettingsQueries.GetProfileSettingsAsync(_context, userId, cancellationToken);
-      }
-
-      public async Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(Guid userId, ProfileSettings request)
-      {
-         return await UserProfileSettingsCommands.SetProfileSettingsAsync(_context, userId, request);
-      }
+   public async Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(Guid userId, ProfileSettings request)
+   {
+      return await UserProfileSettingsCommands.SetProfileSettingsAsync(_context, userId, request);
    }
 }

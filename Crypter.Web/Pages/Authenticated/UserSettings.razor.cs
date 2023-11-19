@@ -27,27 +27,26 @@
 using System.Threading.Tasks;
 using Crypter.Web.Pages.Authenticated.Base;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public partial class UserSettingsBase : AuthenticatedPageBase
 {
-   public partial class UserSettingsBase : AuthenticatedPageBase
+   protected string Username { get; set; } = string.Empty;
+
+   protected bool DataIsReady { get; set; } = false;
+
+   protected override async Task OnInitializedAsync()
    {
-      protected string Username { get; set; } = string.Empty;
-
-      protected bool DataIsReady { get; set; } = false;
-
-      protected override async Task OnInitializedAsync()
+      await base.OnInitializedAsync();
+      if (!await UserSessionService.IsLoggedInAsync())
       {
-         await base.OnInitializedAsync();
-         if (!await UserSessionService.IsLoggedInAsync())
-         {
-            return;
-         }
-
-         Username = UserSessionService.Session.Match(
-            () => null,
-            some => some.Username);
-
-         DataIsReady = true;
+         return;
       }
+
+      Username = UserSessionService.Session.Match(
+         () => null,
+         some => some.Username);
+
+      DataIsReady = true;
    }
 }

@@ -26,17 +26,16 @@
 
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 
-namespace Crypter.API.MetadataProviders
+namespace Crypter.API.MetadataProviders;
+
+public sealed class EmptyStringMetaDataProvider : IDisplayMetadataProvider
 {
-   public sealed class EmptyStringMetaDataProvider : IDisplayMetadataProvider
+   public void CreateDisplayMetadata(DisplayMetadataProviderContext context)
    {
-      public void CreateDisplayMetadata(DisplayMetadataProviderContext context)
+      if (context.Key.MetadataKind == ModelMetadataKind.Parameter
+          && context.Key.ModelType == typeof(string))
       {
-         if (context.Key.MetadataKind == ModelMetadataKind.Parameter
-            && context.Key.ModelType == typeof(string))
-         {
-            context.DisplayMetadata.ConvertEmptyStringToNull = false;
-         }
+         context.DisplayMetadata.ConvertEmptyStringToNull = false;
       }
    }
 }

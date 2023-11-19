@@ -24,10 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings
+namespace Crypter.Common.Contracts.Features.UserSettings;
+
+public enum VerifyEmailAddressError
 {
-   public enum VerifyEmailAddressError
-   {
-      NotFound
-   }
+   NotFound
 }

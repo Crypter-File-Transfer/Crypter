@@ -24,17 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings
+namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+
+public enum UpdateContactInfoSettingsError
 {
-   public enum UpdateContactInfoSettingsError
-   {
-      UnknownError,
-      UserNotFound,
-      EmailAddressUnavailable,
-      InvalidEmailAddress,
-      InvalidPassword,
-      PasswordHashFailure,
-      PasswordNeedsMigration,
-      InvalidUsername
-   }
+   UnknownError,
+   UserNotFound,
+   EmailAddressUnavailable,
+   InvalidEmailAddress,
+   InvalidPassword,
+   PasswordHashFailure,
+   PasswordNeedsMigration,
+   InvalidUsername
 }

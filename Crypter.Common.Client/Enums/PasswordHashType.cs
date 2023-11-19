@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Client.Enums
+namespace Crypter.Common.Client.Enums;
+
+public enum PasswordHashType
 {
-   public enum PasswordHashType
-   {
-      AuthenticationKey,
-      CredentialKey
-   }
+   AuthenticationKey,
+   CredentialKey
 }

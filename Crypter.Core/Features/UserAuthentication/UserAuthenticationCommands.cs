@@ -30,21 +30,20 @@ using System.Threading.Tasks;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Features.UserAuthentication
-{
-   internal static class UserAuthenticationCommands
-   {
-      internal static async Task DeleteFailedLoginAttemptAsync(DataContext dataContext, Guid failedAttemptId)
-      {
-         UserFailedLoginEntity foundAttempt = await dataContext.UserFailedLoginAttempts
-            .Where(x => x.Id == failedAttemptId)
-            .FirstOrDefaultAsync();
+namespace Crypter.Core.Features.UserAuthentication;
 
-         if (foundAttempt is not null)
-         {
-            dataContext.UserFailedLoginAttempts.Remove(foundAttempt);
-            await dataContext.SaveChangesAsync();
-         }
+internal static class UserAuthenticationCommands
+{
+   internal static async Task DeleteFailedLoginAttemptAsync(DataContext dataContext, Guid failedAttemptId)
+   {
+      UserFailedLoginEntity foundAttempt = await dataContext.UserFailedLoginAttempts
+         .Where(x => x.Id == failedAttemptId)
+         .FirstOrDefaultAsync();
+
+      if (foundAttempt is not null)
+      {
+         dataContext.UserFailedLoginAttempts.Remove(foundAttempt);
+         await dataContext.SaveChangesAsync();
       }
    }
 }

@@ -34,35 +34,34 @@ using Crypter.Crypto.Common.DigitalSignature;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Features.UserRecovery
+namespace Crypter.Core.Features.UserRecovery;
+
+internal static class UserRecoveryQueries
 {
-   internal static class UserRecoveryQueries
+   internal static async Task<Maybe<UserRecoveryParameters>> GenerateRecoveryParametersAsync(DataContext dataContext, ICryptoProvider cryptoProvider, string emailAddress)
    {
-      internal static async Task<Maybe<UserRecoveryParameters>> GenerateRecoveryParametersAsync(DataContext dataContext, ICryptoProvider cryptoProvider, string emailAddress)
+      var userData = await dataContext.Users
+         .Where(x => x.EmailAddress == emailAddress)
+         .Where(x => x.EmailVerified)
+         .Select(x => new { x.Id, x.Username, x.EmailAddress })
+         .FirstOrDefaultAsync();
+
+      if (userData is null
+          || !Username.TryFrom(userData.Username, out var username)
+          || !EmailAddress.TryFrom(userData.EmailAddress, out var validEmailAddress))
       {
-         var userData = await dataContext.Users
-            .Where(x => x.EmailAddress == emailAddress)
-            .Where(x => x.EmailVerified)
-            .Select(x => new { x.Id, x.Username, x.EmailAddress })
-            .FirstOrDefaultAsync();
-
-         if (userData is null
-            || !Username.TryFrom(userData.Username, out var username)
-            || !EmailAddress.TryFrom(userData.EmailAddress, out var validEmailAddress))
-         {
-            return Maybe<UserRecoveryParameters>.None;
-         }
-
-         Guid recoveryCode = Guid.NewGuid();
-         Ed25519KeyPair keys = cryptoProvider.DigitalSignature.GenerateKeyPair();
-         byte[] signature = GenerateRecoverySignature(cryptoProvider, keys.PrivateKey, recoveryCode, username);
-         return new UserRecoveryParameters(userData.Id, username, validEmailAddress, recoveryCode, signature, keys.PublicKey);
+         return Maybe<UserRecoveryParameters>.None;
       }
 
-      internal static byte[] GenerateRecoverySignature(ICryptoProvider cryptoProvider, ReadOnlySpan<byte> privateKey, Guid recoveryCode, Username username)
-      {
-         byte[] data = Common.CombineRecoveryCodeWithUsername(recoveryCode, username);
-         return cryptoProvider.DigitalSignature.GenerateSignature(privateKey, data);
-      }
+      Guid recoveryCode = Guid.NewGuid();
+      Ed25519KeyPair keys = cryptoProvider.DigitalSignature.GenerateKeyPair();
+      byte[] signature = GenerateRecoverySignature(cryptoProvider, keys.PrivateKey, recoveryCode, username);
+      return new UserRecoveryParameters(userData.Id, username, validEmailAddress, recoveryCode, signature, keys.PublicKey);
+   }
+
+   internal static byte[] GenerateRecoverySignature(ICryptoProvider cryptoProvider, ReadOnlySpan<byte> privateKey, Guid recoveryCode, Username username)
+   {
+      byte[] data = Common.CombineRecoveryCodeWithUsername(recoveryCode, username);
+      return cryptoProvider.DigitalSignature.GenerateSignature(privateKey, data);
    }
 }

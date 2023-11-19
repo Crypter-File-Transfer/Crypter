@@ -26,18 +26,17 @@
 
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.UserSettings
-{
-   public class VerifyEmailAddressRequest
-   {
-      public string Code { get; set; }
-      public string Signature { get; set; }
+namespace Crypter.Common.Contracts.Features.UserSettings;
 
-      [JsonConstructor]
-      public VerifyEmailAddressRequest(string code, string signature)
-      {
-         Code = code;
-         Signature = signature;
-      }
+public class VerifyEmailAddressRequest
+{
+   public string Code { get; set; }
+   public string Signature { get; set; }
+
+   [JsonConstructor]
+   public VerifyEmailAddressRequest(string code, string signature)
+   {
+      Code = code;
+      Signature = signature;
    }
 }

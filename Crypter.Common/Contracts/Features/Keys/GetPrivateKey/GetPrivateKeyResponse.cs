@@ -26,18 +26,17 @@
 
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.Keys
-{
-   public class GetPrivateKeyResponse
-   {
-      public byte[] EncryptedKey { get; private set; }
-      public byte[] Nonce { get; private set; }
+namespace Crypter.Common.Contracts.Features.Keys;
 
-      [JsonConstructor]
-      public GetPrivateKeyResponse(byte[] encryptedKey, byte[] nonce)
-      {
-         EncryptedKey = encryptedKey;
-         Nonce = nonce;
-      }
+public class GetPrivateKeyResponse
+{
+   public byte[] EncryptedKey { get; private set; }
+   public byte[] Nonce { get; private set; }
+
+   [JsonConstructor]
+   public GetPrivateKeyResponse(byte[] encryptedKey, byte[] nonce)
+   {
+      EncryptedKey = encryptedKey;
+      Nonce = nonce;
    }
 }

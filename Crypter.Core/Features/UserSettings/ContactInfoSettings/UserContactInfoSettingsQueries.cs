@@ -32,16 +32,15 @@ using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 
-namespace Crypter.Core.Features.UserSettings.ContactInfoSettings
+namespace Crypter.Core.Features.UserSettings.ContactInfoSettings;
+
+internal static class UserContactInfoSettingsQueries
 {
-   internal static class UserContactInfoSettingsQueries
+   internal static async Task<Maybe<Contracts.ContactInfoSettings>> GetContactInfoSettingsAsync(DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
    {
-      internal static async Task<Maybe<Contracts.ContactInfoSettings>> GetContactInfoSettingsAsync(DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
-      {
-         return await Maybe<Contracts.ContactInfoSettings>.FromAsync(dataContext.Users
-            .Where(x => x.Id == userId)
-            .Select(x => new Contracts.ContactInfoSettings(x.EmailAddress, x.EmailVerified))
-            .FirstOrDefaultAsync(cancellationToken));
-      }
+      return await Maybe<Contracts.ContactInfoSettings>.FromAsync(dataContext.Users
+         .Where(x => x.Id == userId)
+         .Select(x => new Contracts.ContactInfoSettings(x.EmailAddress, x.EmailVerified))
+         .FirstOrDefaultAsync(cancellationToken));
    }
 }

@@ -28,26 +28,25 @@ using System.Text.Json.Serialization;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings
+namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
+
+public class UpdateContactInfoSettingsRequest
 {
-   public class UpdateContactInfoSettingsRequest
+   public string EmailAddress { get; init; }
+   public byte[] CurrentPassword { get; init; }
+
+   [JsonConstructor]
+   public UpdateContactInfoSettingsRequest(string emailAddress, byte[] currentPassword)
    {
-      public string EmailAddress { get; init; }
-      public byte[] CurrentPassword { get; init; }
+      EmailAddress = emailAddress;
+      CurrentPassword = currentPassword;
+   }
 
-      [JsonConstructor]
-      public UpdateContactInfoSettingsRequest(string emailAddress, byte[] currentPassword)
-      {
-         EmailAddress = emailAddress;
-         CurrentPassword = currentPassword;
-      }
-
-      public UpdateContactInfoSettingsRequest(Maybe<EmailAddress> emailAddress, byte[] currentPassword)
-      {
-         EmailAddress = emailAddress.Match(
-            () => string.Empty,
-            x => x.Value);
-         CurrentPassword = currentPassword;
-      }
+   public UpdateContactInfoSettingsRequest(Maybe<EmailAddress> emailAddress, byte[] currentPassword)
+   {
+      EmailAddress = emailAddress.Match(
+         () => string.Empty,
+         x => x.Value);
+      CurrentPassword = currentPassword;
    }
 }

@@ -27,41 +27,40 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Crypter.Web.Shared.Transfer
+namespace Crypter.Web.Shared.Transfer;
+
+public partial class UploadMessageTransferBase : UploadTransferBase, IDisposable
 {
-   public partial class UploadMessageTransferBase : UploadTransferBase, IDisposable
+   protected string MessageSubject = string.Empty;
+   protected string MessageBody = string.Empty;
+   protected const int MaxMessageLength = 1024;
+
+   protected async Task OnEncryptClicked()
    {
-      protected string MessageSubject = string.Empty;
-      protected string MessageBody = string.Empty;
-      protected const int MaxMessageLength = 1024;
+      EncryptionInProgress = true;
+      ErrorMessage = string.Empty;
 
-      protected async Task OnEncryptClicked()
-      {
-         EncryptionInProgress = true;
-         ErrorMessage = string.Empty;
+      await SetProgressMessage("Encrypting message");
+      var messageUploader = TransferHandlerFactory.CreateUploadMessageHandler(MessageSubject, MessageBody, ExpirationHours);
 
-         await SetProgressMessage("Encrypting message");
-         var messageUploader = TransferHandlerFactory.CreateUploadMessageHandler(MessageSubject, MessageBody, ExpirationHours);
+      SetHandlerUserInfo(messageUploader);
+      var uploadResponse = await messageUploader.UploadAsync();
+      await HandleUploadResponse(uploadResponse);
+      Dispose();
+   }
 
-         SetHandlerUserInfo(messageUploader);
-         var uploadResponse = await messageUploader.UploadAsync();
-         await HandleUploadResponse(uploadResponse);
-         Dispose();
-      }
+   protected async Task SetProgressMessage(string message)
+   {
+      UploadStatusMessage = message;
+      StateHasChanged();
+      await Task.Delay(400);
+   }
 
-      protected async Task SetProgressMessage(string message)
-      {
-         UploadStatusMessage = message;
-         StateHasChanged();
-         await Task.Delay(400);
-      }
-
-      public void Dispose()
-      {
-         MessageSubject = string.Empty;
-         MessageBody = string.Empty;
-         EncryptionInProgress = false;
-         GC.SuppressFinalize(this);
-      }
+   public void Dispose()
+   {
+      MessageSubject = string.Empty;
+      MessageBody = string.Empty;
+      EncryptionInProgress = false;
+      GC.SuppressFinalize(this);
    }
 }

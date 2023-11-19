@@ -26,15 +26,14 @@
 
 using System;
 
-namespace Crypter.Common.Client.Events
-{
-   public class UserSessionServiceInitializedEventArgs : EventArgs
-   {
-      public bool IsLoggedIn { get; init; }
+namespace Crypter.Common.Client.Events;
 
-      public UserSessionServiceInitializedEventArgs(bool isLoggedIn)
-      {
-         IsLoggedIn = isLoggedIn;
-      }
+public class UserSessionServiceInitializedEventArgs : EventArgs
+{
+   public bool IsLoggedIn { get; init; }
+
+   public UserSessionServiceInitializedEventArgs(bool isLoggedIn)
+   {
+      IsLoggedIn = isLoggedIn;
    }
 }

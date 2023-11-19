@@ -26,9 +26,8 @@
 
 using System;
 
-namespace Crypter.Common.Exceptions
+namespace Crypter.Common.Exceptions;
+
+public class NotInitializedException : ApplicationException
 {
-   public class NotInitializedException : ApplicationException
-   {
-   }
 }

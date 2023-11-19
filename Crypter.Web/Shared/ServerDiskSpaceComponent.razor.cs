@@ -30,35 +30,34 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Transfer.Models;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared
+namespace Crypter.Web.Shared;
+
+public partial class ServerDiskSpaceComponentBase : ComponentBase
 {
-   public partial class ServerDiskSpaceComponentBase : ComponentBase
+   [Inject]
+   protected TransferSettings UploadSettings { get; set; }
+
+   [Inject]
+   protected ICrypterApiClient CrypterApiService { get; set; }
+
+   protected bool ServerHasDiskSpace = true;
+
+   protected double ServerSpacePercentageRemaining = 100.0;
+
+   protected override async Task OnInitializedAsync()
    {
-      [Inject]
-      protected TransferSettings UploadSettings { get; set; }
+      var response = await CrypterApiService.Metrics.GetPublicStorageMetricsAsync();
 
-      [Inject]
-      protected ICrypterApiClient CrypterApiService { get; set; }
+      ServerSpacePercentageRemaining = response.Match(
+         0.0,
+         x => 100.0 * (x.Available / (double)x.Allocated));
 
-      protected bool ServerHasDiskSpace = true;
-
-      protected double ServerSpacePercentageRemaining = 100.0;
-
-      protected override async Task OnInitializedAsync()
-      {
-         var response = await CrypterApiService.Metrics.GetPublicStorageMetricsAsync();
-
-         ServerSpacePercentageRemaining = response.Match(
-            0.0,
-            x => 100.0 * (x.Available / (double)x.Allocated));
-
-         ServerHasDiskSpace = response.Match(
-            false,
-            x =>
-            {
-               long maxUploadBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
-               return x.Available > maxUploadBytes;
-            });
-      }
+      ServerHasDiskSpace = response.Match(
+         false,
+         x =>
+         {
+            long maxUploadBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
+            return x.Available > maxUploadBytes;
+         });
    }
 }

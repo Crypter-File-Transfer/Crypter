@@ -30,20 +30,19 @@ using Crypter.Common.Primitives;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.DataContextExtensions
-{
-   internal static class UserEntityExtensions
-   {
-      public static async Task<bool> IsUsernameAvailableAsync(this DbSet<UserEntity> userContext, Username username, CancellationToken cancellationToken = default)
-      {
-         return !await userContext
-            .AnyAsync(x => x.Username == username.Value, cancellationToken);
-      }
+namespace Crypter.Core.DataContextExtensions;
 
-      public static async Task<bool> IsEmailAddressAvailableAsync(this DbSet<UserEntity> userContext, EmailAddress email, CancellationToken cancellationToken = default)
-      {
-         return !await userContext
-            .AnyAsync(x => x.EmailAddress == email.Value, cancellationToken);
-      }
+internal static class UserEntityExtensions
+{
+   public static async Task<bool> IsUsernameAvailableAsync(this DbSet<UserEntity> userContext, Username username, CancellationToken cancellationToken = default)
+   {
+      return !await userContext
+         .AnyAsync(x => x.Username == username.Value, cancellationToken);
+   }
+
+   public static async Task<bool> IsEmailAddressAvailableAsync(this DbSet<UserEntity> userContext, EmailAddress email, CancellationToken cancellationToken = default)
+   {
+      return !await userContext
+         .AnyAsync(x => x.EmailAddress == email.Value, cancellationToken);
    }
 }

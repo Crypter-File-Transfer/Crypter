@@ -24,18 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication
+namespace Crypter.Common.Contracts.Features.UserAuthentication;
+
+public enum RegistrationError
 {
-   public enum RegistrationError
-   {
-      UnknownError,
-      InvalidUsername,
-      InvalidPassword,
-      InvalidEmailAddress,
-      InvalidPasswordConfirm,
-      UsernameTaken,
-      EmailAddressTaken,
-      OldPasswordVersion,
-      PasswordHashFailure
-   }
+   UnknownError,
+   InvalidUsername,
+   InvalidPassword,
+   InvalidEmailAddress,
+   InvalidPasswordConfirm,
+   UsernameTaken,
+   EmailAddressTaken,
+   OldPasswordVersion,
+   PasswordHashFailure
 }

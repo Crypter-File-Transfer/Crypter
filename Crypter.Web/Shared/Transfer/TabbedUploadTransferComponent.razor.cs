@@ -26,11 +26,10 @@
 
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared.Transfer
+namespace Crypter.Web.Shared.Transfer;
+
+public partial class TabbedUploadTransferComponentBase : ComponentBase
 {
-   public partial class TabbedUploadTransferComponentBase : ComponentBase
-   {
-      public int ExpirationHours { get; set; }
-      public bool UseCompression { get; set; }
-   }
+   public int ExpirationHours { get; set; }
+   public bool UseCompression { get; set; }
 }

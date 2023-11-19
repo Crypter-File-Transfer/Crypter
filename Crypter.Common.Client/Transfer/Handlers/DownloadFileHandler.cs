@@ -36,50 +36,49 @@ using Crypter.Common.Enums;
 using Crypter.Crypto.Common;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Transfer.Handlers
+namespace Crypter.Common.Client.Transfer.Handlers;
+
+public class DownloadFileHandler : DownloadHandler
 {
-   public class DownloadFileHandler : DownloadHandler
+   public DownloadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
+      : base(crypterApiClient, cryptoProvider, userSessionService, transferSettings)
+   { }
+
+   public async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> DownloadPreviewAsync()
    {
-      public DownloadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
-         : base(crypterApiClient, cryptoProvider, userSessionService, transferSettings)
-      { }
-
-      public async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> DownloadPreviewAsync()
-      {
 #pragma warning disable CS8524
-         var response = _transferUserType switch
-         {
-            TransferUserType.Anonymous => await _crypterApiClient.FileTransfer.GetAnonymousFilePreviewAsync(_transferHashId),
-            TransferUserType.User => await _crypterApiClient.FileTransfer.GetUserFilePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
-         };
+      var response = _transferUserType switch
+      {
+         TransferUserType.Anonymous => await _crypterApiClient.FileTransfer.GetAnonymousFilePreviewAsync(_transferHashId),
+         TransferUserType.User => await _crypterApiClient.FileTransfer.GetUserFilePreviewAsync(_transferHashId, _userSessionService.Session.IsSome)
+      };
 #pragma warning restore CS8524
 
-         response.DoRight(x => SetSenderPublicKey(x.PublicKey, x.KeyExchangeNonce));
-         return response;
-      }
+      response.DoRight(x => SetSenderPublicKey(x.PublicKey, x.KeyExchangeNonce));
+      return response;
+   }
 
-      public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync()
-      {
-         byte[] symmetricKey = _symmetricKey.Match(
-            () => throw new Exception("Missing symmetric key"),
-            x => x);
+   public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync()
+   {
+      byte[] symmetricKey = _symmetricKey.Match(
+         () => throw new Exception("Missing symmetric key"),
+         x => x);
 
-         byte[] serverProof = _serverProof.Match(
-            () => throw new Exception("Missing server proof"),
-            x => x);
+      byte[] serverProof = _serverProof.Match(
+         () => throw new Exception("Missing server proof"),
+         x => x);
 
 #pragma warning disable CS8524
-         Either<DownloadTransferCiphertextError, StreamDownloadResponse> response = _transferUserType switch
-         {
-            TransferUserType.Anonymous => await _crypterApiClient.FileTransfer.GetAnonymousFileCiphertextAsync(_transferHashId, serverProof),
-            TransferUserType.User => await _crypterApiClient.FileTransfer.GetUserFileCiphertextAsync(_transferHashId, serverProof, _userSessionService.Session.IsSome)
-         };
+      Either<DownloadTransferCiphertextError, StreamDownloadResponse> response = _transferUserType switch
+      {
+         TransferUserType.Anonymous => await _crypterApiClient.FileTransfer.GetAnonymousFileCiphertextAsync(_transferHashId, serverProof),
+         TransferUserType.User => await _crypterApiClient.FileTransfer.GetUserFileCiphertextAsync(_transferHashId, serverProof, _userSessionService.Session.IsSome)
+      };
 #pragma warning restore CS8524
 
-         return response.Match<Either<DownloadTransferCiphertextError, byte[]>>(
-            left => left,
-            right => Decrypt(symmetricKey, right.Stream, right.StreamSize),
-            DownloadTransferCiphertextError.UnknownError);
-      }
+      return response.Match<Either<DownloadTransferCiphertextError, byte[]>>(
+         left => left,
+         right => Decrypt(symmetricKey, right.Stream, right.StreamSize),
+         DownloadTransferCiphertextError.UnknownError);
    }
 }

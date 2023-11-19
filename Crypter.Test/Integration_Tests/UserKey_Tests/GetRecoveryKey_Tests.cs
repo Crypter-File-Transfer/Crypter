@@ -34,84 +34,83 @@ using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
-namespace Crypter.Test.Integration_Tests.UserKey_Tests
+namespace Crypter.Test.Integration_Tests.UserKey_Tests;
+
+[TestFixture]
+internal class GetRecoveryKey_Tests
 {
-   [TestFixture]
-   internal class GetRecoveryKey_Tests
-   {
-      private WebApplicationFactory<Program> _factory;
-      private ICrypterApiClient _client;
-      private ITokenRepository _clientTokenRepository;
+   private WebApplicationFactory<Program> _factory;
+   private ICrypterApiClient _client;
+   private ITokenRepository _clientTokenRepository;
    
-      [SetUp]
-      public async Task SetupTestAsync()
-      {
-         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-         await AssemblySetup.InitializeRespawnerAsync();
-      }
+   [SetUp]
+   public async Task SetupTestAsync()
+   {
+      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+      await AssemblySetup.InitializeRespawnerAsync();
+   }
       
-      [TearDown]
-      public async Task TeardownTestAsync()
+   [TearDown]
+   public async Task TeardownTestAsync()
+   {
+      await _factory.DisposeAsync();
+      await AssemblySetup.ResetServerDataAsync();
+   }
+
+   [Test]
+   public async Task Get_Master_Key_Recovery_Key_Works()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         await _factory.DisposeAsync();
-         await AssemblySetup.ResetServerDataAsync();
-      }
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-      [Test]
-      public async Task Get_Master_Key_Recovery_Key_Works()
+      (_, InsertMasterKeyRequest insertMasterKeyRequest) = TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
+      Either<InsertMasterKeyError, Unit> insertMasterKeyResult = await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
+
+      GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(TestData.DefaultUsername, registrationRequest.VersionedPassword.Password);
+      Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse> result = await _client.UserKey.GetMasterKeyRecoveryProofAsync(request);
+
+      GetMasterKeyRecoveryProofResponse response = result.RightOrDefault(null);
+
+      Assert.True(insertMasterKeyResult.IsRight);
+      Assert.True(result.IsRight);
+      Assert.NotNull(response);
+
+      Assert.AreEqual(insertMasterKeyRequest.RecoveryProof, response.Proof);
+   }
+
+   [Test]
+   public async Task Get_Master_Key_Recovery_Key_Fails_Invalid_Password()
+   {
+      RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+      var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+
+      LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
+      var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+
+      await loginResult.DoRightAsync(async loginResponse =>
       {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+         await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+         await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+      });
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+      (_, InsertMasterKeyRequest insertMasterKeyRequest) = TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
+      Either<InsertMasterKeyError, Unit> insertMasterKeyResult = await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
+      byte[] invalidPassword = "invalid"u8.ToArray();
+      GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(TestData.DefaultUsername, invalidPassword);
+      Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse> result = await _client.UserKey.GetMasterKeyRecoveryProofAsync(request);
 
-         (_, InsertMasterKeyRequest insertMasterKeyRequest) = TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
-         Either<InsertMasterKeyError, Unit> insertMasterKeyResult = await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
-
-         GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(TestData.DefaultUsername, registrationRequest.VersionedPassword.Password);
-         Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse> result = await _client.UserKey.GetMasterKeyRecoveryProofAsync(request);
-
-         GetMasterKeyRecoveryProofResponse response = result.RightOrDefault(null);
-
-         Assert.True(insertMasterKeyResult.IsRight);
-         Assert.True(result.IsRight);
-         Assert.NotNull(response);
-
-         Assert.AreEqual(insertMasterKeyRequest.RecoveryProof, response.Proof);
-      }
-
-      [Test]
-      public async Task Get_Master_Key_Recovery_Key_Fails_Invalid_Password()
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
-
-         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
-
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
-
-         (_, InsertMasterKeyRequest insertMasterKeyRequest) = TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
-         Either<InsertMasterKeyError, Unit> insertMasterKeyResult = await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
-
-         byte[] invalidPassword = "invalid"u8.ToArray();
-         GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(TestData.DefaultUsername, invalidPassword);
-         Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse> result = await _client.UserKey.GetMasterKeyRecoveryProofAsync(request);
-
-         Assert.True(insertMasterKeyResult.IsRight);
-         Assert.True(result.IsLeft);
-      }
+      Assert.True(insertMasterKeyResult.IsRight);
+      Assert.True(result.IsLeft);
    }
 }

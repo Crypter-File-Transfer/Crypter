@@ -24,10 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Settings
+namespace Crypter.Core.Settings;
+
+public class HangfireSettings
 {
-   public class HangfireSettings
-   {
-      public int Workers { get; set; }
-   }
+   public int Workers { get; set; }
 }

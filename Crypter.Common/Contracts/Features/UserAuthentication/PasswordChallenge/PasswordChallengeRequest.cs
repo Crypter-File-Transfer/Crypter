@@ -24,15 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication
-{
-   public class PasswordChallengeRequest
-   {
-      public byte[] Password { get; init; }
+namespace Crypter.Common.Contracts.Features.UserAuthentication;
 
-      public PasswordChallengeRequest(byte[] password)
-      {
-         Password = password;
-      }
+public class PasswordChallengeRequest
+{
+   public byte[] Password { get; init; }
+
+   public PasswordChallengeRequest(byte[] password)
+   {
+      Password = password;
    }
 }

@@ -28,100 +28,99 @@ using Crypter.Common.Primitives;
 using Crypter.Common.Primitives.Exceptions;
 using NUnit.Framework;
 
-namespace Crypter.Test.Common_Tests.Primitive_Tests
+namespace Crypter.Test.Common_Tests.Primitive_Tests;
+
+[TestFixture]
+[Parallelizable]
+public class Username_Tests
 {
-   [TestFixture]
-   [Parallelizable]
-   public class Username_Tests
+   [TestCase(null)]
+   public void Null_Usernames_Are_Invalid(string username)
    {
-      [TestCase(null)]
-      public void Null_Usernames_Are_Invalid(string username)
-      {
-         Assert.Throws<ValueNullException>(() => Username.From(username));
+      Assert.Throws<ValueNullException>(() => Username.From(username));
 
-         bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("")]
-      [TestCase(" ")]
-      [TestCase("   ")]
-      public void Empty_Usernames_Are_Invalid(string username)
-      {
-         Assert.Throws<ValueEmptyException>(() => Username.From(username));
+   [TestCase("")]
+   [TestCase(" ")]
+   [TestCase("   ")]
+   public void Empty_Usernames_Are_Invalid(string username)
+   {
+      Assert.Throws<ValueEmptyException>(() => Username.From(username));
 
-         bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("`")]
-      [TestCase("~")]
-      [TestCase("!")]
-      [TestCase("@")]
-      [TestCase("#")]
-      [TestCase("$")]
-      [TestCase("%")]
-      [TestCase("^")]
-      [TestCase("&")]
-      [TestCase("*")]
-      [TestCase("(")]
-      [TestCase(")")]
-      [TestCase("=")]
-      [TestCase("+")]
-      [TestCase("\\")]
-      [TestCase("|")]
-      [TestCase("[")]
-      [TestCase("]")]
-      [TestCase("{")]
-      [TestCase("}")]
-      [TestCase(";")]
-      [TestCase(":")]
-      [TestCase("'")]
-      [TestCase("\"")]
-      [TestCase(",")]
-      [TestCase("<")]
-      [TestCase(".")]
-      [TestCase(">")]
-      [TestCase("/")]
-      [TestCase("?")]
-      [TestCase("Inv@lid")]
-      public void Usernames_With_Invalid_Characters_Are_Invalid(string username)
-      {
-         Assert.Throws<ValueContainsInvalidCharactersException>(() => Username.From(username));
+   [TestCase("`")]
+   [TestCase("~")]
+   [TestCase("!")]
+   [TestCase("@")]
+   [TestCase("#")]
+   [TestCase("$")]
+   [TestCase("%")]
+   [TestCase("^")]
+   [TestCase("&")]
+   [TestCase("*")]
+   [TestCase("(")]
+   [TestCase(")")]
+   [TestCase("=")]
+   [TestCase("+")]
+   [TestCase("\\")]
+   [TestCase("|")]
+   [TestCase("[")]
+   [TestCase("]")]
+   [TestCase("{")]
+   [TestCase("}")]
+   [TestCase(";")]
+   [TestCase(":")]
+   [TestCase("'")]
+   [TestCase("\"")]
+   [TestCase(",")]
+   [TestCase("<")]
+   [TestCase(".")]
+   [TestCase(">")]
+   [TestCase("/")]
+   [TestCase("?")]
+   [TestCase("Inv@lid")]
+   public void Usernames_With_Invalid_Characters_Are_Invalid(string username)
+   {
+      Assert.Throws<ValueContainsInvalidCharactersException>(() => Username.From(username));
 
-         bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("ThisIsExactly33CharactersInLength")]
-      public void Usernames_Longer_Than_32_Characters_Are_Invalid(string username)
-      {
-         Assert.Throws<ValueTooLongException>(() => Username.From(username));
+   [TestCase("ThisIsExactly33CharactersInLength")]
+   public void Usernames_Longer_Than_32_Characters_Are_Invalid(string username)
+   {
+      Assert.Throws<ValueTooLongException>(() => Username.From(username));
 
-         bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
-         Assert.IsFalse(shouldBeFalse);
-         Assert.IsNull(shouldBeNull);
-      }
+      bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
+      Assert.IsFalse(shouldBeFalse);
+      Assert.IsNull(shouldBeNull);
+   }
 
-      [TestCase("jack")]
-      [TestCase("JACK")]
-      [TestCase("1234567890")]
-      [TestCase("_-_-_-_")]
-      [TestCase("ThisIsPrecisely32Characters_Long")]
-      public void Valid_Usernames_Are_Valid(string username)
-      {
-         Assert.DoesNotThrow(() => Username.From(username));
-         var validUsername = Username.From(username);
-         Assert.IsNotNull(validUsername);
-         Assert.AreEqual(username, validUsername.Value);
+   [TestCase("jack")]
+   [TestCase("JACK")]
+   [TestCase("1234567890")]
+   [TestCase("_-_-_-_")]
+   [TestCase("ThisIsPrecisely32Characters_Long")]
+   public void Valid_Usernames_Are_Valid(string username)
+   {
+      Assert.DoesNotThrow(() => Username.From(username));
+      var validUsername = Username.From(username);
+      Assert.IsNotNull(validUsername);
+      Assert.AreEqual(username, validUsername.Value);
 
-         bool shouldBeTrue = Username.TryFrom(username, out var newValidUsername);
-         Assert.IsTrue(shouldBeTrue);
-         Assert.IsNotNull(newValidUsername);
-         Assert.AreEqual(username, newValidUsername.Value);
-      }
+      bool shouldBeTrue = Username.TryFrom(username, out var newValidUsername);
+      Assert.IsTrue(shouldBeTrue);
+      Assert.IsNotNull(newValidUsername);
+      Assert.AreEqual(username, newValidUsername.Value);
    }
 }

@@ -28,36 +28,35 @@ using System.IO;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 
-namespace Crypter.Test
+namespace Crypter.Test;
+
+internal static class SettingsReader
 {
-   internal static class SettingsReader
+   internal static IConfiguration GetTestSettings()
    {
-      internal static IConfiguration GetTestSettings()
+      DirectoryInfo repoDirectory = GetRepoPath();
+
+      string testSettings = Path.Join(repoDirectory.FullName, "Crypter.Test", "appsettings.Test.json");
+      if (!Path.Exists(testSettings))
       {
-         DirectoryInfo repoDirectory = GetRepoPath();
-
-         string testSettings = Path.Join(repoDirectory.FullName, "Crypter.Test", "appsettings.Test.json");
-         if (!Path.Exists(testSettings))
-         {
-            throw new FileNotFoundException("Failed to find ./Crypter.Test/appsettings.Test.json.");
-         }
-
-         return new ConfigurationBuilder()
-            .AddJsonFile(testSettings)
-            .Build();
+         throw new FileNotFoundException("Failed to find ./Crypter.Test/appsettings.Test.json.");
       }
 
-      internal static DirectoryInfo GetRepoPath()
-      {
-         string assemblyLocation = Assembly.GetExecutingAssembly().Location;
+      return new ConfigurationBuilder()
+         .AddJsonFile(testSettings)
+         .Build();
+   }
+
+   internal static DirectoryInfo GetRepoPath()
+   {
+      string assemblyLocation = Assembly.GetExecutingAssembly().Location;
          
-         DirectoryInfo directory = new DirectoryInfo(assemblyLocation);
-         do
-         {
-            directory = directory.Parent;
-         } while (directory.Name != Assembly.GetExecutingAssembly().GetName().Name);
+      DirectoryInfo directory = new DirectoryInfo(assemblyLocation);
+      do
+      {
+         directory = directory.Parent;
+      } while (directory.Name != Assembly.GetExecutingAssembly().GetName().Name);
 
-         return directory.Parent;
-      }
+      return directory.Parent;
    }
 }

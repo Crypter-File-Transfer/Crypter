@@ -29,34 +29,33 @@ using System.Runtime.Versioning;
 using System.Text;
 using Crypter.Crypto.Common.Encryption;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
+
+[SupportedOSPlatform("browser")]
+public class Encryption : IEncryption
 {
-   [SupportedOSPlatform("browser")]
-   public class Encryption : IEncryption
+   public uint KeySize { get => BlazorSodium.Sodium.SecretBox.KEY_BYTES; }
+
+   public uint NonceSize { get => BlazorSodium.Sodium.SecretBox.NONCE_BYTES; }
+
+   public byte[] Decrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
    {
-      public uint KeySize { get => BlazorSodium.Sodium.SecretBox.KEY_BYTES; }
+      return BlazorSodium.Sodium.AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Decrypt(ciphertext.ToArray(), nonce.ToArray(), key.ToArray(), (byte[])null);
+   }
 
-      public uint NonceSize { get => BlazorSodium.Sodium.SecretBox.NONCE_BYTES; }
+   public string DecryptToString(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
+   {
+      byte[] plaintext = BlazorSodium.Sodium.AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Decrypt(ciphertext.ToArray(), nonce.ToArray(), key.ToArray(), (byte[])null);
+      return Encoding.UTF8.GetString(plaintext);
+   }
 
-      public byte[] Decrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
-      {
-         return BlazorSodium.Sodium.AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Decrypt(ciphertext.ToArray(), nonce.ToArray(), key.ToArray(), (byte[])null);
-      }
+   public byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> plaintext)
+   {
+      return BlazorSodium.Sodium.AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Encrypt(plaintext.ToArray(), nonce.ToArray(), key.ToArray(), (byte[])null);
+   }
 
-      public string DecryptToString(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
-      {
-         byte[] plaintext = BlazorSodium.Sodium.AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Decrypt(ciphertext.ToArray(), nonce.ToArray(), key.ToArray(), (byte[])null);
-         return Encoding.UTF8.GetString(plaintext);
-      }
-
-      public byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> plaintext)
-      {
-         return BlazorSodium.Sodium.AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Encrypt(plaintext.ToArray(), nonce.ToArray(), key.ToArray(), (byte[])null);
-      }
-
-      public byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, string plaintext)
-      {
-         return BlazorSodium.Sodium.AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Encrypt(plaintext, nonce.ToArray(), key.ToArray(), (byte[])null);
-      }
+   public byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, string plaintext)
+   {
+      return BlazorSodium.Sodium.AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Encrypt(plaintext, nonce.ToArray(), key.ToArray(), (byte[])null);
    }
 }

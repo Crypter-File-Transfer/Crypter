@@ -30,22 +30,21 @@ using System.Text;
 using Crypter.Crypto.Common.PasswordHash;
 using EasyMonads;
 
-namespace Crypter.Crypto.Providers.Browser.Wrappers
+namespace Crypter.Crypto.Providers.Browser.Wrappers;
+
+[SupportedOSPlatform("browser")]
+public class PasswordHash : AbstractPasswordHash
 {
-   [SupportedOSPlatform("browser")]
-   public class PasswordHash : AbstractPasswordHash
+   protected override Either<Exception, byte[]> HashImplementation(string password, ReadOnlySpan<byte> salt, uint outputLength, uint opsLimit, uint memLimit)
    {
-      protected override Either<Exception, byte[]> HashImplementation(string password, ReadOnlySpan<byte> salt, uint outputLength, uint opsLimit, uint memLimit)
+      byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+      try
       {
-         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-         try
-         {
-            return BlazorSodium.Sodium.PasswordHash.Crypto_PwHash(outputLength, passwordBytes, salt.ToArray(), opsLimit, memLimit, Constants.ALG_ARGON2ID13);
-         }
-         catch (Exception e)
-         {
-            return e;
-         }
+         return BlazorSodium.Sodium.PasswordHash.Crypto_PwHash(outputLength, passwordBytes, salt.ToArray(), opsLimit, memLimit, Constants.ALG_ARGON2ID13);
+      }
+      catch (Exception e)
+      {
+         return e;
       }
    }
 }

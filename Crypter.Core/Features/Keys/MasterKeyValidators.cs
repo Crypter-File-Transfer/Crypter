@@ -24,15 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Features.Keys
+namespace Crypter.Core.Features.Keys;
+
+internal static class MasterKeyValidators
 {
-   internal static class MasterKeyValidators
+   internal static bool ValidateMasterKeyInformation(byte[] masterKey, byte[] nonce, byte[] recoveryProof)
    {
-      internal static bool ValidateMasterKeyInformation(byte[] masterKey, byte[] nonce, byte[] recoveryProof)
-      {
-         return masterKey?.Length > 0
-            && nonce?.Length > 0
-            && recoveryProof?.Length > 0;
-      }
+      return masterKey?.Length > 0
+             && nonce?.Length > 0
+             && recoveryProof?.Length > 0;
    }
 }

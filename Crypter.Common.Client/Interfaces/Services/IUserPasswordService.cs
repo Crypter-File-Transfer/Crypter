@@ -31,17 +31,16 @@ using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Services
-{
-   public interface IUserPasswordService
-   {
-      int CurrentPasswordVersion { get; }
-      int CredentialKeySize { get; }
-      int AuthenticationPasswordSize { get; }
-      Task<Maybe<VersionedPassword>> DeriveUserAuthenticationPasswordAsync(Username username, Password password, int passwordVersion);
-      Task<Maybe<byte[]>> DeriveUserCredentialKeyAsync(Username username, Password password, int passwordVersion);
+namespace Crypter.Common.Client.Interfaces.Services;
 
-      event EventHandler<PasswordHashBeginEventArgs> PasswordHashBeginEventHandler;
-      event EventHandler<PasswordHashEndEventArgs> PasswordHashEndEventHandler;
-   }
+public interface IUserPasswordService
+{
+   int CurrentPasswordVersion { get; }
+   int CredentialKeySize { get; }
+   int AuthenticationPasswordSize { get; }
+   Task<Maybe<VersionedPassword>> DeriveUserAuthenticationPasswordAsync(Username username, Password password, int passwordVersion);
+   Task<Maybe<byte[]>> DeriveUserCredentialKeyAsync(Username username, Password password, int passwordVersion);
+
+   event EventHandler<PasswordHashBeginEventArgs> PasswordHashBeginEventHandler;
+   event EventHandler<PasswordHashEndEventArgs> PasswordHashEndEventHandler;
 }

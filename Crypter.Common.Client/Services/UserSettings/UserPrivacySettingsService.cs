@@ -32,49 +32,48 @@ using Crypter.Common.Client.Interfaces.Services.UserSettings;
 using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Services.UserSettings
+namespace Crypter.Common.Client.Services.UserSettings;
+
+public class UserPrivacySettingsService : IUserPrivacySettingsService, IDisposable
 {
-   public class UserPrivacySettingsService : IUserPrivacySettingsService, IDisposable
+   private readonly ICrypterApiClient _crypterApiClient;
+   private readonly IUserSessionService _userSessionService;
+
+   private Maybe<PrivacySettings> _privacySettings;
+
+   public UserPrivacySettingsService(ICrypterApiClient crypterApiClient, IUserSessionService userSessionService)
    {
-      private readonly ICrypterApiClient _crypterApiClient;
-      private readonly IUserSessionService _userSessionService;
+      _crypterApiClient = crypterApiClient;
+      _userSessionService = userSessionService;
 
-      private Maybe<PrivacySettings> _privacySettings;
+      _userSessionService.UserLoggedOutEventHandler += Recycle;
+   }
 
-      public UserPrivacySettingsService(ICrypterApiClient crypterApiClient, IUserSessionService userSessionService)
+   public async Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync()
+   {
+      if (_privacySettings.IsNone)
       {
-         _crypterApiClient = crypterApiClient;
-         _userSessionService = userSessionService;
-
-         _userSessionService.UserLoggedOutEventHandler += Recycle;
+         _privacySettings = await _crypterApiClient.UserSetting.GetPrivacySettingsAsync();
       }
 
-      public async Task<Maybe<PrivacySettings>> GetPrivacySettingsAsync()
-      {
-         if (_privacySettings.IsNone)
-         {
-            _privacySettings = await _crypterApiClient.UserSetting.GetPrivacySettingsAsync();
-         }
+      return _privacySettings;
+   }
 
-         return _privacySettings;
-      }
+   public async Task<Either<SetPrivacySettingsError, PrivacySettings>> UpdatePrivacySettingsAsync(PrivacySettings newPrivacySettings)
+   {
+      Either<SetPrivacySettingsError, PrivacySettings> result = await _crypterApiClient.UserSetting.SetPrivacySettingsAsync(newPrivacySettings);
+      _privacySettings = result.ToMaybe();
+      return result;
+   }
 
-      public async Task<Either<SetPrivacySettingsError, PrivacySettings>> UpdatePrivacySettingsAsync(PrivacySettings newPrivacySettings)
-      {
-         Either<SetPrivacySettingsError, PrivacySettings> result = await _crypterApiClient.UserSetting.SetPrivacySettingsAsync(newPrivacySettings);
-         _privacySettings = result.ToMaybe();
-         return result;
-      }
+   private void Recycle(object sender, EventArgs _)
+   {
+      _privacySettings = Maybe<PrivacySettings>.None;
+   }
 
-      private void Recycle(object sender, EventArgs _)
-      {
-         _privacySettings = Maybe<PrivacySettings>.None;
-      }
-
-      public void Dispose()
-      {
-         _userSessionService.UserLoggedOutEventHandler -= Recycle;
-         GC.SuppressFinalize(this);
-      }
+   public void Dispose()
+   {
+      _userSessionService.UserLoggedOutEventHandler -= Recycle;
+      GC.SuppressFinalize(this);
    }
 }

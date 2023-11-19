@@ -38,36 +38,35 @@ using Crypter.Crypto.Common.Random;
 using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Crypto.Common.StreamGenericHash;
 
-namespace Crypter.Crypto.Providers.Browser
+namespace Crypter.Crypto.Providers.Browser;
+
+[SupportedOSPlatform("browser")]
+public class BrowserCryptoProvider : ICryptoProvider
 {
-   [SupportedOSPlatform("browser")]
-   public class BrowserCryptoProvider : ICryptoProvider
+   public IConstantTime ConstantTime => throw new System.NotImplementedException();
+   public ICryptoHash CryptoHash { get; init; }
+   public IDigitalSignature DigitalSignature { get; init; }
+   public IEncryption Encryption { get; init; }
+   public IGenericHash GenericHash { get; init; }
+   public IKeyExchange KeyExchange { get; init; }
+   public IPadding Padding { get; init; }
+   public IPasswordHash PasswordHash { get; init; }
+   public IRandom Random { get; init; }
+   public IStreamEncryptionFactory StreamEncryptionFactory { get; init; }
+   public IStreamGenericHashFactory StreamGenericHashFactory { get; init; }
+
+   public BrowserCryptoProvider()
    {
-      public IConstantTime ConstantTime => throw new System.NotImplementedException();
-      public ICryptoHash CryptoHash { get; init; }
-      public IDigitalSignature DigitalSignature { get; init; }
-      public IEncryption Encryption { get; init; }
-      public IGenericHash GenericHash { get; init; }
-      public IKeyExchange KeyExchange { get; init; }
-      public IPadding Padding { get; init; }
-      public IPasswordHash PasswordHash { get; init; }
-      public IRandom Random { get; init; }
-      public IStreamEncryptionFactory StreamEncryptionFactory { get; init; }
-      public IStreamGenericHashFactory StreamGenericHashFactory { get; init; }
+      CryptoHash = new CryptoHash();
+      DigitalSignature = new Wrappers.DigitalSignature();
+      Encryption = new Wrappers.Encryption();
+      GenericHash = new Wrappers.GenericHash();
+      Padding = new Wrappers.Padding();
+      PasswordHash = new Wrappers.PasswordHash();
+      Random = new Wrappers.Random();
+      StreamGenericHashFactory = new Wrappers.StreamGenericHashFactory();
 
-      public BrowserCryptoProvider()
-      {
-         CryptoHash = new CryptoHash();
-         DigitalSignature = new Wrappers.DigitalSignature();
-         Encryption = new Wrappers.Encryption();
-         GenericHash = new Wrappers.GenericHash();
-         Padding = new Wrappers.Padding();
-         PasswordHash = new Wrappers.PasswordHash();
-         Random = new Wrappers.Random();
-         StreamGenericHashFactory = new Wrappers.StreamGenericHashFactory();
-
-         KeyExchange = new Wrappers.KeyExchange(StreamGenericHashFactory);
-         StreamEncryptionFactory = new Wrappers.StreamEncryptionFactory(Padding);
-      }
+      KeyExchange = new Wrappers.KeyExchange(StreamGenericHashFactory);
+      StreamEncryptionFactory = new Wrappers.StreamEncryptionFactory(Padding);
    }
 }

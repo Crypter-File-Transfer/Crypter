@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes
+namespace Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
+
+public enum AddUserContactError
 {
-   public enum AddUserContactError
-   {
-      UnknownError,
-      NotFound,
-      InvalidUser
-   }
+   UnknownError,
+   NotFound,
+   InvalidUser
 }

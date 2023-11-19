@@ -29,70 +29,69 @@ using Crypter.Core.Entities.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Core.Entities
+namespace Crypter.Core.Entities;
+
+public class UserFileTransferEntity : IUserTransfer, IFileTransfer
 {
-   public class UserFileTransferEntity : IUserTransfer, IFileTransfer
+   public Guid Id { get; set; }
+   public long Size { get; set; }
+   public byte[] PublicKey { get; set; }
+   public byte[] KeyExchangeNonce { get; set; }
+   public byte[] Proof { get; set; }
+   public DateTime Created { get; set; }
+   public DateTime Expiration { get; set; }
+
+   // IUserTransfer
+   public Guid? SenderId { get; set; }
+   public Guid? RecipientId { get; set; }
+
+   public UserEntity Sender { get; set; }
+   public UserEntity Recipient { get; set; }
+
+   // IFileTransfer
+   public string FileName { get; set; }
+   public string ContentType { get; set; }
+
+   public UserFileTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType)
    {
-      public Guid Id { get; set; }
-      public long Size { get; set; }
-      public byte[] PublicKey { get; set; }
-      public byte[] KeyExchangeNonce { get; set; }
-      public byte[] Proof { get; set; }
-      public DateTime Created { get; set; }
-      public DateTime Expiration { get; set; }
-
-      // IUserTransfer
-      public Guid? SenderId { get; set; }
-      public Guid? RecipientId { get; set; }
-
-      public UserEntity Sender { get; set; }
-      public UserEntity Recipient { get; set; }
-
-      // IFileTransfer
-      public string FileName { get; set; }
-      public string ContentType { get; set; }
-
-      public UserFileTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof, DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType)
-      {
-         Id = id;
-         Size = size;
-         PublicKey = publicKey;
-         KeyExchangeNonce = keyExchangeNonce;
-         Proof = proof;
-         Created = created;
-         Expiration = expiration;
-         SenderId = senderId;
-         RecipientId = recipientId;
-         FileName = fileName;
-         ContentType = contentType;
-      }
+      Id = id;
+      Size = size;
+      PublicKey = publicKey;
+      KeyExchangeNonce = keyExchangeNonce;
+      Proof = proof;
+      Created = created;
+      Expiration = expiration;
+      SenderId = senderId;
+      RecipientId = recipientId;
+      FileName = fileName;
+      ContentType = contentType;
    }
+}
 
-   public class UserFileTransferEntityConfiguration : IEntityTypeConfiguration<UserFileTransferEntity>
+public class UserFileTransferEntityConfiguration : IEntityTypeConfiguration<UserFileTransferEntity>
+{
+   public void Configure(EntityTypeBuilder<UserFileTransferEntity> builder)
    {
-      public void Configure(EntityTypeBuilder<UserFileTransferEntity> builder)
-      {
-         builder.ToTable("UserFileTransfer");
+      builder.ToTable("UserFileTransfer");
 
-         builder.HasKey(x => x.Id);
+      builder.HasKey(x => x.Id);
 
-         builder.Property(x => x.SenderId)
-            .HasColumnName("Sender");
+      builder.Property(x => x.SenderId)
+         .HasColumnName("Sender");
 
-         builder.Property(x => x.RecipientId)
-            .HasColumnName("Recipient");
+      builder.Property(x => x.RecipientId)
+         .HasColumnName("Recipient");
 
-         builder.Property(x => x.PublicKey)
-            .IsRequired(false);
+      builder.Property(x => x.PublicKey)
+         .IsRequired(false);
 
-         builder.Property(x => x.Proof)
-            .IsRequired();
+      builder.Property(x => x.Proof)
+         .IsRequired();
 
-         builder.Property(x => x.FileName)
-            .IsRequired();
+      builder.Property(x => x.FileName)
+         .IsRequired();
 
-         builder.Property(x => x.ContentType)
-            .IsRequired();
-      }
+      builder.Property(x => x.ContentType)
+         .IsRequired();
    }
 }

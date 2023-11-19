@@ -29,14 +29,13 @@ using System.Net;
 using Crypter.Common.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers;
+
+public abstract class CrypterControllerBase : ControllerBase
 {
-   public abstract class CrypterControllerBase : ControllerBase
+   protected IActionResult MakeErrorResponseBase(HttpStatusCode httpStatus, Enum errorCode)
    {
-      protected IActionResult MakeErrorResponseBase(HttpStatusCode httpStatus, Enum errorCode)
-      {
-         ErrorResponse errorResponse = new ErrorResponse((int)httpStatus, errorCode);
-         return StatusCode((int)httpStatus, errorResponse);
-      }
+      ErrorResponse errorResponse = new ErrorResponse((int)httpStatus, errorCode);
+      return StatusCode((int)httpStatus, errorResponse);
    }
 }

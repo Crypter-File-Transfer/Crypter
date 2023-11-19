@@ -24,17 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserSettings.NotificationSettings
-{
-   public class NotificationSettings
-   {
-      public bool EmailNotifications { get; init; }
-      public bool NotifyOnTransferReceived { get; init; }
+namespace Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 
-      public NotificationSettings(bool emailNotifications, bool notifyOnTransferReceived)
-      {
-         EmailNotifications = emailNotifications;
-         NotifyOnTransferReceived = notifyOnTransferReceived;
-      }
+public class NotificationSettings
+{
+   public bool EmailNotifications { get; init; }
+   public bool NotifyOnTransferReceived { get; init; }
+
+   public NotificationSettings(bool emailNotifications, bool notifyOnTransferReceived)
+   {
+      EmailNotifications = emailNotifications;
+      NotifyOnTransferReceived = notifyOnTransferReceived;
    }
 }

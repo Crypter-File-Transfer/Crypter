@@ -30,21 +30,20 @@ using System.Threading.Tasks;
 using Crypter.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Features.UserToken
-{
-   internal static class UserTokenCommands
-   {
-      internal static async Task DeleteUserTokenAsync(DataContext dataContext, Guid tokenId)
-      {
-         UserTokenEntity foundToken = await dataContext.UserTokens
-            .Where(x => x.Id == tokenId)
-            .FirstOrDefaultAsync();
+namespace Crypter.Core.Features.UserToken;
 
-         if (foundToken is not null)
-         {
-            dataContext.UserTokens.Remove(foundToken);
-            await dataContext.SaveChangesAsync();
-         }
+internal static class UserTokenCommands
+{
+   internal static async Task DeleteUserTokenAsync(DataContext dataContext, Guid tokenId)
+   {
+      UserTokenEntity foundToken = await dataContext.UserTokens
+         .Where(x => x.Id == tokenId)
+         .FirstOrDefaultAsync();
+
+      if (foundToken is not null)
+      {
+         dataContext.UserTokens.Remove(foundToken);
+         await dataContext.SaveChangesAsync();
       }
    }
 }

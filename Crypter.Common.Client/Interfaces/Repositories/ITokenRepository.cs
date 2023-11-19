@@ -29,16 +29,15 @@ using Crypter.Common.Client.Models;
 using Crypter.Common.Enums;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Repositories
+namespace Crypter.Common.Client.Interfaces.Repositories;
+
+/// <summary>
+/// Simple abstraction over IDeviceRepository
+/// </summary>
+public interface ITokenRepository
 {
-   /// <summary>
-   /// Simple abstraction over IDeviceRepository
-   /// </summary>
-   public interface ITokenRepository
-   {
-      Task<Maybe<TokenObject>> GetAuthenticationTokenAsync();
-      Task<Maybe<TokenObject>> GetRefreshTokenAsync();
-      Task<Unit> StoreAuthenticationTokenAsync(string token);
-      Task<Unit> StoreRefreshTokenAsync(string token, TokenType tokenType);
-   }
+   Task<Maybe<TokenObject>> GetAuthenticationTokenAsync();
+   Task<Maybe<TokenObject>> GetRefreshTokenAsync();
+   Task<Unit> StoreAuthenticationTokenAsync(string token);
+   Task<Unit> StoreRefreshTokenAsync(string token, TokenType tokenType);
 }

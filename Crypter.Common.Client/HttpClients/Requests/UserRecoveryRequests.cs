@@ -32,29 +32,28 @@ using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
-namespace Crypter.Common.Client.HttpClients.Requests
+namespace Crypter.Common.Client.HttpClients.Requests;
+
+public class UserRecoveryRequests : IUserRecoveryRequests
 {
-   public class UserRecoveryRequests : IUserRecoveryRequests
+   private readonly ICrypterHttpClient _crypterHttpClient;
+
+   public UserRecoveryRequests(ICrypterHttpClient crypterHttpClient)
    {
-      private readonly ICrypterHttpClient _crypterHttpClient;
+      _crypterHttpClient = crypterHttpClient;
+   }
 
-      public UserRecoveryRequests(ICrypterHttpClient crypterHttpClient)
-      {
-         _crypterHttpClient = crypterHttpClient;
-      }
+   public Task<Either<SendRecoveryEmailError, Unit>> SendRecoveryEmailAsync(EmailAddress emailAddress)
+   {
+      string url = $"api/user/recovery/?emailAddress={emailAddress.Value}";
+      return _crypterHttpClient.GetEitherUnitResponseAsync(url)
+         .ExtractErrorCode<SendRecoveryEmailError, Unit>();
+   }
 
-      public Task<Either<SendRecoveryEmailError, Unit>> SendRecoveryEmailAsync(EmailAddress emailAddress)
-      {
-         string url = $"api/user/recovery/?emailAddress={emailAddress.Value}";
-         return _crypterHttpClient.GetEitherUnitResponseAsync(url)
-            .ExtractErrorCode<SendRecoveryEmailError, Unit>();
-      }
-
-      public Task<Either<SubmitRecoveryError, Unit>> SubmitRecoveryAsync(SubmitRecoveryRequest request)
-      {
-         string url = "api/user/recovery";
-         return _crypterHttpClient.PostEitherUnitResponseAsync(url, request)
-            .ExtractErrorCode<SubmitRecoveryError, Unit>();
-      }
+   public Task<Either<SubmitRecoveryError, Unit>> SubmitRecoveryAsync(SubmitRecoveryRequest request)
+   {
+      string url = "api/user/recovery";
+      return _crypterHttpClient.PostEitherUnitResponseAsync(url, request)
+         .ExtractErrorCode<SubmitRecoveryError, Unit>();
    }
 }

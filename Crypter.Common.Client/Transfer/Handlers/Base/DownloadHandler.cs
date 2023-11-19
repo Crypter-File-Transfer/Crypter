@@ -34,80 +34,79 @@ using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.StreamEncryption;
 using EasyMonads;
 
-namespace Crypter.Common.Client.Transfer.Handlers.Base
+namespace Crypter.Common.Client.Transfer.Handlers.Base;
+
+public class DownloadHandler : IUserDownloadHandler
 {
-   public class DownloadHandler : IUserDownloadHandler
+   protected readonly ICrypterApiClient _crypterApiClient;
+   protected readonly ICryptoProvider _cryptoProvider;
+   protected readonly IUserSessionService _userSessionService;
+   protected readonly TransferSettings _transferSettings;
+
+   protected string _transferHashId;
+   protected TransferUserType _transferUserType = TransferUserType.Anonymous;
+
+   protected Maybe<byte[]> _recipientPrivateKey = Maybe<byte[]>.None;
+   protected Maybe<byte[]> _senderPublicKey = Maybe<byte[]>.None;
+
+   protected Maybe<byte[]> _symmetricKey = Maybe<byte[]>.None;
+   protected Maybe<byte[]> _serverProof = Maybe<byte[]>.None;
+   protected Maybe<byte[]> _keyExchangeNonce = Maybe<byte[]>.None;
+
+   public DownloadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
    {
-      protected readonly ICrypterApiClient _crypterApiClient;
-      protected readonly ICryptoProvider _cryptoProvider;
-      protected readonly IUserSessionService _userSessionService;
-      protected readonly TransferSettings _transferSettings;
+      _crypterApiClient = crypterApiClient;
+      _cryptoProvider = cryptoProvider;
+      _userSessionService = userSessionService;
+      _transferSettings = transferSettings;
+   }
 
-      protected string _transferHashId;
-      protected TransferUserType _transferUserType = TransferUserType.Anonymous;
+   internal void SetTransferInfo(string transferHashId, TransferUserType userType)
+   {
+      _transferHashId = transferHashId;
+      _transferUserType = userType;
+   }
 
-      protected Maybe<byte[]> _recipientPrivateKey = Maybe<byte[]>.None;
-      protected Maybe<byte[]> _senderPublicKey = Maybe<byte[]>.None;
+   public void SetRecipientInfo(byte[] recipientPrivateKey)
+   {
+      _recipientPrivateKey = recipientPrivateKey;
+      TryDeriveSymmetricKeys();
+   }
 
-      protected Maybe<byte[]> _symmetricKey = Maybe<byte[]>.None;
-      protected Maybe<byte[]> _serverProof = Maybe<byte[]>.None;
-      protected Maybe<byte[]> _keyExchangeNonce = Maybe<byte[]>.None;
+   protected void SetSenderPublicKey(byte[] senderPublicKey, byte[] keyExchangeNonce)
+   {
+      _senderPublicKey = senderPublicKey;
+      _keyExchangeNonce = keyExchangeNonce;
+      TryDeriveSymmetricKeys();
+   }
 
-      public DownloadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserSessionService userSessionService, TransferSettings transferSettings)
+   private void TryDeriveSymmetricKeys()
+   {
+      _recipientPrivateKey.IfSome(privateKey =>
       {
-         _crypterApiClient = crypterApiClient;
-         _cryptoProvider = cryptoProvider;
-         _userSessionService = userSessionService;
-         _transferSettings = transferSettings;
-      }
-
-      internal void SetTransferInfo(string transferHashId, TransferUserType userType)
-      {
-         _transferHashId = transferHashId;
-         _transferUserType = userType;
-      }
-
-      public void SetRecipientInfo(byte[] recipientPrivateKey)
-      {
-         _recipientPrivateKey = recipientPrivateKey;
-         TryDeriveSymmetricKeys();
-      }
-
-      protected void SetSenderPublicKey(byte[] senderPublicKey, byte[] keyExchangeNonce)
-      {
-         _senderPublicKey = senderPublicKey;
-         _keyExchangeNonce = keyExchangeNonce;
-         TryDeriveSymmetricKeys();
-      }
-
-      private void TryDeriveSymmetricKeys()
-      {
-         _recipientPrivateKey.IfSome(privateKey =>
+         _senderPublicKey.IfSome(publicKey =>
          {
-            _senderPublicKey.IfSome(publicKey =>
+            _keyExchangeNonce.IfSome(keyExchangeNonce =>
             {
-               _keyExchangeNonce.IfSome(keyExchangeNonce =>
-               {
-                  uint keySize = _cryptoProvider.StreamEncryptionFactory.KeySize;
-                  (_symmetricKey, _serverProof) = _cryptoProvider.KeyExchange.GenerateDecryptionKey(keySize, privateKey, publicKey, keyExchangeNonce);
-               });
+               uint keySize = _cryptoProvider.StreamEncryptionFactory.KeySize;
+               (_symmetricKey, _serverProof) = _cryptoProvider.KeyExchange.GenerateDecryptionKey(keySize, privateKey, publicKey, keyExchangeNonce);
             });
          });
-      }
+      });
+   }
 
-      protected byte[] Decrypt(byte[] key, Stream ciphertext, long streamSize)
+   protected byte[] Decrypt(byte[] key, Stream ciphertext, long streamSize)
+   {
+      using DecryptionStream decryptionStream = new DecryptionStream(ciphertext, streamSize, key, _cryptoProvider.StreamEncryptionFactory);
+      byte[] plaintextBuffer = new byte[checked((int)streamSize)];
+      int plaintextPosition = 0;
+      int bytesRead;
+      do
       {
-         using DecryptionStream decryptionStream = new DecryptionStream(ciphertext, streamSize, key, _cryptoProvider.StreamEncryptionFactory);
-         byte[] plaintextBuffer = new byte[checked((int)streamSize)];
-         int plaintextPosition = 0;
-         int bytesRead;
-         do
-         {
-            bytesRead = decryptionStream.Read(plaintextBuffer.AsSpan(plaintextPosition));
-            plaintextPosition += bytesRead;
-         }
-         while (bytesRead > 0);
-         return plaintextBuffer[..plaintextPosition];
+         bytesRead = decryptionStream.Read(plaintextBuffer.AsSpan(plaintextPosition));
+         plaintextPosition += bytesRead;
       }
+      while (bytesRead > 0);
+      return plaintextBuffer[..plaintextPosition];
    }
 }

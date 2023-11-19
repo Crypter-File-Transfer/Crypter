@@ -37,139 +37,138 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Crypter.Core.Services
+namespace Crypter.Core.Services;
+
+public interface ITokenService
 {
-   public interface ITokenService
+   string NewAuthenticationToken(Guid userId);
+   RefreshTokenData NewSessionToken(Guid userId);
+   RefreshTokenData NewDeviceToken(Guid userId);
+   Maybe<ClaimsPrincipal> ValidateToken(string token);
+   Guid ParseUserId(ClaimsPrincipal claimsPrincipal);
+   Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal);
+   Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal);
+}
+
+public static class TokenServiceExtensions
+{
+   public static void AddTokenService(this IServiceCollection services, Action<TokenSettings> settings)
    {
-      string NewAuthenticationToken(Guid userId);
-      RefreshTokenData NewSessionToken(Guid userId);
-      RefreshTokenData NewDeviceToken(Guid userId);
-      Maybe<ClaimsPrincipal> ValidateToken(string token);
-      Guid ParseUserId(ClaimsPrincipal claimsPrincipal);
-      Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal);
-      Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal);
+      if (settings is null)
+      {
+         throw new ArgumentNullException(nameof(settings));
+      }
+
+      services.Configure(settings);
+      services.TryAddSingleton<ITokenService, TokenService>();
+   }
+}
+
+public class TokenService : ITokenService
+{
+   private readonly TokenSettings _tokenSettings;
+
+   public TokenService(IOptions<TokenSettings> tokenSettings)
+   {
+      _tokenSettings = tokenSettings.Value;
    }
 
-   public static class TokenServiceExtensions
+   public string NewAuthenticationToken(Guid userId)
    {
-      public static void AddTokenService(this IServiceCollection services, Action<TokenSettings> settings)
-      {
-         if (settings is null)
-         {
-            throw new ArgumentNullException(nameof(settings));
-         }
+      var expiration = DateTime.UtcNow.AddMinutes(_tokenSettings.AuthenticationTokenLifetimeMinutes);
+      return NewToken(userId, expiration);
+   }
 
-         services.Configure(settings);
-         services.TryAddSingleton<ITokenService, TokenService>();
+   public RefreshTokenData NewSessionToken(Guid userId)
+   {
+      DateTime now = DateTime.UtcNow;
+      DateTime expiration = now.AddMinutes(_tokenSettings.SessionTokenLifetimeMinutes);
+      return NewRefreshToken(userId, now, expiration);
+   }
+
+   public RefreshTokenData NewDeviceToken(Guid userId)
+   {
+      DateTime now = DateTime.UtcNow;
+      DateTime expiration = now.AddDays(_tokenSettings.DeviceTokenLifetimeDays);
+      return NewRefreshToken(userId, now, expiration);
+   }
+
+   public Maybe<ClaimsPrincipal> ValidateToken(string token)
+   {
+      var validationParameters = TokenParametersProvider.GetTokenValidationParameters(_tokenSettings);
+
+      try
+      {
+         return new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out _);
+      }
+      catch (Exception)
+      {
+         return Maybe<ClaimsPrincipal>.None;
       }
    }
 
-   public class TokenService : ITokenService
+   public Guid ParseUserId(ClaimsPrincipal claimsPrincipal)
    {
-      private readonly TokenSettings _tokenSettings;
+      return TryParseUserId(claimsPrincipal).Match(
+         () => throw new InvalidTokenException(),
+         x => x);
+   }
 
-      public TokenService(IOptions<TokenSettings> tokenSettings)
+   public Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal)
+   {
+      var userClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
+      if (userClaim is null || !Guid.TryParse(userClaim.Value, out Guid userId))
       {
-         _tokenSettings = tokenSettings.Value;
+         return Maybe<Guid>.None;
       }
 
-      public string NewAuthenticationToken(Guid userId)
+      return userId;
+   }
+
+   public Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal)
+   {
+      var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
+      if (idClaim is null)
       {
-         var expiration = DateTime.UtcNow.AddMinutes(_tokenSettings.AuthenticationTokenLifetimeMinutes);
-         return NewToken(userId, expiration);
+         return Maybe<Guid>.None;
       }
 
-      public RefreshTokenData NewSessionToken(Guid userId)
+      return Guid.TryParse(idClaim.Value, out Guid tokenId)
+         ? tokenId
+         : Maybe<Guid>.None;
+   }
+
+   private RefreshTokenData NewRefreshToken(Guid userId, DateTime created, DateTime expiration)
+   {
+      Guid tokenId = Guid.NewGuid();
+      string token = NewToken(userId, expiration, tokenId);
+      return new RefreshTokenData(token, tokenId, created, expiration);
+   }
+
+   private string NewToken(Guid userId, DateTime expiration, Guid tokenId = default)
+   {
+      var tokenHandler = new JwtSecurityTokenHandler();
+      var claims = new ClaimsIdentity(new Claim[]
       {
-         DateTime now = DateTime.UtcNow;
-         DateTime expiration = now.AddMinutes(_tokenSettings.SessionTokenLifetimeMinutes);
-         return NewRefreshToken(userId, now, expiration);
+         new Claim(ClaimTypes.NameIdentifier, userId.ToString())
+      });
+
+      if (tokenId != default)
+      {
+         var jtiClaim = new Claim(JwtRegisteredClaimNames.Jti, tokenId.ToString());
+         claims.AddClaim(jtiClaim);
       }
 
-      public RefreshTokenData NewDeviceToken(Guid userId)
+      var tokenKeyBytes = Encoding.UTF8.GetBytes(_tokenSettings.SecretKey);
+      var tokenDescriptor = new SecurityTokenDescriptor
       {
-         DateTime now = DateTime.UtcNow;
-         DateTime expiration = now.AddDays(_tokenSettings.DeviceTokenLifetimeDays);
-         return NewRefreshToken(userId, now, expiration);
-      }
-
-      public Maybe<ClaimsPrincipal> ValidateToken(string token)
-      {
-         var validationParameters = TokenParametersProvider.GetTokenValidationParameters(_tokenSettings);
-
-         try
-         {
-            return new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out _);
-         }
-         catch (Exception)
-         {
-            return Maybe<ClaimsPrincipal>.None;
-         }
-      }
-
-      public Guid ParseUserId(ClaimsPrincipal claimsPrincipal)
-      {
-         return TryParseUserId(claimsPrincipal).Match(
-            () => throw new InvalidTokenException(),
-            x => x);
-      }
-
-      public Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal)
-      {
-         var userClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
-         if (userClaim is null || !Guid.TryParse(userClaim.Value, out Guid userId))
-         {
-            return Maybe<Guid>.None;
-         }
-
-         return userId;
-      }
-
-      public Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal)
-      {
-         var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
-         if (idClaim is null)
-         {
-            return Maybe<Guid>.None;
-         }
-
-         return Guid.TryParse(idClaim.Value, out Guid tokenId)
-            ? tokenId
-            : Maybe<Guid>.None;
-      }
-
-      private RefreshTokenData NewRefreshToken(Guid userId, DateTime created, DateTime expiration)
-      {
-         Guid tokenId = Guid.NewGuid();
-         string token = NewToken(userId, expiration, tokenId);
-         return new RefreshTokenData(token, tokenId, created, expiration);
-      }
-
-      private string NewToken(Guid userId, DateTime expiration, Guid tokenId = default)
-      {
-         var tokenHandler = new JwtSecurityTokenHandler();
-         var claims = new ClaimsIdentity(new Claim[]
-         {
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString())
-         });
-
-         if (tokenId != default)
-         {
-            var jtiClaim = new Claim(JwtRegisteredClaimNames.Jti, tokenId.ToString());
-            claims.AddClaim(jtiClaim);
-         }
-
-         var tokenKeyBytes = Encoding.UTF8.GetBytes(_tokenSettings.SecretKey);
-         var tokenDescriptor = new SecurityTokenDescriptor
-         {
-            Subject = claims,
-            Audience = _tokenSettings.Audience,
-            Issuer = _tokenSettings.Issuer,
-            Expires = expiration,
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKeyBytes), SecurityAlgorithms.HmacSha256Signature)
-         };
-         var token = tokenHandler.CreateToken(tokenDescriptor);
-         return tokenHandler.WriteToken(token);
-      }
+         Subject = claims,
+         Audience = _tokenSettings.Audience,
+         Issuer = _tokenSettings.Issuer,
+         Expires = expiration,
+         SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKeyBytes), SecurityAlgorithms.HmacSha256Signature)
+      };
+      var token = tokenHandler.CreateToken(tokenDescriptor);
+      return tokenHandler.WriteToken(token);
    }
 }
