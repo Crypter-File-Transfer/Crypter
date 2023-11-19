@@ -54,6 +54,8 @@ jobs:
         with:
           context: .
           file: ./Crypter.API.Dockerfile
+          flavor: |
+            ${{ (github.event_name == 'workflow_dispatch' && latest=true) || latest=auto }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
