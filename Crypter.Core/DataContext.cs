@@ -45,7 +45,7 @@ namespace Crypter.Core
       {
       }
 
-      public DbSet<UserEntity> Users { get; set; }
+      public virtual DbSet<UserEntity> Users { get; set; }
       public DbSet<UserProfileEntity> UserProfiles { get; set; }
       public DbSet<UserKeyPairEntity> UserKeyPairs { get; set; }
       public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; set; }
