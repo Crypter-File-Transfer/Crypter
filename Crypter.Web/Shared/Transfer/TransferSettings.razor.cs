@@ -27,53 +27,64 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared.Transfer
+namespace Crypter.Web.Shared.Transfer;
+
+public partial class TransferSettings
 {
-   public partial class TransferSettingsBase : ComponentBase
+   private const int MinExpirationHours = 1;
+   private const int MaxExpirationHours = 24;
+   private const int DefaultExpirationHours = 24;
+
+   private string _expirationInput;
+   
+   [Parameter]
+   public int ExpirationHours { get; set; }
+
+   [Parameter]
+   public EventCallback<int> ExpirationHoursChanged { get; set; }
+
+   protected override Task OnParametersSetAsync()
    {
-      protected const int MinExpirationHours = 1;
-      protected const int MaxExpirationHours = 24;
-      protected const int DefaultExpirationHours = 24;
-
-      [Parameter]
-      public int ExpirationHours { get; set; }
-
-      [Parameter]
-      public EventCallback<int> ExpirationHoursChanged { get; set; }
-
-      protected override Task OnParametersSetAsync()
+      if (ExpirationHours > MaxExpirationHours)
       {
-         if (ExpirationHours > MaxExpirationHours)
-         {
-            return ExpirationHoursChanged.InvokeAsync(MaxExpirationHours);
-         }
+         _expirationInput = MaxExpirationHours.ToString();
+         return ExpirationHoursChanged.InvokeAsync(MaxExpirationHours);
+      }
 
-         if (ExpirationHours < MinExpirationHours)
-         {
-            return ExpirationHoursChanged.InvokeAsync(DefaultExpirationHours);
-         }
+      if (ExpirationHours < MinExpirationHours)
+      {
+         _expirationInput = MinExpirationHours.ToString();
+         return ExpirationHoursChanged.InvokeAsync(DefaultExpirationHours);
+      }
 
+      _expirationInput = ExpirationHours.ToString();
+      return Task.CompletedTask;
+   }
+
+   private Task OnExpirationHoursChanged(string value)
+   {
+      if (!int.TryParse(value, out int parsedValue))
+      {
+         ExpirationHours = DefaultExpirationHours;
+         _expirationInput = DefaultExpirationHours.ToString();
+         return ExpirationHoursChanged.InvokeAsync(DefaultExpirationHours);
+      }
+
+      if (ExpirationHours == parsedValue)
+      {
          return Task.CompletedTask;
       }
-
-      protected Task OnExpirationHoursChanged(int value)
+      
+      if (parsedValue > MaxExpirationHours)
       {
-         if (ExpirationHours == value)
-         {
-            return Task.CompletedTask;
-         }
-
-         if (value > MaxExpirationHours)
-         {
-            return ExpirationHoursChanged.InvokeAsync(MaxExpirationHours);
-         }
-         
-         if (value < MinExpirationHours)
-         {
-            return ExpirationHoursChanged.InvokeAsync(MinExpirationHours);
-         }
-
-         return ExpirationHoursChanged.InvokeAsync(value);
+         return ExpirationHoursChanged.InvokeAsync(MaxExpirationHours);
       }
+      
+      if (parsedValue < MinExpirationHours)
+      {
+         return ExpirationHoursChanged.InvokeAsync(MinExpirationHours);
+      }
+
+      return ExpirationHoursChanged.InvokeAsync(parsedValue);
    }
 }
