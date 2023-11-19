@@ -95,7 +95,7 @@ jobs:
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container --profile ${{ db_migration_compose_profile }} run api /app/efbundle
+          script: docker compose --project-directory crypter-web-container --profile ${{ env.db_migration_compose_profile }} run api /app/efbundle
           script_stop: true
 
       - name: Start service
