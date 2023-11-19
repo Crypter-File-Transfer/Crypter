@@ -53,7 +53,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           flavor: |
-            ${{ (github.event_name == 'workflow_dispatch' && latest=true) || latest=auto }}
+            latest=${{ (github.event_name == 'workflow_dispatch' && 'true') || 'auto' }}
           images: ${{ env.registry }}/${{ vars.WEB_IMAGE_NAME }}
 
       - name: Build and push Docker image
