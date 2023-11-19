@@ -48,14 +48,14 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.registry }}/${{ vars.API_IMAGE_NAME }}
+          flavor: |
+            ${{ (github.event_name == 'workflow_dispatch' && latest=true) || latest=auto }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           file: ./Crypter.API.Dockerfile
-          flavor: |
-            ${{ (github.event_name == 'workflow_dispatch' && latest=true) || latest=auto }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
