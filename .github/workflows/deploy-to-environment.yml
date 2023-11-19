@@ -47,7 +47,8 @@ jobs:
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
           source: Environments/${{ github.event.inputs.environment }}/crypter.service
           target: .config/systemd/user/
-
+          strip_components: 2
+      
       - name: Reload systemctl daemon
         uses: appleboy/ssh-action@v0.1.9
         with:
