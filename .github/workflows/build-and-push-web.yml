@@ -52,6 +52,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
+          flavor: |
+            ${{ (github.event_name == 'workflow_dispatch' && latest=true) || latest=auto }}
           images: ${{ env.registry }}/${{ vars.WEB_IMAGE_NAME }}
 
       - name: Build and push Docker image
@@ -59,8 +61,6 @@ jobs:
         with:
           context: .
           file: ./Crypter.Web.Dockerfile
-          flavor: |
-            ${{ (github.event_name == 'workflow_dispatch' && latest=true) || latest=auto }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
