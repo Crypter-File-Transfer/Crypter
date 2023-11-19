@@ -11,6 +11,9 @@ on:
           - production
           - development
 
+env:
+  db_migration_compose_profile: ${{ (github.event.inputs.environment == 'development' && 'dev') || 'web' }}
+
 jobs:
   deploy-web-container:
     runs-on: ubuntu-latest
@@ -85,17 +88,6 @@ jobs:
           script: docker compose --project-directory crypter-web-container --profile web pull
           script_stop: true
 
-      - name: Start local database if deploying to Development server
-        if: github.event.inputs.environment == 'development'
-        uses: appleboy/ssh-action@v0.1.9
-        with:
-          host: ${{ secrets.APPSERVER_SSH_HOST }}
-          port: ${{ secrets.APPSERVER_SSH_PORT }}
-          username: ${{ secrets.APPSERVER_SSH_USER }}
-          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container --profile db up -d
-          script_stop: true
-
       - name: Migrate database
         uses: appleboy/ssh-action@v0.1.9
         with:
@@ -103,18 +95,7 @@ jobs:
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container --profile web run api /app/efbundle
-          script_stop: true
-
-      - name: Stop local database if deploying to Development server
-        if: github.event.inputs.environment == 'development'
-        uses: appleboy/ssh-action@v0.1.9
-        with:
-          host: ${{ secrets.APPSERVER_SSH_HOST }}
-          port: ${{ secrets.APPSERVER_SSH_PORT }}
-          username: ${{ secrets.APPSERVER_SSH_USER }}
-          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container --profile db down
+          script: docker compose --project-directory crypter-web-container --profile ${{ db_migration_compose_profile }} run api /app/efbundle
           script_stop: true
 
       - name: Start service
