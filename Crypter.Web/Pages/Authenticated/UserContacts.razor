@@ -32,32 +32,32 @@
 
 
 <div class="container my-4">
-   @if (!Loading)
-   {
-      <h1>Contacts</h1>
-      <div class="row">
-      @if (Contacts != null)
-      {
-         @foreach (var contact in Contacts)
-         {
-            <div class="col-md-6">
-               <div class="card my-1">
-                  <div class="card-body">
-                     <div class="d-flex bd-highlight mb-3">
-                        <div class="me-auto p-2 bd-highlight">
-                           <a class="text-decoration-none" href="/user/profile/@contact.Username">
-                              <h5 class="card-title">@GetDisplayName(contact.Username, contact.Alias)</h5>
-                           </a>
+    @if (!Loading)
+    {
+        <h1>Contacts</h1>
+        <div class="row">
+            @if (Contacts != null)
+            {
+                @foreach (var contact in Contacts)
+                {
+                    <div class="col-md-6">
+                        <div class="card my-1">
+                            <div class="card-body">
+                                <div class="d-flex bd-highlight mb-3">
+                                    <div class="me-auto p-2 bd-highlight">
+                                        <a class="text-decoration-none" href="/user/profile/@contact.Username">
+                                            <h5 class="card-title">@GetDisplayName(contact.Username, contact.Alias)</h5>
+                                        </a>
+                                    </div>
+                                    <div class="p-2 bd-highlight">
+                                        <button type="button" class="btn btn-outline-danger" @onclick="async () => await RemoveContactAsync(contact.Username)">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="p-2 bd-highlight">
-                           <button type="button" class="btn btn-outline-danger" @onclick="async () => await RemoveContactAsync(contact.Username)">Remove</button>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-            </div>
-         }
-      }
-      </div>
-   }
+                    </div>
+                }
+            }
+        </div>
+    }
 </div>

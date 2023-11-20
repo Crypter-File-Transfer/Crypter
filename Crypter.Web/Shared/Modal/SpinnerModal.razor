@@ -27,19 +27,19 @@
 @inherits SpinnerModalBase
 
 <ModalBehavior @ref=ModalBehaviorRef>
-   <Content>
-      <div class="modal-content">
-         <div class="modal-header">
-            <h3>@Subject</h3>
-         </div>
-         <div class="modal-body justify-content-center">
-            <p class="word-wrap">@Message</p>
-            <div class="text-center">
-               <div class="spinner-border" role="status">
-                  <span class="visually-hidden">Loading...</span>
-               </div>
+    <Content>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>@Subject</h3>
             </div>
-         </div>
-      </div>
-   </Content>
+            <div class="modal-body justify-content-center">
+                <p class="word-wrap">@Message</p>
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Content>
 </ModalBehavior>

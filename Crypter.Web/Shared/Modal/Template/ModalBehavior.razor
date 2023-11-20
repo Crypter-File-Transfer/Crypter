@@ -27,12 +27,12 @@
 @inherits ModalBehaviorBase
 
 <div class="modal" tabindex="-1" role="dialog" style="display:@ModalDisplay">
-   <div class="modal-dialog" role="document">
-      @if (Show)
-      {
-         @Content
-      }
-   </div>
+    <div class="modal-dialog" role="document">
+        @if (Show)
+        {
+            @Content
+        }
+    </div>
 </div>
 
 <div hidden="@(!Show)" class="modal-backdrop fade show"></div>
