@@ -2,10 +2,10 @@
 <html class="h-100">
 
 <head>
-   <meta charset="utf-8" />
-   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-   <meta http-equiv="Content-Security-Policy"
-         content="base-uri 'self';
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta http-equiv="Content-Security-Policy"
+          content="base-uri 'self';
                block-all-mixed-content;
                default-src 'self';
                img-src data: https:;
@@ -22,68 +22,68 @@
                            'self'
                            *.crypter.dev;
                upgrade-insecure-requests;">
-   <title>Crypter</title>
-   <base href="/" />
-   <link rel="stylesheet" href="Crypter.Web.styles.css" />
-   <link rel="stylesheet" href="lib/bootstrap-5.2.3-dist/css/bootstrap.min.css" />
-   <link rel="stylesheet" href="lib/bootstrap-icons-1.10.3/bootstrap-icons.css">
-   <link rel="stylesheet" href="lib/fonts-local/google/Rubik.css">
-   <link rel="stylesheet" href="css/app.css" />
-   <link rel="stylesheet" href="css/main.css" />
+    <title>Crypter</title>
+    <base href="/"/>
+    <link rel="stylesheet" href="Crypter.Web.styles.css"/>
+    <link rel="stylesheet" href="lib/bootstrap-5.2.3-dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="lib/bootstrap-icons-1.10.3/bootstrap-icons.css">
+    <link rel="stylesheet" href="lib/fonts-local/google/Rubik.css">
+    <link rel="stylesheet" href="css/app.css"/>
+    <link rel="stylesheet" href="css/main.css"/>
 
-   <!--
-   Copyright (C) 2023 Crypter File Transfer
-
-   This file is part of the Crypter file transfer project.
-
-   Crypter is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   The Crypter source code is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
-
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-   You can be released from the requirements of the aforementioned license
-   by purchasing a commercial license. Buying such a license is mandatory
-   as soon as you develop commercial activities involving the Crypter source
-   code without disclosing the source code of your own applications.
-
-   Contact the current copyright holder to discuss commerical license options.
-   -->
+    <!--
+    Copyright (C) 2023 Crypter File Transfer
+ 
+    This file is part of the Crypter file transfer project.
+ 
+    Crypter is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+ 
+    The Crypter source code is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+ 
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+    You can be released from the requirements of the aforementioned license
+    by purchasing a commercial license. Buying such a license is mandatory
+    as soon as you develop commercial activities involving the Crypter source
+    code without disclosing the source code of your own applications.
+ 
+    Contact the current copyright holder to discuss commerical license options.
+    -->
 </head>
 
 <body class="grt h-100">
-   <div id="app" class="d-flex flex-column h-100">
-      <div class="position-absolute w-100 text-center" style="top: 30vh;">
-         <h1 class="title">Crypter.dev</h1>
-         <h2>Private, encrypted file transfer and messaging</h2>
-         <div class="spinner-border mt-2" role="status">
+<div id="app" class="d-flex flex-column h-100">
+    <div class="position-absolute w-100 text-center" style="top: 30vh;">
+        <h1 class="title">Crypter.dev</h1>
+        <h2>Private, encrypted file transfer and messaging</h2>
+        <div class="spinner-border mt-2" role="status">
             <span class="visually-hidden">Loading...</span>
-         </div>
-         <h2>Loading...</h2>
-      </div>
-   </div>
-   <div id="blazor-error-ui">
-      An unhandled error has occurred.
-      <a href="" class="reload">Reload</a>
-      <a class="dismiss">🗙</a>
-   </div>
-   <script src="js/scripts.js"></script>
-   <script src="lib/bootstrap-5.2.3-dist/js/bootstrap.bundle.min.js"></script>
-   <script src="_framework/blazor.webassembly.js" autostart="false"></script>
-   <script>
-      Blazor.start({
-         environment: window.location.hostname == "localhost"
+        </div>
+        <h2>Loading...</h2>
+    </div>
+</div>
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
+<script src="js/scripts.js"></script>
+<script src="lib/bootstrap-5.2.3-dist/js/bootstrap.bundle.min.js"></script>
+<script src="_framework/blazor.webassembly.js" autostart="false"></script>
+<script>
+    Blazor.start({
+        environment: window.location.hostname == "localhost"
             ? "Development"
             : "Production"
-      });
-   </script>
+    });
+</script>
 </body>
 
 </html>

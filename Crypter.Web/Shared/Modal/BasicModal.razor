@@ -27,25 +27,25 @@
 @inherits BasicModalBase
 
 <ModalBehavior @ref=ModalBehaviorRef>
-   <Content>
-      <div class="modal-content">
-         <div class="modal-header">
-            <h3>@Subject</h3>
-         </div>
-         <div class="modal-body justify-content-center">
-            <p class="word-wrap">@Message</p>
-         </div>
-         <div class="modal-footer">
-            @if (!string.IsNullOrEmpty(SecondaryButtonText))
-            {
-               <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="async () => await CloseAsync(false)">@SecondaryButtonText</button>
-            }
+    <Content>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>@Subject</h3>
+            </div>
+            <div class="modal-body justify-content-center">
+                <p class="word-wrap">@Message</p>
+            </div>
+            <div class="modal-footer">
+                @if (!string.IsNullOrEmpty(SecondaryButtonText))
+                {
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="async () => await CloseAsync(false)">@SecondaryButtonText</button>
+                }
 
-            @if (!string.IsNullOrEmpty(PrimaryButtonText))
-            {
-               <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="async () => await CloseAsync(true)">@PrimaryButtonText</button>
-            }
-         </div>
-      </div>
-   </Content>
+                @if (!string.IsNullOrEmpty(PrimaryButtonText))
+                {
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="async () => await CloseAsync(true)">@PrimaryButtonText</button>
+                }
+            </div>
+        </div>
+    </Content>
 </ModalBehavior>

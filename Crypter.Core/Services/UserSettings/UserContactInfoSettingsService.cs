@@ -1,26 +1,26 @@
 ﻿/*
  * Copyright (C) 2023 Crypter File Transfer
- * 
+ *
  * This file is part of the Crypter file transfer project.
- * 
+ *
  * Crypter is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The Crypter source code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * You can be released from the requirements of the aforementioned license
  * by purchasing a commercial license. Buying such a license is mandatory
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
- * 
+ *
  * Contact the current copyright holder to discuss commercial license options.
  */
 
@@ -38,44 +38,52 @@ namespace Crypter.Core.Services.UserSettings;
 
 public interface IUserContactInfoSettingsService
 {
-   Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync(Guid userId, CancellationToken cancellationToken = default);
-   Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Guid userId, UpdateContactInfoSettingsRequest request);
+    Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync(Guid userId,
+        CancellationToken cancellationToken = default);
+
+    Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Guid userId,
+        UpdateContactInfoSettingsRequest request);
 }
 
 public class UserContactInfoSettingsService : IUserContactInfoSettingsService
 {
-   private readonly DataContext _context;
-   private readonly IPasswordHashService _passwordHashService;
-   private readonly ServerPasswordSettings _serverPasswordSettings;
-   private readonly IBackgroundJobClient _backgroundJobClient;
-   private readonly IHangfireBackgroundService _hangfireBackgroundService;
+    private readonly DataContext _context;
+    private readonly IPasswordHashService _passwordHashService;
+    private readonly ServerPasswordSettings _serverPasswordSettings;
+    private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly IHangfireBackgroundService _hangfireBackgroundService;
 
-   public UserContactInfoSettingsService(DataContext context, IPasswordHashService passwordHashService, IOptions<ServerPasswordSettings> serverPasswordSettings, IBackgroundJobClient backgroundJobClient, IHangfireBackgroundService hangfireBackgroundService)
-   {
-      _context = context;
-      _passwordHashService = passwordHashService;
-      _serverPasswordSettings = serverPasswordSettings.Value;
-      _backgroundJobClient = backgroundJobClient;
-      _hangfireBackgroundService = hangfireBackgroundService;
-   }
+    public UserContactInfoSettingsService(DataContext context, IPasswordHashService passwordHashService,
+        IOptions<ServerPasswordSettings> serverPasswordSettings, IBackgroundJobClient backgroundJobClient,
+        IHangfireBackgroundService hangfireBackgroundService)
+    {
+        _context = context;
+        _passwordHashService = passwordHashService;
+        _serverPasswordSettings = serverPasswordSettings.Value;
+        _backgroundJobClient = backgroundJobClient;
+        _hangfireBackgroundService = hangfireBackgroundService;
+    }
 
-   public Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync(Guid userId, CancellationToken cancellationToken = default)
-   {
-      return UserContactInfoSettingsQueries.GetContactInfoSettingsAsync(_context, userId, cancellationToken);
-   }
+    public Task<Maybe<ContactInfoSettings>> GetContactInfoSettingsAsync(Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        return UserContactInfoSettingsQueries.GetContactInfoSettingsAsync(_context, userId, cancellationToken);
+    }
 
-   public Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Guid userId, UpdateContactInfoSettingsRequest request)
-   {
-      return UserContactInfoSettingsCommands.UpdateContactInfoSettingsAsync(_context, _passwordHashService, _serverPasswordSettings, userId, request)
-         .DoRightAsync(x =>
-         {
-            bool sendVerificationEmail = !string.IsNullOrEmpty(x.EmailAddress)
-                                         && !x.EmailAddressVerified;
-
-            if (sendVerificationEmail)
+    public Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(Guid userId,
+        UpdateContactInfoSettingsRequest request)
+    {
+        return UserContactInfoSettingsCommands.UpdateContactInfoSettingsAsync(_context, _passwordHashService,
+                _serverPasswordSettings, userId, request)
+            .DoRightAsync(x =>
             {
-               _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId));
-            }
-         });
-   }
+                bool sendVerificationEmail = !string.IsNullOrEmpty(x.EmailAddress)
+                                             && !x.EmailAddressVerified;
+
+                if (sendVerificationEmail)
+                {
+                    _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId));
+                }
+            });
+    }
 }

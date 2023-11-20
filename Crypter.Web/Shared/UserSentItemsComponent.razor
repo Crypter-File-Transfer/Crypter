@@ -27,61 +27,61 @@
 @inherits UserSentItemsComponentBase
 
 <div class="col-md-6">
-   <div class="card mb-4">
-      <div class="card-body">
-         <h5 class="card-title">Sent</h5>
-      </div>
-      <ul class="list-group list-group-flush">
-         @if (Items == null)
-         {
-            <li class="list-group-item">
-               Loading...
-            </li>
-         }
-         else if (Items.Count() == 0)
-         {
-            <li class="list-group-item">
-               You have not uploaded any items
-            </li>
-         }
-         else
-         {
-            foreach (var item in Items)
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Sent</h5>
+        </div>
+        <ul class="list-group list-group-flush">
+            @if (Items == null)
             {
-               <li class="list-group-item">
+                <li class="list-group-item">
+                    Loading...
+                </li>
+            }
+            else if (Items.Count() == 0)
+            {
+                <li class="list-group-item">
+                    You have not uploaded any items
+                </li>
+            }
+            else
+            {
+                foreach (var item in Items)
+                {
+                    <li class="list-group-item">
 
-                  @if (item.ItemType == TransferItemType.File)
-                  {
-                     <h6 class="card-subtitle my-2">
-                        Filename: @item.Name
-                     </h6>
-                  }
-                  else
-                  {
-                     <h6 class="card-subtitle my-2">
-                        Subject: @item.Name
-                     </h6>
-                  }
-                  <div class="row">
-                     <div class="col-12">
-                        @if (string.IsNullOrEmpty(item.RecipientUsername))
+                        @if (item.ItemType == TransferItemType.File)
                         {
-                           <span>To: Unknown</span>
+                            <h6 class="card-subtitle my-2">
+                                Filename: @item.Name
+                            </h6>
                         }
                         else
                         {
-                           <span>To: <a class="text-decoration-none" href="@($"/user/profile/{item.RecipientUsername}")">@($"@{item.RecipientUsername}")</a></span>
+                            <h6 class="card-subtitle my-2">
+                                Subject: @item.Name
+                            </h6>
                         }
-                     </div>
-                  </div>
-                  <div class="row">
-                     <div class="col-12">
-                        Expires on: @item.ExpirationUTC.ToLocalTime().ToString()
-                     </div>
-                  </div>
-               </li>
+                        <div class="row">
+                            <div class="col-12">
+                                @if (string.IsNullOrEmpty(item.RecipientUsername))
+                                {
+                                    <span>To: Unknown</span>
+                                }
+                                else
+                                {
+                                    <span>To: <a class="text-decoration-none" href="@($"/user/profile/{item.RecipientUsername}")">@($"@{item.RecipientUsername}")</a></span>
+                                }
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                Expires on: @item.ExpirationUTC.ToLocalTime().ToString()
+                            </div>
+                        </div>
+                    </li>
+                }
             }
-         }
-      </ul>
-   </div>
+        </ul>
+    </div>
 </div>

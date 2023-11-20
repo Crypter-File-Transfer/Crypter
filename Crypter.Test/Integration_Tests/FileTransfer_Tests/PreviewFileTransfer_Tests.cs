@@ -1,26 +1,26 @@
 ﻿/*
  * Copyright (C) 2023 Crypter File Transfer
- * 
+ *
  * This file is part of the Crypter file transfer project.
- * 
+ *
  * Crypter is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The Crypter source code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * You can be released from the requirements of the aforementioned license
  * by purchasing a commercial license. Buying such a license is mandatory
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
- * 
+ *
  * Contact the current copyright holder to discuss commercial license options.
  */
 
@@ -41,110 +41,119 @@ namespace Crypter.Test.Integration_Tests.FileTransfer_Tests;
 [TestFixture]
 internal class PreviewFileTransfer_Tests
 {
-   private WebApplicationFactory<Program> _factory;
-   private ICrypterApiClient _client;
-   private ITokenRepository _clientTokenRepository;
-   
-   [SetUp]
-   public async Task SetupTestAsync()
-   {
-      _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-      (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-      await AssemblySetup.InitializeRespawnerAsync();
-   }
-      
-   [TearDown]
-   public async Task TeardownTestAsync()
-   {
-      await _factory.DisposeAsync();
-      await AssemblySetup.ResetServerDataAsync();
-   }
-      
-   [Test]
-   public async Task Preview_Anonymous_File_Transfer_Works()
-   {
-      (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
-      UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-      var uploadResult = await _client.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, uploadRequest, encryptionStreamOpener, false);
+    private WebApplicationFactory<Program> _factory;
+    private ICrypterApiClient _client;
+    private ITokenRepository _clientTokenRepository;
 
-      string uploadId = uploadResult
-         .Map(x => x.HashId)
-         .RightOrDefault(null);
+    [SetUp]
+    public async Task SetupTestAsync()
+    {
+        _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+        (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+        await AssemblySetup.InitializeRespawnerAsync();
+    }
 
-      var result = await _client.FileTransfer.GetAnonymousFilePreviewAsync(uploadId);
+    [TearDown]
+    public async Task TeardownTestAsync()
+    {
+        await _factory.DisposeAsync();
+        await AssemblySetup.ResetServerDataAsync();
+    }
 
-      Assert.True(uploadResult.IsRight);
-      Assert.True(result.IsRight);
-   }
+    [Test]
+    public async Task Preview_Anonymous_File_Transfer_Works()
+    {
+        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+            TestData.GetDefaultEncryptionStream();
+        UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
+            TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
+            keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+        var uploadResult =
+            await _client.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, uploadRequest,
+                encryptionStreamOpener, false);
 
-   [TestCase(true, false)]
-   [TestCase(false, true)]
-   [TestCase(true, true)]
-   public async Task Preview_User_File_Transfer_Works(bool senderDefined, bool recipientDefined)
-   {
-      Maybe<string> senderUsername = senderDefined
-         ? TestData.DefaultUsername
-         : Maybe<string>.None;
-      const string senderPassword = TestData.DefaultPassword;
+        string uploadId = uploadResult
+            .Map(x => x.HashId)
+            .RightOrDefault(null);
 
-      Maybe<string> recipientUsername = recipientDefined
-         ? "Samwise"
-         : Maybe<string>.None;
-      const string recipientPassword = "dropping_eaves";
+        var result = await _client.FileTransfer.GetAnonymousFilePreviewAsync(uploadId);
 
-      Assert.True((senderDefined == false && senderUsername.IsNone)
-                  || (senderDefined && senderUsername.IsSome));
+        Assert.True(uploadResult.IsRight);
+        Assert.True(result.IsRight);
+    }
 
-      await senderUsername.IfSomeAsync(async username =>
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, senderPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+    [TestCase(true, false)]
+    [TestCase(false, true)]
+    [TestCase(true, true)]
+    public async Task Preview_User_File_Transfer_Works(bool senderDefined, bool recipientDefined)
+    {
+        Maybe<string> senderUsername = senderDefined
+            ? TestData.DefaultUsername
+            : Maybe<string>.None;
+        const string senderPassword = TestData.DefaultPassword;
 
-         LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Maybe<string> recipientUsername = recipientDefined
+            ? "Samwise"
+            : Maybe<string>.None;
+        const string recipientPassword = "dropping_eaves";
 
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
+        Assert.True((senderDefined == false && senderUsername.IsNone)
+                    || (senderDefined && senderUsername.IsSome));
 
-         Assert.True(registrationResult.IsRight);
-         Assert.True(loginResult.IsRight);
-      });
+        await senderUsername.IfSomeAsync(async username =>
+        {
+            RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, senderPassword);
+            var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-      Assert.True((recipientDefined == false && recipientUsername.IsNone)
-                  || (recipientDefined && recipientUsername.IsSome));
+            LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword, TokenType.Session);
+            var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-      await recipientUsername.IfSomeAsync(async username =>
-      {
-         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, recipientPassword);
-         var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
-      });
+            await loginResult.DoRightAsync(async loginResponse =>
+            {
+                await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+                await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            });
 
-      (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
-      UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-      var uploadResult = await _client.FileTransfer.UploadFileTransferAsync(recipientUsername, uploadRequest, encryptionStreamOpener, senderDefined);
+            Assert.True(registrationResult.IsRight);
+            Assert.True(loginResult.IsRight);
+        });
 
-      await recipientUsername.IfSomeAsync(async username =>
-      {
-         LoginRequest loginRequest = TestData.GetLoginRequest(username, recipientPassword, TokenType.Session);
-         var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Assert.True((recipientDefined == false && recipientUsername.IsNone)
+                    || (recipientDefined && recipientUsername.IsSome));
 
-         await loginResult.DoRightAsync(async loginResponse =>
-         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-         });
-      });
+        await recipientUsername.IfSomeAsync(async username =>
+        {
+            RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, recipientPassword);
+            var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        });
 
-      string uploadId = uploadResult
-         .Map(x => x.HashId)
-         .RightOrDefault(null);
+        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+            TestData.GetDefaultEncryptionStream();
+        UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
+            TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
+            keyExchangeProof, TestData.DefaultTransferLifetimeHours);
+        var uploadResult = await _client.FileTransfer.UploadFileTransferAsync(recipientUsername, uploadRequest,
+            encryptionStreamOpener, senderDefined);
 
-      var result = await _client.FileTransfer.GetUserFilePreviewAsync(uploadId, recipientDefined);
+        await recipientUsername.IfSomeAsync(async username =>
+        {
+            LoginRequest loginRequest = TestData.GetLoginRequest(username, recipientPassword, TokenType.Session);
+            var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-      Assert.True(uploadResult.IsRight);
-      Assert.True(result.IsRight);
-   }
+            await loginResult.DoRightAsync(async loginResponse =>
+            {
+                await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+                await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            });
+        });
+
+        string uploadId = uploadResult
+            .Map(x => x.HashId)
+            .RightOrDefault(null);
+
+        var result = await _client.FileTransfer.GetUserFilePreviewAsync(uploadId, recipientDefined);
+
+        Assert.True(uploadResult.IsRight);
+        Assert.True(result.IsRight);
+    }
 }

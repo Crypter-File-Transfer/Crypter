@@ -27,43 +27,43 @@
 @inherits UploadFileTransferBase
 
 <div class="file-upload" hidden="@EncryptionInProgress">
-   <div class="row">
-      <div class="col-12 p-0">
-         <div class="card dropzone @DropClass rounded mb-3">
-            <p class="card-text dz-text">
-               <i class="bi bi-file-arrow-up d-block fs-1 my-3"></i>
-               <span class="fw-bold">Choose a file</span> or drag it here to upload
-            </p>
-            <InputFile id="fileInput" OnChange="@HandleFileInputChange" @ondragenter="HandleDragEnter" @ondragleave="HandleDragLeave" />
-         </div>
-         <div hidden="@(string.IsNullOrEmpty(ErrorMessage))" class="validation-errors my-3">
-            <div class="alert alert-danger" role="alert">
-               @ErrorMessage
+    <div class="row">
+        <div class="col-12 p-0">
+            <div class="card dropzone @DropClass rounded mb-3">
+                <p class="card-text dz-text">
+                    <i class="bi bi-file-arrow-up d-block fs-1 my-3"></i>
+                    <span class="fw-bold">Choose a file</span> or drag it here to upload
+                </p>
+                <InputFile id="fileInput" OnChange="@HandleFileInputChange" @ondragenter="HandleDragEnter" @ondragleave="HandleDragLeave"/>
             </div>
-         </div>
-
-         @if (SelectedFile is not null)
-         {
-            <div class="card my-3">
-               <div class="card-body">
-                  @SelectedFile.Name
-                  <button type="button" class="btn-close float-end" aria-label="Remove file" @onclick="@(e => SelectedFile = null)"></button>
-               </div>
+            <div hidden="@(string.IsNullOrEmpty(ErrorMessage))" class="validation-errors my-3">
+                <div class="alert alert-danger" role="alert">
+                    @ErrorMessage
+                </div>
             </div>
-         }
 
-      </div>
-      <div class="row">
-         <div class="col-12 p-0">
-            <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(async e => await OnEncryptClicked())">Encrypt</button>
-         </div>
-      </div>
-   </div>
+            @if (SelectedFile is not null)
+            {
+                <div class="card my-3">
+                    <div class="card-body">
+                        @SelectedFile.Name
+                        <button type="button" class="btn-close float-end" aria-label="Remove file" @onclick="@(e => SelectedFile = null)"></button>
+                    </div>
+                </div>
+            }
+
+        </div>
+        <div class="row">
+            <div class="col-12 p-0">
+                <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(async e => await OnEncryptClicked())">Encrypt</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="encrypt-status text-center" hidden="@(!EncryptionInProgress)">
-   <h3>@UploadStatusMessage</h3>
-   <div class="spinner-border" role="status">
-      <span class="visually-hidden">Loading...</span>
-   </div>
+    <h3>@UploadStatusMessage</h3>
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
 </div>

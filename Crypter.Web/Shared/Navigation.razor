@@ -26,66 +26,78 @@
 @inherits NavigationBase
 
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" aria-label="Toggle navigation">
-   <span class="navbar-toggler-icon"></span>
+    <span class="navbar-toggler-icon"></span>
 </button>
 
 <div class="collapse navbar-collapse justify-content-end" id="mainNavigation">
-   <ul hidden="@(!ShowNavigation)" class="navbar-nav ms-auto mb-2 mb-lg-0">
-      @if (ShowUserNavigation)
-      {
-         <li class="nav-item m-1 my-lg-0">
-            <form class="d-flex h-100" @onsubmit:preventDefault @onsubmit="@OnSearchClicked">
-               <div class="input-group">
-                  <span class="input-group-text bi-search" id="search-addon"></span>
-                  <input style="width: 20em; max-width: 20em;" type="text" class="form-control" placeholder="Find a user" aria-label="Search" @bind="SearchKeyword" aria-describedby="search-addon">
-               </div>
-            </form>
-         </li>
+    <ul hidden="@(!ShowNavigation)" class="navbar-nav ms-auto mb-2 mb-lg-0">
+        @if (ShowUserNavigation)
+        {
+            <li class="nav-item m-1 my-lg-0">
+                <form class="d-flex h-100" @onsubmit:preventDefault @onsubmit="@OnSearchClicked">
+                    <div class="input-group">
+                        <span class="input-group-text bi-search" id="search-addon"></span>
+                        <input style="width: 20em; max-width: 20em;" type="text" class="form-control" placeholder="Find a user" aria-label="Search" @bind="SearchKeyword" aria-describedby="search-addon">
+                    </div>
+                </form>
+            </li>
 
-         <li class="nav-item m-1 my-lg-0">
-            <a class="nav-link text-light" href="/user/contacts">
-               <i class="bi-people me-2"></i>Contacts
-            </a>
-         </li>
+            <li class="nav-item m-1 my-lg-0">
+                <a class="nav-link text-light" href="/user/contacts">
+                    <i class="bi-people me-2"></i>Contacts
+                </a>
+            </li>
 
-         <li class="nav-item m-1 my-lg-0">
-            <a class="nav-link text-light" href="/user/transfers">
-               <i class="bi-inboxes me-2"></i>Transfers
-            </a>
-         </li>
+            <li class="nav-item m-1 my-lg-0">
+                <a class="nav-link text-light" href="/user/transfers">
+                    <i class="bi-inboxes me-2"></i>Transfers
+                </a>
+            </li>
 
-         <li class="nav-item m-1 my-lg-0 dropdown">
-            <a class="nav-link dropdown-toggle text-light" href="#" id="navbarEncryptDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-               <i class="bi-cloud-upload me-2"></i>Encrypt
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptFileClicked">File</a></li>
-               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptMessageClicked">Message</a></li>
-            </ul>
-         </li>
-         <li class="nav-item m-1 my-lg-0 dropdown">
-            <a class="nav-link dropdown-toggle text-light" href="#" id="navbarUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-               <i class="bi-person-circle me-2"></i>@Username
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-               <li><a class="dropdown-item" href="@ProfileUrl">Profile</a></li>
-               <li><a class="dropdown-item" href="/user/settings">Settings</a></li>
-               <li><hr class="dropdown-divider"></li>
-               <li><a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnLogoutClicked">Logout</a></li>
-            </ul>
-         </li>
-      }
-      else
-      {
-         <li class="nav-item m-1 my-lg-0">
-            <a class="btn btn-secondary nav-link text-white" href="/login">Login</a>
-         </li>
-         <li class="nav-item m-1 my-lg-0">
-            <a class="btn btn-primary nav-link text-white" href="/register">Sign Up</a>
-         </li>
-      }
-   </ul>
+            <li class="nav-item m-1 my-lg-0 dropdown">
+                <a class="nav-link dropdown-toggle text-light" href="#" id="navbarEncryptDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi-cloud-upload me-2"></i>Encrypt
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptFileClicked">File</a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnEncryptMessageClicked">Message</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="nav-item m-1 my-lg-0 dropdown">
+                <a class="nav-link dropdown-toggle text-light" href="#" id="navbarUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi-person-circle me-2"></i>@Username
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="@ProfileUrl">Profile</a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="/user/settings">Settings</a>
+                    </li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" @onclick:preventDefault @onclick="@OnLogoutClicked">Logout</a>
+                    </li>
+                </ul>
+            </li>
+        }
+        else
+        {
+            <li class="nav-item m-1 my-lg-0">
+                <a class="btn btn-secondary nav-link text-white" href="/login">Login</a>
+            </li>
+            <li class="nav-item m-1 my-lg-0">
+                <a class="btn btn-primary nav-link text-white" href="/register">Sign Up</a>
+            </li>
+        }
+    </ul>
 </div>
 
-<UploadFileTransferModal @ref="FileTransferModal" InstanceId="navbar" RecipientUsername="Maybe<string>.None" RecipientPublicKey="Maybe<byte[]>.None" />
-<UploadMessageTransferModal @ref="MessageTransferModal" InstanceId="navbar" RecipientUsername="Maybe<string>.None" RecipientPublicKey="Maybe<byte[]>.None" />
+<UploadFileTransferModal @ref="FileTransferModal" InstanceId="navbar" RecipientUsername="Maybe<string>.None" RecipientPublicKey="Maybe<byte[]>.None"/>
+<UploadMessageTransferModal @ref="MessageTransferModal" InstanceId="navbar" RecipientUsername="Maybe<string>.None" RecipientPublicKey="Maybe<byte[]>.None"/>

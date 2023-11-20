@@ -6,8 +6,8 @@ namespace Crypter.Benchmarks.Config;
 
 public class AntiVirusFriendlyConfig : ManualConfig
 {
-   public AntiVirusFriendlyConfig()
-   {
-      AddJob(Job.MediumRun.WithToolchain(InProcessNoEmitToolchain.Instance));
-   }
+    public AntiVirusFriendlyConfig()
+    {
+        AddJob(Job.MediumRun.WithToolchain(InProcessNoEmitToolchain.Instance));
+    }
 }

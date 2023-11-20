@@ -27,38 +27,38 @@
 @inherits UploadFileTransferModalBase
 
 <ModalBehavior @ref="ModalBehaviorRef">
-   <Content>
-      <div class="modal-content card">
-         <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs" role="tablist">
-               <li class="nav-item" role="presentation">
-                  <button class="nav-link active" id="file-modal-tab1-@InstanceId" data-bs-toggle="tab" data-bs-target="#file-modal-file-tab-@InstanceId" type="button" role="tab" aria-controls="file" aria-selected="true">Encrypt a File</button>
-               </li>
-               <li class="nav-item ms-auto" role="presentation">
-                  <button class="nav-link" id="file-modal-tab2-@InstanceId" data-bs-toggle="tab" data-bs-target="#file-modal-settings-tab-@InstanceId" type="button" role="tab" aria-controls="settings" aria-selected="false">
-                     <i class="bi bi-gear-fill"></i>
-                  </button>
-               </li>
-            </ul>
-         </div>
-
-         <div class="card-body justify-content-center">
-            <div class="tab-content">
-               <div class="tab-pane fade show active" id="file-modal-file-tab-@InstanceId" role="tabpanel" aria-labelledby="file-tab">
-                  <h2 class="card-title mt-0">Upload a file</h2>
-                  <UploadFileTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientPublicKey="RecipientPublicKey" ExpirationHours="ExpirationHours" UploadCompletedEvent="CloseAsync" />
-               </div>
-
-               <div class="tab-pane fade" id="file-modal-settings-tab-@InstanceId" role="tabpanel" aria-labelledby="settings-tab">
-                  <h2 class="card-title mt-0 mb-0">Configuration</h2>
-                  <TransferSettings @bind-ExpirationHours=ExpirationHours />
-               </div>
+    <Content>
+        <div class="modal-content card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="file-modal-tab1-@InstanceId" data-bs-toggle="tab" data-bs-target="#file-modal-file-tab-@InstanceId" type="button" role="tab" aria-controls="file" aria-selected="true">Encrypt a File</button>
+                    </li>
+                    <li class="nav-item ms-auto" role="presentation">
+                        <button class="nav-link" id="file-modal-tab2-@InstanceId" data-bs-toggle="tab" data-bs-target="#file-modal-settings-tab-@InstanceId" type="button" role="tab" aria-controls="settings" aria-selected="false">
+                            <i class="bi bi-gear-fill"></i>
+                        </button>
+                    </li>
+                </ul>
             </div>
-         </div>
 
-         <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="CloseAsync">Close</button>
-         </div>
-      </div>
-   </Content>
+            <div class="card-body justify-content-center">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="file-modal-file-tab-@InstanceId" role="tabpanel" aria-labelledby="file-tab">
+                        <h2 class="card-title mt-0">Upload a file</h2>
+                        <UploadFileTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientPublicKey="RecipientPublicKey" ExpirationHours="ExpirationHours" UploadCompletedEvent="CloseAsync"/>
+                    </div>
+
+                    <div class="tab-pane fade" id="file-modal-settings-tab-@InstanceId" role="tabpanel" aria-labelledby="settings-tab">
+                        <h2 class="card-title mt-0 mb-0">Configuration</h2>
+                        <TransferSettings @bind-ExpirationHours=ExpirationHours/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="CloseAsync">Close</button>
+            </div>
+        </div>
+    </Content>
 </ModalBehavior>
