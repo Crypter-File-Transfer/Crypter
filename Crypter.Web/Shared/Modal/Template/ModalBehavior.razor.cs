@@ -28,26 +28,26 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.Modal.Template;
 
-public partial class ModalBehaviorBase : ComponentBase
+public partial class ModalBehavior
 {
     [Parameter] public RenderFragment Content { get; set; }
 
-    private const string _modalDisplayNone = "none;";
-    private const string _modalDisplayBlock = "block;";
+    private const string ModalDisplayNone = "none;";
+    private const string ModalDisplayBlock = "block;";
 
     protected bool Show = false;
-    protected string ModalDisplay = _modalDisplayNone;
+    protected string ModalDisplay = ModalDisplayNone;
 
     public void Open()
     {
-        ModalDisplay = _modalDisplayBlock;
+        ModalDisplay = ModalDisplayBlock;
         Show = true;
         StateHasChanged();
     }
 
     public void Close()
     {
-        ModalDisplay = _modalDisplayNone;
+        ModalDisplay = ModalDisplayNone;
         Show = false;
         StateHasChanged();
     }

@@ -24,9 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@inherits RecoveryKeyModalBase
-
-<ModalBehavior @ref=ModalBehaviorRef>
+<ModalBehavior @ref="_modalBehaviorRef">
     <Content>
         <div class="modal-content">
             <div class="modal-header">
@@ -38,7 +36,7 @@
                 <div class="copiedTooltip mb-3">
                     <label for="recoveryKeyModalInput" class="form-label">Recovery Key</label>
                     <div class="input-group mb-3">
-                        <input class="form-control" value="@RecoveryKey" type="text" id="recoveryKeyModalInput" readonly/>
+                        <input class="form-control" value="@_recoveryKey" type="text" id="recoveryKeyModalInput" readonly/>
                         <div class="input-group-append">
                             <button class="btn btn-secondary" type="button" @onclick="CopyRecoveryKeyToClipboardAsync">Copy</button>
                         </div>

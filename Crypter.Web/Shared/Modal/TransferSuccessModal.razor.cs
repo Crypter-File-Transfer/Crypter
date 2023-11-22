@@ -32,32 +32,32 @@ using Microsoft.JSInterop;
 
 namespace Crypter.Web.Shared.Modal;
 
-public partial class TranferSuccessModalBase : ComponentBase
+public partial class TransferSuccessModal
 {
-    [Inject] private IJSRuntime JSRuntime { get; set; }
+    [Inject] private IJSRuntime JsRuntime { get; set; }
 
-    protected string DownloadUrl;
-    protected int ExpirationHours;
+    private string _downloadUrl;
+    private int _expirationHours;
 
-    protected Maybe<EventCallback> ModalClosedCallback { get; set; }
-    protected ModalBehavior ModalBehaviorRef { get; set; }
+    private Maybe<EventCallback> _modalClosedCallback;
+    private ModalBehavior _modalBehaviorRef;
 
     public void Open(string downloadUrl, int expirationHours, Maybe<EventCallback> modalClosedCallback)
     {
-        DownloadUrl = downloadUrl;
-        ExpirationHours = expirationHours;
-        ModalClosedCallback = modalClosedCallback;
-        ModalBehaviorRef.Open();
+        _downloadUrl = downloadUrl;
+        _expirationHours = expirationHours;
+        _modalClosedCallback = modalClosedCallback;
+        _modalBehaviorRef.Open();
     }
 
     public async Task CloseAsync()
     {
-        await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
-        ModalBehaviorRef.Close();
+        await _modalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
+        _modalBehaviorRef.Close();
     }
 
     protected async Task CopyToClipboardAsync()
     {
-        await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", DownloadUrl);
+        await JsRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", _downloadUrl);
     }
 }

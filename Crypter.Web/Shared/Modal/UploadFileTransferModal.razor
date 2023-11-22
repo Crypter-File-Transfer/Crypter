@@ -24,9 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@inherits UploadFileTransferModalBase
-
-<ModalBehavior @ref="ModalBehaviorRef">
+<ModalBehavior @ref="_modalBehaviorRef">
     <Content>
         <div class="modal-content card">
             <div class="card-header">
@@ -46,12 +44,12 @@
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="file-modal-file-tab-@InstanceId" role="tabpanel" aria-labelledby="file-tab">
                         <h2 class="card-title mt-0">Upload a file</h2>
-                        <UploadFileTransfer @ref="UploadComponent" RecipientUsername="RecipientUsername" RecipientPublicKey="RecipientPublicKey" ExpirationHours="ExpirationHours" UploadCompletedEvent="CloseAsync"/>
+                        <UploadFileTransfer @ref="_uploadComponent" RecipientUsername="RecipientUsername" RecipientPublicKey="RecipientPublicKey" ExpirationHours="_expirationHours" UploadCompletedEvent="CloseAsync"/>
                     </div>
 
                     <div class="tab-pane fade" id="file-modal-settings-tab-@InstanceId" role="tabpanel" aria-labelledby="settings-tab">
                         <h2 class="card-title mt-0 mb-0">Configuration</h2>
-                        <TransferSettings @bind-ExpirationHours=ExpirationHours/>
+                        <TransferSettings @bind-ExpirationHours="_expirationHours"/>
                     </div>
                 </div>
             </div>
