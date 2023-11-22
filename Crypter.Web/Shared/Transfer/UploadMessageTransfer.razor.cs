@@ -29,11 +29,11 @@ using System.Threading.Tasks;
 
 namespace Crypter.Web.Shared.Transfer;
 
-public partial class UploadMessageTransferBase : UploadTransferBase, IDisposable
+public partial class UploadMessageTransfer : IDisposable
 {
     protected string MessageSubject = string.Empty;
     protected string MessageBody = string.Empty;
-    protected const int MaxMessageLength = 1024;
+    protected const int _maxMessageLength = 1024;
 
     protected async Task OnEncryptClicked()
     {

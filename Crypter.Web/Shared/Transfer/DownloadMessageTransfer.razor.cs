@@ -32,11 +32,11 @@ using Microsoft.AspNetCore.Components.Web;
 
 namespace Crypter.Web.Shared.Transfer;
 
-public partial class DownloadMessageTransferBase : DownloadTransferBase
+public partial class DownloadMessageTransfer
 {
-    protected string Subject = string.Empty;
-    protected string PlaintextMessage = string.Empty;
-    protected long MessageSize = 0;
+    private string _subject = string.Empty;
+    private string _plaintextMessage = string.Empty;
+    private long _messageSize = 0;
 
     private DownloadMessageHandler _downloadHandler;
 
@@ -46,16 +46,16 @@ public partial class DownloadMessageTransferBase : DownloadTransferBase
         FinishedLoading = true;
     }
 
-    protected async Task PrepareMessagePreviewAsync()
+    private async Task PrepareMessagePreviewAsync()
     {
         _downloadHandler = TransferHandlerFactory.CreateDownloadMessageHandler(TransferHashId, UserType);
         var previewResponse = await _downloadHandler.DownloadPreviewAsync();
         previewResponse.DoRight(x =>
         {
-            Subject = x.Subject;
+            _subject = x.Subject;
             Created = x.CreationUTC.ToLocalTime();
             Expiration = x.ExpirationUTC.ToLocalTime();
-            MessageSize = x.Size;
+            _messageSize = x.Size;
             SenderUsername = x.Sender;
             SpecificRecipient = !string.IsNullOrEmpty(x.Recipient);
         });
@@ -63,7 +63,7 @@ public partial class DownloadMessageTransferBase : DownloadTransferBase
         ItemFound = previewResponse.IsRight;
     }
 
-    protected async Task OnDecryptClickedAsync(MouseEventArgs _)
+    private async Task OnDecryptClickedAsync(MouseEventArgs _)
     {
         DecryptionInProgress = true;
 
@@ -85,7 +85,7 @@ public partial class DownloadMessageTransferBase : DownloadTransferBase
 
             decryptionResponse.DoRight(x =>
             {
-                PlaintextMessage = x;
+                _plaintextMessage = x;
                 DecryptionComplete = true;
             });
         });
@@ -94,7 +94,7 @@ public partial class DownloadMessageTransferBase : DownloadTransferBase
         StateHasChanged();
     }
 
-    protected async Task SetProgressMessage(string message)
+    private async Task SetProgressMessage(string message)
     {
         DecryptionStatusMessage = message;
         StateHasChanged();
@@ -104,17 +104,13 @@ public partial class DownloadMessageTransferBase : DownloadTransferBase
     private void HandleDownloadError(
         DownloadTransferCiphertextError error = DownloadTransferCiphertextError.UnknownError)
     {
-        switch (error)
+#pragma warning disable CS8524
+        ErrorMessage = error switch
+#pragma warning restore CS8524
         {
-            case DownloadTransferCiphertextError.NotFound:
-                ErrorMessage = "Message not found";
-                break;
-            case DownloadTransferCiphertextError.UnknownError:
-                ErrorMessage = "An error occurred";
-                break;
-            case DownloadTransferCiphertextError.InvalidRecipientProof:
-                ErrorMessage = "Invalid decryption key";
-                break;
-        }
+            DownloadTransferCiphertextError.NotFound => "Message not found",
+            DownloadTransferCiphertextError.UnknownError => "An error occurred",
+            DownloadTransferCiphertextError.InvalidRecipientProof => "Invalid decryption key",
+        };
     }
 }

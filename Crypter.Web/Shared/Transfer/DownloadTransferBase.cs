@@ -35,7 +35,7 @@ using ICryptoProvider = Crypter.Crypto.Common.ICryptoProvider;
 
 namespace Crypter.Web.Shared.Transfer;
 
-public partial class DownloadTransferBase : ComponentBase
+public class DownloadTransferBase : ComponentBase
 {
     [Inject] private NavigationManager NavigationManager { get; set; }
 
