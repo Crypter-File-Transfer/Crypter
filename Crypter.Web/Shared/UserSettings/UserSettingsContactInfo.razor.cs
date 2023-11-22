@@ -33,95 +33,91 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.UserSettings;
 
-public partial class UserSettingsContactInfoBase : ComponentBase
+public partial class UserSettingsContactInfo
 {
-    [Inject] protected IUserContactInfoSettingsService UserContactInfoSettingsService { get; set; }
+    [Inject] private IUserContactInfoSettingsService UserContactInfoSettingsService { get; set; }
 
-    protected string EmailAddress { get; set; } = string.Empty;
-    protected string EmailAddressEdit { get; set; } = string.Empty;
+    private string _emailAddress = string.Empty;
+    private string _emailAddressEdit = string.Empty;
 
-    protected bool EmailAddressVerified { get; set; } = false;
+    private bool _emailAddressVerified = false;
 
-    protected string Password { get; set; } = string.Empty;
+    private string _password = string.Empty;
 
-    protected bool IsDataReady { get; set; } = false;
-    protected bool IsEditing { get; set; } = false;
+    private bool _isDataReady = false;
+    private bool _isEditing = false;
 
-    protected string EmailAddressError = string.Empty;
-    protected string PasswordError = string.Empty;
-    protected string GenericError = string.Empty;
+    private string _emailAddressError = string.Empty;
+    private string _passwordError = string.Empty;
+    private string _genericError = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
         await UserContactInfoSettingsService.GetContactInfoSettingsAsync()
             .IfSomeAsync(x =>
             {
-                EmailAddress = x.EmailAddress;
-                EmailAddressEdit = x.EmailAddress;
+                _emailAddress = x.EmailAddress;
+                _emailAddressEdit = x.EmailAddress;
 
-                EmailAddressVerified = x.EmailAddressVerified;
+                _emailAddressVerified = x.EmailAddressVerified;
             });
 
-        IsDataReady = true;
+        _isDataReady = true;
     }
 
-    protected void OnEditClicked()
+    private void OnEditClicked()
     {
-        IsEditing = true;
+        _isEditing = true;
     }
 
-    protected void OnCancelClicked()
+    private void OnCancelClicked()
     {
         ResetErrors();
-        Password = string.Empty;
-        EmailAddressEdit = EmailAddress;
-        IsEditing = false;
+        _password = string.Empty;
+        _emailAddressEdit = _emailAddress;
+        _isEditing = false;
     }
 
     private void ResetErrors()
     {
-        EmailAddressError = string.Empty;
-        PasswordError = string.Empty;
-        GenericError = string.Empty;
+        _emailAddressError = string.Empty;
+        _passwordError = string.Empty;
+        _genericError = string.Empty;
     }
 
-    protected async Task OnSaveClickedAsync()
+    private async Task OnSaveClickedAsync()
     {
         ResetErrors();
 
-        if (!Common.Primitives.Password.TryFrom(Password, out var password))
+        if (!Password.TryFrom(_password, out var password))
         {
-            PasswordError = "Enter your current password";
+            _passwordError = "Enter your current password";
             return;
         }
 
-        bool someEmailAddress = !string.IsNullOrEmpty(EmailAddressEdit);
-        bool validEmailAddress = Common.Primitives.EmailAddress.TryFrom(EmailAddressEdit, out var emailAddress);
+        bool someEmailAddress = !string.IsNullOrEmpty(_emailAddressEdit);
+        bool validEmailAddress = EmailAddress.TryFrom(_emailAddressEdit, out EmailAddress emailAddress);
 
         if (someEmailAddress && !validEmailAddress)
         {
-            EmailAddressError = "You must either enter a valid email address or provide a blank value";
+            _emailAddressError = "You must either enter a valid email address or provide a blank value";
             return;
         }
-
-        Maybe<EmailAddress> newEmailAddress = validEmailAddress
-            ? emailAddress
-            : Maybe<EmailAddress>.None;
 
         await UserContactInfoSettingsService.UpdateContactInfoSettingsAsync(emailAddress, password)
             .DoRightAsync(x =>
             {
-                EmailAddress = x.EmailAddress;
-                EmailAddressEdit = x.EmailAddress;
+                _emailAddress = x.EmailAddress;
+                _emailAddressEdit = x.EmailAddress;
 
-                EmailAddressVerified = x.EmailAddressVerified;
+                _emailAddressVerified = x.EmailAddressVerified;
             })
             .DoLeftOrNeitherAsync(
                 HandleContactInfoUpdateError,
                 () => HandleContactInfoUpdateError());
 
-        Password = string.Empty;
-        IsEditing = false;
+        _password = string.Empty;
+        _isEditing = false;
     }
 
     private void HandleContactInfoUpdateError(
@@ -129,21 +125,27 @@ public partial class UserSettingsContactInfoBase : ComponentBase
     {
         switch (error)
         {
-            case UpdateContactInfoSettingsError.UnknownError:
-            case UpdateContactInfoSettingsError.UserNotFound:
-                GenericError = "An error occurred";
-                break;
             case UpdateContactInfoSettingsError.EmailAddressUnavailable:
-                EmailAddressError = "Email address unavailable";
+                _emailAddressError = "Email address unavailable";
                 break;
             case UpdateContactInfoSettingsError.InvalidEmailAddress:
-                EmailAddressError = "Invalid email address";
+                _emailAddressError = "Invalid email address";
                 break;
             case UpdateContactInfoSettingsError.InvalidPassword:
-                PasswordError = "Incorrect password";
+                _passwordError = "Incorrect password";
                 break;
             case UpdateContactInfoSettingsError.PasswordHashFailure:
-                PasswordError = "A cryptographic error occured. This device or browser may not be supported.";
+                _passwordError = "A cryptographic error occured. This device or browser may not be supported.";
+                break;
+            case UpdateContactInfoSettingsError.PasswordNeedsMigration:
+                _passwordError =
+                    "For security purposes, you must log out then log back in to proceed with this change.";
+                break;
+            case UpdateContactInfoSettingsError.UnknownError:
+            case UpdateContactInfoSettingsError.UserNotFound:
+            case UpdateContactInfoSettingsError.InvalidUsername:
+            default:
+                _genericError = "An error occurred";
                 break;
         }
     }

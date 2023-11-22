@@ -24,79 +24,80 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@inherits UserSettingsPrivacySettingsBase
-
-<form>
-    <div>
-        <div class="form-check form-switch">
-            <label class="form-check-label" for="allowKeyExchangeRequests">Allow contacts to request key exchange</label>
-            <input value="checked" class="form-check-input" type="checkbox" id="allowKeyExchangeRequests" disabled/>
-        </div>
-    </div>
-    <div class="mb-3">
-        <span class="small text-secondary">*Feature not implemented yet</span>
-    </div>
-    <div>
-        <label class="form-label h5" for="profileVisibilityFormControl">Who can see your profile</label>
-        <input @bind="ProfileVisibilityEdit" type="range" class="form-range" id="profileVisibilityFormControl" min="@((int)UserVisibilityLevel.None)" max="@((int)UserVisibilityLevel.Everyone)" step="1.0" disabled="@(!IsEditing)"/>
-        <div class="row">
-            <div class="col-2">
-                <p class="text-start">Nobody</p>
-            </div>
-            <div class="col-4">
-                <p class="text-center">My contacts</p>
-            </div>
-            <div class="col-4">
-                <p class="text-center">Crypter users</p>
-            </div>
-            <div class="col-2">
-                <p class="text-end">Everyone</p>
+@if (_isDataReady)
+{
+    <form>
+        <div>
+            <div class="form-check form-switch">
+                <label class="form-check-label" for="allowKeyExchangeRequests">Allow contacts to request key exchange</label>
+                <input value="checked" class="form-check-input" type="checkbox" id="allowKeyExchangeRequests" disabled/>
             </div>
         </div>
-    </div>
-    <div class="mb-3">
-        <label class="form-label h5" for="messageTransferPermissionControl">Who can send you messages</label>
-        <input @bind="MessageTransferPermissionEdit" type="range" class="form-range" id="messageTransferPermissionControl" min="@((int)UserItemTransferPermission.None)" max="@((int)UserItemTransferPermission.Everyone)" step="1.0" disabled="@(!IsEditing)"/>
-        <div class="row">
-            <div class="col-1">
-                <p class="text-start">Nobody</p>
-            </div>
-            <div class="col-3">
-                <p class="text-end">Confirmed key exchanges</p>
-            </div>
-            <div class="col-4">
-                <p class="text-center">My contacts</p>
-            </div>
-            <div class="col-2">
-                <p class="text-center">Crypter users</p>
-            </div>
-            <div class="col-2">
-                <p class="text-end">Everyone</p>
+        <div class="mb-3">
+            <span class="small text-secondary">*Feature not implemented yet</span>
+        </div>
+        <div>
+            <label class="form-label h5" for="profileVisibilityFormControl">Who can see your profile</label>
+            <input @bind="_profileVisibilityEdit" type="range" class="form-range" id="profileVisibilityFormControl" min="@((int)UserVisibilityLevel.None)" max="@((int)UserVisibilityLevel.Everyone)" step="1.0" disabled="@(!_isEditing)"/>
+            <div class="row">
+                <div class="col-2">
+                    <p class="text-start">Nobody</p>
+                </div>
+                <div class="col-4">
+                    <p class="text-center">My contacts</p>
+                </div>
+                <div class="col-4">
+                    <p class="text-center">Crypter users</p>
+                </div>
+                <div class="col-2">
+                    <p class="text-end">Everyone</p>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="mb-3">
-        <label class="form-label h5" for="fileTransferPermissionControl">Who can send you files</label>
-        <input @bind="FileTransferPermissionEdit" type="range" class="form-range" id="fileTransferPermissionControl" min="@((int)UserItemTransferPermission.None)" max="@((int)UserItemTransferPermission.Everyone)" step="1.0" disabled="@(!IsEditing)"/>
-        <div class="row">
-            <div class="col-1">
-                <p class="text-start">Nobody</p>
-            </div>
-            <div class="col-3">
-                <p class="text-end">Confirmed key exchanges</p>
-            </div>
-            <div class="col-4">
-                <p class="text-center">My contacts</p>
-            </div>
-            <div class="col-2">
-                <p class="text-center">Crypter users</p>
-            </div>
-            <div class="col-2">
-                <p class="text-end">Everyone</p>
+        <div class="mb-3">
+            <label class="form-label h5" for="messageTransferPermissionControl">Who can send you messages</label>
+            <input @bind="_messageTransferPermissionEdit" type="range" class="form-range" id="messageTransferPermissionControl" min="@((int)UserItemTransferPermission.None)" max="@((int)UserItemTransferPermission.Everyone)" step="1.0" disabled="@(!_isEditing)"/>
+            <div class="row">
+                <div class="col-1">
+                    <p class="text-start">Nobody</p>
+                </div>
+                <div class="col-3">
+                    <p class="text-end">Confirmed key exchanges</p>
+                </div>
+                <div class="col-4">
+                    <p class="text-center">My contacts</p>
+                </div>
+                <div class="col-2">
+                    <p class="text-center">Crypter users</p>
+                </div>
+                <div class="col-2">
+                    <p class="text-end">Everyone</p>
+                </div>
             </div>
         </div>
-    </div>
-    <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
-    <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelClicked" hidden="@(!IsEditing)">Cancel</button>
-    <button type="button" class="btn btn-primary mx-auto" @onclick="async () => await OnSaveClickedAsync()" hidden="@(!IsEditing)">Save</button>
-</form>
+        <div class="mb-3">
+            <label class="form-label h5" for="fileTransferPermissionControl">Who can send you files</label>
+            <input @bind="_fileTransferPermissionEdit" type="range" class="form-range" id="fileTransferPermissionControl" min="@((int)UserItemTransferPermission.None)" max="@((int)UserItemTransferPermission.Everyone)" step="1.0" disabled="@(!_isEditing)"/>
+            <div class="row">
+                <div class="col-1">
+                    <p class="text-start">Nobody</p>
+                </div>
+                <div class="col-3">
+                    <p class="text-end">Confirmed key exchanges</p>
+                </div>
+                <div class="col-4">
+                    <p class="text-center">My contacts</p>
+                </div>
+                <div class="col-2">
+                    <p class="text-center">Crypter users</p>
+                </div>
+                <div class="col-2">
+                    <p class="text-end">Everyone</p>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditClicked" hidden="@_isEditing">Edit</button>
+        <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelClicked" hidden="@(!_isEditing)">Cancel</button>
+        <button type="button" class="btn btn-primary mx-auto" @onclick="async () => await OnSaveClickedAsync()" hidden="@(!_isEditing)">Save</button>
+    </form>
+}

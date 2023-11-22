@@ -28,7 +28,7 @@
 <div class="copiedTooltip mb-3">
     @if (string.IsNullOrEmpty(_recoveryKey))
     {
-        <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="() => _passwordModal.Open()">Generate Recovery Key</button>
+        <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="_passwordModal.Open">Generate Recovery Key</button>
     }
     else
     {
@@ -47,7 +47,7 @@
 <h3>Transfer</h3>
 <div class="mb-3">
     <label for="privateKey" class="form-label">Private Key</label>
-    <textarea @bind="_privateKey" class="form-control" id="privateKey" disabled />
+    <textarea @bind="_privateKey" class="form-control" id="privateKey" disabled></textarea>
 </div>
 
 <PasswordModal @ref="_passwordModal"/>

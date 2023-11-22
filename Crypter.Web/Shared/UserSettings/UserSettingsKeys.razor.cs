@@ -53,7 +53,7 @@ public partial class UserSettingsKeys : IDisposable
     protected override void OnInitialized()
     {
         _privateKey = UserKeysService.PrivateKey.Match(
-            () => "",
+            () => string.Empty,
             Convert.ToHexString);
 
         UserSessionService.UserPasswordTestSuccessEventHandler += OnPasswordTestSuccess;
