@@ -26,12 +26,10 @@
 
 @page "/login"
 
-@inherits LoginBase
-
 <PageTitle>Crypter - Login</PageTitle>
 
 <div class="container my-4">
-    @if (!Loading)
+    @if (!_loading)
     {
         <div class="row">
             <div class="col-md-8">

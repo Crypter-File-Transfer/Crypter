@@ -31,28 +31,28 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Pages;
 
-public partial class ForgotPassword : ComponentBase
+public partial class ForgotPassword
 {
-    [Inject] protected IUserRecoveryService _userRecoveryService { get; init; }
+    [Inject] private IUserRecoveryService UserRecoveryService { get; init; }
 
-    protected string EmailAddress { get; set; } = string.Empty;
-    protected string ErrorMessage { get; set; } = string.Empty;
-    protected string EmailAddressInvalidClassPlaceholder { get; set; } = string.Empty;
-    protected bool Success { get; set; } = false;
+    private string _emailAddress = string.Empty;
+    private string _errorMessage = string.Empty;
+    private string _emailAddressInvalidClassPlaceholder = string.Empty;
+    private bool _success;
 
-    protected async Task SubmitAsync()
+    private async Task SubmitAsync()
     {
-        if (Common.Primitives.EmailAddress.TryFrom(EmailAddress, out EmailAddress validEmailAddress))
+        if (EmailAddress.TryFrom(_emailAddress, out EmailAddress validEmailAddress))
         {
-            EmailAddressInvalidClassPlaceholder = string.Empty;
-            ErrorMessage = string.Empty;
-            await _userRecoveryService.RequestRecoveryEmailAsync(validEmailAddress);
-            Success = true;
+            _emailAddressInvalidClassPlaceholder = string.Empty;
+            _errorMessage = string.Empty;
+            await UserRecoveryService.RequestRecoveryEmailAsync(validEmailAddress);
+            _success = true;
         }
         else
         {
-            EmailAddressInvalidClassPlaceholder = "is-invalid";
-            ErrorMessage = "Invalid email address";
+            _emailAddressInvalidClassPlaceholder = "is-invalid";
+            _errorMessage = "Invalid email address";
         }
     }
 }

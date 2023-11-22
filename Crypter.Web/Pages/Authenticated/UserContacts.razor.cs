@@ -28,44 +28,43 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Contracts.Features.Contacts;
-using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages;
+namespace Crypter.Web.Pages.Authenticated;
 
-public partial class UserContactsBase : AuthenticatedPageBase
+public partial class UserContacts
 {
-    [Inject] protected IUserContactsService UserContactsService { get; set; }
+    [Inject] private IUserContactsService UserContactsService { get; set; }
 
-    protected bool Loading = true;
+    private bool _loading = true;
 
-    protected IReadOnlyCollection<UserContact> Contacts { get; set; }
+    private IReadOnlyCollection<UserContact> _contacts;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        Loading = false;
+        _loading = false;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && await UserSessionService.IsLoggedInAsync())
         {
-            Contacts = await UserContactsService.GetContactsAsync();
+            _contacts = await UserContactsService.GetContactsAsync();
             StateHasChanged();
         }
     }
 
-    protected static string GetDisplayName(string username, string alias)
+    private static string GetDisplayName(string username, string alias)
     {
         return string.IsNullOrEmpty(alias)
             ? username
             : $"{alias} ({username})";
     }
 
-    protected async Task RemoveContactAsync(string contactUsername)
+    private async Task RemoveContactAsync(string contactUsername)
     {
         await UserContactsService.RemoveContactAsync(contactUsername);
-        Contacts = await UserContactsService.GetContactsAsync();
+        _contacts = await UserContactsService.GetContactsAsync();
     }
 }

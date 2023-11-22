@@ -26,15 +26,13 @@
 
 @page "/user/profile/{Username}"
 
-@inherits UserProfileBase
-
 <PageTitle>Crypter - User Profile</PageTitle>
 
 <div class="container my-4">
     <div class="d-flex justify-content-evenly flex-md-row flex-lg-row flex-xl-row flex-xxl-row flex-column">
-        @if (!Loading)
+        @if (!_loading)
         {
-            if (IsProfileAvailable)
+            if (_isProfileAvailable)
             {
                 <div class="text-center mx-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
@@ -42,17 +40,17 @@
                         <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
                     </svg>
 
-                    @if (string.IsNullOrEmpty(Alias))
+                    @if (string.IsNullOrEmpty(_alias))
                     {
-                        <h3>@($"@{ProperUsername}")</h3>
+                        <h3>@($"@{_properUsername}")</h3>
                     }
                     else
                     {
-                        <h3>@Alias</h3>
-                        <h4>@($"@{ProperUsername}")</h4>
+                        <h3>@_alias</h3>
+                        <h4>@($"@{_properUsername}")</h4>
                     }
 
-                    @if (EmailVerified)
+                    @if (_emailVerified)
                     {
                         <p class="text-primary">
                             <i class="bi-envelope-check" style="font-size: 1.3rem; vertical-align: middle;"></i>
@@ -69,32 +67,32 @@
                 </div>
 
                 <div class="mx-2">
-                    @if (!string.IsNullOrWhiteSpace(About))
+                    @if (!string.IsNullOrWhiteSpace(_about))
                     {
                         <div class="row">
                             <h3>About</h3>
-                            <p>@About</p>
+                            <p>@_about</p>
                         </div>
                     }
 
                     <div class="row">
                         <h3>Transfer</h3>
                         <div class="col-12">
-                            @if (AllowsFiles)
+                            @if (_allowsFiles)
                             {
                                 <button class="btn btn-secondary mr-3" @onclick="() => FileModal.Open()">Send a file</button>
                                 <UploadFileTransferModal @ref="FileModal"
                                                          InstanceId="user-profile"
-                                                         RecipientUsername="@ProperUsername"
-                                                         RecipientPublicKey="@UserPublicKey"/>
+                                                         RecipientUsername="@_properUsername"
+                                                         RecipientPublicKey="@_userPublicKey"/>
                             }
-                            @if (AllowsMessages)
+                            @if (_allowsMessages)
                             {
                                 <button class="btn btn-secondary" @onclick="() => MessageModal.Open()">Send a message</button>
                                 <UploadMessageTransferModal @ref="MessageModal"
                                                             InstanceId="user-profile"
-                                                            RecipientUsername="@ProperUsername"
-                                                            RecipientPublicKey="@UserPublicKey"/>
+                                                            RecipientUsername="@_properUsername"
+                                                            RecipientPublicKey="@_userPublicKey"/>
                             }
                         </div>
                     </div>
