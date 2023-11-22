@@ -23,21 +23,20 @@
  * 
  * Contact the current copyright holder to discuss commercial license options.
  *@
-@inherits NavigationBase
 
 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
 </button>
 
 <div class="collapse navbar-collapse justify-content-end" id="mainNavigation">
-    <ul hidden="@(!ShowNavigation)" class="navbar-nav ms-auto mb-2 mb-lg-0">
-        @if (ShowUserNavigation)
+    <ul hidden="@(!_showNavigation)" class="navbar-nav ms-auto mb-2 mb-lg-0">
+        @if (_showUserNavigation)
         {
             <li class="nav-item m-1 my-lg-0">
                 <form class="d-flex h-100" @onsubmit:preventDefault @onsubmit="@OnSearchClicked">
                     <div class="input-group">
                         <span class="input-group-text bi-search" id="search-addon"></span>
-                        <input style="width: 20em; max-width: 20em;" type="text" class="form-control" placeholder="Find a user" aria-label="Search" @bind="SearchKeyword" aria-describedby="search-addon">
+                        <input style="width: 20em; max-width: 20em;" type="text" class="form-control" placeholder="Find a user" aria-label="Search" @bind="_searchKeyword" aria-describedby="search-addon">
                     </div>
                 </form>
             </li>
@@ -69,11 +68,11 @@
             </li>
             <li class="nav-item m-1 my-lg-0 dropdown">
                 <a class="nav-link dropdown-toggle text-light" href="#" id="navbarUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi-person-circle me-2"></i>@Username
+                    <i class="bi-person-circle me-2"></i>@_username
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li>
-                        <a class="dropdown-item" href="@ProfileUrl">Profile</a>
+                        <a class="dropdown-item" href="@_profileUrl">Profile</a>
                     </li>
                     <li>
                         <a class="dropdown-item" href="/user/settings">Settings</a>

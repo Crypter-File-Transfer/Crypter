@@ -30,9 +30,9 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared;
 
-public partial class UserReceivedItemsComponentBase : ComponentBase
+public partial class UserReceivedItemsComponent
 {
-    [Inject] protected NavigationManager NavigationManager { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; }
 
     [Parameter] public IEnumerable<UserReceivedItem> Items { get; set; }
 

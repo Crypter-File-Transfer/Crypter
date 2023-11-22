@@ -36,25 +36,25 @@ using Microsoft.JSInterop;
 
 namespace Crypter.Web.Shared;
 
-public partial class NavigationBase : ComponentBase, IDisposable
+public partial class Navigation : IDisposable
 {
-    [Inject] protected IJSRuntime JSRuntime { get; set; }
+    [Inject] private IJSRuntime JsRuntime { get; set; }
 
-    [Inject] protected NavigationManager NavigationManager { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; }
 
-    [Inject] protected IUserSessionService UserSessionService { get; set; }
+    [Inject] private IUserSessionService UserSessionService { get; set; }
 
-    [Inject] protected IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
+    [Inject] private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
 
     protected UploadFileTransferModal FileTransferModal { get; set; }
 
     protected UploadMessageTransferModal MessageTransferModal { get; set; }
 
-    protected bool ShowNavigation = false;
-    protected bool ShowUserNavigation = false;
-    protected string Username = string.Empty;
-    protected string ProfileUrl = string.Empty;
-    protected string SearchKeyword = string.Empty;
+    private bool _showNavigation;
+    private bool _showUserNavigation;
+    private string _username = string.Empty;
+    private string _profileUrl = string.Empty;
+    private string _searchKeyword = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -64,54 +64,54 @@ public partial class NavigationBase : ComponentBase, IDisposable
         UserSessionService.UserLoggedOutEventHandler += UserSessionStateChangedEventHandler;
     }
 
-    protected void HandleUserSessionStateChanged()
+    private void HandleUserSessionStateChanged()
     {
-        ShowUserNavigation = UserSessionService.Session.IsSome;
-        Username = UserSessionService.Session.Match(
+        _showUserNavigation = UserSessionService.Session.IsSome;
+        _username = UserSessionService.Session.Match(
             () => "",
             session => session.Username);
-        ProfileUrl = $"{NavigationManager.BaseUri}user/profile/{Username}";
-        ShowNavigation = true;
+        _profileUrl = $"{NavigationManager.BaseUri}user/profile/{_username}";
+        _showNavigation = true;
         StateHasChanged();
     }
 
-    protected async Task OnLogoutClicked()
+    private async Task OnLogoutClicked()
     {
         await UserSessionService.LogoutAsync();
         await BrowserRepository.RecycleAsync();
         NavigationManager.NavigateTo("/");
     }
 
-    protected void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
     {
         InvokeAsync(async () => { await CollapseNavigationMenuAsync(); });
     }
 
-    protected void UserSessionStateChangedEventHandler(object sender, EventArgs _)
+    private void UserSessionStateChangedEventHandler(object sender, EventArgs _)
     {
         HandleUserSessionStateChanged();
     }
 
-    protected async Task OnEncryptFileClicked()
+    private async Task OnEncryptFileClicked()
     {
         FileTransferModal.Open();
         await CollapseNavigationMenuAsync();
     }
 
-    protected async Task OnEncryptMessageClicked()
+    private async Task OnEncryptMessageClicked()
     {
         MessageTransferModal.Open();
         await CollapseNavigationMenuAsync();
     }
 
-    protected async Task CollapseNavigationMenuAsync()
+    private async Task CollapseNavigationMenuAsync()
     {
-        await JSRuntime.InvokeVoidAsync("Crypter.CollapseNavBar");
+        await JsRuntime.InvokeVoidAsync("Crypter.CollapseNavBar");
     }
 
-    protected void OnSearchClicked()
+    private void OnSearchClicked()
     {
-        NavigationManager.NavigateTo($"/user/search?query={SearchKeyword}");
+        NavigationManager.NavigateTo($"/user/search?query={_searchKeyword}");
     }
 
     public void Dispose()
