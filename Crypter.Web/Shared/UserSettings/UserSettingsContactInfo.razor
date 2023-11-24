@@ -24,48 +24,46 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@inherits UserSettingsContactInfoBase
-
-@if (IsDataReady)
+@if (_isDataReady)
 {
-   <form>
-      <div class="mb-3">
-         <label for="contactInfoEmailAddress" class="form-label">Email Address</label>
-         <input @bind="EmailAddressEdit" type="email" class="form-control" id="contactInfoEmailAddress" name="email" placeholder="Email Not Set" readonly="@(!IsEditing)" />
-         @if (IsEditing)
-         {
-            @if (!string.IsNullOrEmpty(EmailAddressError))
+    <form>
+        <div class="mb-3">
+            <label for="contactInfoEmailAddress" class="form-label">Email Address</label>
+            <input @bind="_emailAddressEdit" type="email" class="form-control" id="contactInfoEmailAddress" name="email" placeholder="Email Not Set" readonly="@(!_isEditing)"/>
+            @if (_isEditing)
             {
-               <span class="text-danger">@EmailAddressError</span>
-            }
-         }
-         else
-         {
-            @if (EmailAddressVerified)
-            {
-               <span class="text-success">Verified</span>
+                @if (!string.IsNullOrEmpty(_emailAddressError))
+                {
+                    <span class="text-danger">@_emailAddressError</span>
+                }
             }
             else
             {
-               <span class="text-danger">Not verified</span>
+                @if (_emailAddressVerified)
+                {
+                    <span class="text-success">Verified</span>
+                }
+                else
+                {
+                    <span class="text-danger">Not verified</span>
+                }
             }
-         }
-      </div>
-      <div class="mb-3" hidden="@(!IsEditing)">
-         <label for="contactInfoCurrentPassword" class="form-label">Current Password</label>
-         <input @bind="Password" type="password" class="form-control" id="contactInfoCurrentPassword" />
-         @if (!string.IsNullOrEmpty(PasswordError))
-         {
-            <span class="text-danger">@PasswordError</span>
-         }
-      </div>
-      <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditClicked" hidden="@IsEditing">Edit</button>
-      <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelClicked" hidden="@(!IsEditing)">Cancel</button>
-      <button type="button" class="btn btn-primary mx-auto" @onclick="async () => await OnSaveClickedAsync()" hidden="@(!IsEditing)">Save</button>
-      @if (!string.IsNullOrEmpty(GenericError))
-      {
-         <br />
-         <span class="text-danger">@GenericError</span>
-      }
-   </form>
+        </div>
+        <div class="mb-3" hidden="@(!_isEditing)">
+            <label for="contactInfoCurrentPassword" class="form-label">Current Password</label>
+            <input @bind="_password" type="password" class="form-control" id="contactInfoCurrentPassword"/>
+            @if (!string.IsNullOrEmpty(_passwordError))
+            {
+                <span class="text-danger">@_passwordError</span>
+            }
+        </div>
+        <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditClicked" hidden="@_isEditing">Edit</button>
+        <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelClicked" hidden="@(!_isEditing)">Cancel</button>
+        <button type="button" class="btn btn-primary mx-auto" @onclick="async () => await OnSaveClickedAsync()" hidden="@(!_isEditing)">Save</button>
+        @if (!string.IsNullOrEmpty(_genericError))
+        {
+            <br/>
+            <span class="text-danger">@_genericError</span>
+        }
+    </form>
 }

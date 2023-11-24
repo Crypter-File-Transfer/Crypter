@@ -26,30 +26,28 @@
 
 @page "/verify"
 
-@inherits VerifyBase
-
 <PageTitle>Crypter - Verify</PageTitle>
 
 <div class="container my-4">
-   <h1>Email Verification</h1>
-   @if (EmailVerificationInProgress)
-   {
-      <div class="spinner-border" role="status">
-         <span class="visually-hidden"></span>
-      </div>
-   }
-   else
-   {
-      @if (EmailVerificationSuccess)
-      {
-         <h3>Success</h3>
-         <p>Thank you for verifying your email address.</p>
-         <p>You may leave this page.</p>
-      }
-      else
-      {
-         <h3>Uh-oh</h3>
-         <p>Something went wrong.</p>
-      }
-   }
+    <h1>Email Verification</h1>
+    @if (_emailVerificationInProgress)
+    {
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden"></span>
+        </div>
+    }
+    else
+    {
+        @if (_emailVerificationSuccess)
+        {
+            <h3>Success</h3>
+            <p>Thank you for verifying your email address.</p>
+            <p>You may leave this page.</p>
+        }
+        else
+        {
+            <h3>Uh-oh</h3>
+            <p>Something went wrong.</p>
+        }
+    }
 </div>

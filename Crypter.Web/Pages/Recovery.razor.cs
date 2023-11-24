@@ -1,26 +1,26 @@
 ﻿/*
  * Copyright (C) 2023 Crypter File Transfer
- * 
+ *
  * This file is part of the Crypter file transfer project.
- * 
+ *
  * Crypter is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The Crypter source code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * You can be released from the requirements of the aforementioned license
  * by purchasing a commercial license. Buying such a license is mandatory
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
- * 
+ *
  * Contact the current copyright holder to discuss commercial license options.
  */
 
@@ -35,96 +35,97 @@ using Crypter.Web.Helpers;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages
+namespace Crypter.Web.Pages;
+
+public partial class Recovery
 {
-   public class RecoveryBase : ComponentBase
-   {
-      [Inject]
-      NavigationManager NavigationManager { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; }
 
-      [Inject]
-      protected IUserRecoveryService UserRecoveryService { get; set; }
+    [Inject] private IUserRecoveryService UserRecoveryService { get; set; }
 
-      private string RecoveryCode;
+    private string _recoveryCode;
 
-      private string RecoverySignature;
+    private string _recoverySignature;
 
-      protected bool RecoveryKeySwitch = true;
+    private bool _recoveryKeySwitch = true;
 
-      protected Username Username { get; set; }
-      protected string NewPassword { get; set; }
-      protected string NewPasswordConfirm { get; set; }
-      protected string RecoveryKeyInput { get; set; }
+    private Username _username;
+    private string _newPassword;
+    private string _newPasswordConfirm;
+    private string _recoveryKeyInput;
 
-      protected bool RecoverySucceeded { get; set; }
+    private bool _recoverySucceeded;
 
-      protected string RecoveryErrorMessage { get; set; }
-      protected string RecoveryKeyErrorMessage { get; set; }
+    private string _recoveryErrorMessage;
 
-      protected override void OnInitialized()
-      {
-         NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
+    protected override void OnInitialized()
+    {
+        NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
 
-         bool validPageLanding = !string.IsNullOrEmpty(queryParameters["username"])
-            && !string.IsNullOrEmpty(queryParameters["code"])
-            && !string.IsNullOrEmpty(queryParameters["signature"]);
+        bool validPageLanding = !string.IsNullOrEmpty(queryParameters["username"])
+                                && !string.IsNullOrEmpty(queryParameters["code"])
+                                && !string.IsNullOrEmpty(queryParameters["signature"]);
 
-         if (!validPageLanding)
-         {
+        if (!validPageLanding)
+        {
             NavigationManager.NavigateTo("/");
             return;
-         }
+        }
 
-         string decodedUsername = UrlSafeEncoder.DecodeStringUrlSafe(queryParameters["username"]);
-         if (Username.TryFrom(decodedUsername, out Username validUsername))
-         {
-            Username = validUsername;
-         }
-         else
-         {
+        string decodedUsername = UrlSafeEncoder.DecodeStringUrlSafe(queryParameters["username"]);
+        if (Username.TryFrom(decodedUsername, out Username validUsername))
+        {
+            _username = validUsername;
+        }
+        else
+        {
             NavigationManager.NavigateTo("/");
             return;
-         }
+        }
 
-         RecoveryCode = queryParameters["code"];
-         RecoverySignature = queryParameters["signature"];
-      }
+        _recoveryCode = queryParameters["code"];
+        _recoverySignature = queryParameters["signature"];
+    }
 
-      public async Task SubmitRecoveryAsync()
-      {
-         if (NewPassword != NewPasswordConfirm)
-         {
-            RecoveryErrorMessage = "Passwords do not match.";
+    private async Task SubmitRecoveryAsync()
+    {
+        if (_newPassword != _newPasswordConfirm)
+        {
+            _recoveryErrorMessage = "Passwords do not match.";
             return;
-         }
+        }
 
-         if (!Password.TryFrom(NewPassword, out  Password validPassword))
-         {
-            RecoveryErrorMessage = "Invalid password.";
+        if (!Password.TryFrom(_newPassword, out Password validPassword))
+        {
+            _recoveryErrorMessage = "Invalid password.";
             return;
-         }
+        }
 
-         Either<SubmitRecoveryError, Maybe<RecoveryKey>> recoveryResult = RecoveryKeySwitch
-            ? await RecoveryKey.FromBase64String(RecoveryKeyInput)
-               .ToEither(SubmitRecoveryError.WrongRecoveryKey)
-               .BindAsync(async x => await UserRecoveryService.SubmitRecoveryRequestAsync(RecoveryCode, RecoverySignature, Username, validPassword, x))
-            : await UserRecoveryService.SubmitRecoveryRequestAsync(RecoveryCode, RecoverySignature, Username, validPassword, Maybe<RecoveryKey>.None);
+        Either<SubmitRecoveryError, Maybe<RecoveryKey>> recoveryResult = _recoveryKeySwitch
+            ? await RecoveryKey.FromBase64String(_recoveryKeyInput)
+                .ToEither(SubmitRecoveryError.WrongRecoveryKey)
+                .BindAsync(async x =>
+                    await UserRecoveryService.SubmitRecoveryRequestAsync(_recoveryCode, _recoverySignature, _username,
+                        validPassword, x))
+            : await UserRecoveryService.SubmitRecoveryRequestAsync(_recoveryCode, _recoverySignature, _username,
+                validPassword, Maybe<RecoveryKey>.None);
 
 #pragma warning disable CS8524
-         recoveryResult.DoLeftOrNeither(
-            errorCode => RecoveryErrorMessage = errorCode switch
+        recoveryResult.DoLeftOrNeither(
+            errorCode => _recoveryErrorMessage = errorCode switch
             {
-               SubmitRecoveryError.UnknownError => "An unknown error occurred.",
-               SubmitRecoveryError.InvalidUsername => "Invalid username.",
-               SubmitRecoveryError.RecoveryNotFound => "This recovery link is expired. Request a new recovery link and try again.",
-               SubmitRecoveryError.WrongRecoveryKey => "The recovery key you provided is invalid.",
-               SubmitRecoveryError.InvalidMasterKey => "Invalid master key information.",
-               SubmitRecoveryError.PasswordHashFailure => "A cryptographic error occurred while securing your new password. This device or browser may not be supported."
+                SubmitRecoveryError.UnknownError => "An unknown error occurred.",
+                SubmitRecoveryError.InvalidUsername => "Invalid username.",
+                SubmitRecoveryError.RecoveryNotFound =>
+                    "This recovery link is expired. Request a new recovery link and try again.",
+                SubmitRecoveryError.WrongRecoveryKey => "The recovery key you provided is invalid.",
+                SubmitRecoveryError.InvalidMasterKey => "Invalid master key information.",
+                SubmitRecoveryError.PasswordHashFailure =>
+                    "A cryptographic error occurred while securing your new password. This device or browser may not be supported."
             },
-            () => RecoveryErrorMessage = "An unknown error occurred.");
+            () => _recoveryErrorMessage = "An unknown error occurred.");
 #pragma warning restore CS8524
 
-         RecoverySucceeded = recoveryResult.IsRight;
-      }
-   }
+        _recoverySucceeded = recoveryResult.IsRight;
+    }
 }

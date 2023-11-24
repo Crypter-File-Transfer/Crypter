@@ -26,84 +26,82 @@
 
 @page "/user/profile/{Username}"
 
-@inherits UserProfileBase
-
 <PageTitle>Crypter - User Profile</PageTitle>
 
 <div class="container my-4">
-   <div class="d-flex justify-content-evenly flex-md-row flex-lg-row flex-xl-row flex-xxl-row flex-column">
-      @if (!Loading)
-      {
-         if (IsProfileAvailable)
-         {
-            <div class="text-center mx-2">
-               <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
-                  <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-                  <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z" />
-               </svg>
+    <div class="d-flex justify-content-evenly flex-md-row flex-lg-row flex-xl-row flex-xxl-row flex-column">
+        @if (!_loading)
+        {
+            if (_isProfileAvailable)
+            {
+                <div class="text-center mx-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                        <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                        <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                    </svg>
 
-               @if (string.IsNullOrEmpty(Alias))
-               {
-                  <h3>@($"@{ProperUsername}")</h3>
-               }
-               else
-               {
-                  <h3>@Alias</h3>
-                  <h4>@($"@{ProperUsername}")</h4>
-               }
+                    @if (string.IsNullOrEmpty(_alias))
+                    {
+                        <h3>@($"@{_properUsername}")</h3>
+                    }
+                    else
+                    {
+                        <h3>@_alias</h3>
+                        <h4>@($"@{_properUsername}")</h4>
+                    }
 
-               @if (EmailVerified)
-               {
-                  <p class="text-primary">
-                     <i class="bi-envelope-check" style="font-size: 1.3rem; vertical-align: middle;"></i>
-                     Verified
-                  </p>
-               }
-               else
-               {
-                  <p class="text-secondary">
-                     <i class="bi-envelope-x" style="font-size: 1.3rem; vertical-align: middle;"></i>
-                     Not Verified
-                  </p>
-               }
-            </div>
+                    @if (_emailVerified)
+                    {
+                        <p class="text-primary">
+                            <i class="bi-envelope-check" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                            Verified
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-secondary">
+                            <i class="bi-envelope-x" style="font-size: 1.3rem; vertical-align: middle;"></i>
+                            Not Verified
+                        </p>
+                    }
+                </div>
 
-            <div class="mx-2">
-               @if (!string.IsNullOrWhiteSpace(About))
-               {
-                  <div class="row">
-                     <h3>About</h3>
-                     <p>@About</p>
-                  </div>
-               }
+                <div class="mx-2">
+                    @if (!string.IsNullOrWhiteSpace(_about))
+                    {
+                        <div class="row">
+                            <h3>About</h3>
+                            <p>@_about</p>
+                        </div>
+                    }
 
-               <div class="row">
-                  <h3>Transfer</h3>
-                  <div class="col-12">
-                     @if (AllowsFiles)
-                     {
-                        <button class="btn btn-secondary mr-3" @onclick="() => FileModal.Open()">Send a file</button>
-                        <UploadFileTransferModal @ref="FileModal"
-                                        InstanceId="user-profile"
-                                        RecipientUsername="@ProperUsername"
-                                        RecipientPublicKey="@UserPublicKey" />
-                     }
-                     @if (AllowsMessages)
-                     {
-                        <button class="btn btn-secondary" @onclick="() => MessageModal.Open()">Send a message</button>
-                        <UploadMessageTransferModal @ref="MessageModal"
-                                           InstanceId="user-profile"
-                                           RecipientUsername="@ProperUsername"
-                                           RecipientPublicKey="@UserPublicKey" />
-                     }
-                  </div>
-               </div>
-            </div>
-         }
-         else
-         {
-            <h3 class="text-center">Profile not available.</h3>
-         }
-      }
-   </div>
+                    <div class="row">
+                        <h3>Transfer</h3>
+                        <div class="col-12">
+                            @if (_allowsFiles)
+                            {
+                                <button class="btn btn-secondary mr-3" @onclick="() => FileModal.Open()">Send a file</button>
+                                <UploadFileTransferModal @ref="FileModal"
+                                                         InstanceId="user-profile"
+                                                         RecipientUsername="@_properUsername"
+                                                         RecipientPublicKey="@_userPublicKey"/>
+                            }
+                            @if (_allowsMessages)
+                            {
+                                <button class="btn btn-secondary" @onclick="() => MessageModal.Open()">Send a message</button>
+                                <UploadMessageTransferModal @ref="MessageModal"
+                                                            InstanceId="user-profile"
+                                                            RecipientUsername="@_properUsername"
+                                                            RecipientPublicKey="@_userPublicKey"/>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <h3 class="text-center">Profile not available.</h3>
+            }
+        }
+    </div>
 </div>

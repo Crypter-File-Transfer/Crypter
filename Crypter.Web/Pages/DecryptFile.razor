@@ -26,14 +26,12 @@
 
 @page "/decrypt/file/{userType:int}/{transferHashId}"
 
-@inherits DecryptFileBase
-
 <PageTitle>Crypter - Decrypt</PageTitle>
 
 <div class="container my-4">
-   <h1>Decrypt File</h1>
-   @if (!Loading)
-   {
-      <DownloadFileTransfer TransferHashId="@TransferHashId" UserType="(TransferUserType)UserType" />
-   }
+    <h1>Decrypt File</h1>
+    @if (!_loading)
+    {
+        <DownloadFileTransfer TransferHashId="@TransferHashId" UserType="(TransferUserType)UserType"/>
+    }
 </div>

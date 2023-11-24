@@ -26,61 +26,61 @@
 
 @page "/user/search"
 
-@inherits SearchBase
+@inherits AuthenticatedPageBase
 
 <PageTitle>Crypter - User Search</PageTitle>
 
 <div class="container my-4">
-   @if (!Loading)
-   {
-      <h1>Find a user</h1>
-      <form @onsubmit:preventDefault @onsubmit="@OnSearchClicked">
-         <div class="row">
-            <div class="col-md-9">
-               <div class="input-group mb-3">
-                  <input type="text" @bind="SearchParameters.Keyword" class="form-control" />
-                  <button class="btn btn-primary" type="submit" id="button-addon2">Search</button>
-               </div>
+    @if (!_loading)
+    {
+        <h1>Find a user</h1>
+        <form @onsubmit:preventDefault @onsubmit="@OnSearchClicked">
+            <div class="row">
+                <div class="col-md-9">
+                    <div class="input-group mb-3">
+                        <input type="text" @bind="_searchParameters.Keyword" class="form-control"/>
+                        <button class="btn btn-primary" type="submit" id="button-addon2">Search</button>
+                    </div>
+                </div>
             </div>
-         </div>
-      </form>
-      <div class="row">
-         @if (SearchResults != null)
-         {
-            @if (SearchResults.Count == 0)
+        </form>
+        <div class="row">
+            @if (SearchResults != null)
             {
-               <h3 class="text-center">No results found</h3>
-            }
-            else
-            {
-               @foreach (var result in SearchResults)
-               {
-                  <div class="col-md-6">
-                     <div class="card my-1">
-                        <div class="card-body">
-                           <div class="d-flex bd-highlight mb-3">
-                              <div class="me-auto p-2 bd-highlight">
-                                 <a class="text-decoration-none" href="/user/profile/@result.Username">
-                                    <h5 class="card-title">@GetDisplayName(result.Username, result.Alias)</h5>
-                                 </a>
-                              </div>
-                              <div class="p-2 bd-highlight">
-                                 @if (result.IsContact)
-                                 {
-                                    <button type="button" disable class="btn btn-outline-success">Added</button>
-                                 }
-                                 else if (result.Username.ToLower() != @SessionUsernameLowercase)
-                                 {
-                                    <button type="button" class="btn btn-outline-dark" @onclick="async () => await AddContactAsync(result.Username)">Add Contact</button>
-                                 }
-                              </div>
-                           </div>
+                @if (SearchResults.Count == 0)
+                {
+                    <h3 class="text-center">No results found</h3>
+                }
+                else
+                {
+                    @foreach (var result in SearchResults)
+                    {
+                        <div class="col-md-6">
+                            <div class="card my-1">
+                                <div class="card-body">
+                                    <div class="d-flex bd-highlight mb-3">
+                                        <div class="me-auto p-2 bd-highlight">
+                                            <a class="text-decoration-none" href="/user/profile/@result.Username">
+                                                <h5 class="card-title">@GetDisplayName(result.Username, result.Alias)</h5>
+                                            </a>
+                                        </div>
+                                        <div class="p-2 bd-highlight">
+                                            @if (result.IsContact)
+                                            {
+                                                <button type="button" disable class="btn btn-outline-success">Added</button>
+                                            }
+                                            else if (result.Username.ToLower() != _sessionUsernameLowercase)
+                                            {
+                                                <button type="button" class="btn btn-outline-dark" @onclick="async () => await AddContactAsync(result.Username)">Add Contact</button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                     </div>
-                  </div>
-               }
+                    }
+                }
             }
-         }
-      </div>
-   }
+        </div>
+    }
 </div>

@@ -24,34 +24,32 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
- @inherits RecoveryKeyModalBase
-
- <ModalBehavior @ref=ModalBehaviorRef>
-   <Content>
-      <div class="modal-content">
-         <div class="modal-header">
-            <h3>Important Message</h3>
-         </div>
-         <div class="modal-body justify-content-center">
-            <p class="word-wrap">Please copy the provided recovery key and keep it safe.</p>
-            <p class="word-wrap">This recovery key will allow you to recover your encrypted information in case you forget your password. All your data will be lost if you fail to provide this recovery key during a password reset event.</p>
-            <div class="copiedTooltip mb-3">
-               <label for="recoveryKeyModalInput" class="form-label">Recovery Key</label>
-               <div class="input-group mb-3">
-                  <input class="form-control" value="@RecoveryKey" type="text" id="recoveryKeyModalInput" readonly />
-                  <div class="input-group-append">
-                     <button class="btn btn-secondary" type="button" @onclick="CopyRecoveryKeyToClipboardAsync">Copy</button>
-                  </div>
-               </div>
-
-               <span id="recoveryKeyModalCopyTooltip" class="copiedToolTip toolTipText">Copied</span>
+<ModalBehavior @ref="_modalBehaviorRef">
+    <Content>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Important Message</h3>
             </div>
-         </div>
-         <div class="modal-footer">
-            <p>You accept any and all risks associated with failing to copy this recovery key.</p>
-            <p>You understand account recovery is only available to users with a <b>verified</b> email address.</p>
-            <button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="OnAcknowledgedClickedAsync">I understand and accept the risks</button>
-         </div>
-      </div>
-   </Content>
+            <div class="modal-body justify-content-center">
+                <p class="word-wrap">Please copy the provided recovery key and keep it safe.</p>
+                <p class="word-wrap">This recovery key will allow you to recover your encrypted information in case you forget your password. All your data will be lost if you fail to provide this recovery key during a password reset event.</p>
+                <div class="copiedTooltip mb-3">
+                    <label for="recoveryKeyModalInput" class="form-label">Recovery Key</label>
+                    <div class="input-group mb-3">
+                        <input class="form-control" value="@_recoveryKey" type="text" id="recoveryKeyModalInput" readonly/>
+                        <div class="input-group-append">
+                            <button class="btn btn-secondary" type="button" @onclick="CopyRecoveryKeyToClipboardAsync">Copy</button>
+                        </div>
+                    </div>
+
+                    <span id="recoveryKeyModalCopyTooltip" class="copiedToolTip toolTipText">Copied</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <p>You accept any and all risks associated with failing to copy this recovery key.</p>
+                <p>You understand account recovery is only available to users with a <b>verified</b> email address.</p>
+                <button type="button" class="btn btn-danger" data-dismiss="modal" @onclick="OnAcknowledgedClickedAsync">I understand and accept the risks</button>
+            </div>
+        </div>
+    </Content>
 </ModalBehavior>

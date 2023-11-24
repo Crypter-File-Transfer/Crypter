@@ -24,84 +24,90 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@inherits DownloadMessageTransferBase
+@inherits DownloadTransferBase
 
 @if (FinishedLoading)
 {
-   @if (ItemFound)
-   {
-      <div class="row">
-      <div class="col-md-4">
-         <div class="card">
-            <h5 class="card-header">Details</h5>
-            <ul class="list-group list-group-flush">
-                  <li class="list-group-item">
-                     <span class="fw-bold">Subject: </span>@(string.IsNullOrEmpty(Subject) ? "{ no subject }" : Subject)
-                  </li>
-               <li class="list-group-item">
-                  <span class="fw-bold">Sender: </span>
-                  @if (string.IsNullOrEmpty(SenderUsername))
-                  {
-                     <span>Unknown</span>
-                  }
-                  else
-                  {
-                     <a href=@($"/user/profile/{SenderUsername}")>@($"@{SenderUsername}")</a>
-                  }
-               </li>
-               <li class="list-group-item"><span class="fw-bold">Encrypted Size: </span>@(ByteSizeLib.ByteSize.FromBytes(MessageSize).ToBinaryString())</li>
-               <li class="list-group-item"><span class="fw-bold">Created: </span>@Created.ToString("MM/dd/yyyy h:mm tt")</li>
-               <li class="list-group-item"><span class="fw-bold">Expiration: </span>@Expiration.ToString("MM/dd/yyyy h:mm tt")</li>
-            </ul>
-         </div>
-      </div>
-      <div class="col-md-8">
-         <div class="card">
-            <div class="card-body text-center">
-               @if (DecryptionComplete)
-               {
-                  <div class="alert alert-success text-center" role="alert">
-                     Decryption successful!
-                  </div>
-                  <div class="mb-3">
-                     <textarea @bind="PlaintextMessage" class="form-control" rows="5"></textarea>
-                  </div>
-               }
-               else if (DecryptionInProgress)
-               {
-                  <div class="mb-3">
-                     <h3>@DecryptionStatusMessage</h3>
-                     <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                     </div>
-                  </div>
-               }
-               else
-               {
-                  <h5 class="card-title">Ready to Decrypt</h5>
-                  <p class="card-text fst-italic">Click 'Decrypt' to decrypt the message</p>
-
-                  @if (!DecryptionInProgress)
-                  {
-                     <div class="mb-3">
-                        <button type="button" class="btn btn-primary" @onclick="OnDecryptClickedAsync">Decrypt</button>
-                     </div>
-                  }
-
-                  @if (!string.IsNullOrEmpty(ErrorMessage))
-                  {
-                     <div class="alert alert-danger text-center" role="alert">
-                        @ErrorMessage
-                     </div>
-                  }
-               }
+    @if (ItemFound)
+    {
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <h5 class="card-header">Details</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <span class="fw-bold">Subject: </span>@(string.IsNullOrEmpty(_subject) ? "{ no subject }" : _subject)
+                        </li>
+                        <li class="list-group-item">
+                            <span class="fw-bold">Sender: </span>
+                            @if (string.IsNullOrEmpty(SenderUsername))
+                            {
+                                <span>Unknown</span>
+                            }
+                            else
+                            {
+                                <a href=@($"/user/profile/{SenderUsername}")>@($"@{SenderUsername}")</a>
+                            }
+                        </li>
+                        <li class="list-group-item">
+                            <span class="fw-bold">Encrypted Size: </span>@(ByteSize.FromBytes(_messageSize).ToBinaryString())
+                        </li>
+                        <li class="list-group-item">
+                            <span class="fw-bold">Created: </span>@Created.ToString("MM/dd/yyyy h:mm tt")
+                        </li>
+                        <li class="list-group-item">
+                            <span class="fw-bold">Expiration: </span>@Expiration.ToString("MM/dd/yyyy h:mm tt")
+                        </li>
+                    </ul>
+                </div>
             </div>
-         </div>
-      </div>
-      </div>
-   }
-   else
-   {
-      <ItemNotFoundComponent />
-   }
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body text-center">
+                        @if (DecryptionComplete)
+                        {
+                            <div class="alert alert-success text-center" role="alert">
+                                Decryption successful!
+                            </div>
+                            <div class="mb-3">
+                                <textarea @bind="_plaintextMessage" class="form-control" rows="5"></textarea>
+                            </div>
+                        }
+                        else if (DecryptionInProgress)
+                        {
+                            <div class="mb-3">
+                                <h3>@DecryptionStatusMessage</h3>
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <h5 class="card-title">Ready to Decrypt</h5>
+                            <p class="card-text fst-italic">Click 'Decrypt' to decrypt the message</p>
+
+                            @if (!DecryptionInProgress)
+                            {
+                                <div class="mb-3">
+                                    <button type="button" class="btn btn-primary" @onclick="OnDecryptClickedAsync">Decrypt</button>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(ErrorMessage))
+                            {
+                                <div class="alert alert-danger text-center" role="alert">
+                                    @ErrorMessage
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <ItemNotFoundComponent/>
+    }
 }
