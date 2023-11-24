@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@inherits UploadMessageTransferBase
+@inherits UploadTransferBase
 
 <div class="message-upload" hidden="@EncryptionInProgress">
     <div class="row">
@@ -34,9 +34,9 @@
         </div>
         <div class="col-12 p-0">
             <label>Message</label>
-            <textarea class="form-control" @bind="MessageBody" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@MaxMessageLength"></textarea>
+            <textarea class="form-control" @bind="MessageBody" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@_maxMessageLength"></textarea>
             <label>
-                <small class="align-text-bottom">@(MaxMessageLength - MessageBody.Count()) remaining</small>
+                <small class="align-text-bottom">@(_maxMessageLength - MessageBody.Count()) remaining</small>
             </label>
         </div>
     </div>

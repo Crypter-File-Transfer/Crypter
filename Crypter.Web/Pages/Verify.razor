@@ -26,13 +26,11 @@
 
 @page "/verify"
 
-@inherits VerifyBase
-
 <PageTitle>Crypter - Verify</PageTitle>
 
 <div class="container my-4">
     <h1>Email Verification</h1>
-    @if (EmailVerificationInProgress)
+    @if (_emailVerificationInProgress)
     {
         <div class="spinner-border" role="status">
             <span class="visually-hidden"></span>
@@ -40,7 +38,7 @@
     }
     else
     {
-        @if (EmailVerificationSuccess)
+        @if (_emailVerificationSuccess)
         {
             <h3>Success</h3>
             <p>Thank you for verifying your email address.</p>

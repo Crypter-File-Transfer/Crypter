@@ -30,24 +30,24 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Pages;
 
-public partial class LoginBase : ComponentBase
+public partial class Login
 {
-    [Inject] protected NavigationManager NavigationManager { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; }
 
-    [Inject] protected IUserSessionService UserSessionService { get; set; }
+    [Inject] private IUserSessionService UserSessionService { get; set; }
 
-    protected bool Loading = true;
+    private bool _loading = true;
 
-    private const string _userLandingPage = "/user/transfers";
+    private const string UserLandingPage = "/user/transfers";
 
     protected override async Task OnInitializedAsync()
     {
         if (await UserSessionService.IsLoggedInAsync())
         {
-            NavigationManager.NavigateTo(_userLandingPage);
+            NavigationManager.NavigateTo(UserLandingPage);
             return;
         }
 
-        Loading = false;
+        _loading = false;
     }
 }

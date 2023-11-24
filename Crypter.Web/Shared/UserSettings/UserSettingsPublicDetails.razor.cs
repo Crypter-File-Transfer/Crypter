@@ -32,58 +32,58 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.UserSettings;
 
-public partial class UserSettingsPublicDetailsBase : ComponentBase
+public partial class UserSettingsPublicDetails
 {
-    [Inject] protected IUserProfileSettingsService UserProfileSettingsService { get; set; }
+    [Inject] private IUserProfileSettingsService UserProfileSettingsService { get; set; }
 
-    protected string Alias { get; set; } = string.Empty;
-    protected string AliasEdit { get; set; } = string.Empty;
+    private string _alias = string.Empty;
+    private string _aliasEdit = string.Empty;
 
-    protected string About { get; set; } = string.Empty;
-    protected string AboutEdit { get; set; } = string.Empty;
+    private string _about = string.Empty;
+    private string _aboutEdit = string.Empty;
 
-    protected bool IsDataReady { get; set; } = false;
-    protected bool IsEditing { get; set; } = false;
+    private bool _isDataReady;
+    private bool _isEditing;
 
     protected override async Task OnInitializedAsync()
     {
         await UserProfileSettingsService.GetProfileSettingsAsync()
             .IfSomeAsync(x =>
             {
-                Alias = x.Alias;
-                AliasEdit = x.Alias;
+                _alias = x.Alias;
+                _aliasEdit = x.Alias;
 
-                About = x.About;
-                AboutEdit = x.About;
+                _about = x.About;
+                _aboutEdit = x.About;
             });
 
-        IsDataReady = true;
+        _isDataReady = true;
     }
 
-    protected void OnEditClicked()
+    private void OnEditClicked()
     {
-        AliasEdit = Alias;
-        AboutEdit = About;
-        IsEditing = true;
+        _aliasEdit = _alias;
+        _aboutEdit = _about;
+        _isEditing = true;
     }
 
-    protected void OnCancelClicked()
+    private void OnCancelClicked()
     {
-        AliasEdit = Alias;
-        AboutEdit = About;
-        IsEditing = false;
+        _aliasEdit = _alias;
+        _aboutEdit = _about;
+        _isEditing = false;
     }
 
-    protected async Task OnSaveClickedAsync()
+    private async Task OnSaveClickedAsync()
     {
-        var request = new ProfileSettings(AliasEdit, AboutEdit);
+        var request = new ProfileSettings(_aliasEdit, _aboutEdit);
         await UserProfileSettingsService.SetProfileSettingsAsync(request)
             .DoRightAsync(x =>
             {
-                Alias = x.Alias;
-                About = x.About;
+                _alias = x.Alias;
+                _about = x.About;
             });
 
-        IsEditing = false;
+        _isEditing = false;
     }
 }

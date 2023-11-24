@@ -32,22 +32,21 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Web.Helpers;
-using Crypter.Web.Pages.Authenticated.Base;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 
-namespace Crypter.Web.Pages;
+namespace Crypter.Web.Pages.Authenticated;
 
-public partial class SearchBase : AuthenticatedPageBase, IDisposable
+public partial class Search : IDisposable
 {
-    [Inject] protected ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
 
-    [Inject] protected IUserContactsService UserContactsService { get; set; }
+    [Inject] private IUserContactsService UserContactsService { get; set; }
 
-    protected bool Loading = true;
-    protected string SessionUsernameLowercase = string.Empty;
-    protected UserSearchParameters SearchParameters;
+    private bool _loading = true;
+    private string _sessionUsernameLowercase = string.Empty;
+    private UserSearchParameters _searchParameters;
     protected List<ContactSearchResult> SearchResults;
 
     protected override async Task OnInitializedAsync()
@@ -59,24 +58,24 @@ public partial class SearchBase : AuthenticatedPageBase, IDisposable
             return;
         }
 
-        SearchParameters = new UserSearchParameters(string.Empty, 0, 20);
+        _searchParameters = new UserSearchParameters(string.Empty, 0, 20);
         NavigationManager.LocationChanged += HandleLocationChanged;
-        SessionUsernameLowercase = UserSessionService.Session.Match(
+        _sessionUsernameLowercase = UserSessionService.Session.Match(
             () => string.Empty,
             x => x.Username.ToLower());
         ParseSearchParamsFromUri();
-        Loading = false;
+        _loading = false;
         await PerformSearchAsync();
     }
 
-    protected async Task PerformSearchAsync()
+    private async Task PerformSearchAsync()
     {
-        if (string.IsNullOrEmpty(SearchParameters.Keyword))
+        if (string.IsNullOrEmpty(_searchParameters.Keyword))
         {
             return;
         }
 
-        SearchResults = await CrypterApiService.User.GetUserSearchResultsAsync(SearchParameters)
+        SearchResults = await CrypterApiService.User.GetUserSearchResultsAsync(_searchParameters)
             .BindAsync<List<UserSearchResult>, List<ContactSearchResult>>(async searchResults =>
             {
                 bool[] contactLookupTasks = await Task.WhenAll(
@@ -90,23 +89,23 @@ public partial class SearchBase : AuthenticatedPageBase, IDisposable
             }).SomeOrDefaultAsync(null);
     }
 
-    protected void OnSearchClicked()
+    private void OnSearchClicked()
     {
-        NavigationManager.NavigateTo($"/user/search?query={SearchParameters.Keyword}");
+        NavigationManager.NavigateTo($"/user/search?query={_searchParameters.Keyword}");
     }
 
-    protected void ParseSearchParamsFromUri()
+    private void ParseSearchParamsFromUri()
     {
         string query = NavigationManager.GetQueryParameter("query");
         if (!string.IsNullOrEmpty(query))
         {
-            SearchParameters.Keyword = query;
+            _searchParameters.Keyword = query;
         }
 
         StateHasChanged();
     }
 
-    protected void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
     {
         if (e.Location.Contains("/user/search"))
         {
@@ -119,7 +118,7 @@ public partial class SearchBase : AuthenticatedPageBase, IDisposable
         }
     }
 
-    protected async Task AddContactAsync(string contactUsername)
+    private async Task AddContactAsync(string contactUsername)
     {
         bool contactAdded = (await UserContactsService.AddContactAsync(contactUsername))
             .IsRight;
@@ -139,7 +138,7 @@ public partial class SearchBase : AuthenticatedPageBase, IDisposable
         StateHasChanged();
     }
 
-    protected static string GetDisplayName(string username, string alias)
+    private static string GetDisplayName(string username, string alias)
     {
         return string.IsNullOrEmpty(alias)
             ? username

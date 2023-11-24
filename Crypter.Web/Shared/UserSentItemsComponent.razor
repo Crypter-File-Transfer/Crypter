@@ -1,4 +1,5 @@
-﻿@*
+﻿@using System.Globalization
+@*
  * Copyright (C) 2023 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
@@ -24,8 +25,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@inherits UserSentItemsComponentBase
-
 <div class="col-md-6">
     <div class="card mb-4">
         <div class="card-body">
@@ -38,7 +37,7 @@
                     Loading...
                 </li>
             }
-            else if (Items.Count() == 0)
+            else if (!Items.Any())
             {
                 <li class="list-group-item">
                     You have not uploaded any items
@@ -76,7 +75,7 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                Expires on: @item.ExpirationUTC.ToLocalTime().ToString()
+                                Expires on: @item.ExpirationUTC.ToLocalTime().ToString(CultureInfo.CurrentCulture)
                             </div>
                         </div>
                     </li>

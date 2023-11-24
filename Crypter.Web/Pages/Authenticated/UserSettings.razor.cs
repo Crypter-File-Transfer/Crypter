@@ -25,15 +25,14 @@
  */
 
 using System.Threading.Tasks;
-using Crypter.Web.Pages.Authenticated.Base;
 
-namespace Crypter.Web.Pages;
+namespace Crypter.Web.Pages.Authenticated;
 
-public partial class UserSettingsBase : AuthenticatedPageBase
+public partial class UserSettings
 {
-    protected string Username { get; set; } = string.Empty;
+    private string _username = string.Empty;
 
-    protected bool DataIsReady { get; set; } = false;
+    private bool _dataIsReady;
 
     protected override async Task OnInitializedAsync()
     {
@@ -43,10 +42,10 @@ public partial class UserSettingsBase : AuthenticatedPageBase
             return;
         }
 
-        Username = UserSessionService.Session.Match(
+        _username = UserSessionService.Session.Match(
             () => null,
             some => some.Username);
 
-        DataIsReady = true;
+        _dataIsReady = true;
     }
 }

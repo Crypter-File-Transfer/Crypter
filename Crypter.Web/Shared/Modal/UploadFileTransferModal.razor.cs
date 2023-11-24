@@ -32,7 +32,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.Modal;
 
-public partial class UploadFileTransferModalBase : ComponentBase
+public partial class UploadFileTransferModal
 {
     [Parameter] public string InstanceId { get; set; }
 
@@ -42,20 +42,20 @@ public partial class UploadFileTransferModalBase : ComponentBase
 
     [Parameter] public EventCallback ModalClosedCallback { get; set; }
 
-    protected ModalBehavior ModalBehaviorRef;
-    protected UploadFileTransfer UploadComponent;
+    private ModalBehavior _modalBehaviorRef;
+    private UploadFileTransfer _uploadComponent;
 
-    protected int ExpirationHours;
+    private int _expirationHours;
 
     public void Open()
     {
-        ModalBehaviorRef.Open();
+        _modalBehaviorRef.Open();
     }
 
     public async Task CloseAsync()
     {
-        UploadComponent.Dispose();
+        _uploadComponent.Dispose();
         await ModalClosedCallback.InvokeAsync();
-        ModalBehaviorRef.Close();
+        _modalBehaviorRef.Close();
     }
 }

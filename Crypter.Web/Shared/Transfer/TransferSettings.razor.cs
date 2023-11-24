@@ -43,20 +43,18 @@ public partial class TransferSettings
 
     protected override Task OnParametersSetAsync()
     {
-        if (ExpirationHours > MaxExpirationHours)
+        switch (ExpirationHours)
         {
-            _expirationInput = MaxExpirationHours.ToString();
-            return ExpirationHoursChanged.InvokeAsync(MaxExpirationHours);
+            case > MaxExpirationHours:
+                _expirationInput = MaxExpirationHours.ToString();
+                return ExpirationHoursChanged.InvokeAsync(MaxExpirationHours);
+            case < MinExpirationHours:
+                _expirationInput = MinExpirationHours.ToString();
+                return ExpirationHoursChanged.InvokeAsync(DefaultExpirationHours);
+            default:
+                _expirationInput = ExpirationHours.ToString();
+                return Task.CompletedTask;
         }
-
-        if (ExpirationHours < MinExpirationHours)
-        {
-            _expirationInput = MinExpirationHours.ToString();
-            return ExpirationHoursChanged.InvokeAsync(DefaultExpirationHours);
-        }
-
-        _expirationInput = ExpirationHours.ToString();
-        return Task.CompletedTask;
     }
 
     private Task OnExpirationHoursChanged(string value)
@@ -73,16 +71,11 @@ public partial class TransferSettings
             return Task.CompletedTask;
         }
 
-        if (parsedValue > MaxExpirationHours)
+        return parsedValue switch
         {
-            return ExpirationHoursChanged.InvokeAsync(MaxExpirationHours);
-        }
-
-        if (parsedValue < MinExpirationHours)
-        {
-            return ExpirationHoursChanged.InvokeAsync(MinExpirationHours);
-        }
-
-        return ExpirationHoursChanged.InvokeAsync(parsedValue);
+            > MaxExpirationHours => ExpirationHoursChanged.InvokeAsync(MaxExpirationHours),
+            < MinExpirationHours => ExpirationHoursChanged.InvokeAsync(MinExpirationHours),
+            _ => ExpirationHoursChanged.InvokeAsync(parsedValue)
+        };
     }
 }

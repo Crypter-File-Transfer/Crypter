@@ -34,16 +34,16 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Pages;
 
-public partial class VerifyBase : ComponentBase
+public partial class Verify
 {
-    [Inject] NavigationManager NavigationManager { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; }
 
-    [Inject] protected ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
 
-    protected EmailVerificationParams EmailVerificationParams = new();
+    private readonly EmailVerificationParams _emailVerificationParams = new EmailVerificationParams();
 
-    protected bool EmailVerificationInProgress = true;
-    protected bool EmailVerificationSuccess = false;
+    private bool _emailVerificationInProgress = true;
+    private bool _emailVerificationSuccess;
 
     protected override async Task OnInitializedAsync()
     {
@@ -51,19 +51,19 @@ public partial class VerifyBase : ComponentBase
         await VerifyEmailAddressAsync();
     }
 
-    protected void ParseVerificationParamsFromUri()
+    private void ParseVerificationParamsFromUri()
     {
         NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
-        EmailVerificationParams.Code = queryParameters["code"];
-        EmailVerificationParams.Signature = queryParameters["signature"];
+        _emailVerificationParams.Code = queryParameters["code"];
+        _emailVerificationParams.Signature = queryParameters["signature"];
     }
 
-    protected async Task VerifyEmailAddressAsync()
+    private async Task VerifyEmailAddressAsync()
     {
         var verificationResponse = await CrypterApiService.UserSetting.VerifyUserEmailAddressAsync(
-            new VerifyEmailAddressRequest(EmailVerificationParams.Code, EmailVerificationParams.Signature));
+            new VerifyEmailAddressRequest(_emailVerificationParams.Code, _emailVerificationParams.Signature));
 
-        EmailVerificationSuccess = verificationResponse.IsRight;
-        EmailVerificationInProgress = false;
+        _emailVerificationSuccess = verificationResponse.IsRight;
+        _emailVerificationInProgress = false;
     }
 }

@@ -40,7 +40,7 @@ using Microsoft.AspNetCore.Components;
 namespace Crypter.Web.Shared;
 
 [SupportedOSPlatform("browser")]
-public partial class MainLayoutBase : LayoutComponentBase, IDisposable
+public class MainLayoutBase : LayoutComponentBase, IDisposable
 {
     [Inject] private IBlazorSodiumService BlazorSodiumService { get; set; }
 
@@ -52,10 +52,10 @@ public partial class MainLayoutBase : LayoutComponentBase, IDisposable
 
     [Inject] private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
 
-    public BasicModal BasicModal { get; protected set; }
-    public RecoveryKeyModal RecoveryKeyModal { get; protected set; }
-    public TransferSuccessModal TransferSuccessModal { get; protected set; }
-    public SpinnerModal SpinnerModal { get; protected set; }
+    protected BasicModal BasicModal { get; set; }
+    protected RecoveryKeyModal RecoveryKeyModal { get; set; }
+    protected TransferSuccessModal TransferSuccessModal { get; set; }
+    protected SpinnerModal SpinnerModal { get; set; }
 
     protected bool ServicesInitialized { get; set; }
 

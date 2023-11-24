@@ -28,29 +28,31 @@ using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Transfer.Models;
+using Crypter.Common.Contracts.Features.Metrics;
+using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared;
 
-public partial class ServerDiskSpaceComponentBase : ComponentBase
+public partial class ServerDiskSpaceComponent
 {
-    [Inject] protected TransferSettings UploadSettings { get; set; }
+    [Inject] private TransferSettings UploadSettings { get; set; }
 
-    [Inject] protected ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
 
-    protected bool ServerHasDiskSpace = true;
+    private bool _serverHasDiskSpace = true;
 
-    protected double ServerSpacePercentageRemaining = 100.0;
+    private double _serverSpacePercentageRemaining = 100.0;
 
     protected override async Task OnInitializedAsync()
     {
-        var response = await CrypterApiService.Metrics.GetPublicStorageMetricsAsync();
+        Maybe<PublicStorageMetricsResponse> response = await CrypterApiService.Metrics.GetPublicStorageMetricsAsync();
 
-        ServerSpacePercentageRemaining = response.Match(
+        _serverSpacePercentageRemaining = response.Match(
             0.0,
             x => 100.0 * (x.Available / (double)x.Allocated));
 
-        ServerHasDiskSpace = response.Match(
+        _serverHasDiskSpace = response.Match(
             false,
             x =>
             {

@@ -32,7 +32,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Pages;
 
-public partial class UserProfileBase : ComponentBase
+public partial class UserProfile
 {
     [Inject] private ICrypterApiClient CrypterApiService { get; set; }
 
@@ -40,47 +40,47 @@ public partial class UserProfileBase : ComponentBase
 
     [Parameter] public string Username { get; set; }
 
-    protected UploadFileTransferModal FileModal { get; set; }
-    protected UploadMessageTransferModal MessageModal { get; set; }
+    private UploadFileTransferModal FileModal { get; set; }
+    private UploadMessageTransferModal MessageModal { get; set; }
 
-    protected bool Loading;
-    protected bool IsProfileAvailable;
-    protected string Alias;
-    protected string About;
-    protected string ProperUsername;
-    protected bool AllowsFiles;
-    protected bool AllowsMessages;
-    protected byte[] UserPublicKey;
-    protected bool EmailVerified;
+    private bool _loading;
+    private bool _isProfileAvailable;
+    private string _alias;
+    private string _about;
+    private string _properUsername;
+    private bool _allowsFiles;
+    private bool _allowsMessages;
+    private byte[] _userPublicKey;
+    private bool _emailVerified;
 
     protected override void OnInitialized()
     {
-        Loading = true;
+        _loading = true;
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        Loading = true;
+        _loading = true;
         await PrepareUserProfileAsync();
-        Loading = false;
+        _loading = false;
     }
 
-    protected async Task PrepareUserProfileAsync()
+    private async Task PrepareUserProfileAsync()
     {
         bool isLoggedIn = await UserSessionService.IsLoggedInAsync();
         var response = await CrypterApiService.User.GetUserProfileAsync(Username, isLoggedIn);
         response.DoRight(x =>
         {
-            Alias = x.Alias;
-            About = x.About;
-            ProperUsername = x.Username;
-            AllowsFiles = x.ReceivesFiles;
-            AllowsMessages = x.ReceivesMessages;
-            UserPublicKey = x.PublicKey;
-            EmailVerified = x.EmailVerified;
+            _alias = x.Alias;
+            _about = x.About;
+            _properUsername = x.Username;
+            _allowsFiles = x.ReceivesFiles;
+            _allowsMessages = x.ReceivesMessages;
+            _userPublicKey = x.PublicKey;
+            _emailVerified = x.EmailVerified;
         });
 
-        IsProfileAvailable = response.Match(
+        _isProfileAvailable = response.Match(
             false,
             right => right.PublicKey is not null);
     }

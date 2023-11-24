@@ -36,12 +36,12 @@ using Microsoft.AspNetCore.Components.Web;
 namespace Crypter.Web.Shared.Transfer;
 
 [SupportedOSPlatform("browser")]
-public partial class DownloadFileTransferBase : DownloadTransferBase, IDisposable
+public partial class DownloadFileTransfer :  IDisposable
 {
-    protected string FileName = string.Empty;
-    protected string ContentType = string.Empty;
-    protected long FileSize = 0;
-    protected bool LocalDownloadInProgress { get; set; }
+    private string _fileName = string.Empty;
+    private string _contentType = string.Empty;
+    private long _fileSize = 0;
+    private bool _localDownloadInProgress;
 
     private DownloadFileHandler _downloadHandler;
 
@@ -51,17 +51,17 @@ public partial class DownloadFileTransferBase : DownloadTransferBase, IDisposabl
         FinishedLoading = true;
     }
 
-    protected async Task PrepareFilePreviewAsync()
+    private async Task PrepareFilePreviewAsync()
     {
         _downloadHandler = TransferHandlerFactory.CreateDownloadFileHandler(TransferHashId, UserType);
         var previewResponse = await _downloadHandler.DownloadPreviewAsync();
         previewResponse.DoRight(x =>
         {
-            FileName = x.FileName;
-            ContentType = x.ContentType;
+            _fileName = x.FileName;
+            _contentType = x.ContentType;
             Created = x.CreationUTC.ToLocalTime();
             Expiration = x.ExpirationUTC.ToLocalTime();
-            FileSize = x.Size;
+            _fileSize = x.Size;
             SenderUsername = x.Sender;
             SpecificRecipient = !string.IsNullOrEmpty(x.Recipient);
         });
@@ -69,7 +69,7 @@ public partial class DownloadFileTransferBase : DownloadTransferBase, IDisposabl
         ItemFound = previewResponse.IsRight;
     }
 
-    protected async Task OnDecryptClickedAsync(MouseEventArgs _)
+    private async Task OnDecryptClickedAsync(MouseEventArgs _)
     {
         BrowserDownloadFileService.Reset();
         DecryptionInProgress = true;
@@ -79,20 +79,20 @@ public partial class DownloadFileTransferBase : DownloadTransferBase, IDisposabl
             : DeriveRecipientPrivateKeyFromUrlSeed();
 
         recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key");
-        await recipientPrivateKey.IfSomeAsync(async x =>
+        await recipientPrivateKey.IfSomeAsync(async privateKey =>
         {
-            _downloadHandler.SetRecipientInfo(x);
+            _downloadHandler.SetRecipientInfo(privateKey);
 
             await SetProgressMessage(_decryptingLiteral);
             var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
 
             decryptionResponse.DoLeftOrNeither(
-                x => HandleDownloadError(x),
+                HandleDownloadError,
                 () => HandleDownloadError());
 
             decryptionResponse.DoRight(x =>
             {
-                BrowserDownloadFileService.CopyBufferToJavaScript(FileName, ContentType, x);
+                BrowserDownloadFileService.CopyBufferToJavaScript(_fileName, _contentType, x);
                 DecryptionComplete = true;
             });
         });
@@ -101,18 +101,18 @@ public partial class DownloadFileTransferBase : DownloadTransferBase, IDisposabl
         StateHasChanged();
     }
 
-    protected async Task DownloadFileAsync()
+    private async Task DownloadFileAsync()
     {
-        LocalDownloadInProgress = true;
+        _localDownloadInProgress = true;
         StateHasChanged();
         await Task.Delay(400);
 
         BrowserDownloadFileService.Download();
-        LocalDownloadInProgress = false;
+        _localDownloadInProgress = false;
         StateHasChanged();
     }
 
-    protected async Task SetProgressMessage(string message)
+    private async Task SetProgressMessage(string message)
     {
         DecryptionStatusMessage = message;
         StateHasChanged();
@@ -122,18 +122,14 @@ public partial class DownloadFileTransferBase : DownloadTransferBase, IDisposabl
     private void HandleDownloadError(
         DownloadTransferCiphertextError error = DownloadTransferCiphertextError.UnknownError)
     {
-        switch (error)
+#pragma warning disable CS8524
+        ErrorMessage = error switch
+#pragma warning restore CS8524
         {
-            case DownloadTransferCiphertextError.NotFound:
-                ErrorMessage = "File not found";
-                break;
-            case DownloadTransferCiphertextError.UnknownError:
-                ErrorMessage = "An error occurred";
-                break;
-            case DownloadTransferCiphertextError.InvalidRecipientProof:
-                ErrorMessage = "Invalid decryption key";
-                break;
-        }
+            DownloadTransferCiphertextError.NotFound => "File not found",
+            DownloadTransferCiphertextError.UnknownError => "An error occurred",
+            DownloadTransferCiphertextError.InvalidRecipientProof => "Invalid decryption key"
+        };
     }
 
     public void Dispose()

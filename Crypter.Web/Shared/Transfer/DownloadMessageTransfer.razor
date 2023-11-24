@@ -23,8 +23,8 @@
  * 
  * Contact the current copyright holder to discuss commercial license options.
  *@
-@using ByteSizeLib
-@inherits DownloadMessageTransferBase
+
+@inherits DownloadTransferBase
 
 @if (FinishedLoading)
 {
@@ -36,7 +36,7 @@
                     <h5 class="card-header">Details</h5>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <span class="fw-bold">Subject: </span>@(string.IsNullOrEmpty(Subject) ? "{ no subject }" : Subject)
+                            <span class="fw-bold">Subject: </span>@(string.IsNullOrEmpty(_subject) ? "{ no subject }" : _subject)
                         </li>
                         <li class="list-group-item">
                             <span class="fw-bold">Sender: </span>
@@ -50,7 +50,7 @@
                             }
                         </li>
                         <li class="list-group-item">
-                            <span class="fw-bold">Encrypted Size: </span>@(ByteSize.FromBytes(MessageSize).ToBinaryString())
+                            <span class="fw-bold">Encrypted Size: </span>@(ByteSize.FromBytes(_messageSize).ToBinaryString())
                         </li>
                         <li class="list-group-item">
                             <span class="fw-bold">Created: </span>@Created.ToString("MM/dd/yyyy h:mm tt")
@@ -70,7 +70,7 @@
                                 Decryption successful!
                             </div>
                             <div class="mb-3">
-                                <textarea @bind="PlaintextMessage" class="form-control" rows="5"></textarea>
+                                <textarea @bind="_plaintextMessage" class="form-control" rows="5"></textarea>
                             </div>
                         }
                         else if (DecryptionInProgress)

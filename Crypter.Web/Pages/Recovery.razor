@@ -26,8 +26,6 @@
 
 @page "/recovery"
 
-@inherits RecoveryBase
-
 <PageTitle>Crypter - Recovery</PageTitle>
 
 <div class="container my-4">
@@ -36,10 +34,10 @@
         <div class="col-md-4">
             <div class="mb-3">
                 <label class="form-label">Username</label>
-                <p class="fw-bold">@Username</p>
+                <p class="fw-bold">@_username</p>
             </div>
 
-            @if (RecoverySucceeded)
+            @if (_recoverySucceeded)
             {
                 <div class="alert alert-success" role="alert">
                     <h4 class="alert-heading">Recovery Success!</h4>
@@ -52,28 +50,24 @@
                 <form @onsubmit:preventDefault @onsubmit="SubmitRecoveryAsync">
                     <div class="mb-3">
                         <label for="newPasswordFormControl" class="form-label">New Password</label>
-                        <input type="password" @bind="NewPassword" class="form-control" id="newPasswordFormControl"/>
+                        <input type="password" @bind="_newPassword" class="form-control" id="newPasswordFormControl"/>
                     </div>
 
                     <div class="mb-3">
                         <label for="newPasswordConfirmFormControl" class="form-label">Confirm New Password</label>
-                        <input type="password" @bind="NewPasswordConfirm" class="form-control" id="newPasswordConfirmFormControl"/>
+                        <input type="password" @bind="_newPasswordConfirm" class="form-control" id="newPasswordConfirmFormControl"/>
                     </div>
 
                     <div class="mb-3">
                         <p>Recovery Key</p>
                         <div class="form-check form-switch">
                             <label class="form-check-label" for="recoveryKeySwitch">I have my recovery key</label>
-                            <input @bind="RecoveryKeySwitch" class="form-check-input" type="checkbox" id="recoveryKeySwitch"/>
+                            <input @bind="_recoveryKeySwitch" class="form-check-input" type="checkbox" id="recoveryKeySwitch"/>
                         </div>
 
-                        @if (RecoveryKeySwitch)
+                        @if (_recoveryKeySwitch)
                         {
-                            <input type="text" @bind="RecoveryKeyInput" class="form-control" id="recoveryKeyFormControl"/>
-                            @if (!string.IsNullOrEmpty(RecoveryKeyErrorMessage))
-                            {
-                                <span class="text-danger">@RecoveryKeyErrorMessage</span>
-                            }
+                            <input type="text" @bind="_recoveryKeyInput" class="form-control" id="recoveryKeyFormControl"/>
                         }
                         else
                         {
@@ -83,8 +77,8 @@
                         }
                     </div>
 
-                    <div hidden="@(string.IsNullOrEmpty(RecoveryErrorMessage))" class="alert alert-danger" role="alert">
-                        @RecoveryErrorMessage
+                    <div hidden="@(string.IsNullOrEmpty(_recoveryErrorMessage))" class="alert alert-danger" role="alert">
+                        @_recoveryErrorMessage
                     </div>
 
                     <button type="submit" class="btn btn-primary">Submit</button>

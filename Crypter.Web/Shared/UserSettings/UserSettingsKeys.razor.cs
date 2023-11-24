@@ -35,7 +35,7 @@ using Microsoft.JSInterop;
 
 namespace Crypter.Web.Shared.UserSettings;
 
-public partial class UserSettingsKeysBase : ComponentBase, IDisposable
+public partial class UserSettingsKeys : IDisposable
 {
     [Inject] private IUserSessionService UserSessionService { get; set; }
 
@@ -43,17 +43,17 @@ public partial class UserSettingsKeysBase : ComponentBase, IDisposable
 
     [Inject] private IUserRecoveryService UserRecoveryService { get; set; }
 
-    [Inject] protected IJSRuntime JSRuntime { get; set; }
+    [Inject] private IJSRuntime JsRuntime { get; set; }
 
-    protected PasswordModal PasswordModal { get; set; }
+    private PasswordModal _passwordModal;
 
-    protected string PrivateKey = string.Empty;
-    protected string RecoveryKey = string.Empty;
+    private string _privateKey = string.Empty;
+    private string _recoveryKey = string.Empty;
 
     protected override void OnInitialized()
     {
-        PrivateKey = UserKeysService.PrivateKey.Match(
-            () => "",
+        _privateKey = UserKeysService.PrivateKey.Match(
+            () => string.Empty,
             Convert.ToHexString);
 
         UserSessionService.UserPasswordTestSuccessEventHandler += OnPasswordTestSuccess;
@@ -61,7 +61,7 @@ public partial class UserSettingsKeysBase : ComponentBase, IDisposable
 
     private async void OnPasswordTestSuccess(object sender, UserPasswordTestSuccessEventArgs args)
     {
-        RecoveryKey = await UserKeysService.MasterKey
+        _recoveryKey = await UserKeysService.MasterKey
             .BindAsync(async masterKey =>
                 await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, args.Username, args.Password))
             .MatchAsync(
@@ -71,10 +71,10 @@ public partial class UserSettingsKeysBase : ComponentBase, IDisposable
         await InvokeAsync(StateHasChanged);
     }
 
-    protected async Task CopyRecoveryKeyToClipboardAsync()
+    private async Task CopyRecoveryKeyToClipboardAsync()
     {
-        await JSRuntime.InvokeVoidAsync("Crypter.CopyToClipboard",
-            new object[] { RecoveryKey, "recoveryKeyCopyTooltip" });
+        await JsRuntime.InvokeVoidAsync("Crypter.CopyToClipboard",
+            new object[] { _recoveryKey, "recoveryKeyCopyTooltip" });
     }
 
     public void Dispose()

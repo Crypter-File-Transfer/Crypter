@@ -30,13 +30,13 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Pages.Authenticated.Base;
 
-public partial class AuthenticatedPageBase : ComponentBase
+public class AuthenticatedPageBase : ComponentBase
 {
     [Inject] protected NavigationManager NavigationManager { get; set; }
 
     [Inject] protected IUserSessionService UserSessionService { get; set; }
 
-    private const string _loginPage = "/login";
+    private const string LoginPage = "/login";
 
     protected override async Task OnInitializedAsync()
     {
@@ -44,8 +44,8 @@ public partial class AuthenticatedPageBase : ComponentBase
         {
             string returnUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
             string redirect = string.IsNullOrWhiteSpace(returnUrl)
-                ? _loginPage
-                : $"{_loginPage}/?returnUrl={returnUrl}";
+                ? LoginPage
+                : $"{LoginPage}/?returnUrl={returnUrl}";
 
             NavigationManager.NavigateTo(redirect);
         }

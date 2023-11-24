@@ -35,7 +35,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.UserSettings;
 
-public partial class UserSettingsNotificationSettingsBase : ComponentBase, IDisposable
+public partial class UserSettingsNotificationSettings : IDisposable
 {
     [Inject] protected ICrypterApiClient CrypterApiService { get; set; }
 
@@ -43,13 +43,13 @@ public partial class UserSettingsNotificationSettingsBase : ComponentBase, IDisp
 
     [Inject] protected IUserNotificationSettingsService UserNotificationSettingsService { get; set; }
 
-    protected bool EmailAddressVerified { get; set; } = false;
+    private bool _emailAddressVerified;
 
-    protected bool EnableTransferNotifications { get; set; } = false;
-    protected bool EnableTransferNotificationsEdit { get; set; } = false;
+    private bool _enableTransferNotifications;
+    private bool _enableTransferNotificationsEdit;
 
-    protected bool IsDataReady { get; set; } = false;
-    protected bool IsEditing { get; set; } = false;
+    private bool _isDataReady;
+    private bool _isEditing;
 
     protected override void OnInitialized()
     {
@@ -58,49 +58,49 @@ public partial class UserSettingsNotificationSettingsBase : ComponentBase, IDisp
 
     protected override async Task OnParametersSetAsync()
     {
-        EmailAddressVerified = await UserContactInfoSettingsService.GetContactInfoSettingsAsync()
+        _emailAddressVerified = await UserContactInfoSettingsService.GetContactInfoSettingsAsync()
             .MatchAsync(() =>
                     false,
                 x => x.EmailAddressVerified);
 
-        EnableTransferNotifications = await UserNotificationSettingsService.GetNotificationSettingsAsync()
+        _enableTransferNotifications = await UserNotificationSettingsService.GetNotificationSettingsAsync()
             .MatchAsync(() =>
                     false,
-                x => EnableTransferNotifications = x.EmailNotifications && x.NotifyOnTransferReceived);
-        EnableTransferNotificationsEdit = EnableTransferNotifications;
+                x => _enableTransferNotifications = x.EmailNotifications && x.NotifyOnTransferReceived);
+        _enableTransferNotificationsEdit = _enableTransferNotifications;
 
-        IsDataReady = true;
+        _isDataReady = true;
     }
 
-    protected void OnEditClicked()
+    private void OnEditClicked()
     {
-        IsEditing = true;
+        _isEditing = true;
     }
 
-    protected void OnCancelClicked()
+    private void OnCancelClicked()
     {
-        EnableTransferNotificationsEdit = EnableTransferNotifications;
-        IsEditing = false;
+        _enableTransferNotificationsEdit = _enableTransferNotifications;
+        _isEditing = false;
     }
 
-    protected async Task OnSaveClickedAsync()
+    private async Task OnSaveClickedAsync()
     {
         NotificationSettings newNotificationSettings =
-            new NotificationSettings(EnableTransferNotificationsEdit, EnableTransferNotificationsEdit);
+            new NotificationSettings(_enableTransferNotificationsEdit, _enableTransferNotificationsEdit);
         await CrypterApiService.UserSetting.UpdateNotificationSettingsAsync(newNotificationSettings)
             .DoRightAsync(x =>
             {
-                EnableTransferNotifications = x.EmailNotifications && x.NotifyOnTransferReceived;
-                EnableTransferNotificationsEdit = EnableTransferNotifications;
+                _enableTransferNotifications = x.EmailNotifications && x.NotifyOnTransferReceived;
+                _enableTransferNotificationsEdit = _enableTransferNotifications;
             })
-            .DoLeftOrNeitherAsync(() => { EnableTransferNotificationsEdit = EnableTransferNotifications; });
+            .DoLeftOrNeitherAsync(() => { _enableTransferNotificationsEdit = _enableTransferNotifications; });
 
-        IsEditing = false;
+        _isEditing = false;
     }
 
     private void OnContactInfoChanged(object sender, UserContactInfoChangedEventArgs args)
     {
-        EmailAddressVerified = args.EmailAddressVerified;
+        _emailAddressVerified = args.EmailAddressVerified;
         StateHasChanged();
     }
 

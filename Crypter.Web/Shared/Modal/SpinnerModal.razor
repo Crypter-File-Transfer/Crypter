@@ -24,16 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@inherits SpinnerModalBase
-
-<ModalBehavior @ref=ModalBehaviorRef>
+<ModalBehavior @ref="_modalBehaviorRef">
     <Content>
         <div class="modal-content">
             <div class="modal-header">
-                <h3>@Subject</h3>
+                <h3>@_subject</h3>
             </div>
             <div class="modal-body justify-content-center">
-                <p class="word-wrap">@Message</p>
+                <p class="word-wrap">@_message</p>
                 <div class="text-center">
                     <div class="spinner-border" role="status">
                         <span class="visually-hidden">Loading...</span>

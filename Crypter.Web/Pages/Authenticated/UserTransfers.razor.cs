@@ -31,16 +31,15 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Web.Models;
-using Crypter.Web.Pages.Authenticated.Base;
 using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Pages;
+namespace Crypter.Web.Pages.Authenticated;
 
-public partial class UserTransfersBase : AuthenticatedPageBase
+public partial class UserTransfers
 {
-    [Inject] protected ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
 
-    protected bool Loading = true;
+    private bool _loading = true;
 
     protected IEnumerable<UserSentItem> Sent;
     protected IEnumerable<UserReceivedItem> Received;
@@ -53,13 +52,13 @@ public partial class UserTransfersBase : AuthenticatedPageBase
             return;
         }
 
-        Loading = false;
+        _loading = false;
 
         Sent = await GetUserSentItems();
         Received = await GetUserReceivedItems();
     }
 
-    protected async Task<IEnumerable<UserSentItem>> GetUserSentItems()
+    private async Task<IEnumerable<UserSentItem>> GetUserSentItems()
     {
         var maybeSentMessages = await CrypterApiService.MessageTransfer.GetSentMessagesAsync();
         var sentMessages = maybeSentMessages.SomeOrDefault(new List<UserSentMessageDTO>());
@@ -90,7 +89,7 @@ public partial class UserTransfersBase : AuthenticatedPageBase
             .OrderBy(x => x.ExpirationUTC);
     }
 
-    protected async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
+    private async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
     {
         var maybeReceivedMessages = await CrypterApiService.MessageTransfer.GetReceivedMessagesAsync();
         var receivedMessages = maybeReceivedMessages.SomeOrDefault(new List<UserReceivedMessageDTO>());

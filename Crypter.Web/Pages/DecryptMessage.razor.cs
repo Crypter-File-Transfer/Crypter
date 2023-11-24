@@ -30,20 +30,19 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Pages;
 
-public partial class DecryptMessageBase : ComponentBase
+public partial class DecryptMessage
 {
     [Parameter] public string TransferHashId { get; set; }
 
     [Parameter] public int UserType { get; set; }
 
-    [Inject] protected IUserSessionService UserSessionService { get; set; }
+    [Inject] private IUserSessionService UserSessionService { get; set; }
 
-    protected bool Loading { get; set; }
+    private bool _loading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        Loading = true;
         await UserSessionService.IsLoggedInAsync();
-        Loading = false;
+        _loading = false;
     }
 }

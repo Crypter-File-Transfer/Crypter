@@ -31,26 +31,26 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.Modal;
 
-public partial class SpinnerModalBase : ComponentBase
+public partial class SpinnerModal
 {
-    protected string Subject;
-    protected string Message;
+    private string _subject;
+    private string _message;
 
-    protected Maybe<EventCallback> ModalClosedCallback { get; set; }
-    protected ModalBehavior ModalBehaviorRef;
+    private Maybe<EventCallback> _modalClosedCallback;
+    private ModalBehavior _modalBehaviorRef;
 
     public void Open(string subject, string message, Maybe<EventCallback> modalClosedCallback)
     {
-        Subject = subject;
-        Message = message;
-        ModalClosedCallback = modalClosedCallback;
+        _subject = subject;
+        _message = message;
+        _modalClosedCallback = modalClosedCallback;
 
-        ModalBehaviorRef.Open();
+        _modalBehaviorRef.Open();
     }
 
     public async Task CloseAsync()
     {
-        await ModalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
-        ModalBehaviorRef.Close();
+        await _modalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
+        _modalBehaviorRef.Close();
     }
 }

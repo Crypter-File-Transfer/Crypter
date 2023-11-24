@@ -26,13 +26,11 @@
 
 @page "/decrypt/message/{userType:int}/{transferHashId}"
 
-@inherits DecryptMessageBase
-
 <PageTitle>Crypter - Decrypt</PageTitle>
 
 <div class="container my-4">
     <h1>Decrypt Message</h1>
-    @if (!Loading)
+    @if (!_loading)
     {
         <DownloadMessageTransfer TransferHashId="@TransferHashId" UserType="(TransferUserType)UserType"/>
     }

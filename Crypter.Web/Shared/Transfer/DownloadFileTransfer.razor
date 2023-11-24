@@ -23,8 +23,8 @@
  * 
  * Contact the current copyright holder to discuss commercial license options.
  *@
-@using ByteSizeLib
-@inherits DownloadFileTransferBase
+
+@inherits DownloadTransferBase
 
 @if (FinishedLoading)
 {
@@ -36,7 +36,7 @@
                     <h5 class="card-header">Details</h5>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <span class="fw-bold">File name: </span>@(string.IsNullOrEmpty(FileName) ? "{ no file name }" : FileName)
+                            <span class="fw-bold">File name: </span>@(string.IsNullOrEmpty(_fileName) ? "{ no file name }" : _fileName)
                         </li>
                         <li class="list-group-item">
                             <span class="fw-bold">Sender: </span>
@@ -50,10 +50,10 @@
                             }
                         </li>
                         <li class="list-group-item">
-                            <span class="fw-bold">Type: </span>@(string.IsNullOrEmpty(ContentType) ? "{ unknown }" : ContentType)
+                            <span class="fw-bold">Type: </span>@(string.IsNullOrEmpty(_contentType) ? "{ unknown }" : _contentType)
                         </li>
                         <li class="list-group-item">
-                            <span class="fw-bold">Encrypted Size: </span>@(ByteSize.FromBytes(FileSize).ToBinaryString())
+                            <span class="fw-bold">Encrypted Size: </span>@(ByteSize.FromBytes(_fileSize).ToBinaryString())
                         </li>
                         <li class="list-group-item">
                             <span class="fw-bold">Created: </span>@Created
@@ -73,11 +73,11 @@
                                 Decryption successful!
                             </div>
                             <p class="card-text fst-italic">Click 'Download' to save the decrypted file to your device</p>
-                            <div class="mb-3" hidden="@LocalDownloadInProgress">
+                            <div class="mb-3" hidden="@_localDownloadInProgress">
                                 <button type="button" class="btn btn-primary" @onclick="@(async () => await DownloadFileAsync())">Download</button>
                             </div>
 
-                            <div hidden="@(!LocalDownloadInProgress)">
+                            <div hidden="@(!_localDownloadInProgress)">
                                 <div class="text-center">
                                     Downloading
                                 </div>

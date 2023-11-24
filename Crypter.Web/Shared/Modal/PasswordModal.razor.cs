@@ -26,26 +26,27 @@
 
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
+using Crypter.Common.Primitives;
 using Crypter.Web.Shared.Modal.Template;
 using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.Modal;
 
-public class PasswordModalBase : ComponentBase
+public partial class PasswordModal
 {
     [Inject] private IUserSessionService UserSessionService { get; set; }
 
     [Parameter] public EventCallback<bool> ModalClosedCallback { get; set; }
 
-    protected ModalBehavior ModalBehaviorRef { get; set; }
+    private ModalBehavior ModalBehaviorRef { get; set; }
 
-    protected string Username;
-    protected string Password;
-    protected bool PasswordTestFailed;
+    private string _username;
+    private string _password;
+    private bool _passwordTestFailed;
 
     public void Open()
     {
-        Username = UserSessionService.Session.Match(
+        _username = UserSessionService.Session.Match(
             () => string.Empty,
             x => x.Username);
 
@@ -58,9 +59,9 @@ public class PasswordModalBase : ComponentBase
         ModalBehaviorRef.Close();
     }
 
-    public async Task<bool> TestPasswordAsync()
+    private async Task<bool> TestPasswordAsync()
     {
-        if (!Common.Primitives.Password.TryFrom(Password, out var password))
+        if (!Password.TryFrom(_password, out Password password))
         {
             return false;
         }
@@ -68,17 +69,17 @@ public class PasswordModalBase : ComponentBase
         return await UserSessionService.TestPasswordAsync(password);
     }
 
-    public async Task OnSubmitClickedAsync()
+    private async Task OnSubmitClickedAsync()
     {
         if (await TestPasswordAsync())
         {
             await CloseAsync(true);
         }
 
-        PasswordTestFailed = true;
+        _passwordTestFailed = true;
     }
 
-    public async Task OnCancelClickedAsync()
+    private async Task OnCancelClickedAsync()
     {
         await CloseAsync(false);
     }

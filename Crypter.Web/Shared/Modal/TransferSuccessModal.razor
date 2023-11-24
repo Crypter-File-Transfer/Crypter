@@ -24,19 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@inherits TranferSuccessModalBase
-
-<ModalBehavior @ref="ModalBehaviorRef">
+<ModalBehavior @ref="_modalBehaviorRef">
     <Content>
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="my-0">Upload Successful</h3>
             </div>
             <div class="modal-body justify-content-center">
-                <p>This shareable link will expire in @ExpirationHours hours</p>
+                <p>This shareable link will expire in @_expirationHours hours</p>
                 <div class="copiedTooltip">
                     <div class="input-group mb-3">
-                        <input class="form-control" value="@DownloadUrl" type="text" name="downloadUrl" id="downloadUrl" readonly @onclick="CopyToClipboardAsync"/>
+                        <input class="form-control" value="@_downloadUrl" type="text" name="downloadUrl" id="downloadUrl" readonly @onclick="CopyToClipboardAsync"/>
                         <div class="input-group-append">
                             <button class="btn btn-secondary" type="button" @onclick="CopyToClipboardAsync">Copy link</button>
                         </div>
@@ -45,7 +43,7 @@
                     <span class="copiedToolTip toolTipText">Copied</span>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="() => CloseAsync()">Okay</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" @onclick="CloseAsync">Okay</button>
                 </div>
             </div>
         </div>

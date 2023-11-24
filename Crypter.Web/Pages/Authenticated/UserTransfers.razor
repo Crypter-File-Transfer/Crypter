@@ -26,12 +26,12 @@
 
 @page "/user/transfers"
 
-@inherits UserTransfersBase
+@inherits AuthenticatedPageBase
 
 <PageTitle>Crypter - Transfers</PageTitle>
 
 <div class="container my-4">
-    @if (!Loading)
+    @if (!_loading)
     {
         <h1>Transfers</h1>
         <div class="row">
