@@ -29,7 +29,7 @@
 <div class="page h-100">
     <CascadingValue Value="@BasicModal">
         <CascadingValue Value="@TransferSuccessModal">
-            <Header></Header>
+            <AppHeader/>
             @if (ServicesInitialized)
             {
                 <main role="main" class="pb-3">
@@ -44,5 +44,5 @@
     <TransferSuccessModal @ref="TransferSuccessModal"/>
     <SpinnerModal @ref="SpinnerModal"/>
 
-    <Footer></Footer>
+    <AppFooter/>
 </div>
