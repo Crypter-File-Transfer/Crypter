@@ -54,8 +54,7 @@ These decisions and locations are device-specific.  For example, storing data in
 
 ### Crypter.Core
 
-A class library containing code to interact with the PostgreSQL database.
-Most of the back-end business logic should be located here.
+All back-end business logic.
 
 ### Crypter.Crypto.Common
 
@@ -70,6 +69,10 @@ This uses libsodium through the [BlazorSodium](https://github.com/Jack-Edwards/B
 
 An implementation of the `Crypter.Crypto.Common` interfaces for use in non-browser platforms.
 This uses libsodium through the [Geralt](https://github.com/samuel-lucas6/Geralt) nuget package, as well as `System.Security.Cryptography` for random number generation.
+
+### Crypter.DataAccess
+
+A class library containing code to interact with the PostgreSQL database.
 
 ### Crypter.Test
 
