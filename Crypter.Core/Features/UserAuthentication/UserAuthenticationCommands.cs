@@ -27,7 +27,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Crypter.Core.Entities;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.UserAuthentication;

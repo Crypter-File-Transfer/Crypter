@@ -30,7 +30,7 @@ using System.Linq.Expressions;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Enums;
-using Crypter.Core.Entities;
+using Crypter.DataAccess.Entities;
 
 namespace Crypter.Core.Extensions;
 

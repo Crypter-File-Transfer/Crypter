@@ -32,6 +32,7 @@ using Crypter.Core.Features.UserRecovery;
 using Crypter.Core.Features.UserRecovery.Models;
 using Crypter.Core.Models;
 using Crypter.Crypto.Common;
+using Crypter.DataAccess;
 using EasyMonads;
 using Hangfire;
 

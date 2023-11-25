@@ -32,6 +32,7 @@ using Crypter.Core.Repositories;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
+using Crypter.DataAccess;
 using Hangfire;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;

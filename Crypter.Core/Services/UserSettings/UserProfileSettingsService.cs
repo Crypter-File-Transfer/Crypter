@@ -29,6 +29,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
 using Crypter.Core.Features.UserSettings.ProfileSettings;
+using Crypter.DataAccess;
 using EasyMonads;
 
 namespace Crypter.Core.Services.UserSettings;
