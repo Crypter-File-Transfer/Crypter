@@ -25,6 +25,18 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9485ACA9-CF19-4D8A-B0AE-E6D432FCA066}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		docker-compose.yml = docker-compose.yml
+		Crypter.API.Dockerfile = Crypter.API.Dockerfile
+		Crypter.Web.Dockerfile = Crypter.Web.Dockerfile
+		.dockerignore = .dockerignore
+		.env = .env
+		.gitignore = .gitignore
+		CONTRIBUTING.md = CONTRIBUTING.md
+		Crypter.sln = Crypter.sln
+		Crypter.sln.DotSettings.user = Crypter.sln.DotSettings.user
+		docker-compose.override.yml = docker-compose.override.yml
+		LICENSE.md = LICENSE.md
+		README.md = README.md
 	EndProjectSection
 EndProject
 Global
