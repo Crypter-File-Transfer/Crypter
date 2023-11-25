@@ -31,6 +31,7 @@ using Crypter.Common.Primitives;
 using Crypter.Core.Models;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.DigitalSignature;
+using Crypter.DataAccess;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 

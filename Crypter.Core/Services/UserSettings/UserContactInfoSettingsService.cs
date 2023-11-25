@@ -30,6 +30,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Core.Features.UserSettings.ContactInfoSettings;
 using Crypter.Core.Models;
+using Crypter.DataAccess;
 using EasyMonads;
 using Hangfire;
 using Microsoft.Extensions.Options;

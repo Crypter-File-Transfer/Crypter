@@ -27,7 +27,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Primitives;
-using Crypter.Core.Entities;
+using Crypter.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.DataContextExtensions;

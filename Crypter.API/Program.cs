@@ -34,6 +34,7 @@ using Crypter.Core;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Settings;
+using Crypter.DataAccess;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

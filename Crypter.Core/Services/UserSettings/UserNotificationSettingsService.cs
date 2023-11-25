@@ -29,6 +29,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Core.Features.UserSettings.NotificationSettings;
+using Crypter.DataAccess;
 using EasyMonads;
 
 namespace Crypter.Core.Services.UserSettings;

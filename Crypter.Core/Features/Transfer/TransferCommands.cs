@@ -28,6 +28,7 @@ using System;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Core.Repositories;
+using Crypter.DataAccess;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer;

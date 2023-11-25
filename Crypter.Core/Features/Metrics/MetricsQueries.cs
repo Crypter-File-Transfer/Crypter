@@ -30,6 +30,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Core.Settings;
+using Crypter.DataAccess;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Metrics;
