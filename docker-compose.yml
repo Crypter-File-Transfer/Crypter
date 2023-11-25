@@ -7,7 +7,7 @@ services:
     image: ghcr.io/crypter-file-transfer/${API_IMAGE_NAME:-crypter_api}:latest
     build:
       context: .
-      dockerfile: Crypter.API.Dockerfile
+      dockerfile: Crypter.Api/Dockerfile
     expose:
       - "80"
     environment:
@@ -27,7 +27,7 @@ services:
     image: ghcr.io/crypter-file-transfer/${WEB_IMAGE_NAME:-crypter_web}:latest
     build:
       context: .
-      dockerfile: Crypter.Web.Dockerfile
+      dockerfile: Crypter.Web/Dockerfile
     ports:
       - ${WEB_BIND_PORT-80}:80
       - ${WEB_SECURE_BIND_PORT-443}:443
