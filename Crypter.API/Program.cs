@@ -34,12 +34,10 @@ using Crypter.Core;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Settings;
-using Crypter.DataAccess;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -112,10 +110,6 @@ if (app.Environment.IsDevelopment())
 
     app.UseSwagger();
     app.UseSwaggerUI();
-
-    using IServiceScope serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope();
-    await using DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
-    await context.Database.MigrateAsync();
 }
 else
 {
@@ -128,6 +122,11 @@ else
     });
 }
 
+DatabaseSettings dbSettings = app.Configuration
+    .GetSection("DatabaseSettings")
+    .Get<DatabaseSettings>();
+await app.ApplyCrypterCoreAsync(dbSettings);
+
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
@@ -135,4 +134,4 @@ app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
