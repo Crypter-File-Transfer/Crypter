@@ -39,6 +39,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -113,8 +114,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 
     using IServiceScope serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope();
-    using DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
-    context.Database.EnsureCreated();
+    await using DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+    await context.Database.MigrateAsync();
 }
 else
 {
