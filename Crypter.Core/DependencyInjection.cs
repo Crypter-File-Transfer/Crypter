@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Repositories;
@@ -35,6 +36,8 @@ using Crypter.Crypto.Providers.Default;
 using Crypter.DataAccess;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -115,4 +118,16 @@ public static class DependencyInjection
 
     public static IServiceCollection AddBackgroundServer(this IServiceCollection services,
         HangfireSettings hangfireSettings) => services.AddHangfireServer(options => { options.WorkerCount = hangfireSettings.Workers; });
+
+    public async static Task<IApplicationBuilder> ApplyCrypterCoreAsync(this WebApplication webApplication, DatabaseSettings databaseSettings)
+    {
+        if (databaseSettings.MigrateOnStartup)
+        {
+            using IServiceScope serviceScope = webApplication.Services.GetService<IServiceScopeFactory>().CreateScope();
+            await using DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+            await context.Database.MigrateAsync();
+        }
+
+        return webApplication;
+    }
 }

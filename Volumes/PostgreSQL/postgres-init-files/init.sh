@@ -11,6 +11,11 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
    REVOKE CONNECT ON DATABASE crypter_hangfire FROM PUBLIC;
 EOSQL
 
+# Create the "citext" extension on the "crypter" database
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "crypter" <<-EOSQL
+  CREATE EXTENSION IF NOT EXISTS citext;
+EOSQL
+
 # Create crypter_user
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "crypter" <<-EOSQL
    CREATE USER crypter_user WITH PASSWORD '$POSTGRES_C_PASSWORD';
