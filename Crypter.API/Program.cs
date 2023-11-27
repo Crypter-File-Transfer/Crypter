@@ -113,19 +113,25 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
+    CorsSettings corsSettings = app.Configuration
+        .GetSection("CorsSettings")
+        .Get<CorsSettings>();
     app.UseCors(x =>
     {
         x.AllowAnyMethod();
         x.AllowAnyHeader();
-        x.WithOrigins("https://*.crypter.dev")
-            .SetIsOriginAllowedToAllowWildcardSubdomains();
+        x.WithOrigins(corsSettings.AllowedOrigins.ToArray());
+        if (corsSettings.AllowWildcardSubdomains)
+        {
+            x.SetIsOriginAllowedToAllowWildcardSubdomains();
+        }
     });
 }
 
 DatabaseSettings dbSettings = app.Configuration
     .GetSection("DatabaseSettings")
     .Get<DatabaseSettings>();
-await app.ApplyCrypterCoreAsync(dbSettings);
+await app.MigrateDatabaseAsync(dbSettings);
 
 app.UseHttpsRedirection();
 app.UseRouting();
