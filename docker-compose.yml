@@ -3,7 +3,7 @@ services:
   api:
     profiles:
       - web
-      - dev
+      - local
     image: ghcr.io/crypter-file-transfer/${API_IMAGE_NAME:-crypter_api}:latest
     build:
       context: .
@@ -23,7 +23,7 @@ services:
   web:
     profiles:
       - web
-      - dev
+      - local
     image: ghcr.io/crypter-file-transfer/${WEB_IMAGE_NAME:-crypter_web}:latest
     build:
       context: .
