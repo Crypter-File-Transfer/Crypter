@@ -119,7 +119,7 @@ public static class DependencyInjection
     public static IServiceCollection AddBackgroundServer(this IServiceCollection services,
         HangfireSettings hangfireSettings) => services.AddHangfireServer(options => { options.WorkerCount = hangfireSettings.Workers; });
 
-    public async static Task<IApplicationBuilder> ApplyCrypterCoreAsync(this WebApplication webApplication, DatabaseSettings databaseSettings)
+    public static async Task<IApplicationBuilder> MigrateDatabaseAsync(this WebApplication webApplication, DatabaseSettings databaseSettings)
     {
         if (databaseSettings.MigrateOnStartup)
         {
