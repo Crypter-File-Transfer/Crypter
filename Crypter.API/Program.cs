@@ -121,10 +121,6 @@ else
         x.AllowAnyMethod();
         x.AllowAnyHeader();
         x.WithOrigins(corsSettings.AllowedOrigins.ToArray());
-        if (corsSettings.AllowWildcardSubdomains)
-        {
-            x.SetIsOriginAllowedToAllowWildcardSubdomains();
-        }
     });
 }
 

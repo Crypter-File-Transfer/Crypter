@@ -11,7 +11,7 @@ services:
     expose:
       - "80"
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT-Production}
+      ASPNETCORE_ENVIRONMENT: ${API_ASPNETCORE_ENVIRONMENT-Production}
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_TransferStorageSettings__Location: /mnt/storage
       ASPNETCORE_CorsSettings__AllowedOrigins: ${CORS_ALLOWED_ORIGINS}
