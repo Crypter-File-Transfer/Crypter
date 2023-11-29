@@ -58,8 +58,11 @@ jobs:
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
           script: systemctl --user daemon-reload
 
+      - name: Create directory to store variables as files
+        run: mkdir $HOME/scp-files
+
       - name: Write latest .env to temp file
-        run: ${{ secrets.APPSERVER_ENV_FILE }} > ${{ env.home }}/files/.env
+        run: ${{ secrets.APPSERVER_ENV_FILE }} > $HOME/scp-files/.env
 
       - name: Push latest .env file
         uses: appleboy/scp-action@v0.1.4
@@ -68,12 +71,12 @@ jobs:
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          source: ${{ env.home }}/files/.env
+          source: $HOME/scp-files/.env
           target: ${{ secrets.APPSERVER_ENV_FILE_PATH }}
           strip_components: 2
           
       - name: Write latest appsettings.json to temp file
-        run: ${{ secrets.APPSERVER_APPSETTINGS_JSON }} > ${{ env.home }}/files/appsettings.json
+        run: ${{ secrets.APPSERVER_APPSETTINGS_JSON }} > $HOME/scp-files/appsettings.json
 
       - name: Push latest appsettings.json file
         uses: appleboy/scp-action@v0.1.4
@@ -82,7 +85,7 @@ jobs:
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          source: ${{ env.home }}/files/appsettings.json
+          source: $HOME/scp-files/appsettings.json
           target: ${{ secrets.APPSERVER_APPSETTINGS_JSON_PATH }}
           strip_components: 2
 
