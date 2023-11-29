@@ -31,8 +31,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
-using Crypter.Core.Entities;
 using Crypter.Core.Repositories;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Services;

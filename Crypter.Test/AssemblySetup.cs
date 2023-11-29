@@ -33,9 +33,11 @@ using Crypter.Common.Client.HttpClients;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Repositories;
-using Crypter.Core;
+using Crypter.DataAccess;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
@@ -89,7 +91,7 @@ internal class AssemblySetup
     }
 
     internal static async Task<WebApplicationFactory<Program>> CreateWebApplicationFactoryAsync(
-        bool ensureDatabaseCreated = true, IServiceCollection overrides = null)
+        bool ensureDatabaseMigrated = true, IServiceCollection overrides = null)
     {
         WebApplicationFactory<Program> factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
@@ -115,11 +117,11 @@ internal class AssemblySetup
                 builder.UseSetting("TransferStorageSettings:Location", FileStorageLocation);
             });
 
-        if (ensureDatabaseCreated)
+        if (ensureDatabaseMigrated)
         {
             using IServiceScope scope = factory.Services.CreateScope();
             await using DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-            await dataContext.Database.EnsureCreatedAsync();
+            await dataContext.Database.MigrateAsync();
         }
 
         return factory;
@@ -154,7 +156,8 @@ internal class AssemblySetup
             WithReseed = true,
             TablesToIgnore = new Table[]
             {
-                "schema"
+                "schema",
+                HistoryRepository.DefaultTableName
             }
         };
 

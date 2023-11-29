@@ -27,7 +27,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Crypter.Core.Entities;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 using Contracts = Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;

@@ -24,8 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Repositories;
@@ -34,14 +33,13 @@ using Crypter.Core.Services.UserSettings;
 using Crypter.Core.Settings;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
+using Crypter.DataAccess;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
 
 namespace Crypter.Core;
 
@@ -56,27 +54,7 @@ public static class DependencyInjection
         string defaultConnectionString,
         string hangfireConnectionString)
     {
-        var serviceProvider = services.BuildServiceProvider();
-        var logger = serviceProvider.GetRequiredService<ILogger<DataContext>>();
-
-        services.AddDbContextPool<DataContext>(optionsBuilder =>
-        {
-            optionsBuilder.UseNpgsql(defaultConnectionString, npgsqlOptionsBuilder =>
-                {
-                    npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), new string[] { "57P01" });
-                    npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName,
-                        DataContext.SchemaName);
-                })
-                .LogTo(
-                    filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
-                    logger: (eventData) =>
-                    {
-                        ExecutionStrategyEventData retryEventData = eventData as ExecutionStrategyEventData;
-                        IReadOnlyList<Exception> exceptions = retryEventData.ExceptionsEncountered;
-                        logger.LogWarning("Retry #{count} with delay {delay} due to error: {error}", exceptions.Count,
-                            retryEventData.Delay, exceptions[exceptions.Count - 1].Message);
-                    });
-        });
+        services.AddDataAccess(defaultConnectionString);
 
         services.TryAddSingleton<IPasswordHashService, PasswordHashService>();
         services.TryAddSingleton<ICryptoProvider, DefaultCryptoProvider>();
@@ -139,10 +117,17 @@ public static class DependencyInjection
     }
 
     public static IServiceCollection AddBackgroundServer(this IServiceCollection services,
-        HangfireSettings hangfireSettings)
-    {
-        services.AddHangfireServer(options => { options.WorkerCount = hangfireSettings.Workers; });
+        HangfireSettings hangfireSettings) => services.AddHangfireServer(options => { options.WorkerCount = hangfireSettings.Workers; });
 
-        return services;
+    public static async Task<IApplicationBuilder> MigrateDatabaseAsync(this WebApplication webApplication, DatabaseSettings databaseSettings)
+    {
+        if (databaseSettings.MigrateOnStartup)
+        {
+            using IServiceScope serviceScope = webApplication.Services.GetService<IServiceScopeFactory>().CreateScope();
+            await using DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+            await context.Database.MigrateAsync();
+        }
+
+        return webApplication;
     }
 }

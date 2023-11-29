@@ -30,13 +30,14 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Infrastructure;
 using Crypter.Common.Primitives;
-using Crypter.Core.Entities;
 using Crypter.Core.Features.Keys;
 using Crypter.Core.Features.UserRecovery.Models;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 

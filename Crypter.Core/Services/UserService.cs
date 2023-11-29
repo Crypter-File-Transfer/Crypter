@@ -30,8 +30,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Users;
-using Crypter.Core.Entities;
 using Crypter.Core.Extensions;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 

@@ -2,14 +2,15 @@
 
 This section details how to setup a basic development environment.
 
-## Visual Studio
+## A good IDE
 
-As you may have guessed, some version of Visual Studio is required in order to work on Crypter.
+I recommend using JetBrains Rider or Visual Studio 2022 for Crypter development.
 
 [Visual Studio Download Page](https://visualstudio.microsoft.com/)
 
-I recommend using Visual Studio 2022 for Crypter development.
-The only workload you need to install is `ASP.NET and web development`.
+### Visual Studio Workloads
+
+Tthe only workload you need to install is `ASP.NET and web development`.
 
 Make sure these individual components are also installed:
 * `.NET 7.0 Runtime` 
@@ -27,11 +28,11 @@ Refer to the commands below if you decide to run the application using Docker.
 
 Run
 
-`docker-compose --profile web build`
+`docker-compose --profile local build`
 
 then run
 
-`docker-compose --profile dev up`
+`docker-compose --profile local up`
 
 You do not need to modify anything in the project for this to work.
 

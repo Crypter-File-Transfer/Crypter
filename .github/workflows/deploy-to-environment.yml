@@ -12,7 +12,7 @@ on:
           - development
 
 env:
-  db_migration_compose_profile: ${{ (github.event.inputs.environment == 'development' && 'dev') || 'web' }}
+  db_migration_compose_profile: ${{ (github.event.inputs.environment == 'development' && 'local') || 'web' }}
 
 jobs:
   deploy-web-container:
@@ -38,7 +38,7 @@ jobs:
             fi
           script_stop: true
 
-      - name: Push new systemctl service file
+      - name: Push latest systemctl service file
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
@@ -57,6 +57,34 @@ jobs:
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
           script: systemctl --user daemon-reload
+
+      - name: Write latest .env to temp file
+        run: ${{ secrets.APPSERVER_ENV_FILE }} > ${{ env.home }}/files/.env
+
+      - name: Push latest .env file
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          source: ${{ env.home }}/files/.env
+          target: ${{ secrets.APPSERVER_ENV_FILE_PATH }}
+          strip_components: 2
+          
+      - name: Write latest appsettings.json to temp file
+        run: ${{ secrets.APPSERVER_APPSETTINGS_JSON }} > ${{ env.home }}/files/appsettings.json
+
+      - name: Push latest appsettings.json file
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.APPSERVER_SSH_HOST }}
+          port: ${{ secrets.APPSERVER_SSH_PORT }}
+          username: ${{ secrets.APPSERVER_SSH_USER }}
+          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          source: ${{ env.home }}/files/appsettings.json
+          target: ${{ secrets.APPSERVER_APPSETTINGS_JSON_PATH }}
+          strip_components: 2
 
       - name: Push latest Docker Compose file
         uses: appleboy/scp-action@v0.1.4

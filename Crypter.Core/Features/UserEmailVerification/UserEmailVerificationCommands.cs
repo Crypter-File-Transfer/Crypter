@@ -26,8 +26,9 @@
 
 using System;
 using System.Threading.Tasks;
-using Crypter.Core.Entities;
 using Crypter.Core.Models;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.UserEmailVerification;

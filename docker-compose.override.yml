@@ -7,7 +7,7 @@ services:
   db:
     profiles:
       - db
-      - dev
+      - local
     image: postgres:15.2
     expose:
       - "5432"

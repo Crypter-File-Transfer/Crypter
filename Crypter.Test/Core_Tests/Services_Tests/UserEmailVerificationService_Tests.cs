@@ -27,11 +27,11 @@
 using System;
 using System.Threading.Tasks;
 using Crypter.Common.Primitives;
-using Crypter.Core;
-using Crypter.Core.Entities;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;

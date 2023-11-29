@@ -23,10 +23,7 @@
       <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
       <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
       <ProjectReference Include="..\Crypter.Crypto.Providers.Default\Crypter.Crypto.Providers.Default.csproj" />
-   </ItemGroup>
-
-   <ItemGroup>
-      <Folder Include="Migrations\" />
+      <ProjectReference Include="..\Crypter.DataAccess\Crypter.DataAccess.csproj" />
    </ItemGroup>
 
 </Project>

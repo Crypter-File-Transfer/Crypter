@@ -33,6 +33,7 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Core.Repositories;
 using Crypter.Crypto.Common;
+using Crypter.DataAccess;
 using EasyMonads;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;

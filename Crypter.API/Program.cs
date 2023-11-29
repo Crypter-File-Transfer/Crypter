@@ -110,21 +110,24 @@ if (app.Environment.IsDevelopment())
 
     app.UseSwagger();
     app.UseSwaggerUI();
-
-    using IServiceScope serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope();
-    using DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
-    context.Database.EnsureCreated();
 }
 else
 {
+    CorsSettings corsSettings = app.Configuration
+        .GetSection("CorsSettings")
+        .Get<CorsSettings>();
     app.UseCors(x =>
     {
         x.AllowAnyMethod();
         x.AllowAnyHeader();
-        x.WithOrigins("https://*.crypter.dev")
-            .SetIsOriginAllowedToAllowWildcardSubdomains();
+        x.WithOrigins(corsSettings.AllowedOrigins.ToArray());
     });
 }
+
+DatabaseSettings dbSettings = app.Configuration
+    .GetSection("DatabaseSettings")
+    .Get<DatabaseSettings>();
+await app.MigrateDatabaseAsync(dbSettings);
 
 app.UseHttpsRedirection();
 app.UseRouting();
@@ -133,4 +136,4 @@ app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();

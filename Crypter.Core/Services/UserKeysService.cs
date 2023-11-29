@@ -31,8 +31,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Core.Entities;
 using Crypter.Core.Features.Keys;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 
