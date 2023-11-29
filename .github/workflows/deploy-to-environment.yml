@@ -72,7 +72,7 @@ jobs:
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
           source: /home/runner/scp-files/.env
-          target: ${{ secrets.APPSERVER_ENV_FILE_PATH }}
+          target: ${{ secrets.APPSERVER_ENV_FILE_PATH }}/
           strip_components: 3
           
       - name: Write latest appsettings.json to temp file
@@ -86,7 +86,7 @@ jobs:
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
           source: /home/runner/scp-files/appsettings.json
-          target: ${{ secrets.APPSERVER_APPSETTINGS_JSON_PATH }}
+          target: ${{ secrets.APPSERVER_APPSETTINGS_JSON_PATH }}/
           strip_components: 3
 
       - name: Push latest Docker Compose file
