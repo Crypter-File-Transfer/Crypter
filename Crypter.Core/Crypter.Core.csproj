@@ -13,6 +13,7 @@
       <PackageReference Include="Hangfire.PostgreSql" Version="1.20.3" />
       <PackageReference Include="Hashids.net" Version="1.7.0" />
       <PackageReference Include="MailKit" Version="4.2.0" />
+      <PackageReference Include="MediatR" Version="12.2.0" />
       <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="7.0.11" />
       <PackageReference Include="MimeKit" Version="4.2.0" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11" />

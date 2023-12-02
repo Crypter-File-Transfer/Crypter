@@ -32,12 +32,15 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Core.Extensions;
+using Crypter.Core.Features.Metrics.Queries;
 using Crypter.Core.Repositories;
+using Crypter.Core.Settings;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Crypter.Core.Services;
 
@@ -53,24 +56,24 @@ public interface ITransferUploadService
 public class TransferUploadService : ITransferUploadService
 {
     private readonly DataContext _context;
-    private readonly IServerMetricsService _serverMetricsService;
     private readonly ITransferRepository _transferStorageService;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IHashIdService _hashIdService;
+    private readonly TransferStorageSettings _transferStorageSettings;
     private const int _maxLifetimeHours = 24;
     private const int _minLifetimeHours = 1;
 
-    public TransferUploadService(DataContext context, IServerMetricsService serverMetricsService,
-        ITransferRepository transferStorageService, IHangfireBackgroundService hangfireBackgroundService,
-        IBackgroundJobClient backgroundJobClient, IHashIdService hashIdService)
+    public TransferUploadService(DataContext context, ITransferRepository transferStorageService,
+        IHangfireBackgroundService hangfireBackgroundService, IBackgroundJobClient backgroundJobClient,
+        IHashIdService hashIdService, IOptions<TransferStorageSettings> transferStorageSettings)
     {
         _context = context;
-        _serverMetricsService = serverMetricsService;
         _transferStorageService = transferStorageService;
         _hangfireBackgroundService = hangfireBackgroundService;
         _backgroundJobClient = backgroundJobClient;
         _hashIdService = hashIdService;
+        _transferStorageSettings = transferStorageSettings.Value;
     }
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<Guid> senderId,
@@ -300,8 +303,9 @@ public class TransferUploadService : ITransferUploadService
     private async Task<bool> IsDiskSpaceForTransferAsync(long transferSize,
         CancellationToken cancellationToken = default)
     {
-        var diskMetrics = await _serverMetricsService.GetAggregateDiskMetricsAsync(cancellationToken);
-        return transferSize <= diskMetrics.Available;
+        GetDiskMetricsResult diskMetrics = await GetDiskMetricsQueryHandler.RunQueryAsync(_context, _transferStorageSettings,
+            cancellationToken);
+        return transferSize <= diskMetrics.FreeBytes;
     }
 
     private async Task<Unit> QueueTransferNotificationAsync(Guid itemId, TransferItemType itemType,
