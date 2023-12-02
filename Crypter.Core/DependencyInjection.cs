@@ -55,12 +55,12 @@ public static class DependencyInjection
         string hangfireConnectionString)
     {
         services.AddDataAccess(defaultConnectionString);
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining(typeof(AssemblyInfo)));
 
         services.TryAddSingleton<IPasswordHashService, PasswordHashService>();
         services.TryAddSingleton<ICryptoProvider, DefaultCryptoProvider>();
 
         services.TryAddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
-        services.TryAddScoped<IServerMetricsService, ServerMetricsService>();
         services.TryAddScoped<ITransferDownloadService, TransferDownloadService>();
         services.TryAddScoped<ITransferUploadService, TransferUploadService>();
         services.TryAddScoped<IUserAuthenticationService, UserAuthenticationService>();

@@ -24,19 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Crypter.Core.Settings;
-
-public static class TransferStorageExtensions
-{
-    public static void AddTransferStorage(this IServiceCollection services,
-        Action<TransferStorageSettings> options = null)
-    {
-        services.Configure(options);
-    }
-}
 
 public class TransferStorageSettings
 {
