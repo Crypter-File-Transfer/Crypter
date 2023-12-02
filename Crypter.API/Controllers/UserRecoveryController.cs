@@ -26,6 +26,7 @@
 
 using System.Net;
 using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserRecovery.RequestRecovery;
 using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;

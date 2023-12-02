@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Core.Services;
@@ -44,12 +44,10 @@ namespace Crypter.API.Controllers;
 public class UserController : CrypterControllerBase
 {
     private readonly IUserService _userService;
-    private readonly ITokenService _tokenService;
 
-    public UserController(IUserService userService, ITokenService tokenService)
+    public UserController(IUserService userService)
     {
         _userService = userService;
-        _tokenService = tokenService;
     }
 
     [HttpGet("profile")]
@@ -68,9 +66,8 @@ public class UserController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Maybe<Guid> userId = _tokenService.TryParseUserId(User);
-        return await _userService.GetUserProfileAsync(userId, username, cancellationToken)
+        
+        return await _userService.GetUserProfileAsync(PossibleUserId, username, cancellationToken)
             .MatchAsync(
                 () => MakeErrorResponse(GetUserProfileError.NotFound),
                 Ok);
@@ -83,9 +80,8 @@ public class UserController : CrypterControllerBase
     public async Task<IActionResult> SearchUsersAsync([FromQuery] string keyword, [FromQuery] int index,
         [FromQuery] int count, CancellationToken cancellationToken)
     {
-        Guid userId = _tokenService.ParseUserId(User);
         List<UserSearchResult> results =
-            await _userService.SearchForUsersAsync(userId, keyword, index, count, cancellationToken);
+            await _userService.SearchForUsersAsync(UserId, keyword, index, count, cancellationToken);
         return Ok(results);
     }
 }

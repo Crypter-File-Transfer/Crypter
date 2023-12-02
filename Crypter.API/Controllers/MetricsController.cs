@@ -26,6 +26,7 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts.Features.Metrics;
 using Crypter.Core.Features.Metrics.Queries;
 using MediatR;

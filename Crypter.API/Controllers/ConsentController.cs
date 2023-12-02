@@ -24,10 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
 using Crypter.Core.Features.UserConsent.Commands;
-using Crypter.Core.Services;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -39,12 +38,10 @@ namespace Crypter.API.Controllers;
 [Route("api/user/consent")]
 public class ConsentController : CrypterControllerBase
 {
-    private readonly ITokenService _tokenService;
     private readonly IMediator _mediator;
 
-    public ConsentController(ITokenService tokenService, IMediator mediator)
+    public ConsentController(IMediator mediator)
     {
-        _tokenService = tokenService;
         _mediator = mediator;
     }
 
@@ -54,8 +51,7 @@ public class ConsentController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> ConsentToRecoveryKeyRisksAsync()
     {
-        Guid userId = _tokenService.ParseUserId(User);
-        SaveAcknowledgementOfRecoveryKeyRisksCommand request = new SaveAcknowledgementOfRecoveryKeyRisksCommand(userId);
+        SaveAcknowledgementOfRecoveryKeyRisksCommand request = new SaveAcknowledgementOfRecoveryKeyRisksCommand(UserId);
         await _mediator.Send(request);
         return Ok();
     }

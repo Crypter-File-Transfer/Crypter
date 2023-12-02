@@ -36,22 +36,19 @@ namespace Crypter.API.Controllers.Base;
 
 public abstract class TransferControllerBase : CrypterControllerBase
 {
-    protected readonly ITransferDownloadService _transferDownloadService;
-    protected readonly ITransferUploadService _transferUploadService;
-    protected readonly ITokenService _tokenService;
-    protected readonly IUserTransferService _userTransferService;
+    protected readonly ITransferDownloadService TransferDownloadService;
+    protected readonly ITransferUploadService TransferUploadService;
+    protected readonly IUserTransferService UserTransferService;
 
-    public TransferControllerBase(ITransferDownloadService transferDownloadService,
-        ITransferUploadService transferUploadService, ITokenService tokenService,
-        IUserTransferService userTransferService)
+    protected TransferControllerBase(ITransferDownloadService transferDownloadService,
+        ITransferUploadService transferUploadService, IUserTransferService userTransferService)
     {
-        _transferDownloadService = transferDownloadService;
-        _transferUploadService = transferUploadService;
-        _tokenService = tokenService;
-        _userTransferService = userTransferService;
+        TransferDownloadService = transferDownloadService;
+        TransferUploadService = transferUploadService;
+        UserTransferService = userTransferService;
     }
 
-    protected Either<DownloadTransferCiphertextError, byte[]> DecodeProof(string base64EncodedProof)
+    protected static Either<DownloadTransferCiphertextError, byte[]> DecodeProof(string base64EncodedProof)
     {
         try
         {

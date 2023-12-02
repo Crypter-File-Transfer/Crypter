@@ -27,12 +27,17 @@
 using System;
 using System.Net;
 using Crypter.Common.Contracts;
+using Crypter.Core.Services;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Crypter.API.Controllers;
+namespace Crypter.API.Controllers.Base;
 
 public abstract class CrypterControllerBase : ControllerBase
 {
+    protected Guid UserId => TokenService.ParseUserId(User);
+    protected Maybe<Guid> PossibleUserId => TokenService.TryParseUserId(User);
+    
     protected IActionResult MakeErrorResponseBase(HttpStatusCode httpStatus, Enum errorCode)
     {
         ErrorResponse errorResponse = new ErrorResponse((int)httpStatus, errorCode);

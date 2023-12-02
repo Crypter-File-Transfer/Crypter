@@ -69,7 +69,7 @@ public class TokenService_Tests
         maybeClaimsPrincipal.IfSome(x =>
         {
             Assert.IsNotNull(x);
-            var parsedUserId = sut.ParseUserId(x);
+            var parsedUserId = TokenService.ParseUserId(x);
             Assert.AreEqual(userId, parsedUserId);
         });
     }
@@ -94,10 +94,10 @@ public class TokenService_Tests
         {
             Assert.IsNotNull(claimsPrincipal);
 
-            var parsedUserId = sut.ParseUserId(claimsPrincipal);
+            var parsedUserId = TokenService.ParseUserId(claimsPrincipal);
             Assert.AreEqual(userId, parsedUserId);
 
-            var maybeTokenId = sut.TryParseTokenId(claimsPrincipal);
+            var maybeTokenId = TokenService.TryParseTokenId(claimsPrincipal);
             maybeTokenId.IfNone(Assert.Fail);
         });
     }
@@ -122,10 +122,10 @@ public class TokenService_Tests
         {
             Assert.IsNotNull(claimsPrincipal);
 
-            var parsedUserId = sut.ParseUserId(claimsPrincipal);
+            var parsedUserId = TokenService.ParseUserId(claimsPrincipal);
             Assert.AreEqual(userId, parsedUserId);
 
-            var maybeTokenId = sut.TryParseTokenId(claimsPrincipal);
+            var maybeTokenId = TokenService.TryParseTokenId(claimsPrincipal);
             maybeTokenId.IfNone(Assert.Fail);
         });
     }

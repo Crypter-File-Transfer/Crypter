@@ -22,10 +22,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Core.Services;
@@ -41,12 +41,10 @@ namespace Crypter.API.Controllers;
 public class UserKeyController : CrypterControllerBase
 {
     private readonly IUserKeysService _userKeysService;
-    private readonly ITokenService _tokenService;
 
-    public UserKeyController(IUserKeysService userKeysService, ITokenService tokenService)
+    public UserKeyController(IUserKeysService userKeysService)
     {
         _userKeysService = userKeysService;
-        _tokenService = tokenService;
     }
 
     [HttpGet("master")]
@@ -67,9 +65,8 @@ public class UserKeyController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userKeysService.GetMasterKeyAsync(userId, cancellationToken)
+        
+        return await _userKeysService.GetMasterKeyAsync(UserId, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -97,9 +94,8 @@ public class UserKeyController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userKeysService.UpsertMasterKeyAsync(userId, request, false)
+        
+        return await _userKeysService.UpsertMasterKeyAsync(UserId, request, false)
             .MatchAsync(
                 MakeErrorResponse,
                 _ => Ok(),
@@ -129,9 +125,8 @@ public class UserKeyController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userKeysService.GetMasterKeyProofAsync(userId, request, cancellationToken)
+        
+        return await _userKeysService.GetMasterKeyProofAsync(UserId, request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -156,9 +151,8 @@ public class UserKeyController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userKeysService.GetPrivateKeyAsync(userId, cancellationToken)
+        
+        return await _userKeysService.GetPrivateKeyAsync(UserId, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -183,9 +177,8 @@ public class UserKeyController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userKeysService.InsertKeyPairAsync(userId, body)
+        
+        return await _userKeysService.InsertKeyPairAsync(UserId, body)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,

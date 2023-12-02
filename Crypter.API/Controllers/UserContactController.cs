@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
@@ -45,12 +45,10 @@ namespace Crypter.API.Controllers;
 public class UserContactController : CrypterControllerBase
 {
     private readonly IUserContactsService _userContactsService;
-    private readonly ITokenService _tokenService;
 
-    public UserContactController(IUserContactsService userContactsService, ITokenService tokenService)
+    public UserContactController(IUserContactsService userContactsService)
     {
         _userContactsService = userContactsService;
-        _tokenService = tokenService;
     }
 
     /// <summary>
@@ -64,8 +62,7 @@ public class UserContactController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> GetUserContactsAsync(CancellationToken cancellationToken)
     {
-        Guid userId = _tokenService.ParseUserId(User);
-        List<UserContact> result = await _userContactsService.GetUserContactsAsync(userId, cancellationToken);
+        List<UserContact> result = await _userContactsService.GetUserContactsAsync(UserId, cancellationToken);
         return Ok(result);
     }
 
@@ -94,9 +91,8 @@ public class UserContactController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userContactsService.UpsertUserContactAsync(userId, username)
+        
+        return await _userContactsService.UpsertUserContactAsync(UserId, username)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -114,8 +110,7 @@ public class UserContactController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> RemoveUserContactAsync([FromQuery] string username)
     {
-        Guid userId = _tokenService.ParseUserId(User);
-        await _userContactsService.RemoveUserContactAsync(userId, username);
+        await _userContactsService.RemoveUserContactAsync(UserId, username);
         return Ok();
     }
 }
