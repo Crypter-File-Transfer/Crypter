@@ -26,7 +26,9 @@
 
 using System;
 using System.Threading.Tasks;
+using Crypter.Core.Features.UserConsent.Commands;
 using Crypter.Core.Services;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -38,12 +40,12 @@ namespace Crypter.API.Controllers;
 public class ConsentController : CrypterControllerBase
 {
     private readonly ITokenService _tokenService;
-    private readonly IUserService _userService;
+    private readonly IMediator _mediator;
 
-    public ConsentController(ITokenService tokenService, IUserService userService)
+    public ConsentController(ITokenService tokenService, IMediator mediator)
     {
         _tokenService = tokenService;
-        _userService = userService;
+        _mediator = mediator;
     }
 
     [HttpPost("recovery-key-risk")]
@@ -53,7 +55,8 @@ public class ConsentController : CrypterControllerBase
     public async Task<IActionResult> ConsentToRecoveryKeyRisksAsync()
     {
         Guid userId = _tokenService.ParseUserId(User);
-        await _userService.SaveUserAcknowledgementOfRecoveryKeyRisksAsync(userId);
+        SaveAcknowledgementOfRecoveryKeyRisksCommand request = new SaveAcknowledgementOfRecoveryKeyRisksCommand(userId);
+        await _mediator.Send(request);
         return Ok();
     }
 }
