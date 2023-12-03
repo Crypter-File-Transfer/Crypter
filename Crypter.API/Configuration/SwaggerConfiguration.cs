@@ -35,7 +35,7 @@ public static class SwaggerConfiguration
 {
     internal static void AddSwaggerGenOptions(this SwaggerGenOptions options)
     {
-        OpenApiSecurityScheme securityDefinition = new()
+        OpenApiSecurityScheme securityDefinition = new OpenApiSecurityScheme
         {
             Name = "Bearer",
             BearerFormat = "JWT",
@@ -45,18 +45,18 @@ public static class SwaggerConfiguration
             Type = SecuritySchemeType.Http
         };
 
-        OpenApiSecurityScheme securityScheme = new()
+        OpenApiSecurityScheme securityScheme = new OpenApiSecurityScheme
         {
-            Reference = new OpenApiReference()
+            Reference = new OpenApiReference
             {
                 Id = "jwt_auth",
                 Type = ReferenceType.SecurityScheme
             }
         };
 
-        OpenApiSecurityRequirement securityRequirements = new()
+        OpenApiSecurityRequirement securityRequirements = new OpenApiSecurityRequirement
         {
-            { securityScheme, Array.Empty<string>() },
+            { securityScheme, Array.Empty<string>() }
         };
 
         options.AddSecurityDefinition("jwt_auth", securityDefinition);

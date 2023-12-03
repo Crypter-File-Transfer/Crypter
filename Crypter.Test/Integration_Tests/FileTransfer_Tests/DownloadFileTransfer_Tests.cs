@@ -148,6 +148,8 @@ internal class DownloadFileTransfer_Tests
             });
         });
 
+        Assert.That(uploadResult.IsRight);
+        
         string uploadId = uploadResult
             .Map(x => x.HashId)
             .RightOrDefault(null);
