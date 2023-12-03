@@ -48,8 +48,7 @@ public interface IUserService
 
     Task<List<UserSearchResult>> SearchForUsersAsync(Guid userId, string keyword, int index, int count,
         CancellationToken cancellationToken = default);
-
-    Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId);
+    
     Task DeleteUserEntityAsync(Guid id);
 }
 
@@ -105,15 +104,6 @@ public class UserService : IUserService
             .Take(count)
             .Select(x => new UserSearchResult(x.Username, x.Profile.Alias))
             .ToListAsync(cancellationToken);
-    }
-
-    public async Task<Unit> SaveUserAcknowledgementOfRecoveryKeyRisksAsync(Guid userId)
-    {
-        UserConsentEntity newConsent =
-            new UserConsentEntity(userId, ConsentType.RecoveryKeyRisks, true, DateTime.UtcNow);
-        _context.UserConsents.Add(newConsent);
-        await _context.SaveChangesAsync();
-        return Unit.Default;
     }
 
     public async Task DeleteUserEntityAsync(Guid id)

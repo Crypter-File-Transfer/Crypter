@@ -208,8 +208,8 @@ public class UserAuthenticationService : IUserAuthenticationService
     public Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal,
         string deviceDescription)
     {
-        return from userId in ParseUserId(claimsPrincipal).ToEither(RefreshError.InvalidToken).AsTask()
-            from tokenId in ParseRefreshTokenId(claimsPrincipal).ToEither(RefreshError.InvalidToken).AsTask()
+        return from userId in TokenService.TryParseUserId(claimsPrincipal).ToEither(RefreshError.InvalidToken).AsTask()
+            from tokenId in TokenService.TryParseTokenId(claimsPrincipal).ToEither(RefreshError.InvalidToken).AsTask()
             from databaseToken in FetchUserTokenAsync(tokenId).ToEitherAsync(RefreshError.InvalidToken)
             from databaseTokenValidated in ValidateUserToken(databaseToken, userId).ToEither(RefreshError.InvalidToken)
                 .AsTask()
@@ -225,8 +225,8 @@ public class UserAuthenticationService : IUserAuthenticationService
 
     public Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal)
     {
-        return from userId in ParseUserId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
-            from tokenId in ParseRefreshTokenId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
+        return from userId in TokenService.TryParseUserId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
+            from tokenId in TokenService.TryParseTokenId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
             from databaseToken in FetchUserTokenAsync(tokenId).ToEitherAsync(LogoutError.InvalidToken)
             let databaseTokenDeleted = DeleteUserTokenInContext(databaseToken)
             from entriesModified in Either<LogoutError, int>.FromRightAsync(SaveContextChangesAsync())
@@ -404,16 +404,6 @@ public class UserAuthenticationService : IUserAuthenticationService
     {
         user.LastLogin = DateTime.UtcNow;
         return Unit.Default;
-    }
-
-    private Maybe<Guid> ParseUserId(ClaimsPrincipal claimsPrincipal)
-    {
-        return _tokenService.TryParseUserId(claimsPrincipal);
-    }
-
-    private Maybe<Guid> ParseRefreshTokenId(ClaimsPrincipal claimsPrincipal)
-    {
-        return _tokenService.TryParseTokenId(claimsPrincipal);
     }
 
     private Task<Maybe<UserTokenEntity>> FetchUserTokenAsync(Guid tokenId,

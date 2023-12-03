@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
@@ -47,20 +47,18 @@ namespace Crypter.API.Controllers;
 [Route("api/user/setting")]
 public class UserSettingController : CrypterControllerBase
 {
-    private readonly ITokenService _tokenService;
     private readonly IUserProfileSettingsService _userProfileSettingsService;
     private readonly IUserContactInfoSettingsService _userContactInfoSettingsService;
     private readonly IUserNotificationSettingsService _userNotificationSettingsService;
     private readonly IUserPrivacySettingsService _userPrivacySettingsService;
     private readonly IUserEmailVerificationService _userEmailVerificationService;
 
-    public UserSettingController(ITokenService tokenService, IUserProfileSettingsService userProfileSettingsService,
+    public UserSettingController(IUserProfileSettingsService userProfileSettingsService,
         IUserContactInfoSettingsService userContactInfoSettingsService,
         IUserNotificationSettingsService userNotificationSettingsService,
         IUserPrivacySettingsService userPrivacySettingsService,
         IUserEmailVerificationService userEmailVerificationService)
     {
-        _tokenService = tokenService;
         _userProfileSettingsService = userProfileSettingsService;
         _userContactInfoSettingsService = userContactInfoSettingsService;
         _userNotificationSettingsService = userNotificationSettingsService;
@@ -87,9 +85,8 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userProfileSettingsService.GetProfileSettingsAsync(userId, cancellationToken)
+        
+        return await _userProfileSettingsService.GetProfileSettingsAsync(UserId, cancellationToken)
             .MatchAsync(
                 () => MakeErrorResponse(GetProfileSettingsError.NotFound),
                 Ok);
@@ -111,9 +108,8 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userProfileSettingsService.SetProfileSettingsAsync(userId, request)
+        
+        return await _userProfileSettingsService.SetProfileSettingsAsync(UserId, request)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -139,9 +135,8 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userContactInfoSettingsService.GetContactInfoSettingsAsync(userId, cancellationToken)
+        
+        return await _userContactInfoSettingsService.GetContactInfoSettingsAsync(UserId, cancellationToken)
             .MatchAsync(
                 () => MakeErrorResponse(GetContactInfoSettingsError.NotFound),
                 Ok);
@@ -175,9 +170,8 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userContactInfoSettingsService.UpdateContactInfoSettingsAsync(userId, request)
+        
+        return await _userContactInfoSettingsService.UpdateContactInfoSettingsAsync(UserId, request)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -214,9 +208,8 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userNotificationSettingsService.GetNotificationSettingsAsync(userId, cancellationToken)
+        
+        return await _userNotificationSettingsService.GetNotificationSettingsAsync(UserId, cancellationToken)
             .MatchAsync(
                 () => MakeErrorResponse(GetNotificationSettingsError.UnknownError),
                 Ok);
@@ -242,9 +235,8 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userNotificationSettingsService.UpdateNotificationSettingsAsync(userId, request)
+        
+        return await _userNotificationSettingsService.UpdateNotificationSettingsAsync(UserId, request)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -270,9 +262,8 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userPrivacySettingsService.GetPrivacySettingsAsync(userId, cancellationToken)
+        
+        return await _userPrivacySettingsService.GetPrivacySettingsAsync(UserId, cancellationToken)
             .MatchAsync(
                 () => MakeErrorResponse(GetPrivacySettingsError.NotFound),
                 Ok);
@@ -294,11 +285,8 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        ;
-
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userPrivacySettingsService.SetPrivacySettingsAsync(userId, request)
+        
+        return await _userPrivacySettingsService.SetPrivacySettingsAsync(UserId, request)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
