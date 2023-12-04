@@ -25,25 +25,16 @@
  */
 
 using System.Text.Json.Serialization;
-using Crypter.Common.Primitives;
 
 namespace Crypter.Common.Contracts.Features.Keys;
 
 public class GetMasterKeyRecoveryProofRequest
 {
-    public string Username { get; init; }
-    public byte[] Password { get; init; }
+    public byte[] AuthenticationPassword { get; init; }
 
     [JsonConstructor]
-    public GetMasterKeyRecoveryProofRequest(string username, byte[] password)
+    public GetMasterKeyRecoveryProofRequest(byte[] authenticationPassword)
     {
-        Username = username;
-        Password = password;
-    }
-
-    public GetMasterKeyRecoveryProofRequest(Username username, byte[] password)
-    {
-        Username = username.Value;
-        Password = password;
+        AuthenticationPassword = authenticationPassword;
     }
 }

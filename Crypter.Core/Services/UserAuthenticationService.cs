@@ -236,7 +236,7 @@ public class UserAuthenticationService : IUserAuthenticationService
     public Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId,
         PasswordChallengeRequest request, CancellationToken cancellationToken = default)
     {
-        return from suppliedPassword in ValidateRequestPassword(request.Password,
+        return from suppliedPassword in ValidateRequestPassword(request.AuthenticationPassword,
                 PasswordChallengeError.InvalidPassword).AsTask()
             from user in FetchUserAsync(userId, PasswordChallengeError.UnknownError, cancellationToken)
             from unit0 in VerifyUserPasswordIsMigrated(user, PasswordChallengeError.PasswordNeedsMigration)

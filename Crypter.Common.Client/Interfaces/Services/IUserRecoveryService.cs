@@ -48,11 +48,9 @@ public interface IUserRecoveryService
     /// Derivce a recovery key from the provided parameters.
     /// </summary>
     /// <param name="masterKey"></param>
-    /// <param name="username"></param>
     /// <param name="versionedPassword">A hashed password.</param>
     /// <returns></returns>
-    Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username,
-        VersionedPassword versionedPassword);
+    Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword);
 
     Task RequestRecoveryEmailAsync(EmailAddress emailAddress);
 

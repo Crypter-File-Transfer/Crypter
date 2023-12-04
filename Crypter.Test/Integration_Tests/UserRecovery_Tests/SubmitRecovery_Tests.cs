@@ -124,8 +124,7 @@ internal class SubmitRecovery_Tests
             UserPasswordService userPasswordService = new UserPasswordService(_cryptoProvider);
             UserRecoveryService userRecoveryService =
                 new UserRecoveryService(_client, new DefaultCryptoProvider(), userPasswordService);
-            recoveryKey = await userRecoveryService.DeriveRecoveryKeyAsync(masterKey,
-                Username.From(TestData.DefaultUsername), registrationRequest.VersionedPassword);
+            recoveryKey = await userRecoveryService.DeriveRecoveryKeyAsync(masterKey, registrationRequest.VersionedPassword);
             recoveryKey.IfNone(Assert.Fail);
         }
 
@@ -236,8 +235,7 @@ internal class SubmitRecovery_Tests
         UserPasswordService userPasswordService = new UserPasswordService(_cryptoProvider);
         UserRecoveryService userRecoveryService =
             new UserRecoveryService(_client, new DefaultCryptoProvider(), userPasswordService);
-        RecoveryKey recoveryKey = await userRecoveryService.DeriveRecoveryKeyAsync(masterKey,
-                Username.From(TestData.DefaultUsername), registrationRequest.VersionedPassword)
+        RecoveryKey recoveryKey = await userRecoveryService.DeriveRecoveryKeyAsync(masterKey, registrationRequest.VersionedPassword)
             .SomeOrDefaultAsync(null);
 
         UserRecoveryEntity recoveryData = await dataContext.UserRecoveries

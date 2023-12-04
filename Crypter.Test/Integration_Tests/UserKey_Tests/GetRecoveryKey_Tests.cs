@@ -80,8 +80,7 @@ internal class GetRecoveryKey_Tests
         Either<InsertMasterKeyError, Unit> insertMasterKeyResult =
             await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
-        GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(TestData.DefaultUsername,
-            registrationRequest.VersionedPassword.Password);
+        GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(registrationRequest.VersionedPassword.Password);
         Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse> result =
             await _client.UserKey.GetMasterKeyRecoveryProofAsync(request);
 
@@ -118,7 +117,7 @@ internal class GetRecoveryKey_Tests
 
         byte[] invalidPassword = "invalid"u8.ToArray();
         GetMasterKeyRecoveryProofRequest request =
-            new GetMasterKeyRecoveryProofRequest(TestData.DefaultUsername, invalidPassword);
+            new GetMasterKeyRecoveryProofRequest(invalidPassword);
         Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse> result =
             await _client.UserKey.GetMasterKeyRecoveryProofAsync(request);
 
