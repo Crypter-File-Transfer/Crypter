@@ -55,13 +55,13 @@ public class FileTransferController : TransferControllerBase
     [MaybeAuthorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> UploadFileTransferAsync([FromQuery] string username,
+    public async Task<IActionResult> UploadFileTransferAsync([FromQuery] string? username,
         [FromForm] UploadFileTransferReceipt request)
     {
         Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
             ? Maybe<string>.None
             : username;
-        await using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
+        await using Stream? ciphertextStream = request.Ciphertext?.OpenReadStream();
 
         return await TransferUploadService
             .UploadFileTransferAsync(PossibleUserId, maybeUsername, request.Data, ciphertextStream)

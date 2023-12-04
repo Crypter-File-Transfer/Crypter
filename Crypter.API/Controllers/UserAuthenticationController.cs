@@ -81,7 +81,7 @@ public class UserAuthenticationController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
+        
         return await _userAuthenticationService.RegisterAsync(request)
             .MatchAsync(
                 MakeErrorResponse,

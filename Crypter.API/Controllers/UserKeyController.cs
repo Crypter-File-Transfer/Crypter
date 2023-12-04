@@ -173,7 +173,7 @@ public class UserKeyController : CrypterControllerBase
             return error switch
             {
                 InsertKeyPairError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-                InsertKeyPairError.KeyPairAlreadyExists => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
+                InsertKeyPairError.KeyPairAlreadyExists => MakeErrorResponseBase(HttpStatusCode.Conflict, error)
             };
 #pragma warning restore CS8524
         }

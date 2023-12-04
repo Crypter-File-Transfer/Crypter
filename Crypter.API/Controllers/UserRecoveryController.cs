@@ -67,10 +67,8 @@ public class UserRecoveryController : CrypterControllerBase
                 _hangfireBackgroundService.SendRecoveryEmailAsync(validEmailAddress.Value));
             return Accepted();
         }
-        else
-        {
-            return MakeErrorResponseBase(HttpStatusCode.BadRequest, SendRecoveryEmailError.InvalidEmailAddress);
-        }
+
+        return MakeErrorResponseBase(HttpStatusCode.BadRequest, SendRecoveryEmailError.InvalidEmailAddress);
     }
 
     [HttpPost]

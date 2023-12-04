@@ -30,18 +30,17 @@ using Crypter.Core.Services;
 using EasyMonads;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Crypter.API.Attributes;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 internal class MaybeAuthorizeAttribute : Attribute, IAuthorizationFilter
 {
     public void OnAuthorization(AuthorizationFilterContext context)
     {
-        string authorization = context.HttpContext.Request.Headers.Authorization;
-        bool authorizationProvided = !string.IsNullOrEmpty(authorization);
-
-        if (authorizationProvided)
+        string? authorization = context.HttpContext.Request.Headers.Authorization;
+        if (!string.IsNullOrEmpty(authorization))
         {
             string[] authorizationParts = authorization.Split(' ');
             if (authorizationParts.Length != 2 || authorizationParts[0].ToLower() != "bearer")
@@ -51,7 +50,7 @@ internal class MaybeAuthorizeAttribute : Attribute, IAuthorizationFilter
             }
 
             ITokenService tokenService =
-                (ITokenService)context.HttpContext.RequestServices.GetService(typeof(ITokenService));
+                (ITokenService)context.HttpContext.RequestServices.GetRequiredService(typeof(ITokenService));
             Maybe<ClaimsPrincipal> maybeClaims = tokenService.ValidateToken(authorizationParts[1]);
 
             maybeClaims.IfSome(x => context.HttpContext.User = x);
