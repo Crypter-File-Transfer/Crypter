@@ -157,8 +157,9 @@ public class UserKeyController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userKeysService.GetPrivateKeyAsync(UserId, cancellationToken)
+
+        GetPrivateKeyQuery request = new GetPrivateKeyQuery(UserId);
+        return await _mediator.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,

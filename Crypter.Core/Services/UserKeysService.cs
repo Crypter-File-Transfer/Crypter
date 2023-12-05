@@ -27,7 +27,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
@@ -43,9 +42,6 @@ public interface IUserKeysService
 {
     Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request,
         bool allowReplacement);
-
-    Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId,
-        CancellationToken cancellationToken = default);
 
     Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId,
         InsertKeyPairRequest request);
@@ -97,17 +93,6 @@ public class UserKeysService : IUserKeysService
                 return Unit.Default;
             },
             InsertMasterKeyError.UnknownError);
-    }
-
-
-    public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync(Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
-            _context.UserKeyPairs
-                .Where(x => x.Owner == userId)
-                .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.Nonce))
-                .FirstOrDefaultAsync(cancellationToken), GetPrivateKeyError.NotFound);
     }
 
     public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId,
