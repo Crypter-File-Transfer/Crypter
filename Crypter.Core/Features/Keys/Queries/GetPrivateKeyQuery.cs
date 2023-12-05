@@ -48,7 +48,8 @@ internal class GetPrivateKeyQueryHandler
         _dataContext = dataContext;
     }
     
-    public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> Handle(GetPrivateKeyQuery request, CancellationToken cancellationToken)
+    public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> Handle(GetPrivateKeyQuery request,
+        CancellationToken cancellationToken)
     {
         return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
             _dataContext.UserKeyPairs

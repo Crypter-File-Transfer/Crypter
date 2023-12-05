@@ -29,8 +29,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Keys;
-using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Core.Features.Keys;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
@@ -40,9 +38,6 @@ namespace Crypter.Core.Services;
 
 public interface IUserKeysService
 {
-    Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request,
-        bool allowReplacement);
-
     Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId,
         InsertKeyPairRequest request);
 
@@ -58,41 +53,6 @@ public class UserKeysService : IUserKeysService
     {
         _context = context;
         _userAuthenticationService = userAuthenticationService;
-    }
-    
-    public async Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId,
-        InsertMasterKeyRequest request, bool allowReplacement)
-    {
-        if (!MasterKeyValidators.ValidateMasterKeyInformation(request.EncryptedKey, request.Nonce,
-                request.RecoveryProof))
-        {
-            return InsertMasterKeyError.InvalidMasterKey;
-        }
-
-        var testPasswordResult =
-            await _userAuthenticationService.TestUserPasswordAsync(userId,
-                new PasswordChallengeRequest(request.Password));
-        return await testPasswordResult.MatchAsync<Either<InsertMasterKeyError, Unit>>(
-            error => InsertMasterKeyError.InvalidPassword,
-            async _ =>
-            {
-                var masterKeyEntity = await _context.UserMasterKeys
-                    .FirstOrDefaultAsync(x => x.Owner == userId);
-
-                if (masterKeyEntity is not null && !allowReplacement)
-                {
-                    return InsertMasterKeyError.Conflict;
-                }
-
-                DateTime now = DateTime.UtcNow;
-                var newEntity = new UserMasterKeyEntity(userId, request.EncryptedKey, request.Nonce,
-                    request.RecoveryProof, now, now);
-                _context.UserMasterKeys.Add(newEntity);
-
-                await _context.SaveChangesAsync();
-                return Unit.Default;
-            },
-            InsertMasterKeyError.UnknownError);
     }
 
     public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId,

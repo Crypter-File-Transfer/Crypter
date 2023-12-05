@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Keys;
+using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Keys.Queries;
 using Crypter.Core.Services;
 using EasyMonads;
@@ -85,7 +86,7 @@ public class UserKeyController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> InsertMasterKeyAsync(InsertMasterKeyRequest request)
+    public async Task<IActionResult> InsertMasterKeyAsync(InsertMasterKeyRequest body)
     {
         IActionResult MakeErrorResponse(InsertMasterKeyError error)
         {
@@ -99,8 +100,9 @@ public class UserKeyController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userKeysService.UpsertMasterKeyAsync(UserId, request, false)
+
+        UpsertMasterKeyCommand request = new UpsertMasterKeyCommand(UserId, body, false);
+        return await _mediator.Send(request)
             .MatchAsync(
                 MakeErrorResponse,
                 _ => Ok(),

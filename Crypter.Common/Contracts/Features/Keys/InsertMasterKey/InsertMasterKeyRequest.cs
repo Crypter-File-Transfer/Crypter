@@ -28,14 +28,14 @@ namespace Crypter.Common.Contracts.Features.Keys;
 
 public class InsertMasterKeyRequest
 {
-    public byte[] Password { get; init; }
+    public byte[] AuthenticationPassword { get; init; }
     public byte[] EncryptedKey { get; init; }
     public byte[] Nonce { get; init; }
     public byte[] RecoveryProof { get; init; }
 
-    public InsertMasterKeyRequest(byte[] password, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof)
+    public InsertMasterKeyRequest(byte[] authenticationPassword, byte[] encryptedKey, byte[] nonce, byte[] recoveryProof)
     {
-        Password = password;
+        AuthenticationPassword = authenticationPassword;
         EncryptedKey = encryptedKey;
         Nonce = nonce;
         RecoveryProof = recoveryProof;
