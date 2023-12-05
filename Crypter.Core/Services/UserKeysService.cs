@@ -41,12 +41,6 @@ namespace Crypter.Core.Services;
 
 public interface IUserKeysService
 {
-    Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId,
-        CancellationToken cancellationToken = default);
-
-    Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(Guid userId,
-        GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken = default);
-
     Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId, InsertMasterKeyRequest request,
         bool allowReplacement);
 
@@ -69,39 +63,7 @@ public class UserKeysService : IUserKeysService
         _context = context;
         _userAuthenticationService = userAuthenticationService;
     }
-
-    public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync(Guid userId,
-        CancellationToken cancellationToken = default)
-    {
-        return Either<GetMasterKeyError, GetMasterKeyResponse>.FromRightAsync(
-            _context.UserMasterKeys
-                .Where(x => x.Owner == userId)
-                .Select(x => new GetMasterKeyResponse(x.EncryptedKey, x.Nonce))
-                .FirstOrDefaultAsync(cancellationToken), GetMasterKeyError.NotFound);
-    }
-
-    public async Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyProofAsync(
-        Guid userId, GetMasterKeyRecoveryProofRequest request, CancellationToken cancellationToken = default)
-    {
-        var testPasswordResult = await _userAuthenticationService.TestUserPasswordAsync(userId,
-            new PasswordChallengeRequest(request.Password), cancellationToken);
-        return await testPasswordResult
-            .MatchAsync<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>>(
-                error => GetMasterKeyRecoveryProofError.InvalidCredentials,
-                async _ =>
-                {
-                    var recoveryProof = await _context.UserMasterKeys
-                        .Where(x => x.Owner == userId)
-                        .Select(x => x.RecoveryProof)
-                        .FirstOrDefaultAsync(cancellationToken);
-
-                    return recoveryProof is null
-                        ? GetMasterKeyRecoveryProofError.NotFound
-                        : new GetMasterKeyRecoveryProofResponse(recoveryProof);
-                },
-                GetMasterKeyRecoveryProofError.UnknownError);
-    }
-
+    
     public async Task<Either<InsertMasterKeyError, Unit>> UpsertMasterKeyAsync(Guid userId,
         InsertMasterKeyRequest request, bool allowReplacement)
     {

@@ -28,10 +28,10 @@ namespace Crypter.Common.Contracts.Features.UserAuthentication;
 
 public class PasswordChallengeRequest
 {
-    public byte[] Password { get; init; }
+    public byte[] AuthenticationPassword { get; init; }
 
-    public PasswordChallengeRequest(byte[] password)
+    public PasswordChallengeRequest(byte[] authenticationPassword)
     {
-        Password = password;
+        AuthenticationPassword = authenticationPassword;
     }
 }

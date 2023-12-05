@@ -67,7 +67,7 @@ public partial class RecoveryKeyModal
     {
         _recoveryKey = await UserKeysService.MasterKey
             .BindAsync(async masterKey =>
-                await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, username, versionedPassword))
+                await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, versionedPassword))
             .MatchAsync(
                 () => "An error occurred",
                 x => x.ToBase64String());

@@ -100,14 +100,13 @@ public class UserRecoveryService : IUserRecoveryService
     {
         return _userPasswordService
             .DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .BindAsync(versionedPassword => DeriveRecoveryKeyAsync(masterKey, username, versionedPassword));
+            .BindAsync(versionedPassword => DeriveRecoveryKeyAsync(masterKey, versionedPassword));
     }
 
-    public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username,
-        VersionedPassword versionedPassword)
+    public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword)
     {
         GetMasterKeyRecoveryProofRequest request =
-            new GetMasterKeyRecoveryProofRequest(username, versionedPassword.Password);
+            new GetMasterKeyRecoveryProofRequest(versionedPassword.Password);
         return _crypterApiClient.UserKey.GetMasterKeyRecoveryProofAsync(request)
             .ToMaybeTask()
             .MapAsync(x => new RecoveryKey(masterKey, x.Proof));

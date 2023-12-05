@@ -28,8 +28,10 @@ using System.Threading.Tasks;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Keys;
+using Crypter.Core.Features.Keys.Queries;
 using Crypter.Core.Services;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -40,10 +42,12 @@ namespace Crypter.API.Controllers;
 [Route("api/user/key")]
 public class UserKeyController : CrypterControllerBase
 {
+    private readonly IMediator _mediator;
     private readonly IUserKeysService _userKeysService;
 
-    public UserKeyController(IUserKeysService userKeysService)
+    public UserKeyController(IMediator mediator, IUserKeysService userKeysService)
     {
+        _mediator = mediator;
         _userKeysService = userKeysService;
     }
 
@@ -65,8 +69,9 @@ public class UserKeyController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userKeysService.GetMasterKeyAsync(UserId, cancellationToken)
+
+        GetMasterKeyQuery request = new GetMasterKeyQuery(UserId);
+        return await _mediator.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -109,7 +114,7 @@ public class UserKeyController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request,
+    public async Task<IActionResult> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest body,
         CancellationToken cancellationToken)
     {
         IActionResult MakeErrorResponse(GetMasterKeyRecoveryProofError error)
@@ -125,8 +130,9 @@ public class UserKeyController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userKeysService.GetMasterKeyProofAsync(UserId, request, cancellationToken)
+
+        GetMasterKeyProofQuery request = new GetMasterKeyProofQuery(UserId, body);
+        return await _mediator.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
