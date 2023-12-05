@@ -303,7 +303,7 @@ public class TransferUploadService : ITransferUploadService
     private async Task<bool> IsDiskSpaceForTransferAsync(long transferSize,
         CancellationToken cancellationToken = default)
     {
-        GetDiskMetricsResult diskMetrics = await GetDiskMetricsQueryHandler.RunQueryAsync(_context, _transferStorageSettings,
+        GetDiskMetricsResult diskMetrics = await GetDiskMetricsQueryHandler.HandleAsync(_context, _transferStorageSettings,
             cancellationToken);
         return transferSize <= diskMetrics.FreeBytes;
     }

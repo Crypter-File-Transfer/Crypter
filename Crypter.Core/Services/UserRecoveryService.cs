@@ -52,19 +52,19 @@ public class UserRecoveryService : IUserRecoveryService
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly ICryptoProvider _cryptoProvider;
     private readonly IPasswordHashService _passwordHashService;
-    private readonly IUserKeysService _userKeysService;
     private readonly IUserTransferService _userTransferService;
+    private readonly IHangfireBackgroundService _hangfireBackgroundService;
 
     public UserRecoveryService(DataContext context, IBackgroundJobClient backgroundJobClient,
-        ICryptoProvider cryptoProvider, IPasswordHashService passwordHashService, IUserKeysService userKeysService,
-        IUserTransferService userTransferService)
+        ICryptoProvider cryptoProvider, IPasswordHashService passwordHashService,
+        IUserTransferService userTransferService, IHangfireBackgroundService hangfireBackgroundService)
     {
         _dataContext = context;
         _backgroundJobClient = backgroundJobClient;
         _cryptoProvider = cryptoProvider;
         _passwordHashService = passwordHashService;
-        _userKeysService = userKeysService;
         _userTransferService = userTransferService;
+        _hangfireBackgroundService = hangfireBackgroundService;
     }
 
     public Task<Maybe<UserRecoveryParameters>> GenerateRecoveryParametersAsync(string emailAddress)
@@ -90,7 +90,7 @@ public class UserRecoveryService : IUserRecoveryService
             {
                 if (x.DeleteUserKeys)
                 {
-                    _backgroundJobClient.Enqueue(() => _userKeysService.DeleteUserKeysAsync(x.UserId));
+                    _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.DeleteUserKeysAsync(x.UserId));
                 }
 
                 if (x.DeleteUserReceivedTransfers)

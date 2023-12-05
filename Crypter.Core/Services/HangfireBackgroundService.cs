@@ -30,6 +30,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using Crypter.Core.Extensions;
+using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Transfer;
 using Crypter.Core.Features.UserAuthentication;
 using Crypter.Core.Features.UserEmailVerification;
@@ -69,6 +70,7 @@ public interface IHangfireBackgroundService
     Task DeleteUserTokenAsync(Guid tokenId);
     Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId);
     Task DeleteRecoveryParametersAsync(Guid userId);
+    Task<Unit> DeleteUserKeysAsync(Guid userId);
 }
 
 /// <summary>
@@ -181,5 +183,10 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public Task DeleteRecoveryParametersAsync(Guid userId)
     {
         return UserRecoveryCommands.DeleteRecoveryParametersAsync(_dataContext, userId);
+    }
+
+    public Task<Unit> DeleteUserKeysAsync(Guid userId)
+    {
+        return DeleteUserKeysCommandHandler.HandleAsync(_dataContext, userId);
     }
 }

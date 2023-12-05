@@ -44,12 +44,10 @@ namespace Crypter.API.Controllers;
 public class UserKeyController : CrypterControllerBase
 {
     private readonly IMediator _mediator;
-    private readonly IUserKeysService _userKeysService;
 
-    public UserKeyController(IMediator mediator, IUserKeysService userKeysService)
+    public UserKeyController(IMediator mediator)
     {
         _mediator = mediator;
-        _userKeysService = userKeysService;
     }
 
     [HttpGet("master")]
