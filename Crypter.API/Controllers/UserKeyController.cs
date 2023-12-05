@@ -170,7 +170,7 @@ public class UserKeyController : CrypterControllerBase
 
     [HttpPut("private")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertKeyPairResponse))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
@@ -186,11 +186,12 @@ public class UserKeyController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userKeysService.InsertKeyPairAsync(UserId, body)
+
+        InsertKeyPairCommand request = new InsertKeyPairCommand(UserId, body);
+        return await _mediator.Send(request)
             .MatchAsync(
                 MakeErrorResponse,
-                Ok,
+                _ => Ok(),
                 MakeErrorResponse(InsertKeyPairError.UnknownError));
     }
 }

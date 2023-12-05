@@ -71,10 +71,10 @@ public class UserKeyRequests : IUserKeyRequests
             .ExtractErrorCode<GetPrivateKeyError, GetPrivateKeyResponse>();
     }
 
-    public Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request)
+    public Task<Either<InsertKeyPairError, Unit>> InsertKeyPairAsync(InsertKeyPairRequest request)
     {
         string url = "api/user/key/private";
-        return _crypterAuthenticatedHttpClient.PutEitherAsync<InsertKeyPairRequest, InsertKeyPairResponse>(url, request)
-            .ExtractErrorCode<InsertKeyPairError, InsertKeyPairResponse>();
+        return _crypterAuthenticatedHttpClient.PutEitherUnitResponseAsync(url, request)
+            .ExtractErrorCode<InsertKeyPairError, Unit>();
     }
 }

@@ -28,50 +28,24 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Crypter.Common.Contracts.Features.Keys;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
-using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Services;
 
 public interface IUserKeysService
 {
-    Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId,
-        InsertKeyPairRequest request);
-
     Task DeleteUserKeysAsync(Guid userId);
 }
 
 public class UserKeysService : IUserKeysService
 {
     private readonly DataContext _context;
-    private readonly IUserAuthenticationService _userAuthenticationService;
 
-    public UserKeysService(DataContext context, IUserAuthenticationService userAuthenticationService)
+    public UserKeysService(DataContext context)
     {
         _context = context;
-        _userAuthenticationService = userAuthenticationService;
-    }
-
-    public async Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(Guid userId,
-        InsertKeyPairRequest request)
-    {
-        var keyPairEntity = await _context.UserKeyPairs
-            .FirstOrDefaultAsync(x => x.Owner == userId);
-
-        if (keyPairEntity is null)
-        {
-            var newEntity = new UserKeyPairEntity(userId, request.EncryptedPrivateKey, request.PublicKey, request.Nonce,
-                DateTime.UtcNow);
-            _context.UserKeyPairs.Add(newEntity);
-            await _context.SaveChangesAsync();
-        }
-
-        return keyPairEntity is null
-            ? new InsertKeyPairResponse()
-            : InsertKeyPairError.KeyPairAlreadyExists;
     }
 
     public async Task DeleteUserKeysAsync(Guid userId)
