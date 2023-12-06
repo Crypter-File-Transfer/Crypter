@@ -40,7 +40,6 @@ public record GetDiskMetricsQuery : IRequest<GetDiskMetricsResult>;
 
 public record GetDiskMetricsResult(long AllocatedBytes, long FreeBytes);
 
-// ReSharper disable once ClassNeverInstantiated.Global
 internal sealed class GetDiskMetricsQueryHandler : IRequestHandler<GetDiskMetricsQuery, GetDiskMetricsResult>
 {
     private readonly DataContext _dataContext;
@@ -52,12 +51,12 @@ internal sealed class GetDiskMetricsQueryHandler : IRequestHandler<GetDiskMetric
         _transferStorageSettings = transferStorageSettings.Value;
     }
     
-    public async Task<GetDiskMetricsResult> Handle(GetDiskMetricsQuery request, CancellationToken cancellationToken)
+    public Task<GetDiskMetricsResult> Handle(GetDiskMetricsQuery request, CancellationToken cancellationToken)
     {
-        return await RunQueryAsync(_dataContext, _transferStorageSettings, cancellationToken);
+        return HandleAsync(_dataContext, _transferStorageSettings, cancellationToken);
     }
 
-    public static async Task<GetDiskMetricsResult> RunQueryAsync(DataContext dataContext,
+    public static async Task<GetDiskMetricsResult> HandleAsync(DataContext dataContext,
         TransferStorageSettings transferStorageSettings, CancellationToken cancellationToken = default)
     {
         IQueryable<long> anonymousMessageSizes = dataContext.AnonymousMessageTransfers
