@@ -30,7 +30,6 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Keys.Queries;
-using Crypter.Core.Services;
 using EasyMonads;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

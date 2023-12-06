@@ -32,8 +32,10 @@ using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
-using Crypter.Core.Services;
+using Crypter.Core.Features.UserContacts.Commands;
+using Crypter.Core.Features.UserContacts.Queries;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -44,11 +46,11 @@ namespace Crypter.API.Controllers;
 [Route("api/user/contact")]
 public class UserContactController : CrypterControllerBase
 {
-    private readonly IUserContactsService _userContactsService;
+    private readonly IMediator _mediator;
 
-    public UserContactController(IUserContactsService userContactsService)
+    public UserContactController(IMediator mediator)
     {
-        _userContactsService = userContactsService;
+        _mediator = mediator;
     }
 
     /// <summary>
@@ -62,7 +64,8 @@ public class UserContactController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> GetUserContactsAsync(CancellationToken cancellationToken)
     {
-        List<UserContact> result = await _userContactsService.GetUserContactsAsync(UserId, cancellationToken);
+        GetUserContactsQuery request = new GetUserContactsQuery(UserId);
+        List<UserContact> result = await _mediator.Send(request, cancellationToken);
         return Ok(result);
     }
 
@@ -91,8 +94,9 @@ public class UserContactController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userContactsService.UpsertUserContactAsync(UserId, username)
+
+        AddUserContactCommand request = new AddUserContactCommand(UserId, username);
+        return await _mediator.Send(request)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -110,7 +114,8 @@ public class UserContactController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> RemoveUserContactAsync([FromQuery] string username)
     {
-        await _userContactsService.RemoveUserContactAsync(UserId, username);
+        RemoveUserContactCommand request = new RemoveUserContactCommand(UserId, username);
+        await _mediator.Send(request);
         return Ok();
     }
 }
