@@ -27,7 +27,6 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
-using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Users;
 using Crypter.Common.Enums;
 using Crypter.DataAccess.Entities;
@@ -44,18 +43,7 @@ public static class LinqUserExpressions
                       || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts &&
                           x.Contacts.Any(y => y.ContactId == visitorId));
     }
-
-    public static Expression<Func<UserEntity, UserContact>> ToUserContactDTO(Guid? visitorId)
-    {
-        return (x) => x.Id == visitorId
-                      || x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
-                      || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && visitorId != null)
-                      || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts &&
-                          x.Contacts.Any(y => y.ContactId == visitorId))
-            ? new UserContact(x.Username, x.Profile.Alias)
-            : new UserContact("{ Private }", string.Empty);
-    }
-
+    
     public static Expression<Func<UserEntity, bool>> UserProfileIsComplete()
     {
         return (x) => x.Profile != null
