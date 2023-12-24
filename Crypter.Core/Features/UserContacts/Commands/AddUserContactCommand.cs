@@ -30,7 +30,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
-using Crypter.Core.Extensions;
+using Crypter.Core.LinqExpressions;
 using Crypter.Core.MediatorMonads;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;

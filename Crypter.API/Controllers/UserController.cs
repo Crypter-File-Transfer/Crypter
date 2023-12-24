@@ -31,8 +31,9 @@ using System.Threading.Tasks;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Users;
-using Crypter.Core.Services;
+using Crypter.Core.Features.Users.Queries;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -43,15 +44,15 @@ namespace Crypter.API.Controllers;
 [Route("api/user")]
 public class UserController : CrypterControllerBase
 {
-    private readonly IUserService _userService;
+    private readonly ISender _sender;
 
-    public UserController(IUserService userService)
+    public UserController(ISender sender)
     {
-        _userService = userService;
+        _sender = sender;
     }
 
     [HttpGet("profile")]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserProfileDTO))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UserProfile))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> GetUserProfileAsync([FromQuery] string username,
@@ -66,8 +67,9 @@ public class UserController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userService.GetUserProfileAsync(PossibleUserId, username, cancellationToken)
+
+        UserProfileQuery request = new UserProfileQuery(PossibleUserId, username);
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 () => MakeErrorResponse(GetUserProfileError.NotFound),
                 Ok);
@@ -80,8 +82,8 @@ public class UserController : CrypterControllerBase
     public async Task<IActionResult> SearchUsersAsync([FromQuery] string keyword, [FromQuery] int index,
         [FromQuery] int count, CancellationToken cancellationToken)
     {
-        List<UserSearchResult> results =
-            await _userService.SearchForUsersAsync(UserId, keyword, index, count, cancellationToken);
+        UserSearchQuery request = new UserSearchQuery(UserId, keyword, index, count);
+        List<UserSearchResult>? results = await _sender.Send(request, cancellationToken);
         return Ok(results);
     }
 }
