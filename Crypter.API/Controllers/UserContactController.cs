@@ -46,11 +46,11 @@ namespace Crypter.API.Controllers;
 [Route("api/user/contact")]
 public class UserContactController : CrypterControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly ISender _sender;
 
-    public UserContactController(IMediator mediator)
+    public UserContactController(ISender sender)
     {
-        _mediator = mediator;
+        _sender = sender;
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public class UserContactController : CrypterControllerBase
     public async Task<IActionResult> GetUserContactsAsync(CancellationToken cancellationToken)
     {
         GetUserContactsQuery request = new GetUserContactsQuery(UserId);
-        List<UserContact> result = await _mediator.Send(request, cancellationToken);
+        List<UserContact> result = await _sender.Send(request, cancellationToken);
         return Ok(result);
     }
 
@@ -96,7 +96,7 @@ public class UserContactController : CrypterControllerBase
         }
 
         AddUserContactCommand request = new AddUserContactCommand(UserId, username);
-        return await _mediator.Send(request)
+        return await _sender.Send(request)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -115,7 +115,7 @@ public class UserContactController : CrypterControllerBase
     public async Task<IActionResult> RemoveUserContactAsync([FromQuery] string username)
     {
         RemoveUserContactCommand request = new RemoveUserContactCommand(UserId, username);
-        await _mediator.Send(request);
+        await _sender.Send(request);
         return Ok();
     }
 }
