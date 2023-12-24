@@ -79,10 +79,10 @@ internal class GetUserProfile_Tests
         InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
         var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-        Either<GetUserProfileError, UserProfileDTO> response =
+        Either<GetUserProfileError, UserProfile> response =
             await _client.User.GetUserProfileAsync(TestData.DefaultUsername, false);
 
-        UserProfileDTO result = response.RightOrDefault(null);
+        UserProfile result = response.RightOrDefault(null);
 
         Assert.True(loginResult.IsRight);
         Assert.True(response.IsRight);
