@@ -38,11 +38,11 @@ namespace Crypter.API.Controllers;
 [Route("api/user/consent")]
 public class ConsentController : CrypterControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly ISender _sender;
 
-    public ConsentController(IMediator mediator)
+    public ConsentController(ISender sender)
     {
-        _mediator = mediator;
+        _sender = sender;
     }
 
     [HttpPost("recovery-key-risk")]
@@ -52,7 +52,7 @@ public class ConsentController : CrypterControllerBase
     public async Task<IActionResult> ConsentToRecoveryKeyRisksAsync()
     {
         SaveAcknowledgementOfRecoveryKeyRisksCommand request = new SaveAcknowledgementOfRecoveryKeyRisksCommand(UserId);
-        await _mediator.Send(request);
+        await _sender.Send(request);
         return Ok();
     }
 }

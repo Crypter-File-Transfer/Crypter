@@ -38,11 +38,11 @@ namespace Crypter.API.Controllers;
 [Route("api/metrics")]
 public class MetricsController : CrypterControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly ISender _sender;
 
-    public MetricsController(IMediator mediator)
+    public MetricsController(ISender sender)
     {
-        _mediator = mediator;
+        _sender = sender;
     }
 
     [HttpGet("storage/public")]
@@ -50,7 +50,7 @@ public class MetricsController : CrypterControllerBase
     public async Task<IActionResult> GetPublicStorageMetricsAsync(CancellationToken cancellationToken)
     {
         GetDiskMetricsQuery request = new GetDiskMetricsQuery();
-        GetDiskMetricsResult result = await _mediator.Send(request, cancellationToken);
+        GetDiskMetricsResult result = await _sender.Send(request, cancellationToken);
         PublicStorageMetricsResponse response = new PublicStorageMetricsResponse(result.AllocatedBytes, result.FreeBytes);
         return Ok(response);
     }

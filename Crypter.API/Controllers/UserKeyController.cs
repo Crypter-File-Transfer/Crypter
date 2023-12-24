@@ -42,11 +42,11 @@ namespace Crypter.API.Controllers;
 [Route("api/user/key")]
 public class UserKeyController : CrypterControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly ISender _sender;
 
-    public UserKeyController(IMediator mediator)
+    public UserKeyController(ISender sender)
     {
-        _mediator = mediator;
+        _sender = sender;
     }
 
     [HttpGet("master")]
@@ -69,7 +69,7 @@ public class UserKeyController : CrypterControllerBase
         }
 
         GetMasterKeyQuery request = new GetMasterKeyQuery(UserId);
-        return await _mediator.Send(request, cancellationToken)
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -99,7 +99,7 @@ public class UserKeyController : CrypterControllerBase
         }
 
         UpsertMasterKeyCommand request = new UpsertMasterKeyCommand(UserId, body, false);
-        return await _mediator.Send(request)
+        return await _sender.Send(request)
             .MatchAsync(
                 MakeErrorResponse,
                 _ => Ok(),
@@ -131,7 +131,7 @@ public class UserKeyController : CrypterControllerBase
         }
 
         GetMasterKeyProofQuery request = new GetMasterKeyProofQuery(UserId, body);
-        return await _mediator.Send(request, cancellationToken)
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -158,7 +158,7 @@ public class UserKeyController : CrypterControllerBase
         }
 
         GetPrivateKeyQuery request = new GetPrivateKeyQuery(UserId);
-        return await _mediator.Send(request, cancellationToken)
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -185,7 +185,7 @@ public class UserKeyController : CrypterControllerBase
         }
 
         InsertKeyPairCommand request = new InsertKeyPairCommand(UserId, body);
-        return await _mediator.Send(request)
+        return await _sender.Send(request)
             .MatchAsync(
                 MakeErrorResponse,
                 _ => Ok(),
