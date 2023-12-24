@@ -27,4 +27,8 @@
       <ProjectReference Include="..\Crypter.DataAccess\Crypter.DataAccess.csproj" />
    </ItemGroup>
 
+   <ItemGroup>
+      <InternalsVisibleTo Include="Crypter.Test" />
+   </ItemGroup>
+   
 </Project>
