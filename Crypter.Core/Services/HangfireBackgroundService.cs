@@ -25,15 +25,16 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
+using Crypter.Core.Features.AccountRecovery;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Transfer;
 using Crypter.Core.Features.UserAuthentication;
 using Crypter.Core.Features.UserEmailVerification;
-using Crypter.Core.Features.UserRecovery;
 using Crypter.Core.Features.UserToken;
 using Crypter.Core.LinqExpressions;
 using Crypter.Core.Repositories;
@@ -71,6 +72,7 @@ public interface IHangfireBackgroundService
     Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId);
     Task DeleteRecoveryParametersAsync(Guid userId);
     Task<Unit> DeleteUserKeysAsync(Guid userId);
+    Task<Unit> DeleteReceivedTransfersAsync(Guid userId);
 }
 
 /// <summary>
@@ -116,25 +118,18 @@ public class HangfireBackgroundService : IHangfireBackgroundService
 
     public async Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType)
     {
-        UserEntity recipient = null;
-
-        switch (itemType)
+        UserEntity recipient = itemType switch
         {
-            case TransferItemType.Message:
-                recipient = await _dataContext.UserMessageTransfers
-                    .Where(x => x.Id == itemId)
-                    .Select(x => x.Recipient)
-                    .Where(LinqUserExpressions.UserReceivesEmailNotifications())
-                    .FirstOrDefaultAsync();
-                break;
-            case TransferItemType.File:
-                recipient = await _dataContext.UserFileTransfers
-                    .Where(x => x.Id == itemId)
-                    .Select(x => x.Recipient)
-                    .Where(LinqUserExpressions.UserReceivesEmailNotifications())
-                    .FirstOrDefaultAsync();
-                break;
-        }
+            TransferItemType.Message => await _dataContext.UserMessageTransfers.Where(x => x.Id == itemId)
+                .Select(x => x.Recipient)
+                .Where(LinqUserExpressions.UserReceivesEmailNotifications())
+                .FirstOrDefaultAsync(),
+            TransferItemType.File => await _dataContext.UserFileTransfers.Where(x => x.Id == itemId)
+                .Select(x => x.Recipient)
+                .Where(LinqUserExpressions.UserReceivesEmailNotifications())
+                .FirstOrDefaultAsync(),
+            _ => null
+        };
 
         if (recipient is not null
             && EmailAddress.TryFrom(recipient.EmailAddress, out EmailAddress validEmailAddress))
@@ -188,5 +183,31 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public Task<Unit> DeleteUserKeysAsync(Guid userId)
     {
         return DeleteUserKeysCommandHandler.HandleAsync(_dataContext, userId);
+    }
+
+    public async Task<Unit> DeleteReceivedTransfersAsync(Guid userId)
+    {
+        List<UserFileTransferEntity> receivedFileTransfers = await _dataContext.UserFileTransfers
+            .Where(x => x.RecipientId == userId)
+            .ToListAsync();
+
+        List<UserMessageTransferEntity> receivedMessageTransfers = await _dataContext.UserMessageTransfers
+            .Where(x => x.RecipientId == userId)
+            .ToListAsync();
+
+        foreach (UserFileTransferEntity receivedTransfer in receivedFileTransfers)
+        {
+            _dataContext.Remove((object)receivedTransfer);
+            _transferRepository.DeleteTransfer(receivedTransfer.Id, TransferItemType.File, TransferUserType.User);
+        }
+
+        foreach (UserMessageTransferEntity receivedTransfer in receivedMessageTransfers)
+        {
+            _dataContext.Remove((object)receivedTransfer);
+            _transferRepository.DeleteTransfer(receivedTransfer.Id, TransferItemType.Message, TransferUserType.User);
+        }
+
+        await _dataContext.SaveChangesAsync();
+        return Unit.Default;
     }
 }

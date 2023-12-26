@@ -30,10 +30,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Enums;
 using Crypter.Core.Repositories;
 using Crypter.DataAccess;
-using Crypter.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Services;
@@ -49,8 +47,6 @@ public interface IUserTransferService
 
     Task<List<UserReceivedFileDTO>> GetUserReceivedFilesAsync(Guid userId,
         CancellationToken cancellationToken = default);
-
-    Task DeleteReceivedTransfersAsync(Guid userId);
 }
 
 public class UserTransferService : IUserTransferService
@@ -133,30 +129,5 @@ public class UserTransferService : IUserTransferService
             .ToList();
 
         return receivedFilesWithHashIds;
-    }
-
-    public async Task DeleteReceivedTransfersAsync(Guid userId)
-    {
-        List<UserFileTransferEntity> receivedFileTransfers = await _context.UserFileTransfers
-            .Where(x => x.RecipientId == userId)
-            .ToListAsync();
-
-        List<UserMessageTransferEntity> receivedMessageTransfers = await _context.UserMessageTransfers
-            .Where(x => x.RecipientId == userId)
-            .ToListAsync();
-
-        foreach (var receivedTransfer in receivedFileTransfers)
-        {
-            _context.Remove(receivedTransfer);
-            _transferRepository.DeleteTransfer(receivedTransfer.Id, TransferItemType.File, TransferUserType.User);
-        }
-
-        foreach (var receivedTransfer in receivedMessageTransfers)
-        {
-            _context.Remove(receivedTransfer);
-            _transferRepository.DeleteTransfer(receivedTransfer.Id, TransferItemType.Message, TransferUserType.User);
-        }
-
-        await _context.SaveChangesAsync();
     }
 }

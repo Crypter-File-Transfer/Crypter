@@ -28,9 +28,9 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
+using Crypter.Common.Contracts.Features.AccountRecovery.SubmitRecovery;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Primitives;
 using Crypter.Crypto.Common;
 using EasyMonads;
@@ -56,7 +56,7 @@ public class UserRecoveryService : IUserRecoveryService
         return _crypterApiClient.UserRecovery.SendRecoveryEmailAsync(emailAddress);
     }
 
-    public Task<Either<SubmitRecoveryError, Maybe<RecoveryKey>>> SubmitRecoveryRequestAsync(string recoveryCode,
+    public Task<Either<SubmitAccountRecoveryError, Maybe<RecoveryKey>>> SubmitRecoveryRequestAsync(string recoveryCode,
         string recoverySignature, Username username, Password newPassword, Maybe<RecoveryKey> recoveryKey)
     {
         byte[] currentRecoveryProof = recoveryKey.Map(x => x.Proof).SomeOrDefault(null);
@@ -64,7 +64,7 @@ public class UserRecoveryService : IUserRecoveryService
 
         return _userPasswordService
             .DeriveUserAuthenticationPasswordAsync(username, newPassword, _userPasswordService.CurrentPasswordVersion)
-            .ToEitherAsync(SubmitRecoveryError.PasswordHashFailure)
+            .ToEitherAsync(SubmitAccountRecoveryError.PasswordHashFailure)
             .BindAsync(async versionedPassword =>
             {
                 Maybe<RecoveryKey> newRecoveryKey = Maybe<RecoveryKey>.None;
@@ -75,7 +75,7 @@ public class UserRecoveryService : IUserRecoveryService
                         newPassword, _userPasswordService.CurrentPasswordVersion);
                     if (maybeCredentialKey.IsNone)
                     {
-                        return SubmitRecoveryError.PasswordHashFailure;
+                        return SubmitAccountRecoveryError.PasswordHashFailure;
                     }
 
                     byte[] credentialKey = maybeCredentialKey.SomeOrDefault(null);
@@ -89,10 +89,10 @@ public class UserRecoveryService : IUserRecoveryService
                         newRecoveryProof, encryptedMasterKey, nonce);
                 }
 
-                SubmitRecoveryRequest request = new SubmitRecoveryRequest(username.Value, recoveryCode,
+                AccountRecoverySubmission submission = new AccountRecoverySubmission(username.Value, recoveryCode,
                     recoverySignature, versionedPassword, replacementMasterKeyInformation);
-                return await _crypterApiClient.UserRecovery.SubmitRecoveryAsync(request)
-                    .MapAsync<SubmitRecoveryError, Unit, Maybe<RecoveryKey>>(_ => newRecoveryKey);
+                return await _crypterApiClient.UserRecovery.SubmitRecoveryAsync(submission)
+                    .MapAsync<SubmitAccountRecoveryError, Unit, Maybe<RecoveryKey>>(_ => newRecoveryKey);
             });
     }
 

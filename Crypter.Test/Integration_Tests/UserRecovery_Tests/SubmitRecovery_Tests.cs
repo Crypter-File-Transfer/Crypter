@@ -32,15 +32,15 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Client.Services;
+using Crypter.Common.Contracts.Features.AccountRecovery.RequestRecovery;
+using Crypter.Common.Contracts.Features.AccountRecovery.SubmitRecovery;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserRecovery.RequestRecovery;
-using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Infrastructure;
 using Crypter.Common.Primitives;
-using Crypter.Core.Services;
+using Crypter.Core.Features.AccountRecovery;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.DigitalSignature;
 using Crypter.Crypto.Providers.Default;
@@ -155,10 +155,9 @@ internal class SubmitRecovery_Tests
         UserRecoveryEntity recoveryData = await dataContext.UserRecoveries
             .Where(x => x.User.Username == TestData.DefaultUsername)
             .FirstAsync();
-
-        IUserRecoveryService recoveryService = _factory.Services.GetRequiredService<IUserRecoveryService>();
+        
         string encodedRecoveryCode = UrlSafeEncoder.EncodeGuidUrlSafe(recoveryData.Code);
-        byte[] signedRecoveryData = recoveryService.GenerateRecoverySignature(_knownKeyPair.PrivateKey,
+        byte[] signedRecoveryData = UserRecoveryQueries.GenerateRecoverySignature(_cryptoProvider, _knownKeyPair.PrivateKey,
             recoveryData.Code, Username.From(TestData.DefaultUsername));
         string encodedRecoverySignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedRecoveryData);
 
@@ -169,9 +168,9 @@ internal class SubmitRecovery_Tests
             () => null,
             x => new ReplacementMasterKeyInformation(x.Proof, new byte[] { 0x01 }, new byte[] { 0x02 },
                 new byte[] { 0x03 }));
-        SubmitRecoveryRequest request = new SubmitRecoveryRequest(TestData.DefaultUsername, encodedRecoveryCode,
+        AccountRecoverySubmission submission = new AccountRecoverySubmission(TestData.DefaultUsername, encodedRecoveryCode,
             encodedRecoverySignature, versionedPassword, replacementMasterKeyInformation);
-        Either<SubmitRecoveryError, Unit> result = await _client.UserRecovery.SubmitRecoveryAsync(request);
+        Either<SubmitAccountRecoveryError, Unit> result = await _client.UserRecovery.SubmitRecoveryAsync(submission);
 
         Assert.True(registrationResult.IsRight);
         Assert.True(verificationResult.IsRight);
@@ -241,10 +240,9 @@ internal class SubmitRecovery_Tests
         UserRecoveryEntity recoveryData = await dataContext.UserRecoveries
             .Where(x => x.User.Username == TestData.DefaultUsername)
             .FirstAsync();
-
-        IUserRecoveryService recoveryService = _factory.Services.GetRequiredService<IUserRecoveryService>();
+        
         string encodedRecoveryCode = UrlSafeEncoder.EncodeGuidUrlSafe(recoveryData.Code);
-        byte[] signedRecoveryData = recoveryService.GenerateRecoverySignature(_knownKeyPair.PrivateKey,
+        byte[] signedRecoveryData = UserRecoveryQueries.GenerateRecoverySignature(_cryptoProvider, _knownKeyPair.PrivateKey,
             recoveryData.Code, Username.From(TestData.DefaultUsername));
         string encodedRecoverySignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedRecoveryData);
 
@@ -259,9 +257,9 @@ internal class SubmitRecovery_Tests
             _ => throw new NotImplementedException()
         };
 
-        SubmitRecoveryRequest request = new SubmitRecoveryRequest(TestData.DefaultUsername, encodedRecoveryCode,
+        AccountRecoverySubmission submission = new AccountRecoverySubmission(TestData.DefaultUsername, encodedRecoveryCode,
             encodedRecoverySignature, versionedPassword, replacementMasterKeyInformation);
-        Either<SubmitRecoveryError, Unit> result = await _client.UserRecovery.SubmitRecoveryAsync(request);
+        Either<SubmitAccountRecoveryError, Unit> result = await _client.UserRecovery.SubmitRecoveryAsync(submission);
 
         Assert.True(registrationResult.IsRight);
         Assert.True(verificationResult.IsRight);
@@ -269,7 +267,7 @@ internal class SubmitRecovery_Tests
         Assert.True(verificationResult.IsRight);
         Assert.True(result.IsLeft);
         result.DoLeftOrNeither(x =>
-                Assert.AreEqual(SubmitRecoveryError.InvalidMasterKey, x),
+                Assert.AreEqual(SubmitAccountRecoveryError.InvalidMasterKey, x),
             Assert.Fail);
     }
 }

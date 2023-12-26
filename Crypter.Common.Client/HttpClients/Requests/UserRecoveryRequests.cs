@@ -27,8 +27,8 @@
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Requests;
-using Crypter.Common.Contracts.Features.UserRecovery.RequestRecovery;
-using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
+using Crypter.Common.Contracts.Features.AccountRecovery.RequestRecovery;
+using Crypter.Common.Contracts.Features.AccountRecovery.SubmitRecovery;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
@@ -50,10 +50,10 @@ public class UserRecoveryRequests : IUserRecoveryRequests
             .ExtractErrorCode<SendRecoveryEmailError, Unit>();
     }
 
-    public Task<Either<SubmitRecoveryError, Unit>> SubmitRecoveryAsync(SubmitRecoveryRequest request)
+    public Task<Either<SubmitAccountRecoveryError, Unit>> SubmitRecoveryAsync(AccountRecoverySubmission submission)
     {
         string url = "api/user/recovery";
-        return _crypterHttpClient.PostEitherUnitResponseAsync(url, request)
-            .ExtractErrorCode<SubmitRecoveryError, Unit>();
+        return _crypterHttpClient.PostEitherUnitResponseAsync(url, submission)
+            .ExtractErrorCode<SubmitAccountRecoveryError, Unit>();
     }
 }

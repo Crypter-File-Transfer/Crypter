@@ -65,7 +65,6 @@ public static class DependencyInjection
         services.TryAddScoped<ITransferUploadService, TransferUploadService>();
         services.TryAddScoped<IUserAuthenticationService, UserAuthenticationService>();
         services.TryAddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
-        services.TryAddScoped<IUserRecoveryService, UserRecoveryService>();
         services.TryAddScoped<IUserTransferService, UserTransferService>();
         services.TryAddScoped<IUserProfileSettingsService, UserProfileSettingsService>();
         services.TryAddScoped<IUserContactInfoSettingsService, UserContactInfoSettingsService>();
