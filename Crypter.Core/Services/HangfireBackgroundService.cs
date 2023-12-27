@@ -30,11 +30,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
+using Crypter.Core.Exceptions;
 using Crypter.Core.Features.AccountRecovery;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Transfer;
 using Crypter.Core.Features.UserAuthentication;
-using Crypter.Core.Features.UserEmailVerification;
+using Crypter.Core.Features.UserEmailVerification.Commands;
 using Crypter.Core.Features.UserToken;
 using Crypter.Core.LinqExpressions;
 using Crypter.Core.Repositories;
@@ -43,13 +44,16 @@ using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
 using Hangfire;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Services;
 
 public interface IHangfireBackgroundService
 {
-    Task SendEmailVerificationAsync(Guid userId);
+    Task<Unit> SendEmailVerificationAsync(Guid userId);
     Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType);
     Task SendRecoveryEmailAsync(string emailAddress);
 
@@ -85,35 +89,45 @@ public interface IHangfireBackgroundService
 public class HangfireBackgroundService : IHangfireBackgroundService
 {
     private readonly DataContext _dataContext;
+    private readonly ISender _sender;
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly ICryptoProvider _cryptoProvider;
     private readonly IEmailService _emailService;
     private readonly ITransferRepository _transferRepository;
+    private readonly ILogger<HangfireBackgroundService> _logger;
 
-    private const int _accountRecoveryEmailExpirationMinutes = 30;
+    private const int AccountRecoveryEmailExpirationMinutes = 30;
 
     public HangfireBackgroundService(
-        DataContext dataContext, IBackgroundJobClient backgroundJobClient, ICryptoProvider cryptoProvider,
-        IEmailService emailService, ITransferRepository transferRepository)
+        DataContext dataContext,
+        ISender sender,
+        IBackgroundJobClient backgroundJobClient,
+        ICryptoProvider cryptoProvider,
+        IEmailService emailService,
+        ITransferRepository transferRepository,
+        ILogger<HangfireBackgroundService> logger)
     {
         _dataContext = dataContext;
+        _sender = sender;
         _backgroundJobClient = backgroundJobClient;
         _cryptoProvider = cryptoProvider;
         _emailService = emailService;
         _transferRepository = transferRepository;
+        _logger = logger;
     }
 
-    public Task SendEmailVerificationAsync(Guid userId)
+    public async Task<Unit> SendEmailVerificationAsync(Guid userId)
     {
-        return UserEmailVerificationQueries.GenerateVerificationParametersAsync(_dataContext, _cryptoProvider, userId)
-            .IfSomeAsync(async x =>
-            {
-                bool deliverySuccess = await _emailService.SendEmailVerificationAsync(x);
-                if (deliverySuccess)
-                {
-                    await UserEmailVerificationCommands.SaveVerificationParametersAsync(_dataContext, x);
-                }
-            });
+        var request = new SendVerificationEmailCommand(userId);
+        var result = await _sender.Send(request);
+        
+        if (!result)
+        {
+            _logger.LogError("Failed to send verification email for user: {userId}", userId);
+            throw new HangfireJobException($"{nameof(SendEmailVerificationAsync)} failed");
+        }
+
+        return Unit.Default;
     }
 
     public async Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType)
@@ -145,13 +159,13 @@ public class HangfireBackgroundService : IHangfireBackgroundService
             {
                 bool deliverySuccess =
                     await _emailService.SendAccountRecoveryLinkAsync(parameters,
-                        _accountRecoveryEmailExpirationMinutes);
+                        AccountRecoveryEmailExpirationMinutes);
                 if (deliverySuccess)
                 {
                     DateTime utcNow = DateTime.UtcNow;
                     await UserRecoveryCommands.SaveRecoveryParametersAsync(_dataContext, parameters, utcNow);
 
-                    DateTime recoveryExpiration = utcNow.AddMinutes(_accountRecoveryEmailExpirationMinutes);
+                    DateTime recoveryExpiration = utcNow.AddMinutes(AccountRecoveryEmailExpirationMinutes);
                     _backgroundJobClient.Schedule(() => DeleteRecoveryParametersAsync(parameters.UserId),
                         recoveryExpiration);
                 }
@@ -180,9 +194,10 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return UserRecoveryCommands.DeleteRecoveryParametersAsync(_dataContext, userId);
     }
 
-    public Task<Unit> DeleteUserKeysAsync(Guid userId)
+    public async Task<Unit> DeleteUserKeysAsync(Guid userId)
     {
-        return DeleteUserKeysCommandHandler.HandleAsync(_dataContext, userId);
+        var request = new DeleteUserKeysCommand(userId);
+        return await _sender.Send(request);
     }
 
     public async Task<Unit> DeleteReceivedTransfersAsync(Guid userId)

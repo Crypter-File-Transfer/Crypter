@@ -34,6 +34,7 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
@@ -63,11 +64,13 @@ public static class EmailServiceExtensions
 
 public class EmailService : IEmailService
 {
-    private readonly EmailSettings Settings;
+    private readonly IOptions<EmailSettings> _settings;
+    private readonly ILogger<EmailService> _logger;
 
-    public EmailService(IOptions<EmailSettings> emailSettings)
+    public EmailService(IOptions<EmailSettings> emailSettings, ILogger<EmailService> logger)
     {
-        Settings = emailSettings.Value;
+        _settings = emailSettings;
+        _logger = logger;
     }
 
     /// <summary>
@@ -80,13 +83,13 @@ public class EmailService : IEmailService
     /// <returns></returns>
     public virtual async Task<bool> SendAsync(string subject, string message, EmailAddress recipient)
     {
-        if (!Settings.Enabled)
+        if (!_settings.Value.Enabled)
         {
             return true;
         }
 
         var mailMessage = new MimeMessage();
-        mailMessage.From.Add(MailboxAddress.Parse(Settings.From));
+        mailMessage.From.Add(MailboxAddress.Parse(_settings.Value.From));
         mailMessage.To.Add(MailboxAddress.Parse(recipient.Value));
         mailMessage.Subject = subject;
         mailMessage.Body = new TextPart("plain")
@@ -98,13 +101,13 @@ public class EmailService : IEmailService
 
         try
         {
-            await smtpClient.ConnectAsync(Settings.Host, Settings.Port, SecureSocketOptions.StartTls);
-            await smtpClient.AuthenticateAsync(Settings.Username, Settings.Password);
+            await smtpClient.ConnectAsync(_settings.Value.Host, _settings.Value.Port, SecureSocketOptions.StartTls);
+            await smtpClient.AuthenticateAsync(_settings.Value.Username, _settings.Value.Password);
             await smtpClient.SendAsync(mailMessage);
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            _logger.LogError("An error occured while sending an email: {error}", ex.Message);
             return false;
         }
         finally
@@ -130,9 +133,7 @@ public class EmailService : IEmailService
     /// <summary>
     /// Send a verification email to the provided recipient.
     /// </summary>
-    /// <param name="emailAddress"></param>
-    /// <param name="verificationCode"></param>
-    /// <param name="ecdsaPrivateKey"></param>
+    /// <param name="parameters"></param>
     /// <remarks>This method is 'virtual' to enable some unit tests.</remarks>
     /// <returns></returns>
     public virtual async Task<bool> SendEmailVerificationAsync(UserEmailAddressVerificationParameters parameters)
