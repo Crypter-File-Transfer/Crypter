@@ -29,15 +29,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
-using Crypter.Common.Primitives;
 using Crypter.Core.Exceptions;
 using Crypter.Core.Features.AccountRecovery;
 using Crypter.Core.Features.Keys.Commands;
+using Crypter.Core.Features.Notifications.Commands;
 using Crypter.Core.Features.Transfer;
 using Crypter.Core.Features.UserAuthentication;
 using Crypter.Core.Features.UserEmailVerification.Commands;
 using Crypter.Core.Features.UserToken;
-using Crypter.Core.LinqExpressions;
 using Crypter.Core.Repositories;
 using Crypter.Crypto.Common;
 using Crypter.DataAccess;
@@ -54,7 +53,7 @@ namespace Crypter.Core.Services;
 public interface IHangfireBackgroundService
 {
     Task<Unit> SendEmailVerificationAsync(Guid userId);
-    Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType);
+    Task<Unit> SendTransferNotificationAsync(Guid itemId, TransferItemType itemType);
     Task SendRecoveryEmailAsync(string emailAddress);
 
     /// <summary>
@@ -123,33 +122,26 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         
         if (!result)
         {
-            _logger.LogError("Failed to send verification email for user: {userId}", userId);
-            throw new HangfireJobException($"{nameof(SendEmailVerificationAsync)} failed");
+            _logger.LogError("Failed to send verification email for user: {userId}.", userId);
+            throw new HangfireJobException($"{nameof(SendEmailVerificationAsync)} failed.");
         }
 
         return Unit.Default;
     }
 
-    public async Task SendTransferNotificationAsync(Guid itemId, TransferItemType itemType)
+    public async Task<Unit> SendTransferNotificationAsync(Guid itemId, TransferItemType itemType)
     {
-        UserEntity recipient = itemType switch
-        {
-            TransferItemType.Message => await _dataContext.UserMessageTransfers.Where(x => x.Id == itemId)
-                .Select(x => x.Recipient)
-                .Where(LinqUserExpressions.UserReceivesEmailNotifications())
-                .FirstOrDefaultAsync(),
-            TransferItemType.File => await _dataContext.UserFileTransfers.Where(x => x.Id == itemId)
-                .Select(x => x.Recipient)
-                .Where(LinqUserExpressions.UserReceivesEmailNotifications())
-                .FirstOrDefaultAsync(),
-            _ => null
-        };
+        var request = new SendTransferNotificationCommand(itemId, itemType);
+        var result = await _sender.Send(request);
 
-        if (recipient is not null
-            && EmailAddress.TryFrom(recipient.EmailAddress, out EmailAddress validEmailAddress))
+        if (!result)
         {
-            await _emailService.SendTransferNotificationAsync(validEmailAddress);
+            _logger.LogError("Failed to send transfer notification for item: {itemId}; type: {itemType}.",
+                itemId, itemType);
+            throw new HangfireJobException($"{nameof(SendTransferNotificationAsync)} failed.");
         }
+        
+        return Unit.Default;
     }
 
     public Task SendRecoveryEmailAsync(string emailAddress)
