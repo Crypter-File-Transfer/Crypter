@@ -26,12 +26,9 @@
 
 using System;
 using System.Threading.Tasks;
-using Crypter.Core;
 using Crypter.Core.Models;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
-using Crypter.Crypto.Common;
-using Crypter.Crypto.Providers.Default;
 using Crypter.DataAccess;
 using Hangfire;
 using MediatR;
@@ -50,7 +47,6 @@ public class HangfireBackgroundService_Tests
     private IServiceScope _scope;
     private DataContext _dataContext;
     private ISender _sender;
-    private ICryptoProvider _cryptoProvider;
     private ILogger<HangfireBackgroundService> _logger;
     
     private Mock<IBackgroundJobClient> _backgroundJobClientMock;
@@ -60,7 +56,6 @@ public class HangfireBackgroundService_Tests
     [SetUp]
     public async Task SetupTestAsync()
     {
-        _cryptoProvider = new DefaultCryptoProvider();
         _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
         _emailServiceMock = new Mock<IEmailService>();
         _transferStorageMock = new Mock<ITransferRepository>();
@@ -93,7 +88,7 @@ public class HangfireBackgroundService_Tests
             .ReturnsAsync((UserEmailAddressVerificationParameters parameters) => true);
 
         HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _sender, _backgroundJobClientMock.Object,
-            _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object, _logger);
+            _transferStorageMock.Object, _logger);
         await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
         _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>()),
@@ -110,7 +105,7 @@ public class HangfireBackgroundService_Tests
             .ReturnsAsync((UserRecoveryParameters parameters, int expirationMinutes) => true);
 
         HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _sender, _backgroundJobClientMock.Object,
-            _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object, _logger);
+            _transferStorageMock.Object, _logger);
         await sut.SendRecoveryEmailAsync("foo@test.com");
 
         _emailServiceMock.Verify(
