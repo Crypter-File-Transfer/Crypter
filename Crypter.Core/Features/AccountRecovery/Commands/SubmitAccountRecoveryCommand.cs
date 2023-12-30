@@ -47,6 +47,11 @@ using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.AccountRecovery.Commands;
 
+/// <summary>
+/// Handle the second part of the account recovery process.
+/// The user's account will be updated with new authentication information.
+/// </summary>
+/// <param name="AccountRecoverySubmission"></param>
 public sealed record SubmitAccountRecoveryCommand(AccountRecoverySubmission AccountRecoverySubmission)
     : IEitherRequest<SubmitAccountRecoveryError, Unit>;
 
@@ -140,10 +145,10 @@ internal sealed class SubmitAccountRecoveryCommandHandler
             DateTime utcNow = DateTime.UtcNow;
             if (validRecoveryProofProvided)
             {
-                user.MasterKey.EncryptedKey = recoverySubmission.ReplacementMasterKeyInformation.EncryptedKey;
-                user.MasterKey.Nonce = recoverySubmission.ReplacementMasterKeyInformation.Nonce;
-                user.MasterKey.RecoveryProof = recoverySubmission.ReplacementMasterKeyInformation.NewRecoveryProof;
-                user.MasterKey.Updated = utcNow;
+                user.MasterKey!.EncryptedKey = recoverySubmission.ReplacementMasterKeyInformation.EncryptedKey;
+                user.MasterKey!.Nonce = recoverySubmission.ReplacementMasterKeyInformation.Nonce;
+                user.MasterKey!.RecoveryProof = recoverySubmission.ReplacementMasterKeyInformation.NewRecoveryProof;
+                user.MasterKey!.Updated = utcNow;
             }
             else
             {

@@ -40,7 +40,6 @@ using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Enums;
 using Crypter.Common.Infrastructure;
 using Crypter.Common.Primitives;
-using Crypter.Core.Features.AccountRecovery;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.DigitalSignature;
 using Crypter.Crypto.Providers.Default;
@@ -157,7 +156,7 @@ internal class SubmitRecovery_Tests
             .FirstAsync();
         
         string encodedRecoveryCode = UrlSafeEncoder.EncodeGuidUrlSafe(recoveryData.Code);
-        byte[] signedRecoveryData = UserRecoveryQueries.GenerateRecoverySignature(_cryptoProvider, _knownKeyPair.PrivateKey,
+        byte[] signedRecoveryData = Core.Features.AccountRecovery.Common.GenerateRecoverySignature(_cryptoProvider, _knownKeyPair.PrivateKey,
             recoveryData.Code, Username.From(TestData.DefaultUsername));
         string encodedRecoverySignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedRecoveryData);
 
@@ -242,7 +241,7 @@ internal class SubmitRecovery_Tests
             .FirstAsync();
         
         string encodedRecoveryCode = UrlSafeEncoder.EncodeGuidUrlSafe(recoveryData.Code);
-        byte[] signedRecoveryData = UserRecoveryQueries.GenerateRecoverySignature(_cryptoProvider, _knownKeyPair.PrivateKey,
+        byte[] signedRecoveryData = Core.Features.AccountRecovery.Common.GenerateRecoverySignature(_cryptoProvider, _knownKeyPair.PrivateKey,
             recoveryData.Code, Username.From(TestData.DefaultUsername));
         string encodedRecoverySignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedRecoveryData);
 

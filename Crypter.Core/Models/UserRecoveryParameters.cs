@@ -37,9 +37,10 @@ public class UserRecoveryParameters
     public Guid RecoveryCode { get; init; }
     public byte[] Signature { get; init; }
     public byte[] VerificationKey { get; init; }
+    public DateTimeOffset Created { get; init; }
 
     public UserRecoveryParameters(Guid userId, Username username, EmailAddress emailAddress, Guid recoveryCode,
-        byte[] signature, byte[] verificationKey)
+        byte[] signature, byte[] verificationKey, DateTimeOffset created)
     {
         UserId = userId;
         Username = username;
@@ -47,5 +48,6 @@ public class UserRecoveryParameters
         RecoveryCode = recoveryCode;
         Signature = signature;
         VerificationKey = verificationKey;
+        Created = created;
     }
 }

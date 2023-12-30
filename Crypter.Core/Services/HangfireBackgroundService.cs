@@ -30,15 +30,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Core.Exceptions;
-using Crypter.Core.Features.AccountRecovery;
+using Crypter.Core.Features.AccountRecovery.Commands;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Notifications.Commands;
 using Crypter.Core.Features.Transfer;
 using Crypter.Core.Features.UserAuthentication;
 using Crypter.Core.Features.UserEmailVerification.Commands;
 using Crypter.Core.Features.UserToken;
+using Crypter.Core.Models;
 using Crypter.Core.Repositories;
-using Crypter.Crypto.Common;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
@@ -54,7 +54,7 @@ public interface IHangfireBackgroundService
 {
     Task<Unit> SendEmailVerificationAsync(Guid userId);
     Task<Unit> SendTransferNotificationAsync(Guid itemId, TransferItemType itemType);
-    Task SendRecoveryEmailAsync(string emailAddress);
+    Task<Unit> SendRecoveryEmailAsync(string emailAddress);
 
     /// <summary>
     /// Delete a transfer from transfer storage and the database.
@@ -73,7 +73,7 @@ public interface IHangfireBackgroundService
 
     Task DeleteUserTokenAsync(Guid tokenId);
     Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId);
-    Task DeleteRecoveryParametersAsync(Guid userId);
+    Task<Unit> DeleteRecoveryParametersAsync(Guid userId);
     Task<Unit> DeleteUserKeysAsync(Guid userId);
     Task<Unit> DeleteReceivedTransfersAsync(Guid userId);
 }
@@ -90,8 +90,6 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     private readonly DataContext _dataContext;
     private readonly ISender _sender;
     private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly ICryptoProvider _cryptoProvider;
-    private readonly IEmailService _emailService;
     private readonly ITransferRepository _transferRepository;
     private readonly ILogger<HangfireBackgroundService> _logger;
 
@@ -101,24 +99,20 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         DataContext dataContext,
         ISender sender,
         IBackgroundJobClient backgroundJobClient,
-        ICryptoProvider cryptoProvider,
-        IEmailService emailService,
         ITransferRepository transferRepository,
         ILogger<HangfireBackgroundService> logger)
     {
         _dataContext = dataContext;
         _sender = sender;
         _backgroundJobClient = backgroundJobClient;
-        _cryptoProvider = cryptoProvider;
-        _emailService = emailService;
         _transferRepository = transferRepository;
         _logger = logger;
     }
 
     public async Task<Unit> SendEmailVerificationAsync(Guid userId)
     {
-        var request = new SendVerificationEmailCommand(userId);
-        var result = await _sender.Send(request);
+        SendVerificationEmailCommand request = new SendVerificationEmailCommand(userId);
+        bool result = await _sender.Send(request);
         
         if (!result)
         {
@@ -131,8 +125,8 @@ public class HangfireBackgroundService : IHangfireBackgroundService
 
     public async Task<Unit> SendTransferNotificationAsync(Guid itemId, TransferItemType itemType)
     {
-        var request = new SendTransferNotificationCommand(itemId, itemType);
-        var result = await _sender.Send(request);
+        SendTransferNotificationCommand request = new SendTransferNotificationCommand(itemId, itemType);
+        bool result = await _sender.Send(request);
 
         if (!result)
         {
@@ -144,24 +138,47 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return Unit.Default;
     }
 
-    public Task SendRecoveryEmailAsync(string emailAddress)
+    public async Task<Unit> SendRecoveryEmailAsync(string emailAddress)
     {
-        return UserRecoveryQueries.GenerateRecoveryParametersAsync(_dataContext, _cryptoProvider, emailAddress)
-            .IfSomeAsync(async parameters =>
+        SendAccountRecoveryEmailCommand request =
+            new SendAccountRecoveryEmailCommand(emailAddress, AccountRecoveryEmailExpirationMinutes);
+        Either<SendAccountRecoveryEmailError, UserRecoveryParameters> result = await _sender.Send(request);
+        
+        result.DoRight(x =>
+        {
+            DateTime recoveryExpiration = x.Created.DateTime.AddMinutes(AccountRecoveryEmailExpirationMinutes);
+            _backgroundJobClient.Schedule(() => DeleteRecoveryParametersAsync(x.UserId),
+                recoveryExpiration);
+        }).DoLeftOrNeither(
+            left: error =>
             {
-                bool deliverySuccess =
-                    await _emailService.SendAccountRecoveryLinkAsync(parameters,
-                        AccountRecoveryEmailExpirationMinutes);
-                if (deliverySuccess)
+                // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+                switch (error)
                 {
-                    DateTime utcNow = DateTime.UtcNow;
-                    await UserRecoveryCommands.SaveRecoveryParametersAsync(_dataContext, parameters, utcNow);
-
-                    DateTime recoveryExpiration = utcNow.AddMinutes(AccountRecoveryEmailExpirationMinutes);
-                    _backgroundJobClient.Schedule(() => DeleteRecoveryParametersAsync(parameters.UserId),
-                        recoveryExpiration);
+                    case SendAccountRecoveryEmailError.Unknown:
+                        _logger.LogError("An unknown error occurred while trying to send a recovery email.");
+                        throw new HangfireJobException($"{nameof(SendRecoveryEmailAsync)} failed.");
+                    case SendAccountRecoveryEmailError.UserNotFound:
+                        _logger.LogWarning("A user was not found while attempting to send a recovery email.");
+                        break;
+                    case SendAccountRecoveryEmailError.InvalidSavedUsername:
+                        _logger.LogWarning("A user was found to have an invalid username while attempting to send a recovery email.");
+                        break;
+                    case SendAccountRecoveryEmailError.InvalidSavedEmailAddress:
+                        _logger.LogWarning("A user was found to have an invalid email address while attempting to send a recovery email.");
+                        break;
+                    case SendAccountRecoveryEmailError.EmailFailure:
+                        _logger.LogWarning("An email failure occurred while trying to send a recovery email.");
+                        throw new HangfireJobException($"{nameof(SendRecoveryEmailAsync)} failed.");
                 }
+            },
+            neither: () =>
+            {
+                _logger.LogError("Something unforeseen occurred while trying to send a recovery email.");
+                throw new HangfireJobException($"{nameof(SendRecoveryEmailAsync)} failed.");
             });
+        
+        return Unit.Default;
     }
 
     public Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
@@ -181,9 +198,10 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return UserAuthenticationCommands.DeleteFailedLoginAttemptAsync(_dataContext, failedAttemptId);
     }
 
-    public Task DeleteRecoveryParametersAsync(Guid userId)
+    public async Task<Unit> DeleteRecoveryParametersAsync(Guid userId)
     {
-        return UserRecoveryCommands.DeleteRecoveryParametersAsync(_dataContext, userId);
+        DeleteRecoveryParametersCommand request = new DeleteRecoveryParametersCommand(userId);
+        return await _sender.Send(request);
     }
 
     public async Task<Unit> DeleteUserKeysAsync(Guid userId)

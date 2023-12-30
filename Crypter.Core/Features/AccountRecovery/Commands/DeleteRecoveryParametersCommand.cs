@@ -25,34 +25,38 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
-using Crypter.Core.Models;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Unit = EasyMonads.Unit;
 
-namespace Crypter.Core.Features.AccountRecovery;
+namespace Crypter.Core.Features.AccountRecovery.Commands;
 
-internal static class UserRecoveryCommands
+public sealed record DeleteRecoveryParametersCommand(Guid UserId) : IRequest<Unit>;
+
+internal sealed class DeleteRecoveryParametersCommandHandler : IRequestHandler<DeleteRecoveryParametersCommand, Unit>
 {
-    internal static Task SaveRecoveryParametersAsync(DataContext dataContext,
-        UserRecoveryParameters userRecoveryParameters, DateTime created)
-    {
-        UserRecoveryEntity newEntity = new UserRecoveryEntity(userRecoveryParameters.UserId,
-            userRecoveryParameters.RecoveryCode, userRecoveryParameters.VerificationKey, created);
-        dataContext.UserRecoveries.Add(newEntity);
-        return dataContext.SaveChangesAsync();
-    }
+    private readonly DataContext _dataContext;
 
-    internal static async Task DeleteRecoveryParametersAsync(DataContext dataContext, Guid userId)
+    public DeleteRecoveryParametersCommandHandler(DataContext dataContext)
     {
-        UserRecoveryEntity savedEntity = await dataContext.UserRecoveries
-            .FirstOrDefaultAsync(x => x.Owner == userId);
+        _dataContext = dataContext;
+    }
+    
+    public async Task<Unit> Handle(DeleteRecoveryParametersCommand request, CancellationToken cancellationToken)
+    {
+        UserRecoveryEntity savedEntity = await _dataContext.UserRecoveries
+            .FirstOrDefaultAsync(x => x.Owner == request.UserId, CancellationToken.None);
 
         if (savedEntity is not null)
         {
-            dataContext.UserRecoveries.Remove(savedEntity);
-            await dataContext.SaveChangesAsync();
+            _dataContext.UserRecoveries.Remove(savedEntity);
+            await _dataContext.SaveChangesAsync(CancellationToken.None);
         }
+
+        return Unit.Default;
     }
 }

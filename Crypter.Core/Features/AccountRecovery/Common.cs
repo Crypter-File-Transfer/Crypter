@@ -28,11 +28,19 @@ using System;
 using System.Linq;
 using System.Text;
 using Crypter.Common.Primitives;
+using Crypter.Crypto.Common;
 
 namespace Crypter.Core.Features.AccountRecovery;
 
 internal static class Common
 {
+    internal static byte[] GenerateRecoverySignature(ICryptoProvider cryptoProvider, ReadOnlySpan<byte> privateKey,
+        Guid recoveryCode, Username username)
+    {
+        byte[] data = CombineRecoveryCodeWithUsername(recoveryCode, username);
+        return cryptoProvider.DigitalSignature.GenerateSignature(privateKey, data);
+    }
+    
     internal static byte[] CombineRecoveryCodeWithUsername(Guid recoveryCode, Username username)
     {
         byte[] recoveryCodeBytes = recoveryCode.ToByteArray();
