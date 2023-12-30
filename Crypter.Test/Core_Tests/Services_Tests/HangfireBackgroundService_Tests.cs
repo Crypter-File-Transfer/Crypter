@@ -27,7 +27,6 @@
 using System;
 using System.Threading.Tasks;
 using Crypter.Core.Models;
-using Crypter.Core.Repositories;
 using Crypter.Core.Services;
 using Crypter.DataAccess;
 using Hangfire;
@@ -51,14 +50,12 @@ public class HangfireBackgroundService_Tests
     
     private Mock<IBackgroundJobClient> _backgroundJobClientMock;
     private Mock<IEmailService> _emailServiceMock;
-    private Mock<ITransferRepository> _transferStorageMock;
 
     [SetUp]
     public async Task SetupTestAsync()
     {
         _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
         _emailServiceMock = new Mock<IEmailService>();
-        _transferStorageMock = new Mock<ITransferRepository>();
 
         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
         await AssemblySetup.InitializeRespawnerAsync();
@@ -87,8 +84,8 @@ public class HangfireBackgroundService_Tests
                 It.IsAny<UserEmailAddressVerificationParameters>()))
             .ReturnsAsync((UserEmailAddressVerificationParameters parameters) => true);
 
-        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _sender, _backgroundJobClientMock.Object,
-            _transferStorageMock.Object, _logger);
+        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _sender,
+            _backgroundJobClientMock.Object, _logger);
         await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
         _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>()),
@@ -104,8 +101,8 @@ public class HangfireBackgroundService_Tests
                 It.IsAny<int>()))
             .ReturnsAsync((UserRecoveryParameters parameters, int expirationMinutes) => true);
 
-        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _sender, _backgroundJobClientMock.Object,
-            _transferStorageMock.Object, _logger);
+        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _sender,
+            _backgroundJobClientMock.Object, _logger);
         await sut.SendRecoveryEmailAsync("foo@test.com");
 
         _emailServiceMock.Verify(

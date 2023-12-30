@@ -25,26 +25,21 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Core.Exceptions;
 using Crypter.Core.Features.AccountRecovery.Commands;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Notifications.Commands;
-using Crypter.Core.Features.Transfer;
+using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.UserAuthentication;
 using Crypter.Core.Features.UserEmailVerification.Commands;
 using Crypter.Core.Features.UserToken;
 using Crypter.Core.Models;
-using Crypter.Core.Repositories;
 using Crypter.DataAccess;
-using Crypter.DataAccess.Entities;
 using EasyMonads;
 using Hangfire;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Unit = EasyMonads.Unit;
 
@@ -68,7 +63,7 @@ public interface IHangfireBackgroundService
     /// The background service should not delete from transfer storage when "DeleteOnClose" is configured.
     /// </param>
     /// <returns></returns>
-    Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
+    Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
         bool deleteFromTransferStorage);
 
     Task DeleteUserTokenAsync(Guid tokenId);
@@ -90,7 +85,6 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     private readonly DataContext _dataContext;
     private readonly ISender _sender;
     private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly ITransferRepository _transferRepository;
     private readonly ILogger<HangfireBackgroundService> _logger;
 
     private const int AccountRecoveryEmailExpirationMinutes = 30;
@@ -99,13 +93,11 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         DataContext dataContext,
         ISender sender,
         IBackgroundJobClient backgroundJobClient,
-        ITransferRepository transferRepository,
         ILogger<HangfireBackgroundService> logger)
     {
         _dataContext = dataContext;
         _sender = sender;
         _backgroundJobClient = backgroundJobClient;
-        _transferRepository = transferRepository;
         _logger = logger;
     }
 
@@ -181,11 +173,11 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return Unit.Default;
     }
 
-    public Task DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
+    public Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
         bool deleteFromTransferStorage)
     {
-        return TransferCommands.DeleteTransferAsync(_dataContext, _transferRepository, itemId, itemType, userType,
-            deleteFromTransferStorage);
+        DeleteTransferCommand request = new DeleteTransferCommand(itemId, itemType, userType, deleteFromTransferStorage);
+        return _sender.Send(request);
     }
 
     public Task DeleteUserTokenAsync(Guid tokenId)
@@ -210,29 +202,9 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return await _sender.Send(request);
     }
 
-    public async Task<Unit> DeleteReceivedTransfersAsync(Guid userId)
+    public Task<Unit> DeleteReceivedTransfersAsync(Guid userId)
     {
-        List<UserFileTransferEntity> receivedFileTransfers = await _dataContext.UserFileTransfers
-            .Where(x => x.RecipientId == userId)
-            .ToListAsync();
-
-        List<UserMessageTransferEntity> receivedMessageTransfers = await _dataContext.UserMessageTransfers
-            .Where(x => x.RecipientId == userId)
-            .ToListAsync();
-
-        foreach (UserFileTransferEntity receivedTransfer in receivedFileTransfers)
-        {
-            _dataContext.Remove((object)receivedTransfer);
-            _transferRepository.DeleteTransfer(receivedTransfer.Id, TransferItemType.File, TransferUserType.User);
-        }
-
-        foreach (UserMessageTransferEntity receivedTransfer in receivedMessageTransfers)
-        {
-            _dataContext.Remove((object)receivedTransfer);
-            _transferRepository.DeleteTransfer(receivedTransfer.Id, TransferItemType.Message, TransferUserType.User);
-        }
-
-        await _dataContext.SaveChangesAsync();
-        return Unit.Default;
+        DeleteUserReceivedTransfersCommand request = new DeleteUserReceivedTransfersCommand(userId);
+        return _sender.Send(request);
     }
 }
