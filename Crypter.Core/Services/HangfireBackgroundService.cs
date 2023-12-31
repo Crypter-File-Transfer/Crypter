@@ -35,10 +35,8 @@ using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.UserAuthentication;
 using Crypter.Core.Features.UserEmailVerification.Commands;
 using Crypter.Core.Features.UserToken;
-using Crypter.Core.Models;
 using Crypter.DataAccess;
 using EasyMonads;
-using Hangfire;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Unit = EasyMonads.Unit;
@@ -84,20 +82,12 @@ public class HangfireBackgroundService : IHangfireBackgroundService
 {
     private readonly DataContext _dataContext;
     private readonly ISender _sender;
-    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly ILogger<HangfireBackgroundService> _logger;
 
-    private const int AccountRecoveryEmailExpirationMinutes = 30;
-
-    public HangfireBackgroundService(
-        DataContext dataContext,
-        ISender sender,
-        IBackgroundJobClient backgroundJobClient,
-        ILogger<HangfireBackgroundService> logger)
+    public HangfireBackgroundService(DataContext dataContext, ISender sender, ILogger<HangfireBackgroundService> logger)
     {
         _dataContext = dataContext;
         _sender = sender;
-        _backgroundJobClient = backgroundJobClient;
         _logger = logger;
     }
 
@@ -132,43 +122,33 @@ public class HangfireBackgroundService : IHangfireBackgroundService
 
     public async Task<Unit> SendRecoveryEmailAsync(string emailAddress)
     {
-        SendAccountRecoveryEmailCommand request =
-            new SendAccountRecoveryEmailCommand(emailAddress, AccountRecoveryEmailExpirationMinutes);
-        Either<SendAccountRecoveryEmailError, UserRecoveryParameters> result = await _sender.Send(request);
-        
-        result.DoRight(x =>
+        SendAccountRecoveryEmailCommand request = new SendAccountRecoveryEmailCommand(emailAddress);
+        Maybe<SendAccountRecoveryEmailError> result = await _sender.Send(request);
+
+        result.IfSome(error =>
         {
-            DateTime recoveryExpiration = x.Created.DateTime.AddMinutes(AccountRecoveryEmailExpirationMinutes);
-            _backgroundJobClient.Schedule(() => DeleteRecoveryParametersAsync(x.UserId),
-                recoveryExpiration);
-        }).DoLeftOrNeither(
-            left: error =>
+            // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+            switch (error)
             {
-                // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
-                switch (error)
-                {
-                    case SendAccountRecoveryEmailError.Unknown:
-                        _logger.LogError("An unknown error occurred while trying to send a recovery email.");
-                        throw new HangfireJobException($"{nameof(SendRecoveryEmailAsync)} failed.");
-                    case SendAccountRecoveryEmailError.UserNotFound:
-                        _logger.LogWarning("A user was not found while attempting to send a recovery email.");
-                        break;
-                    case SendAccountRecoveryEmailError.InvalidSavedUsername:
-                        _logger.LogWarning("A user was found to have an invalid username while attempting to send a recovery email.");
-                        break;
-                    case SendAccountRecoveryEmailError.InvalidSavedEmailAddress:
-                        _logger.LogWarning("A user was found to have an invalid email address while attempting to send a recovery email.");
-                        break;
-                    case SendAccountRecoveryEmailError.EmailFailure:
-                        _logger.LogWarning("An email failure occurred while trying to send a recovery email.");
-                        throw new HangfireJobException($"{nameof(SendRecoveryEmailAsync)} failed.");
-                }
-            },
-            neither: () =>
-            {
-                _logger.LogError("Something unforeseen occurred while trying to send a recovery email.");
-                throw new HangfireJobException($"{nameof(SendRecoveryEmailAsync)} failed.");
-            });
+                case SendAccountRecoveryEmailError.Unknown:
+                    _logger.LogError("An unknown error occurred while trying to send a recovery email.");
+                    throw new HangfireJobException($"{nameof(SendRecoveryEmailAsync)} failed.");
+                case SendAccountRecoveryEmailError.UserNotFound:
+                    _logger.LogWarning("A user was not found while attempting to send a recovery email.");
+                    break;
+                case SendAccountRecoveryEmailError.InvalidSavedUsername:
+                    _logger.LogWarning(
+                        "A user was found to have an invalid username while attempting to send a recovery email.");
+                    break;
+                case SendAccountRecoveryEmailError.InvalidSavedEmailAddress:
+                    _logger.LogWarning(
+                        "A user was found to have an invalid email address while attempting to send a recovery email.");
+                    break;
+                case SendAccountRecoveryEmailError.EmailFailure:
+                    _logger.LogWarning("An email failure occurred while trying to send a recovery email.");
+                    throw new HangfireJobException($"{nameof(SendRecoveryEmailAsync)} failed.");
+            }
+        });
         
         return Unit.Default;
     }
