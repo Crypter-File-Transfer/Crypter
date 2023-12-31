@@ -68,7 +68,7 @@ public class UserProfileSettingsService : IUserProfileSettingsService, IDisposab
         return result;
     }
 
-    private void Recycle(object sender, EventArgs _)
+    private void Recycle(object? _, EventArgs __)
     {
         _profileSettings = Maybe<ProfileSettings>.None;
     }

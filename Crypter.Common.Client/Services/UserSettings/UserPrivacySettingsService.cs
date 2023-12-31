@@ -68,7 +68,7 @@ public class UserPrivacySettingsService : IUserPrivacySettingsService, IDisposab
         return result;
     }
 
-    private void Recycle(object sender, EventArgs _)
+    private void Recycle(object? _, EventArgs __)
     {
         _privacySettings = Maybe<PrivacySettings>.None;
     }

@@ -38,60 +38,60 @@ namespace Crypter.Common.Client.Transfer.Handlers.Base;
 
 public class DownloadHandler : IUserDownloadHandler
 {
-    protected readonly ICrypterApiClient _crypterApiClient;
-    protected readonly ICryptoProvider _cryptoProvider;
-    protected readonly IUserSessionService _userSessionService;
-    protected readonly TransferSettings _transferSettings;
+    protected readonly ICrypterApiClient CrypterApiClient;
+    protected readonly ICryptoProvider CryptoProvider;
+    protected readonly IUserSessionService UserSessionService;
+    protected readonly TransferSettings TransferSettings;
 
-    protected string _transferHashId;
-    protected TransferUserType _transferUserType = TransferUserType.Anonymous;
+    protected string? TransferHashId;
+    protected TransferUserType TransferUserType = TransferUserType.Anonymous;
 
-    protected Maybe<byte[]> _recipientPrivateKey = Maybe<byte[]>.None;
-    protected Maybe<byte[]> _senderPublicKey = Maybe<byte[]>.None;
+    protected Maybe<byte[]> RecipientPrivateKey = Maybe<byte[]>.None;
+    protected Maybe<byte[]> SenderPublicKey = Maybe<byte[]>.None;
 
-    protected Maybe<byte[]> _symmetricKey = Maybe<byte[]>.None;
-    protected Maybe<byte[]> _serverProof = Maybe<byte[]>.None;
-    protected Maybe<byte[]> _keyExchangeNonce = Maybe<byte[]>.None;
+    protected Maybe<byte[]> SymmetricKey = Maybe<byte[]>.None;
+    protected Maybe<byte[]> ServerProof = Maybe<byte[]>.None;
+    protected Maybe<byte[]> KeyExchangeNonce = Maybe<byte[]>.None;
 
-    public DownloadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
+    protected DownloadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
         IUserSessionService userSessionService, TransferSettings transferSettings)
     {
-        _crypterApiClient = crypterApiClient;
-        _cryptoProvider = cryptoProvider;
-        _userSessionService = userSessionService;
-        _transferSettings = transferSettings;
+        CrypterApiClient = crypterApiClient;
+        CryptoProvider = cryptoProvider;
+        UserSessionService = userSessionService;
+        TransferSettings = transferSettings;
     }
 
     internal void SetTransferInfo(string transferHashId, TransferUserType userType)
     {
-        _transferHashId = transferHashId;
-        _transferUserType = userType;
+        TransferHashId = transferHashId;
+        TransferUserType = userType;
     }
 
     public void SetRecipientInfo(byte[] recipientPrivateKey)
     {
-        _recipientPrivateKey = recipientPrivateKey;
+        RecipientPrivateKey = recipientPrivateKey;
         TryDeriveSymmetricKeys();
     }
 
     protected void SetSenderPublicKey(byte[] senderPublicKey, byte[] keyExchangeNonce)
     {
-        _senderPublicKey = senderPublicKey;
-        _keyExchangeNonce = keyExchangeNonce;
+        SenderPublicKey = senderPublicKey;
+        KeyExchangeNonce = keyExchangeNonce;
         TryDeriveSymmetricKeys();
     }
 
     private void TryDeriveSymmetricKeys()
     {
-        _recipientPrivateKey.IfSome(privateKey =>
+        RecipientPrivateKey.IfSome(privateKey =>
         {
-            _senderPublicKey.IfSome(publicKey =>
+            SenderPublicKey.IfSome(publicKey =>
             {
-                _keyExchangeNonce.IfSome(keyExchangeNonce =>
+                KeyExchangeNonce.IfSome(keyExchangeNonce =>
                 {
-                    uint keySize = _cryptoProvider.StreamEncryptionFactory.KeySize;
-                    (_symmetricKey, _serverProof) =
-                        _cryptoProvider.KeyExchange.GenerateDecryptionKey(keySize, privateKey, publicKey,
+                    uint keySize = CryptoProvider.StreamEncryptionFactory.KeySize;
+                    (SymmetricKey, ServerProof) =
+                        CryptoProvider.KeyExchange.GenerateDecryptionKey(keySize, privateKey, publicKey,
                             keyExchangeNonce);
                 });
             });
@@ -101,7 +101,7 @@ public class DownloadHandler : IUserDownloadHandler
     protected byte[] Decrypt(byte[] key, Stream ciphertext, long streamSize)
     {
         using DecryptionStream decryptionStream =
-            new DecryptionStream(ciphertext, streamSize, key, _cryptoProvider.StreamEncryptionFactory);
+            new DecryptionStream(ciphertext, streamSize, key, CryptoProvider.StreamEncryptionFactory);
         byte[] plaintextBuffer = new byte[checked((int)streamSize)];
         int plaintextPosition = 0;
         int bytesRead;

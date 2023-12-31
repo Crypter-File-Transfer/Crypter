@@ -35,10 +35,7 @@ namespace Crypter.Common.Client.HttpClients;
 
 public class CrypterApiClient : ICrypterApiClient
 {
-    private readonly ICrypterHttpClient _crypterHttpClient;
-    private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
-
-    private EventHandler _refreshTokenRejectedHandler;
+    private EventHandler? _refreshTokenRejectedHandler;
 
     public IFileTransferRequests FileTransfer { get; init; }
     public IMessageTransferRequests MessageTransfer { get; init; }
@@ -53,25 +50,34 @@ public class CrypterApiClient : ICrypterApiClient
 
     public CrypterApiClient(HttpClient httpClient, ITokenRepository tokenRepository)
     {
-        _crypterHttpClient = new CrypterHttpClient(httpClient);
-        _crypterAuthenticatedHttpClient = new CrypterAuthenticatedHttpClient(httpClient, tokenRepository, this);
-
-        FileTransfer = new FileTransferRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
-        MessageTransfer = new MessageTransferRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
-        Metrics = new MetricsRequests(_crypterHttpClient);
-        User = new UserRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
-        UserAuthentication = new UserAuthenticationRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient,
+        ICrypterHttpClient crypterHttpClient = new CrypterHttpClient(httpClient);
+        ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient = new CrypterAuthenticatedHttpClient(httpClient,
+            tokenRepository, this);
+        
+        FileTransfer = new FileTransferRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
+        MessageTransfer = new MessageTransferRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
+        Metrics = new MetricsRequests(crypterHttpClient);
+        User = new UserRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
+        UserAuthentication = new UserAuthenticationRequests(crypterHttpClient, crypterAuthenticatedHttpClient,
             _refreshTokenRejectedHandler);
-        UserConsent = new UserConsentRequests(_crypterAuthenticatedHttpClient);
-        UserContact = new UserContactRequests(_crypterAuthenticatedHttpClient);
-        UserKey = new UserKeyRequests(_crypterAuthenticatedHttpClient);
-        UserRecovery = new UserRecoveryRequests(_crypterHttpClient);
-        UserSetting = new UserSettingRequests(_crypterHttpClient, _crypterAuthenticatedHttpClient);
+        UserConsent = new UserConsentRequests(crypterAuthenticatedHttpClient);
+        UserContact = new UserContactRequests(crypterAuthenticatedHttpClient);
+        UserKey = new UserKeyRequests(crypterAuthenticatedHttpClient);
+        UserRecovery = new UserRecoveryRequests(crypterHttpClient);
+        UserSetting = new UserSettingRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
     }
 
     public event EventHandler RefreshTokenRejectedEventHandler
     {
-        add => _refreshTokenRejectedHandler = (EventHandler)Delegate.Combine(_refreshTokenRejectedHandler, value);
-        remove => _refreshTokenRejectedHandler = (EventHandler)Delegate.Remove(_refreshTokenRejectedHandler, value);
+        add
+        {
+            _refreshTokenRejectedHandler = (EventHandler?)Delegate.Combine(_refreshTokenRejectedHandler, value);
+            UserAuthentication.RefreshTokenRejectedHandler = _refreshTokenRejectedHandler;
+        }
+        remove
+        {
+            _refreshTokenRejectedHandler = (EventHandler?)Delegate.Remove(_refreshTokenRejectedHandler, value);
+            UserAuthentication.RefreshTokenRejectedHandler = _refreshTokenRejectedHandler;
+        }
     }
 }

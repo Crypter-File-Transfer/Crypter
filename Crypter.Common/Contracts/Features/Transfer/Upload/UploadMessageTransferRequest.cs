@@ -31,13 +31,13 @@ namespace Crypter.Common.Contracts.Features.Transfer;
 public class UploadMessageTransferRequest
 {
     public string Subject { get; init; }
-    public byte[] PublicKey { get; init; }
+    public byte[]? PublicKey { get; init; }
     public byte[] KeyExchangeNonce { get; init; }
     public byte[] Proof { get; init; }
     public int LifetimeHours { get; init; }
 
     [JsonConstructor]
-    public UploadMessageTransferRequest(string subject, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof,
+    public UploadMessageTransferRequest(string subject, byte[]? publicKey, byte[] keyExchangeNonce, byte[] proof,
         int lifetimeHours)
     {
         Subject = subject;
