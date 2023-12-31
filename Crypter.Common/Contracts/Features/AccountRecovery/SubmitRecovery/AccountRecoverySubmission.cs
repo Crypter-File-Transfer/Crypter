@@ -34,10 +34,10 @@ public class AccountRecoverySubmission
     public string RecoveryCode { get; set; }
     public string RecoverySignature { get; set; }
     public VersionedPassword VersionedPassword { get; set; }
-    public ReplacementMasterKeyInformation ReplacementMasterKeyInformation { get; set; }
+    public ReplacementMasterKeyInformation? ReplacementMasterKeyInformation { get; set; }
 
     public AccountRecoverySubmission(string username, string recoveryCode, string recoverySignature,
-        VersionedPassword versionedPassword, ReplacementMasterKeyInformation replacementMasterKeyInformation = null)
+        VersionedPassword versionedPassword, ReplacementMasterKeyInformation? replacementMasterKeyInformation = null)
     {
         Username = username;
         RecoveryCode = recoveryCode;

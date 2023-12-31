@@ -2,6 +2,7 @@
    <PropertyGroup>
       <TargetFramework>net7.0</TargetFramework>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <Nullable>enable</Nullable>
    </PropertyGroup>
    <ItemGroup>
       <PackageReference Include="EasyMonads" Version="1.4.3" />
