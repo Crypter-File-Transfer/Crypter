@@ -37,6 +37,7 @@ using Crypter.Crypto.Common.DigitalSignature;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.AccountRecovery.Commands;
@@ -46,9 +47,8 @@ namespace Crypter.Core.Features.AccountRecovery.Commands;
 /// A recovery link will be emailed to the user.
 /// </summary>
 /// <param name="EmailAddress"></param>
-/// <param name="RecoveryLinkExpirationMinutes"></param>
-public sealed record SendAccountRecoveryEmailCommand(string EmailAddress, int RecoveryLinkExpirationMinutes)
-    : IEitherRequest<SendAccountRecoveryEmailError, UserRecoveryParameters>;
+public sealed record SendAccountRecoveryEmailCommand(string EmailAddress)
+    : IMaybeRequest<SendAccountRecoveryEmailError>;
 
 public enum SendAccountRecoveryEmailError
 {
@@ -60,37 +60,55 @@ public enum SendAccountRecoveryEmailError
 }
 
 internal sealed class SendAccountRecoveryEmailCommandHandler
-    : IEitherRequestHandler<SendAccountRecoveryEmailCommand, SendAccountRecoveryEmailError, UserRecoveryParameters>
+    : IMaybeRequestHandler<SendAccountRecoveryEmailCommand, SendAccountRecoveryEmailError>
 {
+    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly ICryptoProvider _cryptoProvider;
     private readonly DataContext _dataContext;
     private readonly IEmailService _emailService;
+    private readonly IHangfireBackgroundService _hangfireBackgroundService;
+    
+    private const int AccountRecoveryEmailExpirationMinutes = 30;
 
-    public SendAccountRecoveryEmailCommandHandler(ICryptoProvider cryptoProvider, DataContext dataContext,
-        IEmailService emailService)
+    public SendAccountRecoveryEmailCommandHandler(
+        IBackgroundJobClient backgroundJobClient,
+        ICryptoProvider cryptoProvider,
+        DataContext dataContext,
+        IEmailService emailService,
+        IHangfireBackgroundService hangfireBackgroundService)
     {
+        _backgroundJobClient = backgroundJobClient;
         _cryptoProvider = cryptoProvider;
         _dataContext = dataContext;
         _emailService = emailService;
+        _hangfireBackgroundService = hangfireBackgroundService;
     }
 
-    public async Task<Either<SendAccountRecoveryEmailError, UserRecoveryParameters>> Handle(
+    public async Task<Maybe<SendAccountRecoveryEmailError>> Handle(
         SendAccountRecoveryEmailCommand request, CancellationToken cancellationToken)
     {
         return await GenerateRecoveryParametersAsync(request.EmailAddress)
-            .BindAsync<SendAccountRecoveryEmailError, UserRecoveryParameters, UserRecoveryParameters>(async x =>
-            {
-                bool emailDeliverySuccess = await _emailService.SendAccountRecoveryLinkAsync(x,
-                    request.RecoveryLinkExpirationMinutes);
-
-                if (!emailDeliverySuccess)
+            .MatchAsync(
+                left: error => error,
+                rightAsync: async x =>
                 {
-                    return SendAccountRecoveryEmailError.EmailFailure;
-                }
+                    bool emailDeliverySuccess = await _emailService.SendAccountRecoveryLinkAsync(x,
+                        AccountRecoveryEmailExpirationMinutes);
 
-                await SaveRecoveryParametersAsync(x);
-                return x;
-            });
+                    if (!emailDeliverySuccess)
+                    {
+                        return SendAccountRecoveryEmailError.EmailFailure;
+                    }
+
+                    await SaveRecoveryParametersAsync(x);
+
+                    DateTime recoveryExpiration = x.Created.DateTime.AddMinutes(AccountRecoveryEmailExpirationMinutes);
+                    _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteRecoveryParametersAsync(x.UserId),
+                        recoveryExpiration);
+
+                    return Maybe<SendAccountRecoveryEmailError>.None;
+                },
+                neither: SendAccountRecoveryEmailError.Unknown);
     }
 
     private async Task<Either<SendAccountRecoveryEmailError, UserRecoveryParameters>> GenerateRecoveryParametersAsync(
