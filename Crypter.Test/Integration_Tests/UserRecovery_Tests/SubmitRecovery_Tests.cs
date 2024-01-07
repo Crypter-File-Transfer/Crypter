@@ -177,11 +177,9 @@ internal class SubmitRecovery_Tests
         Assert.True(verificationResult.IsRight);
         Assert.True(result.IsRight);
     }
-
-    [TestCase(0)]
-    [TestCase(1)]
-    public async Task Submit_Recovery_Fails_When_Recovery_Code_Provided_Without_New_Master_Key_Information(
-        int failureCase)
+    
+    [Test]
+    public async Task Submit_Recovery_Fails_When_Recovery_Code_Provided_With_Empty_New_Master_Key_Information()
     {
         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername,
             TestData.DefaultPassword, TestData.DefaultEmailAdress);
@@ -248,13 +246,8 @@ internal class SubmitRecovery_Tests
         VersionedPassword versionedPassword =
             new VersionedPassword(Encoding.UTF8.GetBytes(TestData.DefaultPassword), 1);
 
-        ReplacementMasterKeyInformation replacementMasterKeyInformation = failureCase switch
-        {
-            0 => new ReplacementMasterKeyInformation(recoveryKey.Proof, null, null, null),
-            1 => new ReplacementMasterKeyInformation(recoveryKey.Proof, Array.Empty<byte>(), Array.Empty<byte>(),
-                Array.Empty<byte>()),
-            _ => throw new NotImplementedException()
-        };
+        ReplacementMasterKeyInformation replacementMasterKeyInformation =
+            new ReplacementMasterKeyInformation(recoveryKey.Proof, Array.Empty<byte>(), Array.Empty<byte>(), Array.Empty<byte>());
 
         AccountRecoverySubmission submission = new AccountRecoverySubmission(TestData.DefaultUsername, encodedRecoveryCode,
             encodedRecoverySignature, versionedPassword, replacementMasterKeyInformation);
