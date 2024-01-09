@@ -51,20 +51,20 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
     private readonly ITokenRepository _tokenRepository;
 
     // Events
-    private EventHandler<UserSessionServiceInitializedEventArgs> _serviceInitializedEventHandler;
-    private EventHandler<UserLoggedInEventArgs> _userLoggedInEventHandler;
-    private EventHandler _userLoggedOutEventHandler;
-    private EventHandler<UserPasswordTestSuccessEventArgs> _userPasswordTestSuccessEventHandler;
+    private EventHandler<UserSessionServiceInitializedEventArgs>? _serviceInitializedEventHandler;
+    private EventHandler<UserLoggedInEventArgs>? _userLoggedInEventHandler;
+    private EventHandler? _userLoggedOutEventHandler;
+    private EventHandler<UserPasswordTestSuccessEventArgs>? _userPasswordTestSuccessEventHandler;
 
     // Configuration
     private readonly IReadOnlyDictionary<bool, TokenType> _trustDeviceRefreshTokenTypeMap;
 
     // Private state
-    private bool _isInitialized = false;
-    private readonly SemaphoreSlim _initializationMutex = new(1);
+    private bool _isInitialized;
+    private readonly SemaphoreSlim _initializationMutex = new SemaphoreSlim(1);
 
     // Public properties
-    public Maybe<UserSession> Session { get; protected set; } = Maybe<UserSession>.None;
+    public Maybe<UserSession> Session { get; private set; } = Maybe<UserSession>.None;
 
     public UserSessionService(ICrypterApiClient crypterApiClient, IUserSessionRepository userSessionRepository,
         ITokenRepository tokenRepository, IDeviceRepository<TStorageLocation> deviceRepository,
@@ -200,10 +200,10 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
 
     #region Events
 
-    private async void OnDeviceRepositoryInitializedAsync(object sender, EventArgs _) =>
+    private async void OnDeviceRepositoryInitializedAsync(object? _, EventArgs __) =>
         await InitializeAsync();
 
-    private async void OnRefreshTokenRejectedByApi(object sender, EventArgs _) =>
+    private async void OnRefreshTokenRejectedByApi(object? _, EventArgs __) =>
         await RecycleAsync();
 
     private void HandleServiceInitializedEvent() =>
@@ -227,7 +227,7 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
             (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Combine(_serviceInitializedEventHandler,
                 value);
         remove => _serviceInitializedEventHandler =
-            (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Remove(_serviceInitializedEventHandler,
+            (EventHandler<UserSessionServiceInitializedEventArgs>?)Delegate.Remove(_serviceInitializedEventHandler,
                 value);
     }
 
@@ -236,13 +236,13 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
         add => _userLoggedInEventHandler =
             (EventHandler<UserLoggedInEventArgs>)Delegate.Combine(_userLoggedInEventHandler, value);
         remove => _userLoggedInEventHandler =
-            (EventHandler<UserLoggedInEventArgs>)Delegate.Remove(_userLoggedInEventHandler, value);
+            (EventHandler<UserLoggedInEventArgs>?)Delegate.Remove(_userLoggedInEventHandler, value);
     }
 
     public event EventHandler UserLoggedOutEventHandler
     {
         add => _userLoggedOutEventHandler = (EventHandler)Delegate.Combine(_userLoggedOutEventHandler, value);
-        remove => _userLoggedOutEventHandler = (EventHandler)Delegate.Remove(_userLoggedOutEventHandler, value);
+        remove => _userLoggedOutEventHandler = (EventHandler?)Delegate.Remove(_userLoggedOutEventHandler, value);
     }
 
     public event EventHandler<UserPasswordTestSuccessEventArgs> UserPasswordTestSuccessEventHandler
@@ -251,7 +251,7 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
             (EventHandler<UserPasswordTestSuccessEventArgs>)Delegate.Combine(_userPasswordTestSuccessEventHandler,
                 value);
         remove => _userPasswordTestSuccessEventHandler =
-            (EventHandler<UserPasswordTestSuccessEventArgs>)Delegate.Remove(_userPasswordTestSuccessEventHandler,
+            (EventHandler<UserPasswordTestSuccessEventArgs>?)Delegate.Remove(_userPasswordTestSuccessEventHandler,
                 value);
     }
 

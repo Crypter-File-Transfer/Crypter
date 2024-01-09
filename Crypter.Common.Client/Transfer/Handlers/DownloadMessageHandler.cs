@@ -50,12 +50,12 @@ public class DownloadMessageHandler : DownloadHandler
     public async Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> DownloadPreviewAsync()
     {
 #pragma warning disable CS8524
-        var response = _transferUserType switch
+        var response = TransferUserType switch
         {
-            TransferUserType.Anonymous => await _crypterApiClient.MessageTransfer.GetAnonymousMessagePreviewAsync(
-                _transferHashId),
-            TransferUserType.User => await _crypterApiClient.MessageTransfer.GetUserMessagePreviewAsync(_transferHashId,
-                _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await CrypterApiClient.MessageTransfer.GetAnonymousMessagePreviewAsync(
+                TransferHashId!),
+            TransferUserType.User => await CrypterApiClient.MessageTransfer.GetUserMessagePreviewAsync(TransferHashId!,
+                UserSessionService.Session.IsSome)
         };
 #pragma warning restore CS8524
 
@@ -65,21 +65,21 @@ public class DownloadMessageHandler : DownloadHandler
 
     public async Task<Either<DownloadTransferCiphertextError, string>> DownloadCiphertextAsync()
     {
-        byte[] symmetricKey = _symmetricKey.Match(
+        byte[] symmetricKey = SymmetricKey.Match(
             () => throw new Exception("Missing symmetric key"),
             x => x);
 
-        byte[] serverProof = _serverProof.Match(
+        byte[] serverProof = ServerProof.Match(
             () => throw new Exception("Missing server proof"),
             x => x);
 
 #pragma warning disable CS8524
-        Either<DownloadTransferCiphertextError, StreamDownloadResponse> response = _transferUserType switch
+        Either<DownloadTransferCiphertextError, StreamDownloadResponse> response = TransferUserType switch
         {
-            TransferUserType.Anonymous => await _crypterApiClient.MessageTransfer.GetAnonymousMessageCiphertextAsync(
-                _transferHashId, serverProof),
-            TransferUserType.User => await _crypterApiClient.MessageTransfer.GetUserMessageCiphertextAsync(
-                _transferHashId, serverProof, _userSessionService.Session.IsSome)
+            TransferUserType.Anonymous => await CrypterApiClient.MessageTransfer.GetAnonymousMessageCiphertextAsync(
+                TransferHashId!, serverProof),
+            TransferUserType.User => await CrypterApiClient.MessageTransfer.GetUserMessageCiphertextAsync(
+                TransferHashId!, serverProof, UserSessionService.Session.IsSome)
         };
 #pragma warning restore CS8524
 

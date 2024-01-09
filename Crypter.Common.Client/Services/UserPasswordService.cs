@@ -42,29 +42,25 @@ namespace Crypter.Common.Client.Services;
 
 public class UserPasswordService : IUserPasswordService
 {
-    private const int _currentPasswordVersion = 1;
-    private const int _credentialKeySize = 32;
-    private const int _authenticationPasswordSize = 64;
-
-    private readonly ICryptoProvider _cryptoProvider;
-
-    private EventHandler<PasswordHashBeginEventArgs> _passwordHashBeginEventHandler;
-    private EventHandler<PasswordHashEndEventArgs> _passwordHashEndEventHandler;
-
     public int CurrentPasswordVersion
     {
-        get { return _currentPasswordVersion; }
+        get => 1;
     }
 
     public int CredentialKeySize
     {
-        get { return _credentialKeySize; }
+        get => 32;
     }
 
     public int AuthenticationPasswordSize
     {
-        get { return _authenticationPasswordSize; }
+        get => 64;
     }
+    
+    private readonly ICryptoProvider _cryptoProvider;
+
+    private EventHandler<PasswordHashBeginEventArgs>? _passwordHashBeginEventHandler;
+    private EventHandler<PasswordHashEndEventArgs>? _passwordHashEndEventHandler;
 
     public UserPasswordService(ICryptoProvider cryptoProvider)
     {
@@ -95,7 +91,7 @@ public class UserPasswordService : IUserPasswordService
     }
 
     [Obsolete("Use DeriveArgonAuthenticationPassword instead")]
-    public VersionedPassword DeriveSha512AuthenticationPassword(Username username, Password password)
+    private VersionedPassword DeriveSha512AuthenticationPassword(Username username, Password password)
     {
         byte[] passwordBytes = Encoding.UTF8.GetBytes(password.Value);
         byte[] usernameBytes = Encoding.UTF8.GetBytes(username.Value.ToLower());
@@ -105,7 +101,7 @@ public class UserPasswordService : IUserPasswordService
         return new VersionedPassword(hashedPassword, 0);
     }
 
-    public async Task<Maybe<VersionedPassword>> DeriveArgonAuthenticationPasswordAsync(Username username,
+    private async Task<Maybe<VersionedPassword>> DeriveArgonAuthenticationPasswordAsync(Username username,
         Password password)
     {
         OnPasswordHashBeginEvent(PasswordHashType.AuthenticationKey);
@@ -118,7 +114,7 @@ public class UserPasswordService : IUserPasswordService
         byte[] salt = _cryptoProvider.GenericHash.GenerateHash(saltSize, password.Value, hashedUsername);
 
         Maybe<VersionedPassword> hashResult = _cryptoProvider.PasswordHash
-            .GenerateKey(password.Value, salt, _authenticationPasswordSize, OpsLimit.Sensitive, MemLimit.Moderate)
+            .GenerateKey(password.Value, salt, (uint)AuthenticationPasswordSize, OpsLimit.Sensitive, MemLimit.Moderate)
             .Map(x => new VersionedPassword(x, 1))
             .ToMaybe();
 
@@ -126,7 +122,7 @@ public class UserPasswordService : IUserPasswordService
         return hashResult;
     }
 
-    public async Task<Maybe<byte[]>> DeriveArgonCredentialKeyAsync(Username username, Password password)
+    private async Task<Maybe<byte[]>> DeriveArgonCredentialKeyAsync(Username username, Password password)
     {
         OnPasswordHashBeginEvent(PasswordHashType.CredentialKey);
         await Task.Delay(1);
@@ -138,7 +134,7 @@ public class UserPasswordService : IUserPasswordService
         byte[] salt = _cryptoProvider.GenericHash.GenerateHash(saltSize, password.Value, hashedUsername);
 
         Maybe<byte[]> hashResult = _cryptoProvider.PasswordHash
-            .GenerateKey(password.Value, salt, _credentialKeySize, OpsLimit.Sensitive, MemLimit.Moderate)
+            .GenerateKey(password.Value, salt, (uint)CredentialKeySize, OpsLimit.Sensitive, MemLimit.Moderate)
             .ToMaybe();
 
         OnPasswordHashEndEvent(hashResult.IsSome);
@@ -156,7 +152,7 @@ public class UserPasswordService : IUserPasswordService
         add => _passwordHashBeginEventHandler =
             (EventHandler<PasswordHashBeginEventArgs>)Delegate.Combine(_passwordHashBeginEventHandler, value);
         remove => _passwordHashBeginEventHandler =
-            (EventHandler<PasswordHashBeginEventArgs>)Delegate.Remove(_passwordHashBeginEventHandler, value);
+            (EventHandler<PasswordHashBeginEventArgs>?)Delegate.Remove(_passwordHashBeginEventHandler, value);
     }
 
     public event EventHandler<PasswordHashEndEventArgs> PasswordHashEndEventHandler
@@ -164,6 +160,6 @@ public class UserPasswordService : IUserPasswordService
         add => _passwordHashEndEventHandler =
             (EventHandler<PasswordHashEndEventArgs>)Delegate.Combine(_passwordHashEndEventHandler, value);
         remove => _passwordHashEndEventHandler =
-            (EventHandler<PasswordHashEndEventArgs>)Delegate.Remove(_passwordHashEndEventHandler, value);
+            (EventHandler<PasswordHashEndEventArgs>?)Delegate.Remove(_passwordHashEndEventHandler, value);
     }
 }

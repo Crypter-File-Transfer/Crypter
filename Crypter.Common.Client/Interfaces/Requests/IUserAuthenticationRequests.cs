@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using EasyMonads;
@@ -32,6 +33,7 @@ namespace Crypter.Common.Client.Interfaces.Requests;
 
 public interface IUserAuthenticationRequests
 {
+    EventHandler? RefreshTokenRejectedHandler { set; }
     Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest registerRequest);
     Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest);
     Task<Either<RefreshError, RefreshResponse>> RefreshSessionAsync();

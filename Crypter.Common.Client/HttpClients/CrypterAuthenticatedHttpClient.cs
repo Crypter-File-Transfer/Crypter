@@ -74,7 +74,7 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
     public async Task<Maybe<TResponse>> GetMaybeAsync<TResponse>(string uri)
         where TResponse : class
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Get, uri);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Get, uri);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
         return await DeserializeMaybeResponseAsync<TResponse>(response);
     }
@@ -85,25 +85,24 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         return GetEitherAsync<TResponse>(uri, false);
     }
 
-    public async Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri,
-        bool useRefreshToken = false)
+    public async Task<Either<ErrorResponse, TResponse>> GetEitherAsync<TResponse>(string uri, bool useRefreshToken)
         where TResponse : class
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Get, uri);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Get, uri);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, useRefreshToken);
         return await DeserializeResponseAsync<TResponse>(response);
     }
 
     public async Task<Either<ErrorResponse, Unit>> GetEitherUnitResponseAsync(string uri)
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Get, uri);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Get, uri);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
         return await DeserializeEitherUnitResponseAsync(response);
     }
 
     public async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(string uri)
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Get, uri);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Get, uri);
 
         // Do not dispose of the HttpResponseMessage here.
         // Callers need to read the contained Stream.
@@ -115,7 +114,7 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         bool useRefreshToken = false)
         where TRequest : class
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Put, uri, body);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Put, uri, body);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, useRefreshToken);
         return await DeserializeResponseAsync<TResponse>(response);
     }
@@ -124,7 +123,7 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         bool useRefreshToken = false)
         where TRequest : class
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Put, uri, body);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Put, uri, body);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, useRefreshToken);
         return await DeserializeEitherUnitResponseAsync(response);
     }
@@ -133,7 +132,7 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         bool useRefreshToken = false)
         where TResponse : class
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, useRefreshToken);
         return await DeserializeResponseAsync<TResponse>(response);
     }
@@ -146,18 +145,18 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
     }
 
     public async Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body,
-        bool useRefreshToken = false)
+        bool useRefreshToken)
         where TResponse : class
         where TRequest : class
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
         return await DeserializeResponseAsync<TResponse>(response);
     }
 
     public async Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri)
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
         return DeserializeMaybeUnitResponse(response);
     }
@@ -167,9 +166,9 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         return PostEitherUnitResponseAsync(uri, false);
     }
 
-    public async Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri, bool useRefreshToken = false)
+    public async Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri, bool useRefreshToken)
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, useRefreshToken);
         return await DeserializeEitherUnitResponseAsync(response);
     }
@@ -180,26 +179,26 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         return PostEitherUnitResponseAsync(uri, body, false);
     }
 
-    public async Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync<TRequest>(string uri,
+    public async Task<Either<ErrorResponse, Unit>> PostUnitResponseAsync(string uri,
         bool useRefreshToken = false)
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, useRefreshToken);
         return await DeserializeEitherUnitResponseAsync(response);
     }
 
     public async Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body,
-        bool useRefreshToken = false)
+        bool useRefreshToken)
         where TRequest : class
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, useRefreshToken);
         return await DeserializeEitherUnitResponseAsync(response);
     }
 
     public async Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri)
     {
-        var requestFactory = MakeRequestMessageFactory(HttpMethod.Delete, uri);
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Delete, uri);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
         return response.IsSuccessStatusCode
             ? Unit.Default
@@ -251,20 +250,20 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
             await _requestSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                using HttpRequestMessage retryRequest = requestFactory();
-                var refreshAndRetry =
-                    await (from refreshResponse in _crypterApiClient.UserAuthentication.RefreshSessionAsync()
-                        from unit0 in Either<RefreshError, Unit>.FromRightAsync(
-                            _tokenRepository.StoreAuthenticationTokenAsync(refreshResponse.AuthenticationToken))
-                        from unit1 in Either<RefreshError, Unit>.FromRightAsync(
-                            _tokenRepository.StoreRefreshTokenAsync(refreshResponse.RefreshToken,
-                                refreshResponse.RefreshTokenType))
-                        from unit2 in Either<RefreshError, Unit>.FromRightAsync(AttachTokenAsync(retryRequest, false))
-                        from secondAttempt in Either<RefreshError, HttpResponseMessage>.FromRightAsync(
-                            _httpClient.SendAsync(retryRequest, HttpCompletionOption.ResponseHeadersRead))
-                        select secondAttempt);
-
-                return refreshAndRetry.Match(
+                Either<RefreshError, HttpResponseMessage> retryRequest = await _crypterApiClient.UserAuthentication
+                    .RefreshSessionAsync()
+                    .DoRightAsync(async x =>
+                    {
+                        await _tokenRepository.StoreAuthenticationTokenAsync(x.AuthenticationToken);
+                        await _tokenRepository.StoreRefreshTokenAsync(x.RefreshToken, x.RefreshTokenType);
+                    }).BindAsync<RefreshError, RefreshResponse, HttpResponseMessage>(async _ =>
+                    {
+                        using HttpRequestMessage retryRequest = requestFactory();
+                        Unit __ = await AttachTokenAsync(retryRequest);
+                        return await _httpClient.SendAsync(retryRequest, HttpCompletionOption.ResponseHeadersRead);
+                    });
+                
+                return retryRequest.Match(
                     initialAttempt,
                     right => right);
             }
@@ -289,7 +288,7 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
             return Maybe<TResponse>.None;
         }
 
-        using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        await using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
         return await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
     }
 
@@ -300,7 +299,7 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
             return Either<ErrorResponse, Unit>.Neither;
         }
 
-        using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        await using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
         if (!response.IsSuccessStatusCode)
         {
             return await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions)
@@ -318,7 +317,7 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
             return Either<ErrorResponse, TResponse>.Neither;
         }
 
-        using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        await using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
         return response.IsSuccessStatusCode
             ? await JsonSerializer.DeserializeAsync<TResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false)
             : await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions)
@@ -340,13 +339,11 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
             // Do not dispose of the Stream here. The caller needs to read it.
             return new StreamDownloadResponse(stream, response.Content.Headers.ContentLength!.Value);
         }
-        else
-        {
-            ErrorResponse errorResponse = await JsonSerializer
-                .DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
-            stream.Dispose();
-            return errorResponse;
-        }
+
+        ErrorResponse? errorResponse = await JsonSerializer
+            .DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+        await stream.DisposeAsync();
+        return errorResponse;
     }
 
     private async Task<Unit> AttachTokenAsync(HttpRequestMessage request, bool useRefreshToken = false)

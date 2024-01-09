@@ -34,10 +34,10 @@ public class RegistrationRequest
 {
     public string Username { get; set; }
     public VersionedPassword VersionedPassword { get; set; }
-    public string EmailAddress { get; set; }
+    public string? EmailAddress { get; set; }
 
     [JsonConstructor]
-    public RegistrationRequest(string username, VersionedPassword versionedPassword, string emailAddress = null)
+    public RegistrationRequest(string username, VersionedPassword versionedPassword, string? emailAddress = null)
     {
         Username = username;
         VersionedPassword = versionedPassword;
@@ -48,7 +48,7 @@ public class RegistrationRequest
     {
         Username = username.Value;
         VersionedPassword = versionedPassword;
-        EmailAddress = emailAddress.Match(
+        EmailAddress = emailAddress.Match<string?>(
             () => null,
             some => some.Value);
     }

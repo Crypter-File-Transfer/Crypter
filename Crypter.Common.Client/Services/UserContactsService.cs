@@ -42,9 +42,9 @@ public class UserContactsService : IUserContactsService, IDisposable
 {
     private readonly ICrypterApiClient _crypterApiClient;
     private readonly IUserSessionService _userSessionService;
-    private IDictionary<string, UserContact> _contacts;
+    private IDictionary<string, UserContact>? _contacts;
 
-    private readonly SemaphoreSlim _fetchMutex = new(1);
+    private readonly SemaphoreSlim _fetchMutex = new SemaphoreSlim(1);
 
     public UserContactsService(ICrypterApiClient crypterApiClient, IUserSessionService userSessionService)
     {
@@ -58,20 +58,20 @@ public class UserContactsService : IUserContactsService, IDisposable
     public async Task<IReadOnlyCollection<UserContact>> GetContactsAsync()
     {
         await LoadContactsAsync(true);
-        return _contacts.Values.ToList();
+        return _contacts!.Values.ToList();
     }
 
     public async Task<bool> IsContactAsync(string contactUsername)
     {
         await LoadContactsAsync();
-        return _contacts.ContainsKey(contactUsername.ToLower());
+        return _contacts!.ContainsKey(contactUsername.ToLower());
     }
 
     public async Task<Either<AddUserContactError, UserContact>> AddContactAsync(string contactUsername)
     {
         await LoadContactsAsync();
         string lowerContactUsername = contactUsername.ToLower();
-        if (_contacts.ContainsKey(lowerContactUsername))
+        if (_contacts!.ContainsKey(lowerContactUsername))
         {
             return Either<AddUserContactError, UserContact>.FromRight(_contacts[lowerContactUsername]);
         }
@@ -84,8 +84,8 @@ public class UserContactsService : IUserContactsService, IDisposable
     {
         await LoadContactsAsync();
         string lowerContactUsername = contactUsername.ToLower();
-        var response = await _crypterApiClient.UserContact.RemoveUserContactAsync(lowerContactUsername);
-        response.IfSome(_ => _contacts.Remove(lowerContactUsername));
+        Maybe<Unit> response = await _crypterApiClient.UserContact.RemoveUserContactAsync(lowerContactUsername);
+        response.IfSome(_ => _contacts!.Remove(lowerContactUsername));
     }
 
     private async Task<Dictionary<string, UserContact>> FetchContactsAsync()
@@ -117,7 +117,7 @@ public class UserContactsService : IUserContactsService, IDisposable
         }
     }
 
-    private async void OnSessionServiceInitialized(object sender, UserSessionServiceInitializedEventArgs args)
+    private async void OnSessionServiceInitialized(object? _, UserSessionServiceInitializedEventArgs args)
     {
         if (args.IsLoggedIn)
         {
@@ -129,12 +129,12 @@ public class UserContactsService : IUserContactsService, IDisposable
         }
     }
 
-    private async void OnUserLoggedIn(object sender, UserLoggedInEventArgs _)
+    private async void OnUserLoggedIn(object? _, UserLoggedInEventArgs __)
     {
         await LoadContactsAsync();
     }
 
-    private void OnUserLoggedOut(object sender, EventArgs _)
+    private void OnUserLoggedOut(object? _, EventArgs __)
     {
         _contacts = null;
     }

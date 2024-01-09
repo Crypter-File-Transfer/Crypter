@@ -28,7 +28,7 @@
 <div class="copiedTooltip mb-3">
     @if (string.IsNullOrEmpty(_recoveryKey))
     {
-        <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="_passwordModal.Open">Generate Recovery Key</button>
+        <button type="submit" class="btn btn-primary" @onclick:preventDefault @onclick="() => _passwordModal.Open()">Generate Recovery Key</button>
     }
     else
     {
