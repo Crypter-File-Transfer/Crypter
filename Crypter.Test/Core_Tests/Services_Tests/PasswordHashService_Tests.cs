@@ -64,7 +64,7 @@ public class PasswordHashService_Tests
     public void Service_Exists_In_Crypter_Core()
     {
         Type assembly = typeof(PasswordHashService);
-        Assert.AreEqual("Crypter.Core.Services.PasswordHashService", assembly.FullName);
+        Assert.That(assembly.FullName, Is.EqualTo("Crypter.Core.Services.PasswordHashService"));
     }
 
     [Test]
@@ -72,7 +72,7 @@ public class PasswordHashService_Tests
     {
         byte[] password = "foo"u8.ToArray();
         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
-        Assert.True(hashOutput.Salt.Length == 16);
+        Assert.That(hashOutput.Salt.Length, Is.EqualTo(16));
     }
 
     [Test]
@@ -80,7 +80,7 @@ public class PasswordHashService_Tests
     {
         byte[] password = "foo"u8.ToArray();
         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
-        Assert.True(hashOutput.Hash.Length == 64);
+        Assert.That(hashOutput.Hash.Length, Is.EqualTo(64));
     }
 
     [Test]
@@ -89,7 +89,7 @@ public class PasswordHashService_Tests
         byte[] password = "foo"u8.ToArray();
         SecurePasswordHashOutput hashOutput1 = _sut.MakeSecurePasswordHash(password, 0);
         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 0);
-        Assert.AreNotEqual(hashOutput1.Salt, hashOutput2.Salt);
+        Assert.That(hashOutput1.Salt, Is.Not.EqualTo(hashOutput2.Salt));
     }
 
     [Test]
@@ -98,7 +98,7 @@ public class PasswordHashService_Tests
         byte[] password = "foo"u8.ToArray();
         SecurePasswordHashOutput hashOutput1 = _sut.MakeSecurePasswordHash(password, 0);
         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 0);
-        Assert.AreNotEqual(hashOutput1.Hash, hashOutput2.Hash);
+        Assert.That(hashOutput1.Hash, Is.Not.EqualTo(hashOutput2.Hash));
     }
 
     [Test]
@@ -107,7 +107,7 @@ public class PasswordHashService_Tests
         byte[] password = "foo"u8.ToArray();
         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 0);
-        Assert.True(hashesMatch);
+        Assert.That(hashesMatch, Is.True);
     }
 
     [Test]
@@ -117,7 +117,7 @@ public class PasswordHashService_Tests
         byte[] notPassword = "not foo"u8.ToArray();
         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
         bool hashesMatch = _sut.VerifySecurePasswordHash(notPassword, hashOutput.Hash, hashOutput.Salt, 0);
-        Assert.False(hashesMatch);
+        Assert.That(hashesMatch, Is.False);
     }
 
     [Test]
@@ -132,7 +132,7 @@ public class PasswordHashService_Tests
             : hashOutput.Salt[0] = 0x01;
 
         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 0);
-        Assert.False(hashesMatch);
+        Assert.That(hashesMatch, Is.False);
     }
 
     [Test]
@@ -142,7 +142,7 @@ public class PasswordHashService_Tests
         SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
 
         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 1);
-        Assert.False(hashesMatch);
+        Assert.That(hashesMatch, Is.False);
     }
 
     [Test]
@@ -168,6 +168,6 @@ public class PasswordHashService_Tests
         };
 
         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt, 2);
-        Assert.True(hashesMatch);
+        Assert.That(hashesMatch, Is.False);
     }
 }

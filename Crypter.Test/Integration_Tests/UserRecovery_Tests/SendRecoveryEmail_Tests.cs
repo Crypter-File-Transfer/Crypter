@@ -61,6 +61,6 @@ internal class SendRecoveryEmail_Tests
         EmailAddress emailAddress = EmailAddress.From(TestData.DefaultEmailAdress);
         Either<SendRecoveryEmailError, Unit> result = await _client.UserRecovery.SendRecoveryEmailAsync(emailAddress);
 
-        Assert.True(result.IsRight);
+        Assert.That(result.IsRight, Is.True);
     }
 }

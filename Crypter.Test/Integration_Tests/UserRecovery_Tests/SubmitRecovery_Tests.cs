@@ -106,8 +106,8 @@ internal class SubmitRecovery_Tests
         if (withRecoveryProof)
         {
             LoginRequest loginRequest =
-                TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-            var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+                TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+            Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
             await loginResult.DoRightAsync(async loginResponse =>
             {
@@ -117,7 +117,7 @@ internal class SubmitRecovery_Tests
 
             (byte[] masterKey, InsertMasterKeyRequest insertMasterKeyRequest) =
                 TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
-            Either<InsertMasterKeyError, Unit> insertMasterKeyResponse =
+            Either<InsertMasterKeyError, Unit> _ =
                 await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
             UserPasswordService userPasswordService = new UserPasswordService(_cryptoProvider);
@@ -165,17 +165,17 @@ internal class SubmitRecovery_Tests
 
         ReplacementMasterKeyInformation replacementMasterKeyInformation = recoveryKey.Match(
             () => null,
-            x => new ReplacementMasterKeyInformation(x.Proof, new byte[] { 0x01 }, new byte[] { 0x02 },
-                new byte[] { 0x03 }));
+            x => new ReplacementMasterKeyInformation(x.Proof, [0x01], [0x02],
+                [0x03]));
         AccountRecoverySubmission submission = new AccountRecoverySubmission(TestData.DefaultUsername, encodedRecoveryCode,
             encodedRecoverySignature, versionedPassword, replacementMasterKeyInformation);
         Either<SubmitAccountRecoveryError, Unit> result = await _client.UserRecovery.SubmitRecoveryAsync(submission);
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(verificationResult.IsRight);
-        Assert.True(sendRecoveryEmailResult.IsRight);
-        Assert.True(verificationResult.IsRight);
-        Assert.True(result.IsRight);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(verificationResult.IsRight, Is.True);
+        Assert.That(sendRecoveryEmailResult.IsRight, Is.True);
+        Assert.That(verificationResult.IsRight, Is.True);
+        Assert.That(result.IsRight, Is.True);
     }
     
     [Test]
@@ -214,8 +214,8 @@ internal class SubmitRecovery_Tests
         await Task.Delay(5000);
 
         LoginRequest loginRequest =
-            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -225,7 +225,7 @@ internal class SubmitRecovery_Tests
 
         (byte[] masterKey, InsertMasterKeyRequest insertMasterKeyRequest) =
             TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
-        Either<InsertMasterKeyError, Unit> insertMasterKeyResponse =
+        Either<InsertMasterKeyError, Unit> _ =
             await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
         UserPasswordService userPasswordService = new UserPasswordService(_cryptoProvider);
@@ -253,13 +253,13 @@ internal class SubmitRecovery_Tests
             encodedRecoverySignature, versionedPassword, replacementMasterKeyInformation);
         Either<SubmitAccountRecoveryError, Unit> result = await _client.UserRecovery.SubmitRecoveryAsync(submission);
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(verificationResult.IsRight);
-        Assert.True(sendRecoveryEmailResult.IsRight);
-        Assert.True(verificationResult.IsRight);
-        Assert.True(result.IsLeft);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(verificationResult.IsRight, Is.True);
+        Assert.That(sendRecoveryEmailResult.IsRight, Is.True);
+        Assert.That(verificationResult.IsRight, Is.True);
+        Assert.That(result.IsLeft, Is.True);
         result.DoLeftOrNeither(x =>
-                Assert.AreEqual(SubmitAccountRecoveryError.InvalidMasterKey, x),
+                Assert.That(x, Is.EqualTo(SubmitAccountRecoveryError.InvalidMasterKey)),
             Assert.Fail);
     }
 }

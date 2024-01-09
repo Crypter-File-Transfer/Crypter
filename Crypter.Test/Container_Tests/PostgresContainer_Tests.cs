@@ -85,7 +85,7 @@ internal class PostgresContainer_Tests
         IEnumerable<bool> results = await connection.QueryAsync<bool>(query, parameters);
         bool canConnect = results.First();
 
-        Assert.False(canConnect);
+        Assert.That(canConnect, Is.False);
 
         await connection.CloseAsync();
     }
@@ -108,7 +108,7 @@ internal class PostgresContainer_Tests
         IEnumerable<bool> results = await connection.QueryAsync<bool>(query, parameters);
         bool canConnect = results.First();
 
-        Assert.False(canConnect);
+        Assert.That(canConnect, Is.False);
 
         await connection.CloseAsync();
     }

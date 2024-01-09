@@ -55,12 +55,11 @@ public class BrowserUserSessionRepository_Tests
                 DeviceStorageObjectType.UserSession,
                 It.IsAny<UserSession>(),
                 BrowserStorageLocation.SessionStorage))
-            .ReturnsAsync((DeviceStorageObjectType objectType, UserSession userSession,
-                BrowserStorageLocation browserStorageLocation) => Unit.Default);
+            .ReturnsAsync((DeviceStorageObjectType _, UserSession _, BrowserStorageLocation _) => Unit.Default);
 
-        var sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
+        BrowserUserSessionRepository sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
 
-        UserSession session = new(Username.From("foo"), false, UserSession.LATEST_SCHEMA);
+        UserSession session = new UserSession(Username.From("foo"), false, UserSession.LATEST_SCHEMA);
         await sut.StoreUserSessionAsync(session, false);
 
         _browserStorageMock.Verify(
@@ -76,12 +75,11 @@ public class BrowserUserSessionRepository_Tests
                 DeviceStorageObjectType.UserSession,
                 It.IsAny<UserSession>(),
                 BrowserStorageLocation.LocalStorage))
-            .ReturnsAsync((DeviceStorageObjectType objectType, UserSession userSession,
-                BrowserStorageLocation browserStorageLocation) => Unit.Default);
+            .ReturnsAsync((DeviceStorageObjectType _, UserSession _, BrowserStorageLocation _) => Unit.Default);
 
-        var sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
+        BrowserUserSessionRepository sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
 
-        UserSession session = new(Username.From("foo"), true, UserSession.LATEST_SCHEMA);
+        UserSession session = new UserSession(Username.From("foo"), true, UserSession.LATEST_SCHEMA);
         await sut.StoreUserSessionAsync(session, true);
 
         _browserStorageMock.Verify(
@@ -94,17 +92,17 @@ public class BrowserUserSessionRepository_Tests
     {
         _browserStorageMock
             .Setup(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession))
-            .ReturnsAsync((DeviceStorageObjectType objectType) =>
+            .ReturnsAsync((DeviceStorageObjectType _) =>
                 new UserSession("foo", true, UserSession.LATEST_SCHEMA));
 
-        var sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
+        BrowserUserSessionRepository sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
 
-        var fetchedSession = await sut.GetUserSessionAsync();
+        Maybe<UserSession> fetchedSession = await sut.GetUserSessionAsync();
         fetchedSession.IfNone(Assert.Fail);
         fetchedSession.IfSome(x =>
         {
-            Assert.AreEqual("foo", x.Username);
-            Assert.IsTrue(x.RememberUser);
+            Assert.That(x.Username, Is.EqualTo("foo"));
+            Assert.That(x.RememberUser, Is.True);
         });
 
         _browserStorageMock.Verify(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession), Times.Once);
@@ -115,12 +113,12 @@ public class BrowserUserSessionRepository_Tests
     {
         _browserStorageMock
             .Setup(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession))
-            .ReturnsAsync((DeviceStorageObjectType objectType) => Maybe<UserSession>.None);
+            .ReturnsAsync((DeviceStorageObjectType _) => Maybe<UserSession>.None);
 
-        var sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
+        BrowserUserSessionRepository sut = new BrowserUserSessionRepository(_browserStorageMock.Object);
 
-        var fetchedSession = await sut.GetUserSessionAsync();
-        Assert.IsTrue(fetchedSession.IsNone);
+        Maybe<UserSession> fetchedSession = await sut.GetUserSessionAsync();
+        Assert.That(fetchedSession.IsNone, Is.True);
 
         _browserStorageMock.Verify(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession), Times.Once);
     }

@@ -27,11 +27,13 @@
 using System;
 using System.Threading.Tasks;
 using Crypter.Common.Primitives;
+using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
@@ -73,8 +75,8 @@ internal class UserEmailVerificationService_Tests
     [Test]
     public async Task Verification_Parameters_Not_Created_If_User_Does_Not_Exist()
     {
-        var result = await _sut.GenerateVerificationParametersAsync(Guid.NewGuid());
-        Assert.IsTrue(result.IsNone);
+        Maybe<UserEmailAddressVerificationParameters> result = await _sut.GenerateVerificationParametersAsync(Guid.NewGuid());
+        Assert.That(result.IsNone, Is.True);
     }
 
     [Test]
@@ -85,8 +87,8 @@ internal class UserEmailVerificationService_Tests
         _dataContext.Users.Add(newUser);
         await _dataContext.SaveChangesAsync();
 
-        var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
-        Assert.IsTrue(result.IsNone);
+        Maybe<UserEmailAddressVerificationParameters> result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
+        Assert.That(result.IsNone, Is.True);
     }
 
     [Test]
@@ -100,8 +102,8 @@ internal class UserEmailVerificationService_Tests
         _dataContext.Users.Add(newUser);
         await _dataContext.SaveChangesAsync();
 
-        var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
-        Assert.IsTrue(result.IsNone);
+        Maybe<UserEmailAddressVerificationParameters> result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
+        Assert.That(result.IsNone, Is.True);
     }
 
     [TestCase(null)]
@@ -114,8 +116,8 @@ internal class UserEmailVerificationService_Tests
         _dataContext.Users.Add(newUser);
         await _dataContext.SaveChangesAsync();
 
-        var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
-        Assert.IsTrue(result.IsNone);
+        Maybe<UserEmailAddressVerificationParameters> result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
+        Assert.That(result.IsNone, Is.True);
     }
 
     [Test]
@@ -126,17 +128,17 @@ internal class UserEmailVerificationService_Tests
         _dataContext.Users.Add(newUser);
         await _dataContext.SaveChangesAsync();
 
-        var result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
-        Assert.IsTrue(result.IsSome);
+        Maybe<UserEmailAddressVerificationParameters> result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
+        Assert.That(result.IsSome, Is.True);
         result.IfSome(x =>
         {
-            Assert.AreEqual(newUser.Id, x.UserId);
-            Assert.AreEqual(newUser.EmailAddress, x.EmailAddress.Value);
+            Assert.That(x.UserId, Is.EqualTo(newUser.Id));
+            Assert.That(x.EmailAddress.Value, Is.EqualTo(newUser.EmailAddress));
 
             Span<byte> verificationCode = x.VerificationCode.ToByteArray();
             bool verificationCodeVerified =
                 _cryptoProvider.DigitalSignature.VerifySignature(x.VerificationKey, verificationCode, x.Signature);
-            Assert.IsTrue(verificationCodeVerified);
+            Assert.That(verificationCodeVerified, Is.True);
         });
     }
 }

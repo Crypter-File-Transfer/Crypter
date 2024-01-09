@@ -58,6 +58,6 @@ internal class PublicStorage_Tests
     public async Task Get_Public_Storage_Metrics_Works()
     {
         Maybe<PublicStorageMetricsResponse> result = await _client.Metrics.GetPublicStorageMetricsAsync();
-        Assert.True(result.IsSome);
+        Assert.That(result.IsSome, Is.True);
     }
 }

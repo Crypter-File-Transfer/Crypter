@@ -32,6 +32,7 @@ using Crypter.Common.Enums;
 using Crypter.Core.Identity;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -68,11 +69,11 @@ internal class Refresh_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, refreshTokenType);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -80,11 +81,11 @@ internal class Refresh_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, refreshTokenType);
         });
 
-        var result = await _client.UserAuthentication.RefreshSessionAsync();
+        Either<RefreshError, RefreshResponse> result = await _client.UserAuthentication.RefreshSessionAsync();
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(loginResult.IsRight);
-        Assert.True(result.IsRight);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(loginResult.IsRight, Is.True);
+        Assert.That(result.IsRight, Is.True);
     }
 
     [Test]
@@ -95,11 +96,11 @@ internal class Refresh_Tests
 
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
-            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -108,11 +109,11 @@ internal class Refresh_Tests
         });
 
         await Task.Delay(apiTokenSettings.SessionTokenLifetimeMinutes * 60000);
-        var result = await _client.UserAuthentication.RefreshSessionAsync();
+        Either<RefreshError, RefreshResponse> result = await _client.UserAuthentication.RefreshSessionAsync();
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(loginResult.IsRight);
-        Assert.True(result.IsLeft);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(loginResult.IsRight, Is.True);
+        Assert.That(result.IsLeft, Is.True);
     }
 
     [Test]
@@ -120,11 +121,11 @@ internal class Refresh_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
-            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -139,10 +140,10 @@ internal class Refresh_Tests
         dataContext.UserTokens.Remove(refreshTokenEntity);
         await dataContext.SaveChangesAsync();
 
-        var result = await _client.UserAuthentication.RefreshSessionAsync();
+        Either<RefreshError, RefreshResponse> result = await _client.UserAuthentication.RefreshSessionAsync();
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(loginResult.IsRight);
-        Assert.True(result.IsLeft);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(loginResult.IsRight, Is.True);
+        Assert.That(result.IsLeft, Is.True);
     }
 }

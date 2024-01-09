@@ -62,10 +62,10 @@ internal class RecoveryKeyRisksConsent_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -75,8 +75,8 @@ internal class RecoveryKeyRisksConsent_Tests
 
         Maybe<Unit> result = await _client.UserConsent.ConsentToRecoveryKeyRisksAsync();
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(loginResult.IsRight);
-        Assert.True(result.IsSome);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(loginResult.IsRight, Is.True);
+        Assert.That(result.IsSome, Is.True);
     }
 }

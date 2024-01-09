@@ -27,8 +27,11 @@
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
@@ -64,14 +67,14 @@ internal class AddUserContact_Tests
 
         RegistrationRequest contactRegistrationRequest =
             TestData.GetRegistrationRequest(contactUsername, contactPassword);
-        var contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
+        Either<RegistrationError, Unit> contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
 
         RegistrationRequest userRegistrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+        Either<RegistrationError, Unit> userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+        Either<LoginError, LoginResponse> userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
 
         await userLoginResult.DoRightAsync(async loginResponse =>
         {
@@ -79,12 +82,12 @@ internal class AddUserContact_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
-        var result = await _client.UserContact.AddUserContactAsync(contactUsername);
+        Either<AddUserContactError, UserContact> result = await _client.UserContact.AddUserContactAsync(contactUsername);
 
-        Assert.True(contactRegistrationResult.IsRight);
-        Assert.True(userRegistrationResult.IsRight);
-        Assert.True(userLoginResult.IsRight);
-        Assert.True(result.IsRight);
+        Assert.That(contactRegistrationResult.IsRight, Is.True);
+        Assert.That(userRegistrationResult.IsRight, Is.True);
+        Assert.That(userLoginResult.IsRight, Is.True);
+        Assert.That(result.IsRight, Is.True);
     }
 
     [TestCase]
@@ -92,10 +95,10 @@ internal class AddUserContact_Tests
     {
         RegistrationRequest userRegistrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+        Either<RegistrationError, Unit> userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+        Either<LoginError, LoginResponse> userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
 
         await userLoginResult.DoRightAsync(async loginResponse =>
         {
@@ -103,11 +106,11 @@ internal class AddUserContact_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
-        var result = await _client.UserContact.AddUserContactAsync(TestData.DefaultUsername);
+        Either<AddUserContactError, UserContact> result = await _client.UserContact.AddUserContactAsync(TestData.DefaultUsername);
 
-        Assert.True(userRegistrationResult.IsRight);
-        Assert.True(userLoginResult.IsRight);
-        Assert.True(result.IsLeft);
+        Assert.That(userRegistrationResult.IsRight, Is.True);
+        Assert.That(userLoginResult.IsRight, Is.True);
+        Assert.That(result.IsLeft, Is.True);
     }
 
     [TestCase]
@@ -115,10 +118,10 @@ internal class AddUserContact_Tests
     {
         RegistrationRequest userRegistrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+        Either<RegistrationError, Unit> userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+        Either<LoginError, LoginResponse> userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
 
         await userLoginResult.DoRightAsync(async loginResponse =>
         {
@@ -126,10 +129,10 @@ internal class AddUserContact_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
-        var result = await _client.UserContact.AddUserContactAsync("Tom_Bombadil");
+        Either<AddUserContactError, UserContact> result = await _client.UserContact.AddUserContactAsync("Tom_Bombadil");
 
-        Assert.True(userRegistrationResult.IsRight);
-        Assert.True(userLoginResult.IsRight);
-        Assert.True(result.IsLeft);
+        Assert.That(userRegistrationResult.IsRight, Is.True);
+        Assert.That(userLoginResult.IsRight, Is.True);
+        Assert.That(result.IsLeft, Is.True);
     }
 }
