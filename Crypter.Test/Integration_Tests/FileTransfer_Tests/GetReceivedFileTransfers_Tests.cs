@@ -34,6 +34,7 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Common.StreamEncryption;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
@@ -66,11 +67,11 @@ internal class GetReceivedFileTransfers_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
-            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -79,20 +80,20 @@ internal class GetReceivedFileTransfers_Tests
         });
 
         InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
-        var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
+        Either<InsertKeyPairError, Unit> __ = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadFileTransferRequest uploadFileTransferRequest = new UploadFileTransferRequest(
             TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey,
             TestData.DefaultKeyExchangeNonce, keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        var uploadFileTransferResponse = await _client.FileTransfer.UploadFileTransferAsync(TestData.DefaultUsername,
+        Either<UploadTransferError, UploadTransferResponse> ___ = await _client.FileTransfer.UploadFileTransferAsync(TestData.DefaultUsername,
             uploadFileTransferRequest, encryptionStreamOpener, false);
 
-        var response = await _client.FileTransfer.GetReceivedFilesAsync();
+        Maybe<List<UserReceivedFileDTO>> response = await _client.FileTransfer.GetReceivedFilesAsync();
         List<UserReceivedFileDTO> result = response.SomeOrDefault(null);
 
-        Assert.True(response.IsSome);
-        Assert.AreEqual(1, result.Count);
+        Assert.That(response.IsSome, Is.True);
+        Assert.That(result.Count, Is.EqualTo(1));
     }
 }

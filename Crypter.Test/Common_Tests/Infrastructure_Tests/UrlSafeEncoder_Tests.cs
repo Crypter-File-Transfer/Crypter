@@ -42,47 +42,47 @@ public class UrlSafeEncoder_Tests
     public void Code_Encoding_Is_Consistent()
     {
         Guid code = new Guid("adec7c67-dfb6-4b9f-9a1f-04c0b0f4643c");
-        string knownEncoding = "Z3zsrbbfn0uaHwTAsPRkPA";
+        const string knownEncoding = "Z3zsrbbfn0uaHwTAsPRkPA";
         string newEncoding = UrlSafeEncoder.EncodeGuidUrlSafe(code);
-        Assert.AreEqual(knownEncoding, newEncoding);
+        Assert.That(newEncoding, Is.EqualTo(knownEncoding));
     }
 
     [Test]
     public void Code_Decoding_Is_Consistent()
     {
-        string encoding = "Z3zsrbbfn0uaHwTAsPRkPA";
+        const string encoding = "Z3zsrbbfn0uaHwTAsPRkPA";
         Guid knownCode = new Guid("adec7c67-dfb6-4b9f-9a1f-04c0b0f4643c");
         Guid newCode = UrlSafeEncoder.DecodeGuidFromUrlSafe(encoding);
-        Assert.AreEqual(knownCode, newCode);
+        Assert.That(newCode, Is.EqualTo(knownCode));
     }
 
     [Test]
     public void Signature_Encoding_Is_Consistent()
     {
-        byte[] bytes = new byte[]
-        {
+        byte[] bytes =
+        [
             0x8b, 0x6f, 0xa0, 0x13, 0x13, 0xce, 0x51, 0xaf,
             0xc0, 0x9e, 0x61, 0x0f, 0x81, 0x92, 0x50, 0xda,
             0x50, 0x17, 0x78, 0xad, 0x36, 0x3c, 0xba, 0x4f,
             0x9e, 0x31, 0x2a, 0x6e, 0xc8, 0x23, 0xd4, 0x2a
-        };
-        string knownEncoding = "i2-gExPOUa_AnmEPgZJQ2lAXeK02PLpPnjEqbsgj1Co";
+        ];
+        const string knownEncoding = "i2-gExPOUa_AnmEPgZJQ2lAXeK02PLpPnjEqbsgj1Co";
         string newEncoding = UrlSafeEncoder.EncodeBytesUrlSafe(bytes);
-        Assert.AreEqual(knownEncoding, newEncoding);
+        Assert.That(newEncoding, Is.EqualTo(knownEncoding));
     }
 
     [Test]
     public void Signature_Decoding_Is_Consistent()
     {
-        string encoding = "i2-gExPOUa_AnmEPgZJQ2lAXeK02PLpPnjEqbsgj1Co";
-        byte[] knownBytes = new byte[]
-        {
+        const string encoding = "i2-gExPOUa_AnmEPgZJQ2lAXeK02PLpPnjEqbsgj1Co";
+        byte[] knownBytes =
+        [
             0x8b, 0x6f, 0xa0, 0x13, 0x13, 0xce, 0x51, 0xaf,
             0xc0, 0x9e, 0x61, 0x0f, 0x81, 0x92, 0x50, 0xda,
             0x50, 0x17, 0x78, 0xad, 0x36, 0x3c, 0xba, 0x4f,
             0x9e, 0x31, 0x2a, 0x6e, 0xc8, 0x23, 0xd4, 0x2a
-        };
+        ];
         byte[] newSignature = UrlSafeEncoder.DecodeBytesFromUrlSafe(encoding);
-        Assert.AreEqual(knownBytes, newSignature);
+        Assert.That(newSignature, Is.EqualTo(knownBytes));
     }
 }

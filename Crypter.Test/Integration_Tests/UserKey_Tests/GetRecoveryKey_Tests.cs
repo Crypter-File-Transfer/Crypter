@@ -63,11 +63,11 @@ internal class GetRecoveryKey_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> __ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
-            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -86,11 +86,11 @@ internal class GetRecoveryKey_Tests
 
         GetMasterKeyRecoveryProofResponse response = result.RightOrDefault(null);
 
-        Assert.True(insertMasterKeyResult.IsRight);
-        Assert.True(result.IsRight);
-        Assert.NotNull(response);
+        Assert.That(insertMasterKeyResult.IsRight, Is.True);
+        Assert.That(result.IsRight, Is.True);
+        Assert.That(response, Is.Not.Null);
 
-        Assert.AreEqual(insertMasterKeyRequest.RecoveryProof, response.Proof);
+        Assert.That(response.Proof, Is.EqualTo(insertMasterKeyRequest.RecoveryProof));
     }
 
     [Test]
@@ -98,11 +98,11 @@ internal class GetRecoveryKey_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> __ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
-            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -121,7 +121,7 @@ internal class GetRecoveryKey_Tests
         Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse> result =
             await _client.UserKey.GetMasterKeyRecoveryProofAsync(request);
 
-        Assert.True(insertMasterKeyResult.IsRight);
-        Assert.True(result.IsLeft);
+        Assert.That(insertMasterKeyResult.IsRight, Is.True);
+        Assert.That(result.IsLeft, Is.True);
     }
 }

@@ -60,6 +60,6 @@ public class EmailService_Tests
         var sut = new EmailService(_defaultEmailSettings, _logger);
         var emailAddress = EmailAddress.From("jack@crypter.dev");
         var result = await sut.SendAsync("foo", "bar", emailAddress);
-        Assert.IsTrue(result);
+        Assert.That(result, Is.True);
     }
 }

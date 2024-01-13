@@ -57,6 +57,6 @@ public class HashIdService_Tests
         string hash = _sut.Encode(guid);
         Guid decodedHash = _sut.Decode(hash);
 
-        Assert.AreEqual(guid, decodedHash);
+        Assert.That(decodedHash, Is.EqualTo(guid));
     }
 }

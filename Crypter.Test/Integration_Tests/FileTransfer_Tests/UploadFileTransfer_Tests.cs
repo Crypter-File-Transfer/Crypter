@@ -68,11 +68,11 @@ internal class UploadFileTransfer_Tests
         UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        var result =
+        Either<UploadTransferError, UploadTransferResponse> result =
             await _client.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, request, encryptionStreamOpener,
                 false);
 
-        Assert.True(result.IsRight);
+        Assert.That(result.IsRight, Is.True);
     }
 
     [TestCase(true, false)]
@@ -90,16 +90,16 @@ internal class UploadFileTransfer_Tests
             : Maybe<string>.None;
         const string recipientPassword = "dropping_eaves";
 
-        Assert.True((senderDefined == false && senderUsername.IsNone)
-                    || (senderDefined && senderUsername.IsSome));
+        Assert.That((senderDefined == false && senderUsername.IsNone)
+                    || (senderDefined && senderUsername.IsSome), Is.True);
 
         await senderUsername.IfSomeAsync(async username =>
         {
             RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, senderPassword);
-            var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-            LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword, TokenType.Session);
-            var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword);
+            Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
             await loginResult.DoRightAsync(async loginResponse =>
             {
@@ -107,17 +107,17 @@ internal class UploadFileTransfer_Tests
                 await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
             });
 
-            Assert.True(registrationResult.IsRight);
-            Assert.True(loginResult.IsRight);
+            Assert.That(registrationResult.IsRight, Is.True);
+            Assert.That(loginResult.IsRight, Is.True);
         });
 
-        Assert.True((recipientDefined == false && recipientUsername.IsNone)
-                    || (recipientDefined && recipientUsername.IsSome));
+        Assert.That((recipientDefined == false && recipientUsername.IsNone)
+                    || (recipientDefined && recipientUsername.IsSome), Is.True);
 
         await recipientUsername.IfSomeAsync(async username =>
         {
             RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, recipientPassword);
-            var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
         });
 
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
@@ -125,11 +125,11 @@ internal class UploadFileTransfer_Tests
         UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        var result =
+        Either<UploadTransferError, UploadTransferResponse> result =
             await _client.FileTransfer.UploadFileTransferAsync(recipientUsername, request, encryptionStreamOpener,
                 senderDefined);
 
-        Assert.True(result.IsRight);
+        Assert.That(result.IsRight, Is.True);
     }
 
     [Test]
@@ -140,10 +140,10 @@ internal class UploadFileTransfer_Tests
         UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        var result =
+        Either<UploadTransferError, UploadTransferResponse> result =
             await _client.FileTransfer.UploadFileTransferAsync("John Smith", request, encryptionStreamOpener, false);
 
-        Assert.True(result.IsLeft);
+        Assert.That(result.IsLeft, Is.True);
     }
 
     [Test]
@@ -167,10 +167,10 @@ internal class UploadFileTransfer_Tests
         const string senderPassword = TestData.DefaultPassword;
 
         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(senderUsername, senderPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-        LoginRequest loginRequest = TestData.GetLoginRequest(senderUsername, senderPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        LoginRequest loginRequest = TestData.GetLoginRequest(senderUsername, senderPassword);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -178,18 +178,18 @@ internal class UploadFileTransfer_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(loginResult.IsRight);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(loginResult.IsRight, Is.True);
 
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        var result =
+        Either<UploadTransferError, UploadTransferResponse> result =
             await _client.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, request, encryptionStreamOpener,
                 true);
 
-        Assert.True(result.IsRight);
+        Assert.That(result.IsRight, Is.True);
     }
 }

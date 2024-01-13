@@ -48,8 +48,7 @@ internal class EmailAddressVerification_Tests
 {
     private WebApplicationFactory<Program> _factory;
     private ICrypterApiClient _client;
-
-    private ICryptoProvider _mockCryptoProvider;
+    
     private DefaultCryptoProvider _cryptoProvider;
     private Ed25519KeyPair _emailVerificationKeyPair;
 
@@ -58,7 +57,6 @@ internal class EmailAddressVerification_Tests
     {
         _cryptoProvider = new DefaultCryptoProvider();
         _emailVerificationKeyPair = _cryptoProvider.DigitalSignature.GenerateKeyPair();
-        _mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_emailVerificationKeyPair).Object;
     }
 
     [SetUp]
@@ -77,7 +75,7 @@ internal class EmailAddressVerification_Tests
     {
         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername,
             TestData.DefaultPassword, TestData.DefaultEmailAdress);
-        Either<RegistrationError, Unit> registrationResult =
+        Either<RegistrationError, Unit> _ =
             await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         // Allow the background service to "send" the verification email and save the email verification data
@@ -98,6 +96,6 @@ internal class EmailAddressVerification_Tests
         VerifyEmailAddressRequest request = new VerifyEmailAddressRequest(encodedVerificationCode, encodedSignature);
         Either<VerifyEmailAddressError, Unit> result = await _client.UserSetting.VerifyUserEmailAddressAsync(request);
 
-        Assert.True(result.IsRight);
+        Assert.That(result.IsRight, Is.True);
     }
 }

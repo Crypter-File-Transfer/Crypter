@@ -38,10 +38,9 @@ public class Base64String_Tests
     public void Null_Value_Is_Invalid(string value)
     {
         Assert.Throws<ValueNullException>(() => Base64String.From(value));
-
-        bool shouldBeFalse = Base64String.TryFrom(value, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = Base64String.TryFrom(value, out Base64String shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("")]
@@ -51,9 +50,9 @@ public class Base64String_Tests
     {
         Assert.Throws<ValueEmptyException>(() => Base64String.From(value));
 
-        bool shouldBeFalse = Base64String.TryFrom(value, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = Base64String.TryFrom(value, out Base64String shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("jellyfish")]
@@ -63,9 +62,9 @@ public class Base64String_Tests
     {
         Assert.Throws<ValueInvalidException>(() => Base64String.From(value));
 
-        bool shouldBeFalse = Base64String.TryFrom(value, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = Base64String.TryFrom(value, out Base64String shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("amVsbHlmaXNo")]
@@ -74,13 +73,13 @@ public class Base64String_Tests
     public void Valid_Base64_Strings_Are_Valid(string value)
     {
         Assert.DoesNotThrow(() => Base64String.From(value));
-        var validBase64 = Base64String.From(value);
-        Assert.IsNotNull(validBase64);
-        Assert.AreEqual(value, validBase64.Value);
+        Base64String validBase64 = Base64String.From(value);
+        Assert.That(validBase64, Is.Not.Null);
+        Assert.That(validBase64.Value, Is.EqualTo(value));
 
-        bool shouldBeTrue = Base64String.TryFrom(value, out var newValidBase64);
-        Assert.IsTrue(shouldBeTrue);
-        Assert.IsNotNull(newValidBase64);
-        Assert.AreEqual(value, newValidBase64.Value);
+        bool shouldBeTrue = Base64String.TryFrom(value, out Base64String newValidBase64);
+        Assert.That(shouldBeTrue, Is.True);
+        Assert.That(newValidBase64, Is.Not.Null);
+        Assert.That(newValidBase64.Value, Is.EqualTo(value));
     }
 }

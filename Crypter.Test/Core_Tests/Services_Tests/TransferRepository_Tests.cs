@@ -72,18 +72,18 @@ internal class TransferRepository_Tests
         Guid itemGuid = Guid.NewGuid();
         MemoryStream memoryStream = new MemoryStream(buffer);
         bool saveSuccess = await _sut.SaveTransferAsync(itemGuid, TransferItemType.File, userType, memoryStream);
-        Assert.IsTrue(saveSuccess);
-        memoryStream.Dispose();
+        Assert.That(saveSuccess, Is.True);
+        await memoryStream.DisposeAsync();
 
         Maybe<FileStream> fileStream = _sut.GetTransfer(itemGuid, TransferItemType.File, userType, true);
-        Assert.IsTrue(fileStream.IsSome);
-        fileStream.IfSome(async x =>
+        Assert.That(fileStream.IsSome, Is.True);
+        await fileStream.IfSomeAsync(async x =>
         {
             byte[] readBuffer = new byte[4];
             int bytesRead = await x.ReadAsync(readBuffer);
-            Assert.AreEqual(4, bytesRead);
-            Assert.AreEqual(buffer, readBuffer);
-            x.Dispose();
+            Assert.That(bytesRead, Is.EqualTo(4));
+            Assert.That(readBuffer, Is.EqualTo(buffer));
+            await x.DisposeAsync();
         });
     }
 }

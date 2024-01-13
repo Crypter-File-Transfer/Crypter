@@ -39,9 +39,9 @@ public class Username_Tests
     {
         Assert.Throws<ValueNullException>(() => Username.From(username));
 
-        bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = Username.TryFrom(username, out Username shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("")]
@@ -51,9 +51,9 @@ public class Username_Tests
     {
         Assert.Throws<ValueEmptyException>(() => Username.From(username));
 
-        bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = Username.TryFrom(username, out Username shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("`")]
@@ -91,9 +91,9 @@ public class Username_Tests
     {
         Assert.Throws<ValueContainsInvalidCharactersException>(() => Username.From(username));
 
-        bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = Username.TryFrom(username, out Username shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("ThisIsExactly33CharactersInLength")]
@@ -101,9 +101,9 @@ public class Username_Tests
     {
         Assert.Throws<ValueTooLongException>(() => Username.From(username));
 
-        bool shouldBeFalse = Username.TryFrom(username, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = Username.TryFrom(username, out Username shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("jack")]
@@ -114,13 +114,13 @@ public class Username_Tests
     public void Valid_Usernames_Are_Valid(string username)
     {
         Assert.DoesNotThrow(() => Username.From(username));
-        var validUsername = Username.From(username);
-        Assert.IsNotNull(validUsername);
-        Assert.AreEqual(username, validUsername.Value);
+        Username validUsername = Username.From(username);
+        Assert.That(validUsername, Is.Not.Null);
+        Assert.That(validUsername.Value, Is.EqualTo(username));
 
-        bool shouldBeTrue = Username.TryFrom(username, out var newValidUsername);
-        Assert.IsTrue(shouldBeTrue);
-        Assert.IsNotNull(newValidUsername);
-        Assert.AreEqual(username, newValidUsername.Value);
+        bool shouldBeTrue = Username.TryFrom(username, out Username newValidUsername);
+        Assert.That(shouldBeTrue, Is.True);
+        Assert.That(newValidUsername, Is.Not.Null);
+        Assert.That(newValidUsername.Value, Is.EqualTo(username));
     }
 }

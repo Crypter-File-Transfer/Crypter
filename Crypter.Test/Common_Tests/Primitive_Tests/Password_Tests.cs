@@ -39,9 +39,9 @@ public class Password_Tests
     {
         Assert.Throws<ValueNullException>(() => Password.From(password));
 
-        bool shouldBeFalse = Password.TryFrom(password, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = Password.TryFrom(password, out Password shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("")]
@@ -51,9 +51,9 @@ public class Password_Tests
     {
         Assert.Throws<ValueEmptyException>(() => Password.From(password));
 
-        bool shouldBeFalse = Password.TryFrom(password, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = Password.TryFrom(password, out Password shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("a")]
@@ -63,13 +63,13 @@ public class Password_Tests
     public void Valid_Passwords_Are_Valid(string password)
     {
         Assert.DoesNotThrow(() => Password.From(password));
-        var validPassword = Password.From(password);
-        Assert.IsNotNull(validPassword);
-        Assert.AreEqual(password, validPassword.Value);
+        Password validPassword = Password.From(password);
+        Assert.That(validPassword, Is.Not.Null);
+        Assert.That(validPassword.Value, Is.EqualTo(password));
 
-        bool shouldBeTrue = Password.TryFrom(password, out var newValidPassword);
-        Assert.IsTrue(shouldBeTrue);
-        Assert.IsNotNull(newValidPassword);
-        Assert.AreEqual(password, newValidPassword.Value);
+        bool shouldBeTrue = Password.TryFrom(password, out Password newValidPassword);
+        Assert.That(shouldBeTrue, Is.True);
+        Assert.That(newValidPassword, Is.Not.Null);
+        Assert.That(newValidPassword.Value, Is.EqualTo(password));
     }
 }
