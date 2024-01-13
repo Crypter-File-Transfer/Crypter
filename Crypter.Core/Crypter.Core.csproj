@@ -15,10 +15,10 @@
       <PackageReference Include="Hashids.net" Version="1.7.0" />
       <PackageReference Include="MailKit" Version="4.3.0" />
       <PackageReference Include="MediatR" Version="12.2.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="8.0.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="8.0.1" />
       <PackageReference Include="MimeKit" Version="4.3.0" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
-      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.3" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.2.0" />
    </ItemGroup>
 
    <ItemGroup>
