@@ -24,11 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
@@ -64,10 +68,10 @@ internal class GetUserContact_Tests
 
         RegistrationRequest userRegistrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+        Either<RegistrationError, Unit> userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+        Either<LoginError, LoginResponse> userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
 
         await userLoginResult.DoRightAsync(async loginResponse =>
         {
@@ -75,27 +79,27 @@ internal class GetUserContact_Tests
             await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
-        var initialContactsResult = await _client.UserContact.GetUserContactsAsync();
+        Maybe<List<UserContact>> initialContactsResult = await _client.UserContact.GetUserContactsAsync();
 
         RegistrationRequest contactRegistrationRequest =
             TestData.GetRegistrationRequest(contactUsername, contactPassword);
-        var contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
+        Either<RegistrationError, Unit> contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
 
-        var addContactResult = await _client.UserContact.AddUserContactAsync(contactUsername);
-        var finalContactsResult = await _client.UserContact.GetUserContactsAsync();
+        Either<AddUserContactError, UserContact> addContactResult = await _client.UserContact.AddUserContactAsync(contactUsername);
+        Maybe<List<UserContact>> finalContactsResult = await _client.UserContact.GetUserContactsAsync();
 
-        Assert.True(userRegistrationResult.IsRight);
-        Assert.True(userLoginResult.IsRight);
-        Assert.True(initialContactsResult.IsSome);
-        initialContactsResult.IfSome(x => Assert.AreEqual(0, x.Count));
+        Assert.That(userRegistrationResult.IsRight, Is.True);
+        Assert.That(userLoginResult.IsRight, Is.True);
+        Assert.That(initialContactsResult.IsSome, Is.True);
+        initialContactsResult.IfSome(x => Assert.That(x, Is.Empty));
 
-        Assert.True(contactRegistrationResult.IsRight);
-        Assert.True(addContactResult.IsRight);
-        Assert.True(finalContactsResult.IsSome);
+        Assert.That(contactRegistrationResult.IsRight, Is.True);
+        Assert.That(addContactResult.IsRight, Is.True);
+        Assert.That(finalContactsResult.IsSome, Is.True);
         finalContactsResult.IfSome(x =>
         {
-            Assert.AreEqual(1, x.Count);
-            Assert.AreEqual(contactUsername, x[0].Username);
+            Assert.That(x.Count, Is.EqualTo(1));
+            Assert.That(x[0].Username, Is.EqualTo(contactUsername));
         });
     }
 }

@@ -19,8 +19,8 @@ public class FormDataJsonBinder : IModelBinder
             throw new ArgumentNullException(nameof(bindingContext));
         }
 
-        var modelName = bindingContext.ModelName;
-        var valueProviderResult = bindingContext.ValueProvider.GetValue(modelName);
+        string modelName = bindingContext.ModelName;
+        ValueProviderResult valueProviderResult = bindingContext.ValueProvider.GetValue(modelName);
 
         if (valueProviderResult == ValueProviderResult.None)
         {
@@ -29,7 +29,7 @@ public class FormDataJsonBinder : IModelBinder
 
         bindingContext.ModelState.SetModelValue(modelName, valueProviderResult);
 
-        var value = valueProviderResult.FirstValue;
+        string? value = valueProviderResult.FirstValue;
         if (string.IsNullOrEmpty(value))
         {
             return Task.CompletedTask;
@@ -37,7 +37,7 @@ public class FormDataJsonBinder : IModelBinder
 
         try
         {
-            var result = JsonSerializer.Deserialize(value, bindingContext.ModelType);
+            object? result = JsonSerializer.Deserialize(value, bindingContext.ModelType);
             bindingContext.Result = ModelBindingResult.Success(result);
         }
         catch (Exception)

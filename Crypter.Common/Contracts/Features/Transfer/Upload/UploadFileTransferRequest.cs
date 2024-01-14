@@ -32,13 +32,13 @@ public class UploadFileTransferRequest
 {
     public string Filename { get; init; }
     public string ContentType { get; init; }
-    public byte[] PublicKey { get; init; }
+    public byte[]? PublicKey { get; init; }
     public byte[] KeyExchangeNonce { get; init; }
     public byte[] Proof { get; init; }
     public int LifetimeHours { get; init; }
 
     [JsonConstructor]
-    public UploadFileTransferRequest(string fileName, string contentType, byte[] publicKey, byte[] keyExchangeNonce,
+    public UploadFileTransferRequest(string fileName, string contentType, byte[]? publicKey, byte[] keyExchangeNonce,
         byte[] proof, int lifetimeHours)
     {
         Filename = fileName;

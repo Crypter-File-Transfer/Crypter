@@ -26,7 +26,7 @@
 
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Contracts.Features.UserRecovery.RequestRecovery;
+using Crypter.Common.Contracts.Features.AccountRecovery.RequestRecovery;
 using Crypter.Common.Primitives;
 using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -61,6 +61,6 @@ internal class SendRecoveryEmail_Tests
         EmailAddress emailAddress = EmailAddress.From(TestData.DefaultEmailAdress);
         Either<SendRecoveryEmailError, Unit> result = await _client.UserRecovery.SendRecoveryEmailAsync(emailAddress);
 
-        Assert.True(result.IsRight);
+        Assert.That(result.IsRight, Is.True);
     }
 }

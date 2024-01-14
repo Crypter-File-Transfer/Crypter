@@ -25,8 +25,8 @@
  */
 
 using System.Threading.Tasks;
-using Crypter.Common.Contracts.Features.UserRecovery.RequestRecovery;
-using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
+using Crypter.Common.Contracts.Features.AccountRecovery.RequestRecovery;
+using Crypter.Common.Contracts.Features.AccountRecovery.SubmitRecovery;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
@@ -35,5 +35,5 @@ namespace Crypter.Common.Client.Interfaces.Requests;
 public interface IUserRecoveryRequests
 {
     Task<Either<SendRecoveryEmailError, Unit>> SendRecoveryEmailAsync(EmailAddress emailAddress);
-    Task<Either<SubmitRecoveryError, Unit>> SubmitRecoveryAsync(SubmitRecoveryRequest request);
+    Task<Either<SubmitAccountRecoveryError, Unit>> SubmitRecoveryAsync(AccountRecoverySubmission submission);
 }

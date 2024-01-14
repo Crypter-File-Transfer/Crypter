@@ -26,16 +26,13 @@
 
 using System;
 using System.Threading.Tasks;
-using Crypter.Core;
 using Crypter.Core.Models;
-using Crypter.Core.Repositories;
 using Crypter.Core.Services;
-using Crypter.Crypto.Common;
-using Crypter.Crypto.Providers.Default;
 using Crypter.DataAccess;
-using Hangfire;
+using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 
@@ -47,25 +44,24 @@ public class HangfireBackgroundService_Tests
     private WebApplicationFactory<Program> _factory;
     private IServiceScope _scope;
     private DataContext _dataContext;
-
-    private ICryptoProvider _cryptoProvider;
-    private Mock<IBackgroundJobClient> _backgroundJobClientMock;
+    private ISender _sender;
+    private ILogger<HangfireBackgroundService> _logger;
     private Mock<IEmailService> _emailServiceMock;
-    private Mock<ITransferRepository> _transferStorageMock;
 
     [SetUp]
     public async Task SetupTestAsync()
     {
-        _cryptoProvider = new DefaultCryptoProvider();
-        _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
         _emailServiceMock = new Mock<IEmailService>();
-        _transferStorageMock = new Mock<ITransferRepository>();
 
         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
         await AssemblySetup.InitializeRespawnerAsync();
 
         _scope = _factory.Services.CreateScope();
         _dataContext = _scope.ServiceProvider.GetRequiredService<DataContext>();
+        _sender = _scope.ServiceProvider.GetRequiredService<ISender>();
+        
+        ILoggerFactory factory = _scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+        _logger = factory.CreateLogger<HangfireBackgroundService>();
     }
 
     [TearDown]
@@ -82,10 +78,9 @@ public class HangfireBackgroundService_Tests
         _emailServiceMock
             .Setup(x => x.SendEmailVerificationAsync(
                 It.IsAny<UserEmailAddressVerificationParameters>()))
-            .ReturnsAsync((UserEmailAddressVerificationParameters parameters) => true);
+            .ReturnsAsync((UserEmailAddressVerificationParameters _) => true);
 
-        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _backgroundJobClientMock.Object,
-            _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
+        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _sender, _logger);
         await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
         _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>()),
@@ -99,10 +94,9 @@ public class HangfireBackgroundService_Tests
             .Setup(x => x.SendAccountRecoveryLinkAsync(
                 It.IsAny<UserRecoveryParameters>(),
                 It.IsAny<int>()))
-            .ReturnsAsync((UserRecoveryParameters parameters, int expirationMinutes) => true);
+            .ReturnsAsync((UserRecoveryParameters _, int _) => true);
 
-        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _backgroundJobClientMock.Object,
-            _cryptoProvider, _emailServiceMock.Object, _transferStorageMock.Object);
+        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _sender, _logger);
         await sut.SendRecoveryEmailAsync("foo@test.com");
 
         _emailServiceMock.Verify(

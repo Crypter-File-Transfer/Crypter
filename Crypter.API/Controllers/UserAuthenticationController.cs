@@ -24,10 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
 using Crypter.API.Methods;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
@@ -43,13 +43,10 @@ namespace Crypter.API.Controllers;
 [Route("api/user/authentication")]
 public class UserAuthenticationController : CrypterControllerBase
 {
-    private readonly ITokenService _tokenService;
     private readonly IUserAuthenticationService _userAuthenticationService;
 
-    public UserAuthenticationController(ITokenService tokenService,
-        IUserAuthenticationService userAuthenticationService)
+    public UserAuthenticationController(IUserAuthenticationService userAuthenticationService)
     {
-        _tokenService = tokenService;
         _userAuthenticationService = userAuthenticationService;
     }
 
@@ -57,7 +54,6 @@ public class UserAuthenticationController : CrypterControllerBase
     /// Handle a registration request.
     /// </summary>
     /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpPost]
     [Route("register")]
@@ -85,7 +81,7 @@ public class UserAuthenticationController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
+        
         return await _userAuthenticationService.RegisterAsync(request)
             .MatchAsync(
                 MakeErrorResponse,
@@ -97,7 +93,6 @@ public class UserAuthenticationController : CrypterControllerBase
     /// Handle a login request.
     /// </summary>
     /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginResponse))]
@@ -122,8 +117,8 @@ public class UserAuthenticationController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        var requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-        var loginResult = await _userAuthenticationService.LoginAsync(request, requestUserAgent);
+        string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
+        Either<LoginError, LoginResponse> loginResult = await _userAuthenticationService.LoginAsync(request, requestUserAgent);
         return loginResult.Match(
             MakeErrorResponse,
             Ok,
@@ -133,7 +128,6 @@ public class UserAuthenticationController : CrypterControllerBase
     /// <summary>
     /// Trade in a valid refresh token for a new authentication token and refresh token.
     /// </summary>
-    /// <param name="cancellationToken"></param>
     /// <returns></returns>
     /// <remarks>
     /// This action will accept a valid, un-expired refresh token. In exchange, it will respond with a fresh authentication token
@@ -162,8 +156,8 @@ public class UserAuthenticationController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        var requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-        var refreshResult = await _userAuthenticationService.RefreshAsync(User, requestUserAgent);
+        string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
+        Either<RefreshError, RefreshResponse> refreshResult = await _userAuthenticationService.RefreshAsync(User, requestUserAgent);
 
         return refreshResult.Match(
             MakeErrorResponse,
@@ -199,10 +193,9 @@ public class UserAuthenticationController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-
-        Guid userId = _tokenService.ParseUserId(User);
-        var testPasswordResult =
-            await _userAuthenticationService.TestUserPasswordAsync(userId, request, cancellationToken);
+        
+        Either<PasswordChallengeError, Unit> testPasswordResult =
+            await _userAuthenticationService.TestUserPasswordAsync(UserId, request, cancellationToken);
         return testPasswordResult.Match(
             MakeErrorResponse,
             _ => Ok(),
@@ -212,8 +205,6 @@ public class UserAuthenticationController : CrypterControllerBase
     /// <summary>
     /// Clears the provided refresh token from the database, ensuring it cannot be used for subsequent requests.
     /// </summary>
-    /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
     /// <returns></returns>
     /// <remarks>
     /// The refresh token should be provided in the Authorization header.
@@ -237,7 +228,7 @@ public class UserAuthenticationController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        var logoutResult = await _userAuthenticationService.LogoutAsync(User);
+        Either<LogoutError, Unit> logoutResult = await _userAuthenticationService.LogoutAsync(User);
         return logoutResult.Match(
             MakeErrorResponse,
             _ => Ok(),

@@ -63,11 +63,11 @@ internal class InsertMasterKey_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> __ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
-            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -78,6 +78,6 @@ internal class InsertMasterKey_Tests
         (_, InsertMasterKeyRequest request) = TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
         Either<InsertMasterKeyError, Unit> result = await _client.UserKey.InsertMasterKeyAsync(request);
 
-        Assert.True(result.IsRight);
+        Assert.That(result.IsRight, Is.True);
     }
 }

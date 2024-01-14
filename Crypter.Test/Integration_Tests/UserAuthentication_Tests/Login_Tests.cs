@@ -24,11 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
@@ -60,22 +60,22 @@ internal class Login_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var result = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> result = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(result.IsRight);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(result.IsRight, Is.True);
     }
 
     [Test]
     public async Task Login_Fails_Invalid_Username()
     {
         LoginRequest request = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var result = await _client.UserAuthentication.LoginAsync(request);
+        Either<LoginError, LoginResponse> result = await _client.UserAuthentication.LoginAsync(request);
 
-        Assert.True(result.IsLeft);
+        Assert.That(result.IsLeft, Is.True);
     }
 
     [Test]
@@ -83,15 +83,15 @@ internal class Login_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
         VersionedPassword invalidPassword = new VersionedPassword("invalid"u8.ToArray(), 1);
-        loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
-        var result = await _client.UserAuthentication.LoginAsync(loginRequest);
+        loginRequest.VersionedPasswords = [invalidPassword];
+        Either<LoginError, LoginResponse> result = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(result.IsLeft);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(result.IsLeft, Is.True);
     }
 
     [Test]
@@ -99,16 +99,16 @@ internal class Login_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
         VersionedPassword correctPassword = loginRequest.VersionedPasswords.First();
         VersionedPassword invalidPassword =
             new VersionedPassword(correctPassword.Password, (short)(correctPassword.Version - 1));
-        loginRequest.VersionedPasswords = new List<VersionedPassword> { invalidPassword };
-        var result = await _client.UserAuthentication.LoginAsync(loginRequest);
+        loginRequest.VersionedPasswords = [invalidPassword];
+        Either<LoginError, LoginResponse> result = await _client.UserAuthentication.LoginAsync(loginRequest);
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(result.IsLeft);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(result.IsLeft, Is.True);
     }
 }

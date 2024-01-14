@@ -63,11 +63,11 @@ internal class SetPrivacySettings_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
-            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -80,6 +80,6 @@ internal class SetPrivacySettings_Tests
         Either<SetPrivacySettingsError, PrivacySettings> result =
             await _client.UserSetting.SetPrivacySettingsAsync(request);
 
-        Assert.True(result.IsRight);
+        Assert.That(result.IsRight, Is.True);
     }
 }

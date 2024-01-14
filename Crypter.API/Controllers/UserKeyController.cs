@@ -22,14 +22,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Keys;
-using Crypter.Core.Services;
+using Crypter.Core.Features.Keys.Commands;
+using Crypter.Core.Features.Keys.Queries;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -40,13 +42,11 @@ namespace Crypter.API.Controllers;
 [Route("api/user/key")]
 public class UserKeyController : CrypterControllerBase
 {
-    private readonly IUserKeysService _userKeysService;
-    private readonly ITokenService _tokenService;
+    private readonly ISender _sender;
 
-    public UserKeyController(IUserKeysService userKeysService, ITokenService tokenService)
+    public UserKeyController(ISender sender)
     {
-        _userKeysService = userKeysService;
-        _tokenService = tokenService;
+        _sender = sender;
     }
 
     [HttpGet("master")]
@@ -68,8 +68,8 @@ public class UserKeyController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userKeysService.GetMasterKeyAsync(userId, cancellationToken)
+        GetMasterKeyQuery request = new GetMasterKeyQuery(UserId);
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -83,7 +83,7 @@ public class UserKeyController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> InsertMasterKeyAsync(InsertMasterKeyRequest request)
+    public async Task<IActionResult> InsertMasterKeyAsync(InsertMasterKeyRequest body)
     {
         IActionResult MakeErrorResponse(InsertMasterKeyError error)
         {
@@ -98,8 +98,8 @@ public class UserKeyController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userKeysService.UpsertMasterKeyAsync(userId, request, false)
+        UpsertMasterKeyCommand request = new UpsertMasterKeyCommand(UserId, body, false);
+        return await _sender.Send(request)
             .MatchAsync(
                 MakeErrorResponse,
                 _ => Ok(),
@@ -113,7 +113,7 @@ public class UserKeyController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request,
+    public async Task<IActionResult> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest body,
         CancellationToken cancellationToken)
     {
         IActionResult MakeErrorResponse(GetMasterKeyRecoveryProofError error)
@@ -130,8 +130,8 @@ public class UserKeyController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userKeysService.GetMasterKeyProofAsync(userId, request, cancellationToken)
+        GetMasterKeyProofQuery request = new GetMasterKeyProofQuery(UserId, body);
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -157,8 +157,8 @@ public class UserKeyController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userKeysService.GetPrivateKeyAsync(userId, cancellationToken)
+        GetPrivateKeyQuery request = new GetPrivateKeyQuery(UserId);
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -167,7 +167,7 @@ public class UserKeyController : CrypterControllerBase
 
     [HttpPut("private")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(InsertKeyPairResponse))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
@@ -179,16 +179,16 @@ public class UserKeyController : CrypterControllerBase
             return error switch
             {
                 InsertKeyPairError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
-                InsertKeyPairError.KeyPairAlreadyExists => MakeErrorResponseBase(HttpStatusCode.Conflict, error),
+                InsertKeyPairError.KeyPairAlreadyExists => MakeErrorResponseBase(HttpStatusCode.Conflict, error)
             };
 #pragma warning restore CS8524
         }
 
-        Guid userId = _tokenService.ParseUserId(User);
-        return await _userKeysService.InsertKeyPairAsync(userId, body)
+        InsertKeyPairCommand request = new InsertKeyPairCommand(UserId, body);
+        return await _sender.Send(request)
             .MatchAsync(
                 MakeErrorResponse,
-                Ok,
+                _ => Ok(),
                 MakeErrorResponse(InsertKeyPairError.UnknownError));
     }
 }

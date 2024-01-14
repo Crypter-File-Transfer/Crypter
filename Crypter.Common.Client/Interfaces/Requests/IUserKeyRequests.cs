@@ -39,5 +39,5 @@ public interface IUserKeyRequests
         GetMasterKeyRecoveryProofRequest request);
 
     Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync();
-    Task<Either<InsertKeyPairError, InsertKeyPairResponse>> InsertKeyPairAsync(InsertKeyPairRequest request);
+    Task<Either<InsertKeyPairError, Unit>> InsertKeyPairAsync(InsertKeyPairRequest request);
 }

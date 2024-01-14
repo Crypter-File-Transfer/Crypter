@@ -95,7 +95,7 @@ builder.Services
     .AddSingleton<IUserNotificationSettingsService, UserNotificationSettingsService>()
     .AddSingleton<IUserPrivacySettingsService, UserPrivacySettingsService>()
     .AddSingleton<TransferHandlerFactory>()
-    .AddSingleton<Func<ICrypterApiClient>>(sp => () => sp.GetService<ICrypterApiClient>());
+    .AddSingleton<Func<ICrypterApiClient>>(sp => sp.GetRequiredService<ICrypterApiClient>);
 
 if (OperatingSystem.IsBrowser())
 {
@@ -106,7 +106,7 @@ if (OperatingSystem.IsBrowser())
 WebAssemblyHost host = builder.Build();
 
 // Resolve services so they can subscribe to events
-IUserContactsService contactsService = host.Services.GetRequiredService<IUserContactsService>();
-IUserSessionService userSessionService = host.Services.GetRequiredService<IUserSessionService>();
+IUserContactsService _ = host.Services.GetRequiredService<IUserContactsService>();
+IUserSessionService __ = host.Services.GetRequiredService<IUserSessionService>();
 
 await host.RunAsync();

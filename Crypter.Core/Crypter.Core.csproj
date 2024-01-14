@@ -1,22 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
    <PropertyGroup>
-      <TargetFramework>net7.0</TargetFramework>
+      <TargetFramework>net8.0</TargetFramework>
       <Nullable>disable</Nullable>
       <ImplicitUsings>disable</ImplicitUsings>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <LangVersion>12</LangVersion>
    </PropertyGroup>
 
    <ItemGroup>
-      <PackageReference Include="Hangfire.AspNetCore" Version="1.8.5" />
-      <PackageReference Include="Hangfire.Core" Version="1.8.5" />
-      <PackageReference Include="Hangfire.PostgreSql" Version="1.20.3" />
+      <PackageReference Include="Hangfire.AspNetCore" Version="1.8.7" />
+      <PackageReference Include="Hangfire.Core" Version="1.8.7" />
+      <PackageReference Include="Hangfire.PostgreSql" Version="1.20.5" />
       <PackageReference Include="Hashids.net" Version="1.7.0" />
-      <PackageReference Include="MailKit" Version="4.2.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="7.0.11" />
-      <PackageReference Include="MimeKit" Version="4.2.0" />
-      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.11" />
-      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.2" />
+      <PackageReference Include="MailKit" Version="4.3.0" />
+      <PackageReference Include="MediatR" Version="12.2.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="8.0.1" />
+      <PackageReference Include="MimeKit" Version="4.3.0" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.2.0" />
    </ItemGroup>
 
    <ItemGroup>
@@ -26,4 +28,8 @@
       <ProjectReference Include="..\Crypter.DataAccess\Crypter.DataAccess.csproj" />
    </ItemGroup>
 
+   <ItemGroup>
+      <InternalsVisibleTo Include="Crypter.Test" />
+   </ItemGroup>
+   
 </Project>

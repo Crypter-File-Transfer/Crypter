@@ -28,9 +28,9 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
+using Crypter.Common.Contracts.Features.AccountRecovery.SubmitRecovery;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
 using Crypter.Common.Primitives;
 using Crypter.Crypto.Common;
 using EasyMonads;
@@ -56,43 +56,59 @@ public class UserRecoveryService : IUserRecoveryService
         return _crypterApiClient.UserRecovery.SendRecoveryEmailAsync(emailAddress);
     }
 
-    public Task<Either<SubmitRecoveryError, Maybe<RecoveryKey>>> SubmitRecoveryRequestAsync(string recoveryCode,
+    public async Task<Either<SubmitAccountRecoveryError, Maybe<RecoveryKey>>> SubmitRecoveryRequestAsync(string recoveryCode,
         string recoverySignature, Username username, Password newPassword, Maybe<RecoveryKey> recoveryKey)
     {
-        byte[] currentRecoveryProof = recoveryKey.Map(x => x.Proof).SomeOrDefault(null);
-        byte[] masterKey = recoveryKey.Map(x => x.MasterKey).SomeOrDefault(null);
-
-        return _userPasswordService
+        Either<SubmitAccountRecoveryError, PasswordDerivatives> passwordDerivatives = await _userPasswordService
             .DeriveUserAuthenticationPasswordAsync(username, newPassword, _userPasswordService.CurrentPasswordVersion)
-            .ToEitherAsync(SubmitRecoveryError.PasswordHashFailure)
-            .BindAsync(async versionedPassword =>
-            {
-                Maybe<RecoveryKey> newRecoveryKey = Maybe<RecoveryKey>.None;
-                ReplacementMasterKeyInformation replacementMasterKeyInformation = null;
-                if (recoveryKey.IsSome)
+            .ToEitherAsync(SubmitAccountRecoveryError.PasswordHashFailure)
+            .MapAsync(async versionedPassword => await _userPasswordService.DeriveUserCredentialKeyAsync(username,
+                    newPassword, _userPasswordService.CurrentPasswordVersion)
+                .ToEitherAsync(SubmitAccountRecoveryError.PasswordHashFailure)
+                .BindAsync<SubmitAccountRecoveryError, byte[], PasswordDerivatives>(credentialKey => new PasswordDerivatives
                 {
-                    Maybe<byte[]> maybeCredentialKey = await _userPasswordService.DeriveUserCredentialKeyAsync(username,
-                        newPassword, _userPasswordService.CurrentPasswordVersion);
-                    if (maybeCredentialKey.IsNone)
+                    VersionedPassword = versionedPassword,
+                    CredentialKey = credentialKey
+                }));
+        
+        return await passwordDerivatives
+            .Bind<RecoveryParameters>(derivatives => recoveryKey.Match(
+                    () => new RecoveryParameters
                     {
-                        return SubmitRecoveryError.PasswordHashFailure;
-                    }
+                        PasswordDerivatives = derivatives
+                    },
+                    x =>
+                    {
+                        byte[] nonce =
+                            _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.NonceSize);
+                        byte[] encryptedMasterKey =
+                            _cryptoProvider.Encryption.Encrypt(derivatives.CredentialKey, nonce, x.MasterKey);
+                        byte[] newRecoveryProof = _cryptoProvider.Random.GenerateRandomBytes(32);
+                        
+                        RecoveryKey newRecoveryKey = new RecoveryKey(x.MasterKey, newRecoveryProof);
+                        ReplacementMasterKeyInformation replacementMasterKeyInformation = new ReplacementMasterKeyInformation(x.Proof,
+                            newRecoveryProof, encryptedMasterKey, nonce);
 
-                    byte[] credentialKey = maybeCredentialKey.SomeOrDefault(null);
-                    byte[] nonce =
-                        _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.NonceSize);
-                    byte[] encryptedMasterKey = _cryptoProvider.Encryption.Encrypt(credentialKey, nonce, masterKey);
-                    byte[] newRecoveryProof = _cryptoProvider.Random.GenerateRandomBytes(32);
-
-                    newRecoveryKey = new RecoveryKey(masterKey, newRecoveryProof);
-                    replacementMasterKeyInformation = new ReplacementMasterKeyInformation(currentRecoveryProof,
-                        newRecoveryProof, encryptedMasterKey, nonce);
-                }
-
-                SubmitRecoveryRequest request = new SubmitRecoveryRequest(username.Value, recoveryCode,
-                    recoverySignature, versionedPassword, replacementMasterKeyInformation);
-                return await _crypterApiClient.UserRecovery.SubmitRecoveryAsync(request)
-                    .MapAsync<SubmitRecoveryError, Unit, Maybe<RecoveryKey>>(_ => newRecoveryKey);
+                        return new RecoveryParameters
+                            {
+                                PasswordDerivatives = derivatives,
+                                RecoveryArtifacts = new RecoveryArtifacts
+                                {
+                                    NewRecoveryKey = newRecoveryKey,
+                                    ReplacementMasterKeyInformation = replacementMasterKeyInformation
+                                }
+                            };
+                    }))
+            .BindAsync(async x =>
+            {
+                AccountRecoverySubmission submission = new AccountRecoverySubmission(username.Value, recoveryCode,
+                    recoverySignature, x.PasswordDerivatives.VersionedPassword, x.RecoveryArtifacts
+                        .Select(y => y.ReplacementMasterKeyInformation)
+                        .SomeOrDefault(null!));
+                
+                return await _crypterApiClient.UserRecovery.SubmitRecoveryAsync(submission)
+                    .MapAsync<SubmitAccountRecoveryError, Unit, Maybe<RecoveryKey>>(_ => x.RecoveryArtifacts
+                        .Select(y => y.NewRecoveryKey));
             });
     }
 
@@ -100,16 +116,33 @@ public class UserRecoveryService : IUserRecoveryService
     {
         return _userPasswordService
             .DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .BindAsync(versionedPassword => DeriveRecoveryKeyAsync(masterKey, username, versionedPassword));
+            .BindAsync(versionedPassword => DeriveRecoveryKeyAsync(masterKey, versionedPassword));
     }
 
-    public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username,
-        VersionedPassword versionedPassword)
+    public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword)
     {
         GetMasterKeyRecoveryProofRequest request =
-            new GetMasterKeyRecoveryProofRequest(username, versionedPassword.Password);
+            new GetMasterKeyRecoveryProofRequest(versionedPassword.Password);
         return _crypterApiClient.UserKey.GetMasterKeyRecoveryProofAsync(request)
             .ToMaybeTask()
             .MapAsync(x => new RecoveryKey(masterKey, x.Proof));
+    }
+    
+    private struct PasswordDerivatives
+    {
+        public VersionedPassword VersionedPassword { get; init; }
+        public byte[] CredentialKey { get; init; }
+    }
+
+    private struct RecoveryParameters
+    {
+        public PasswordDerivatives PasswordDerivatives { get; init; }
+        public Maybe<RecoveryArtifacts> RecoveryArtifacts { get; init; }
+    }
+
+    private struct RecoveryArtifacts
+    {
+        public RecoveryKey NewRecoveryKey { get; init; }
+        public ReplacementMasterKeyInformation ReplacementMasterKeyInformation { get; init; }
     }
 }

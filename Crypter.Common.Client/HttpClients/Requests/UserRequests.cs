@@ -46,7 +46,7 @@ public class UserRequests : IUserRequests
         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
     }
 
-    public Task<Either<GetUserProfileError, UserProfileDTO>> GetUserProfileAsync(string username,
+    public Task<Either<GetUserProfileError, UserProfile>> GetUserProfileAsync(string username,
         bool withAuthentication)
     {
         string url = $"api/user/profile/?username={username}";
@@ -54,8 +54,8 @@ public class UserRequests : IUserRequests
             ? _crypterAuthenticatedHttpClient
             : _crypterHttpClient;
 
-        return client.GetEitherAsync<UserProfileDTO>(url)
-            .ExtractErrorCode<GetUserProfileError, UserProfileDTO>();
+        return client.GetEitherAsync<UserProfile>(url)
+            .ExtractErrorCode<GetUserProfileError, UserProfile>();
     }
 
     public Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters)

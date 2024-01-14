@@ -48,8 +48,8 @@ public class UserKeysService : IUserKeysService, IDisposable
     private readonly IUserKeysRepository _userKeysRepository;
     private readonly IUserSessionService _userSessionService;
 
-    public Maybe<byte[]> MasterKey { get; protected set; } = Maybe<byte[]>.None;
-    public Maybe<byte[]> PrivateKey { get; protected set; } = Maybe<byte[]>.None;
+    public Maybe<byte[]> MasterKey { get; private set; } = Maybe<byte[]>.None;
+    public Maybe<byte[]> PrivateKey { get; private set; } = Maybe<byte[]>.None;
 
     public UserKeysService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
         IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository,
@@ -65,7 +65,7 @@ public class UserKeysService : IUserKeysService, IDisposable
         _userSessionService.UserLoggedOutEventHandler += Recycle;
     }
 
-    public async void InitializeAsync(object sender, UserSessionServiceInitializedEventArgs args)
+    private async void InitializeAsync(object? _, UserSessionServiceInitializedEventArgs args)
     {
         if (args.IsLoggedIn)
         {
@@ -123,8 +123,8 @@ public class UserKeysService : IUserKeysService, IDisposable
     {
         return UploadNewMasterKeyAsync(versionedPassword, credentialKey)
             .BindAsync(recoveryKey => UploadNewUserKeyPairAsync(recoveryKey.MasterKey)
-                .MapAsync(privateKey => StoreSecretKeys(recoveryKey.MasterKey, privateKey, trustDevice))
-                .MapAsync(_ => recoveryKey));
+                .IfSomeAsync(privateKey => StoreSecretKeys(recoveryKey.MasterKey, privateKey, trustDevice))
+                .BindAsync(_ => recoveryKey));
     }
 
     private Task<Maybe<RecoveryKey>> UploadNewMasterKeyAsync(VersionedPassword versionedPassword, byte[] credentialKey)
@@ -138,7 +138,7 @@ public class UserKeysService : IUserKeysService, IDisposable
             new InsertMasterKeyRequest(versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof);
         return _crypterApiClient.UserKey.InsertMasterKeyAsync(request)
             .ToMaybeTask()
-            .MapAsync(x => new RecoveryKey(newMasterKey, request.RecoveryProof));
+            .BindAsync(_ => new RecoveryKey(newMasterKey, request.RecoveryProof));
     }
 
     private Task<Maybe<byte[]>> UploadNewUserKeyPairAsync(byte[] masterKey)
@@ -150,7 +150,7 @@ public class UserKeysService : IUserKeysService, IDisposable
         InsertKeyPairRequest request = new InsertKeyPairRequest(encryptedPrivateKey, keyPair.PublicKey, nonce);
         return _crypterApiClient.UserKey.InsertKeyPairAsync(request)
             .ToMaybeTask()
-            .MapAsync(x => keyPair.PrivateKey);
+            .BindAsync(_ => keyPair.PrivateKey);
     }
 
     #endregion
@@ -164,7 +164,7 @@ public class UserKeysService : IUserKeysService, IDisposable
         return Unit.Default;
     }
 
-    private void Recycle(object sender, EventArgs _)
+    private void Recycle(object? _, EventArgs __)
     {
         MasterKey = Maybe<byte[]>.None;
         PrivateKey = Maybe<byte[]>.None;

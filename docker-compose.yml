@@ -14,8 +14,6 @@ services:
       ASPNETCORE_ENVIRONMENT: ${API_ASPNETCORE_ENVIRONMENT-Production}
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_TransferStorageSettings__Location: /mnt/storage
-      ASPNETCORE_CorsSettings__AllowedOrigins: ${CORS_ALLOWED_ORIGINS}
-      ASPNETCORE_CorsSettings__AllowWildcardSubdomains: ${CORS_ALLOW_WILDCARD_SUBDOMAINS}
       CUSTOMCONNSTR_DefaultConnection: host=${POSTGRES_HOST:-db};database=crypter;user id=crypter_user;pwd=${POSTGRES_USER_PASSWORD:-DEFAULT_PASSWORD};
       CUSTOMCONNSTR_HangfireConnection: host=${POSTGRES_HANGFIRE_HOST:-db};database=crypter_hangfire;user id=crypter_hangfire_user;pwd=${POSTGRES_HANGFIRE_USER_PASSWORD:-DEFAULT_PASSWORD};
     volumes:

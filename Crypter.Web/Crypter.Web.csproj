@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
    <PropertyGroup>
-      <TargetFramework>net7.0</TargetFramework>
+      <TargetFramework>net8.0</TargetFramework>
       <Nullable>disable</Nullable>
       <ImplicitUsings>disable</ImplicitUsings>
       <ApplicationIcon />
@@ -12,13 +12,15 @@
       <StartupObject />
 
       <EmccInitialHeapSize>134217728</EmccInitialHeapSize>
+
+      <LangVersion>12</LangVersion>
    </PropertyGroup>
 
    <ItemGroup>
       <PackageReference Include="ByteSize" Version="2.1.1" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.11" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.11" />
-      <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.1" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
    </ItemGroup>
 
    <ItemGroup>

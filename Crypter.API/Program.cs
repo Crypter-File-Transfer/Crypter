@@ -28,9 +28,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using Crypter.API.Configuration;
+using Crypter.API.MetadataProviders;
 using Crypter.API.Middleware;
 using Crypter.Common.Contracts;
 using Crypter.Core;
+using Crypter.Core.Exceptions;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.Core.Settings;
@@ -46,10 +48,10 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 TokenSettings tokenSettings = builder.Configuration
     .GetSection("TokenSettings")
-    .Get<TokenSettings>();
+    .Get<TokenSettings>() ?? throw new ConfigurationException("TokenSettings not found");
 
 string hangfireConnectionString = builder.Configuration
-    .GetConnectionString("HangfireConnection");
+    .GetConnectionString("HangfireConnection") ?? throw new ConfigurationException("HangfireConnection not found");
 
 builder.Services.AddCrypterCore(
         builder.Configuration
@@ -89,7 +91,8 @@ builder.Services.AddControllers()
             ErrorResponse errorResponse = new ErrorResponse((int)HttpStatusCode.BadRequest, errors);
             return new BadRequestObjectResult(errorResponse);
         };
-    });
+    })
+    .AddMvcOptions(options => options.ModelMetadataDetailsProviders.Add(new EmptyStringMetaDataProvider()));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(SwaggerConfiguration.AddSwaggerGenOptions);
@@ -115,7 +118,7 @@ else
 {
     CorsSettings corsSettings = app.Configuration
         .GetSection("CorsSettings")
-        .Get<CorsSettings>();
+        .Get<CorsSettings>() ?? throw new ConfigurationException("CorsSettings not found");
     app.UseCors(x =>
     {
         x.AllowAnyMethod();
@@ -126,7 +129,7 @@ else
 
 DatabaseSettings dbSettings = app.Configuration
     .GetSection("DatabaseSettings")
-    .Get<DatabaseSettings>();
+    .Get<DatabaseSettings>() ?? throw new ConfigurationException("DatabaseSettings not found");
 await app.MigrateDatabaseAsync(dbSettings);
 
 app.UseHttpsRedirection();

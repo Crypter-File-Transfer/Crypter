@@ -37,14 +37,19 @@ public class UserAuthenticationRequests : IUserAuthenticationRequests
 {
     private readonly ICrypterHttpClient _crypterHttpClient;
     private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
-    private readonly EventHandler _refreshTokenRejectedHandler;
+    private EventHandler? _refreshTokenRejectedHandler;
 
     public UserAuthenticationRequests(ICrypterHttpClient crypterHttpClient,
-        ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient, EventHandler refreshTokenRejectedHandler)
+        ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient, EventHandler? refreshTokenRejectedHandler)
     {
         _crypterHttpClient = crypterHttpClient;
         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
         _refreshTokenRejectedHandler = refreshTokenRejectedHandler;
+    }
+    
+    public EventHandler? RefreshTokenRejectedHandler
+    {
+        set => _refreshTokenRejectedHandler = value;
     }
 
     public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest registerRequest)

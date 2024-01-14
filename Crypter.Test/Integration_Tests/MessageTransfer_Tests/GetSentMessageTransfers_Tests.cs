@@ -66,11 +66,11 @@ internal class GetSentMessageTransfers_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
-            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -83,13 +83,13 @@ internal class GetSentMessageTransfers_Tests
         UploadMessageTransferRequest uploadMessageRequest = new UploadMessageTransferRequest(
             TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        var uploadMessageResponse = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None,
+        Either<UploadTransferError, UploadTransferResponse> __ = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None,
             uploadMessageRequest, encryptionStreamOpener, true);
 
-        var response = await _client.MessageTransfer.GetSentMessagesAsync();
+        Maybe<List<UserSentMessageDTO>> response = await _client.MessageTransfer.GetSentMessagesAsync();
         List<UserSentMessageDTO> result = response.SomeOrDefault(null);
 
-        Assert.True(response.IsSome);
-        Assert.AreEqual(1, result.Count);
+        Assert.That(response.IsSome, Is.True);
+        Assert.That(result.Count, Is.EqualTo(1));
     }
 }

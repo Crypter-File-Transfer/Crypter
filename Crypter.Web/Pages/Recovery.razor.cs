@@ -28,7 +28,7 @@ using System.Collections.Specialized;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
-using Crypter.Common.Contracts.Features.UserRecovery.SubmitRecovery;
+using Crypter.Common.Contracts.Features.AccountRecovery.SubmitRecovery;
 using Crypter.Common.Infrastructure;
 using Crypter.Common.Primitives;
 using Crypter.Web.Helpers;
@@ -101,9 +101,9 @@ public partial class Recovery
             return;
         }
 
-        Either<SubmitRecoveryError, Maybe<RecoveryKey>> recoveryResult = _recoveryKeySwitch
+        Either<SubmitAccountRecoveryError, Maybe<RecoveryKey>> recoveryResult = _recoveryKeySwitch
             ? await RecoveryKey.FromBase64String(_recoveryKeyInput)
-                .ToEither(SubmitRecoveryError.WrongRecoveryKey)
+                .ToEither(SubmitAccountRecoveryError.WrongRecoveryKey)
                 .BindAsync(async x =>
                     await UserRecoveryService.SubmitRecoveryRequestAsync(_recoveryCode, _recoverySignature, _username,
                         validPassword, x))
@@ -114,13 +114,13 @@ public partial class Recovery
         recoveryResult.DoLeftOrNeither(
             errorCode => _recoveryErrorMessage = errorCode switch
             {
-                SubmitRecoveryError.UnknownError => "An unknown error occurred.",
-                SubmitRecoveryError.InvalidUsername => "Invalid username.",
-                SubmitRecoveryError.RecoveryNotFound =>
+                SubmitAccountRecoveryError.UnknownError => "An unknown error occurred.",
+                SubmitAccountRecoveryError.InvalidUsername => "Invalid username.",
+                SubmitAccountRecoveryError.RecoveryNotFound =>
                     "This recovery link is expired. Request a new recovery link and try again.",
-                SubmitRecoveryError.WrongRecoveryKey => "The recovery key you provided is invalid.",
-                SubmitRecoveryError.InvalidMasterKey => "Invalid master key information.",
-                SubmitRecoveryError.PasswordHashFailure =>
+                SubmitAccountRecoveryError.WrongRecoveryKey => "The recovery key you provided is invalid.",
+                SubmitAccountRecoveryError.InvalidMasterKey => "Invalid master key information.",
+                SubmitAccountRecoveryError.PasswordHashFailure =>
                     "A cryptographic error occurred while securing your new password. This device or browser may not be supported."
             },
             () => _recoveryErrorMessage = "An unknown error occurred.");

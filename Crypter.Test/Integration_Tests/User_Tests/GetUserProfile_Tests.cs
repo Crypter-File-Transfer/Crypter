@@ -64,11 +64,11 @@ internal class GetUserProfile_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, TokenType.Session);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -77,15 +77,15 @@ internal class GetUserProfile_Tests
         });
 
         InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
-        var insertKeyPairResponse = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
+        Either<InsertKeyPairError, Unit> __ = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-        Either<GetUserProfileError, UserProfileDTO> response =
+        Either<GetUserProfileError, UserProfile> response =
             await _client.User.GetUserProfileAsync(TestData.DefaultUsername, false);
 
-        UserProfileDTO result = response.RightOrDefault(null);
+        UserProfile result = response.RightOrDefault(null);
 
-        Assert.True(loginResult.IsRight);
-        Assert.True(response.IsRight);
-        Assert.AreEqual(TestData.DefaultUsername, result.Username);
+        Assert.That(loginResult.IsRight, Is.True);
+        Assert.That(response.IsRight, Is.True);
+        Assert.That(result.Username, Is.EqualTo(TestData.DefaultUsername));
     }
 }

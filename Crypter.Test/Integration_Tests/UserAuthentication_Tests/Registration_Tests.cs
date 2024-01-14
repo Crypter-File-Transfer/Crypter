@@ -27,6 +27,7 @@
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
@@ -59,9 +60,9 @@ internal class Registration_Tests
     {
         RegistrationRequest request =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword, emailAddress);
-        var result = await _client.UserAuthentication.RegisterAsync(request);
+        Either<RegistrationError, Unit> result = await _client.UserAuthentication.RegisterAsync(request);
 
-        Assert.True(result.IsRight);
+        Assert.That(result.IsRight, Is.True);
     }
 
     [TestCase("FOO", "foo")]
@@ -70,14 +71,14 @@ internal class Registration_Tests
     {
         VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
 
-        RegistrationRequest initialRequest = new RegistrationRequest(initialUsername, password, null);
-        var initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
+        RegistrationRequest initialRequest = new RegistrationRequest(initialUsername, password);
+        Either<RegistrationError, Unit> initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
 
-        RegistrationRequest secondRequest = new RegistrationRequest(duplicateUsername, password, null);
-        var secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
+        RegistrationRequest secondRequest = new RegistrationRequest(duplicateUsername, password);
+        Either<RegistrationError, Unit> secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
 
-        Assert.True(initialResult.IsRight);
-        Assert.True(secondResult.IsLeft);
+        Assert.That(initialResult.IsRight, Is.True);
+        Assert.That(secondResult.IsLeft, Is.True);
     }
 
     [TestCase("FOO@foo.com", "foo@foo.com")]
@@ -88,12 +89,12 @@ internal class Registration_Tests
         VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
 
         RegistrationRequest initialRequest = new RegistrationRequest("first", password, initialEmailAddress);
-        var initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
+        Either<RegistrationError, Unit> initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
 
         RegistrationRequest secondRequest = new RegistrationRequest("second", password, duplicateEmailAddress);
-        var secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
+        Either<RegistrationError, Unit> secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
 
-        Assert.True(initialResult.IsRight);
-        Assert.True(secondResult.IsLeft);
+        Assert.That(initialResult.IsRight, Is.True);
+        Assert.That(secondResult.IsLeft, Is.True);
     }
 }

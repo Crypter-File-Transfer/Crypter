@@ -28,6 +28,7 @@ using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
@@ -68,7 +69,7 @@ internal class DownloadFileTransfer_Tests
         UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        var uploadResult =
+        Either<UploadTransferError, UploadTransferResponse> uploadResult =
             await _client.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, uploadRequest,
                 encryptionStreamOpener, false);
 
@@ -76,10 +77,10 @@ internal class DownloadFileTransfer_Tests
             .Map(x => x.HashId)
             .RightOrDefault(null);
 
-        var result = await _client.FileTransfer.GetAnonymousFileCiphertextAsync(uploadId, keyExchangeProof);
+        Either<DownloadTransferCiphertextError, StreamDownloadResponse> result = await _client.FileTransfer.GetAnonymousFileCiphertextAsync(uploadId, keyExchangeProof);
 
-        Assert.True(uploadResult.IsRight);
-        Assert.True(result.IsRight);
+        Assert.That(uploadResult.IsRight, Is.True);
+        Assert.That(result.IsRight, Is.True);
         result.DoRight(x => { Assert.DoesNotThrow(() => x.Stream.ReadByte()); });
     }
 
@@ -98,16 +99,16 @@ internal class DownloadFileTransfer_Tests
             : Maybe<string>.None;
         const string recipientPassword = "dropping_eaves";
 
-        Assert.True((senderDefined == false && senderUsername.IsNone)
-                    || (senderDefined && senderUsername.IsSome));
+        Assert.That((senderDefined == false && senderUsername.IsNone)
+                    || (senderDefined && senderUsername.IsSome), Is.True);
 
         await senderUsername.IfSomeAsync(async username =>
         {
             RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, senderPassword);
-            var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
-            LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword, TokenType.Session);
-            var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword);
+            Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
             await loginResult.DoRightAsync(async loginResponse =>
             {
@@ -115,17 +116,17 @@ internal class DownloadFileTransfer_Tests
                 await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
             });
 
-            Assert.True(registrationResult.IsRight);
-            Assert.True(loginResult.IsRight);
+            Assert.That(registrationResult.IsRight, Is.True);
+            Assert.That(loginResult.IsRight, Is.True);
         });
 
-        Assert.True((recipientDefined == false && recipientUsername.IsNone)
-                    || (recipientDefined && recipientUsername.IsSome));
+        Assert.That((recipientDefined == false && recipientUsername.IsNone)
+                    || (recipientDefined && recipientUsername.IsSome), Is.True);
 
         await recipientUsername.IfSomeAsync(async username =>
         {
             RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, recipientPassword);
-            var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
         });
 
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
@@ -133,13 +134,13 @@ internal class DownloadFileTransfer_Tests
         UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        var uploadResult = await _client.FileTransfer.UploadFileTransferAsync(recipientUsername, uploadRequest,
+        Either<UploadTransferError, UploadTransferResponse> uploadResult = await _client.FileTransfer.UploadFileTransferAsync(recipientUsername, uploadRequest,
             encryptionStreamOpener, senderDefined);
 
         await recipientUsername.IfSomeAsync(async username =>
         {
-            LoginRequest loginRequest = TestData.GetLoginRequest(username, recipientPassword, TokenType.Session);
-            var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            LoginRequest loginRequest = TestData.GetLoginRequest(username, recipientPassword);
+            Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
             await loginResult.DoRightAsync(async loginResponse =>
             {
@@ -148,15 +149,17 @@ internal class DownloadFileTransfer_Tests
             });
         });
 
+        Assert.That(uploadResult.IsRight);
+        
         string uploadId = uploadResult
             .Map(x => x.HashId)
             .RightOrDefault(null);
 
-        var result =
+        Either<DownloadTransferCiphertextError, StreamDownloadResponse> result =
             await _client.FileTransfer.GetUserFileCiphertextAsync(uploadId, keyExchangeProof, recipientDefined);
 
-        Assert.True(uploadResult.IsRight);
-        Assert.True(result.IsRight);
+        Assert.That(uploadResult.IsRight, Is.True);
+        Assert.That(result.IsRight, Is.True);
         result.DoRight(x => { Assert.DoesNotThrow(() => x.Stream.ReadByte()); });
     }
 }

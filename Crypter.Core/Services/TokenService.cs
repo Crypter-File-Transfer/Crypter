@@ -45,9 +45,6 @@ public interface ITokenService
     RefreshTokenData NewSessionToken(Guid userId);
     RefreshTokenData NewDeviceToken(Guid userId);
     Maybe<ClaimsPrincipal> ValidateToken(string token);
-    Guid ParseUserId(ClaimsPrincipal claimsPrincipal);
-    Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal);
-    Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal);
 }
 
 public static class TokenServiceExtensions
@@ -107,14 +104,14 @@ public class TokenService : ITokenService
         }
     }
 
-    public Guid ParseUserId(ClaimsPrincipal claimsPrincipal)
+    public static Guid ParseUserId(ClaimsPrincipal claimsPrincipal)
     {
         return TryParseUserId(claimsPrincipal).Match(
             () => throw new InvalidTokenException(),
             x => x);
     }
 
-    public Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal)
+    public static Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal)
     {
         var userClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
         if (userClaim is null || !Guid.TryParse(userClaim.Value, out Guid userId))
@@ -125,7 +122,7 @@ public class TokenService : ITokenService
         return userId;
     }
 
-    public Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal)
+    public static Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal)
     {
         var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
         if (idClaim is null)

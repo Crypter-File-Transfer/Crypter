@@ -1,19 +1,24 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /source/
 
-RUN dotnet tool install --global dotnet-references
-ENV PATH="${PATH}:/root/.dotnet/tools"
+COPY ../*.sln .
+COPY ../Crypter.Common/*.csproj ./Crypter.Common/
+COPY ../Crypter.Common.Client/*.csproj ./Crypter.Common.Client/
+COPY ../Crypter.Crypto.Common/*.csproj ./Crypter.Crypto.Common/
+COPY ../Crypter.Crypto.Providers.Browser/*.csproj ./Crypter.Crypto.Providers.Browser/
+COPY ../Crypter.Web/*.csproj ./Crypter.Web/
 
-COPY ../*.sln ./
-COPY ../*/*.csproj ./
-
-RUN dotnet-references fix --entry-point ./Crypter.sln --working-directory ./ --remove-unreferenced-project-files
 RUN dotnet restore Crypter.Web
 
-COPY ./ ./
+COPY Crypter.Common/. ./Crypter.Common/
+COPY Crypter.Common.Client/. ./Crypter.Common.Client/
+COPY Crypter.Crypto.Common/. ./Crypter.Crypto.Common/
+COPY Crypter.Crypto.Providers.Browser/. ./Crypter.Crypto.Providers.Browser/
+COPY Crypter.Web/. ./Crypter.Web/
+
 RUN dotnet publish Crypter.Web --no-restore --configuration release /p:TreatWarningsAsErrors=true /warnaserror --output /app/
 
-FROM caddy:2.6-alpine AS webhost
+FROM caddy:2.7-alpine AS webhost
 COPY Crypter.Web/Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/wwwroot/ /srv/
 EXPOSE 80

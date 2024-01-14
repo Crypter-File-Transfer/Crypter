@@ -30,6 +30,7 @@ using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.DataAccess;
+using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,11 +66,11 @@ internal class Logout_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        var registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, refreshTokenType);
-        var loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
@@ -81,14 +82,14 @@ internal class Logout_Tests
         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
         bool databaseHasTokenBeforeLogout = await dataContext.UserTokens.AnyAsync();
 
-        var result = await _client.UserAuthentication.LogoutAsync();
+        Either<LogoutError, Unit> result = await _client.UserAuthentication.LogoutAsync();
 
-        bool databaseHasTokenAfterlogout = await dataContext.UserTokens.AnyAsync();
+        bool databaseHasTokenAfterLogout = await dataContext.UserTokens.AnyAsync();
 
-        Assert.True(registrationResult.IsRight);
-        Assert.True(loginResult.IsRight);
-        Assert.True(databaseHasTokenBeforeLogout);
-        Assert.True(result.IsRight);
-        Assert.False(databaseHasTokenAfterlogout);
+        Assert.That(registrationResult.IsRight, Is.True);
+        Assert.That(loginResult.IsRight, Is.True);
+        Assert.That(databaseHasTokenBeforeLogout, Is.True);
+        Assert.That(result.IsRight, Is.True);
+        Assert.That(databaseHasTokenAfterLogout, Is.False);
     }
 }

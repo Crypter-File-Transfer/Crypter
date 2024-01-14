@@ -44,7 +44,7 @@ public class UserContactInfoSettingsService : IUserContactInfoSettingsService, I
 
     private Maybe<ContactInfoSettings> _contactInfoSettings;
 
-    private EventHandler<UserContactInfoChangedEventArgs> _userContactInfoChangedEventHandler;
+    private EventHandler<UserContactInfoChangedEventArgs>? _userContactInfoChangedEventHandler;
 
     public UserContactInfoSettingsService(ICrypterApiClient crypterApiClient, IUserPasswordService userPasswordService,
         IUserSessionService userSessionService)
@@ -52,7 +52,7 @@ public class UserContactInfoSettingsService : IUserContactInfoSettingsService, I
         _crypterApiClient = crypterApiClient;
         _userPasswordService = userPasswordService;
         _userSessionService = userSessionService;
-
+        
         _userSessionService.UserLoggedOutEventHandler += Recycle;
     }
 
@@ -107,14 +107,14 @@ public class UserContactInfoSettingsService : IUserContactInfoSettingsService, I
         add => _userContactInfoChangedEventHandler =
             (EventHandler<UserContactInfoChangedEventArgs>)Delegate.Combine(_userContactInfoChangedEventHandler, value);
         remove => _userContactInfoChangedEventHandler =
-            (EventHandler<UserContactInfoChangedEventArgs>)Delegate.Remove(_userContactInfoChangedEventHandler, value);
+            (EventHandler<UserContactInfoChangedEventArgs>?)Delegate.Remove(_userContactInfoChangedEventHandler, value);
     }
 
     private void HandleUserContactInfoChangedEvent(Maybe<EmailAddress> emailAddress, bool emailAddressVerified) =>
         _userContactInfoChangedEventHandler?.Invoke(this,
             new UserContactInfoChangedEventArgs(emailAddress, emailAddressVerified));
 
-    private void Recycle(object sender, EventArgs _)
+    private void Recycle(object? _, EventArgs __)
     {
         _contactInfoSettings = Maybe<ContactInfoSettings>.None;
     }

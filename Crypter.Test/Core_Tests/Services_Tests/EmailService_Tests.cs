@@ -28,6 +28,8 @@ using System.Threading.Tasks;
 using Crypter.Common.Primitives;
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
@@ -37,20 +39,27 @@ namespace Crypter.Test.Core_Tests.Services_Tests;
 public class EmailService_Tests
 {
     private IOptions<EmailSettings> _defaultEmailSettings;
+    private ILogger<EmailService> _logger;
 
-    [OneTimeSetUp]
-    public void OneTimeSetup()
+    [SetUp]
+    public void Setup()
     {
         EmailSettings settings = new EmailSettings();
         _defaultEmailSettings = Options.Create(settings);
+        
+        var serviceProvider = new ServiceCollection()
+            .AddLogging()
+            .BuildServiceProvider();
+        var factory = serviceProvider.GetService<ILoggerFactory>();
+        _logger = factory.CreateLogger<EmailService>();
     }
 
     [Test]
     public async Task ServiceDisabled_SendAsync_ReturnsTrue()
     {
-        var sut = new EmailService(_defaultEmailSettings);
+        var sut = new EmailService(_defaultEmailSettings, _logger);
         var emailAddress = EmailAddress.From("jack@crypter.dev");
         var result = await sut.SendAsync("foo", "bar", emailAddress);
-        Assert.IsTrue(result);
+        Assert.That(result, Is.True);
     }
 }

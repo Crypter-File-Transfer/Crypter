@@ -39,9 +39,9 @@ public class EmailAddress_Tests
     {
         Assert.Throws<ValueNullException>(() => EmailAddress.From(emailAddress));
 
-        bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out EmailAddress shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("")]
@@ -51,9 +51,9 @@ public class EmailAddress_Tests
     {
         Assert.Throws<ValueEmptyException>(() => EmailAddress.From(emailAddress));
 
-        bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out EmailAddress shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("hello@crypter.dev.")]
@@ -62,9 +62,9 @@ public class EmailAddress_Tests
     {
         Assert.Throws<ValueInvalidException>(() => EmailAddress.From(emailAddress));
 
-        bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out var shouldBeNull);
-        Assert.IsFalse(shouldBeFalse);
-        Assert.IsNull(shouldBeNull);
+        bool shouldBeFalse = EmailAddress.TryFrom(emailAddress, out EmailAddress shouldBeNull);
+        Assert.That(shouldBeFalse, Is.False);
+        Assert.That(shouldBeNull, Is.Null);
     }
 
     [TestCase("jack@crypter.dev")]
@@ -73,13 +73,13 @@ public class EmailAddress_Tests
     public void Valid_Email_Addresses_Are_Valid(string emailAddress)
     {
         Assert.DoesNotThrow(() => EmailAddress.From(emailAddress));
-        var validEmailAddress = EmailAddress.From(emailAddress);
-        Assert.IsNotNull(validEmailAddress);
-        Assert.AreEqual(emailAddress, validEmailAddress.Value);
+        EmailAddress validEmailAddress = EmailAddress.From(emailAddress);
+        Assert.That(validEmailAddress, Is.Not.Null);
+        Assert.That(validEmailAddress.Value, Is.EqualTo(emailAddress));
 
-        bool shouldBeTrue = EmailAddress.TryFrom(emailAddress, out var newValidEmailAddress);
-        Assert.IsTrue(shouldBeTrue);
-        Assert.IsNotNull(newValidEmailAddress);
-        Assert.AreEqual(emailAddress, newValidEmailAddress.Value);
+        bool shouldBeTrue = EmailAddress.TryFrom(emailAddress, out EmailAddress newValidEmailAddress);
+        Assert.That(shouldBeTrue, Is.True);
+        Assert.That(newValidEmailAddress, Is.Not.Null);
+        Assert.That(newValidEmailAddress.Value, Is.EqualTo(emailAddress));
     }
 }

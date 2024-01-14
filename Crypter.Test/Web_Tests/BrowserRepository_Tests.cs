@@ -30,6 +30,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Models;
 using Crypter.Web.Repositories;
+using EasyMonads;
 using Microsoft.JSInterop;
 using Moq;
 using NUnit.Framework;
@@ -47,17 +48,17 @@ public class BrowserRepository_Tests
     [Test]
     public async Task Storage_Is_Empty_Upon_Initialization_Without_Existing_Data()
     {
-        var jsRuntime = new Mock<IJSRuntime>();
+        Mock<IJSRuntime> jsRuntime = new Mock<IJSRuntime>();
         jsRuntime
             .Setup(x => x.InvokeAsync<string>(It.IsAny<string>(), new object[] { It.IsAny<string>() }))
-            .ReturnsAsync((string command, string itemType) => default);
+            .ReturnsAsync((string _, string _) => default);
 
-        var sut = new BrowserRepository(jsRuntime.Object);
+        BrowserRepository sut = new BrowserRepository(jsRuntime.Object);
         await sut.InitializeAsync();
 
         foreach (DeviceStorageObjectType item in Enum.GetValues(typeof(DeviceStorageObjectType)))
         {
-            Assert.IsFalse(sut.HasItem(item));
+            Assert.That(sut.HasItem(item), Is.False);
         }
     }
 
@@ -67,8 +68,8 @@ public class BrowserRepository_Tests
         BrowserStorageLocation storageLocation)
     {
         UserSession storedUserSession = new UserSession("foo", true, UserSession.LATEST_SCHEMA);
-        string authenticationToken = "authentication";
-        string refreshToken = "refresh";
+        const string authenticationToken = "authentication";
+        const string refreshToken = "refresh";
         byte[] privateKey = "privateKey"u8.ToArray();
         byte[] masterKey = "masterKey"u8.ToArray();
         Mock<IJSRuntime> jsRuntime = new Mock<IJSRuntime>();
@@ -76,68 +77,68 @@ public class BrowserRepository_Tests
         // UserSession
         jsRuntime
             .Setup(x => x.InvokeAsync<string>(
-                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.UserSession.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(storedUserSession));
+                It.Is<string>(y => y == $"{storageLiteral}.getItem"),
+                It.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.UserSession.ToString())))
+            .ReturnsAsync((string _, object[] _) => JsonSerializer.Serialize(storedUserSession));
 
         // AuthenticationToken
         jsRuntime
             .Setup(x => x.InvokeAsync<string>(
-                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.AuthenticationToken.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(authenticationToken));
+                It.Is<string>(y => y == $"{storageLiteral}.getItem"),
+                It.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.AuthenticationToken.ToString())))
+            .ReturnsAsync((string _, object[] _) => JsonSerializer.Serialize(authenticationToken));
 
         // RefreshToken
         jsRuntime
             .Setup(x => x.InvokeAsync<string>(
-                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.RefreshToken.ToString())))
-            .ReturnsAsync((string commands, object[] args) => JsonSerializer.Serialize(refreshToken));
+                It.Is<string>(y => y == $"{storageLiteral}.getItem"),
+                It.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.RefreshToken.ToString())))
+            .ReturnsAsync((string _, object[] _) => JsonSerializer.Serialize(refreshToken));
 
         // PrivateKey
         jsRuntime
             .Setup(x => x.InvokeAsync<string>(
-                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.PrivateKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(privateKey));
+                It.Is<string>(y => y == $"{storageLiteral}.getItem"),
+                It.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.PrivateKey.ToString())))
+            .ReturnsAsync((string _, object[] _) => JsonSerializer.Serialize(privateKey));
 
         // MasterKey
         jsRuntime
             .Setup(x => x.InvokeAsync<string>(
-                It.Is<string>(x => x == $"{storageLiteral}.getItem"),
-                It.Is<object[]>(x => x[0].ToString() == DeviceStorageObjectType.MasterKey.ToString())))
-            .ReturnsAsync((string command, object[] args) => JsonSerializer.Serialize(privateKey));
+                It.Is<string>(y => y == $"{storageLiteral}.getItem"),
+                It.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.MasterKey.ToString())))
+            .ReturnsAsync((string _, object[] _) => JsonSerializer.Serialize(masterKey));
 
-        var sut = new BrowserRepository(jsRuntime.Object);
+        BrowserRepository sut = new BrowserRepository(jsRuntime.Object);
         await sut.InitializeAsync();
 
         foreach (DeviceStorageObjectType item in Enum.GetValues(typeof(DeviceStorageObjectType)))
         {
-            Assert.IsTrue(sut.HasItem(item));
-            var itemLocation = sut.GetItemLocation(item);
+            Assert.That(sut.HasItem(item), Is.True);
+            Maybe<BrowserStorageLocation> itemLocation = sut.GetItemLocation(item);
 
             itemLocation.IfNone(Assert.Fail);
-            itemLocation.IfSome(x => Assert.AreEqual(storageLocation, x));
+            itemLocation.IfSome(x => Assert.That(x, Is.EqualTo(storageLocation)));
         }
 
-        var fetchedUserSession = await sut.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession);
+        Maybe<UserSession> fetchedUserSession = await sut.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession);
         fetchedUserSession.IfNone(Assert.Fail);
-        fetchedUserSession.IfSome(x => Assert.AreEqual(storedUserSession.Username, x.Username));
+        fetchedUserSession.IfSome(x => Assert.That(x.Username, Is.EqualTo(storedUserSession.Username)));
 
-        var fetchedAuthenticationToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.AuthenticationToken);
+        Maybe<string> fetchedAuthenticationToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.AuthenticationToken);
         fetchedAuthenticationToken.IfNone(Assert.Fail);
-        fetchedAuthenticationToken.IfSome(x => Assert.AreEqual(authenticationToken, x));
+        fetchedAuthenticationToken.IfSome(x => Assert.That(x, Is.EqualTo(authenticationToken)));
 
-        var fetchedRefreshToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.RefreshToken);
+        Maybe<string> fetchedRefreshToken = await sut.GetItemAsync<string>(DeviceStorageObjectType.RefreshToken);
         fetchedRefreshToken.IfNone(Assert.Fail);
-        fetchedRefreshToken.IfSome(x => Assert.AreEqual(refreshToken, x));
+        fetchedRefreshToken.IfSome(x => Assert.That(x, Is.EqualTo(refreshToken)));
 
-        var fetchedPrivateKey = await sut.GetItemAsync<byte[]>(DeviceStorageObjectType.PrivateKey);
+        Maybe<byte[]> fetchedPrivateKey = await sut.GetItemAsync<byte[]>(DeviceStorageObjectType.PrivateKey);
         fetchedPrivateKey.IfNone(Assert.Fail);
-        fetchedPrivateKey.IfSome(x => Assert.AreEqual(privateKey, x));
+        fetchedPrivateKey.IfSome(x => Assert.That(x, Is.EqualTo(privateKey)));
 
-        var fetchedMasterKeyKey = await sut.GetItemAsync<byte[]>(DeviceStorageObjectType.MasterKey);
+        Maybe<byte[]> fetchedMasterKeyKey = await sut.GetItemAsync<byte[]>(DeviceStorageObjectType.MasterKey);
         fetchedMasterKeyKey.IfNone(Assert.Fail);
-        fetchedMasterKeyKey.IfSome(x => Assert.AreEqual(privateKey, x));
+        fetchedMasterKeyKey.IfSome(x => Assert.That(x, Is.EqualTo(masterKey)));
     }
 }

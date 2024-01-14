@@ -26,7 +26,6 @@
 
 using System;
 using System.Threading.Tasks;
-using Crypter.Core.Models;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -35,15 +34,6 @@ namespace Crypter.Core.Features.UserEmailVerification;
 
 internal static class UserEmailVerificationCommands
 {
-    internal static Task SaveVerificationParametersAsync(DataContext dataContext,
-        UserEmailAddressVerificationParameters parameters)
-    {
-        UserEmailVerificationEntity newEntity = new UserEmailVerificationEntity(parameters.UserId,
-            parameters.VerificationCode, parameters.VerificationKey, DateTime.UtcNow);
-        dataContext.UserEmailVerifications.Add(newEntity);
-        return dataContext.SaveChangesAsync();
-    }
-
     internal static async Task DeleteUserEmailVerificationEntity(DataContext dataContext, Guid userId, bool saveChanges)
     {
         UserEmailVerificationEntity foundEntity = await dataContext.UserEmailVerifications

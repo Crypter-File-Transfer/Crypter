@@ -34,7 +34,7 @@ namespace Crypter.API.Contracts;
 public class UploadMessageTransferReceipt
 {
     [ModelBinder(BinderType = typeof(FormDataJsonBinder))]
-    public UploadMessageTransferRequest Data { get; set; }
+    public UploadMessageTransferRequest? Data { get; init; }
 
-    public IFormFile Ciphertext { get; set; }
+    public IFormFile? Ciphertext { get; init; }
 }

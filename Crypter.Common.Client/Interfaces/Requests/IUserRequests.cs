@@ -33,6 +33,6 @@ namespace Crypter.Common.Client.Interfaces.Requests;
 
 public interface IUserRequests
 {
-    Task<Either<GetUserProfileError, UserProfileDTO>> GetUserProfileAsync(string username, bool withAuthentication);
+    Task<Either<GetUserProfileError, UserProfile>> GetUserProfileAsync(string username, bool withAuthentication);
     Task<Maybe<List<UserSearchResult>>> GetUserSearchResultsAsync(UserSearchParameters searchParameters);
 }

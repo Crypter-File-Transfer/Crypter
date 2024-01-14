@@ -68,7 +68,7 @@ public class UserNotificationSettingsService : IUserNotificationSettingsService,
         return result;
     }
 
-    private void Recycle(object sender, EventArgs _)
+    private void Recycle(object? _, EventArgs __)
     {
         _notificationSettings = Maybe<NotificationSettings>.None;
     }

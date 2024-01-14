@@ -28,5 +28,5 @@ namespace Crypter.Common.Client.Models;
 
 public class ClientApiSettings
 {
-    public string ApiBaseUrl { get; set; }
+    public string ApiBaseUrl { get; set; } = string.Empty;
 }

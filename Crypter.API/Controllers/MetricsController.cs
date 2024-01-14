@@ -26,8 +26,10 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts.Features.Metrics;
-using Crypter.Core.Services;
+using Crypter.Core.Features.Metrics.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -36,19 +38,20 @@ namespace Crypter.API.Controllers;
 [Route("api/metrics")]
 public class MetricsController : CrypterControllerBase
 {
-    private readonly IServerMetricsService _serverMetricsService;
+    private readonly ISender _sender;
 
-    public MetricsController(IServerMetricsService serverMetricsService)
+    public MetricsController(ISender sender)
     {
-        _serverMetricsService = serverMetricsService;
+        _sender = sender;
     }
 
     [HttpGet("storage/public")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PublicStorageMetricsResponse))]
     public async Task<IActionResult> GetPublicStorageMetricsAsync(CancellationToken cancellationToken)
     {
-        PublicStorageMetricsResponse result =
-            await _serverMetricsService.GetAggregateDiskMetricsAsync(cancellationToken);
-        return Ok(result);
+        GetDiskMetricsQuery request = new GetDiskMetricsQuery();
+        GetDiskMetricsResult result = await _sender.Send(request, cancellationToken);
+        PublicStorageMetricsResponse response = new PublicStorageMetricsResponse(result.AllocatedBytes, result.FreeBytes);
+        return Ok(response);
     }
 }

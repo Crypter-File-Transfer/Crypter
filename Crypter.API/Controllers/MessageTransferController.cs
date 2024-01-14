@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -47,9 +46,8 @@ namespace Crypter.API.Controllers;
 public class MessageTransferController : TransferControllerBase
 {
     public MessageTransferController(ITransferDownloadService transferDownloadService,
-        ITransferUploadService transferUploadService, ITokenService tokenService,
-        IUserTransferService userTransferService)
-        : base(transferDownloadService, transferUploadService, tokenService, userTransferService)
+        ITransferUploadService transferUploadService, IUserTransferService userTransferService)
+        : base(transferDownloadService, transferUploadService, userTransferService)
     {
     }
 
@@ -57,17 +55,16 @@ public class MessageTransferController : TransferControllerBase
     [MaybeAuthorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> UploadMessageTransferAsync([FromQuery] string username,
+    public async Task<IActionResult> UploadMessageTransferAsync([FromQuery] string? username,
         [FromForm] UploadMessageTransferReceipt request)
     {
-        Maybe<Guid> senderId = _tokenService.TryParseUserId(User);
         Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
             ? Maybe<string>.None
             : username;
-        using Stream ciphertextStream = request.Ciphertext.OpenReadStream();
+        await using Stream? ciphertextStream = request.Ciphertext?.OpenReadStream();
 
-        return await _transferUploadService
-            .UploadMessageTransferAsync(senderId, maybeUsername, request.Data, ciphertextStream)
+        return await TransferUploadService
+            .UploadMessageTransferAsync(PossibleUserId, maybeUsername, request.Data, ciphertextStream)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -80,9 +77,8 @@ public class MessageTransferController : TransferControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> GetReceivedMessagesAsync(CancellationToken cancellationToken)
     {
-        Guid userId = _tokenService.ParseUserId(User);
         List<UserReceivedMessageDTO> result =
-            await _userTransferService.GetUserReceivedMessagesAsync(userId, cancellationToken);
+            await UserTransferService.GetUserReceivedMessagesAsync(UserId, cancellationToken);
         return Ok(result);
     }
 
@@ -92,9 +88,8 @@ public class MessageTransferController : TransferControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> GetSentMessagesAsync(CancellationToken cancellationToken)
     {
-        Guid userId = _tokenService.ParseUserId(User);
         List<UserSentMessageDTO>
-            result = await _userTransferService.GetUserSentMessagesAsync(userId, cancellationToken);
+            result = await UserTransferService.GetUserSentMessagesAsync(UserId, cancellationToken);
         return Ok(result);
     }
 
@@ -104,7 +99,7 @@ public class MessageTransferController : TransferControllerBase
     public async Task<IActionResult> GetAnonymousMessagePreviewAsync([FromQuery] string id,
         CancellationToken cancellationToken)
     {
-        return await _transferDownloadService.GetAnonymousMessagePreviewAsync(id, cancellationToken)
+        return await TransferDownloadService.GetAnonymousMessagePreviewAsync(id, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -118,8 +113,7 @@ public class MessageTransferController : TransferControllerBase
     public async Task<IActionResult> GetUserMessagePreviewAsync([FromQuery] string id,
         CancellationToken cancellationToken)
     {
-        Maybe<Guid> userId = _tokenService.TryParseUserId(User);
-        return await _transferDownloadService.GetUserMessagePreviewAsync(id, userId, cancellationToken)
+        return await TransferDownloadService.GetUserMessagePreviewAsync(id, PossibleUserId, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -134,7 +128,7 @@ public class MessageTransferController : TransferControllerBase
     {
         return await DecodeProof(proof)
             .BindAsync(async decodedProof =>
-                await _transferDownloadService.GetAnonymousMessageCiphertextAsync(id, decodedProof))
+                await TransferDownloadService.GetAnonymousMessageCiphertextAsync(id, decodedProof))
             .MatchAsync(
                 MakeErrorResponse,
                 x => new FileStreamResult(x, "application/octet-stream"),
@@ -148,10 +142,9 @@ public class MessageTransferController : TransferControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> GetUserMessageCiphertextAsync([FromQuery] string id, [FromQuery] string proof)
     {
-        Maybe<Guid> userId = _tokenService.TryParseUserId(User);
         return await DecodeProof(proof)
             .BindAsync(async decodedProof =>
-                await _transferDownloadService.GetUserMessageCiphertextAsync(id, decodedProof, userId))
+                await TransferDownloadService.GetUserMessageCiphertextAsync(id, decodedProof, PossibleUserId))
             .MatchAsync(
                 MakeErrorResponse,
                 x => new FileStreamResult(x, "application/octet-stream"),

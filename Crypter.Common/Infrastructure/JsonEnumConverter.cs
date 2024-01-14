@@ -31,7 +31,7 @@ using System.Text.Json.Serialization;
 namespace Crypter.Common.Infrastructure;
 
 public class JsonEnumConverter<T> : JsonConverter<T>
-    where T : notnull, Enum
+    where T : Enum
 {
     public override bool CanConvert(Type typeToConvert)
     {
@@ -56,15 +56,15 @@ public class JsonEnumConverter<T> : JsonConverter<T>
         }
 
         // Try reading the value as a string
-        string enumStringValue = reader.GetString();
-        return Enum.TryParse(typeToConvert, enumStringValue, true, out object enumValue)
+        string? enumStringValue = reader.GetString();
+        return Enum.TryParse(typeToConvert, enumStringValue, true, out object? enumValue)
             ? (T)enumValue
-            : throw new InvalidEnumValueException(enumStringValue, typeof(T));
+            : throw new InvalidEnumValueException(enumStringValue ?? "'null' string", typeof(T));
     }
 
     public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
     {
-        if (value is not null && value is Enum sourceEnum)
+        if (value is Enum sourceEnum)
         {
             writer.WriteNumberValue((int)(object)sourceEnum);
         }
