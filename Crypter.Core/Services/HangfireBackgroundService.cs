@@ -32,7 +32,7 @@ using Crypter.Core.Features.AccountRecovery.Commands;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Notifications.Commands;
 using Crypter.Core.Features.Transfer.Commands;
-using Crypter.Core.Features.UserAuthentication;
+using Crypter.Core.Features.UserAuthentication.Commands;
 using Crypter.Core.Features.UserEmailVerification.Commands;
 using Crypter.Core.Features.UserToken;
 using Crypter.DataAccess;
@@ -65,7 +65,7 @@ public interface IHangfireBackgroundService
         bool deleteFromTransferStorage);
 
     Task DeleteUserTokenAsync(Guid tokenId);
-    Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId);
+    Task<Unit> DeleteFailedLoginAttemptAsync(Guid failedAttemptId);
     Task<Unit> DeleteRecoveryParametersAsync(Guid userId);
     Task<Unit> DeleteUserKeysAsync(Guid userId);
     Task<Unit> DeleteReceivedTransfersAsync(Guid userId);
@@ -165,9 +165,10 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return UserTokenCommands.DeleteUserTokenAsync(_dataContext, tokenId);
     }
 
-    public Task DeleteFailedLoginAttemptAsync(Guid failedAttemptId)
+    public Task<Unit> DeleteFailedLoginAttemptAsync(Guid failedAttemptId)
     {
-        return UserAuthenticationCommands.DeleteFailedLoginAttemptAsync(_dataContext, failedAttemptId);
+        DeleteFailedLoginAttemptCommand request = new DeleteFailedLoginAttemptCommand(failedAttemptId);
+        return _sender.Send(request);
     }
 
     public async Task<Unit> DeleteRecoveryParametersAsync(Guid userId)

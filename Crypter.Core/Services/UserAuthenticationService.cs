@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -34,7 +34,6 @@ using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using Crypter.Core.DataContextExtensions;
-using Crypter.Core.Features.UserAuthentication;
 using Crypter.Core.Identity;
 using Crypter.Core.Models;
 using Crypter.DataAccess;
@@ -152,7 +151,7 @@ public class UserAuthenticationService : IUserAuthenticationService
                     return LoginError.InvalidUsername;
                 }
 
-                if (user.FailedLoginAttempts.Count >= _maximumFailedLoginAttempts)
+                if (user.FailedLoginAttempts!.Count >= _maximumFailedLoginAttempts)
                 {
                     return LoginError.ExcessiveFailedLoginAttempts;
                 }
@@ -188,15 +187,15 @@ public class UserAuthenticationService : IUserAuthenticationService
 
                 user.LastLogin = DateTime.UtcNow;
 
-                var refreshToken =
+                RefreshTokenData refreshToken =
                     CreateRefreshTokenInContext(user.Id, validatedLoginRequest.RefreshTokenType, deviceDescription);
-                var authToken = MakeAuthenticationToken(user.Id);
+                string authToken = MakeAuthenticationToken(user.Id);
 
                 await _context.SaveChangesAsync();
                 ScheduleRefreshTokenDeletion(refreshToken.TokenId, refreshToken.Expiration);
 
                 bool userHasConsentedToRecoveryKeyRisks =
-                    user.Consents.Any(x => x.ConsentType == ConsentType.RecoveryKeyRisks);
+                    user.Consents!.Any(x => x.ConsentType == ConsentType.RecoveryKeyRisks);
                 bool userNeedsNewKeys = user.MasterKey is null && user.KeyPair is null;
 
                 return new LoginResponse(user.Username, authToken, refreshToken.Token, userNeedsNewKeys,
@@ -315,7 +314,7 @@ public class UserAuthenticationService : IUserAuthenticationService
 
     private static Either<T, byte[]> ValidateRequestPassword<T>(byte[] password, T error)
     {
-        return UserAuthenticationValidators.ValidatePassword(password)
+        return AuthenticationPassword.TryFrom(password, out AuthenticationPassword _)
             ? password
             : error;
     }
