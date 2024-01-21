@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -57,36 +57,36 @@ namespace Crypter.Test.Integration_Tests.UserRecovery_Tests;
 [TestFixture]
 internal class SubmitRecovery_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
-    private ICryptoProvider _mockCryptoProvider;
-    private DefaultCryptoProvider _cryptoProvider;
-    private Ed25519KeyPair _knownKeyPair;
-
-    [OneTimeSetUp]
-    public void SetupFixture()
+    private ICryptoProvider? _mockCryptoProvider;
+    private DefaultCryptoProvider? _cryptoProvider;
+    private Ed25519KeyPair? _knownKeyPair;
+    
+    [SetUp]
+    public async Task SetupTestAsync()
     {
         _cryptoProvider = new DefaultCryptoProvider();
         _knownKeyPair = _cryptoProvider.DigitalSignature.GenerateKeyPair();
         _mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_knownKeyPair).Object;
-    }
-
-    [SetUp]
-    public async Task SetupTestAsync()
-    {
+        
         IServiceCollection overrideServices = new ServiceCollection();
-        overrideServices.AddSingleton(_mockCryptoProvider);
+        overrideServices.AddSingleton(_mockCryptoProvider!);
 
         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync(true, overrideServices);
         (_client, _clientTokenRepository) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+        await AssemblySetup.InitializeRespawnerAsync();
     }
 
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync(); 
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -97,7 +97,7 @@ internal class SubmitRecovery_Tests
         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername,
             TestData.DefaultPassword, TestData.DefaultEmailAdress);
         Either<RegistrationError, Unit> registrationResult =
-            await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         // Allow the background service to "send" the verification email and save the email verification data
         await Task.Delay(5000);
@@ -107,70 +107,74 @@ internal class SubmitRecovery_Tests
         {
             LoginRequest loginRequest =
                 TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-            Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
             await loginResult.DoRightAsync(async loginResponse =>
             {
-                await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-                await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+                await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+                await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
             });
 
             (byte[] masterKey, InsertMasterKeyRequest insertMasterKeyRequest) =
                 TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
             Either<InsertMasterKeyError, Unit> _ =
-                await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
+                await _client!.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
-            UserPasswordService userPasswordService = new UserPasswordService(_cryptoProvider);
+            UserPasswordService userPasswordService = new UserPasswordService(_cryptoProvider!);
             UserRecoveryService userRecoveryService =
                 new UserRecoveryService(_client, new DefaultCryptoProvider(), userPasswordService);
             recoveryKey = await userRecoveryService.DeriveRecoveryKeyAsync(masterKey, registrationRequest.VersionedPassword);
             recoveryKey.IfNone(Assert.Fail);
         }
 
-        using IServiceScope scope = _factory.Services.CreateScope();
+        using IServiceScope scope = _factory!.Services.CreateScope();
         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
         UserEmailVerificationEntity verificationData = await dataContext.UserEmailVerifications
-            .Where(x => x.User.Username == TestData.DefaultUsername)
+            .Where(x => x.User!.Username == TestData.DefaultUsername)
             .FirstAsync();
 
         string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(verificationData.Code);
         byte[] signedVerificationCode =
-            _cryptoProvider.DigitalSignature.GenerateSignature(_knownKeyPair.PrivateKey,
+            _cryptoProvider!.DigitalSignature.GenerateSignature(_knownKeyPair!.PrivateKey,
                 verificationData.Code.ToByteArray());
         string encodedVerificationSignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedVerificationCode);
 
         VerifyEmailAddressRequest verificationRequest =
             new VerifyEmailAddressRequest(encodedVerificationCode, encodedVerificationSignature);
         Either<VerifyEmailAddressError, Unit> verificationResult =
-            await _client.UserSetting.VerifyUserEmailAddressAsync(verificationRequest);
+            await _client!.UserSetting.VerifyUserEmailAddressAsync(verificationRequest);
 
         EmailAddress emailAddress = EmailAddress.From(TestData.DefaultEmailAdress);
         Either<SendRecoveryEmailError, Unit> sendRecoveryEmailResult =
-            await _client.UserRecovery.SendRecoveryEmailAsync(emailAddress);
+            await _client!.UserRecovery.SendRecoveryEmailAsync(emailAddress);
 
         // Allow the background service to "send" the recovery email and save the recovery data
         await Task.Delay(5000);
 
         UserRecoveryEntity recoveryData = await dataContext.UserRecoveries
-            .Where(x => x.User.Username == TestData.DefaultUsername)
+            .Where(x => x.User!.Username == TestData.DefaultUsername)
             .FirstAsync();
         
         string encodedRecoveryCode = UrlSafeEncoder.EncodeGuidUrlSafe(recoveryData.Code);
-        byte[] signedRecoveryData = Core.Features.AccountRecovery.Common.GenerateRecoverySignature(_cryptoProvider, _knownKeyPair.PrivateKey,
+        byte[] signedRecoveryData = Core.Features.AccountRecovery.Common.GenerateRecoverySignature(_cryptoProvider!, _knownKeyPair!.PrivateKey,
             recoveryData.Code, Username.From(TestData.DefaultUsername));
         string encodedRecoverySignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedRecoveryData);
 
         VersionedPassword versionedPassword =
             new VersionedPassword(Encoding.UTF8.GetBytes(TestData.DefaultPassword), 1);
 
-        ReplacementMasterKeyInformation replacementMasterKeyInformation = recoveryKey.Match(
-            () => null,
-            x => new ReplacementMasterKeyInformation(x.Proof, [0x01], [0x02],
-                [0x03]));
-        AccountRecoverySubmission submission = new AccountRecoverySubmission(TestData.DefaultUsername, encodedRecoveryCode,
-            encodedRecoverySignature, versionedPassword, replacementMasterKeyInformation);
-        Either<SubmitAccountRecoveryError, Unit> result = await _client.UserRecovery.SubmitRecoveryAsync(submission);
+        AccountRecoverySubmission recoverySubmission = recoveryKey
+            .Bind<ReplacementMasterKeyInformation>(x => new ReplacementMasterKeyInformation(
+                x.Proof, [0x01], [0x02],
+                [0x03]))
+            .Match(
+                none: new AccountRecoverySubmission(TestData.DefaultUsername, encodedRecoveryCode,
+                    encodedRecoverySignature, versionedPassword),
+                some: x => new AccountRecoverySubmission(TestData.DefaultUsername, encodedRecoveryCode,
+                    encodedRecoverySignature, versionedPassword, x));
 
+        Either<SubmitAccountRecoveryError, Unit> result = await _client!.UserRecovery.SubmitRecoveryAsync(recoverySubmission);
+        
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(verificationResult.IsRight, Is.True);
         Assert.That(sendRecoveryEmailResult.IsRight, Is.True);
@@ -184,82 +188,88 @@ internal class SubmitRecovery_Tests
         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername,
             TestData.DefaultPassword, TestData.DefaultEmailAdress);
         Either<RegistrationError, Unit> registrationResult =
-            await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         // Allow the background service to "send" the verification email and save the email verification data
         await Task.Delay(5000);
 
-        using IServiceScope scope = _factory.Services.CreateScope();
+        using IServiceScope scope = _factory!.Services.CreateScope();
         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
         UserEmailVerificationEntity verificationData = await dataContext.UserEmailVerifications
-            .Where(x => x.User.Username == TestData.DefaultUsername)
+            .Where(x => x.User!.Username == TestData.DefaultUsername)
             .FirstAsync();
 
         string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(verificationData.Code);
         byte[] signedVerificationCode =
-            _cryptoProvider.DigitalSignature.GenerateSignature(_knownKeyPair.PrivateKey,
+            _cryptoProvider!.DigitalSignature.GenerateSignature(_knownKeyPair!.PrivateKey,
                 verificationData.Code.ToByteArray());
         string encodedVerificationSignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedVerificationCode);
 
         VerifyEmailAddressRequest verificationRequest =
             new VerifyEmailAddressRequest(encodedVerificationCode, encodedVerificationSignature);
         Either<VerifyEmailAddressError, Unit> verificationResult =
-            await _client.UserSetting.VerifyUserEmailAddressAsync(verificationRequest);
+            await _client!.UserSetting.VerifyUserEmailAddressAsync(verificationRequest);
 
         EmailAddress emailAddress = EmailAddress.From(TestData.DefaultEmailAdress);
         Either<SendRecoveryEmailError, Unit> sendRecoveryEmailResult =
-            await _client.UserRecovery.SendRecoveryEmailAsync(emailAddress);
+            await _client!.UserRecovery.SendRecoveryEmailAsync(emailAddress);
 
         // Allow the background service to "send" the recovery email and save the recovery data
         await Task.Delay(5000);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
         (byte[] masterKey, InsertMasterKeyRequest insertMasterKeyRequest) =
             TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
         Either<InsertMasterKeyError, Unit> _ =
-            await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
+            await _client!.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
-        UserPasswordService userPasswordService = new UserPasswordService(_cryptoProvider);
+        UserPasswordService userPasswordService = new UserPasswordService(_cryptoProvider!);
         UserRecoveryService userRecoveryService =
             new UserRecoveryService(_client, new DefaultCryptoProvider(), userPasswordService);
-        RecoveryKey recoveryKey = await userRecoveryService.DeriveRecoveryKeyAsync(masterKey, registrationRequest.VersionedPassword)
-            .SomeOrDefaultAsync(null);
+        Maybe<RecoveryKey> recoveryKeyResponse =
+            await userRecoveryService.DeriveRecoveryKeyAsync(masterKey, registrationRequest.VersionedPassword);
 
-        UserRecoveryEntity recoveryData = await dataContext.UserRecoveries
-            .Where(x => x.User.Username == TestData.DefaultUsername)
-            .FirstAsync();
+        await recoveryKeyResponse
+            .IfNone(Assert.Fail)
+            .IfSomeAsync(async recoveryKey =>
+            {
+                UserRecoveryEntity recoveryData = await dataContext.UserRecoveries
+                    .Where(x => x.User!.Username == TestData.DefaultUsername)
+                    .FirstAsync();
         
-        string encodedRecoveryCode = UrlSafeEncoder.EncodeGuidUrlSafe(recoveryData.Code);
-        byte[] signedRecoveryData = Core.Features.AccountRecovery.Common.GenerateRecoverySignature(_cryptoProvider, _knownKeyPair.PrivateKey,
-            recoveryData.Code, Username.From(TestData.DefaultUsername));
-        string encodedRecoverySignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedRecoveryData);
+                string encodedRecoveryCode = UrlSafeEncoder.EncodeGuidUrlSafe(recoveryData.Code);
+                byte[] signedRecoveryData = Core.Features.AccountRecovery.Common.GenerateRecoverySignature(_cryptoProvider!, _knownKeyPair!.PrivateKey,
+                    recoveryData.Code, Username.From(TestData.DefaultUsername));
+                string encodedRecoverySignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedRecoveryData);
 
-        VersionedPassword versionedPassword =
-            new VersionedPassword(Encoding.UTF8.GetBytes(TestData.DefaultPassword), 1);
+                VersionedPassword versionedPassword =
+                    new VersionedPassword(Encoding.UTF8.GetBytes(TestData.DefaultPassword), 1);
 
-        ReplacementMasterKeyInformation replacementMasterKeyInformation =
-            new ReplacementMasterKeyInformation(recoveryKey.Proof, Array.Empty<byte>(), Array.Empty<byte>(), Array.Empty<byte>());
+                ReplacementMasterKeyInformation replacementMasterKeyInformation =
+                    new ReplacementMasterKeyInformation(recoveryKey.Proof, Array.Empty<byte>(), Array.Empty<byte>(), Array.Empty<byte>());
 
-        AccountRecoverySubmission submission = new AccountRecoverySubmission(TestData.DefaultUsername, encodedRecoveryCode,
-            encodedRecoverySignature, versionedPassword, replacementMasterKeyInformation);
-        Either<SubmitAccountRecoveryError, Unit> result = await _client.UserRecovery.SubmitRecoveryAsync(submission);
-
+                AccountRecoverySubmission submission = new AccountRecoverySubmission(TestData.DefaultUsername, encodedRecoveryCode,
+                    encodedRecoverySignature, versionedPassword, replacementMasterKeyInformation);
+                Either<SubmitAccountRecoveryError, Unit> result = await _client!.UserRecovery.SubmitRecoveryAsync(submission);
+                
+                Assert.That(result.IsLeft, Is.True);
+                result.DoLeftOrNeither(x =>
+                    Assert.That(x, Is.EqualTo(SubmitAccountRecoveryError.InvalidMasterKey)),
+                    Assert.Fail);
+            });
+        
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(verificationResult.IsRight, Is.True);
         Assert.That(sendRecoveryEmailResult.IsRight, Is.True);
         Assert.That(verificationResult.IsRight, Is.True);
-        Assert.That(result.IsLeft, Is.True);
-        result.DoLeftOrNeither(x =>
-                Assert.That(x, Is.EqualTo(SubmitAccountRecoveryError.InvalidMasterKey)),
-            Assert.Fail);
     }
 }

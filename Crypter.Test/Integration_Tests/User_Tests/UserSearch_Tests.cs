@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -41,9 +41,9 @@ namespace Crypter.Test.Integration_Tests.User_Tests;
 [TestFixture]
 internal class UserSearch_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -56,7 +56,10 @@ internal class UserSearch_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -65,29 +68,33 @@ internal class UserSearch_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> _ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-        });
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+        })
+        .DoLeftOrNeitherAsync(Assert.Fail);
 
         InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
-        Either<InsertKeyPairError, Unit> __ = await _client.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
+        Either<InsertKeyPairError, Unit> __ = await _client!.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
         UserSearchParameters searchParameters = new UserSearchParameters(TestData.DefaultUsername, 0, 10);
-        Maybe<List<UserSearchResult>> response = await _client.User.GetUserSearchResultsAsync(searchParameters);
-
-        List<UserSearchResult> results = response.SomeOrDefault(null);
-
-        Assert.That(loginResult.IsRight, Is.True);
-        Assert.That(response.IsSome, Is.True);
-        Assert.That(results.Count, Is.EqualTo(1));
-        Assert.That(results[0].Username, Is.EqualTo(TestData.DefaultUsername));
+        Maybe<List<UserSearchResult>> response = await _client!.User.GetUserSearchResultsAsync(searchParameters);
+        response
+            .IfSome(results =>
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(results.Count, Is.EqualTo(1));
+                    Assert.That(results[0].Username, Is.EqualTo(TestData.DefaultUsername));
+                });
+            })
+            .IfNone(Assert.Fail);
     }
 }

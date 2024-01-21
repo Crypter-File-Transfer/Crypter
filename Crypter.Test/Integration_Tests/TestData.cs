@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,7 +25,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Crypter.Common.Contracts.Features.Keys;
@@ -38,45 +37,45 @@ namespace Crypter.Test.Integration_Tests;
 
 internal static class TestData
 {
-    private static readonly byte[] _defaultPrivateKey = new byte[]
-    {
+    private static readonly byte[] _defaultPrivateKey =
+    [
         0xdf, 0x9f, 0x89, 0x8b, 0x66, 0xc9, 0xcc, 0x2c,
         0xb2, 0x9b, 0xa8, 0x51, 0xf7, 0xf7, 0x1c, 0xec,
         0x59, 0xad, 0x67, 0x09, 0xc7, 0x77, 0xab, 0x30,
         0x09, 0x3b, 0x52, 0xd6, 0xde, 0x2f, 0x5e, 0x28
-    };
+    ];
 
-    private static readonly byte[] _alternatePrivateKey = new byte[]
-    {
+    private static readonly byte[] _alternatePrivateKey =
+    [
         0xe6, 0xdc, 0x7f, 0xaa, 0x13, 0x8d, 0xdc, 0xbe,
         0x23, 0xbe, 0xf7, 0xb0, 0x81, 0x10, 0x3b, 0xbd,
         0x6c, 0x63, 0x2b, 0xf5, 0xe2, 0x25, 0xfa, 0x8f,
         0xef, 0x3c, 0x66, 0x3f, 0x07, 0x49, 0x0a, 0xd2
-    };
+    ];
 
-    private static readonly byte[] _defaultPublicKey = new byte[]
-    {
+    private static readonly byte[] _defaultPublicKey =
+    [
         0x2f, 0x33, 0x2f, 0x8b, 0x19, 0x80, 0x12, 0x7f,
         0x7d, 0x0b, 0x5e, 0x00, 0x1a, 0x35, 0x28, 0x42,
         0x67, 0x96, 0x21, 0x3d, 0x04, 0x7e, 0x17, 0x6b,
         0xdc, 0x5f, 0xbc, 0xf2, 0x7e, 0x57, 0x61, 0x08
-    };
+    ];
 
-    private static readonly byte[] _alternatePublicKey = new byte[]
-    {
+    private static readonly byte[] _alternatePublicKey =
+    [
         0x89, 0xdf, 0xc0, 0xe1, 0x4a, 0x3f, 0x30, 0x08,
         0xb1, 0x4b, 0x29, 0x7b, 0xf7, 0x34, 0x82, 0xc6,
         0x97, 0x2c, 0x5f, 0x9b, 0xa3, 0xd3, 0x2a, 0xe2,
         0xb0, 0x32, 0xce, 0x2a, 0x9c, 0x34, 0xf8, 0x45
-    };
+    ];
 
-    private static readonly byte[] _defaultKeyExchangeNonce = new byte[]
-    {
+    private static readonly byte[] _defaultKeyExchangeNonce =
+    [
         0xd5, 0x3a, 0xcf, 0xc3, 0x66, 0x3f, 0xfd, 0x80,
         0xbe, 0x9a, 0x5e, 0xc4, 0x1f, 0xa9, 0x56, 0xd7,
         0x89, 0xad, 0x3c, 0x67, 0x92, 0xa2, 0x7f, 0xa5,
         0x2c, 0x19, 0x9c, 0xd8, 0x0c, 0xed, 0xd5, 0x83
-    };
+    ];
 
     internal static byte[] DefaultPrivateKey
     {
@@ -115,24 +114,25 @@ internal static class TestData
 
     internal static (Func<EncryptionStream> encryptionStreamOpener, byte[] proof) GetDefaultEncryptionStream()
     {
-        MemoryStream plaintextStreamOpener() => new MemoryStream(DefaultTransferBytes);
         DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
         (byte[] encryptionKey, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(
             cryptoProvider.StreamEncryptionFactory.KeySize, DefaultPrivateKey, AlternatePublicKey,
             DefaultKeyExchangeNonce);
 
-        EncryptionStream encryptionStreamOpener()
+        return (EncryptionStreamOpener, proof);
+
+        MemoryStream PlaintextStreamOpener() => new MemoryStream(DefaultTransferBytes);
+
+        EncryptionStream EncryptionStreamOpener()
         {
-            MemoryStream stream = plaintextStreamOpener();
+            MemoryStream stream = PlaintextStreamOpener();
             return new EncryptionStream(stream, stream.Length, encryptionKey, cryptoProvider.StreamEncryptionFactory,
                 128, 64);
         }
-
-        return (encryptionStreamOpener, proof);
     }
 
     internal static RegistrationRequest GetRegistrationRequest(string username, string password,
-        string emailAddress = null)
+        string? emailAddress = null)
     {
         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
         VersionedPassword versionedPassword = new VersionedPassword(passwordBytes, 1);
@@ -144,7 +144,7 @@ internal static class TestData
     {
         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
         VersionedPassword versionedPassword = new VersionedPassword(passwordBytes, 1);
-        return new LoginRequest(username, new List<VersionedPassword> { versionedPassword }, tokenType);
+        return new LoginRequest(username, [versionedPassword], tokenType);
     }
 
     internal static (byte[] masterKey, InsertMasterKeyRequest request) GetInsertMasterKeyRequest(string password)

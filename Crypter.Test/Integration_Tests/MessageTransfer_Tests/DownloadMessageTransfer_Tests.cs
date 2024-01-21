@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -42,9 +42,9 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests;
 [TestFixture]
 internal class DownloadMessageTransfer_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -57,7 +57,10 @@ internal class DownloadMessageTransfer_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -70,19 +73,18 @@ internal class DownloadMessageTransfer_Tests
             TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
             TestData.DefaultTransferLifetimeHours);
         Either<UploadTransferError, UploadTransferResponse> uploadResult =
-            await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request,
+            await _client!.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request,
                 encryptionStreamOpener, false);
 
-        string uploadId = uploadResult
-            .Map(x => x.HashId)
-            .RightOrDefault(null);
-
-        Either<DownloadTransferCiphertextError, StreamDownloadResponse> result =
-            await _client.MessageTransfer.GetAnonymousMessageCiphertextAsync(uploadId, keyExchangeProof);
-
-        Assert.That(uploadResult.IsRight, Is.True);
-        Assert.That(result.IsRight, Is.True);
-        result.DoRight(x => { Assert.DoesNotThrow(() => x.Stream.ReadByte()); });
+        await uploadResult
+            .DoRightAsync(async response =>
+            {
+                Either<DownloadTransferCiphertextError, StreamDownloadResponse> result =
+                    await _client!.MessageTransfer.GetAnonymousMessageCiphertextAsync(response.HashId, keyExchangeProof);
+                Assert.That(result.IsRight, Is.True);
+                result.DoRight(x => { Assert.DoesNotThrow(() => x.Stream.ReadByte()); });
+            })
+            .DoLeftOrNeitherAsync(Assert.Fail);
     }
 
     [TestCase(true, false)]
@@ -106,15 +108,15 @@ internal class DownloadMessageTransfer_Tests
         await senderUsername.IfSomeAsync(async username =>
         {
             RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, senderPassword);
-            Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
             LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword);
-            Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
             await loginResult.DoRightAsync(async loginResponse =>
             {
-                await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-                await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+                await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+                await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
             });
 
             Assert.That(registrationResult.IsRight, Is.True);
@@ -127,7 +129,7 @@ internal class DownloadMessageTransfer_Tests
         await recipientUsername.IfSomeAsync(async username =>
         {
             RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, recipientPassword);
-            Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            Either<RegistrationError, Unit> _ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
         });
 
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
@@ -135,30 +137,31 @@ internal class DownloadMessageTransfer_Tests
         UploadMessageTransferRequest uploadRequest = new UploadMessageTransferRequest(
             TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        Either<UploadTransferError, UploadTransferResponse> uploadResult = await _client.MessageTransfer.UploadMessageTransferAsync(recipientUsername, uploadRequest,
+        Either<UploadTransferError, UploadTransferResponse> uploadResult = await _client!.MessageTransfer.UploadMessageTransferAsync(recipientUsername, uploadRequest,
             encryptionStreamOpener, senderDefined);
 
         await recipientUsername.IfSomeAsync(async username =>
         {
             LoginRequest loginRequest = TestData.GetLoginRequest(username, recipientPassword);
-            Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
             await loginResult.DoRightAsync(async loginResponse =>
             {
-                await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-                await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+                await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+                await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
             });
         });
 
-        string uploadId = uploadResult
-            .Map(x => x.HashId)
-            .RightOrDefault(null);
-
-        Either<DownloadTransferCiphertextError, StreamDownloadResponse> result =
-            await _client.MessageTransfer.GetUserMessageCiphertextAsync(uploadId, keyExchangeProof, recipientDefined);
-
-        Assert.That(uploadResult.IsRight, Is.True);
-        Assert.That(result.IsRight,  Is.True);
-        result.DoRight(x => { Assert.DoesNotThrow(() => x.Stream.ReadByte()); });
+        await uploadResult
+            .DoRightAsync(async response =>
+            {
+                Either<DownloadTransferCiphertextError, StreamDownloadResponse> result =
+                    await _client!.MessageTransfer.GetUserMessageCiphertextAsync(response.HashId, keyExchangeProof,
+                        recipientDefined);
+                result
+                    .DoRight(x => Assert.DoesNotThrow(() => x.Stream.ReadByte()))
+                    .DoLeftOrNeither(Assert.Fail);
+            })
+            .DoLeftOrNeitherAsync(Assert.Fail);
     }
 }

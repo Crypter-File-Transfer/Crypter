@@ -43,12 +43,12 @@ namespace Crypter.Test.Core_Tests.Services_Tests;
 [TestFixture]
 internal class UserEmailVerificationService_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private IServiceScope _scope;
-    private DataContext _dataContext;
+    private WebApplicationFactory<Program>? _factory;
+    private IServiceScope? _scope;
+    private DataContext? _dataContext;
 
-    private ICryptoProvider _cryptoProvider;
-    private UserEmailVerificationService _sut;
+    private ICryptoProvider? _cryptoProvider;
+    private UserEmailVerificationService? _sut;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -67,15 +67,18 @@ internal class UserEmailVerificationService_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        _scope.Dispose();
-        await _factory.DisposeAsync();
+        _scope?.Dispose();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
     [Test]
     public async Task Verification_Parameters_Not_Created_If_User_Does_Not_Exist()
     {
-        Maybe<UserEmailAddressVerificationParameters> result = await _sut.GenerateVerificationParametersAsync(Guid.NewGuid());
+        Maybe<UserEmailAddressVerificationParameters> result = await _sut!.GenerateVerificationParametersAsync(Guid.NewGuid());
         Assert.That(result.IsNone, Is.True);
     }
 
@@ -83,11 +86,11 @@ internal class UserEmailVerificationService_Tests
     public async Task Verification_Parameters_Not_Created_If_User_Email_Already_Verified()
     {
         UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"),
-            new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, true, DateTime.UtcNow, DateTime.UtcNow);
-        _dataContext.Users.Add(newUser);
+            [0x00], [0x00], 1, 1, true, DateTime.UtcNow, DateTime.UtcNow);
+        _dataContext!.Users.Add(newUser);
         await _dataContext.SaveChangesAsync();
 
-        Maybe<UserEmailAddressVerificationParameters> result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
+        Maybe<UserEmailAddressVerificationParameters> result = await _sut!.GenerateVerificationParametersAsync(newUser.Id);
         Assert.That(result.IsNone, Is.True);
     }
 
@@ -95,14 +98,14 @@ internal class UserEmailVerificationService_Tests
     public async Task Verification_Parameters_Not_Created_If_User_Verification_Already_Pending()
     {
         UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"),
-            new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
+            [0x00], [0x00], 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
         newUser.EmailVerification =
-            new UserEmailVerificationEntity(newUser.Id, Guid.NewGuid(), new byte[] { 0x00 }, DateTime.UtcNow);
+            new UserEmailVerificationEntity(newUser.Id, Guid.NewGuid(), [0x00], DateTime.UtcNow);
 
-        _dataContext.Users.Add(newUser);
+        _dataContext!.Users.Add(newUser);
         await _dataContext.SaveChangesAsync();
 
-        Maybe<UserEmailAddressVerificationParameters> result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
+        Maybe<UserEmailAddressVerificationParameters> result = await _sut!.GenerateVerificationParametersAsync(newUser.Id);
         Assert.That(result.IsNone, Is.True);
     }
 
@@ -111,12 +114,12 @@ internal class UserEmailVerificationService_Tests
     [TestCase("invalid email address")]
     public async Task Verification_Parameters_Not_Created_If_User_Email_Address_Is_Invalid(string emailAddress)
     {
-        UserEntity newUser = new UserEntity(Guid.NewGuid(), "username", emailAddress, new byte[] { 0x00 },
-            new byte[] { 0x00 }, 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
-        _dataContext.Users.Add(newUser);
+        UserEntity newUser = new UserEntity(Guid.NewGuid(), "username", emailAddress, [0x00],
+            [0x00], 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
+        _dataContext!.Users.Add(newUser);
         await _dataContext.SaveChangesAsync();
 
-        Maybe<UserEmailAddressVerificationParameters> result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
+        Maybe<UserEmailAddressVerificationParameters> result = await _sut!.GenerateVerificationParametersAsync(newUser.Id);
         Assert.That(result.IsNone, Is.True);
     }
 
@@ -124,11 +127,11 @@ internal class UserEmailVerificationService_Tests
     public async Task Verification_Parameters_Created_If_All_Criteria_Are_Satisfied()
     {
         UserEntity newUser = new UserEntity(Guid.NewGuid(), Username.From("test"), EmailAddress.From("jack@test.com"),
-            new byte[] { 0x00 }, new byte[] { 0x00 }, 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
-        _dataContext.Users.Add(newUser);
+            [0x00], [0x00], 1, 1, false, DateTime.UtcNow, DateTime.UtcNow);
+        _dataContext!.Users.Add(newUser);
         await _dataContext.SaveChangesAsync();
 
-        Maybe<UserEmailAddressVerificationParameters> result = await _sut.GenerateVerificationParametersAsync(newUser.Id);
+        Maybe<UserEmailAddressVerificationParameters> result = await _sut!.GenerateVerificationParametersAsync(newUser.Id);
         Assert.That(result.IsSome, Is.True);
         result.IfSome(x =>
         {
@@ -137,7 +140,7 @@ internal class UserEmailVerificationService_Tests
 
             Span<byte> verificationCode = x.VerificationCode.ToByteArray();
             bool verificationCodeVerified =
-                _cryptoProvider.DigitalSignature.VerifySignature(x.VerificationKey, verificationCode, x.Signature);
+                _cryptoProvider!.DigitalSignature.VerifySignature(x.VerificationKey, verificationCode, x.Signature);
             Assert.That(verificationCodeVerified, Is.True);
         });
     }

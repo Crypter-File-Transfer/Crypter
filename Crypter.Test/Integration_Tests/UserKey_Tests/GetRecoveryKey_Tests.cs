@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -39,9 +39,9 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests;
 [TestFixture]
 internal class GetRecoveryKey_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -54,7 +54,10 @@ internal class GetRecoveryKey_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync(); 
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -63,34 +66,35 @@ internal class GetRecoveryKey_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> __ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> __ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
         (_, InsertMasterKeyRequest insertMasterKeyRequest) =
             TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
         Either<InsertMasterKeyError, Unit> insertMasterKeyResult =
-            await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
+            await _client!.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
         GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(registrationRequest.VersionedPassword.Password);
         Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse> result =
-            await _client.UserKey.GetMasterKeyRecoveryProofAsync(request);
-
-        GetMasterKeyRecoveryProofResponse response = result.RightOrDefault(null);
-
+            await _client!.UserKey.GetMasterKeyRecoveryProofAsync(request);
+        
+        result
+            .DoRight(response =>
+            {
+                Assert.That(response.Proof, Is.EqualTo(insertMasterKeyRequest.RecoveryProof));
+            })
+            .DoLeftOrNeither(Assert.Fail);
+        
         Assert.That(insertMasterKeyResult.IsRight, Is.True);
-        Assert.That(result.IsRight, Is.True);
-        Assert.That(response, Is.Not.Null);
-
-        Assert.That(response.Proof, Is.EqualTo(insertMasterKeyRequest.RecoveryProof));
     }
 
     [Test]
@@ -98,28 +102,28 @@ internal class GetRecoveryKey_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> __ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> __ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
         (_, InsertMasterKeyRequest insertMasterKeyRequest) =
             TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
         Either<InsertMasterKeyError, Unit> insertMasterKeyResult =
-            await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
+            await _client!.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
         byte[] invalidPassword = "invalid"u8.ToArray();
         GetMasterKeyRecoveryProofRequest request =
             new GetMasterKeyRecoveryProofRequest(invalidPassword);
         Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse> result =
-            await _client.UserKey.GetMasterKeyRecoveryProofAsync(request);
+            await _client!.UserKey.GetMasterKeyRecoveryProofAsync(request);
 
         Assert.That(insertMasterKeyResult.IsRight, Is.True);
         Assert.That(result.IsLeft, Is.True);

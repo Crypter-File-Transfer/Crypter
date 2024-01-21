@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -38,8 +38,8 @@ namespace Crypter.Test.Core_Tests.Services_Tests;
 [TestFixture]
 public class EmailService_Tests
 {
-    private IOptions<EmailSettings> _defaultEmailSettings;
-    private ILogger<EmailService> _logger;
+    private IOptions<EmailSettings>? _defaultEmailSettings;
+    private ILogger<EmailService>? _logger;
 
     [SetUp]
     public void Setup()
@@ -47,19 +47,19 @@ public class EmailService_Tests
         EmailSettings settings = new EmailSettings();
         _defaultEmailSettings = Options.Create(settings);
         
-        var serviceProvider = new ServiceCollection()
+        ServiceProvider serviceProvider = new ServiceCollection()
             .AddLogging()
             .BuildServiceProvider();
-        var factory = serviceProvider.GetService<ILoggerFactory>();
-        _logger = factory.CreateLogger<EmailService>();
+        ILoggerFactory? factory = serviceProvider.GetService<ILoggerFactory>();
+        _logger = factory?.CreateLogger<EmailService>();
     }
 
     [Test]
     public async Task ServiceDisabled_SendAsync_ReturnsTrue()
     {
-        var sut = new EmailService(_defaultEmailSettings, _logger);
-        var emailAddress = EmailAddress.From("jack@crypter.dev");
-        var result = await sut.SendAsync("foo", "bar", emailAddress);
+        EmailService sut = new EmailService(_defaultEmailSettings, _logger);
+        EmailAddress? emailAddress = EmailAddress.From("jack@crypter.dev");
+        bool result = await sut.SendAsync("foo", "bar", emailAddress);
         Assert.That(result, Is.True);
     }
 }

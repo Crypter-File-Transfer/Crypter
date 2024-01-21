@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -42,9 +42,9 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests;
 [TestFixture]
 internal class GetSentMessageTransfers_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -57,7 +57,10 @@ internal class GetSentMessageTransfers_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -66,16 +69,16 @@ internal class GetSentMessageTransfers_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> _ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
@@ -83,13 +86,12 @@ internal class GetSentMessageTransfers_Tests
         UploadMessageTransferRequest uploadMessageRequest = new UploadMessageTransferRequest(
             TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        Either<UploadTransferError, UploadTransferResponse> __ = await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None,
+        Either<UploadTransferError, UploadTransferResponse> __ = await _client!.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None,
             uploadMessageRequest, encryptionStreamOpener, true);
 
-        Maybe<List<UserSentMessageDTO>> response = await _client.MessageTransfer.GetSentMessagesAsync();
-        List<UserSentMessageDTO> result = response.SomeOrDefault(null);
-
-        Assert.That(response.IsSome, Is.True);
-        Assert.That(result.Count, Is.EqualTo(1));
+        Maybe<List<UserSentMessageDTO>> response = await _client!.MessageTransfer.GetSentMessagesAsync();
+        response
+            .IfSome(x => Assert.That(x.Count, Is.EqualTo(1)))
+            .IfNone(Assert.Fail);
     }
 }

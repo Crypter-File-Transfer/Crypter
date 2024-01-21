@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.IO;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
@@ -54,9 +55,9 @@ internal static class SettingsReader
         DirectoryInfo directory = new DirectoryInfo(assemblyLocation);
         do
         {
-            directory = directory.Parent;
+            directory = directory.Parent ?? throw new Exception("Directory has no parent.");
         } while (directory.Name != Assembly.GetExecutingAssembly().GetName().Name);
 
-        return directory.Parent;
+        return directory.Parent ?? throw new Exception("Directory has no parent.");
     }
 }

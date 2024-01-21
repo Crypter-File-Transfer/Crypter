@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -41,12 +41,12 @@ namespace Crypter.Test.Core_Tests.Services_Tests;
 [TestFixture]
 public class HangfireBackgroundService_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private IServiceScope _scope;
-    private DataContext _dataContext;
-    private ISender _sender;
-    private ILogger<HangfireBackgroundService> _logger;
-    private Mock<IEmailService> _emailServiceMock;
+    private WebApplicationFactory<Program>? _factory;
+    private IServiceScope? _scope;
+    private DataContext? _dataContext;
+    private ISender? _sender;
+    private ILogger<HangfireBackgroundService>? _logger;
+    private Mock<IEmailService>? _emailServiceMock;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -67,15 +67,18 @@ public class HangfireBackgroundService_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        _scope.Dispose();
-        await _factory.DisposeAsync();
+        _scope?.Dispose();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
     [Test]
     public async Task Verification_Email_Not_Sent_Without_Verification_Parameters()
     {
-        _emailServiceMock
+        _emailServiceMock!
             .Setup(x => x.SendEmailVerificationAsync(
                 It.IsAny<UserEmailAddressVerificationParameters>()))
             .ReturnsAsync((UserEmailAddressVerificationParameters _) => true);
@@ -90,7 +93,7 @@ public class HangfireBackgroundService_Tests
     [Test]
     public async Task Recovery_Email_Not_Sent_Without_Recovery_Parameters()
     {
-        _emailServiceMock
+        _emailServiceMock!
             .Setup(x => x.SendAccountRecoveryLinkAsync(
                 It.IsAny<UserRecoveryParameters>(),
                 It.IsAny<int>()))
