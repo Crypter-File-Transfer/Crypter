@@ -38,7 +38,7 @@ public class AuthenticationPassword_Tests
     [Test]
     public void Null_Authentication_Passwords_Are_Invalid()
     {
-        byte[] authenticationPassword = null;
+        byte[]? authenticationPassword = null;
         
         Assert.Throws<ValueNullException>(() => AuthenticationPassword.From(authenticationPassword));
 

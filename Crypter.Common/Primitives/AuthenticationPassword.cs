@@ -31,7 +31,7 @@ using ValueOf;
 
 namespace Crypter.Common.Primitives;
 
-public class AuthenticationPassword : ValueOf<byte[], AuthenticationPassword>
+public class AuthenticationPassword : ValueOf<byte[]?, AuthenticationPassword>
 {
     protected override void Validate()
     {
@@ -44,7 +44,7 @@ public class AuthenticationPassword : ValueOf<byte[], AuthenticationPassword>
             .IsNone;
     }
 
-    public static Maybe<ByteArrayPrimitiveValidationFailure> CheckValidation(byte[] value)
+    public static Maybe<ByteArrayPrimitiveValidationFailure> CheckValidation(byte[]? value)
     {
         if (value is null)
         {

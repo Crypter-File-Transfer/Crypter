@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -36,10 +36,10 @@ namespace Crypter.Test;
 
 internal class ContainerService : IAsyncDisposable
 {
-    public string CrypterConnectionString { get; private set; }
-    public string HangfireConnectionString { get; private set; }
+    public string? CrypterConnectionString { get; private set; }
+    public string? HangfireConnectionString { get; private set; }
 
-    private PostgreSqlContainer _postgresContainer;
+    private PostgreSqlContainer? _postgresContainer;
 
     internal async Task StartPostgresContainerAsync()
     {
@@ -92,7 +92,7 @@ internal class ContainerService : IAsyncDisposable
     {
         return SettingsReader.GetTestSettings()
             .GetSection("IntegrationTestingOnly:PostgresContainer")
-            .Get<PostgresContainerSettings>();
+            .Get<PostgresContainerSettings>() ?? throw new Exception("Section missing from test settings: 'IntegrationTestingOnly:PostgresContainer'");
     }
 
     private static string GetPostgresInitVolume()
@@ -111,13 +111,13 @@ internal class ContainerService : IAsyncDisposable
 
 internal class PostgresContainerSettings
 {
-    public string Image { get; init; }
+    public string? Image { get; init; }
     public int ContainerPort { get; init; }
-    public string SuperPassword { get; init; }
-    public string CrypterDatabaseName { get; init; }
-    public string CrypterUserName { get; init; }
-    public string CrypterUserPassword { get; init; }
-    public string HangfireDatabaseName { get; init; }
-    public string HangfireUserName { get; init; }
-    public string HangfireUserPassword { get; init; }
+    public string? SuperPassword { get; init; }
+    public string? CrypterDatabaseName { get; init; }
+    public string? CrypterUserName { get; init; }
+    public string? CrypterUserPassword { get; init; }
+    public string? HangfireDatabaseName { get; init; }
+    public string? HangfireUserName { get; init; }
+    public string? HangfireUserPassword { get; init; }
 }

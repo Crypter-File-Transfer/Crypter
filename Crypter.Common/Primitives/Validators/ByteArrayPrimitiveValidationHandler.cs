@@ -33,11 +33,12 @@ namespace Crypter.Common.Primitives.ValidationHandlers;
 
 public static class ByteArrayPrimitiveValidationHandler
 {
-    public static void ThrowIfInvalid(Func<byte[], Maybe<ByteArrayPrimitiveValidationFailure>> validator, byte[] value)
+    public static void ThrowIfInvalid(Func<byte[]?, Maybe<ByteArrayPrimitiveValidationFailure>> validator, byte[]? value)
     {
         Maybe<ByteArrayPrimitiveValidationFailure> validationResult = validator(value);
         validationResult.IfSome(invalidReason => throw (invalidReason switch
         {
+            ByteArrayPrimitiveValidationFailure.Invalid => new ValueInvalidException(),
             ByteArrayPrimitiveValidationFailure.IsNull => new ValueNullException(),
             ByteArrayPrimitiveValidationFailure.IsEmpty => new ValueEmptyException(),
             ByteArrayPrimitiveValidationFailure.TooLong => new ValueTooLongException(),

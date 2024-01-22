@@ -41,9 +41,9 @@ namespace Crypter.Test.Integration_Tests.MessageTransfer_Tests;
 [TestFixture]
 internal class UploadMessageTransfer_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -56,7 +56,10 @@ internal class UploadMessageTransfer_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync(); 
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -69,7 +72,7 @@ internal class UploadMessageTransfer_Tests
             TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
             TestData.DefaultTransferLifetimeHours);
         Either<UploadTransferError, UploadTransferResponse> result =
-            await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request,
+            await _client!.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request,
                 encryptionStreamOpener, false);
 
         Assert.That(result.IsRight, Is.True);
@@ -96,15 +99,15 @@ internal class UploadMessageTransfer_Tests
         await senderUsername.IfSomeAsync(async username =>
         {
             RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, senderPassword);
-            Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
             LoginRequest loginRequest = TestData.GetLoginRequest(username, senderPassword);
-            Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+            Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
             await loginResult.DoRightAsync(async loginResponse =>
             {
-                await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-                await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+                await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+                await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
             });
 
             Assert.That(registrationResult.IsRight, Is.True);
@@ -117,7 +120,7 @@ internal class UploadMessageTransfer_Tests
         await recipientUsername.IfSomeAsync(async username =>
         {
             RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, recipientPassword);
-            Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+            Either<RegistrationError, Unit> _ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
         });
 
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
@@ -125,7 +128,7 @@ internal class UploadMessageTransfer_Tests
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
             TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
             TestData.DefaultTransferLifetimeHours);
-        Either<UploadTransferError, UploadTransferResponse> result = await _client.MessageTransfer.UploadMessageTransferAsync(recipientUsername, request,
+        Either<UploadTransferError, UploadTransferResponse> result = await _client!.MessageTransfer.UploadMessageTransferAsync(recipientUsername, request,
             encryptionStreamOpener, senderDefined);
 
         Assert.That(result.IsRight, Is.True);
@@ -140,7 +143,7 @@ internal class UploadMessageTransfer_Tests
             TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
             TestData.DefaultTransferLifetimeHours);
         Either<UploadTransferError, UploadTransferResponse> result =
-            await _client.MessageTransfer.UploadMessageTransferAsync("John Smith", request, encryptionStreamOpener,
+            await _client!.MessageTransfer.UploadMessageTransferAsync("John Smith", request, encryptionStreamOpener,
                 false);
 
         Assert.That(result.IsLeft, Is.True);
@@ -156,7 +159,7 @@ internal class UploadMessageTransfer_Tests
             TestData.DefaultTransferLifetimeHours);
 
         Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request,
+            await _client!.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request,
                 encryptionStreamOpener, true));
     }
 
@@ -167,15 +170,15 @@ internal class UploadMessageTransfer_Tests
         const string senderPassword = TestData.DefaultPassword;
 
         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(senderUsername, senderPassword);
-        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest = TestData.GetLoginRequest(senderUsername, senderPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync("bogus auth token");
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync("bogus auth token");
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
         Assert.That(registrationResult.IsRight, Is.True);
@@ -187,7 +190,7 @@ internal class UploadMessageTransfer_Tests
             TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
             TestData.DefaultTransferLifetimeHours);
         Either<UploadTransferError, UploadTransferResponse> result =
-            await _client.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request,
+            await _client!.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request,
                 encryptionStreamOpener, true);
 
         Assert.That(result.IsRight, Is.True);

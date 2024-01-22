@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -39,7 +39,7 @@ namespace Crypter.Test.Web_Tests;
 [TestFixture]
 public class BrowserTokenRepository_Tests
 {
-    private Mock<IDeviceRepository<BrowserStorageLocation>> _browserStorageMock;
+    private Mock<IDeviceRepository<BrowserStorageLocation>>? _browserStorageMock;
 
     [SetUp]
     public void Setup()
@@ -51,17 +51,17 @@ public class BrowserTokenRepository_Tests
     [Test]
     public async Task Repository_Stores_Authentication_Token_As_Token_Object()
     {
-        _browserStorageMock
+        _browserStorageMock!
             .Setup(x => x.SetItemAsync(
                 DeviceStorageObjectType.AuthenticationToken,
                 It.IsAny<TokenObject>(),
                 BrowserStorageLocation.Memory))
             .ReturnsAsync((DeviceStorageObjectType _, TokenObject _, BrowserStorageLocation _) => Unit.Default);
 
-        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock.Object);
+        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock!.Object);
         await sut.StoreAuthenticationTokenAsync("foo");
 
-        _browserStorageMock.Verify(
+        _browserStorageMock!.Verify(
             x => x.SetItemAsync(DeviceStorageObjectType.AuthenticationToken, It.IsAny<TokenObject>(),
                 BrowserStorageLocation.Memory), Times.Once);
     }
@@ -71,7 +71,7 @@ public class BrowserTokenRepository_Tests
     public async Task Repository_Stores_Refresh_Token_As_Token_Object(TokenType tokenType,
         BrowserStorageLocation browserStorageLocation)
     {
-        _browserStorageMock
+        _browserStorageMock!
             .Setup(x => x.SetItemAsync(
                 DeviceStorageObjectType.RefreshToken,
                 It.IsAny<TokenObject>(),
@@ -79,10 +79,10 @@ public class BrowserTokenRepository_Tests
             .ReturnsAsync(
                 (DeviceStorageObjectType _, TokenObject _, BrowserStorageLocation _) => Unit.Default);
 
-        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock.Object);
+        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock!.Object);
         await sut.StoreRefreshTokenAsync("foo", tokenType);
 
-        _browserStorageMock.Verify(
+        _browserStorageMock!.Verify(
             x => x.SetItemAsync(DeviceStorageObjectType.RefreshToken, It.IsAny<TokenObject>(), browserStorageLocation),
             Times.Once);
     }
@@ -90,11 +90,11 @@ public class BrowserTokenRepository_Tests
     [Test]
     public async Task Repository_Gets_Some_Authentication_Token()
     {
-        _browserStorageMock
+        _browserStorageMock!
             .Setup(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.AuthenticationToken))
             .ReturnsAsync((DeviceStorageObjectType _) => new TokenObject(TokenType.Authentication, "foo"));
 
-        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock.Object);
+        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock!.Object);
 
         Maybe<TokenObject> fetchedToken = await sut.GetAuthenticationTokenAsync();
         fetchedToken.IfNone(Assert.Fail);
@@ -104,23 +104,23 @@ public class BrowserTokenRepository_Tests
             Assert.That(x.Token, Is.EqualTo("foo"));
         });
 
-        _browserStorageMock.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.AuthenticationToken),
+        _browserStorageMock!.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.AuthenticationToken),
             Times.Once);
     }
 
     [Test]
     public async Task Repository_Gets_None_Authentication_Token()
     {
-        _browserStorageMock
+        _browserStorageMock!
             .Setup(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.AuthenticationToken))
             .ReturnsAsync((DeviceStorageObjectType _) => Maybe<TokenObject>.None);
 
-        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock.Object);
+        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock!.Object);
 
         Maybe<TokenObject> fetchedToken = await sut.GetAuthenticationTokenAsync();
         Assert.That(fetchedToken.IsNone, Is.True);
 
-        _browserStorageMock.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.AuthenticationToken),
+        _browserStorageMock!.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.AuthenticationToken),
             Times.Once);
     }
 
@@ -128,11 +128,11 @@ public class BrowserTokenRepository_Tests
     [TestCase(TokenType.Device)]
     public async Task Repository_Gets_Some_Refresh_Token(TokenType tokenType)
     {
-        _browserStorageMock
+        _browserStorageMock!
             .Setup(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken))
             .ReturnsAsync((DeviceStorageObjectType _) => new TokenObject(tokenType, "foo"));
 
-        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock.Object);
+        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock!.Object);
 
         Maybe<TokenObject> fetchedToken = await sut.GetRefreshTokenAsync();
         fetchedToken.IfNone(Assert.Fail);
@@ -142,20 +142,20 @@ public class BrowserTokenRepository_Tests
             Assert.That(x.Token, Is.EqualTo("foo"));
         });
 
-        _browserStorageMock.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken), Times.Once);
+        _browserStorageMock!.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken), Times.Once);
     }
 
     public async Task Repository_Gets_None_Refresh_Token()
     {
-        _browserStorageMock
+        _browserStorageMock!
             .Setup(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken))
             .ReturnsAsync((DeviceStorageObjectType _) => Maybe<TokenObject>.None);
 
-        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock.Object);
+        BrowserTokenRepository sut = new BrowserTokenRepository(_browserStorageMock!.Object);
 
         Maybe<TokenObject> fetchedToken = await sut.GetRefreshTokenAsync();
         Assert.That(fetchedToken.IsNone, Is.True);
 
-        _browserStorageMock.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken), Times.Once);
+        _browserStorageMock!.Verify(x => x.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken), Times.Once);
     }
 }

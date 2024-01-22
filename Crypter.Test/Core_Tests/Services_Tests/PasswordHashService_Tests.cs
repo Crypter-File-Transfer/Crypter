@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -39,10 +39,10 @@ namespace Crypter.Test.Core_Tests.Services_Tests;
 [TestFixture]
 public class PasswordHashService_Tests
 {
-    private PasswordHashService _sut;
+    private PasswordHashService? _sut;
 
-    [OneTimeSetUp]
-    public void SetupOnce()
+    [SetUp]
+    public void Setup()
     {
         ICryptoProvider cryptoProvider = new DefaultCryptoProvider();
 
@@ -71,7 +71,7 @@ public class PasswordHashService_Tests
     public void Salt_Is_16_Bytes()
     {
         byte[] password = "foo"u8.ToArray();
-        SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
+        SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
         Assert.That(hashOutput.Salt.Length, Is.EqualTo(16));
     }
 
@@ -79,7 +79,7 @@ public class PasswordHashService_Tests
     public void Hash_Is_64_Bytes()
     {
         byte[] password = "foo"u8.ToArray();
-        SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
+        SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
         Assert.That(hashOutput.Hash.Length, Is.EqualTo(64));
     }
 
@@ -87,7 +87,7 @@ public class PasswordHashService_Tests
     public void Salts_Are_Unique()
     {
         byte[] password = "foo"u8.ToArray();
-        SecurePasswordHashOutput hashOutput1 = _sut.MakeSecurePasswordHash(password, 0);
+        SecurePasswordHashOutput hashOutput1 = _sut!.MakeSecurePasswordHash(password, 0);
         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 0);
         Assert.That(hashOutput1.Salt, Is.Not.EqualTo(hashOutput2.Salt));
     }
@@ -96,7 +96,7 @@ public class PasswordHashService_Tests
     public void Hashes_With_Unique_Salts_Are_Unique()
     {
         byte[] password = "foo"u8.ToArray();
-        SecurePasswordHashOutput hashOutput1 = _sut.MakeSecurePasswordHash(password, 0);
+        SecurePasswordHashOutput hashOutput1 = _sut!.MakeSecurePasswordHash(password, 0);
         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 0);
         Assert.That(hashOutput1.Hash, Is.Not.EqualTo(hashOutput2.Hash));
     }
@@ -105,7 +105,7 @@ public class PasswordHashService_Tests
     public void Hash_Verification_Can_Succeed()
     {
         byte[] password = "foo"u8.ToArray();
-        SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
+        SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 0);
         Assert.That(hashesMatch, Is.True);
     }
@@ -115,7 +115,7 @@ public class PasswordHashService_Tests
     {
         byte[] password = "foo"u8.ToArray();
         byte[] notPassword = "not foo"u8.ToArray();
-        SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
+        SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
         bool hashesMatch = _sut.VerifySecurePasswordHash(notPassword, hashOutput.Hash, hashOutput.Salt, 0);
         Assert.That(hashesMatch, Is.False);
     }
@@ -124,7 +124,7 @@ public class PasswordHashService_Tests
     public void Hash_Verification_Fails_With_Bad_Salt()
     {
         byte[] password = "foo"u8.ToArray();
-        SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
+        SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
 
         // Modify the first byte in the salt to make it "bad"
         hashOutput.Salt[0] = hashOutput.Salt[0] == 0x01
@@ -139,7 +139,7 @@ public class PasswordHashService_Tests
     public void Hash_Verification_Fails_With_Different_Iterations()
     {
         byte[] password = "foo"u8.ToArray();
-        SecurePasswordHashOutput hashOutput = _sut.MakeSecurePasswordHash(password, 0);
+        SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
 
         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 1);
         Assert.That(hashesMatch, Is.False);
@@ -167,7 +167,7 @@ public class PasswordHashService_Tests
             0x90, 0xe8, 0x6b, 0x19, 0x70, 0x27, 0xa5, 0xc6
         ];
 
-        bool hashesMatch = _sut.VerifySecurePasswordHash(password, hash, salt, 2);
+        bool hashesMatch = _sut!.VerifySecurePasswordHash(password, hash, salt, 2);
         Assert.That(hashesMatch, Is.True);
     }
 }

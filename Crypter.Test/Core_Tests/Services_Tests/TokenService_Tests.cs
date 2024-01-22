@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -37,10 +37,10 @@ namespace Crypter.Test.Core_Tests.Services_Tests;
 [TestFixture]
 public class TokenService_Tests
 {
-    private IOptions<TokenSettings> _tokenSettings;
+    private IOptions<TokenSettings>? _tokenSettings;
 
-    [OneTimeSetUp]
-    public void OneTimeSetup()
+    [SetUp]
+    public void Setup()
     {
         TokenSettings tokenSettings = new TokenSettings
         {
@@ -83,7 +83,7 @@ public class TokenService_Tests
 
         TokenService sut = new TokenService(_tokenSettings);
         DateTime tokenCreatedUtc = DateTime.UtcNow;
-        DateTime expectedTokenExpiration = tokenCreatedUtc.AddMinutes(_tokenSettings.Value.SessionTokenLifetimeMinutes);
+        DateTime expectedTokenExpiration = tokenCreatedUtc.AddMinutes(_tokenSettings!.Value.SessionTokenLifetimeMinutes);
         RefreshTokenData tokenData = sut.NewSessionToken(userId);
 
         Assert.That(tokenData, Is.Not.Null);
@@ -111,7 +111,7 @@ public class TokenService_Tests
 
         TokenService sut = new TokenService(_tokenSettings);
         DateTime tokenCreatedUtc = DateTime.UtcNow;
-        DateTime expectedTokenExpiration = tokenCreatedUtc.AddDays(_tokenSettings.Value.DeviceTokenLifetimeDays);
+        DateTime expectedTokenExpiration = tokenCreatedUtc.AddDays(_tokenSettings!.Value.DeviceTokenLifetimeDays);
         RefreshTokenData tokenData = sut.NewDeviceToken(userId);
 
         Assert.That(tokenData, Is.Not.Null);

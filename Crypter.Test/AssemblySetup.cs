@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -43,24 +43,23 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using NUnit.Framework;
 using Respawn;
-using Respawn.Graph;
 
 namespace Crypter.Test;
 
 [SetUpFixture]
 internal class AssemblySetup
 {
-    public static string CrypterConnectionString;
-    public static string HangfireConnectionString;
-    public static string FileStorageLocation;
+    public static string? CrypterConnectionString;
+    public static string? HangfireConnectionString;
+    public static string? FileStorageLocation;
 
-    private ContainerService _containerService;
+    private ContainerService? _containerService;
 
-    private static Respawner _crypterRespawner;
-    private static NpgsqlConnection _crypterConnection;
+    private static Respawner? _crypterRespawner;
+    private static NpgsqlConnection? _crypterConnection;
 
-    private static Respawner _hangfireRespawner;
-    private static NpgsqlConnection _hangfireConnection;
+    private static Respawner? _hangfireRespawner;
+    private static NpgsqlConnection? _hangfireConnection;
 
     [OneTimeSetUp]
     public async Task SetupFixtureAsync()
@@ -91,7 +90,7 @@ internal class AssemblySetup
     }
 
     internal static async Task<WebApplicationFactory<Program>> CreateWebApplicationFactoryAsync(
-        bool ensureDatabaseMigrated = true, IServiceCollection overrides = null)
+        bool ensureDatabaseMigrated = true, IServiceCollection? overrides = null)
     {
         WebApplicationFactory<Program> factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
@@ -129,11 +128,7 @@ internal class AssemblySetup
 
     private static void ReplaceService(IServiceCollection serviceCollection, ServiceDescriptor service)
     {
-        if (service is not null)
-        {
-            serviceCollection.Remove(service);
-        }
-
+        serviceCollection.Remove(service);
         serviceCollection.Add(service);
     }
 
@@ -154,11 +149,11 @@ internal class AssemblySetup
         {
             DbAdapter = DbAdapter.Postgres,
             WithReseed = true,
-            TablesToIgnore = new Table[]
-            {
+            TablesToIgnore =
+            [
                 "schema",
                 HistoryRepository.DefaultTableName
-            }
+            ]
         };
 
         _crypterRespawner = await InitializeRespawnerAsync(_crypterConnection, respawnOptions);
@@ -169,7 +164,7 @@ internal class AssemblySetup
     {
         connection.Open();
         Respawner respawner = await Respawner.CreateAsync(connection, options);
-        connection.Close();
+        await connection.CloseAsync();
 
         return respawner;
     }
@@ -183,6 +178,7 @@ internal class AssemblySetup
         }
         catch (Exception)
         {
+            // ignored
         }
         finally
         {
@@ -197,13 +193,35 @@ internal class AssemblySetup
     {
         try
         {
-            Directory.Delete(FileStorageLocation, true);
+            Directory.Delete(FileStorageLocation!, true);
         }
         catch (Exception)
         {
+            // ignored
         }
 
+        if (_crypterRespawner is null)
+        {
+            throw new Exception($"{nameof(_crypterRespawner)} should not be null.");
+        }
+
+        if (_crypterConnection is null)
+        {
+            throw new Exception($"{nameof(_crypterConnection)} should not be null.");
+        }
+        
         await ResetDatabaseAsync(_crypterRespawner, _crypterConnection);
+
+        if (_hangfireRespawner is null)
+        {
+            throw new Exception($"{nameof(_hangfireRespawner)} should not be null.");
+        }
+
+        if (_hangfireConnection is null)
+        {
+            throw new Exception($"{nameof(_hangfireConnection)} should not be null.");
+        }
+        
         await ResetDatabaseAsync(_hangfireRespawner, _hangfireConnection);
     }
 }

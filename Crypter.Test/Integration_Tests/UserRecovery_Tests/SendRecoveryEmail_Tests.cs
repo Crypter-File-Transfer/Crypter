@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -37,8 +37,8 @@ namespace Crypter.Test.Integration_Tests.UserRecovery_Tests;
 [TestFixture]
 internal class SendRecoveryEmail_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -51,7 +51,10 @@ internal class SendRecoveryEmail_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -59,7 +62,7 @@ internal class SendRecoveryEmail_Tests
     public async Task Send_Recovery_Email_Works()
     {
         EmailAddress emailAddress = EmailAddress.From(TestData.DefaultEmailAdress);
-        Either<SendRecoveryEmailError, Unit> result = await _client.UserRecovery.SendRecoveryEmailAsync(emailAddress);
+        Either<SendRecoveryEmailError, Unit> result = await _client!.UserRecovery.SendRecoveryEmailAsync(emailAddress);
 
         Assert.That(result.IsRight, Is.True);
     }

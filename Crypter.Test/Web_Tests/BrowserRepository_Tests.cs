@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -50,8 +50,8 @@ public class BrowserRepository_Tests
     {
         Mock<IJSRuntime> jsRuntime = new Mock<IJSRuntime>();
         jsRuntime
-            .Setup(x => x.InvokeAsync<string>(It.IsAny<string>(), new object[] { It.IsAny<string>() }))
-            .ReturnsAsync((string _, string _) => default);
+            .Setup(x => x.InvokeAsync<string?>(It.IsAny<string>(), new object[] { It.IsAny<string>() }))
+            .ReturnsAsync((string _, string _) => null);
 
         BrowserRepository sut = new BrowserRepository(jsRuntime.Object);
         await sut.InitializeAsync();
