@@ -34,7 +34,7 @@ namespace Crypter.Crypto.Common.StreamEncryption;
 
 public class EncryptionStream : Stream
 {
-    private const int _lengthBufferSize = sizeof(int);
+    private const int LengthBufferSize = sizeof(int);
 
     private readonly IStreamEncrypt _streamEncrypt;
     private readonly Stream _plaintextStream;
@@ -43,9 +43,9 @@ public class EncryptionStream : Stream
     private readonly int _minimumBufferSize;
     private readonly byte[] _headerBytes;
 
-    private bool _finishedReadingPlaintext = false;
-    private long _plaintextReadPosition = 0;
-    private bool _headerHasBeenReturned = false;
+    private bool _finishedReadingPlaintext;
+    private long _plaintextReadPosition;
+    private bool _headerHasBeenReturned;
 
     /// <summary>
     /// 
@@ -54,10 +54,8 @@ public class EncryptionStream : Stream
     /// <param name="plaintextSize"></param>
     /// <param name="encryptionKey"></param>
     /// <param name="streamEncryptionFactory"></param>
-    /// <param name="plaintextChunkSize">
-    /// The amount of plaintext bytes to encrypt in a single operation.
-    /// If this amount of plaintext bytes cannot be read in a single operation, padding is applied up to this size.
-    /// </param>
+    /// <param name="maxReadSize"></param>
+    /// <param name="padSize"></param>
     public EncryptionStream(Stream plaintextStream, long plaintextSize, Span<byte> encryptionKey,
         IStreamEncryptionFactory streamEncryptionFactory, int maxReadSize, int padSize)
     {
@@ -67,7 +65,7 @@ public class EncryptionStream : Stream
 
         _streamEncrypt = streamEncryptionFactory.NewEncryptionStream(padSize);
         _headerBytes = _streamEncrypt.GenerateHeader(encryptionKey);
-        _minimumBufferSize = _lengthBufferSize + maxReadSize + padSize + (int)_streamEncrypt.TagSize;
+        _minimumBufferSize = LengthBufferSize + maxReadSize + padSize + (int)_streamEncrypt.TagSize;
     }
 
     public override bool CanRead => true;
@@ -93,17 +91,17 @@ public class EncryptionStream : Stream
             return 0;
         }
 
-        byte[] lengthBuffer = new byte[_lengthBufferSize];
+        byte[] lengthBuffer = new byte[LengthBufferSize];
         if (!_headerHasBeenReturned)
         {
             BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer, _headerBytes.Length);
-            lengthBuffer.CopyTo(buffer.AsMemory()[.._lengthBufferSize]);
-            _headerBytes.CopyTo(buffer.AsMemory()[_lengthBufferSize..]);
+            lengthBuffer.CopyTo(buffer.AsMemory()[..LengthBufferSize]);
+            _headerBytes.CopyTo(buffer.AsMemory()[LengthBufferSize..]);
             _headerHasBeenReturned = true;
 
-            Console.WriteLine(Convert.ToHexString(buffer.AsSpan(0, _headerBytes.Length + _lengthBufferSize)));
+            Console.WriteLine(Convert.ToHexString(buffer.AsSpan(0, _headerBytes.Length + LengthBufferSize)));
 
-            return _headerBytes.Length + _lengthBufferSize;
+            return _headerBytes.Length + LengthBufferSize;
         }
 
         byte[] plaintextBuffer = new byte[_plaintextReadSize];
@@ -116,9 +114,9 @@ public class EncryptionStream : Stream
             : _streamEncrypt.Push(plaintextBuffer, _finishedReadingPlaintext);
 
         BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer, ciphertext.Length);
-        lengthBuffer.CopyTo(buffer.AsMemory()[.._lengthBufferSize]);
-        ciphertext.CopyTo(buffer.AsMemory()[_lengthBufferSize..]);
-        return ciphertext.Length + _lengthBufferSize;
+        lengthBuffer.CopyTo(buffer.AsMemory()[..LengthBufferSize]);
+        ciphertext.CopyTo(buffer.AsMemory()[LengthBufferSize..]);
+        return ciphertext.Length + LengthBufferSize;
     }
 
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
@@ -130,15 +128,15 @@ public class EncryptionStream : Stream
             return 0;
         }
 
-        byte[] lengthBuffer = new byte[_lengthBufferSize];
+        byte[] lengthBuffer = new byte[LengthBufferSize];
         if (!_headerHasBeenReturned)
         {
             BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer, _headerBytes.Length);
-            lengthBuffer.CopyTo(buffer[.._lengthBufferSize]);
-            _headerBytes.CopyTo(buffer[_lengthBufferSize..]);
+            lengthBuffer.CopyTo(buffer[..LengthBufferSize]);
+            _headerBytes.CopyTo(buffer[LengthBufferSize..]);
             _headerHasBeenReturned = true;
 
-            return _headerBytes.Length + _lengthBufferSize;
+            return _headerBytes.Length + LengthBufferSize;
         }
 
         byte[] plaintextBuffer = new byte[_plaintextReadSize];
@@ -152,9 +150,9 @@ public class EncryptionStream : Stream
             : _streamEncrypt.Push(plaintextBuffer, _finishedReadingPlaintext);
 
         BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer, ciphertext.Length);
-        lengthBuffer.CopyTo(buffer[.._lengthBufferSize]);
-        ciphertext.CopyTo(buffer[_lengthBufferSize..]);
-        return ciphertext.Length + _lengthBufferSize;
+        lengthBuffer.CopyTo(buffer[..LengthBufferSize]);
+        ciphertext.CopyTo(buffer[LengthBufferSize..]);
+        return ciphertext.Length + LengthBufferSize;
     }
 
     private void AssertBufferSize(int bufferSize)

@@ -41,8 +41,8 @@ public class DecryptionStream : Stream
     private readonly Stream _ciphertextStream;
     private readonly long _ciphertextStreamSize;
 
-    private long _ciphertextReadPosition = 0;
-    private bool _finishedReadingCiphertext = false;
+    private long _ciphertextReadPosition;
+    private bool _finishedReadingCiphertext;
 
     public DecryptionStream(Stream ciphertextStream, long streamSize, Span<byte> decryptionKey,
         IStreamEncryptionFactory streamEncryptionFactory)
@@ -84,7 +84,7 @@ public class DecryptionStream : Stream
         _ciphertextReadPosition += lengthBytesRead;
         int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
-        AssertBuffersize(buffer.Length, plaintextChunkSize);
+        AssertBufferSize(buffer.Length, plaintextChunkSize);
 
         byte[] ciphertextBuffer = new byte[ciphertextChunkSize];
         int bytesRead = _ciphertextStream.Read(ciphertextBuffer, 0, ciphertextChunkSize);
@@ -109,7 +109,7 @@ public class DecryptionStream : Stream
         _ciphertextReadPosition += lengthBytesRead;
         int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
-        AssertBuffersize(buffer.Length, plaintextChunkSize);
+        AssertBufferSize(buffer.Length, plaintextChunkSize);
 
         Span<byte> ciphertextBuffer = new byte[ciphertextChunkSize];
         int bytesRead = _ciphertextStream.Read(ciphertextBuffer);
@@ -134,7 +134,7 @@ public class DecryptionStream : Stream
         _ciphertextReadPosition += lengthBytesRead;
         int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
-        AssertBuffersize(buffer.Length, plaintextChunkSize);
+        AssertBufferSize(buffer.Length, plaintextChunkSize);
 
         byte[] ciphertextBuffer = new byte[ciphertextChunkSize];
         int bytesRead = await _ciphertextStream.ReadAsync(
@@ -168,7 +168,7 @@ public class DecryptionStream : Stream
         throw new NotImplementedException();
     }
 
-    private static void AssertBuffersize(int bufferSize, int chunkSize)
+    private static void AssertBufferSize(int bufferSize, int chunkSize)
     {
         if (bufferSize < chunkSize)
         {
