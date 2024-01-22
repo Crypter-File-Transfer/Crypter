@@ -3,14 +3,10 @@
    <PropertyGroup>
       <TargetFramework>net8.0</TargetFramework>
       <ImplicitUsings>disable</ImplicitUsings>
-      <Nullable>disable</Nullable>
+      <Nullable>enable</Nullable>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <LangVersion>12</LangVersion>
    </PropertyGroup>
-
-   <ItemGroup>
-      <PackageReference Include="BlazorSodium" Version="1.3.0" />
-   </ItemGroup>
 
    <ItemGroup>
       <SupportedPlatform Include="browser" />
@@ -18,6 +14,10 @@
 
    <ItemGroup>
       <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
+   </ItemGroup>
+
+   <ItemGroup>
+     <PackageReference Include="BlazorSodium" Version="1.3.2" />
    </ItemGroup>
 
 </Project>

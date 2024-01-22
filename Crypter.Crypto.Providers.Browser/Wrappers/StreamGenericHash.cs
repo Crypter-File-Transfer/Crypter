@@ -37,14 +37,10 @@ public class StreamGenericHash : IStreamGenericHash
     private readonly uint _hashLength;
     private readonly StateAddress _stateAddress;
 
-    public StreamGenericHash(uint hashLength, ReadOnlySpan<byte> key = default)
+    public StreamGenericHash(uint hashLength, byte[]? key = null)
     {
         _hashLength = hashLength;
-        byte[] keyBytes = key == default
-            ? null
-            : key.ToArray();
-
-        _stateAddress = BlazorSodium.Sodium.GenericHash.Crypto_GenericHash_Init(_hashLength, keyBytes);
+        _stateAddress = BlazorSodium.Sodium.GenericHash.Crypto_GenericHash_Init(_hashLength, key);
     }
 
     public byte[] Complete()

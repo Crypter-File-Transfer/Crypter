@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Runtime.Versioning;
 using Crypter.Crypto.Common.StreamGenericHash;
 
@@ -38,7 +37,7 @@ public class StreamGenericHashFactory : IStreamGenericHashFactory
         get => BlazorSodium.Sodium.GenericHash.KEY_BYTES;
     }
 
-    public IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default)
+    public IStreamGenericHash NewGenericHashStream(uint hashLength, byte[] key)
     {
         return new StreamGenericHash(hashLength, key);
     }

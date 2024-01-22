@@ -38,7 +38,7 @@ public class StreamEncrypt : IStreamEncrypt
 {
     private readonly IPadding _padding;
     private readonly int _padSize;
-    private StateAddress _stateAddress;
+    private StateAddress? _stateAddress;
 
     public uint KeySize
     {
@@ -65,6 +65,11 @@ public class StreamEncrypt : IStreamEncrypt
 
     public byte[] Push(byte[] plaintext, bool final)
     {
+        if (_stateAddress is null)
+        {
+            throw new Exception($"{nameof(GenerateHeader)} must be invoked before pushing.");
+        }
+        
         uint tag = final ? SecretStream.TAG_FINAL : SecretStream.TAG_MESSAGE;
         byte[] paddedPlaintext = _padding.Pad(plaintext, _padSize);
         return SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Push(_stateAddress, paddedPlaintext, tag);
