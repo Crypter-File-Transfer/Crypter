@@ -33,7 +33,7 @@ namespace Crypter.Crypto.Common.KeyExchange;
 public abstract class AbstractKeyExchange : IKeyExchange
 {
     private readonly byte[] _kxContext;
-    private const string _kxContextString = "crypter";
+    private const string KxContextString = "crypter";
     private readonly IStreamGenericHashFactory _streamGenericHashFactory;
 
     public uint SeedSize
@@ -53,21 +53,21 @@ public abstract class AbstractKeyExchange : IKeyExchange
 
     public AbstractKeyExchange(IStreamGenericHashFactory streamGenericHashFactory)
     {
-        _kxContext = Encoding.UTF8.GetBytes(_kxContextString);
+        _kxContext = Encoding.UTF8.GetBytes(KxContextString);
         _streamGenericHashFactory = streamGenericHashFactory;
     }
 
     public (byte[] decryptionKey, byte[] proof) GenerateDecryptionKey(uint keySize, ReadOnlySpan<byte> privateKey,
         ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> nonce)
     {
-        var (_, decryptionKey, proof) = GenerateTransmissionKeys(keySize, privateKey, publicKey, nonce);
+        (_, byte[] decryptionKey, byte[] proof) = GenerateTransmissionKeys(keySize, privateKey, publicKey, nonce);
         return (decryptionKey, proof);
     }
 
     public (byte[] encryptionKey, byte[] proof) GenerateEncryptionKey(uint keySize, ReadOnlySpan<byte> privateKey,
         ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> nonce)
     {
-        var (encryptionKey, _, proof) = GenerateTransmissionKeys(keySize, privateKey, publicKey, nonce);
+        (byte[] encryptionKey, _, byte[] proof) = GenerateTransmissionKeys(keySize, privateKey, publicKey, nonce);
         return (encryptionKey, proof);
     }
 
@@ -85,14 +85,14 @@ public abstract class AbstractKeyExchange : IKeyExchange
         Span<byte> sharedKey = GenerateSharedKey(privateKey, publicKey);
         Span<byte> generatedPublicKey = GeneratePublicKey(privateKey);
 
-        IStreamGenericHash encryptionKeyHasher = _streamGenericHashFactory.NewGenericHashStream(keySize, nonce);
+        IStreamGenericHash encryptionKeyHasher = _streamGenericHashFactory.NewGenericHashStream(keySize, nonce.ToArray());
         encryptionKeyHasher.Update(_kxContext);
         encryptionKeyHasher.Update(sharedKey);
         encryptionKeyHasher.Update(publicKey);
         encryptionKeyHasher.Update(generatedPublicKey);
         byte[] encryptionKey = encryptionKeyHasher.Complete();
 
-        IStreamGenericHash decryptionKeyHasher = _streamGenericHashFactory.NewGenericHashStream(keySize, nonce);
+        IStreamGenericHash decryptionKeyHasher = _streamGenericHashFactory.NewGenericHashStream(keySize, nonce.ToArray());
         decryptionKeyHasher.Update(_kxContext);
         decryptionKeyHasher.Update(sharedKey);
         decryptionKeyHasher.Update(generatedPublicKey);
@@ -126,7 +126,7 @@ public abstract class AbstractKeyExchange : IKeyExchange
             }
         }
 
-        IStreamGenericHash digestor = _streamGenericHashFactory.NewGenericHashStream(ProofSize, nonce);
+        IStreamGenericHash digestor = _streamGenericHashFactory.NewGenericHashStream(ProofSize, nonce.ToArray());
         digestor.Update(firstKey);
         digestor.Update(secondKey);
         return digestor.Complete();

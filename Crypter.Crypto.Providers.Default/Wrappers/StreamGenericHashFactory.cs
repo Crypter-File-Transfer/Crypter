@@ -33,7 +33,7 @@ public class StreamGenericHashFactory : IStreamGenericHashFactory
 {
     public uint KeySize => throw new NotImplementedException();
 
-    public IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default)
+    public IStreamGenericHash NewGenericHashStream(uint hashLength, byte[] key)
     {
         return new StreamGenericHash(hashLength, key);
     }

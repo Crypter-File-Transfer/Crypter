@@ -48,25 +48,25 @@ public class Encryption : IEncryption
     public byte[] Decrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
     {
         return AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Decrypt(ciphertext.ToArray(), nonce.ToArray(), key.ToArray(),
-            (byte[])null);
+            (byte[]?)null);
     }
 
     public string DecryptToString(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
     {
         byte[] plaintext =
             AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Decrypt(ciphertext.ToArray(), nonce.ToArray(), key.ToArray(),
-                (byte[])null);
+                (byte[]?)null);
         return Encoding.UTF8.GetString(plaintext);
     }
 
     public byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> plaintext)
     {
         return AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Encrypt(plaintext.ToArray(), nonce.ToArray(), key.ToArray(),
-            (byte[])null);
+            (byte[]?)null);
     }
 
     public byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, string plaintext)
     {
-        return AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Encrypt(plaintext, nonce.ToArray(), key.ToArray(), (byte[])null);
+        return AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Encrypt(plaintext, nonce.ToArray(), key.ToArray(), (byte[]?)null);
     }
 }
