@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -28,10 +28,10 @@ namespace Crypter.Core.Settings;
 
 public class EmailSettings
 {
-    public bool Enabled { get; set; }
-    public string From { get; set; }
-    public string Username { get; set; }
-    public string Password { get; set; }
-    public string Host { get; set; }
-    public int Port { get; set; }
+    public required bool Enabled { get; set; }
+    public required string From { get; set; }
+    public required string Username { get; set; }
+    public required string Password { get; set; }
+    public required string Host { get; set; }
+    public required int Port { get; set; }
 }

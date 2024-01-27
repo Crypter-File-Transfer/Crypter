@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -76,7 +76,7 @@ internal static class UserNotificationSettingsCommands
     internal static async Task ResetUserNotificationSettingsAsync(DataContext dataContext, Guid userId,
         bool saveChanges)
     {
-        UserNotificationSettingEntity foundEntity = await dataContext.UserNotificationSettings
+        UserNotificationSettingEntity? foundEntity = await dataContext.UserNotificationSettings
             .FirstOrDefaultAsync(x => x.Owner == userId);
 
         if (foundEntity is not null)

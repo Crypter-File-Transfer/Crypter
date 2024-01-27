@@ -25,9 +25,7 @@
  */
 
 using System;
-using System.Collections.Generic;
 using Crypter.Core.Identity;
-using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
@@ -49,12 +47,12 @@ public class PasswordHashService_Tests
         ServerPasswordSettings settings = new ServerPasswordSettings
         {
             ClientVersion = 1,
-            ServerVersions = new List<PasswordVersion>
-            {
-                new PasswordVersion { Version = 0, Algorithm = "PBKDF2", Iterations = 1 },
-                new PasswordVersion { Version = 1, Algorithm = "PBKDF2", Iterations = 2 },
-                new PasswordVersion { Version = 2, Algorithm = "PBKDF2", Iterations = 100001 },
-            }
+            ServerVersions =
+            [
+                new PasswordVersion { Algorithm = "PBKDF2", Version = 0, Iterations = 1 },
+                new PasswordVersion { Algorithm = "PBKDF2", Version = 1, Iterations = 2 },
+                new PasswordVersion { Algorithm = "PBKDF2", Version = 2, Iterations = 100001 }
+            ]
         };
         IOptions<ServerPasswordSettings> options = Options.Create(settings);
         _sut = new PasswordHashService(cryptoProvider, options);

@@ -49,7 +49,7 @@ internal sealed class DeleteFailedLoginAttemptCommandHandler : IRequestHandler<D
     
     public async Task<Unit> Handle(DeleteFailedLoginAttemptCommand request, CancellationToken cancellationToken)
     {
-        UserFailedLoginEntity foundAttempt = await _dataContext.UserFailedLoginAttempts
+        UserFailedLoginEntity? foundAttempt = await _dataContext.UserFailedLoginAttempts
             .Where(x => x.Id == request.Id)
             .FirstOrDefaultAsync(CancellationToken.None);
 

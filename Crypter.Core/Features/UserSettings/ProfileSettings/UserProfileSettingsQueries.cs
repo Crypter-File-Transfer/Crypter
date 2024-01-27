@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -40,7 +40,7 @@ internal static class UserProfileSettingsQueries
     internal static async Task<Maybe<Contracts.ProfileSettings>> GetProfileSettingsAsync(DataContext dataContext,
         Guid userId, CancellationToken cancellationToken = default)
     {
-        return await Maybe<Contracts.ProfileSettings>.FromAsync(dataContext.UserProfiles
+        return await Maybe<Contracts.ProfileSettings>.FromNullableAsync(dataContext.UserProfiles
             .Where(x => x.Owner == userId)
             .Select(x => new Contracts.ProfileSettings(x.Alias, x.About))
             .FirstOrDefaultAsync(cancellationToken));

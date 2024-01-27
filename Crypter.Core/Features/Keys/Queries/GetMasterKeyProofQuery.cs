@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -64,7 +64,7 @@ internal sealed class GetMasterKeyProofQueryHandler : IEitherRequestHandler<GetM
                 error => GetMasterKeyRecoveryProofError.InvalidCredentials,
                 async _ =>
                 {
-                    byte[] recoveryProof = await _dataContext.UserMasterKeys
+                    byte[]? recoveryProof = await _dataContext.UserMasterKeys
                         .Where(x => x.Owner == request.UserId)
                         .Select(x => x.RecoveryProof)
                         .FirstOrDefaultAsync(cancellationToken);

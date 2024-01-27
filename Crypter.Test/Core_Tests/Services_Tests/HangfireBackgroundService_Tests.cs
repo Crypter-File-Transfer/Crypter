@@ -83,7 +83,7 @@ public class HangfireBackgroundService_Tests
                 It.IsAny<UserEmailAddressVerificationParameters>()))
             .ReturnsAsync((UserEmailAddressVerificationParameters _) => true);
 
-        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _sender, _logger);
+        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext!, _sender!, _logger!);
         await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
         _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>()),
@@ -99,7 +99,7 @@ public class HangfireBackgroundService_Tests
                 It.IsAny<int>()))
             .ReturnsAsync((UserRecoveryParameters _, int _) => true);
 
-        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext, _sender, _logger);
+        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext!, _sender!, _logger!);
         await sut.SendRecoveryEmailAsync("foo@test.com");
 
         _emailServiceMock.Verify(

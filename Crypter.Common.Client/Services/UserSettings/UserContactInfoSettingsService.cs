@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -91,7 +91,7 @@ public class UserContactInfoSettingsService : IUserContactInfoSettingsService, I
 
                 response.DoRight(updatedContactInfoSettings =>
                 {
-                    Maybe<EmailAddress> newEmailAddress = EmailAddress.TryFrom(updatedContactInfoSettings.EmailAddress,
+                    Maybe<EmailAddress> newEmailAddress = EmailAddress.TryFrom(updatedContactInfoSettings.EmailAddress!,
                         out EmailAddress newValidEmailAddress)
                         ? newValidEmailAddress
                         : Maybe<EmailAddress>.None;

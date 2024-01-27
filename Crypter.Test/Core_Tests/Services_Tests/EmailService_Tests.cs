@@ -44,7 +44,15 @@ public class EmailService_Tests
     [SetUp]
     public void Setup()
     {
-        EmailSettings settings = new EmailSettings();
+        EmailSettings settings = new EmailSettings
+        {
+            Enabled = false,
+            From = string.Empty,
+            Host = string.Empty,
+            Password = string.Empty,
+            Port = 0,
+            Username = string.Empty
+        };
         _defaultEmailSettings = Options.Create(settings);
         
         ServiceProvider serviceProvider = new ServiceCollection()
@@ -57,7 +65,7 @@ public class EmailService_Tests
     [Test]
     public async Task ServiceDisabled_SendAsync_ReturnsTrue()
     {
-        EmailService sut = new EmailService(_defaultEmailSettings, _logger);
+        EmailService sut = new EmailService(_defaultEmailSettings!, _logger!);
         EmailAddress? emailAddress = EmailAddress.From("jack@crypter.dev");
         bool result = await sut.SendAsync("foo", "bar", emailAddress);
         Assert.That(result, Is.True);

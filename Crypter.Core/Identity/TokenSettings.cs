@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -28,10 +28,10 @@ namespace Crypter.Core.Identity;
 
 public class TokenSettings
 {
-    public string Audience { get; set; }
-    public string Issuer { get; set; }
-    public string SecretKey { get; set; }
-    public int AuthenticationTokenLifetimeMinutes { get; set; }
-    public int SessionTokenLifetimeMinutes { get; set; }
-    public int DeviceTokenLifetimeDays { get; set; }
+    public required string Audience { get; set; }
+    public required string Issuer { get; set; }
+    public required string SecretKey { get; set; }
+    public required int AuthenticationTokenLifetimeMinutes { get; set; }
+    public required int SessionTokenLifetimeMinutes { get; set; }
+    public required int DeviceTokenLifetimeDays { get; set; }
 }

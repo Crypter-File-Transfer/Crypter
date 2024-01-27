@@ -35,7 +35,6 @@ using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using Crypter.Core.DataContextExtensions;
 using Crypter.Core.Identity;
-using Crypter.Core.Models;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
@@ -83,7 +82,7 @@ public class UserAuthenticationService : IUserAuthenticationService
     private readonly IReadOnlyDictionary<TokenType, Func<Guid, RefreshTokenData>> _refreshTokenProviderMap;
 
     private readonly short _clientPasswordVersion;
-    private const int _maximumFailedLoginAttempts = 3;
+    private const int MaximumFailedLoginAttempts = 3;
 
     public UserAuthenticationService(DataContext context, IPasswordHashService passwordHashService,
         ITokenService tokenService, IBackgroundJobClient backgroundJobClient,
@@ -133,15 +132,15 @@ public class UserAuthenticationService : IUserAuthenticationService
     /// </remarks>
     public async Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription)
     {
-        var validLoginRequest = ValidateLoginRequest(request);
+        Either<LoginError, ValidLoginRequest> validLoginRequest = ValidateLoginRequest(request);
         return await validLoginRequest.MatchAsync<Either<LoginError, LoginResponse>>(
             error => error,
             async validatedLoginRequest =>
             {
-                UserEntity user = await _context.Users
+                UserEntity? user = await _context.Users
                     .Where(x => x.Username == validatedLoginRequest.Username.Value)
                     .Include(x => x.FailedLoginAttempts)
-                    .Include(x => x.Consents.Where(y => y.Active == true))
+                    .Include(x => x.Consents!.Where(y => y.Active == true))
                     .Include(x => x.MasterKey)
                     .Include(x => x.KeyPair)
                     .FirstOrDefaultAsync();
@@ -151,7 +150,7 @@ public class UserAuthenticationService : IUserAuthenticationService
                     return LoginError.InvalidUsername;
                 }
 
-                if (user.FailedLoginAttempts!.Count >= _maximumFailedLoginAttempts)
+                if (user.FailedLoginAttempts!.Count >= MaximumFailedLoginAttempts)
                 {
                     return LoginError.ExcessiveFailedLoginAttempts;
                 }
@@ -177,7 +176,7 @@ public class UserAuthenticationService : IUserAuthenticationService
                     user.ClientPasswordVersion != _clientPasswordVersion)
                 {
                     byte[] latestClientPassword = validatedLoginRequest.VersionedPasswords[_clientPasswordVersion];
-                    var hashOutput = _passwordHashService.MakeSecurePasswordHash(latestClientPassword,
+                    SecurePasswordHashOutput hashOutput = _passwordHashService.MakeSecurePasswordHash(latestClientPassword,
                         _passwordHashService.LatestServerPasswordVersion);
                     user.PasswordHash = hashOutput.Hash;
                     user.PasswordSalt = hashOutput.Salt;
@@ -249,7 +248,7 @@ public class UserAuthenticationService : IUserAuthenticationService
 
     private Either<LoginError, ValidLoginRequest> ValidateLoginRequest(LoginRequest request)
     {
-        if (!request.VersionedPasswords.Any(x => x.Version == _clientPasswordVersion))
+        if (request.VersionedPasswords.All(x => x.Version != _clientPasswordVersion))
         {
             return LoginError.InvalidPasswordVersion;
         }
@@ -267,10 +266,8 @@ public class UserAuthenticationService : IUserAuthenticationService
             {
                 return LoginError.InvalidPasswordVersion;
             }
-            else
-            {
-                validVersionedPasswords.Add(versionedPassword.Version, versionedPassword.Password);
-            }
+
+            validVersionedPasswords.Add(versionedPassword.Version, versionedPassword.Password);
         }
 
         if (!_refreshTokenProviderMap.ContainsKey(request.RefreshTokenType))
@@ -288,7 +285,7 @@ public class UserAuthenticationService : IUserAuthenticationService
             return RegistrationError.OldPasswordVersion;
         }
 
-        if (!Username.TryFrom(request.Username, out var validUsername))
+        if (!Username.TryFrom(request.Username, out Username? validUsername))
         {
             return RegistrationError.InvalidUsername;
         }
@@ -298,13 +295,13 @@ public class UserAuthenticationService : IUserAuthenticationService
             return RegistrationError.InvalidPassword;
         }
 
-        bool isPossibleEmailAddress = !string.IsNullOrEmpty(request.EmailAddress);
-        Maybe<EmailAddress> validatedEmailAddress =
-            EmailAddress.TryFrom(request.EmailAddress, out var validEmailAddressOrNull)
-                ? validEmailAddressOrNull
-                : Maybe<EmailAddress>.None;
+        Maybe<EmailAddress> validatedEmailAddress = Maybe<EmailAddress>.None;
+        if (EmailAddress.TryFrom(request.EmailAddress!, out EmailAddress validEmailAddress))
+        {
+            validatedEmailAddress = validEmailAddress;
+        }
 
-        if (isPossibleEmailAddress && validatedEmailAddress.IsNone)
+        if (!string.IsNullOrEmpty(request.EmailAddress) && validatedEmailAddress.IsNone)
         {
             return RegistrationError.InvalidEmailAddress;
         }
@@ -374,10 +371,10 @@ public class UserAuthenticationService : IUserAuthenticationService
         return user;
     }
 
-    private Task<Either<T, UserEntity>> FetchUserAsync<T>(Guid userId, T error,
+    private Task<Either<T, UserEntity?>> FetchUserAsync<T>(Guid userId, T error,
         CancellationToken cancellationToken = default)
     {
-        return Either<T, UserEntity>.FromRightAsync(
+        return Either<T, UserEntity?>.FromRightAsync(
             _context.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken),
             error);
     }
@@ -408,8 +405,8 @@ public class UserAuthenticationService : IUserAuthenticationService
     private Task<Maybe<UserTokenEntity>> FetchUserTokenAsync(Guid tokenId,
         CancellationToken cancellationToken = default)
     {
-        return Maybe<UserTokenEntity>.FromAsync(_context.UserTokens
-            .FindAsync(new object[] { tokenId }, cancellationToken).AsTask());
+        return Maybe<UserTokenEntity>.FromNullableAsync(_context.UserTokens
+            .FindAsync([tokenId], cancellationToken).AsTask());
     }
 
     private Unit DeleteUserTokenInContext(UserTokenEntity token)

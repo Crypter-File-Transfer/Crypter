@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -55,13 +55,13 @@ internal sealed class UserSearchQueryHandler : IRequestHandler<UserSearchQuery, 
 
         return _dataContext.Users
             .Where(x => x.Username.StartsWith(lowerKeyword)
-                        || x.Profile.Alias.ToLower().StartsWith(lowerKeyword))
+                        || x.Profile!.Alias.ToLower().StartsWith(lowerKeyword))
             .Where(LinqUserExpressions.UserProfileIsComplete())
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(request.UserId))
             .OrderBy(x => x.Username)
             .Skip(request.Index)
             .Take(request.Count)
-            .Select(x => new UserSearchResult(x.Username, x.Profile.Alias))
+            .Select(x => new UserSearchResult(x.Username, x.Profile!.Alias))
             .ToListAsync(cancellationToken);
     }
 }

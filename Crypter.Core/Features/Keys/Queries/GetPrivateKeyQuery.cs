@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -51,7 +51,7 @@ internal class GetPrivateKeyQueryHandler
     public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> Handle(GetPrivateKeyQuery request,
         CancellationToken cancellationToken)
     {
-        return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightAsync(
+        return Either<GetPrivateKeyError, GetPrivateKeyResponse>.FromRightNullableAsync(
             _dataContext.UserKeyPairs
                 .Where(x => x.Owner == request.UserId)
                 .Select(x => new GetPrivateKeyResponse(x.PrivateKey, x.Nonce))

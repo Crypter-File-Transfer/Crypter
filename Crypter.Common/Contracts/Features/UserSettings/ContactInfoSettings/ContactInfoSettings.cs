@@ -28,10 +28,10 @@ namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 
 public class ContactInfoSettings
 {
-    public string EmailAddress { get; init; }
+    public string? EmailAddress { get; init; }
     public bool EmailAddressVerified { get; init; }
 
-    public ContactInfoSettings(string emailAddress, bool emailAddressVerified)
+    public ContactInfoSettings(string? emailAddress, bool emailAddressVerified)
     {
         EmailAddress = emailAddress;
         EmailAddressVerified = emailAddressVerified;

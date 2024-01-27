@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -37,7 +37,7 @@ internal static class UserTokenCommands
 {
     internal static async Task DeleteUserTokenAsync(DataContext dataContext, Guid tokenId)
     {
-        UserTokenEntity foundToken = await dataContext.UserTokens
+        UserTokenEntity? foundToken = await dataContext.UserTokens
             .Where(x => x.Id == tokenId)
             .FirstOrDefaultAsync();
 

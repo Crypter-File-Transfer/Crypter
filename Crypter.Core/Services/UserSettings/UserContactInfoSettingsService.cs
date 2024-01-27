@@ -29,7 +29,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Core.Features.UserSettings.ContactInfoSettings;
-using Crypter.Core.Models;
+using Crypter.Core.Identity;
 using Crypter.DataAccess;
 using EasyMonads;
 using Hangfire;

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -39,7 +39,7 @@ internal static class UserProfileSettingsCommands
     public static async Task<Either<Contracts.SetProfileSettingsError, Contracts.ProfileSettings>>
         SetProfileSettingsAsync(DataContext dataContext, Guid userId, Contracts.ProfileSettings request)
     {
-        UserProfileEntity userProfile = await dataContext.UserProfiles
+        UserProfileEntity? userProfile = await dataContext.UserProfiles
             .FirstOrDefaultAsync(x => x.Owner == userId);
 
         if (userProfile is null)
