@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -68,7 +68,7 @@ internal sealed class SendTransferNotificationCommandHandler
 
     public async Task<bool> Handle(SendTransferNotificationCommand request, CancellationToken cancellationToken)
     {
-        UserEntity recipient = request.ItemType switch
+        UserEntity? recipient = request.ItemType switch
         {
             TransferItemType.Message => await _dataContext.UserMessageTransfers
                 .Where(x => x.Id == request.ItemId)
@@ -84,7 +84,7 @@ internal sealed class SendTransferNotificationCommandHandler
         };
 
         if (recipient is not null
-            && EmailAddress.TryFrom(recipient.EmailAddress, out EmailAddress validEmailAddress))
+            && EmailAddress.TryFrom(recipient.EmailAddress!, out EmailAddress validEmailAddress))
         {
             return await _emailService.SendTransferNotificationAsync(validEmailAddress);
         }

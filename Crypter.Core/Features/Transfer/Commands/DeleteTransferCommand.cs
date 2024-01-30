@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -70,7 +70,7 @@ internal sealed class DeleteTransferCommandHandler : IRequestHandler<DeleteTrans
                 switch (request.UserType)
                 {
                     case TransferUserType.Anonymous:
-                        AnonymousMessageTransferEntity anonymousEntity = await _dataContext.AnonymousMessageTransfers
+                        AnonymousMessageTransferEntity? anonymousEntity = await _dataContext.AnonymousMessageTransfers
                                 .FirstOrDefaultAsync(x => x.Id == request.ItemId, CancellationToken.None);
                         if (anonymousEntity is not null)
                         {
@@ -80,8 +80,7 @@ internal sealed class DeleteTransferCommandHandler : IRequestHandler<DeleteTrans
                         break;
                     
                     case TransferUserType.User:
-                        UserMessageTransferEntity userEntity =
-                            await _dataContext.UserMessageTransfers
+                        UserMessageTransferEntity? userEntity = await _dataContext.UserMessageTransfers
                                 .FirstOrDefaultAsync(x => x.Id == request.ItemId, CancellationToken.None);
                         if (userEntity is not null)
                         {
@@ -97,8 +96,7 @@ internal sealed class DeleteTransferCommandHandler : IRequestHandler<DeleteTrans
                 switch (request.UserType)
                 {
                     case TransferUserType.Anonymous:
-                        AnonymousFileTransferEntity anonymousEntity =
-                            await _dataContext.AnonymousFileTransfers
+                        AnonymousFileTransferEntity? anonymousEntity = await _dataContext.AnonymousFileTransfers
                                 .FirstOrDefaultAsync(x => x.Id == request.ItemId, CancellationToken.None);
                         if (anonymousEntity is not null)
                         {
@@ -108,7 +106,7 @@ internal sealed class DeleteTransferCommandHandler : IRequestHandler<DeleteTrans
                         break;
                     
                     case TransferUserType.User:
-                        UserFileTransferEntity userEntity = await _dataContext.UserFileTransfers
+                        UserFileTransferEntity? userEntity = await _dataContext.UserFileTransfers
                             .FirstOrDefaultAsync(x => x.Id == request.ItemId, CancellationToken.None);
                         if (userEntity is not null)
                         {

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -38,10 +38,10 @@ public static class LinqUserExpressions
     public static Expression<Func<UserEntity, bool>> UserPrivacyAllowsVisitor(Guid? visitorId)
     {
         return x => x.Id == visitorId
-                      || x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
-                      || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && visitorId != null)
-                      || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts &&
-                          x.Contacts.Any(y => y.ContactId == visitorId));
+                      || x.PrivacySetting!.Visibility == UserVisibilityLevel.Everyone
+                      || (x.PrivacySetting!.Visibility == UserVisibilityLevel.Authenticated && visitorId != null)
+                      || (x.PrivacySetting!.Visibility == UserVisibilityLevel.Contacts &&
+                          x.Contacts!.Any(y => y.ContactId == visitorId));
     }
     
     public static Expression<Func<UserEntity, bool>> UserProfileIsComplete()
@@ -55,26 +55,27 @@ public static class LinqUserExpressions
     {
         return x => new UserProfile(
             x.Username,
-            x.Profile.Alias,
-            x.Profile.About,
-            x.PrivacySetting.AllowKeyExchangeRequests,
+            x.Profile!.Alias,
+            x.Profile!.About,
+            x.PrivacySetting!.AllowKeyExchangeRequests,
             x.Id == visitorId
-            || x.PrivacySetting.ReceiveMessages == UserItemTransferPermission.Everyone
-            || (x.PrivacySetting.ReceiveMessages == UserItemTransferPermission.Authenticated && visitorId != null)
-            || (x.PrivacySetting.ReceiveMessages == UserItemTransferPermission.Contacts &&
-                x.Contacts.Any(y => y.ContactId == visitorId)),
+            || x.PrivacySetting!.ReceiveMessages == UserItemTransferPermission.Everyone
+            || (x.PrivacySetting!.ReceiveMessages == UserItemTransferPermission.Authenticated && visitorId != null)
+            || (x.PrivacySetting!.ReceiveMessages == UserItemTransferPermission.Contacts &&
+                x.Contacts!.Any(y => y.ContactId == visitorId)),
             x.Id == visitorId
-            || x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Everyone
-            || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Authenticated && visitorId != null)
-            || (x.PrivacySetting.ReceiveFiles == UserItemTransferPermission.Contacts &&
-                x.Contacts.Any(y => y.ContactId == visitorId)),
-            x.KeyPair.PublicKey,
+            || x.PrivacySetting!.ReceiveFiles == UserItemTransferPermission.Everyone
+            || (x.PrivacySetting!.ReceiveFiles == UserItemTransferPermission.Authenticated && visitorId != null)
+            || (x.PrivacySetting!.ReceiveFiles == UserItemTransferPermission.Contacts &&
+                x.Contacts!.Any(y => y.ContactId == visitorId)),
+            x.KeyPair!.PublicKey,
             x.EmailVerified);
     }
 
-    public static Expression<Func<UserEntity, bool>> UserReceivesEmailNotifications()
+    public static Expression<Func<UserEntity?, bool>> UserReceivesEmailNotifications()
     {
-        return x => x.EmailVerified
+        return x => x != null
+                      && x.EmailVerified
                       && x.NotificationSetting != null
                       && x.NotificationSetting.EnableTransferNotifications
                       && x.NotificationSetting.EmailNotifications;

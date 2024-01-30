@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -109,7 +109,7 @@ public class TransferDownloadService : ITransferDownloadService
         string hashId, CancellationToken cancellationToken = default)
     {
         Guid id = _hashIdService.Decode(hashId);
-        var filePreview = await _context.AnonymousFileTransfers
+        FileTransferPreviewResponse? filePreview = await _context.AnonymousFileTransfers
             .Where(x => x.Id == id)
             .Select(x => new FileTransferPreviewResponse(x.FileName, x.ContentType, x.Size, string.Empty, string.Empty,
                 string.Empty, x.PublicKey, x.KeyExchangeNonce, x.Created, x.Expiration))
@@ -186,24 +186,26 @@ public class TransferDownloadService : ITransferDownloadService
 
         Guid id = _hashIdService.Decode(hashId);
 
-        MessageTransferPreviewResponse messagePreview = await _context.UserMessageTransfers
+        MessageTransferPreviewResponse? messagePreview = await _context.UserMessageTransfers
             .Where(x => x.Id == id)
             .Where(x => x.RecipientId == null || x.RecipientId == nullableRequestorUserId)
             .Select(x => new MessageTransferPreviewResponse(
                 x.Subject,
                 x.Size,
-                x.Sender.Username,
-                x.Sender.Profile.Alias,
-                x.Recipient.Username,
+                x.Sender!.Username,
+                x.Sender!.Profile!.Alias,
+                x.Recipient!.Username,
                 x.SenderId == null
                     ? x.PublicKey
-                    : x.Sender.KeyPair.PublicKey,
+                    : x.Sender!.KeyPair!.PublicKey,
                 x.KeyExchangeNonce,
                 x.Created,
-                x.Expiration)).FirstOrDefaultAsync(cancellationToken);
+                x.Expiration))
+            .FirstOrDefaultAsync(cancellationToken);
 
         bool ciphertextExists =
             _transferStorageService.TransferExists(id, TransferItemType.Message, TransferUserType.User);
+        
         return messagePreview is not null && ciphertextExists
             ? messagePreview
             : TransferPreviewError.NotFound;
@@ -218,25 +220,27 @@ public class TransferDownloadService : ITransferDownloadService
 
         Guid id = _hashIdService.Decode(hashId);
 
-        FileTransferPreviewResponse filePreview = await _context.UserFileTransfers
+        FileTransferPreviewResponse? filePreview = await _context.UserFileTransfers
             .Where(x => x.Id == id)
             .Where(x => x.RecipientId == null || x.RecipientId == nullableRequestorUserId)
             .Select(x => new FileTransferPreviewResponse(
                 x.FileName,
                 x.ContentType,
                 x.Size,
-                x.Sender.Username,
-                x.Sender.Profile.Alias,
-                x.Recipient.Username,
+                x.Sender!.Username,
+                x.Sender!.Profile!.Alias,
+                x.Recipient!.Username,
                 x.SenderId == null
                     ? x.PublicKey
-                    : x.Sender.KeyPair.PublicKey,
+                    : x.Sender!.KeyPair!.PublicKey,
                 x.KeyExchangeNonce,
                 x.Created,
-                x.Expiration)).FirstOrDefaultAsync(cancellationToken);
+                x.Expiration))
+            .FirstOrDefaultAsync(cancellationToken);
 
         bool ciphertextExists =
             _transferStorageService.TransferExists(id, TransferItemType.File, TransferUserType.User);
+        
         return filePreview is not null && ciphertextExists
             ? filePreview
             : TransferPreviewError.NotFound;

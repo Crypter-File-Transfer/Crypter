@@ -31,7 +31,7 @@ using Crypter.Common.Primitives;
 using Crypter.Core.DataContextExtensions;
 using Crypter.Core.Features.UserEmailVerification;
 using Crypter.Core.Features.UserSettings.NotificationSettings;
-using Crypter.Core.Models;
+using Crypter.Core.Identity;
 using Crypter.Core.Services;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
@@ -65,7 +65,7 @@ internal static class UserContactInfoSettingsCommands
             ? validEmailAddress
             : Maybe<EmailAddress>.None;
 
-        UserEntity user = await dataContext.Users
+        UserEntity? user = await dataContext.Users
             .Where(x => x.Id == userId)
             .FirstOrDefaultAsync();
 

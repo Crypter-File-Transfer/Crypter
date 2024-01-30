@@ -27,4 +27,10 @@
       <ProjectReference Include="..\Crypter.Web\Crypter.Web.csproj" />
    </ItemGroup>
 
+   <ItemGroup>
+     <None Update="appsettings.Test.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </None>
+   </ItemGroup>
+
 </Project>

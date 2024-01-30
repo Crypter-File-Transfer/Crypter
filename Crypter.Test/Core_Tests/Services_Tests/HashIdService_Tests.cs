@@ -40,7 +40,7 @@ public class HashIdService_Tests
     [SetUp]
     public void Setup()
     {
-        HashIdSettings settings = new HashIdSettings()
+        HashIdSettings settings = new HashIdSettings
         {
             Salt = "test"
         };

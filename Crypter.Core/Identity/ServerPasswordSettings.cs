@@ -24,39 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Crypter.DataAccess;
-using Crypter.DataAccess.Entities;
-using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Unit = EasyMonads.Unit;
+using System.Collections.Generic;
 
-namespace Crypter.Core.Features.AccountRecovery.Commands;
+namespace Crypter.Core.Identity;
 
-public sealed record DeleteRecoveryParametersCommand(Guid UserId) : IRequest<Unit>;
-
-internal sealed class DeleteRecoveryParametersCommandHandler : IRequestHandler<DeleteRecoveryParametersCommand, Unit>
+public class ServerPasswordSettings
 {
-    private readonly DataContext _dataContext;
-
-    public DeleteRecoveryParametersCommandHandler(DataContext dataContext)
-    {
-        _dataContext = dataContext;
-    }
-    
-    public async Task<Unit> Handle(DeleteRecoveryParametersCommand request, CancellationToken cancellationToken)
-    {
-        UserRecoveryEntity? savedEntity = await _dataContext.UserRecoveries
-            .FirstOrDefaultAsync(x => x.Owner == request.UserId, CancellationToken.None);
-
-        if (savedEntity is not null)
-        {
-            _dataContext.UserRecoveries.Remove(savedEntity);
-            await _dataContext.SaveChangesAsync(CancellationToken.None);
-        }
-
-        return Unit.Default;
-    }
+    public required short ClientVersion { get; set; }
+    public required List<PasswordVersion> ServerVersions { get; set; }
 }

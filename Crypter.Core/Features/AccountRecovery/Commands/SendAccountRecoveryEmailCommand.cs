@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -130,7 +130,7 @@ internal sealed class SendAccountRecoveryEmailCommandHandler
             return SendAccountRecoveryEmailError.InvalidSavedUsername;
         }
 
-        if (!EmailAddress.TryFrom(userData.EmailAddress, out EmailAddress validEmailAddress))
+        if (!EmailAddress.TryFrom(userData.EmailAddress!, out EmailAddress validEmailAddress))
         {
             return SendAccountRecoveryEmailError.InvalidSavedEmailAddress;
         }

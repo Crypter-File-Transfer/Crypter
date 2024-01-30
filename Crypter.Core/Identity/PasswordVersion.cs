@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -28,7 +28,7 @@ namespace Crypter.Core.Identity;
 
 public class PasswordVersion
 {
-    public short Version { get; init; }
-    public string Algorithm { get; init; }
-    public int Iterations { get; init; }
+    public required short Version { get; set; }
+    public required string Algorithm { get; set; }
+    public required int Iterations { get; set; }
 }

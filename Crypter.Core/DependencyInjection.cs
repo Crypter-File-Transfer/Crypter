@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -26,7 +26,6 @@
 
 using System.Threading.Tasks;
 using Crypter.Core.Identity;
-using Crypter.Core.Models;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
 using Crypter.Core.Services.UserSettings;
@@ -55,7 +54,8 @@ public static class DependencyInjection
         string hangfireConnectionString)
     {
         services.AddDataAccess(defaultConnectionString);
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining(typeof(AssemblyInfo)));
+        services.AddMediatR(cfg => cfg
+            .RegisterServicesFromAssemblyContaining(typeof(AssemblyInfo)));
 
         services.TryAddSingleton<IPasswordHashService, PasswordHashService>();
         services.TryAddSingleton<ICryptoProvider, DefaultCryptoProvider>();
@@ -119,8 +119,13 @@ public static class DependencyInjection
     {
         if (databaseSettings.MigrateOnStartup)
         {
-            using IServiceScope serviceScope = webApplication.Services.GetService<IServiceScopeFactory>().CreateScope();
-            await using DataContext context = serviceScope.ServiceProvider.GetRequiredService<DataContext>();
+            using IServiceScope serviceScope = webApplication.Services
+                .GetRequiredService<IServiceScopeFactory>()
+                .CreateScope();
+            
+            await using DataContext context = serviceScope.ServiceProvider
+                .GetRequiredService<DataContext>();
+            
             await context.Database.MigrateAsync();
         }
 

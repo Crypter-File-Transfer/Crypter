@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -40,7 +40,7 @@ internal static class UserContactInfoSettingsQueries
     internal static async Task<Maybe<Contracts.ContactInfoSettings>> GetContactInfoSettingsAsync(
         DataContext dataContext, Guid userId, CancellationToken cancellationToken = default)
     {
-        return await Maybe<Contracts.ContactInfoSettings>.FromAsync(dataContext.Users
+        return await Maybe<Contracts.ContactInfoSettings>.FromNullableAsync(dataContext.Users
             .Where(x => x.Id == userId)
             .Select(x => new Contracts.ContactInfoSettings(x.EmailAddress, x.EmailVerified))
             .FirstOrDefaultAsync(cancellationToken));

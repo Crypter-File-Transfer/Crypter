@@ -44,8 +44,8 @@ public class TokenService_Tests
     {
         TokenSettings tokenSettings = new TokenSettings
         {
-            Audience = "The Fellowship",
-            Issuer = "Legolas",
+            Audience = "test aud",
+            Issuer = "test iss",
             SecretKey = "They're taking the hobbits to Isengard!",
             AuthenticationTokenLifetimeMinutes = 5,
             SessionTokenLifetimeMinutes = 30,
@@ -60,7 +60,7 @@ public class TokenService_Tests
     {
         Guid userId = Guid.NewGuid();
 
-        TokenService sut = new TokenService(_tokenSettings);
+        TokenService sut = new TokenService(_tokenSettings!);
         string token = sut.NewAuthenticationToken(userId);
 
         Assert.That(token, Is.Not.Null);
@@ -81,7 +81,7 @@ public class TokenService_Tests
     {
         Guid userId = Guid.NewGuid();
 
-        TokenService sut = new TokenService(_tokenSettings);
+        TokenService sut = new TokenService(_tokenSettings!);
         DateTime tokenCreatedUtc = DateTime.UtcNow;
         DateTime expectedTokenExpiration = tokenCreatedUtc.AddMinutes(_tokenSettings!.Value.SessionTokenLifetimeMinutes);
         RefreshTokenData tokenData = sut.NewSessionToken(userId);
@@ -109,7 +109,7 @@ public class TokenService_Tests
     {
         Guid userId = Guid.NewGuid();
 
-        TokenService sut = new TokenService(_tokenSettings);
+        TokenService sut = new TokenService(_tokenSettings!);
         DateTime tokenCreatedUtc = DateTime.UtcNow;
         DateTime expectedTokenExpiration = tokenCreatedUtc.AddDays(_tokenSettings!.Value.DeviceTokenLifetimeDays);
         RefreshTokenData tokenData = sut.NewDeviceToken(userId);

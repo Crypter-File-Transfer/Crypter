@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -40,7 +40,7 @@ internal static class UserPrivacySettingsQueries
     internal static async Task<Maybe<Contracts.PrivacySettings>> GetPrivacySettingsAsync(DataContext dataContext,
         Guid userId, CancellationToken cancellationToken = default)
     {
-        return await Maybe<Contracts.PrivacySettings>.FromAsync(dataContext.UserPrivacySettings
+        return await Maybe<Contracts.PrivacySettings>.FromNullableAsync(dataContext.UserPrivacySettings
             .Where(x => x.Owner == userId)
             .Select(x =>
                 new Contracts.PrivacySettings(x.AllowKeyExchangeRequests, x.Visibility, x.ReceiveMessages,
