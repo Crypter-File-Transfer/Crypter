@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -37,6 +37,7 @@ using Crypter.Common.Client.Services;
 using Crypter.Common.Client.Services.UserSettings;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Client.Transfer.Models;
+using Crypter.Common.Exceptions;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Browser;
 using Crypter.Web;
@@ -47,7 +48,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-var builder = WebAssemblyHostBuilder.CreateDefault(args);
+WebAssemblyHostBuilder builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
@@ -55,27 +56,30 @@ Console.WriteLine($"Environment: {builder.HostEnvironment.Environment}");
 
 builder.Services.AddSingleton(sp =>
 {
-    var config = sp.GetService<IConfiguration>();
-    return config.Get<ClientSettings>();
+    IConfiguration config = sp.GetRequiredService<IConfiguration>();
+    return config.Get<ClientSettings>()
+           ?? throw new ConfigurationException("Failed to load client settings.");
 });
 
 builder.Services.AddSingleton(sp =>
 {
-    var config = sp.GetService<IConfiguration>();
-    return config.GetSection("ApiSettings").Get<ClientApiSettings>();
+    IConfiguration config = sp.GetRequiredService<IConfiguration>();
+    return config.GetSection("ApiSettings").Get<ClientApiSettings>()
+        ?? throw new ConfigurationException("Failed to load ApiSettings.");
 });
 
 builder.Services.AddSingleton(sp =>
 {
-    var config = sp.GetService<IConfiguration>();
-    return config.GetSection("TransferSettings").Get<TransferSettings>();
+    IConfiguration config = sp.GetRequiredService<IConfiguration>();
+    return config.GetSection("TransferSettings").Get<TransferSettings>()
+        ?? throw new ConfigurationException("Failed to load TransferSettings.");
 });
 
 builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =>
 {
-    var config = builder.Services
+    ClientApiSettings config = builder.Services
         .BuildServiceProvider()
-        .GetService<ClientApiSettings>();
+        .GetRequiredService<ClientApiSettings>();
 
     httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
 });

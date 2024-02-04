@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,12 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+namespace Crypter.Web.Models;
 
-namespace Crypter.Core.Exceptions;
-
-public class ConfigurationException : Exception
+public class EmailVerificationParameters
 {
-    public ConfigurationException(string message) : base(message)
-    { }
+    public string Code { get; set; } = string.Empty;
+    public string Signature { get; set; } = string.Empty;
 }

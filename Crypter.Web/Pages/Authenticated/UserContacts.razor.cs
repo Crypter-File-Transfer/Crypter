@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -34,11 +34,11 @@ namespace Crypter.Web.Pages.Authenticated;
 
 public partial class UserContacts
 {
-    [Inject] private IUserContactsService UserContactsService { get; set; }
+    [Inject] private IUserContactsService UserContactsService { get; init; } = null!;
 
     private bool _loading = true;
 
-    private IReadOnlyCollection<UserContact> _contacts;
+    private IReadOnlyCollection<UserContact> _contacts = [];
 
     protected override async Task OnInitializedAsync()
     {

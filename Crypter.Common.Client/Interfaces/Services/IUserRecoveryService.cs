@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -45,15 +45,38 @@ public interface IUserRecoveryService
     Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, Password password);
 
     /// <summary>
-    /// Derivce a recovery key from the provided parameters.
+    /// Derive a recovery key from the provided parameters.
     /// </summary>
     /// <param name="masterKey"></param>
     /// <param name="versionedPassword">A hashed password.</param>
     /// <returns></returns>
     Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword);
 
+    /// <summary>
+    /// Request an account recovery email.
+    /// The email, if received, will contain a temporary link to proceed with account recovery.
+    /// Account recovery cannot occur without the link.
+    /// </summary>
+    /// <param name="emailAddress"></param>
+    /// <returns></returns>
     Task RequestRecoveryEmailAsync(EmailAddress emailAddress);
 
+    /// <summary>
+    /// Proceed with account recovery by submitting necessary recovery information, including secrets from the
+    /// account recovery link, the current username, a new password, and an optional recovery key.
+    ///
+    /// The user's pre-existing master key will be preserved and re-encrypted if the correct recovery key is
+    /// provided. Meaning, all encrypted data saved on the server can be recovered.
+    ///
+    /// If a recovery key is not provided, the user must generate a new master key and will necessarily lose access
+    /// to all encrypted data saved on the server.
+    /// </summary>
+    /// <param name="recoveryCode"></param>
+    /// <param name="recoverySignature"></param>
+    /// <param name="username"></param>
+    /// <param name="newPassword"></param>
+    /// <param name="recoveryKey"></param>
+    /// <returns></returns>
     Task<Either<SubmitAccountRecoveryError, Maybe<RecoveryKey>>> SubmitRecoveryRequestAsync(string recoveryCode,
-        string recoverySignature, Username username, Password newPassword, Maybe<RecoveryKey> recoveryProof);
+        string recoverySignature, Username username, Password newPassword, Maybe<RecoveryKey> recoveryKey);
 }

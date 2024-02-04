@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -34,14 +34,14 @@ namespace Crypter.Web.Pages;
 
 public partial class UserProfile
 {
-    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] private ICrypterApiClient CrypterApiService { get; set; } = null!;
 
-    [Inject] private IUserSessionService UserSessionService { get; set; }
+    [Inject] private IUserSessionService UserSessionService { get; set; } = null!;
 
-    [Parameter] public string Username { get; set; }
+    [Parameter] public required string Username { get; set; }
 
-    private UploadFileTransferModal FileModal { get; set; }
-    private UploadMessageTransferModal MessageModal { get; set; }
+    private UploadFileTransferModal? FileModal { get; set; }
+    private UploadMessageTransferModal? MessageModal { get; set; }
 
     private bool _loading;
     private bool _isProfileAvailable;

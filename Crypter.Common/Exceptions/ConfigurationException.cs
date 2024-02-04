@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,25 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Threading.Tasks;
-using Crypter.Common.Client.Interfaces.Services;
-using Microsoft.AspNetCore.Components;
+using System;
 
-namespace Crypter.Web.Pages;
+namespace Crypter.Common.Exceptions;
 
-public partial class DecryptMessage
+public class ConfigurationException : Exception
 {
-    [Parameter] public required string TransferHashId { get; set; }
-
-    [Parameter] public required int UserType { get; set; }
-
-    [Inject] private IUserSessionService UserSessionService { get; set; } = null!;
-
-    private bool _loading = true;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await UserSessionService.IsLoggedInAsync();
-        _loading = false;
-    }
+    public ConfigurationException(string message) : base(message)
+    { }
 }

@@ -40,7 +40,7 @@ public partial class Verify
 
     [Inject] private ICrypterApiClient CrypterApiService { get; set; }
 
-    private readonly EmailVerificationParams _emailVerificationParams = new EmailVerificationParams();
+    private readonly EmailVerificationParameters _emailVerificationParameters = new EmailVerificationParameters();
 
     private bool _emailVerificationInProgress = true;
     private bool _emailVerificationSuccess;
@@ -54,14 +54,14 @@ public partial class Verify
     private void ParseVerificationParamsFromUri()
     {
         NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
-        _emailVerificationParams.Code = queryParameters["code"];
-        _emailVerificationParams.Signature = queryParameters["signature"];
+        _emailVerificationParameters.Code = queryParameters["code"];
+        _emailVerificationParameters.Signature = queryParameters["signature"];
     }
 
     private async Task VerifyEmailAddressAsync()
     {
         var verificationResponse = await CrypterApiService.UserSetting.VerifyUserEmailAddressAsync(
-            new VerifyEmailAddressRequest(_emailVerificationParams.Code, _emailVerificationParams.Signature));
+            new VerifyEmailAddressRequest(_emailVerificationParameters.Code, _emailVerificationParameters.Signature));
 
         _emailVerificationSuccess = verificationResponse.IsRight;
         _emailVerificationInProgress = false;

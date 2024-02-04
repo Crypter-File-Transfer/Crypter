@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -45,40 +45,37 @@
             </div>
         </form>
         <div class="row">
-            @if (SearchResults != null)
+            @if (SearchResults.Count == 0)
             {
-                @if (SearchResults.Count == 0)
+                <h3 class="text-center">No results found</h3>
+            }
+            else
+            {
+                @foreach (ContactSearchResult result in SearchResults)
                 {
-                    <h3 class="text-center">No results found</h3>
-                }
-                else
-                {
-                    @foreach (var result in SearchResults)
-                    {
-                        <div class="col-md-6">
-                            <div class="card my-1">
-                                <div class="card-body">
-                                    <div class="d-flex bd-highlight mb-3">
-                                        <div class="me-auto p-2 bd-highlight">
-                                            <a class="text-decoration-none" href="/user/profile/@result.Username">
-                                                <h5 class="card-title">@GetDisplayName(result.Username, result.Alias)</h5>
-                                            </a>
-                                        </div>
-                                        <div class="p-2 bd-highlight">
-                                            @if (result.IsContact)
-                                            {
-                                                <button type="button" disable class="btn btn-outline-success">Added</button>
-                                            }
-                                            else if (result.Username.ToLower() != _sessionUsernameLowercase)
-                                            {
-                                                <button type="button" class="btn btn-outline-dark" @onclick="async () => await AddContactAsync(result.Username)">Add Contact</button>
-                                            }
-                                        </div>
+                    <div class="col-md-6">
+                        <div class="card my-1">
+                            <div class="card-body">
+                                <div class="d-flex bd-highlight mb-3">
+                                    <div class="me-auto p-2 bd-highlight">
+                                        <a class="text-decoration-none" href="/user/profile/@result.Username">
+                                            <h5 class="card-title">@GetDisplayName(result.Username, result.Alias)</h5>
+                                        </a>
+                                    </div>
+                                    <div class="p-2 bd-highlight">
+                                        @if (result.IsContact)
+                                        {
+                                            <button type="button" disable class="btn btn-outline-success">Added</button>
+                                        }
+                                        else if (result.Username.ToLower() != _sessionUsernameLowercase)
+                                        {
+                                            <button type="button" class="btn btn-outline-dark" @onclick="async () => await AddContactAsync(result.Username)">Add Contact</button>
+                                        }
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    }
+                    </div>
                 }
             }
         </div>
