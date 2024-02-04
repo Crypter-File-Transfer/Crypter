@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -29,41 +29,53 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Web.Helpers;
-using Crypter.Web.Models;
+using Crypter.Web.Models.Forms;
+using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Pages;
 
 public partial class Verify
 {
-    [Inject] private NavigationManager NavigationManager { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
 
-    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
-
-    private readonly EmailVerificationParameters _emailVerificationParameters = new EmailVerificationParameters();
+    [Inject] private ICrypterApiClient CrypterApiService { get; set; } = null!;
 
     private bool _emailVerificationInProgress = true;
     private bool _emailVerificationSuccess;
 
     protected override async Task OnInitializedAsync()
     {
-        ParseVerificationParamsFromUri();
-        await VerifyEmailAddressAsync();
-    }
-
-    private void ParseVerificationParamsFromUri()
-    {
-        NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
-        _emailVerificationParameters.Code = queryParameters["code"];
-        _emailVerificationParameters.Signature = queryParameters["signature"];
-    }
-
-    private async Task VerifyEmailAddressAsync()
-    {
-        var verificationResponse = await CrypterApiService.UserSetting.VerifyUserEmailAddressAsync(
-            new VerifyEmailAddressRequest(_emailVerificationParameters.Code, _emailVerificationParameters.Signature));
-
-        _emailVerificationSuccess = verificationResponse.IsRight;
+        if (TryParseVerificationParamsFromUri(out EmailVerificationParameters parameters))
+        {
+            await VerifyEmailAddressAsync(parameters);
+        }
+        
         _emailVerificationInProgress = false;
+    }
+
+    private bool TryParseVerificationParamsFromUri(out EmailVerificationParameters parameters)
+    {
+        parameters = new EmailVerificationParameters();
+        NameValueCollection queryParameters = NavigationManager.GetQueryParameters();
+        
+        string? code = queryParameters["code"];
+        string? signature = queryParameters["signature"];
+        if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(signature))
+        {
+            return false;
+        }
+
+        parameters.Code = code;
+        parameters.Signature = signature;
+
+        return true;
+    }
+
+    private async Task VerifyEmailAddressAsync(EmailVerificationParameters parameters)
+    {
+        _emailVerificationSuccess = await CrypterApiService.UserSetting.VerifyUserEmailAddressAsync(
+                new VerifyEmailAddressRequest(parameters.Code, parameters.Signature))
+            .MatchAsync(leftOrNeither: false, right: _ => true);
     }
 }

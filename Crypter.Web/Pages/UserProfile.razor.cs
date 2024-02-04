@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Web.Shared.Modal;
+using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Pages;
@@ -43,24 +44,18 @@ public partial class UserProfile
     private UploadFileTransferModal? FileModal { get; set; }
     private UploadMessageTransferModal? MessageModal { get; set; }
 
-    private bool _loading;
+    private bool _loading = true;
     private bool _isProfileAvailable;
-    private string _alias;
-    private string _about;
-    private string _properUsername;
+    private string _alias = string.Empty;
+    private string _about = string.Empty;
+    private string _properUsername = string.Empty;
     private bool _allowsFiles;
     private bool _allowsMessages;
-    private byte[] _userPublicKey;
+    private byte[] _userPublicKey = [];
     private bool _emailVerified;
-
-    protected override void OnInitialized()
-    {
-        _loading = true;
-    }
-
+    
     protected override async Task OnParametersSetAsync()
     {
-        _loading = true;
         await PrepareUserProfileAsync();
         _loading = false;
     }
@@ -68,20 +63,17 @@ public partial class UserProfile
     private async Task PrepareUserProfileAsync()
     {
         bool isLoggedIn = await UserSessionService.IsLoggedInAsync();
-        var response = await CrypterApiService.User.GetUserProfileAsync(Username, isLoggedIn);
-        response.DoRight(x =>
-        {
-            _alias = x.Alias;
-            _about = x.About;
-            _properUsername = x.Username;
-            _allowsFiles = x.ReceivesFiles;
-            _allowsMessages = x.ReceivesMessages;
-            _userPublicKey = x.PublicKey;
-            _emailVerified = x.EmailVerified;
-        });
-
-        _isProfileAvailable = response.Match(
-            false,
-            right => right.PublicKey is not null);
+        await CrypterApiService.User.GetUserProfileAsync(Username, isLoggedIn)
+            .DoRightAsync(x =>
+            {
+                _isProfileAvailable = true;
+                _alias = x.Alias;
+                _about = x.About;
+                _properUsername = x.Username;
+                _allowsFiles = x.ReceivesFiles;
+                _allowsMessages = x.ReceivesMessages;
+                _userPublicKey = x.PublicKey;
+                _emailVerified = x.EmailVerified;
+            });
     }
 }

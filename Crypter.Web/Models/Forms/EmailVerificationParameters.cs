@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Web.Models;
+namespace Crypter.Web.Models.Forms;
 
 public class EmailVerificationParameters
 {
