@@ -92,7 +92,7 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
 
                 if (args.ShowRecoveryKeyModal)
                 {
-                    await RecoveryKeyModal.OpenAsync(args.Username, args.VersionedPassword);
+                    await RecoveryKeyModal.OpenAsync(args.VersionedPassword);
                 }
             });
     }

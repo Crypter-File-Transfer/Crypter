@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,6 +25,7 @@
  */
 
 
+using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
@@ -39,17 +40,17 @@ namespace Crypter.Web.Shared.Modal;
 
 public partial class RecoveryKeyModal
 {
-    [Inject] private IJSRuntime JsRuntime { get; set; }
+    [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
 
-    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] private ICrypterApiClient CrypterApiService { get; set; } = null!;
 
-    [Inject] private IUserKeysService UserKeysService { get; set; }
+    [Inject] private IUserKeysService UserKeysService { get; set; } = null!;
 
-    [Inject] private IUserRecoveryService UserRecoveryService { get; set; }
+    [Inject] private IUserRecoveryService UserRecoveryService { get; set; } = null!;
 
-    private string _recoveryKey;
+    private string _recoveryKey = string.Empty;
 
-    private ModalBehavior _modalBehaviorRef;
+    private ModalBehavior _modalBehaviorRef = null!;
 
     public async Task OpenAsync(Username username, Password password)
     {
@@ -63,7 +64,7 @@ public partial class RecoveryKeyModal
         _modalBehaviorRef.Open();
     }
 
-    public async Task OpenAsync(Username username, VersionedPassword versionedPassword)
+    public async Task OpenAsync(VersionedPassword versionedPassword)
     {
         _recoveryKey = await UserKeysService.MasterKey
             .BindAsync(async masterKey =>

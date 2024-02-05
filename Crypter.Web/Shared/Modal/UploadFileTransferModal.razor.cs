@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -34,16 +34,16 @@ namespace Crypter.Web.Shared.Modal;
 
 public partial class UploadFileTransferModal
 {
-    [Parameter] public string InstanceId { get; set; }
+    [Parameter] public required string InstanceId { get; set; }
 
-    [Parameter] public Maybe<string> RecipientUsername { get; set; }
+    [Parameter] public required Maybe<string> RecipientUsername { get; set; }
 
-    [Parameter] public Maybe<byte[]> RecipientPublicKey { get; set; }
+    [Parameter] public required Maybe<byte[]> RecipientPublicKey { get; set; }
 
-    [Parameter] public EventCallback ModalClosedCallback { get; set; }
+    [Parameter] public required EventCallback ModalClosedCallback { get; set; }
 
-    private ModalBehavior _modalBehaviorRef;
-    private UploadFileTransfer _uploadComponent;
+    private ModalBehavior _modalBehaviorRef = null!;
+    private UploadFileTransfer _uploadComponent = null!;
 
     private int _expirationHours;
 

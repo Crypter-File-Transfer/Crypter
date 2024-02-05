@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Primitives;
@@ -34,14 +35,14 @@ namespace Crypter.Web.Shared.Modal;
 
 public partial class PasswordModal
 {
-    [Inject] private IUserSessionService UserSessionService { get; set; }
+    [Inject] private IUserSessionService UserSessionService { get; set; } = null!;
 
-    [Parameter] public EventCallback<bool> ModalClosedCallback { get; set; }
+    [Parameter] public required EventCallback<bool> ModalClosedCallback { get; set; }
 
-    private ModalBehavior ModalBehaviorRef { get; set; }
+    private ModalBehavior ModalBehaviorRef { get; set; } = null!;
 
-    private string _username;
-    private string _password;
+    private string _username = string.Empty;
+    private string _password = string.Empty;
     private bool _passwordTestFailed;
 
     public void Open()
@@ -53,7 +54,7 @@ public partial class PasswordModal
         ModalBehaviorRef.Open();
     }
 
-    public async Task CloseAsync(bool success)
+    private async Task CloseAsync(bool success)
     {
         await ModalClosedCallback.InvokeAsync(success);
         ModalBehaviorRef.Close();

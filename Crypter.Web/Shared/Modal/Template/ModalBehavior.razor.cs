@@ -30,25 +30,25 @@ namespace Crypter.Web.Shared.Modal.Template;
 
 public partial class ModalBehavior
 {
-    [Parameter] public RenderFragment Content { get; set; }
+    [Parameter] public required RenderFragment Content { get; set; }
 
     private const string ModalDisplayNone = "none;";
     private const string ModalDisplayBlock = "block;";
 
-    protected bool Show = false;
-    protected string ModalDisplay = ModalDisplayNone;
+    private bool _show = false;
+    private string _modalDisplay = ModalDisplayNone;
 
     public void Open()
     {
-        ModalDisplay = ModalDisplayBlock;
-        Show = true;
+        _modalDisplay = ModalDisplayBlock;
+        _show = true;
         StateHasChanged();
     }
 
     public void Close()
     {
-        ModalDisplay = ModalDisplayNone;
-        Show = false;
+        _modalDisplay = ModalDisplayNone;
+        _show = false;
         StateHasChanged();
     }
 }

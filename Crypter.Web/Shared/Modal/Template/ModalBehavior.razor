@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,13 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-<div class="modal" tabindex="-1" role="dialog" style="display:@ModalDisplay">
+<div class="modal" tabindex="-1" role="dialog" style="display: @_modalDisplay">
     <div class="modal-dialog" role="document">
-        @if (Show)
+        @if (_show)
         {
             @Content
         }
     </div>
 </div>
 
-<div hidden="@(!Show)" class="modal-backdrop fade show"></div>
+<div hidden="@(!_show)" class="modal-backdrop fade show"></div>
