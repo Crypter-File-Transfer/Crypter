@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
@@ -38,91 +39,80 @@ namespace Crypter.Web.Shared;
 
 public partial class RegisterComponent
 {
-    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] private ICrypterApiClient CrypterApiService { get; init; } = null!;
 
-    [Inject] private IUserSessionService UserSessionService { get; set; }
+    [Inject] private IUserSessionService UserSessionService { get; init; } = null!;
 
-    [Inject] private IUserPasswordService UserPasswordService { get; set; }
+    [Inject] private IUserPasswordService UserPasswordService { get; init; } = null!;
 
     private const string InvalidClassName = "is-invalid";
 
-    private UserRegistrationForm _registrationModel;
+    private UserRegistrationForm _registrationModel = new UserRegistrationForm();
 
     private bool _registrationAttemptFailed;
     private bool _registrationAttemptSucceeded;
-    private string _registrationAttemptErrorMessage;
+    private string _registrationAttemptErrorMessage = string.Empty;
 
-    private string _usernameInvalidClassPlaceholder;
-    private string _usernameValidationErrorMessage;
+    private string _usernameInvalidClassPlaceholder = string.Empty;
+    private string _usernameValidationErrorMessage = string.Empty;
 
-    private string _passwordInvalidClassPlaceholder;
-    private string _passwordValidationErrorMessage;
+    private string _passwordInvalidClassPlaceholder = string.Empty;
+    private string _passwordValidationErrorMessage = string.Empty;
 
-    private string _passwordConfirmInvalidClassPlaceholder;
-    private string _passwordConfirmValidationErrorMessage;
+    private string _passwordConfirmInvalidClassPlaceholder = string.Empty;
+    private string _passwordConfirmValidationErrorMessage = string.Empty;
 
-    private string _emailAddressInvalidClassPlaceholder;
-    private string _emailAddressValidationErrorMessage;
+    private string _emailAddressInvalidClassPlaceholder = string.Empty;
+    private string _emailAddressValidationErrorMessage = string.Empty;
 
     private bool _userProvidedEmailAddress;
-
-    protected override void OnInitialized()
-    {
-        _registrationModel = new UserRegistrationForm();
-    }
-
+    
     private Maybe<Username> ValidateUsername()
     {
-        Maybe<StringPrimitiveValidationFailure> invalidReason = Username.CheckValidation(_registrationModel.Username);
-
-        invalidReason.IfNone(() =>
-        {
-            _usernameInvalidClassPlaceholder = string.Empty;
-            _usernameValidationErrorMessage = string.Empty;
-        });
-
-        invalidReason.IfSome(error =>
-        {
-            _usernameInvalidClassPlaceholder = InvalidClassName;
-            _usernameValidationErrorMessage = error switch
+        return Username.CheckValidation(_registrationModel.Username)
+            .IfSome(error =>
             {
-                StringPrimitiveValidationFailure.IsNull
-                    or StringPrimitiveValidationFailure.IsEmpty => "Please choose a username",
-                StringPrimitiveValidationFailure.TooLong => "Username exceeds 32-character limit",
-                StringPrimitiveValidationFailure.InvalidCharacters => "Username contains invalid character(s)",
-                _ => "Invalid username"
-            };
-        });
-
-        return invalidReason.Match(
-            () => Username.From(_registrationModel.Username),
-            _ => Maybe<Username>.None);
+                _usernameInvalidClassPlaceholder = InvalidClassName;
+                _usernameValidationErrorMessage = error switch
+                {
+                    StringPrimitiveValidationFailure.IsNull
+                        or StringPrimitiveValidationFailure.IsEmpty => "Please choose a username",
+                    StringPrimitiveValidationFailure.TooLong => "Username exceeds 32-character limit",
+                    StringPrimitiveValidationFailure.InvalidCharacters => "Username contains invalid character(s)",
+                    _ => "Invalid username"
+                };
+            })
+            .IfNone(() =>
+            {
+                _usernameInvalidClassPlaceholder = string.Empty;
+                _usernameValidationErrorMessage = string.Empty;
+            })
+            .Match(
+                () => Username.From(_registrationModel.Username),
+                _ => Maybe<Username>.None);
     }
 
     private Maybe<Password> ValidatePassword()
     {
-        Maybe<StringPrimitiveValidationFailure> invalidReason = Password.CheckValidation(_registrationModel.Password);
-
-        invalidReason.IfNone(() =>
-        {
-            _passwordInvalidClassPlaceholder = string.Empty;
-            _passwordValidationErrorMessage = string.Empty;
-        });
-
-        invalidReason.IfSome(error =>
-        {
-            _passwordInvalidClassPlaceholder = InvalidClassName;
-            _passwordValidationErrorMessage = error switch
+        return Password.CheckValidation(_registrationModel.Password)
+            .IfSome(error =>
             {
-                StringPrimitiveValidationFailure.IsNull
-                    or StringPrimitiveValidationFailure.IsEmpty => "Please enter a password",
-                _ => "Invalid password"
-            };
-        });
-
-        return invalidReason.Match(
-            () => Password.From(_registrationModel.Password),
-            _ => Maybe<Password>.None);
+                _passwordInvalidClassPlaceholder = InvalidClassName;
+                _passwordValidationErrorMessage = error switch
+                {
+                    StringPrimitiveValidationFailure.IsNull
+                        or StringPrimitiveValidationFailure.IsEmpty => "Please enter a password",
+                    _ => "Invalid password"
+                };
+            })
+            .IfNone(() =>
+            {
+                _passwordInvalidClassPlaceholder = string.Empty;
+                _passwordValidationErrorMessage = string.Empty;
+            })
+            .Match(
+                () => Password.From(_registrationModel.Password),
+                _ => Maybe<Password>.None);
     }
 
     private bool ValidatePasswordConfirmation()
@@ -156,28 +146,25 @@ public partial class RegisterComponent
             return Maybe<EmailAddress>.None;
         }
 
-        Maybe<StringPrimitiveValidationFailure> invalidReason = EmailAddress.CheckValidation(_registrationModel.EmailAddress);
-
-        invalidReason.IfNone(() =>
-        {
-            _emailAddressInvalidClassPlaceholder = string.Empty;
-            _emailAddressValidationErrorMessage = string.Empty;
-        });
-
-        invalidReason.IfSome(error =>
-        {
-            _emailAddressInvalidClassPlaceholder = InvalidClassName;
-            _emailAddressValidationErrorMessage = "Invalid email address";
-        });
-
-        return invalidReason.Match<Either<Unit, Maybe<EmailAddress>>>(
-            () => Maybe<EmailAddress>.From(EmailAddress.From(_registrationModel.EmailAddress)),
-            _ => Unit.Default);
+        return EmailAddress.CheckValidation(_registrationModel.EmailAddress)
+            .IfSome(_ =>
+            {
+                _emailAddressInvalidClassPlaceholder = InvalidClassName;
+                _emailAddressValidationErrorMessage = "Invalid email address";
+            })
+            .IfNone(() =>
+            {
+                _emailAddressInvalidClassPlaceholder = string.Empty;
+                _emailAddressValidationErrorMessage = string.Empty;
+            })
+            .Match<Either<Unit, Maybe<EmailAddress>>>(
+                () => Maybe<EmailAddress>.From(EmailAddress.From(_registrationModel.EmailAddress)),
+                _ => Unit.Default);
     }
 
-    protected async Task SubmitRegistrationAsync()
+    private async Task SubmitRegistrationAsync()
     {
-        var registrationResult = await ValidateUsername()
+        _registrationAttemptSucceeded = await ValidateUsername()
             .BindAsync(username => ValidatePassword()
                 .MapAsync(password => ValidateEmailAddress().MapLeft(_ => RegistrationError.InvalidEmailAddress)
                     .BindAsync(async emailAddress =>
@@ -198,19 +185,17 @@ public partial class RegisterComponent
                                     new RegistrationRequest(username, versionedPassword, emailAddress);
                                 return await CrypterApiService.UserAuthentication.RegisterAsync(request);
                             });
-                    })));
-
-        registrationResult.IfSome(x => x.DoLeftOrNeither(HandleRegistrationFailure, HandleUnknownRegistrationFailure));
-        _registrationAttemptSucceeded = registrationResult.Match(
-            () => false,
-            x => x.IsRight
-        );
+                    })))
+            .IfSomeAsync(x => x.DoLeftOrNeither(HandleRegistrationFailure, HandleUnknownRegistrationFailure))
+            .MatchAsync(
+                () => false,
+                x => x.IsRight);
     }
 
     private void HandleRegistrationFailure(RegistrationError error)
     {
         _registrationAttemptFailed = error != RegistrationError.InvalidPasswordConfirm;
-#pragma warning disable CS8524
+        
         _registrationAttemptErrorMessage = error switch
         {
             RegistrationError.InvalidUsername => "Invalid username",
@@ -222,9 +207,9 @@ public partial class RegisterComponent
                 "A cryptographic error occurred. This device or browser may not be supported.",
             RegistrationError.OldPasswordVersion
                 or RegistrationError.UnknownError => "An unknown error occurred.",
-            RegistrationError.InvalidPasswordConfirm => string.Empty
+            RegistrationError.InvalidPasswordConfirm => string.Empty,
+            _ => throw new ArgumentOutOfRangeException(nameof(error), "Encountered an unknown RegistrationError")
         };
-#pragma warning restore CS8524
     }
 
     private void HandleUnknownRegistrationFailure()

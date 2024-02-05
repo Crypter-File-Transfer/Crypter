@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -42,20 +42,20 @@ namespace Crypter.Web.Shared;
 [SupportedOSPlatform("browser")]
 public class MainLayoutBase : LayoutComponentBase, IDisposable
 {
-    [Inject] private IBlazorSodiumService BlazorSodiumService { get; set; }
+    [Inject] private IBlazorSodiumService BlazorSodiumService { get; init; } = null!;
 
-    [Inject] private IUserSessionService UserSessionService { get; set; }
+    [Inject] private IUserSessionService UserSessionService { get; init; } = null!;
 
-    [Inject] private IUserKeysService UserKeysService { get; set; }
+    [Inject] private IUserKeysService UserKeysService { get; init; } = null!;
 
-    [Inject] private IUserPasswordService UserPasswordService { get; set; }
+    [Inject] private IUserPasswordService UserPasswordService { get; init; } = null!;
 
-    [Inject] private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
+    [Inject] private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; init; } = null!;
 
-    protected BasicModal BasicModal { get; set; }
-    protected RecoveryKeyModal RecoveryKeyModal { get; set; }
-    protected TransferSuccessModal TransferSuccessModal { get; set; }
-    protected SpinnerModal SpinnerModal { get; set; }
+    protected BasicModal BasicModal { get; set; } = null!;
+    protected RecoveryKeyModal RecoveryKeyModal { get; set; } = null!;
+    protected TransferSuccessModal TransferSuccessModal { get; set; } = null!;
+    protected SpinnerModal SpinnerModal { get; set; } = null!;
 
     protected bool ServicesInitialized { get; set; }
 
@@ -75,7 +75,7 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
         ServicesInitialized = true;
     }
 
-    private async void HandleUserLoggedInEvent(object sender, UserLoggedInEventArgs args)
+    private async void HandleUserLoggedInEvent(object? sender, UserLoggedInEventArgs args)
     {
         await UserPasswordService
             .DeriveUserCredentialKeyAsync(args.Username, args.Password, UserPasswordService.CurrentPasswordVersion)
@@ -97,7 +97,7 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
             });
     }
 
-    private void ShowPasswordHashingModal(object sender, PasswordHashBeginEventArgs args)
+    private void ShowPasswordHashingModal(object? sender, PasswordHashBeginEventArgs args)
     {
         switch (args.HashType)
         {
@@ -110,10 +110,12 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
                 SpinnerModal.Open("Calculating Encryption Key",
                     "Please wait while your personal encryption key is calculated.", Maybe<EventCallback>.None);
                 break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(args), "Args contained an invalid HashType");
         }
     }
 
-    private async void ClosePasswordHashingModal(object sender, PasswordHashEndEventArgs args)
+    private async void ClosePasswordHashingModal(object? sender, PasswordHashEndEventArgs args)
     {
         await SpinnerModal.CloseAsync();
     }

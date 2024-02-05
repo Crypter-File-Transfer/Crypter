@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -32,9 +32,9 @@ namespace Crypter.Web.Shared;
 
 public partial class UserReceivedItemsComponent
 {
-    [Inject] private NavigationManager NavigationManager { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; init; } = null!;
 
-    [Parameter] public IEnumerable<UserReceivedItem> Items { get; set; }
+    [Parameter] public required IEnumerable<UserReceivedItem> Items { get; set; }
 
     [Parameter] public EventCallback<IEnumerable<UserReceivedItem>> ItemsChanged { get; set; }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -36,9 +36,9 @@ namespace Crypter.Web.Shared;
 
 public partial class ServerDiskSpaceComponent
 {
-    [Inject] private ClientTransferSettings UploadSettings { get; set; }
+    [Inject] private ClientTransferSettings UploadSettings { get; init; } = null!;
 
-    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] private ICrypterApiClient CrypterApiService { get; init; } = null!;
 
     private bool _serverHasDiskSpace = true;
 
