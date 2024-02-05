@@ -36,7 +36,7 @@ namespace Crypter.Web.Shared;
 
 public partial class ServerDiskSpaceComponent
 {
-    [Inject] private TransferSettings UploadSettings { get; set; }
+    [Inject] private ClientTransferSettings UploadSettings { get; set; }
 
     [Inject] private ICrypterApiClient CrypterApiService { get; set; }
 

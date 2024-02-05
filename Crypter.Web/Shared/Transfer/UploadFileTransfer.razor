@@ -1,5 +1,5 @@
 @*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -29,12 +29,12 @@
 <div class="file-upload" hidden="@EncryptionInProgress">
     <div class="row">
         <div class="col-12 p-0">
-            <div class="card dropzone @DropClass rounded mb-3">
+            <div class="card dropzone @_dropClass rounded mb-3">
                 <p class="card-text dz-text">
                     <i class="bi bi-file-arrow-up d-block fs-1 my-3"></i>
                     <span class="fw-bold">Choose a file</span> or drag it here to upload
                 </p>
-                <InputFile id="fileInput" OnChange="@HandleFileInputChange" @ondragenter="HandleDragEnter" @ondragleave="HandleDragLeave"/>
+                <InputFile id="fileInput" OnChange="@HandleFileInputChange" @ondragenter="@HandleDragEnter" @ondragleave="@HandleDragLeave"/>
             </div>
             <div hidden="@(string.IsNullOrEmpty(ErrorMessage))" class="validation-errors my-3">
                 <div class="alert alert-danger" role="alert">
@@ -42,12 +42,12 @@
                 </div>
             </div>
 
-            @if (SelectedFile is not null)
+            @if (_selectedFile is not null)
             {
                 <div class="card my-3">
                     <div class="card-body">
-                        @SelectedFile.Name
-                        <button type="button" class="btn-close float-end" aria-label="Remove file" @onclick="@(e => SelectedFile = null)"></button>
+                        @_selectedFile.Name
+                        <button type="button" class="btn-close float-end" aria-label="Remove file" @onclick="@(_ => _selectedFile = null)"></button>
                     </div>
                 </div>
             }
@@ -55,7 +55,7 @@
         </div>
         <div class="row">
             <div class="col-12 p-0">
-                <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(async e => await OnEncryptClicked())">Encrypt</button>
+                <button type="button" class="btn btn-primary mx-auto d-block" @onclick="@(async _ => await OnEncryptClicked())">Encrypt</button>
             </div>
         </div>
     </div>

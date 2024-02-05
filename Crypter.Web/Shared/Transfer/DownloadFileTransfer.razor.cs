@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -43,7 +43,7 @@ public partial class DownloadFileTransfer :  IDisposable
     private long _fileSize = 0;
     private bool _localDownloadInProgress;
 
-    private DownloadFileHandler _downloadHandler;
+    private DownloadFileHandler? _downloadHandler;
 
     protected override async Task OnInitializedAsync()
     {
@@ -54,7 +54,7 @@ public partial class DownloadFileTransfer :  IDisposable
     private async Task PrepareFilePreviewAsync()
     {
         _downloadHandler = TransferHandlerFactory.CreateDownloadFileHandler(TransferHashId, UserType);
-        var previewResponse = await _downloadHandler.DownloadPreviewAsync();
+        Either<TransferPreviewError, FileTransferPreviewResponse> previewResponse = await _downloadHandler.DownloadPreviewAsync();
         previewResponse.DoRight(x =>
         {
             _fileName = x.FileName;
@@ -71,6 +71,12 @@ public partial class DownloadFileTransfer :  IDisposable
 
     private async Task OnDecryptClickedAsync(MouseEventArgs _)
     {
+        if (_downloadHandler is null)
+        {
+            ErrorMessage = "Download handler not assigned.";
+            return;
+        }
+        
         BrowserDownloadFileService.Reset();
         DecryptionInProgress = true;
 
@@ -83,8 +89,8 @@ public partial class DownloadFileTransfer :  IDisposable
         {
             _downloadHandler.SetRecipientInfo(privateKey);
 
-            await SetProgressMessage(_decryptingLiteral);
-            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
+            await SetProgressMessage(DecryptingLiteral);
+            Either<DownloadTransferCiphertextError, byte[]> decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
 
             decryptionResponse.DoLeftOrNeither(
                 HandleDownloadError,

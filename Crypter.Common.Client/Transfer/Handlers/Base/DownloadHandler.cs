@@ -41,7 +41,7 @@ public class DownloadHandler : IUserDownloadHandler
     protected readonly ICrypterApiClient CrypterApiClient;
     protected readonly ICryptoProvider CryptoProvider;
     protected readonly IUserSessionService UserSessionService;
-    protected readonly TransferSettings TransferSettings;
+    protected readonly ClientTransferSettings ClientTransferSettings;
 
     protected string? TransferHashId;
     protected TransferUserType TransferUserType = TransferUserType.Anonymous;
@@ -54,12 +54,12 @@ public class DownloadHandler : IUserDownloadHandler
     protected Maybe<byte[]> KeyExchangeNonce = Maybe<byte[]>.None;
 
     protected DownloadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        IUserSessionService userSessionService, TransferSettings transferSettings)
+        IUserSessionService userSessionService, ClientTransferSettings clientTransferSettings)
     {
         CrypterApiClient = crypterApiClient;
         CryptoProvider = cryptoProvider;
         UserSessionService = userSessionService;
-        TransferSettings = transferSettings;
+        ClientTransferSettings = clientTransferSettings;
     }
 
     internal void SetTransferInfo(string transferHashId, TransferUserType userType)

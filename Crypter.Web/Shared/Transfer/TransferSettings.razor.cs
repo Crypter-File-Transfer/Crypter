@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -35,7 +35,7 @@ public partial class TransferSettings
     private const int MaxExpirationHours = 24;
     private const int DefaultExpirationHours = 24;
 
-    private string _expirationInput;
+    private string _expirationInput = string.Empty;
 
     [Parameter] public int ExpirationHours { get; set; }
 

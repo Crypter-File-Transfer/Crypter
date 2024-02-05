@@ -71,7 +71,7 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton(sp =>
 {
     IConfiguration config = sp.GetRequiredService<IConfiguration>();
-    return config.GetSection("TransferSettings").Get<TransferSettings>()
+    return config.GetSection("TransferSettings").Get<ClientTransferSettings>()
         ?? throw new ConfigurationException("Failed to load TransferSettings.");
 });
 

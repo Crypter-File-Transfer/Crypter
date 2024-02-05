@@ -41,8 +41,8 @@ namespace Crypter.Common.Client.Transfer.Handlers;
 public class DownloadFileHandler : DownloadHandler
 {
     public DownloadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        IUserSessionService userSessionService, TransferSettings transferSettings)
-        : base(crypterApiClient, cryptoProvider, userSessionService, transferSettings)
+        IUserSessionService userSessionService, ClientTransferSettings clientTransferSettings)
+        : base(crypterApiClient, cryptoProvider, userSessionService, clientTransferSettings)
     {
     }
 

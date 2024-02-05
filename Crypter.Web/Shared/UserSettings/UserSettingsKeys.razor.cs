@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -37,15 +37,15 @@ namespace Crypter.Web.Shared.UserSettings;
 
 public partial class UserSettingsKeys : IDisposable
 {
-    [Inject] private IUserSessionService UserSessionService { get; set; }
+    [Inject] private IUserSessionService UserSessionService { get; init; } = null!;
 
-    [Inject] private IUserKeysService UserKeysService { get; set; }
+    [Inject] private IUserKeysService UserKeysService { get; init; } = null!;
 
-    [Inject] private IUserRecoveryService UserRecoveryService { get; set; }
+    [Inject] private IUserRecoveryService UserRecoveryService { get; init; } = null!;
 
-    [Inject] private IJSRuntime JsRuntime { get; set; }
+    [Inject] private IJSRuntime JsRuntime { get; init; } = null!;
 
-    private PasswordModal _passwordModal;
+    private PasswordModal _passwordModal = null!;
 
     private string _privateKey = string.Empty;
     private string _recoveryKey = string.Empty;
@@ -59,7 +59,7 @@ public partial class UserSettingsKeys : IDisposable
         UserSessionService.UserPasswordTestSuccessEventHandler += OnPasswordTestSuccess;
     }
 
-    private async void OnPasswordTestSuccess(object sender, UserPasswordTestSuccessEventArgs args)
+    private async void OnPasswordTestSuccess(object? sender, UserPasswordTestSuccessEventArgs args)
     {
         _recoveryKey = await UserKeysService.MasterKey
             .BindAsync(async masterKey =>
@@ -74,7 +74,7 @@ public partial class UserSettingsKeys : IDisposable
     private async Task CopyRecoveryKeyToClipboardAsync()
     {
         await JsRuntime.InvokeVoidAsync("Crypter.CopyToClipboard",
-            new object[] { _recoveryKey, "recoveryKeyCopyTooltip" });
+            [_recoveryKey, "recoveryKeyCopyTooltip"]);
     }
 
     public void Dispose()

@@ -24,17 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Models;
-using Crypter.Common.Client.Transfer.Models;
+namespace Crypter.Common.Client.Transfer.Models;
 
-namespace Crypter.Web.Models.Settings;
-
-/// <summary>
-/// Caution!  Do not add secrets here!
-/// These settings are available to the client.
-/// </summary>
-public class ClientSettings
+public class ClientTransferSettings
 {
-    public required ClientApiSettings ApiSettings { get; init; }
-    public required ClientTransferSettings ClientTransferSettings { get; init; }
+    public short MaximumTransferSizeMiB { get; init; }
+    public int MaxReadSize { get; init; }
+    public int PadSize { get; init; }
 }

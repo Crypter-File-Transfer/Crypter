@@ -47,8 +47,8 @@ public class UploadMessageHandler : UploadHandler
     private bool _transferInfoSet;
 
     public UploadMessageHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        TransferSettings transferSettings)
-        : base(crypterApiClient, cryptoProvider, transferSettings)
+        ClientTransferSettings clientTransferSettings)
+        : base(crypterApiClient, cryptoProvider, clientTransferSettings)
     {
     }
 

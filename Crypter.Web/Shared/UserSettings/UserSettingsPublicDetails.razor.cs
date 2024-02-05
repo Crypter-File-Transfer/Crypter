@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -34,7 +34,7 @@ namespace Crypter.Web.Shared.UserSettings;
 
 public partial class UserSettingsPublicDetails
 {
-    [Inject] private IUserProfileSettingsService UserProfileSettingsService { get; set; }
+    [Inject] private IUserProfileSettingsService UserProfileSettingsService { get; init; } = null!;
 
     private string _alias = string.Empty;
     private string _aliasEdit = string.Empty;
@@ -42,7 +42,7 @@ public partial class UserSettingsPublicDetails
     private string _about = string.Empty;
     private string _aboutEdit = string.Empty;
 
-    private bool _isDataReady;
+    private bool _loading = true;
     private bool _isEditing;
 
     protected override async Task OnInitializedAsync()
@@ -57,7 +57,7 @@ public partial class UserSettingsPublicDetails
                 _aboutEdit = x.About;
             });
 
-        _isDataReady = true;
+        _loading = false;
     }
 
     private void OnEditClicked()
@@ -76,7 +76,7 @@ public partial class UserSettingsPublicDetails
 
     private async Task OnSaveClickedAsync()
     {
-        var request = new ProfileSettings(_aliasEdit, _aboutEdit);
+        ProfileSettings request = new ProfileSettings(_aliasEdit, _aboutEdit);
         await UserProfileSettingsService.SetProfileSettingsAsync(request)
             .DoRightAsync(x =>
             {
