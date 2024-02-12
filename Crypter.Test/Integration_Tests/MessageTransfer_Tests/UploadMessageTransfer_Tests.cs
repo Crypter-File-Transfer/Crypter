@@ -96,6 +96,10 @@ internal class UploadMessageTransfer_Tests
         Assert.That((senderDefined == false && senderUsername.IsNone)
                     || (senderDefined && senderUsername.IsSome), Is.True);
 
+        byte[]? senderPublicKey = senderDefined
+            ? null
+            : TestData.DefaultPublicKey;
+        
         await senderUsername.IfSomeAsync(async username =>
         {
             RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(username, senderPassword);
@@ -126,7 +130,7 @@ internal class UploadMessageTransfer_Tests
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
-            TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
+            senderPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
             TestData.DefaultTransferLifetimeHours);
         Either<UploadTransferError, UploadTransferResponse> result = await _client!.MessageTransfer.UploadMessageTransferAsync(recipientUsername, request,
             encryptionStreamOpener, senderDefined);
@@ -140,7 +144,7 @@ internal class UploadMessageTransfer_Tests
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
-            TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
+            null, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
             TestData.DefaultTransferLifetimeHours);
         Either<UploadTransferError, UploadTransferResponse> result =
             await _client!.MessageTransfer.UploadMessageTransferAsync("John Smith", request, encryptionStreamOpener,
@@ -155,7 +159,7 @@ internal class UploadMessageTransfer_Tests
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
-            TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
+            null, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
             TestData.DefaultTransferLifetimeHours);
 
         Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -187,7 +191,7 @@ internal class UploadMessageTransfer_Tests
         (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
-            TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
+            null, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
             TestData.DefaultTransferLifetimeHours);
         Either<UploadTransferError, UploadTransferResponse> result =
             await _client!.MessageTransfer.UploadMessageTransferAsync(Maybe<string>.None, request,

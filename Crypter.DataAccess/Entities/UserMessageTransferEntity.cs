@@ -34,7 +34,7 @@ public class UserMessageTransferEntity : IUserTransfer, IMessageTransfer
 {
     public Guid Id { get; set; }
     public long Size { get; set; }
-    public byte[] PublicKey { get; set; }
+    public byte[]? PublicKey { get; set; }
     public byte[] KeyExchangeNonce { get; set; }
     public byte[] Proof { get; set; }
     public DateTime Created { get; set; }
@@ -50,7 +50,7 @@ public class UserMessageTransferEntity : IUserTransfer, IMessageTransfer
     // IMessageTransfer
     public string Subject { get; set; }
 
-    public UserMessageTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof,
+    public UserMessageTransferEntity(Guid id, long size, byte[]? publicKey, byte[] keyExchangeNonce, byte[] proof,
         DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string subject = "")
     {
         Id = id;
