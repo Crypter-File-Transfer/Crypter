@@ -51,6 +51,14 @@ public static class LinqUserExpressions
                       && x.PrivacySetting != null;
     }
 
+    /// <summary>
+    /// Project a UserEntity to a UserProfile model.
+    ///
+    /// The query should first be filtered through 'UserProfileIsComplete' prior to ensure all required properties
+    /// are present.
+    /// </summary>
+    /// <param name="visitorId"></param>
+    /// <returns></returns>
     public static Expression<Func<UserEntity, UserProfile>> ToUserProfileForVisitor(Guid? visitorId)
     {
         return x => new UserProfile(

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -33,13 +33,13 @@ namespace Crypter.Web.Shared.Modal;
 
 public partial class BasicModal
 {
-    private string _subject;
-    private string _message;
-    private string _primaryButtonText;
-    private string _secondaryButtonText;
+    private string _subject = string.Empty;
+    private string _message = string.Empty;
+    private string _primaryButtonText = string.Empty;
+    private string _secondaryButtonText = string.Empty;
 
     private Maybe<EventCallback<bool>> _modalClosedCallback;
-    private ModalBehavior _modalBehaviorRef;
+    private ModalBehavior _modalBehaviorRef = null!;
 
     public void Open(string subject, string message, string primaryButtonText, Maybe<string> secondaryButtonText,
         Maybe<EventCallback<bool>> modalClosedCallback)

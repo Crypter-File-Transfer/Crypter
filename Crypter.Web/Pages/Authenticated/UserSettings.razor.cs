@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -32,7 +32,7 @@ public partial class UserSettings
 {
     private string _username = string.Empty;
 
-    private bool _dataIsReady;
+    private bool _loading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -43,9 +43,9 @@ public partial class UserSettings
         }
 
         _username = UserSessionService.Session.Match(
-            () => null,
+            () => string.Empty,
             some => some.Username);
 
-        _dataIsReady = true;
+        _loading = false;
     }
 }

@@ -47,8 +47,8 @@ public class UploadFileHandler : UploadHandler
     private bool _transferInfoSet;
 
     public UploadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        TransferSettings transferSettings)
-        : base(crypterApiClient, cryptoProvider, transferSettings)
+        ClientTransferSettings clientTransferSettings)
+        : base(crypterApiClient, cryptoProvider, clientTransferSettings)
     {
     }
 

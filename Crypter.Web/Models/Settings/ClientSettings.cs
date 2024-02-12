@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -35,6 +35,6 @@ namespace Crypter.Web.Models.Settings;
 /// </summary>
 public class ClientSettings
 {
-    public ClientApiSettings ApiSettings { get; set; }
-    public TransferSettings TransferSettings { get; set; }
+    public required ClientApiSettings ApiSettings { get; init; }
+    public required ClientTransferSettings ClientTransferSettings { get; init; }
 }

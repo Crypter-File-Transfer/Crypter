@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -37,11 +37,11 @@ namespace Crypter.Web.Shared.UserSettings;
 
 public partial class UserSettingsNotificationSettings : IDisposable
 {
-    [Inject] protected ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] protected ICrypterApiClient CrypterApiService { get; init; } = null!;
 
-    [Inject] protected IUserContactInfoSettingsService UserContactInfoSettingsService { get; set; }
+    [Inject] protected IUserContactInfoSettingsService UserContactInfoSettingsService { get; init; } = null!;
 
-    [Inject] protected IUserNotificationSettingsService UserNotificationSettingsService { get; set; }
+    [Inject] protected IUserNotificationSettingsService UserNotificationSettingsService { get; init; } = null!;
 
     private bool _emailAddressVerified;
 
@@ -66,7 +66,7 @@ public partial class UserSettingsNotificationSettings : IDisposable
         _enableTransferNotifications = await UserNotificationSettingsService.GetNotificationSettingsAsync()
             .MatchAsync(() =>
                     false,
-                x => _enableTransferNotifications = x.EmailNotifications && x.NotifyOnTransferReceived);
+                x => _enableTransferNotifications = x is { EmailNotifications: true, NotifyOnTransferReceived: true });
         _enableTransferNotificationsEdit = _enableTransferNotifications;
 
         _isDataReady = true;
@@ -90,7 +90,7 @@ public partial class UserSettingsNotificationSettings : IDisposable
         await CrypterApiService.UserSetting.UpdateNotificationSettingsAsync(newNotificationSettings)
             .DoRightAsync(x =>
             {
-                _enableTransferNotifications = x.EmailNotifications && x.NotifyOnTransferReceived;
+                _enableTransferNotifications = x is { EmailNotifications: true, NotifyOnTransferReceived: true };
                 _enableTransferNotificationsEdit = _enableTransferNotifications;
             })
             .DoLeftOrNeitherAsync(() => { _enableTransferNotificationsEdit = _enableTransferNotifications; });
@@ -98,7 +98,7 @@ public partial class UserSettingsNotificationSettings : IDisposable
         _isEditing = false;
     }
 
-    private void OnContactInfoChanged(object sender, UserContactInfoChangedEventArgs args)
+    private void OnContactInfoChanged(object? sender, UserContactInfoChangedEventArgs args)
     {
         _emailAddressVerified = args.EmailAddressVerified;
         StateHasChanged();

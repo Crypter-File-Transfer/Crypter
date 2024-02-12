@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -32,9 +32,9 @@ namespace Crypter.Web.Pages.Authenticated.Base;
 
 public class AuthenticatedPageBase : ComponentBase
 {
-    [Inject] protected NavigationManager NavigationManager { get; set; }
+    [Inject] protected NavigationManager NavigationManager { get; init; } = null!;
 
-    [Inject] protected IUserSessionService UserSessionService { get; set; }
+    [Inject] protected IUserSessionService UserSessionService { get; init; } = null!;
 
     private const string LoginPage = "/login";
 

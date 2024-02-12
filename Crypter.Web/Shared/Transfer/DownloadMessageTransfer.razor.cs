@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -38,7 +38,7 @@ public partial class DownloadMessageTransfer
     private string _plaintextMessage = string.Empty;
     private long _messageSize = 0;
 
-    private DownloadMessageHandler _downloadHandler;
+    private DownloadMessageHandler? _downloadHandler;
 
     protected override async Task OnInitializedAsync()
     {
@@ -49,7 +49,7 @@ public partial class DownloadMessageTransfer
     private async Task PrepareMessagePreviewAsync()
     {
         _downloadHandler = TransferHandlerFactory.CreateDownloadMessageHandler(TransferHashId, UserType);
-        var previewResponse = await _downloadHandler.DownloadPreviewAsync();
+        Either<TransferPreviewError, MessageTransferPreviewResponse> previewResponse = await _downloadHandler.DownloadPreviewAsync();
         previewResponse.DoRight(x =>
         {
             _subject = x.Subject;
@@ -65,6 +65,12 @@ public partial class DownloadMessageTransfer
 
     private async Task OnDecryptClickedAsync(MouseEventArgs _)
     {
+        if (_downloadHandler is null)
+        {
+            ErrorMessage = "Download handler not assigned.";
+            return;
+        }
+        
         DecryptionInProgress = true;
 
         Maybe<byte[]> recipientPrivateKey = SpecificRecipient
@@ -72,15 +78,15 @@ public partial class DownloadMessageTransfer
             : DeriveRecipientPrivateKeyFromUrlSeed();
 
         recipientPrivateKey.IfNone(() => ErrorMessage = "Invalid decryption key.");
-        await recipientPrivateKey.IfSomeAsync(async x =>
+        await recipientPrivateKey.IfSomeAsync(async privateKey =>
         {
-            _downloadHandler.SetRecipientInfo(x);
+            _downloadHandler.SetRecipientInfo(privateKey);
 
-            await SetProgressMessage(_decryptingLiteral);
-            var decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
+            await SetProgressMessage(DecryptingLiteral);
+            Either<DownloadTransferCiphertextError, string> decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
 
             decryptionResponse.DoLeftOrNeither(
-                x => HandleDownloadError(x),
+                HandleDownloadError,
                 () => HandleDownloadError());
 
             decryptionResponse.DoRight(x =>

@@ -24,17 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
-using Crypter.Web.Models;
-using Microsoft.AspNetCore.Components;
+namespace Crypter.Web.Models.Forms;
 
-namespace Crypter.Web.Shared;
-
-public partial class UserReceivedItemsComponent
+public class EmailVerificationParameters
 {
-    [Inject] private NavigationManager NavigationManager { get; init; } = null!;
-
-    [Parameter] public required IEnumerable<UserReceivedItem> Items { get; set; }
-
-    [Parameter] public EventCallback<IEnumerable<UserReceivedItem>> ItemsChanged { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Signature { get; set; } = string.Empty;
 }

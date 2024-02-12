@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -35,7 +35,7 @@ namespace Crypter.Web.Shared.UserSettings;
 
 public partial class UserSettingsContactInfo
 {
-    [Inject] private IUserContactInfoSettingsService UserContactInfoSettingsService { get; set; }
+    [Inject] private IUserContactInfoSettingsService UserContactInfoSettingsService { get; init; } = null!;
 
     private string _emailAddress = string.Empty;
     private string _emailAddressEdit = string.Empty;
@@ -56,8 +56,8 @@ public partial class UserSettingsContactInfo
         await UserContactInfoSettingsService.GetContactInfoSettingsAsync()
             .IfSomeAsync(x =>
             {
-                _emailAddress = x.EmailAddress;
-                _emailAddressEdit = x.EmailAddress;
+                _emailAddress = x.EmailAddress ?? string.Empty;
+                _emailAddressEdit = x.EmailAddress ?? string.Empty;
 
                 _emailAddressVerified = x.EmailAddressVerified;
             });
@@ -107,8 +107,8 @@ public partial class UserSettingsContactInfo
         await UserContactInfoSettingsService.UpdateContactInfoSettingsAsync(emailAddress, password)
             .DoRightAsync(x =>
             {
-                _emailAddress = x.EmailAddress;
-                _emailAddressEdit = x.EmailAddress;
+                _emailAddress = x.EmailAddress ?? string.Empty;
+                _emailAddressEdit = x.EmailAddress ?? string.Empty;
 
                 _emailAddressVerified = x.EmailAddressVerified;
             })
