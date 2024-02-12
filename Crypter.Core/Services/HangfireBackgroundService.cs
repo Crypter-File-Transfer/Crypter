@@ -34,8 +34,7 @@ using Crypter.Core.Features.Notifications.Commands;
 using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.UserAuthentication.Commands;
 using Crypter.Core.Features.UserEmailVerification.Commands;
-using Crypter.Core.Features.UserToken;
-using Crypter.DataAccess;
+using Crypter.Core.Features.UserToken.Commands;
 using EasyMonads;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -64,7 +63,7 @@ public interface IHangfireBackgroundService
     Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
         bool deleteFromTransferStorage);
 
-    Task DeleteUserTokenAsync(Guid tokenId);
+    Task<Unit> DeleteUserTokenAsync(Guid tokenId);
     Task<Unit> DeleteFailedLoginAttemptAsync(Guid failedAttemptId);
     Task<Unit> DeleteRecoveryParametersAsync(Guid userId);
     Task<Unit> DeleteUserKeysAsync(Guid userId);
@@ -80,13 +79,11 @@ public interface IHangfireBackgroundService
 /// </summary>
 public class HangfireBackgroundService : IHangfireBackgroundService
 {
-    private readonly DataContext _dataContext;
     private readonly ISender _sender;
     private readonly ILogger<HangfireBackgroundService> _logger;
 
-    public HangfireBackgroundService(DataContext dataContext, ISender sender, ILogger<HangfireBackgroundService> logger)
+    public HangfireBackgroundService(ISender sender, ILogger<HangfireBackgroundService> logger)
     {
-        _dataContext = dataContext;
         _sender = sender;
         _logger = logger;
     }
@@ -160,9 +157,10 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return _sender.Send(request);
     }
 
-    public Task DeleteUserTokenAsync(Guid tokenId)
+    public Task<Unit> DeleteUserTokenAsync(Guid tokenId)
     {
-        return UserTokenCommands.DeleteUserTokenAsync(_dataContext, tokenId);
+        DeleteUserTokenCommand request = new DeleteUserTokenCommand(tokenId);
+        return _sender.Send(request);
     }
 
     public Task<Unit> DeleteFailedLoginAttemptAsync(Guid failedAttemptId)
