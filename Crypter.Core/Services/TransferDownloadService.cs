@@ -92,10 +92,10 @@ public class TransferDownloadService : ITransferDownloadService
         string hashId, CancellationToken cancellationToken = default)
     {
         Guid id = _hashIdService.Decode(hashId);
-        var messagePreview = await _context.AnonymousMessageTransfers
+        MessageTransferPreviewResponse? messagePreview = await _context.AnonymousMessageTransfers
             .Where(x => x.Id == id)
             .Select(x => new MessageTransferPreviewResponse(x.Subject, x.Size, string.Empty, string.Empty, string.Empty,
-                x.PublicKey, x.KeyExchangeNonce, x.Created, x.Expiration))
+                x.PublicKey!, x.KeyExchangeNonce, x.Created, x.Expiration))
             .FirstOrDefaultAsync(cancellationToken);
 
         bool ciphertextExists =
@@ -112,7 +112,7 @@ public class TransferDownloadService : ITransferDownloadService
         FileTransferPreviewResponse? filePreview = await _context.AnonymousFileTransfers
             .Where(x => x.Id == id)
             .Select(x => new FileTransferPreviewResponse(x.FileName, x.ContentType, x.Size, string.Empty, string.Empty,
-                string.Empty, x.PublicKey, x.KeyExchangeNonce, x.Created, x.Expiration))
+                string.Empty, x.PublicKey!, x.KeyExchangeNonce, x.Created, x.Expiration))
             .FirstOrDefaultAsync(cancellationToken);
 
         bool ciphertextExists =
@@ -196,7 +196,7 @@ public class TransferDownloadService : ITransferDownloadService
                 x.Sender!.Profile!.Alias,
                 x.Recipient!.Username,
                 x.SenderId == null
-                    ? x.PublicKey
+                    ? x.PublicKey!
                     : x.Sender!.KeyPair!.PublicKey,
                 x.KeyExchangeNonce,
                 x.Created,
@@ -231,7 +231,7 @@ public class TransferDownloadService : ITransferDownloadService
                 x.Sender!.Profile!.Alias,
                 x.Recipient!.Username,
                 x.SenderId == null
-                    ? x.PublicKey
+                    ? x.PublicKey!
                     : x.Sender!.KeyPair!.PublicKey,
                 x.KeyExchangeNonce,
                 x.Created,

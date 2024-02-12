@@ -79,7 +79,7 @@ public class TransferUploadService : ITransferUploadService
     public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<Guid> senderId,
         Maybe<string> recipientUsername, UploadFileTransferRequest? request, Stream? ciphertextStream)
     {
-        if (request?.PublicKey is null || ciphertextStream is null)
+        if (request is null || ciphertextStream is null)
         {
             return UploadTransferError.UnknownError;
         }
@@ -112,7 +112,7 @@ public class TransferUploadService : ITransferUploadService
         Maybe<Guid> senderId, Maybe<string> recipientUsername, UploadMessageTransferRequest? request,
         Stream? ciphertextStream)
     {
-        if (request?.PublicKey is null || ciphertextStream is null)
+        if (request is null || ciphertextStream is null)
         {
             return UploadTransferError.UnknownError;
         }
@@ -191,7 +191,7 @@ public class TransferUploadService : ITransferUploadService
             UserFileTransferEntity transferEntity = new UserFileTransferEntity(
                 id: transferId,
                 size: requiredDiskSpace,
-                publicKey: request.PublicKey!,
+                publicKey: request.PublicKey,
                 keyExchangeNonce: request.KeyExchangeNonce,
                 proof: request.Proof,
                 created: now,
@@ -237,7 +237,7 @@ public class TransferUploadService : ITransferUploadService
             UserMessageTransferEntity transferEntity = new UserMessageTransferEntity(
                 id: transferId,
                 size: requiredDiskSpace,
-                publicKey: request.PublicKey!,
+                publicKey: request.PublicKey,
                 keyExchangeNonce: request.KeyExchangeNonce,
                 proof: request.Proof,
                 created: now,

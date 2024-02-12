@@ -34,7 +34,7 @@ public class UserFileTransferEntity : IUserTransfer, IFileTransfer
 {
     public Guid Id { get; set; }
     public long Size { get; set; }
-    public byte[] PublicKey { get; set; }
+    public byte[]? PublicKey { get; set; }
     public byte[] KeyExchangeNonce { get; set; }
     public byte[] Proof { get; set; }
     public DateTime Created { get; set; }
@@ -51,7 +51,7 @@ public class UserFileTransferEntity : IUserTransfer, IFileTransfer
     public string FileName { get; set; }
     public string ContentType { get; set; }
 
-    public UserFileTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof,
+    public UserFileTransferEntity(Guid id, long size, byte[]? publicKey, byte[] keyExchangeNonce, byte[] proof,
         DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType)
     {
         Id = id;
