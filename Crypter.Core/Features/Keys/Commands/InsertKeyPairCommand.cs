@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -52,7 +52,7 @@ internal class InsertKeyPairCommandHandler
     public async Task<Either<InsertKeyPairError, Unit>> Handle(InsertKeyPairCommand request,
         CancellationToken cancellationToken)
     {
-        UserKeyPairEntity keyPairEntity = await _dataContext.UserKeyPairs
+        UserKeyPairEntity? keyPairEntity = await _dataContext.UserKeyPairs
             .FirstOrDefaultAsync(x => x.Owner == request.UserId, CancellationToken.None);
 
         if (keyPairEntity is null)

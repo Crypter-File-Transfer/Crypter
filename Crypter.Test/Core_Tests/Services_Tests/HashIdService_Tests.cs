@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -35,12 +35,12 @@ namespace Crypter.Test.Core_Tests.Services_Tests;
 [TestFixture]
 public class HashIdService_Tests
 {
-    private HashIdService _sut;
+    private HashIdService? _sut;
 
-    [OneTimeSetUp]
-    public void SetupOnce()
+    [SetUp]
+    public void Setup()
     {
-        HashIdSettings settings = new HashIdSettings()
+        HashIdSettings settings = new HashIdSettings
         {
             Salt = "test"
         };
@@ -54,7 +54,7 @@ public class HashIdService_Tests
     {
         Guid guid = Guid.NewGuid();
 
-        string hash = _sut.Encode(guid);
+        string hash = _sut!.Encode(guid);
         Guid decodedHash = _sut.Decode(hash);
 
         Assert.That(decodedHash, Is.EqualTo(guid));

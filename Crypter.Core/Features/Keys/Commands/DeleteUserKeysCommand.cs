@@ -1,4 +1,6 @@
 ﻿/*
+ * Copyright (C) 2024 Crypter File Transfer
+ *
  *This file is part of the Crypter file transfer project.
  *
  * Crypter is free software: you can redistribute it and/or modify
@@ -52,7 +54,7 @@ internal class DeleteUserKeysCommandHandler : MediatR.IRequestHandler<DeleteUser
 
     public static async Task<Unit> HandleAsync(DataContext dataContext, Guid userId)
     {
-        UserMasterKeyEntity masterKey = await dataContext.UserMasterKeys
+        UserMasterKeyEntity? masterKey = await dataContext.UserMasterKeys
             .Where(x => x.Owner == userId)
             .FirstOrDefaultAsync(CancellationToken.None);
 

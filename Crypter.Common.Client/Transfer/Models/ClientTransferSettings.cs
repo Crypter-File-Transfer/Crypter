@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,12 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+namespace Crypter.Common.Client.Transfer.Models;
 
-namespace Crypter.Core.Exceptions;
-
-public class ConfigurationException : Exception
+public class ClientTransferSettings
 {
-    public ConfigurationException(string message) : base(message)
-    { }
+    public short MaximumTransferSizeMiB { get; init; }
+    public int MaxReadSize { get; init; }
+    public int PadSize { get; init; }
 }

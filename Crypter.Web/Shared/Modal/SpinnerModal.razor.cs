@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.Threading.Tasks;
 using Crypter.Web.Shared.Modal.Template;
 using EasyMonads;
@@ -33,11 +34,11 @@ namespace Crypter.Web.Shared.Modal;
 
 public partial class SpinnerModal
 {
-    private string _subject;
-    private string _message;
+    private string _subject = string.Empty;
+    private string _message = string.Empty;
 
     private Maybe<EventCallback> _modalClosedCallback;
-    private ModalBehavior _modalBehaviorRef;
+    private ModalBehavior _modalBehaviorRef = null!;
 
     public void Open(string subject, string message, Maybe<EventCallback> modalClosedCallback)
     {

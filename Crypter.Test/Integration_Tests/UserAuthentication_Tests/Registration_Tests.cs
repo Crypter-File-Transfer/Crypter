@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -36,8 +36,8 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests;
 [TestFixture]
 internal class Registration_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -50,7 +50,10 @@ internal class Registration_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -60,7 +63,7 @@ internal class Registration_Tests
     {
         RegistrationRequest request =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword, emailAddress);
-        Either<RegistrationError, Unit> result = await _client.UserAuthentication.RegisterAsync(request);
+        Either<RegistrationError, Unit> result = await _client!.UserAuthentication.RegisterAsync(request);
 
         Assert.That(result.IsRight, Is.True);
     }
@@ -72,10 +75,10 @@ internal class Registration_Tests
         VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
 
         RegistrationRequest initialRequest = new RegistrationRequest(initialUsername, password);
-        Either<RegistrationError, Unit> initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
+        Either<RegistrationError, Unit> initialResult = await _client!.UserAuthentication.RegisterAsync(initialRequest);
 
         RegistrationRequest secondRequest = new RegistrationRequest(duplicateUsername, password);
-        Either<RegistrationError, Unit> secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
+        Either<RegistrationError, Unit> secondResult = await _client!.UserAuthentication.RegisterAsync(secondRequest);
 
         Assert.That(initialResult.IsRight, Is.True);
         Assert.That(secondResult.IsLeft, Is.True);
@@ -89,10 +92,10 @@ internal class Registration_Tests
         VersionedPassword password = new VersionedPassword("password"u8.ToArray(), 1);
 
         RegistrationRequest initialRequest = new RegistrationRequest("first", password, initialEmailAddress);
-        Either<RegistrationError, Unit> initialResult = await _client.UserAuthentication.RegisterAsync(initialRequest);
+        Either<RegistrationError, Unit> initialResult = await _client!.UserAuthentication.RegisterAsync(initialRequest);
 
         RegistrationRequest secondRequest = new RegistrationRequest("second", password, duplicateEmailAddress);
-        Either<RegistrationError, Unit> secondResult = await _client.UserAuthentication.RegisterAsync(secondRequest);
+        Either<RegistrationError, Unit> secondResult = await _client!.UserAuthentication.RegisterAsync(secondRequest);
 
         Assert.That(initialResult.IsRight, Is.True);
         Assert.That(secondResult.IsLeft, Is.True);

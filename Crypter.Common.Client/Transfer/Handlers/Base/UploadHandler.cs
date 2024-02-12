@@ -40,7 +40,7 @@ public class UploadHandler : IUserUploadHandler
 {
     protected readonly ICrypterApiClient CrypterApiClient;
     protected readonly ICryptoProvider CryptoProvider;
-    protected readonly TransferSettings TransferSettings;
+    protected readonly ClientTransferSettings ClientTransferSettings;
 
     protected TransferUserType TransferUserType = TransferUserType.Anonymous;
 
@@ -58,11 +58,11 @@ public class UploadHandler : IUserUploadHandler
     protected Maybe<byte[]> RecipientPublicKey = Maybe<byte[]>.None;
 
     protected UploadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        TransferSettings transferSettings)
+        ClientTransferSettings clientTransferSettings)
     {
         CrypterApiClient = crypterApiClient;
         CryptoProvider = cryptoProvider;
-        TransferSettings = transferSettings;
+        ClientTransferSettings = clientTransferSettings;
 
         KeyExchangeNonce = CryptoProvider.Random.GenerateRandomBytes((int)CryptoProvider.KeyExchange.NonceSize);
     }
@@ -129,6 +129,6 @@ public class UploadHandler : IUserUploadHandler
 
         EncryptionStream EncryptionStreamOpener()
             => new EncryptionStream(plaintextStreamOpener(), streamSize, encryptionKey,
-                CryptoProvider.StreamEncryptionFactory, TransferSettings.MaxReadSize, TransferSettings.PadSize);
+                CryptoProvider.StreamEncryptionFactory, ClientTransferSettings.MaxReadSize, ClientTransferSettings.PadSize);
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -28,7 +28,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Crypter.Core.Identity;
-using Crypter.Core.Models;
 using Crypter.Crypto.Common;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.Extensions.Options;
@@ -46,11 +45,11 @@ public interface IPasswordHashService
 
 public class PasswordHashService : IPasswordHashService
 {
-    public short LatestServerPasswordVersion { get; init; }
+    public short LatestServerPasswordVersion { get; }
 
-    private static readonly KeyDerivationPrf KeyDerivationAlgorithm = KeyDerivationPrf.HMACSHA512;
-    private static readonly int HashByteLength = 64; // 512 bits
-    private static readonly int SaltByteLength = 16; // 128 bits
+    private const KeyDerivationPrf KeyDerivationAlgorithm = KeyDerivationPrf.HMACSHA512;
+    private const int HashByteLength = 64; // 512 bits
+    private const int SaltByteLength = 16; // 128 bits
 
     private readonly ICryptoProvider _cryptoProvider;
 
@@ -66,10 +65,10 @@ public class PasswordHashService : IPasswordHashService
 
     public SecurePasswordHashOutput MakeSecurePasswordHash(byte[] password, short serverPasswordVersion)
     {
-        var salt = _cryptoProvider.Random.GenerateRandomBytes(SaltByteLength);
-        var hash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), salt, KeyDerivationAlgorithm,
+        byte[] salt = _cryptoProvider.Random.GenerateRandomBytes(SaltByteLength);
+        byte[] hash = KeyDerivation.Pbkdf2(Convert.ToBase64String(password), salt, KeyDerivationAlgorithm,
             _serverPasswordVersions[serverPasswordVersion].Iterations, HashByteLength);
-        return new SecurePasswordHashOutput { Hash = hash, Salt = salt };
+        return new SecurePasswordHashOutput(hash: hash, salt: salt);
     }
 
     public bool VerifySecurePasswordHash(byte[] password, byte[] existingHash, byte[] existingSalt,

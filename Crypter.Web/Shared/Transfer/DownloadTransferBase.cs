@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -37,17 +37,15 @@ namespace Crypter.Web.Shared.Transfer;
 
 public class DownloadTransferBase : ComponentBase
 {
-    [Inject] private NavigationManager NavigationManager { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; init; } = null!;
 
-    [Inject] protected IUserSessionService UserSessionService { get; set; }
+    [Inject] protected IUserKeysService UserKeysService { get; init; } = null!;
 
-    [Inject] protected IUserKeysService UserKeysService { get; set; }
+    [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; init; } = null!;
 
-    [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; set; }
+    [Inject] protected ICryptoProvider CryptoProvider { get; init; } = null!;
 
-    [Inject] protected ICryptoProvider CryptoProvider { get; set; }
-
-    [Parameter] public string TransferHashId { get; set; }
+    [Parameter] public required string TransferHashId { get; set; }
 
     [Parameter] public TransferUserType UserType { get; set; }
 
@@ -63,7 +61,7 @@ public class DownloadTransferBase : ComponentBase
     protected DateTime Created = DateTime.MinValue;
     protected DateTime Expiration = DateTime.MinValue;
 
-    protected const string _decryptingLiteral = "Decrypting";
+    protected const string DecryptingLiteral = "Decrypting";
 
     protected Maybe<byte[]> DeriveRecipientPrivateKeyFromUrlSeed()
     {

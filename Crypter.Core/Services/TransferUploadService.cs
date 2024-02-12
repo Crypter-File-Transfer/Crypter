@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -47,10 +47,10 @@ namespace Crypter.Core.Services;
 public interface ITransferUploadService
 {
     Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<Guid> senderId,
-        Maybe<string> recipientUsername, UploadFileTransferRequest request, Stream ciphertextStream);
+        Maybe<string> recipientUsername, UploadFileTransferRequest? request, Stream? ciphertextStream);
 
     Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<Guid> senderId,
-        Maybe<string> recipientUsername, UploadMessageTransferRequest request, Stream ciphertextStream);
+        Maybe<string> recipientUsername, UploadMessageTransferRequest? request, Stream? ciphertextStream);
 }
 
 public class TransferUploadService : ITransferUploadService
@@ -61,8 +61,8 @@ public class TransferUploadService : ITransferUploadService
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IHashIdService _hashIdService;
     private readonly TransferStorageSettings _transferStorageSettings;
-    private const int _maxLifetimeHours = 24;
-    private const int _minLifetimeHours = 1;
+    private const int MaxLifetimeHours = 24;
+    private const int MinLifetimeHours = 1;
 
     public TransferUploadService(DataContext context, ITransferRepository transferStorageService,
         IHangfireBackgroundService hangfireBackgroundService, IBackgroundJobClient backgroundJobClient,
@@ -77,8 +77,13 @@ public class TransferUploadService : ITransferUploadService
     }
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<Guid> senderId,
-        Maybe<string> recipientUsername, UploadFileTransferRequest request, Stream ciphertextStream)
+        Maybe<string> recipientUsername, UploadFileTransferRequest? request, Stream? ciphertextStream)
     {
+        if (request is null || ciphertextStream is null)
+        {
+            return UploadTransferError.UnknownError;
+        }
+        
         Maybe<Guid> recipientId = await recipientUsername.MatchAsync(
             () => Maybe<Guid>.None,
             async x => await GetRecipientIdAsync(senderId, x));
@@ -104,9 +109,14 @@ public class TransferUploadService : ITransferUploadService
     }
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(
-        Maybe<Guid> senderId, Maybe<string> recipientUsername, UploadMessageTransferRequest request,
-        Stream ciphertextStream)
+        Maybe<Guid> senderId, Maybe<string> recipientUsername, UploadMessageTransferRequest? request,
+        Stream? ciphertextStream)
     {
+        if (request is null || ciphertextStream is null)
+        {
+            return UploadTransferError.UnknownError;
+        }
+        
         Maybe<Guid> recipientId = await recipientUsername.MatchAsync(
             () => Maybe<Guid>.None,
             async x => await GetRecipientIdAsync(senderId, x));
@@ -116,7 +126,7 @@ public class TransferUploadService : ITransferUploadService
             return UploadTransferError.RecipientNotFound;
         }
 
-        var task = from diskSpace in GetRequiredDiskSpaceAsync(ciphertextStream.Length)
+        return await (from diskSpace in GetRequiredDiskSpaceAsync(ciphertextStream.Length)
             from lifetimeHours in ValidateLifetimeHours(request.LifetimeHours).AsTask()
             let transferId = Guid.NewGuid()
             let transferUserType = DetermineTransferUserType(senderId, recipientId)
@@ -128,9 +138,7 @@ public class TransferUploadService : ITransferUploadService
                 QueueTransferNotificationAsync(transferId, TransferItemType.Message, recipientId))
             let deletionJobId = ScheduleTransferDeletion(transferId, TransferItemType.Message, transferUserType,
                 savedToDatabase.ExpirationUTC)
-            select savedToDatabase;
-
-        return await task;
+            select savedToDatabase);
     }
 
     private static TransferUserType DetermineTransferUserType(Maybe<Guid> senderId, Maybe<Guid> recipientId)
@@ -169,7 +177,7 @@ public class TransferUploadService : ITransferUploadService
             AnonymousFileTransferEntity transferEntity = new AnonymousFileTransferEntity(
                 id: transferId,
                 size: requiredDiskSpace,
-                publicKey: request.PublicKey,
+                publicKey: request.PublicKey!,
                 keyExchangeNonce: request.KeyExchangeNonce,
                 proof: request.Proof,
                 created: now,
@@ -216,7 +224,7 @@ public class TransferUploadService : ITransferUploadService
             AnonymousMessageTransferEntity transferEntity = new AnonymousMessageTransferEntity(
                 id: transferId,
                 size: requiredDiskSpace,
-                publicKey: request.PublicKey,
+                publicKey: request.PublicKey!,
                 keyExchangeNonce: request.KeyExchangeNonce,
                 proof: request.Proof,
                 created: now,
@@ -258,7 +266,7 @@ public class TransferUploadService : ITransferUploadService
 
     private static Either<UploadTransferError, int> ValidateLifetimeHours(int lifetimeHours)
     {
-        bool inRange = lifetimeHours <= _maxLifetimeHours || lifetimeHours >= _minLifetimeHours;
+        bool inRange = lifetimeHours is <= MaxLifetimeHours and >= MinLifetimeHours;
         return inRange
             ? lifetimeHours
             : UploadTransferError.InvalidRequestedLifetimeHours;
@@ -314,9 +322,9 @@ public class TransferUploadService : ITransferUploadService
         await maybeUserId.IfSomeAsync(
             async userId =>
             {
-                UserEntity user = await _context.Users
+                UserEntity? user = await _context.Users
                     .Where(x => x.Id == userId)
-                    .Where(x => x.NotificationSetting.EnableTransferNotifications
+                    .Where(x => x.NotificationSetting!.EnableTransferNotifications
                                 && x.EmailVerified
                                 && x.NotificationSetting.EmailNotifications)
                     .FirstOrDefaultAsync();

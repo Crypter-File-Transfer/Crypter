@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -38,17 +38,17 @@ namespace Crypter.Web.Shared;
 
 public partial class Navigation : IDisposable
 {
-    [Inject] private IJSRuntime JsRuntime { get; set; }
+    [Inject] private IJSRuntime JsRuntime { get; init; } = null!;
 
-    [Inject] private NavigationManager NavigationManager { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; init; } = null!;
 
-    [Inject] private IUserSessionService UserSessionService { get; set; }
+    [Inject] private IUserSessionService UserSessionService { get; init; } = null!;
 
-    [Inject] private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; set; }
+    [Inject] private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; init; } = null!;
 
-    protected UploadFileTransferModal FileTransferModal { get; set; }
+    private UploadFileTransferModal FileTransferModal { get; set; } = null!;
 
-    protected UploadMessageTransferModal MessageTransferModal { get; set; }
+    private UploadMessageTransferModal MessageTransferModal { get; set; } = null!;
 
     private bool _showNavigation;
     private bool _showUserNavigation;
@@ -82,12 +82,12 @@ public partial class Navigation : IDisposable
         NavigationManager.NavigateTo("/");
     }
 
-    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         InvokeAsync(async () => { await CollapseNavigationMenuAsync(); });
     }
 
-    private void UserSessionStateChangedEventHandler(object sender, EventArgs _)
+    private void UserSessionStateChangedEventHandler(object? sender, EventArgs _)
     {
         HandleUserSessionStateChanged();
     }

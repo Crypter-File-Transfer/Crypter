@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -38,7 +38,7 @@ public class StreamEncrypt : IStreamEncrypt
 {
     private readonly IPadding _padding;
     private readonly int _padSize;
-    private IncrementalXChaCha20Poly1305 _state;
+    private IncrementalXChaCha20Poly1305? _state;
 
     public uint KeySize
     {
@@ -65,6 +65,11 @@ public class StreamEncrypt : IStreamEncrypt
 
     public byte[] Push(byte[] plaintext, bool final)
     {
+        if (_state is null)
+        {
+            throw new Exception($"{nameof(GenerateHeader)} must be invoked before pushing.");
+        }
+        
         ChunkFlag chunkFlag = final ? ChunkFlag.Final : ChunkFlag.Message;
         byte[] paddedPlaintext = _padding.Pad(plaintext, _padSize);
         byte[] ciphertext = new byte[paddedPlaintext.Length + TagSize];

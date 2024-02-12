@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -50,8 +50,8 @@ internal class RemoveUserContactCommandHandler : MediatR.IRequestHandler<RemoveU
     {
         string lowerContactUsername = request.ContactUsername.ToLower();
 
-        UserContactEntity contactEntity = await _dataContext.UserContacts
-            .Where(x => x.OwnerId == request.UserId && x.Contact.Username.ToLower() == lowerContactUsername)
+        UserContactEntity? contactEntity = await _dataContext.UserContacts
+            .Where(x => x.OwnerId == request.UserId && x.Contact!.Username.ToLower() == lowerContactUsername)
             .FirstOrDefaultAsync(CancellationToken.None);
 
         if (contactEntity is not null)

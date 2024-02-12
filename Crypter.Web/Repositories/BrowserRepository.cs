@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -43,16 +43,16 @@ public class BrowserRepository : IDeviceRepository<BrowserStorageLocation>
     public const string LocalStorageLiteral = "localStorage";
 
     private readonly IJSRuntime _jsRuntime;
-    private readonly Dictionary<string, object> _inMemoryStorage;
+    private readonly Dictionary<string, object?> _inMemoryStorage;
     private readonly Dictionary<string, BrowserStorageLocation> _objectLocations;
-    private readonly SemaphoreSlim _initializationSemaphore = new(1);
+    private readonly SemaphoreSlim _initializationSemaphore = new SemaphoreSlim(1);
     private bool _initialized;
-    private EventHandler _initializedEventHandler;
+    private EventHandler? _initializedEventHandler;
 
     public BrowserRepository(IJSRuntime jSRuntime)
     {
         _jsRuntime = jSRuntime;
-        _inMemoryStorage = new Dictionary<string, object>();
+        _inMemoryStorage = new Dictionary<string, object?>();
         _objectLocations = new Dictionary<string, BrowserStorageLocation>();
     }
 
@@ -111,20 +111,20 @@ public class BrowserRepository : IDeviceRepository<BrowserStorageLocation>
     {
         AssertInitialized();
         string strItemType = itemType.ToString();
-        if (_objectLocations.TryGetValue(strItemType, out var location))
+        if (_objectLocations.TryGetValue(strItemType, out BrowserStorageLocation location))
         {
             ValueTask<string> jsonTask;
             switch (location)
             {
                 case BrowserStorageLocation.Memory:
-                    return Maybe<T>.From((T)_inMemoryStorage[strItemType]);
+                    return (T?)_inMemoryStorage[strItemType];
                 case BrowserStorageLocation.SessionStorage:
                     jsonTask = _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.getItem",
-                        new object[] { strItemType });
+                        [strItemType]);
                     break;
                 case BrowserStorageLocation.LocalStorage:
                     jsonTask = _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.getItem",
-                        new object[] { strItemType });
+                        [strItemType]);
                     break;
                 default:
                     throw new NotImplementedException();
@@ -153,7 +153,7 @@ public class BrowserRepository : IDeviceRepository<BrowserStorageLocation>
     public Maybe<BrowserStorageLocation> GetItemLocation(DeviceStorageObjectType itemType)
     {
         AssertInitialized();
-        if (_objectLocations.TryGetValue(itemType.ToString(), out var location))
+        if (_objectLocations.TryGetValue(itemType.ToString(), out BrowserStorageLocation location))
         {
             return location;
         }
@@ -172,11 +172,11 @@ public class BrowserRepository : IDeviceRepository<BrowserStorageLocation>
                 break;
             case BrowserStorageLocation.SessionStorage:
                 await _jsRuntime.InvokeAsync<string>($"{SessionStorageLiteral}.setItem",
-                    new object[] { strItemType, JsonSerializer.Serialize(value) });
+                    [strItemType, JsonSerializer.Serialize(value)]);
                 break;
             case BrowserStorageLocation.LocalStorage:
                 await _jsRuntime.InvokeAsync<string>($"{LocalStorageLiteral}.setItem",
-                    new object[] { strItemType, JsonSerializer.Serialize(value) });
+                    [strItemType, JsonSerializer.Serialize(value)]);
                 break;
             default:
                 throw new NotImplementedException();
@@ -189,7 +189,7 @@ public class BrowserRepository : IDeviceRepository<BrowserStorageLocation>
     public async Task<Unit> RemoveItemAsync(DeviceStorageObjectType itemType)
     {
         AssertInitialized();
-        if (_objectLocations.TryGetValue(itemType.ToString(), out var location))
+        if (_objectLocations.TryGetValue(itemType.ToString(), out BrowserStorageLocation location))
         {
             _objectLocations.Remove(itemType.ToString());
             switch (location)
@@ -225,6 +225,6 @@ public class BrowserRepository : IDeviceRepository<BrowserStorageLocation>
     public event EventHandler InitializedEventHandler
     {
         add => _initializedEventHandler = (EventHandler)Delegate.Combine(_initializedEventHandler, value);
-        remove => _initializedEventHandler = (EventHandler)Delegate.Remove(_initializedEventHandler, value);
+        remove => _initializedEventHandler = (EventHandler?)Delegate.Remove(_initializedEventHandler, value);
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -36,7 +36,7 @@ internal static class UserEmailVerificationCommands
 {
     internal static async Task DeleteUserEmailVerificationEntity(DataContext dataContext, Guid userId, bool saveChanges)
     {
-        UserEmailVerificationEntity foundEntity = await dataContext.UserEmailVerifications
+        UserEmailVerificationEntity? foundEntity = await dataContext.UserEmailVerifications
             .FirstOrDefaultAsync(x => x.Owner == userId);
 
         if (foundEntity is not null)

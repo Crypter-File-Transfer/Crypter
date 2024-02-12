@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -31,10 +32,9 @@ using Crypter.API.Configuration;
 using Crypter.API.MetadataProviders;
 using Crypter.API.Middleware;
 using Crypter.Common.Contracts;
+using Crypter.Common.Exceptions;
 using Crypter.Core;
-using Crypter.Core.Exceptions;
 using Crypter.Core.Identity;
-using Crypter.Core.Models;
 using Crypter.Core.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -53,23 +53,33 @@ TokenSettings tokenSettings = builder.Configuration
 string hangfireConnectionString = builder.Configuration
     .GetConnectionString("HangfireConnection") ?? throw new ConfigurationException("HangfireConnection not found");
 
+var foo = builder.Configuration
+    .GetSection("PasswordSettings")
+    .Get<ServerPasswordSettings>();
+
 builder.Services.AddCrypterCore(
         builder.Configuration
             .GetSection("EmailSettings")
-            .Get<EmailSettings>(),
+            .Get<EmailSettings>()
+        ?? throw new Exception("EmailSettings missing from configuration"),
         builder.Configuration
             .GetSection("HashIdSettings")
-            .Get<HashIdSettings>(),
+            .Get<HashIdSettings>()
+        ?? throw new Exception("HashIdSettings missing from configuration"),
         builder.Configuration
             .GetSection("PasswordSettings")
-            .Get<ServerPasswordSettings>(),
+            .Get<ServerPasswordSettings>()
+        ?? throw new Exception("PasswordSettings missing from configuration"),
         tokenSettings,
         builder.Configuration
             .GetSection("TransferStorageSettings")
-            .Get<TransferStorageSettings>(),
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+            .Get<TransferStorageSettings>()
+        ?? throw new Exception("TransferStorageSettings missing from configuration"),
+        builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new Exception("DefaultConnection missing from configuration"),
         hangfireConnectionString)
-    .AddBackgroundServer(builder.Configuration.GetSection("HangfireSettings").Get<HangfireSettings>());
+    .AddBackgroundServer(builder.Configuration.GetSection("HangfireSettings").Get<HangfireSettings>()
+                         ?? throw new Exception("HangfireSettings missing from configuration"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearerConfiguration(tokenSettings);

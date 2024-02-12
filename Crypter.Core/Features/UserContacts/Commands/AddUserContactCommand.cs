@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -59,7 +59,7 @@ internal class AddUserContactCommandHandler
         var foundUser = await _dataContext.Users
             .Where(x => x.Username.ToLower() == lowerContactUsername)
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(request.UserId))
-            .Select(x => new { x.Id, x.Username, x.Profile.Alias })
+            .Select(x => new { x.Id, x.Username, x.Profile!.Alias })
             .FirstOrDefaultAsync(CancellationToken.None);
 
         if (foundUser is null)

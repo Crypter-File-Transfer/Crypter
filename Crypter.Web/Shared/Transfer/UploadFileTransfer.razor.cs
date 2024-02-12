@@ -28,58 +28,56 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Transfer.Handlers;
+using Crypter.Common.Client.Transfer.Models;
+using Crypter.Common.Contracts.Features.Transfer;
+using EasyMonads;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace Crypter.Web.Shared.Transfer;
 
 public partial class UploadFileTransfer : IDisposable
 {
-    protected IBrowserFile SelectedFile;
-
-    // Settings
-    protected long MaxFileSizeBytes = 0;
-
-    // UI
-    protected string DropClass = string.Empty;
-
-    // Strings
+    private IBrowserFile? _selectedFile;
+    
+    private long _maxFileSizeBytes = 0;
+    private string _dropClass = string.Empty;
     private const string DropzoneDrag = "dropzone-drag";
     private const string NoFileSelected = "No file selected.";
 
     protected override void OnInitialized()
     {
-        MaxFileSizeBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
+        _maxFileSizeBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
     }
 
-    protected void HandleDragEnter()
+    private void HandleDragEnter()
     {
-        DropClass = DropzoneDrag;
+        _dropClass = DropzoneDrag;
     }
 
-    protected void HandleDragLeave()
+    private void HandleDragLeave()
     {
-        DropClass = string.Empty;
+        _dropClass = string.Empty;
     }
 
-    protected void HandleFileInputChange(InputFileChangeEventArgs e)
+    private void HandleFileInputChange(InputFileChangeEventArgs e)
     {
-        DropClass = string.Empty;
+        _dropClass = string.Empty;
         ErrorMessage = string.Empty;
 
         IBrowserFile file = e.File;
 
-        if (file.Size > MaxFileSizeBytes)
+        if (file.Size > _maxFileSizeBytes)
         {
             ErrorMessage = $"The max file size is {UploadSettings.MaximumTransferSizeMiB} MB.";
             return;
         }
 
-        SelectedFile = file;
+        _selectedFile = file;
     }
 
     protected async Task OnEncryptClicked()
     {
-        if (SelectedFile is null)
+        if (_selectedFile is null)
         {
             ErrorMessage = NoFileSelected;
             return;
@@ -91,19 +89,19 @@ public partial class UploadFileTransfer : IDisposable
         await SetProgressMessage("Encrypting file");
 
         UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(FileStreamOpener,
-            SelectedFile.Name, SelectedFile.Size, SelectedFile.ContentType, ExpirationHours);
+            _selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType, ExpirationHours);
 
         SetHandlerUserInfo(fileUploader);
-        var uploadResponse = await fileUploader.UploadAsync();
+        Either<UploadTransferError, UploadHandlerResponse> uploadResponse = await fileUploader.UploadAsync();
         await HandleUploadResponse(uploadResponse);
         Dispose();
         return;
 
         Stream FileStreamOpener()
-            => SelectedFile.OpenReadStream(SelectedFile.Size);
+            => _selectedFile.OpenReadStream(_selectedFile.Size);
     }
 
-    protected async Task SetProgressMessage(string message)
+    private async Task SetProgressMessage(string message)
     {
         UploadStatusMessage = message;
         StateHasChanged();
@@ -112,9 +110,9 @@ public partial class UploadFileTransfer : IDisposable
 
     public void Dispose()
     {
-        SelectedFile = null;
+        _selectedFile = null;
         EncryptionInProgress = false;
-        DropClass = string.Empty;
+        _dropClass = string.Empty;
         GC.SuppressFinalize(this);
     }
 }

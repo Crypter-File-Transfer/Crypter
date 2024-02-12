@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -41,9 +41,9 @@ namespace Crypter.Test.Integration_Tests.UserContact_Tests;
 [TestFixture]
 internal class GetUserContact_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -56,7 +56,10 @@ internal class GetUserContact_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -68,25 +71,25 @@ internal class GetUserContact_Tests
 
         RegistrationRequest userRegistrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> userRegistrationResult = await _client.UserAuthentication.RegisterAsync(userRegistrationRequest);
+        Either<RegistrationError, Unit> userRegistrationResult = await _client!.UserAuthentication.RegisterAsync(userRegistrationRequest);
 
         LoginRequest userLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> userLoginResult = await _client.UserAuthentication.LoginAsync(userLoginRequest);
+        Either<LoginError, LoginResponse> userLoginResult = await _client!.UserAuthentication.LoginAsync(userLoginRequest);
 
         await userLoginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
-        Maybe<List<UserContact>> initialContactsResult = await _client.UserContact.GetUserContactsAsync();
+        Maybe<List<UserContact>> initialContactsResult = await _client!.UserContact.GetUserContactsAsync();
 
         RegistrationRequest contactRegistrationRequest =
             TestData.GetRegistrationRequest(contactUsername, contactPassword);
-        Either<RegistrationError, Unit> contactRegistrationResult = await _client.UserAuthentication.RegisterAsync(contactRegistrationRequest);
+        Either<RegistrationError, Unit> contactRegistrationResult = await _client!.UserAuthentication.RegisterAsync(contactRegistrationRequest);
 
-        Either<AddUserContactError, UserContact> addContactResult = await _client.UserContact.AddUserContactAsync(contactUsername);
-        Maybe<List<UserContact>> finalContactsResult = await _client.UserContact.GetUserContactsAsync();
+        Either<AddUserContactError, UserContact> addContactResult = await _client!.UserContact.AddUserContactAsync(contactUsername);
+        Maybe<List<UserContact>> finalContactsResult = await _client!.UserContact.GetUserContactsAsync();
 
         Assert.That(userRegistrationResult.IsRight, Is.True);
         Assert.That(userLoginResult.IsRight, Is.True);

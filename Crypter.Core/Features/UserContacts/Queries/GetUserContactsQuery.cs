@@ -59,14 +59,15 @@ internal class GetUserContactsQueryHandler : IRequestHandler<GetUserContactsQuer
             .ToListAsync(cancellationToken);
     }
     
-    private static Expression<Func<UserEntity, UserContact>> ToUserContactDto(Guid? visitorId)
+    private static Expression<Func<UserEntity?, UserContact>> ToUserContactDto(Guid? visitorId)
     {
-        return x => x.Id == visitorId
-                      || x.PrivacySetting.Visibility == UserVisibilityLevel.Everyone
-                      || (x.PrivacySetting.Visibility == UserVisibilityLevel.Authenticated && visitorId != null)
-                      || (x.PrivacySetting.Visibility == UserVisibilityLevel.Contacts &&
-                          x.Contacts.Any(y => y.ContactId == visitorId))
-            ? new UserContact(x.Username, x.Profile.Alias)
+        return x => x != null
+                && (x.Id == visitorId
+                    || x.PrivacySetting!.Visibility == UserVisibilityLevel.Everyone
+                    || (x.PrivacySetting!.Visibility == UserVisibilityLevel.Authenticated && visitorId != null)
+                    || (x.PrivacySetting!.Visibility == UserVisibilityLevel.Contacts &&
+                      x.Contacts!.Any(y => y.ContactId == visitorId)))
+            ? new UserContact(x.Username, x.Profile!.Alias)
             : new UserContact("{ Private }", string.Empty);
     }
 }

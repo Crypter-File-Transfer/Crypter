@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -41,15 +41,15 @@ namespace Crypter.Web.Shared.Transfer;
 
 public class UploadTransferBase : ComponentBase
 {
-    [Inject] protected IUserSessionService UserSessionService { get; set; }
+    [Inject] protected IUserSessionService UserSessionService { get; init; } = null!;
 
-    [Inject] protected IUserKeysService UserKeysService { get; set; }
+    [Inject] protected IUserKeysService UserKeysService { get; init; } = null!;
 
-    [Inject] protected NavigationManager NavigationManager { get; set; }
+    [Inject] protected NavigationManager NavigationManager { get; init; } = null!;
 
-    [Inject] protected Common.Client.Transfer.Models.TransferSettings UploadSettings { get; set; }
+    [Inject] protected ClientTransferSettings UploadSettings { get; init; } = null!;
 
-    [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; set; }
+    [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; init; } = null!;
 
     [Parameter] public Maybe<string> RecipientUsername { get; set; }
 
@@ -59,9 +59,9 @@ public class UploadTransferBase : ComponentBase
 
     [Parameter] public EventCallback UploadCompletedEvent { get; set; }
 
-    [CascadingParameter] public TransferSuccessModal ModalForAnonymousRecipient { get; set; }
+    [CascadingParameter] public TransferSuccessModal ModalForAnonymousRecipient { get; set; } = null!;
 
-    [CascadingParameter] public BasicModal ModalForUserRecipient { get; set; }
+    [CascadingParameter] public BasicModal ModalForUserRecipient { get; set; } = null!;
 
     protected bool EncryptionInProgress = false;
     protected string ErrorMessage = string.Empty;
@@ -95,46 +95,45 @@ public class UploadTransferBase : ComponentBase
 
     protected async Task HandleUploadResponse(Either<UploadTransferError, UploadHandlerResponse> uploadResponse)
     {
-        uploadResponse.DoLeftOrNeither(HandleUploadError, () => HandleUploadError());
-
-        await uploadResponse.DoRightAsync(async response =>
-        {
-            await UploadCompletedEvent.InvokeAsync();
-
-#pragma warning disable CS8524
-            string itemType = response.ItemType switch
+        await uploadResponse
+            .DoRightAsync(async response =>
             {
-                TransferItemType.Message => "message",
-                TransferItemType.File => "file"
-            };
-#pragma warning restore CS8524
+                await UploadCompletedEvent.InvokeAsync();
 
-            response.RecipientKeySeed.IfNone(() =>
-            {
-                ModalForUserRecipient.Open("Sent", $"Your {itemType} has been sent.", "Ok", Maybe<string>.None,
-                    Maybe<EventCallback<bool>>.None);
-            });
+                string itemType = response.ItemType switch
+                {
+                    TransferItemType.Message => "message",
+                    TransferItemType.File => "file",
+                    _ => throw new ArgumentOutOfRangeException(nameof(uploadResponse),
+                        "Upload response contains an unknown ItemType")
+                };
 
-            response.RecipientKeySeed.IfSome(x =>
-            {
-                string recipientKeySeed = Base64UrlEncoder.Encode(x);
-                string downloadUrl =
-                    $"{NavigationManager.BaseUri}decrypt/{itemType}/{(int)response.UserType}/{response.TransferId}#{recipientKeySeed}";
-                ModalForAnonymousRecipient.Open(downloadUrl, response.ExpirationHours, UploadCompletedEvent);
-            });
-        });
+                response.RecipientKeySeed.IfNone(() =>
+                {
+                    ModalForUserRecipient.Open("Sent", $"Your {itemType} has been sent.", "Ok", Maybe<string>.None,
+                        Maybe<EventCallback<bool>>.None);
+                });
+
+                response.RecipientKeySeed.IfSome(x =>
+                {
+                    string recipientKeySeed = Base64UrlEncoder.Encode(x);
+                    string downloadUrl =
+                        $"{NavigationManager.BaseUri}decrypt/{itemType}/{(int)response.UserType}/{response.TransferId}#{recipientKeySeed}";
+                    ModalForAnonymousRecipient.Open(downloadUrl, response.ExpirationHours, UploadCompletedEvent);
+                });
+            })
+            .DoLeftOrNeitherAsync(HandleUploadError, () => HandleUploadError());
     }
 
     private void HandleUploadError(UploadTransferError error = UploadTransferError.UnknownError)
     {
-#pragma warning disable CS8524
         ErrorMessage = error switch
-#pragma warning restore CS8524
         {
             UploadTransferError.UnknownError => UnknownError,
             UploadTransferError.InvalidRequestedLifetimeHours => ExpirationRange,
             UploadTransferError.RecipientNotFound => UserNotFound,
             UploadTransferError.OutOfSpace => ServerOutOfSpace,
+            _ => UnknownError
         };
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -31,18 +31,19 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Web.Models;
+using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Pages.Authenticated;
 
 public partial class UserTransfers
 {
-    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] private ICrypterApiClient CrypterApiService { get; init; } = null!;
 
     private bool _loading = true;
 
-    protected IEnumerable<UserSentItem> Sent;
-    protected IEnumerable<UserReceivedItem> Received;
+    protected IEnumerable<UserSentItem> Sent = [];
+    protected IEnumerable<UserReceivedItem> Received = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -60,11 +61,11 @@ public partial class UserTransfers
 
     private async Task<IEnumerable<UserSentItem>> GetUserSentItems()
     {
-        var maybeSentMessages = await CrypterApiService.MessageTransfer.GetSentMessagesAsync();
-        var sentMessages = maybeSentMessages.SomeOrDefault(new List<UserSentMessageDTO>());
+        Maybe<List<UserSentMessageDTO>> maybeSentMessages = await CrypterApiService.MessageTransfer.GetSentMessagesAsync();
+        List<UserSentMessageDTO> sentMessages = maybeSentMessages.SomeOrDefault([]);
 
-        var maybeSentFiles = await CrypterApiService.FileTransfer.GetSentFilesAsync();
-        var sentFiles = maybeSentFiles.SomeOrDefault(new List<UserSentFileDTO>());
+        Maybe<List<UserSentFileDTO>> maybeSentFiles = await CrypterApiService.FileTransfer.GetSentFilesAsync();
+        List<UserSentFileDTO> sentFiles = maybeSentFiles.SomeOrDefault([]);
 
         return sentMessages
             .Select(x => new UserSentItem
@@ -74,7 +75,7 @@ public partial class UserTransfers
                 RecipientUsername = x.RecipientUsername,
                 RecipientAlias = x.RecipientAlias,
                 ItemType = TransferItemType.Message,
-                ExpirationUTC = x.ExpirationUTC
+                ExpirationUtc = x.ExpirationUTC
             })
             .Concat(sentFiles
                 .Select(x => new UserSentItem
@@ -84,18 +85,18 @@ public partial class UserTransfers
                     RecipientUsername = x.RecipientUsername,
                     RecipientAlias = x.RecipientAlias,
                     ItemType = TransferItemType.File,
-                    ExpirationUTC = x.ExpirationUTC
+                    ExpirationUtc = x.ExpirationUTC
                 }))
-            .OrderBy(x => x.ExpirationUTC);
+            .OrderBy(x => x.ExpirationUtc);
     }
 
     private async Task<IEnumerable<UserReceivedItem>> GetUserReceivedItems()
     {
-        var maybeReceivedMessages = await CrypterApiService.MessageTransfer.GetReceivedMessagesAsync();
-        var receivedMessages = maybeReceivedMessages.SomeOrDefault(new List<UserReceivedMessageDTO>());
+        Maybe<List<UserReceivedMessageDTO>> maybeReceivedMessages = await CrypterApiService.MessageTransfer.GetReceivedMessagesAsync();
+        List<UserReceivedMessageDTO> receivedMessages = maybeReceivedMessages.SomeOrDefault([]);
 
-        var maybeReceivedFiles = await CrypterApiService.FileTransfer.GetReceivedFilesAsync();
-        var receivedFiles = maybeReceivedFiles.SomeOrDefault(new List<UserReceivedFileDTO>());
+        Maybe<List<UserReceivedFileDTO>> maybeReceivedFiles = await CrypterApiService.FileTransfer.GetReceivedFilesAsync();
+        List<UserReceivedFileDTO> receivedFiles = maybeReceivedFiles.SomeOrDefault([]);
 
         return receivedMessages
             .Select(x => new UserReceivedItem
@@ -105,7 +106,7 @@ public partial class UserTransfers
                 SenderUsername = x.SenderUsername,
                 SenderAlias = x.SenderAlias,
                 ItemType = TransferItemType.Message,
-                ExpirationUTC = x.ExpirationUTC
+                ExpirationUtc = x.ExpirationUTC
             })
             .Concat(receivedFiles
                 .Select(x => new UserReceivedItem
@@ -115,8 +116,8 @@ public partial class UserTransfers
                     SenderUsername = x.SenderUsername,
                     SenderAlias = x.SenderAlias,
                     ItemType = TransferItemType.File,
-                    ExpirationUTC = x.ExpirationUTC
+                    ExpirationUtc = x.ExpirationUTC
                 }))
-            .OrderBy(x => x.ExpirationUTC);
+            .OrderBy(x => x.ExpirationUtc);
     }
 }

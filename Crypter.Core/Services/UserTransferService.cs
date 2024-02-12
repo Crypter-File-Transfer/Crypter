@@ -30,7 +30,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Core.Repositories;
 using Crypter.DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,14 +52,11 @@ public class UserTransferService : IUserTransferService
 {
     private readonly DataContext _context;
     private readonly IHashIdService _hashIdService;
-    private readonly ITransferRepository _transferRepository;
 
-    public UserTransferService(DataContext context, IHashIdService hashIdService,
-        ITransferRepository transferRepository)
+    public UserTransferService(DataContext context, IHashIdService hashIdService)
     {
         _context = context;
         _hashIdService = hashIdService;
-        _transferRepository = transferRepository;
     }
 
     public async Task<List<UserSentMessageDTO>> GetUserSentMessagesAsync(Guid userId,
@@ -69,7 +65,7 @@ public class UserTransferService : IUserTransferService
         var sentMessages = await _context.UserMessageTransfers
             .Where(x => x.SenderId == userId)
             .OrderBy(x => x.Expiration)
-            .Select(x => new { x.Id, x.Subject, x.Recipient.Username, x.Recipient.Profile.Alias, x.Expiration })
+            .Select(x => new { x.Id, x.Subject, x.Recipient!.Username, x.Recipient!.Profile!.Alias, x.Expiration })
             .ToListAsync(cancellationToken);
 
         List<UserSentMessageDTO> sentMessagesWithHashIds = sentMessages
@@ -86,7 +82,7 @@ public class UserTransferService : IUserTransferService
         var receivedMessages = await _context.UserMessageTransfers
             .Where(x => x.RecipientId == userId)
             .OrderBy(x => x.Expiration)
-            .Select(x => new { x.Id, x.Subject, x.Sender.Username, x.Sender.Profile.Alias, x.Expiration })
+            .Select(x => new { x.Id, x.Subject, x.Sender!.Username, x.Sender!.Profile!.Alias, x.Expiration })
             .ToListAsync(cancellationToken);
 
         List<UserReceivedMessageDTO> receivedMessagesWithHashIds = receivedMessages
@@ -103,7 +99,7 @@ public class UserTransferService : IUserTransferService
         var sentFiles = await _context.UserFileTransfers
             .Where(x => x.SenderId == userId)
             .OrderBy(x => x.Expiration)
-            .Select(x => new { x.Id, x.FileName, x.Recipient.Username, x.Recipient.Profile.Alias, x.Expiration })
+            .Select(x => new { x.Id, x.FileName, x.Recipient!.Username, x.Recipient!.Profile!.Alias, x.Expiration })
             .ToListAsync(cancellationToken);
 
         List<UserSentFileDTO> sentFilesWithHashIds = sentFiles
@@ -120,7 +116,7 @@ public class UserTransferService : IUserTransferService
         var receivedFiles = await _context.UserFileTransfers
             .Where(x => x.RecipientId == userId)
             .OrderBy(x => x.Expiration)
-            .Select(x => new { x.Id, x.FileName, x.Sender.Username, x.Sender.Profile.Alias, x.Expiration })
+            .Select(x => new { x.Id, x.FileName, x.Sender!.Username, x.Sender!.Profile!.Alias, x.Expiration })
             .ToListAsync(cancellationToken);
 
         List<UserReceivedFileDTO> receivedFilesWithHashIds = receivedFiles

@@ -5,6 +5,7 @@
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <IsPackable>false</IsPackable>
       <LangVersion>12</LangVersion>
+      <Nullable>enable</Nullable>
    </PropertyGroup>
 
    <ItemGroup>
@@ -24,6 +25,12 @@
       <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
       <ProjectReference Include="..\Crypter.Crypto.Providers.Default\Crypter.Crypto.Providers.Default.csproj" />
       <ProjectReference Include="..\Crypter.Web\Crypter.Web.csproj" />
+   </ItemGroup>
+
+   <ItemGroup>
+     <None Update="appsettings.Test.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </None>
    </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -37,7 +37,7 @@ namespace Crypter.Test.Container_Tests;
 [TestFixture]
 internal class PostgresContainer_Tests
 {
-    private WebApplicationFactory<Program> _factory;
+    private WebApplicationFactory<Program>? _factory;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -48,7 +48,10 @@ internal class PostgresContainer_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
     }
 
     [Test]
@@ -72,7 +75,7 @@ internal class PostgresContainer_Tests
     {
         PostgresContainerSettings postgresSettings = ContainerService.GetPostgresContainerSettings();
 
-        using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.CrypterConnectionString);
+        await using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.CrypterConnectionString);
         await connection.OpenAsync();
 
         const string query = "SELECT has_database_privilege(@Username, @DatabaseName, 'CONNECT');";
@@ -95,7 +98,7 @@ internal class PostgresContainer_Tests
     {
         PostgresContainerSettings postgresSettings = ContainerService.GetPostgresContainerSettings();
 
-        using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.HangfireConnectionString);
+        await using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.HangfireConnectionString);
         await connection.OpenAsync();
 
         const string query = "SELECT has_database_privilege(@Username, @DatabaseName, 'CONNECT');";

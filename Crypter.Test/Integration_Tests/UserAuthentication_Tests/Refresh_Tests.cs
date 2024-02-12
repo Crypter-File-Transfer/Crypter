@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -44,9 +44,9 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests;
 [TestFixture]
 internal class Refresh_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -59,7 +59,10 @@ internal class Refresh_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync(); 
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -69,19 +72,19 @@ internal class Refresh_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword, refreshTokenType);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, refreshTokenType);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, refreshTokenType);
         });
 
-        Either<RefreshError, RefreshResponse> result = await _client.UserAuthentication.RefreshSessionAsync();
+        Either<RefreshError, RefreshResponse> result = await _client!.UserAuthentication.RefreshSessionAsync();
 
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);
@@ -92,24 +95,29 @@ internal class Refresh_Tests
     public async Task Refresh_Fails_Expired_Token()
     {
         IConfiguration apiConfiguration = SettingsReader.GetTestSettings();
-        TokenSettings apiTokenSettings = apiConfiguration.GetSection("TokenSettings").Get<TokenSettings>();
+        TokenSettings? apiTokenSettings = apiConfiguration.GetSection("TokenSettings").Get<TokenSettings>();
+        if (apiTokenSettings is null)
+        {
+            Assert.Fail();
+            return;
+        }
 
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
         await Task.Delay(apiTokenSettings.SessionTokenLifetimeMinutes * 60000);
-        Either<RefreshError, RefreshResponse> result = await _client.UserAuthentication.RefreshSessionAsync();
+        Either<RefreshError, RefreshResponse> result = await _client!.UserAuthentication.RefreshSessionAsync();
 
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);
@@ -121,26 +129,26 @@ internal class Refresh_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
-        using IServiceScope scope = _factory.Services.CreateScope();
+        using IServiceScope scope = _factory!.Services.CreateScope();
         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
         UserTokenEntity refreshTokenEntity = await dataContext.UserTokens
-            .SingleOrDefaultAsync();
+            .SingleAsync();
         dataContext.UserTokens.Remove(refreshTokenEntity);
         await dataContext.SaveChangesAsync();
 
-        Either<RefreshError, RefreshResponse> result = await _client.UserAuthentication.RefreshSessionAsync();
+        Either<RefreshError, RefreshResponse> result = await _client!.UserAuthentication.RefreshSessionAsync();
 
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);

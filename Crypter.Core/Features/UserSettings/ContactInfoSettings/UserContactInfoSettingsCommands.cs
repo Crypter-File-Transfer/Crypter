@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -29,10 +29,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Primitives;
 using Crypter.Core.DataContextExtensions;
-using Crypter.Core.Features.UserAuthentication;
 using Crypter.Core.Features.UserEmailVerification;
 using Crypter.Core.Features.UserSettings.NotificationSettings;
-using Crypter.Core.Models;
+using Crypter.Core.Identity;
 using Crypter.Core.Services;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
@@ -49,11 +48,11 @@ internal static class UserContactInfoSettingsCommands
             ServerPasswordSettings serverPasswordSettings, Guid userId,
             Contracts.UpdateContactInfoSettingsRequest request)
     {
-        if (!UserAuthenticationValidators.ValidatePassword(request.CurrentPassword))
+        if (!AuthenticationPassword.TryFrom(request.CurrentPassword, out AuthenticationPassword _))
         {
             return Contracts.UpdateContactInfoSettingsError.InvalidPassword;
         }
-
+        
         bool noEmailAddressProvided = string.IsNullOrEmpty(request.EmailAddress);
         bool validEmailAddressProvided = EmailAddress.TryFrom(request.EmailAddress, out EmailAddress validEmailAddress);
         bool validEmailAddressOption = noEmailAddressProvided || validEmailAddressProvided;
@@ -66,7 +65,7 @@ internal static class UserContactInfoSettingsCommands
             ? validEmailAddress
             : Maybe<EmailAddress>.None;
 
-        UserEntity user = await dataContext.Users
+        UserEntity? user = await dataContext.Users
             .Where(x => x.Id == userId)
             .FirstOrDefaultAsync();
 
@@ -92,7 +91,7 @@ internal static class UserContactInfoSettingsCommands
         {
             bool isEmailAddressAvailableForUser = await newEmailAddress.MatchAsync(
                 () => true,
-                async x => await dataContext.Users.IsEmailAddressAvailableAsync(validEmailAddress));
+                async _ => await dataContext.Users.IsEmailAddressAvailableAsync(validEmailAddress));
 
             if (!isEmailAddressAvailableForUser)
             {

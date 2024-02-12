@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -39,24 +39,21 @@ namespace Crypter.Web.Pages;
 
 public partial class Recovery
 {
-    [Inject] private NavigationManager NavigationManager { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; init; } = null!;
 
-    [Inject] private IUserRecoveryService UserRecoveryService { get; set; }
+    [Inject] private IUserRecoveryService UserRecoveryService { get; init; } = null!;
 
-    private string _recoveryCode;
-
-    private string _recoverySignature;
-
+    private string? _recoveryCode;
+    private string? _recoverySignature;
     private bool _recoveryKeySwitch = true;
 
-    private Username _username;
-    private string _newPassword;
-    private string _newPasswordConfirm;
-    private string _recoveryKeyInput;
+    private Username? _username;
+    private string _newPassword = string.Empty;
+    private string _newPasswordConfirm = string.Empty;
+    private string _recoveryKeyInput = string.Empty;
 
     private bool _recoverySucceeded;
-
-    private string _recoveryErrorMessage;
+    private string _recoveryErrorMessage = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -72,23 +69,32 @@ public partial class Recovery
             return;
         }
 
-        string decodedUsername = UrlSafeEncoder.DecodeStringUrlSafe(queryParameters["username"]);
-        if (Username.TryFrom(decodedUsername, out Username validUsername))
-        {
-            _username = validUsername;
-        }
-        else
-        {
-            NavigationManager.NavigateTo("/");
-            return;
-        }
-
         _recoveryCode = queryParameters["code"];
         _recoverySignature = queryParameters["signature"];
+        
+        string? queryUsername = queryParameters["username"];
+        if (!string.IsNullOrEmpty(queryUsername))
+        {
+            string decodedUsername = UrlSafeEncoder.DecodeStringUrlSafe(queryUsername);
+            if (Username.TryFrom(decodedUsername, out Username validUsername))
+            {
+                _username = validUsername;
+                return;
+            }
+        }
+        
+        // Unable to decode valid username. Return to index page.
+        NavigationManager.NavigateTo("/");
     }
 
     private async Task SubmitRecoveryAsync()
     {
+        if (_username is null)
+        {
+            _recoveryErrorMessage = "Invalid username.";
+            return;
+        }
+        
         if (_newPassword != _newPasswordConfirm)
         {
             _recoveryErrorMessage = "Passwords do not match.";
@@ -101,6 +107,18 @@ public partial class Recovery
             return;
         }
 
+        if (string.IsNullOrEmpty(_recoveryCode))
+        {
+            _recoveryErrorMessage = "Invalid recovery code.";
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(_recoverySignature))
+        {
+            _recoveryErrorMessage = "Invalid recovery code signature.";
+            return;
+        }
+        
         Either<SubmitAccountRecoveryError, Maybe<RecoveryKey>> recoveryResult = _recoveryKeySwitch
             ? await RecoveryKey.FromBase64String(_recoveryKeyInput)
                 .ToEither(SubmitAccountRecoveryError.WrongRecoveryKey)

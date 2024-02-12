@@ -50,7 +50,7 @@ internal static class UserEmailVerificationQueries
             .Select(x => new { x.Id, x.EmailAddress })
             .FirstOrDefaultAsync();
 
-        if (user is null || !EmailAddress.TryFrom(user.EmailAddress, out EmailAddress validEmailAddress))
+        if (user is null || !EmailAddress.TryFrom(user.EmailAddress!, out EmailAddress validEmailAddress))
         {
             return Maybe<UserEmailAddressVerificationParameters>.None;
         }

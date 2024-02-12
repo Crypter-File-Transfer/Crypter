@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -46,18 +46,15 @@ public static class StringPrimitiveValidationHandler
     /// <exception cref="ValueInvalidException"></exception>
     public static void ThrowIfInvalid(Func<string, Maybe<StringPrimitiveValidationFailure>> validator, string value)
     {
-        var validationResult = validator(value);
-        validationResult.IfSome(invalidReason =>
+        Maybe<StringPrimitiveValidationFailure> validationResult = validator(value);
+        validationResult.IfSome(invalidReason => throw (invalidReason switch
         {
-            throw invalidReason switch
-            {
-                StringPrimitiveValidationFailure.IsNull => new ValueNullException(),
-                StringPrimitiveValidationFailure.IsEmpty => new ValueEmptyException(),
-                StringPrimitiveValidationFailure.TooLong => new ValueTooLongException(),
-                StringPrimitiveValidationFailure.TooShort => new ValueTooShortException(),
-                StringPrimitiveValidationFailure.InvalidCharacters => new ValueContainsInvalidCharactersException(),
-                _ => new ValueInvalidException(),
-            };
-        });
+            StringPrimitiveValidationFailure.IsNull => new ValueNullException(),
+            StringPrimitiveValidationFailure.IsEmpty => new ValueEmptyException(),
+            StringPrimitiveValidationFailure.TooLong => new ValueTooLongException(),
+            StringPrimitiveValidationFailure.TooShort => new ValueTooShortException(),
+            StringPrimitiveValidationFailure.InvalidCharacters => new ValueContainsInvalidCharactersException(),
+            _ => new ValueInvalidException(),
+        }));
     }
 }

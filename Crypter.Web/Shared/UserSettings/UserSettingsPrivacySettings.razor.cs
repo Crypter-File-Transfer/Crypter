@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -35,7 +35,7 @@ namespace Crypter.Web.Shared.UserSettings;
 
 public partial class UserSettingsPrivacySettings
 {
-    [Inject] private IUserPrivacySettingsService UserPrivacySettingsService { get; set; }
+    [Inject] private IUserPrivacySettingsService UserPrivacySettingsService { get; init; } = null!;
 
     private UserVisibilityLevel _profileVisibility;
     private int _profileVisibilityEdit;
@@ -46,7 +46,7 @@ public partial class UserSettingsPrivacySettings
     private UserItemTransferPermission _fileTransferPermission;
     private int _fileTransferPermissionEdit;
 
-    private bool _isDataReady;
+    private bool _loading = true;
     private bool _isEditing;
 
     protected override async Task OnInitializedAsync()
@@ -64,7 +64,7 @@ public partial class UserSettingsPrivacySettings
                 _fileTransferPermissionEdit = (int)_fileTransferPermission;
             });
 
-        _isDataReady = true;
+        _loading = false;
     }
 
     private void OnEditClicked()

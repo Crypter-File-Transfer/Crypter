@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -39,9 +39,9 @@ namespace Crypter.Test.Integration_Tests.UserSettings_Tests;
 [TestFixture]
 internal class SetPrivacySettings_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -54,7 +54,10 @@ internal class SetPrivacySettings_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync(); 
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -63,22 +66,22 @@ internal class SetPrivacySettings_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> _ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> _ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
         PrivacySettings request = new PrivacySettings(false, UserVisibilityLevel.None, UserItemTransferPermission.None,
             UserItemTransferPermission.None);
         Either<SetPrivacySettingsError, PrivacySettings> result =
-            await _client.UserSetting.SetPrivacySettingsAsync(request);
+            await _client!.UserSetting.SetPrivacySettingsAsync(request);
 
         Assert.That(result.IsRight, Is.True);
     }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -54,7 +54,7 @@ internal sealed class UserProfileQueryHandler : IMaybeRequestHandler<UserProfile
             () => null,
             x => x);
 
-        return Maybe<UserProfile>.FromAsync(_dataContext.Users
+        return Maybe<UserProfile>.FromNullableAsync(_dataContext.Users
             .Where(x => x.Username == request.Username)
             .Where(LinqUserExpressions.UserProfileIsComplete())
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(visitorId))

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -38,7 +38,7 @@ public static class ExtensionMethods
         return HttpUtility.ParseQueryString(new Uri(navigationManager.Uri).Query);
     }
 
-    public static string GetQueryParameter(this NavigationManager navigationManager, string key)
+    public static string? GetQueryParameter(this NavigationManager navigationManager, string key)
     {
         return navigationManager.GetQueryParameters()[key];
     }

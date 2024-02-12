@@ -24,12 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-
 namespace Crypter.Crypto.Common.StreamGenericHash;
 
 public interface IStreamGenericHashFactory
 {
     uint KeySize { get; }
-    IStreamGenericHash NewGenericHashStream(uint hashLength, ReadOnlySpan<byte> key = default);
+    IStreamGenericHash NewGenericHashStream(uint hashLength, byte[] key);
 }

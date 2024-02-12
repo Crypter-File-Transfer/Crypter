@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -40,14 +40,14 @@ namespace Crypter.Web.Pages.Authenticated;
 
 public partial class Search : IDisposable
 {
-    [Inject] private ICrypterApiClient CrypterApiService { get; set; }
+    [Inject] private ICrypterApiClient CrypterApiService { get; init; } = null!;
 
-    [Inject] private IUserContactsService UserContactsService { get; set; }
+    [Inject] private IUserContactsService UserContactsService { get; init; } = null!;
 
     private bool _loading = true;
     private string _sessionUsernameLowercase = string.Empty;
-    private UserSearchParameters _searchParameters;
-    protected List<ContactSearchResult> SearchResults;
+    private readonly UserSearchParameters _searchParameters = new UserSearchParameters(string.Empty, 0, 20);
+    protected List<ContactSearchResult> SearchResults = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -57,8 +57,7 @@ public partial class Search : IDisposable
         {
             return;
         }
-
-        _searchParameters = new UserSearchParameters(string.Empty, 0, 20);
+        
         NavigationManager.LocationChanged += HandleLocationChanged;
         _sessionUsernameLowercase = UserSessionService.Session.Match(
             () => string.Empty,
@@ -86,7 +85,7 @@ public partial class Search : IDisposable
                 return contactLookupTasks.Zip(searchResults.Select(x => x))
                     .Select(x => new ContactSearchResult(x.Second.Username, x.Second.Alias, x.First))
                     .ToList();
-            }).SomeOrDefaultAsync(null);
+            }).SomeOrDefaultAsync([]);
     }
 
     private void OnSearchClicked()
@@ -96,7 +95,7 @@ public partial class Search : IDisposable
 
     private void ParseSearchParamsFromUri()
     {
-        string query = NavigationManager.GetQueryParameter("query");
+        string? query = NavigationManager.GetQueryParameter("query");
         if (!string.IsNullOrEmpty(query))
         {
             _searchParameters.Keyword = query;
@@ -105,7 +104,7 @@ public partial class Search : IDisposable
         StateHasChanged();
     }
 
-    private void HandleLocationChanged(object sender, LocationChangedEventArgs e)
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         if (e.Location.Contains("/user/search"))
         {
@@ -125,9 +124,8 @@ public partial class Search : IDisposable
 
         if (contactAdded)
         {
-            ContactSearchResult addedContact = SearchResults
-                .Where(x => x.Username == contactUsername)
-                .FirstOrDefault();
+            ContactSearchResult? addedContact = SearchResults
+                .FirstOrDefault(x => x.Username == contactUsername);
 
             if (addedContact is not null)
             {

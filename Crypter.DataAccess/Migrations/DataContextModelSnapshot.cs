@@ -18,13 +18,13 @@ namespace Crypter.DataAccess.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("crypter")
-                .HasAnnotation("ProductVersion", "7.0.4")
+                .HasAnnotation("ProductVersion", "8.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Crypter.Core.Entities.AnonymousFileTransferEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.AnonymousFileTransferEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -45,6 +45,7 @@ namespace Crypter.DataAccess.Migrations
                         .HasColumnType("text");
 
                     b.Property<byte[]>("KeyExchangeNonce")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("Proof")
@@ -63,7 +64,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("AnonymousFileTransfer", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.AnonymousMessageTransferEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.AnonymousMessageTransferEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -76,6 +77,7 @@ namespace Crypter.DataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("KeyExchangeNonce")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("Proof")
@@ -98,7 +100,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("AnonymousMessageTransfer", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserConsentEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserConsentEntity", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -128,7 +130,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserConsent", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserContactEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserContactEntity", b =>
                 {
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid")
@@ -145,7 +147,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserContact", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserEmailVerificationEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserEmailVerificationEntity", b =>
                 {
                     b.Property<Guid>("Owner")
                         .HasColumnType("uuid");
@@ -157,6 +159,7 @@ namespace Crypter.DataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("VerificationKey")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.HasKey("Owner");
@@ -167,7 +170,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserEmailVerification", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -191,9 +194,11 @@ namespace Crypter.DataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("PasswordHash")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("PasswordSalt")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<short>("ServerPasswordVersion")
@@ -202,6 +207,7 @@ namespace Crypter.DataAccess.Migrations
                         .HasDefaultValue((short)0);
 
                     b.Property<string>("Username")
+                        .IsRequired()
                         .HasColumnType("citext");
 
                     b.HasKey("Id");
@@ -215,7 +221,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("User", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserFailedLoginEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserFailedLoginEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -234,7 +240,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserFailedLogin", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserFileTransferEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserFileTransferEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -255,6 +261,7 @@ namespace Crypter.DataAccess.Migrations
                         .HasColumnType("text");
 
                     b.Property<byte[]>("KeyExchangeNonce")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("Proof")
@@ -284,7 +291,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserFileTransfer", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserKeyPairEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserKeyPairEntity", b =>
                 {
                     b.Property<Guid>("Owner")
                         .HasColumnType("uuid");
@@ -293,12 +300,15 @@ namespace Crypter.DataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("Nonce")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("PrivateKey")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("PublicKey")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.HasKey("Owner");
@@ -306,7 +316,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserKeyPair", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserMasterKeyEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserMasterKeyEntity", b =>
                 {
                     b.Property<Guid>("Owner")
                         .HasColumnType("uuid");
@@ -323,6 +333,7 @@ namespace Crypter.DataAccess.Migrations
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("RecoveryProof")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<DateTime>("Updated")
@@ -333,7 +344,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserMasterKey", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserMessageTransferEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserMessageTransferEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -346,6 +357,7 @@ namespace Crypter.DataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("KeyExchangeNonce")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("Proof")
@@ -379,7 +391,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserMessageTransfer", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserNotificationSettingEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserNotificationSettingEntity", b =>
                 {
                     b.Property<Guid>("Owner")
                         .HasColumnType("uuid");
@@ -395,7 +407,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserNotificationSetting", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserPrivacySettingEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserPrivacySettingEntity", b =>
                 {
                     b.Property<Guid>("Owner")
                         .HasColumnType("uuid");
@@ -417,18 +429,21 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserPrivacySetting", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserProfileEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserProfileEntity", b =>
                 {
                     b.Property<Guid>("Owner")
                         .HasColumnType("uuid");
 
                     b.Property<string>("About")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Alias")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Image")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Owner");
@@ -436,7 +451,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserProfile", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserRecoveryEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserRecoveryEntity", b =>
                 {
                     b.Property<Guid>("Owner")
                         .HasColumnType("uuid");
@@ -448,6 +463,7 @@ namespace Crypter.DataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("VerificationKey")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.HasKey("Owner");
@@ -458,7 +474,7 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserRecovery", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserTokenEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserTokenEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -468,6 +484,7 @@ namespace Crypter.DataAccess.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("Expiration")
@@ -486,9 +503,9 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserToken", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserConsentEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserConsentEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
                         .WithMany("Consents")
                         .HasForeignKey("Owner")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -497,15 +514,15 @@ namespace Crypter.DataAccess.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserContactEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserContactEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "Contact")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "Contact")
                         .WithMany("Contactors")
                         .HasForeignKey("ContactId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "Owner")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "Owner")
                         .WithMany("Contacts")
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -516,19 +533,19 @@ namespace Crypter.DataAccess.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserEmailVerificationEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserEmailVerificationEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
                         .WithOne("EmailVerification")
-                        .HasForeignKey("Crypter.Core.Entities.UserEmailVerificationEntity", "Owner")
+                        .HasForeignKey("Crypter.DataAccess.Entities.UserEmailVerificationEntity", "Owner")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserFailedLoginEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserFailedLoginEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
                         .WithMany("FailedLoginAttempts")
                         .HasForeignKey("Owner")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -537,13 +554,13 @@ namespace Crypter.DataAccess.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserFileTransferEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserFileTransferEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "Recipient")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "Recipient")
                         .WithMany("ReceivedFileTransfers")
                         .HasForeignKey("RecipientId");
 
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "Sender")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "Sender")
                         .WithMany("SentFileTransfers")
                         .HasForeignKey("SenderId");
 
@@ -552,34 +569,34 @@ namespace Crypter.DataAccess.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserKeyPairEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserKeyPairEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
                         .WithOne("KeyPair")
-                        .HasForeignKey("Crypter.Core.Entities.UserKeyPairEntity", "Owner")
+                        .HasForeignKey("Crypter.DataAccess.Entities.UserKeyPairEntity", "Owner")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserMasterKeyEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserMasterKeyEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
                         .WithOne("MasterKey")
-                        .HasForeignKey("Crypter.Core.Entities.UserMasterKeyEntity", "Owner")
+                        .HasForeignKey("Crypter.DataAccess.Entities.UserMasterKeyEntity", "Owner")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserMessageTransferEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserMessageTransferEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "Recipient")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "Recipient")
                         .WithMany("ReceivedMessageTransfers")
                         .HasForeignKey("RecipientId");
 
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "Sender")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "Sender")
                         .WithMany("SentMessageTransfers")
                         .HasForeignKey("SenderId");
 
@@ -588,53 +605,53 @@ namespace Crypter.DataAccess.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserNotificationSettingEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserNotificationSettingEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
                         .WithOne("NotificationSetting")
-                        .HasForeignKey("Crypter.Core.Entities.UserNotificationSettingEntity", "Owner")
+                        .HasForeignKey("Crypter.DataAccess.Entities.UserNotificationSettingEntity", "Owner")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserPrivacySettingEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserPrivacySettingEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
                         .WithOne("PrivacySetting")
-                        .HasForeignKey("Crypter.Core.Entities.UserPrivacySettingEntity", "Owner")
+                        .HasForeignKey("Crypter.DataAccess.Entities.UserPrivacySettingEntity", "Owner")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserProfileEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserProfileEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
                         .WithOne("Profile")
-                        .HasForeignKey("Crypter.Core.Entities.UserProfileEntity", "Owner")
+                        .HasForeignKey("Crypter.DataAccess.Entities.UserProfileEntity", "Owner")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserRecoveryEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserRecoveryEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
                         .WithOne("Recovery")
-                        .HasForeignKey("Crypter.Core.Entities.UserRecoveryEntity", "Owner")
+                        .HasForeignKey("Crypter.DataAccess.Entities.UserRecoveryEntity", "Owner")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserTokenEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserTokenEntity", b =>
                 {
-                    b.HasOne("Crypter.Core.Entities.UserEntity", "User")
+                    b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
                         .WithMany("Tokens")
                         .HasForeignKey("Owner")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -643,7 +660,7 @@ namespace Crypter.DataAccess.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Crypter.Core.Entities.UserEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserEntity", b =>
                 {
                     b.Navigation("Consents");
 

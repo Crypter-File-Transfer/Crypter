@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -41,9 +41,9 @@ namespace Crypter.Test.Integration_Tests.UserAuthentication_Tests;
 [TestFixture]
 internal class PasswordChallenge_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -56,7 +56,10 @@ internal class PasswordChallenge_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -65,20 +68,20 @@ internal class PasswordChallenge_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
         PasswordChallengeRequest request = new PasswordChallengeRequest(registrationRequest.VersionedPassword.Password);
-        Either<PasswordChallengeError, Unit> result = await _client.UserAuthentication.PasswordChallengeAsync(request);
+        Either<PasswordChallengeError, Unit> result = await _client!.UserAuthentication.PasswordChallengeAsync(request);
 
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);
@@ -90,13 +93,13 @@ internal class PasswordChallenge_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         PasswordChallengeRequest request = new PasswordChallengeRequest(registrationRequest.VersionedPassword.Password);
         using HttpRequestMessage requestMessage =
             new HttpRequestMessage(HttpMethod.Post, "api/user/authentication/password/challenge");
         requestMessage.Content = JsonContent.Create(request);
-        using HttpClient rawClient = _factory.CreateClient();
+        using HttpClient rawClient = _factory!.CreateClient();
         HttpResponseMessage response = await rawClient.SendAsync(requestMessage);
 
         Assert.That(registrationResult.IsRight, Is.True);
@@ -108,16 +111,16 @@ internal class PasswordChallenge_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> registrationResult = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
         byte[] wrongPassword = new byte[registrationRequest.VersionedPassword.Password.Length];
@@ -127,7 +130,7 @@ internal class PasswordChallenge_Tests
             : 0x01);
 
         PasswordChallengeRequest request = new PasswordChallengeRequest(wrongPassword);
-        Either<PasswordChallengeError, Unit> result = await _client.UserAuthentication.PasswordChallengeAsync(request);
+        Either<PasswordChallengeError, Unit> result = await _client!.UserAuthentication.PasswordChallengeAsync(request);
 
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);

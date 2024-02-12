@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -48,7 +48,7 @@ internal sealed class DeleteRecoveryParametersCommandHandler : IRequestHandler<D
     
     public async Task<Unit> Handle(DeleteRecoveryParametersCommand request, CancellationToken cancellationToken)
     {
-        UserRecoveryEntity savedEntity = await _dataContext.UserRecoveries
+        UserRecoveryEntity? savedEntity = await _dataContext.UserRecoveries
             .FirstOrDefaultAsync(x => x.Owner == request.UserId, CancellationToken.None);
 
         if (savedEntity is not null)

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -39,10 +39,10 @@ namespace Crypter.Test.Core_Tests.Services_Tests;
 [TestFixture]
 internal class TransferRepository_Tests
 {
-    private TransferRepository _sut;
+    private TransferRepository? _sut;
 
-    [OneTimeSetUp]
-    public void OneTimeSetup()
+    [SetUp]
+    public void Setup()
     {
         SetupRepository();
     }
@@ -52,16 +52,16 @@ internal class TransferRepository_Tests
         TransferStorageSettings settings = new TransferStorageSettings
         {
             AllocatedGB = 1,
-            Location = AssemblySetup.FileStorageLocation
+            Location = AssemblySetup.FileStorageLocation!
         };
         IOptions<TransferStorageSettings> options = Options.Create(settings);
         _sut = new TransferRepository(options);
     }
 
-    [OneTimeTearDown]
-    public void OneTimeTearDown()
+    [TearDown]
+    public void TearDown()
     {
-        Directory.Delete(AssemblySetup.FileStorageLocation, true);
+        Directory.Delete(AssemblySetup.FileStorageLocation!, true);
     }
 
     [TestCase(TransferUserType.Anonymous)]
@@ -71,7 +71,7 @@ internal class TransferRepository_Tests
         byte[] buffer = new byte[] { 0x01, 0x02, 0x03, 0x04 };
         Guid itemGuid = Guid.NewGuid();
         MemoryStream memoryStream = new MemoryStream(buffer);
-        bool saveSuccess = await _sut.SaveTransferAsync(itemGuid, TransferItemType.File, userType, memoryStream);
+        bool saveSuccess = await _sut!.SaveTransferAsync(itemGuid, TransferItemType.File, userType, memoryStream);
         Assert.That(saveSuccess, Is.True);
         await memoryStream.DisposeAsync();
 

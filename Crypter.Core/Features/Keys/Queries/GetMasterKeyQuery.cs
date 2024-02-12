@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -50,7 +50,7 @@ internal sealed class
     
     public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> Handle(GetMasterKeyQuery request, CancellationToken cancellationToken)
     {
-        return Either<GetMasterKeyError, GetMasterKeyResponse>.FromRightAsync(
+        return Either<GetMasterKeyError, GetMasterKeyResponse>.FromRightNullableAsync(
             _dataContext.UserMasterKeys
                 .Where(x => x.Owner == request.UserId)
                 .Select(x => new GetMasterKeyResponse(x.EncryptedKey, x.Nonce))

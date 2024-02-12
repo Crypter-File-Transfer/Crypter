@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -31,10 +31,10 @@ namespace Crypter.Web.Models;
 
 public class UserSentItem
 {
-    public string HashId { get; set; }
-    public string Name { get; set; }
-    public string RecipientUsername { get; set; }
-    public string RecipientAlias { get; set; }
-    public DateTime ExpirationUTC { get; set; }
-    public TransferItemType ItemType { get; set; }
+    public string HashId { get; init; } = string.Empty;
+    public string Name { get; init; } = string.Empty;
+    public string RecipientUsername { get; init; } = string.Empty;
+    public string RecipientAlias { get; init; } = string.Empty;
+    public DateTime ExpirationUtc { get; init; }
+    public TransferItemType ItemType { get; init; }
 }

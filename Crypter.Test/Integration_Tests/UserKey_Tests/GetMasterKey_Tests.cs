@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -39,9 +39,9 @@ namespace Crypter.Test.Integration_Tests.UserKey_Tests;
 [TestFixture]
 internal class GetMasterKey_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
-    private ITokenRepository _clientTokenRepository;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+    private ITokenRepository? _clientTokenRepository;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -54,7 +54,10 @@ internal class GetMasterKey_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
@@ -63,32 +66,33 @@ internal class GetMasterKey_Tests
     {
         RegistrationRequest registrationRequest =
             TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> __ = await _client.UserAuthentication.RegisterAsync(registrationRequest);
+        Either<RegistrationError, Unit> __ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest =
             TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client.UserAuthentication.LoginAsync(loginRequest);
+        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
         {
-            await _clientTokenRepository.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
         (_, InsertMasterKeyRequest insertMasterKeyRequest) =
             TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
         Either<InsertMasterKeyError, Unit> insertMasterKeyResult =
-            await _client.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
+            await _client!.UserKey.InsertMasterKeyAsync(insertMasterKeyRequest);
 
-        Either<GetMasterKeyError, GetMasterKeyResponse> result = await _client.UserKey.GetMasterKeyAsync();
+        Either<GetMasterKeyError, GetMasterKeyResponse> result = await _client!.UserKey.GetMasterKeyAsync();
 
-        GetMasterKeyResponse response = result.RightOrDefault(null);
-
+        result
+            .DoRight(response =>
+            {
+                Assert.That(response.EncryptedKey, Is.EqualTo(insertMasterKeyRequest.EncryptedKey));
+                Assert.That(response.Nonce, Is.EqualTo(insertMasterKeyRequest.Nonce));
+            })
+            .DoLeftOrNeither(Assert.Fail);
+        
         Assert.That(insertMasterKeyResult.IsRight, Is.True);
-        Assert.That(result.IsRight, Is.True);
-        Assert.That(response, Is.Not.Null);
-
-        Assert.That(response.EncryptedKey, Is.EqualTo(insertMasterKeyRequest.EncryptedKey));
-        Assert.That(response.Nonce, Is.EqualTo(insertMasterKeyRequest.Nonce));
     }
 }

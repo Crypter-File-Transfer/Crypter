@@ -36,8 +36,8 @@ namespace Crypter.Test.Integration_Tests.Metrics_Tests;
 [TestFixture]
 internal class PublicStorage_Tests
 {
-    private WebApplicationFactory<Program> _factory;
-    private ICrypterApiClient _client;
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
 
     [SetUp]
     public async Task SetupTestAsync()
@@ -50,14 +50,17 @@ internal class PublicStorage_Tests
     [TearDown]
     public async Task TeardownTestAsync()
     {
-        await _factory.DisposeAsync();
+        if (_factory is not null)
+        {
+            await _factory.DisposeAsync();
+        }
         await AssemblySetup.ResetServerDataAsync();
     }
 
     [Test]
     public async Task Get_Public_Storage_Metrics_Works()
     {
-        Maybe<PublicStorageMetricsResponse> result = await _client.Metrics.GetPublicStorageMetricsAsync();
+        Maybe<PublicStorageMetricsResponse> result = await _client!.Metrics.GetPublicStorageMetricsAsync();
         Assert.That(result.IsSome, Is.True);
     }
 }

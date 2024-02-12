@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -94,8 +94,8 @@ internal sealed class SubmitAccountRecoveryCommandHandler
             return SubmitAccountRecoveryError.InvalidUsername;
         }
 
-        UserRecoveryEntity recoveryEntity = await _dataContext.UserRecoveries
-            .Where(x => x.User.Username == validUsername.Value)
+        UserRecoveryEntity? recoveryEntity = await _dataContext.UserRecoveries
+            .Where(x => x.User!.Username == validUsername.Value)
             .FirstOrDefaultAsync();
 
         if (recoveryEntity is null)
@@ -104,7 +104,7 @@ internal sealed class SubmitAccountRecoveryCommandHandler
         }
 
         bool validRecoveryProofProvided = false;
-        if (recoverySubmission.ReplacementMasterKeyInformation?.CurrentRecoveryProof?.Length > 0)
+        if (recoverySubmission.ReplacementMasterKeyInformation?.CurrentRecoveryProof.Length > 0)
         {
             if (!MasterKeyValidators.ValidateMasterKeyInformation(
                     recoverySubmission.ReplacementMasterKeyInformation?.EncryptedKey,
@@ -116,7 +116,7 @@ internal sealed class SubmitAccountRecoveryCommandHandler
 
             validRecoveryProofProvided = await _dataContext.UserMasterKeys
                 .Where(x => x.Owner == recoveryEntity.Owner)
-                .Where(x => x.RecoveryProof == recoverySubmission.ReplacementMasterKeyInformation.CurrentRecoveryProof)
+                .Where(x => x.RecoveryProof == recoverySubmission.ReplacementMasterKeyInformation!.CurrentRecoveryProof)
                 .AnyAsync();
 
             if (!validRecoveryProofProvided)
@@ -145,9 +145,9 @@ internal sealed class SubmitAccountRecoveryCommandHandler
             DateTime utcNow = DateTime.UtcNow;
             if (validRecoveryProofProvided)
             {
-                user.MasterKey!.EncryptedKey = recoverySubmission.ReplacementMasterKeyInformation.EncryptedKey;
-                user.MasterKey!.Nonce = recoverySubmission.ReplacementMasterKeyInformation.Nonce;
-                user.MasterKey!.RecoveryProof = recoverySubmission.ReplacementMasterKeyInformation.NewRecoveryProof;
+                user.MasterKey!.EncryptedKey = recoverySubmission.ReplacementMasterKeyInformation!.EncryptedKey;
+                user.MasterKey!.Nonce = recoverySubmission.ReplacementMasterKeyInformation!.Nonce;
+                user.MasterKey!.RecoveryProof = recoverySubmission.ReplacementMasterKeyInformation!.NewRecoveryProof;
                 user.MasterKey!.Updated = utcNow;
             }
             else
@@ -156,7 +156,7 @@ internal sealed class SubmitAccountRecoveryCommandHandler
                 recoveryResult.DeleteUserKeys = true;
             }
 
-            UserConsentEntity latestRecoveryConsent = await _dataContext.UserConsents
+            UserConsentEntity? latestRecoveryConsent = await _dataContext.UserConsents
                 .Where(x => x.Owner == user.Id)
                 .Where(x => x.ConsentType == ConsentType.RecoveryKeyRisks)
                 .OrderBy(x => x.Created)

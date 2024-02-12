@@ -34,13 +34,13 @@ namespace Crypter.Web.Shared.Modal;
 
 public partial class TransferSuccessModal
 {
-    [Inject] private IJSRuntime JsRuntime { get; set; }
+    [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
 
-    private string _downloadUrl;
+    private string _downloadUrl = string.Empty;
     private int _expirationHours;
 
     private Maybe<EventCallback> _modalClosedCallback;
-    private ModalBehavior _modalBehaviorRef;
+    private ModalBehavior _modalBehaviorRef = null!;
 
     public void Open(string downloadUrl, int expirationHours, Maybe<EventCallback> modalClosedCallback)
     {
@@ -50,13 +50,13 @@ public partial class TransferSuccessModal
         _modalBehaviorRef.Open();
     }
 
-    public async Task CloseAsync()
+    private async Task CloseAsync()
     {
         await _modalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
         _modalBehaviorRef.Close();
     }
 
-    protected async Task CopyToClipboardAsync()
+    private async Task CopyToClipboardAsync()
     {
         await JsRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", _downloadUrl);
     }
