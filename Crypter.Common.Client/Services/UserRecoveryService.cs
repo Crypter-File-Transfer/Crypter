@@ -104,7 +104,7 @@ public class UserRecoveryService : IUserRecoveryService
                 AccountRecoverySubmission submission = new AccountRecoverySubmission(username.Value, recoveryCode,
                     recoverySignature, x.PasswordDerivatives.VersionedPassword, x.RecoveryArtifacts
                         .Select(y => y.ReplacementMasterKeyInformation)
-                        .SomeOrDefault(null!));
+                        .SomeOrDefault());
                 
                 return await _crypterApiClient.UserRecovery.SubmitRecoveryAsync(submission)
                     .MapAsync<SubmitAccountRecoveryError, Unit, Maybe<RecoveryKey>>(_ => x.RecoveryArtifacts
