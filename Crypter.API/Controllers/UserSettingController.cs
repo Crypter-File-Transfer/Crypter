@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -34,9 +34,11 @@ using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+using Crypter.Core.Features.UserSettings.Commands;
+using Crypter.Core.Features.UserSettings.Queries;
 using Crypter.Core.Services;
-using Crypter.Core.Services.UserSettings;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -47,22 +49,14 @@ namespace Crypter.API.Controllers;
 [Route("api/user/setting")]
 public class UserSettingController : CrypterControllerBase
 {
-    private readonly IUserProfileSettingsService _userProfileSettingsService;
-    private readonly IUserContactInfoSettingsService _userContactInfoSettingsService;
-    private readonly IUserNotificationSettingsService _userNotificationSettingsService;
-    private readonly IUserPrivacySettingsService _userPrivacySettingsService;
+    private readonly ISender _sender;
     private readonly IUserEmailVerificationService _userEmailVerificationService;
 
-    public UserSettingController(IUserProfileSettingsService userProfileSettingsService,
-        IUserContactInfoSettingsService userContactInfoSettingsService,
-        IUserNotificationSettingsService userNotificationSettingsService,
-        IUserPrivacySettingsService userPrivacySettingsService,
+    public UserSettingController(
+        ISender sender,
         IUserEmailVerificationService userEmailVerificationService)
     {
-        _userProfileSettingsService = userProfileSettingsService;
-        _userContactInfoSettingsService = userContactInfoSettingsService;
-        _userNotificationSettingsService = userNotificationSettingsService;
-        _userPrivacySettingsService = userPrivacySettingsService;
+        _sender = sender;
         _userEmailVerificationService = userEmailVerificationService;
     }
 
@@ -85,8 +79,9 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userProfileSettingsService.GetProfileSettingsAsync(UserId, cancellationToken)
+
+        ProfileSettingsQuery request = new ProfileSettingsQuery(UserId);
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 () => MakeErrorResponse(GetProfileSettingsError.NotFound),
                 Ok);
@@ -108,8 +103,9 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userProfileSettingsService.SetProfileSettingsAsync(UserId, request)
+
+        UpdateProfileSettingsCommand command = new UpdateProfileSettingsCommand(UserId, request);
+        return await _sender.Send(command)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -135,8 +131,9 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userContactInfoSettingsService.GetContactInfoSettingsAsync(UserId, cancellationToken)
+
+        ContactInformationSettingsQuery request = new ContactInformationSettingsQuery(UserId);
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 () => MakeErrorResponse(GetContactInfoSettingsError.NotFound),
                 Ok);
@@ -149,7 +146,7 @@ public class UserSettingController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> UpdateContactInfoSettingsAsync(UpdateContactInfoSettingsRequest request)
+    public async Task<IActionResult> UpdateContactInfoSettingsAsync([FromBody] UpdateContactInfoSettingsRequest request)
     {
         IActionResult MakeErrorResponse(UpdateContactInfoSettingsError error)
         {
@@ -170,8 +167,9 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userContactInfoSettingsService.UpdateContactInfoSettingsAsync(UserId, request)
+
+        UpdateContactInformationCommand command = new UpdateContactInformationCommand(UserId, request);
+        return await _sender.Send(command)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -208,8 +206,9 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userNotificationSettingsService.GetNotificationSettingsAsync(UserId, cancellationToken)
+
+        NotificationSettingsQuery request = new NotificationSettingsQuery(UserId);
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 () => MakeErrorResponse(GetNotificationSettingsError.UnknownError),
                 Ok);
@@ -221,7 +220,7 @@ public class UserSettingController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> UpdateNotificationSettingsAsync(NotificationSettings request)
+    public async Task<IActionResult> UpdateNotificationSettingsAsync([FromBody] NotificationSettings request)
     {
         IActionResult MakeErrorResponse(UpdateNotificationSettingsError error)
         {
@@ -235,8 +234,9 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userNotificationSettingsService.UpdateNotificationSettingsAsync(UserId, request)
+
+        UpdateNotificationSettingsCommand command = new UpdateNotificationSettingsCommand(UserId, request);
+        return await _sender.Send(command)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -262,8 +262,9 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userPrivacySettingsService.GetPrivacySettingsAsync(UserId, cancellationToken)
+
+        PrivacySettingsQuery request = new PrivacySettingsQuery(UserId);
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 () => MakeErrorResponse(GetPrivacySettingsError.NotFound),
                 Ok);
@@ -274,7 +275,7 @@ public class UserSettingController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(PrivacySettings))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> SetPrivacySettingsAsync(PrivacySettings request)
+    public async Task<IActionResult> SetPrivacySettingsAsync([FromBody] PrivacySettings request)
     {
         IActionResult MakeErrorResponse(SetPrivacySettingsError error)
         {
@@ -285,8 +286,9 @@ public class UserSettingController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userPrivacySettingsService.SetPrivacySettingsAsync(UserId, request)
+
+        UpdatePrivacySettingsCommand command = new UpdatePrivacySettingsCommand(UserId, request);
+        return await _sender.Send(command)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
