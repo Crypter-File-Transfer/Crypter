@@ -33,8 +33,10 @@ using Crypter.API.Contracts;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Core.Features.Transfer.Queries;
 using Crypter.Core.Services;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -45,9 +47,9 @@ namespace Crypter.API.Controllers;
 [Route("api/file/transfer")]
 public class FileTransferController : TransferControllerBase
 {
-    public FileTransferController(ITransferDownloadService transferDownloadService,
+    public FileTransferController(ISender sender, ITransferDownloadService transferDownloadService,
         ITransferUploadService transferUploadService, IUserTransferService userTransferService)
-        : base(transferDownloadService, transferUploadService, userTransferService)
+        : base(sender, transferDownloadService, transferUploadService, userTransferService)
     {
     }
 
@@ -98,7 +100,8 @@ public class FileTransferController : TransferControllerBase
     public async Task<IActionResult> GetAnonymousFilePreviewAsync([FromQuery] string id,
         CancellationToken cancellationToken)
     {
-        return await TransferDownloadService.GetAnonymousFilePreviewAsync(id, cancellationToken)
+        AnonymousFilePreviewQuery request = new AnonymousFilePreviewQuery(id);
+        return await Sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -111,7 +114,8 @@ public class FileTransferController : TransferControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> GetUserFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
     {
-        return await TransferDownloadService.GetUserFilePreviewAsync(id, PossibleUserId, cancellationToken)
+        UserFilePreviewQuery request = new UserFilePreviewQuery(id, PossibleUserId);
+        return await Sender.Send(request, cancellationToken)
             .MatchAsync(
                 left: MakeErrorResponse,
                 right: Ok,

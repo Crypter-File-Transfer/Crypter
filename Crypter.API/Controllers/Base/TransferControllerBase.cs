@@ -30,19 +30,22 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Infrastructure;
 using Crypter.Core.Services;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crypter.API.Controllers.Base;
 
 public abstract class TransferControllerBase : CrypterControllerBase
 {
+    protected readonly ISender Sender;
     protected readonly ITransferDownloadService TransferDownloadService;
     protected readonly ITransferUploadService TransferUploadService;
     protected readonly IUserTransferService UserTransferService;
 
-    protected TransferControllerBase(ITransferDownloadService transferDownloadService,
+    protected TransferControllerBase(ISender sender, ITransferDownloadService transferDownloadService,
         ITransferUploadService transferUploadService, IUserTransferService userTransferService)
     {
+        Sender = sender;
         TransferDownloadService = transferDownloadService;
         TransferUploadService = transferUploadService;
         UserTransferService = userTransferService;
