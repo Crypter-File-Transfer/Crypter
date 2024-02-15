@@ -27,7 +27,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
@@ -42,23 +41,11 @@ namespace Crypter.Core.Services;
 
 public interface ITransferDownloadService
 {
-    Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetAnonymousMessagePreviewAsync(string hashId,
-        CancellationToken cancellationToken = default);
-
-    Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetAnonymousFilePreviewAsync(string hashId,
-        CancellationToken cancellationToken = default);
-
     Task<Either<DownloadTransferCiphertextError, FileStream>> GetAnonymousMessageCiphertextAsync(string hashId,
         byte[] proof);
 
     Task<Either<DownloadTransferCiphertextError, FileStream>> GetAnonymousFileCiphertextAsync(string hashId,
         byte[] proof);
-
-    Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetUserMessagePreviewAsync(string hashId,
-        Maybe<Guid> requestorId, CancellationToken cancellationToken = default);
-
-    Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetUserFilePreviewAsync(string hashId,
-        Maybe<Guid> requestorId, CancellationToken cancellationToken = default);
 
     Task<Either<DownloadTransferCiphertextError, FileStream>> GetUserMessageCiphertextAsync(string hashId, byte[] proof,
         Maybe<Guid> requestorId);
@@ -87,41 +74,7 @@ public class TransferDownloadService : ITransferDownloadService
         _hashIdService = hashIdService;
         _cryptoProvider = cryptoProvider;
     }
-
-    public async Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetAnonymousMessagePreviewAsync(
-        string hashId, CancellationToken cancellationToken = default)
-    {
-        Guid id = _hashIdService.Decode(hashId);
-        MessageTransferPreviewResponse? messagePreview = await _context.AnonymousMessageTransfers
-            .Where(x => x.Id == id)
-            .Select(x => new MessageTransferPreviewResponse(x.Subject, x.Size, string.Empty, string.Empty, string.Empty,
-                x.PublicKey!, x.KeyExchangeNonce, x.Created, x.Expiration))
-            .FirstOrDefaultAsync(cancellationToken);
-
-        bool ciphertextExists =
-            _transferStorageService.TransferExists(id, TransferItemType.Message, TransferUserType.Anonymous);
-        return messagePreview is not null && ciphertextExists
-            ? messagePreview
-            : TransferPreviewError.NotFound;
-    }
-
-    public async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetAnonymousFilePreviewAsync(
-        string hashId, CancellationToken cancellationToken = default)
-    {
-        Guid id = _hashIdService.Decode(hashId);
-        FileTransferPreviewResponse? filePreview = await _context.AnonymousFileTransfers
-            .Where(x => x.Id == id)
-            .Select(x => new FileTransferPreviewResponse(x.FileName, x.ContentType, x.Size, string.Empty, string.Empty,
-                string.Empty, x.PublicKey!, x.KeyExchangeNonce, x.Created, x.Expiration))
-            .FirstOrDefaultAsync(cancellationToken);
-
-        bool ciphertextExists =
-            _transferStorageService.TransferExists(id, TransferItemType.File, TransferUserType.Anonymous);
-        return filePreview is not null && ciphertextExists
-            ? filePreview
-            : TransferPreviewError.NotFound;
-    }
-
+    
     public async Task<Either<DownloadTransferCiphertextError, FileStream>> GetAnonymousMessageCiphertextAsync(
         string hashId, byte[] proof)
     {
@@ -176,76 +129,7 @@ public class TransferDownloadService : ITransferDownloadService
         ciphertextStream.IfSome(_ => QueueTransferForDeletion(id, TransferItemType.File, TransferUserType.Anonymous));
         return ciphertextStream.ToEither(DownloadTransferCiphertextError.NotFound);
     }
-
-    public async Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetUserMessagePreviewAsync(
-        string hashId, Maybe<Guid> requestorId, CancellationToken cancellationToken = default)
-    {
-        Guid? nullableRequestorUserId = requestorId.Match<Guid?>(
-            () => null,
-            x => x);
-
-        Guid id = _hashIdService.Decode(hashId);
-
-        MessageTransferPreviewResponse? messagePreview = await _context.UserMessageTransfers
-            .Where(x => x.Id == id)
-            .Where(x => x.RecipientId == null || x.RecipientId == nullableRequestorUserId)
-            .Select(x => new MessageTransferPreviewResponse(
-                x.Subject,
-                x.Size,
-                x.Sender!.Username,
-                x.Sender!.Profile!.Alias,
-                x.Recipient!.Username,
-                x.SenderId == null
-                    ? x.PublicKey!
-                    : x.Sender!.KeyPair!.PublicKey,
-                x.KeyExchangeNonce,
-                x.Created,
-                x.Expiration))
-            .FirstOrDefaultAsync(cancellationToken);
-
-        bool ciphertextExists =
-            _transferStorageService.TransferExists(id, TransferItemType.Message, TransferUserType.User);
-        
-        return messagePreview is not null && ciphertextExists
-            ? messagePreview
-            : TransferPreviewError.NotFound;
-    }
-
-    public async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetUserFilePreviewAsync(string hashId,
-        Maybe<Guid> requestorId, CancellationToken cancellationToken = default)
-    {
-        Guid? nullableRequestorUserId = requestorId.Match<Guid?>(
-            () => null,
-            x => x);
-
-        Guid id = _hashIdService.Decode(hashId);
-
-        FileTransferPreviewResponse? filePreview = await _context.UserFileTransfers
-            .Where(x => x.Id == id)
-            .Where(x => x.RecipientId == null || x.RecipientId == nullableRequestorUserId)
-            .Select(x => new FileTransferPreviewResponse(
-                x.FileName,
-                x.ContentType,
-                x.Size,
-                x.Sender!.Username,
-                x.Sender!.Profile!.Alias,
-                x.Recipient!.Username,
-                x.SenderId == null
-                    ? x.PublicKey!
-                    : x.Sender!.KeyPair!.PublicKey,
-                x.KeyExchangeNonce,
-                x.Created,
-                x.Expiration))
-            .FirstOrDefaultAsync(cancellationToken);
-
-        bool ciphertextExists =
-            _transferStorageService.TransferExists(id, TransferItemType.File, TransferUserType.User);
-        
-        return filePreview is not null && ciphertextExists
-            ? filePreview
-            : TransferPreviewError.NotFound;
-    }
-
+    
     public async Task<Either<DownloadTransferCiphertextError, FileStream>> GetUserMessageCiphertextAsync(string hashId,
         byte[] proof, Maybe<Guid> requestorId)
     {

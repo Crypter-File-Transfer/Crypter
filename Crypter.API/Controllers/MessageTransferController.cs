@@ -33,8 +33,10 @@ using Crypter.API.Contracts;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Core.Features.Transfer.Queries;
 using Crypter.Core.Services;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -45,9 +47,9 @@ namespace Crypter.API.Controllers;
 [Route("api/message/transfer")]
 public class MessageTransferController : TransferControllerBase
 {
-    public MessageTransferController(ITransferDownloadService transferDownloadService,
+    public MessageTransferController(ISender sender, ITransferDownloadService transferDownloadService,
         ITransferUploadService transferUploadService, IUserTransferService userTransferService)
-        : base(transferDownloadService, transferUploadService, userTransferService)
+        : base(sender, transferDownloadService, transferUploadService, userTransferService)
     {
     }
 
@@ -99,7 +101,8 @@ public class MessageTransferController : TransferControllerBase
     public async Task<IActionResult> GetAnonymousMessagePreviewAsync([FromQuery] string id,
         CancellationToken cancellationToken)
     {
-        return await TransferDownloadService.GetAnonymousMessagePreviewAsync(id, cancellationToken)
+        AnonymousMessagePreviewQuery request = new AnonymousMessagePreviewQuery(id);
+        return await Sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -113,7 +116,8 @@ public class MessageTransferController : TransferControllerBase
     public async Task<IActionResult> GetUserMessagePreviewAsync([FromQuery] string id,
         CancellationToken cancellationToken)
     {
-        return await TransferDownloadService.GetUserMessagePreviewAsync(id, PossibleUserId, cancellationToken)
+        UserMessagePreviewQuery request = new UserMessagePreviewQuery(id, PossibleUserId);
+        return await Sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
