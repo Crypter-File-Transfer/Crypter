@@ -54,14 +54,16 @@ public interface IHangfireBackgroundService
     /// <param name="itemId"></param>
     /// <param name="itemType"></param>
     /// <param name="userType"></param>
-    /// <param name="deleteFromTransferStorage">
-    /// Transfers are streamed from transfer storage to the client.
+    /// <param name="deleteFromTransferRepository">
+    /// Transfers are streamed from the transfer repository to the client.
     /// These streams are sometimes configured to "DeleteOnClose".
-    /// The background service should not delete from transfer storage when "DeleteOnClose" is configured.
+    /// The background service should not attempt to delete from the transfer repository when
+    ///   "DeleteOnClose" is configured, otherwise a background worker might attempt to
+    ///   delete the transfer from storage as the client is still streaming the transfer.
     /// </param>
     /// <returns></returns>
     Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
-        bool deleteFromTransferStorage);
+        bool deleteFromTransferRepository);
 
     Task<Unit> DeleteUserTokenAsync(Guid tokenId);
     Task<Unit> DeleteFailedLoginAttemptAsync(Guid failedAttemptId);
@@ -151,9 +153,9 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     }
 
     public Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
-        bool deleteFromTransferStorage)
+        bool deleteFromTransferRepository)
     {
-        DeleteTransferCommand request = new DeleteTransferCommand(itemId, itemType, userType, deleteFromTransferStorage);
+        DeleteTransferCommand request = new DeleteTransferCommand(itemId, itemType, userType, deleteFromTransferRepository);
         return _sender.Send(request);
     }
 

@@ -60,7 +60,6 @@ public static class DependencyInjection
         services.TryAddSingleton<ICryptoProvider, DefaultCryptoProvider>();
 
         services.TryAddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
-        services.TryAddScoped<ITransferDownloadService, TransferDownloadService>();
         services.TryAddScoped<ITransferUploadService, TransferUploadService>();
         services.TryAddScoped<IUserAuthenticationService, UserAuthenticationService>();
         services.TryAddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
