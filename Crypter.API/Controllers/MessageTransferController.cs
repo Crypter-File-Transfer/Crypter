@@ -33,6 +33,7 @@ using Crypter.API.Contracts;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.Transfer.Queries;
 using Crypter.Core.Services;
 using EasyMonads;
@@ -47,9 +48,11 @@ namespace Crypter.API.Controllers;
 [Route("api/message/transfer")]
 public class MessageTransferController : TransferControllerBase
 {
-    public MessageTransferController(ISender sender, ITransferDownloadService transferDownloadService,
-        ITransferUploadService transferUploadService, IUserTransferService userTransferService)
-        : base(sender, transferDownloadService, transferUploadService, userTransferService)
+    public MessageTransferController(
+        ISender sender,
+        ITransferUploadService transferUploadService,
+        IUserTransferService userTransferService)
+        : base(sender, transferUploadService, userTransferService)
     {
     }
 
@@ -132,7 +135,10 @@ public class MessageTransferController : TransferControllerBase
     {
         return await DecodeProof(proof)
             .BindAsync(async decodedProof =>
-                await TransferDownloadService.GetAnonymousMessageCiphertextAsync(id, decodedProof))
+            {
+                GetAnonymousMessageCiphertextCommand request = new GetAnonymousMessageCiphertextCommand(id, decodedProof);
+                return await Sender.Send(request);
+            })
             .MatchAsync(
                 MakeErrorResponse,
                 x => new FileStreamResult(x, "application/octet-stream"),
@@ -148,7 +154,11 @@ public class MessageTransferController : TransferControllerBase
     {
         return await DecodeProof(proof)
             .BindAsync(async decodedProof =>
-                await TransferDownloadService.GetUserMessageCiphertextAsync(id, decodedProof, PossibleUserId))
+            {
+                GetUserMessageCiphertextCommand request =
+                    new GetUserMessageCiphertextCommand(id, decodedProof, PossibleUserId);
+                return await Sender.Send(request);
+            })
             .MatchAsync(
                 MakeErrorResponse,
                 x => new FileStreamResult(x, "application/octet-stream"),

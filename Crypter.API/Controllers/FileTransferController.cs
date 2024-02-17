@@ -33,6 +33,7 @@ using Crypter.API.Contracts;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.Transfer.Queries;
 using Crypter.Core.Services;
 using EasyMonads;
@@ -47,9 +48,11 @@ namespace Crypter.API.Controllers;
 [Route("api/file/transfer")]
 public class FileTransferController : TransferControllerBase
 {
-    public FileTransferController(ISender sender, ITransferDownloadService transferDownloadService,
-        ITransferUploadService transferUploadService, IUserTransferService userTransferService)
-        : base(sender, transferDownloadService, transferUploadService, userTransferService)
+    public FileTransferController(
+        ISender sender,
+        ITransferUploadService transferUploadService,
+        IUserTransferService userTransferService)
+        : base(sender, transferUploadService, userTransferService)
     {
     }
 
@@ -130,7 +133,10 @@ public class FileTransferController : TransferControllerBase
     {
         return await DecodeProof(proof)
             .BindAsync(async decodedProof =>
-                await TransferDownloadService.GetAnonymousFileCiphertextAsync(id, decodedProof))
+            {
+                GetAnonymousFileCiphertextCommand request = new GetAnonymousFileCiphertextCommand(id, decodedProof);
+                return await Sender.Send(request);
+            })
             .MatchAsync(
                 MakeErrorResponse,
                 x => new FileStreamResult(x, "application/octet-stream"),
@@ -146,7 +152,11 @@ public class FileTransferController : TransferControllerBase
     {
         return await DecodeProof(proof)
             .BindAsync(async decodedProof =>
-                await TransferDownloadService.GetUserFileCiphertextAsync(id, decodedProof, PossibleUserId))
+            {
+                GetUserFileCiphertextCommand request =
+                    new GetUserFileCiphertextCommand(id, decodedProof, PossibleUserId);
+                return await Sender.Send(request);
+            })
             .MatchAsync(
                 MakeErrorResponse,
                 x => new FileStreamResult(x, "application/octet-stream"),
