@@ -39,16 +39,11 @@ public abstract class TransferControllerBase : CrypterControllerBase
 {
     protected readonly ISender Sender;
     protected readonly ITransferUploadService TransferUploadService;
-    protected readonly IUserTransferService UserTransferService;
 
-    protected TransferControllerBase(
-        ISender sender,
-        ITransferUploadService transferUploadService,
-        IUserTransferService userTransferService)
+    protected TransferControllerBase(ISender sender, ITransferUploadService transferUploadService)
     {
         Sender = sender;
         TransferUploadService = transferUploadService;
-        UserTransferService = userTransferService;
     }
 
     protected static Either<DownloadTransferCiphertextError, byte[]> DecodeProof(string base64EncodedProof)
