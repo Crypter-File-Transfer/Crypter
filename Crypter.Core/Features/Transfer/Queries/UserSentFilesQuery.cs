@@ -25,42 +25,43 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Core.Services;
-using Hangfire;
+using Crypter.DataAccess;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Features.AccountRecovery.Events;
+namespace Crypter.Core.Features.Transfer.Queries;
 
-internal sealed record AccountRecoverySucceededEvent(Guid UserId, bool DeleteUserKeys, bool DeleteReceivedTransfers)
-    : INotification;
+public sealed record UserSentFilesQuery(Guid UserId)
+    : IRequest<IEnumerable<UserSentFileDTO>>;
 
-internal sealed class AccountRecoverySucceededEventHandler : INotificationHandler<AccountRecoverySucceededEvent>
+internal class UserSentFilesQueryHandler
+    : IRequestHandler<UserSentFilesQuery, IEnumerable<UserSentFileDTO>>
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly IHangfireBackgroundService _hangfireBackgroundService;
+    private readonly DataContext _dataContext;
+    private readonly IHashIdService _hashIdService;
 
-    public AccountRecoverySucceededEventHandler(
-        IBackgroundJobClient backgroundJobClient,
-        IHangfireBackgroundService hangfireBackgroundService)
+    public UserSentFilesQueryHandler(DataContext dataContext, IHashIdService hashIdService)
     {
-        _backgroundJobClient = backgroundJobClient;
-        _hangfireBackgroundService = hangfireBackgroundService;
+        _dataContext = dataContext;
+        _hashIdService = hashIdService;
     }
-    
-    public Task Handle(AccountRecoverySucceededEvent notification, CancellationToken cancellationToken)
+
+    public async Task<IEnumerable<UserSentFileDTO>> Handle(UserSentFilesQuery request, CancellationToken cancellationToken)
     {
-        if (notification.DeleteUserKeys)
-        {
-            _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.DeleteUserKeysAsync(notification.UserId));
-        }
+        var sentFiles = await _dataContext.UserFileTransfers
+            .Where(x => x.SenderId == request.UserId)
+            .OrderBy(x => x.Expiration)
+            .Select(x => new { x.Id, x.FileName, x.Recipient!.Username, x.Recipient!.Profile!.Alias, x.Expiration })
+            .ToListAsync(cancellationToken);
 
-        if (notification.DeleteReceivedTransfers)
-        {
-            _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.DeleteReceivedTransfersAsync(notification.UserId));
-        }
-
-        return Task.CompletedTask;
+        return sentFiles
+            .Select(x =>
+                new UserSentFileDTO(_hashIdService.Encode(x.Id), x.FileName, x.Username, x.Alias, x.Expiration));
     }
 }

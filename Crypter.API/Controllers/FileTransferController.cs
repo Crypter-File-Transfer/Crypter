@@ -48,11 +48,8 @@ namespace Crypter.API.Controllers;
 [Route("api/file/transfer")]
 public class FileTransferController : TransferControllerBase
 {
-    public FileTransferController(
-        ISender sender,
-        ITransferUploadService transferUploadService,
-        IUserTransferService userTransferService)
-        : base(sender, transferUploadService, userTransferService)
+    public FileTransferController(ISender sender, ITransferUploadService transferUploadService)
+        : base(sender, transferUploadService)
     {
     }
 
@@ -78,22 +75,23 @@ public class FileTransferController : TransferControllerBase
 
     [HttpGet("received")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserReceivedFileDTO>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserReceivedFileDTO>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> GetReceivedFilesAsync(CancellationToken cancellationToken)
     {
-        List<UserReceivedFileDTO> result =
-            await UserTransferService.GetUserReceivedFilesAsync(UserId, cancellationToken);
+        UserReceivedFilesQuery request = new UserReceivedFilesQuery(UserId);
+        IEnumerable<UserReceivedFileDTO> result = await Sender.Send(request, cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("sent")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserSentFileDTO>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserSentFileDTO>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> GetSentFilesAsync(CancellationToken cancellationToken)
     {
-        List<UserSentFileDTO> result = await UserTransferService.GetUserSentFilesAsync(UserId, cancellationToken);
+        UserSentFilesQuery request = new UserSentFilesQuery(UserId);
+        IEnumerable<UserSentFileDTO> result = await Sender.Send(request, cancellationToken);
         return Ok(result);
     }
 

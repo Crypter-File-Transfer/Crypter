@@ -48,11 +48,8 @@ namespace Crypter.API.Controllers;
 [Route("api/message/transfer")]
 public class MessageTransferController : TransferControllerBase
 {
-    public MessageTransferController(
-        ISender sender,
-        ITransferUploadService transferUploadService,
-        IUserTransferService userTransferService)
-        : base(sender, transferUploadService, userTransferService)
+    public MessageTransferController(ISender sender, ITransferUploadService transferUploadService)
+        : base(sender, transferUploadService)
     {
     }
 
@@ -78,23 +75,23 @@ public class MessageTransferController : TransferControllerBase
 
     [HttpGet("received")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserReceivedMessageDTO>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserReceivedMessageDTO>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> GetReceivedMessagesAsync(CancellationToken cancellationToken)
     {
-        List<UserReceivedMessageDTO> result =
-            await UserTransferService.GetUserReceivedMessagesAsync(UserId, cancellationToken);
+        UserReceivedMessagesQuery request = new UserReceivedMessagesQuery(UserId);
+        IEnumerable<UserReceivedMessageDTO> result = await Sender.Send(request, cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("sent")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserSentMessageDTO>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserSentMessageDTO>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> GetSentMessagesAsync(CancellationToken cancellationToken)
     {
-        List<UserSentMessageDTO>
-            result = await UserTransferService.GetUserSentMessagesAsync(UserId, cancellationToken);
+        UserSentMessagesQuery request = new UserSentMessagesQuery(UserId);
+        IEnumerable<UserSentMessageDTO> result = await Sender.Send(request, cancellationToken);
         return Ok(result);
     }
 
