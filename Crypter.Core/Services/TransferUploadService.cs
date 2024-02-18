@@ -46,9 +46,6 @@ namespace Crypter.Core.Services;
 
 public interface ITransferUploadService
 {
-    Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<Guid> senderId,
-        Maybe<string> recipientUsername, UploadFileTransferRequest? request, Stream? ciphertextStream);
-
     Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(Maybe<Guid> senderId,
         Maybe<string> recipientUsername, UploadMessageTransferRequest? request, Stream? ciphertextStream);
 }
@@ -75,39 +72,7 @@ public class TransferUploadService : ITransferUploadService
         _hashIdService = hashIdService;
         _transferStorageSettings = transferStorageSettings.Value;
     }
-
-    public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<Guid> senderId,
-        Maybe<string> recipientUsername, UploadFileTransferRequest? request, Stream? ciphertextStream)
-    {
-        if (request is null || ciphertextStream is null)
-        {
-            return UploadTransferError.UnknownError;
-        }
-        
-        Maybe<Guid> recipientId = await recipientUsername.MatchAsync(
-            () => Maybe<Guid>.None,
-            async x => await GetRecipientIdAsync(senderId, x));
-
-        if (recipientUsername.IsSome && recipientId.IsNone)
-        {
-            return UploadTransferError.RecipientNotFound;
-        }
-
-        return await (from diskSpace in GetRequiredDiskSpaceAsync(ciphertextStream.Length)
-            from lifetimeHours in ValidateLifetimeHours(request.LifetimeHours).AsTask()
-            let transferId = Guid.NewGuid()
-            let transferUserType = DetermineTransferUserType(senderId, recipientId)
-            from savedToDisk in SaveFileToDiskAsync(transferUserType, transferId, ciphertextStream)
-                .ToLeftEitherAsync(Unit.Default)
-            from savedToDatabase in Either<UploadTransferError, UploadTransferResponse>.FromRightAsync(
-                SaveFileTransferToDatabaseAsync(transferId, senderId, recipientId, diskSpace, request))
-            from _ in Either<UploadTransferError, Unit>.FromRightAsync(
-                QueueTransferNotificationAsync(transferId, TransferItemType.File, recipientId))
-            let jobId = ScheduleTransferDeletion(transferId, TransferItemType.File, transferUserType,
-                savedToDatabase.ExpirationUTC)
-            select savedToDatabase);
-    }
-
+    
     public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(
         Maybe<Guid> senderId, Maybe<string> recipientUsername, UploadMessageTransferRequest? request,
         Stream? ciphertextStream)

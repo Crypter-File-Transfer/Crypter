@@ -65,8 +65,10 @@ public class FileTransferController : TransferControllerBase
             : username;
         await using Stream? ciphertextStream = request.Ciphertext?.OpenReadStream();
 
-        return await TransferUploadService
-            .UploadFileTransferAsync(PossibleUserId, maybeUsername, request.Data, ciphertextStream)
+        SaveFileTransferCommand command = new SaveFileTransferCommand(
+            PossibleUserId, maybeUsername, request.Data, ciphertextStream);
+        
+        return await Sender.Send(command)
             .MatchAsync(
                 left: MakeErrorResponse,
                 right: Ok,
