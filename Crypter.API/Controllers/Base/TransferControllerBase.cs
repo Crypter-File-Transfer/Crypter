@@ -28,24 +28,13 @@ using System;
 using System.Net;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Infrastructure;
-using Crypter.Core.Services;
 using EasyMonads;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crypter.API.Controllers.Base;
 
 public abstract class TransferControllerBase : CrypterControllerBase
 {
-    protected readonly ISender Sender;
-    protected readonly ITransferUploadService TransferUploadService;
-
-    protected TransferControllerBase(ISender sender, ITransferUploadService transferUploadService)
-    {
-        Sender = sender;
-        TransferUploadService = transferUploadService;
-    }
-
     protected static Either<DownloadTransferCiphertextError, byte[]> DecodeProof(string base64EncodedProof)
     {
         try
