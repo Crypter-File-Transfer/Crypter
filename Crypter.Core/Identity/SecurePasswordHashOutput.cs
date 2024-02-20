@@ -28,12 +28,14 @@ namespace Crypter.Core.Identity;
 
 public class SecurePasswordHashOutput
 {
-    public byte[] Hash { get; set; }
-    public byte[] Salt { get; set; }
+    public byte[] Hash { get; init; }
+    public byte[] Salt { get; init; }
+    public short ServerPasswordVersion { get; init; }
 
-    public SecurePasswordHashOutput(byte[] hash, byte[] salt)
+    public SecurePasswordHashOutput(byte[] hash, byte[] salt, short serverPasswordVersion)
     {
         Hash = hash;
         Salt = salt;
+        ServerPasswordVersion = serverPasswordVersion;
     }
 }

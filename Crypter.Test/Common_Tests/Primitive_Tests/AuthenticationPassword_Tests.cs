@@ -40,9 +40,9 @@ public class AuthenticationPassword_Tests
     {
         byte[]? authenticationPassword = null;
         
-        Assert.Throws<ValueNullException>(() => AuthenticationPassword.From(authenticationPassword));
+        Assert.Throws<ValueNullException>(() => AuthenticationPassword.From(authenticationPassword!));
 
-        bool shouldBeFalse = AuthenticationPassword.TryFrom(authenticationPassword, out AuthenticationPassword shouldBeNull);
+        bool shouldBeFalse = AuthenticationPassword.TryFrom(authenticationPassword!, out AuthenticationPassword shouldBeNull);
         Assert.That(shouldBeFalse, Is.False);
         Assert.That(shouldBeNull, Is.Null);
     }

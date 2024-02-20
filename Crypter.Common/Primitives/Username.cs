@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -32,9 +32,9 @@ using ValueOf;
 
 namespace Crypter.Common.Primitives;
 
-public class Username : ValueOf<string, Username>
+public partial class Username : ValueOf<string, Username>
 {
-    private static readonly Regex _validCharacters = new(@"^[a-zA-Z0-9_\-]+$");
+    private static readonly Regex ValidCharacters = MyRegex();
 
     /// <summary>
     /// Do not use this.
@@ -54,7 +54,7 @@ public class Username : ValueOf<string, Username>
             .IsNone;
     }
 
-    public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+    public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string? value)
     {
         if (value is null)
         {
@@ -71,11 +71,14 @@ public class Username : ValueOf<string, Username>
             return StringPrimitiveValidationFailure.TooLong;
         }
 
-        if (!_validCharacters.IsMatch(value))
+        if (!ValidCharacters.IsMatch(value))
         {
             return StringPrimitiveValidationFailure.InvalidCharacters;
         }
 
         return Maybe<StringPrimitiveValidationFailure>.None;
     }
+
+    [GeneratedRegex(@"^[a-zA-Z0-9_\-]+$")]
+    private static partial Regex MyRegex();
 }

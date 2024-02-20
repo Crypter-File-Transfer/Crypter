@@ -134,6 +134,7 @@ public partial class Recovery
             {
                 SubmitAccountRecoveryError.UnknownError => "An unknown error occurred.",
                 SubmitAccountRecoveryError.InvalidUsername => "Invalid username.",
+                SubmitAccountRecoveryError.InvalidPassword => "Invalid password",
                 SubmitAccountRecoveryError.RecoveryNotFound =>
                     "This recovery link is expired. Request a new recovery link and try again.",
                 SubmitAccountRecoveryError.WrongRecoveryKey => "The recovery key you provided is invalid.",

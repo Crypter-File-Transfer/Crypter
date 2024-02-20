@@ -88,6 +88,7 @@ public class AccountRecoveryController : CrypterControllerBase
                     or SubmitAccountRecoveryError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError,
                         error),
                 SubmitAccountRecoveryError.InvalidUsername
+                    or SubmitAccountRecoveryError.InvalidPassword
                     or SubmitAccountRecoveryError.WrongRecoveryKey
                     or SubmitAccountRecoveryError.InvalidMasterKey => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
                 SubmitAccountRecoveryError.RecoveryNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)

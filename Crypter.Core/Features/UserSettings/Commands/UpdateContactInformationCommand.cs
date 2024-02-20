@@ -71,7 +71,7 @@ internal sealed class UpdateContactInformationCommandHandler
         UpdateContactInformationCommand request,
         CancellationToken cancellationToken)
     {
-        if (!AuthenticationPassword.TryFrom(request.Request.CurrentPassword, out AuthenticationPassword _))
+        if (!AuthenticationPassword.TryFrom(request.Request.CurrentPassword, out AuthenticationPassword validAuthenticationPassword))
         {
             return UpdateContactInfoSettingsError.InvalidPassword;
         }
@@ -103,7 +103,7 @@ internal sealed class UpdateContactInformationCommandHandler
             return UpdateContactInfoSettingsError.PasswordNeedsMigration;
         }
 
-        bool correctPasswordProvided = _passwordHashService.VerifySecurePasswordHash(request.Request.CurrentPassword,
+        bool correctPasswordProvided = _passwordHashService.VerifySecurePasswordHash(validAuthenticationPassword,
             user.PasswordHash, user.PasswordSalt, _passwordHashService.LatestServerPasswordVersion);
         if (!correctPasswordProvided)
         {
