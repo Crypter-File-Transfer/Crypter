@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,14 +24,11 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Core.Settings;
 using Crypter.DataAccess;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace Crypter.Core.Features.Metrics.Queries;
@@ -59,27 +56,6 @@ internal sealed class GetDiskMetricsQueryHandler : IRequestHandler<GetDiskMetric
     public static async Task<GetDiskMetricsResult> HandleAsync(DataContext dataContext,
         TransferStorageSettings transferStorageSettings, CancellationToken cancellationToken = default)
     {
-        IQueryable<long> anonymousMessageSizes = dataContext.AnonymousMessageTransfers
-            .Select(x => x.Size);
-
-        IQueryable<long> userMessageSizes = dataContext.UserMessageTransfers
-            .Select(x => x.Size);
-
-        IQueryable<long> anonymousFileSizes = dataContext.AnonymousFileTransfers
-            .Select(x => x.Size);
-
-        IQueryable<long> userFileSizes = dataContext.UserFileTransfers
-            .Select(x => x.Size);
-
-        long usedBytes = await anonymousMessageSizes
-            .Concat(userMessageSizes)
-            .Concat(anonymousFileSizes)
-            .Concat(userFileSizes)
-            .SumAsync(cancellationToken);
-
-        long allocatedBytes = transferStorageSettings.AllocatedGB * Convert.ToInt64(Math.Pow(2, 30));
-        long freeBytes = allocatedBytes - usedBytes;
-
-        return new GetDiskMetricsResult(allocatedBytes, freeBytes);
+        return await Common.GetDiskMetricsAsync(dataContext, transferStorageSettings, cancellationToken);
     }
 }

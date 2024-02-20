@@ -35,7 +35,6 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.Transfer.Queries;
-using Crypter.Core.Services;
 using EasyMonads;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -48,9 +47,11 @@ namespace Crypter.API.Controllers;
 [Route("api/file/transfer")]
 public class FileTransferController : TransferControllerBase
 {
-    public FileTransferController(ISender sender, ITransferUploadService transferUploadService)
-        : base(sender, transferUploadService)
+    private readonly ISender _sender;
+    
+    public FileTransferController(ISender sender)
     {
+        _sender = sender;
     }
 
     [HttpPost]
@@ -65,8 +66,10 @@ public class FileTransferController : TransferControllerBase
             : username;
         await using Stream? ciphertextStream = request.Ciphertext?.OpenReadStream();
 
-        return await TransferUploadService
-            .UploadFileTransferAsync(PossibleUserId, maybeUsername, request.Data, ciphertextStream)
+        SaveFileTransferCommand command = new SaveFileTransferCommand(
+            PossibleUserId, maybeUsername, request.Data, ciphertextStream);
+        
+        return await _sender.Send(command)
             .MatchAsync(
                 left: MakeErrorResponse,
                 right: Ok,
@@ -80,7 +83,7 @@ public class FileTransferController : TransferControllerBase
     public async Task<IActionResult> GetReceivedFilesAsync(CancellationToken cancellationToken)
     {
         UserReceivedFilesQuery request = new UserReceivedFilesQuery(UserId);
-        IEnumerable<UserReceivedFileDTO> result = await Sender.Send(request, cancellationToken);
+        IEnumerable<UserReceivedFileDTO> result = await _sender.Send(request, cancellationToken);
         return Ok(result);
     }
 
@@ -91,7 +94,7 @@ public class FileTransferController : TransferControllerBase
     public async Task<IActionResult> GetSentFilesAsync(CancellationToken cancellationToken)
     {
         UserSentFilesQuery request = new UserSentFilesQuery(UserId);
-        IEnumerable<UserSentFileDTO> result = await Sender.Send(request, cancellationToken);
+        IEnumerable<UserSentFileDTO> result = await _sender.Send(request, cancellationToken);
         return Ok(result);
     }
 
@@ -102,7 +105,7 @@ public class FileTransferController : TransferControllerBase
         CancellationToken cancellationToken)
     {
         AnonymousFilePreviewQuery request = new AnonymousFilePreviewQuery(id);
-        return await Sender.Send(request, cancellationToken)
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -116,7 +119,7 @@ public class FileTransferController : TransferControllerBase
     public async Task<IActionResult> GetUserFilePreviewAsync([FromQuery] string id, CancellationToken cancellationToken)
     {
         UserFilePreviewQuery request = new UserFilePreviewQuery(id, PossibleUserId);
-        return await Sender.Send(request, cancellationToken)
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 left: MakeErrorResponse,
                 right: Ok,
@@ -133,7 +136,7 @@ public class FileTransferController : TransferControllerBase
             .BindAsync(async decodedProof =>
             {
                 GetAnonymousFileCiphertextCommand request = new GetAnonymousFileCiphertextCommand(id, decodedProof);
-                return await Sender.Send(request);
+                return await _sender.Send(request);
             })
             .MatchAsync(
                 MakeErrorResponse,
@@ -153,7 +156,7 @@ public class FileTransferController : TransferControllerBase
             {
                 GetUserFileCiphertextCommand request =
                     new GetUserFileCiphertextCommand(id, decodedProof, PossibleUserId);
-                return await Sender.Send(request);
+                return await _sender.Send(request);
             })
             .MatchAsync(
                 MakeErrorResponse,

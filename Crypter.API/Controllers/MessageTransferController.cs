@@ -35,7 +35,6 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.Transfer.Queries;
-using Crypter.Core.Services;
 using EasyMonads;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -48,9 +47,11 @@ namespace Crypter.API.Controllers;
 [Route("api/message/transfer")]
 public class MessageTransferController : TransferControllerBase
 {
-    public MessageTransferController(ISender sender, ITransferUploadService transferUploadService)
-        : base(sender, transferUploadService)
+    private readonly ISender _sender;
+    
+    public MessageTransferController(ISender sender)
     {
+        _sender = sender;
     }
 
     [HttpPost]
@@ -65,8 +66,10 @@ public class MessageTransferController : TransferControllerBase
             : username;
         await using Stream? ciphertextStream = request.Ciphertext?.OpenReadStream();
 
-        return await TransferUploadService
-            .UploadMessageTransferAsync(PossibleUserId, maybeUsername, request.Data, ciphertextStream)
+        SaveMessageTransferCommand command = new SaveMessageTransferCommand(
+            PossibleUserId, maybeUsername, request.Data, ciphertextStream);
+        
+        return await _sender.Send(command)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -80,7 +83,7 @@ public class MessageTransferController : TransferControllerBase
     public async Task<IActionResult> GetReceivedMessagesAsync(CancellationToken cancellationToken)
     {
         UserReceivedMessagesQuery request = new UserReceivedMessagesQuery(UserId);
-        IEnumerable<UserReceivedMessageDTO> result = await Sender.Send(request, cancellationToken);
+        IEnumerable<UserReceivedMessageDTO> result = await _sender.Send(request, cancellationToken);
         return Ok(result);
     }
 
@@ -91,7 +94,7 @@ public class MessageTransferController : TransferControllerBase
     public async Task<IActionResult> GetSentMessagesAsync(CancellationToken cancellationToken)
     {
         UserSentMessagesQuery request = new UserSentMessagesQuery(UserId);
-        IEnumerable<UserSentMessageDTO> result = await Sender.Send(request, cancellationToken);
+        IEnumerable<UserSentMessageDTO> result = await _sender.Send(request, cancellationToken);
         return Ok(result);
     }
 
@@ -102,7 +105,7 @@ public class MessageTransferController : TransferControllerBase
         CancellationToken cancellationToken)
     {
         AnonymousMessagePreviewQuery request = new AnonymousMessagePreviewQuery(id);
-        return await Sender.Send(request, cancellationToken)
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -117,7 +120,7 @@ public class MessageTransferController : TransferControllerBase
         CancellationToken cancellationToken)
     {
         UserMessagePreviewQuery request = new UserMessagePreviewQuery(id, PossibleUserId);
-        return await Sender.Send(request, cancellationToken)
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -134,7 +137,7 @@ public class MessageTransferController : TransferControllerBase
             .BindAsync(async decodedProof =>
             {
                 GetAnonymousMessageCiphertextCommand request = new GetAnonymousMessageCiphertextCommand(id, decodedProof);
-                return await Sender.Send(request);
+                return await _sender.Send(request);
             })
             .MatchAsync(
                 MakeErrorResponse,
@@ -154,7 +157,7 @@ public class MessageTransferController : TransferControllerBase
             {
                 GetUserMessageCiphertextCommand request =
                     new GetUserMessageCiphertextCommand(id, decodedProof, PossibleUserId);
-                return await Sender.Send(request);
+                return await _sender.Send(request);
             })
             .MatchAsync(
                 MakeErrorResponse,
