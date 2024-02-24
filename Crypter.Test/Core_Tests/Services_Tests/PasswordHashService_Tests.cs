@@ -25,6 +25,7 @@
  */
 
 using System;
+using Crypter.Common.Primitives;
 using Crypter.Core.Identity;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
@@ -68,7 +69,7 @@ public class PasswordHashService_Tests
     [Test]
     public void Salt_Is_16_Bytes()
     {
-        byte[] password = "foo"u8.ToArray();
+        AuthenticationPassword password = AuthenticationPassword.From("foo"u8.ToArray());
         SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
         Assert.That(hashOutput.Salt.Length, Is.EqualTo(16));
     }
@@ -76,7 +77,7 @@ public class PasswordHashService_Tests
     [Test]
     public void Hash_Is_64_Bytes()
     {
-        byte[] password = "foo"u8.ToArray();
+        AuthenticationPassword password = AuthenticationPassword.From("foo"u8.ToArray());
         SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
         Assert.That(hashOutput.Hash.Length, Is.EqualTo(64));
     }
@@ -84,7 +85,7 @@ public class PasswordHashService_Tests
     [Test]
     public void Salts_Are_Unique()
     {
-        byte[] password = "foo"u8.ToArray();
+        AuthenticationPassword password = AuthenticationPassword.From("foo"u8.ToArray());
         SecurePasswordHashOutput hashOutput1 = _sut!.MakeSecurePasswordHash(password, 0);
         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 0);
         Assert.That(hashOutput1.Salt, Is.Not.EqualTo(hashOutput2.Salt));
@@ -93,7 +94,7 @@ public class PasswordHashService_Tests
     [Test]
     public void Hashes_With_Unique_Salts_Are_Unique()
     {
-        byte[] password = "foo"u8.ToArray();
+        AuthenticationPassword password = AuthenticationPassword.From("foo"u8.ToArray());
         SecurePasswordHashOutput hashOutput1 = _sut!.MakeSecurePasswordHash(password, 0);
         SecurePasswordHashOutput hashOutput2 = _sut.MakeSecurePasswordHash(password, 0);
         Assert.That(hashOutput1.Hash, Is.Not.EqualTo(hashOutput2.Hash));
@@ -102,7 +103,7 @@ public class PasswordHashService_Tests
     [Test]
     public void Hash_Verification_Can_Succeed()
     {
-        byte[] password = "foo"u8.ToArray();
+        AuthenticationPassword password = AuthenticationPassword.From("foo"u8.ToArray());
         SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 0);
         Assert.That(hashesMatch, Is.True);
@@ -111,8 +112,8 @@ public class PasswordHashService_Tests
     [Test]
     public void Hash_Verification_Fails_With_Bad_Password()
     {
-        byte[] password = "foo"u8.ToArray();
-        byte[] notPassword = "not foo"u8.ToArray();
+        AuthenticationPassword password = AuthenticationPassword.From("foo"u8.ToArray());
+        AuthenticationPassword notPassword = AuthenticationPassword.From("not foo"u8.ToArray());
         SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
         bool hashesMatch = _sut.VerifySecurePasswordHash(notPassword, hashOutput.Hash, hashOutput.Salt, 0);
         Assert.That(hashesMatch, Is.False);
@@ -121,7 +122,7 @@ public class PasswordHashService_Tests
     [Test]
     public void Hash_Verification_Fails_With_Bad_Salt()
     {
-        byte[] password = "foo"u8.ToArray();
+        AuthenticationPassword password = AuthenticationPassword.From("foo"u8.ToArray());
         SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
 
         // Modify the first byte in the salt to make it "bad"
@@ -136,7 +137,7 @@ public class PasswordHashService_Tests
     [Test]
     public void Hash_Verification_Fails_With_Different_Iterations()
     {
-        byte[] password = "foo"u8.ToArray();
+        AuthenticationPassword password = AuthenticationPassword.From("foo"u8.ToArray());
         SecurePasswordHashOutput hashOutput = _sut!.MakeSecurePasswordHash(password, 0);
 
         bool hashesMatch = _sut.VerifySecurePasswordHash(password, hashOutput.Hash, hashOutput.Salt, 1);
@@ -146,7 +147,7 @@ public class PasswordHashService_Tests
     [Test]
     public void Hash_Verification_Is_Stable()
     {
-        byte[] password = "foo"u8.ToArray();
+        AuthenticationPassword password = AuthenticationPassword.From("foo"u8.ToArray());
         byte[] salt =
         [
             0xa1, 0xb8, 0x4d, 0x9b, 0x83, 0xf6, 0xb3, 0x46,

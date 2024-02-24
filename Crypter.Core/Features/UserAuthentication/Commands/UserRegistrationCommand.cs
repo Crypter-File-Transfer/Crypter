@@ -1,0 +1,176 @@
+﻿/*
+ * Copyright (C) 2024 Crypter File Transfer
+ *
+ * This file is part of the Crypter file transfer project.
+ *
+ * Crypter is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The Crypter source code is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * You can be released from the requirements of the aforementioned license
+ * by purchasing a commercial license. Buying such a license is mandatory
+ * as soon as you develop commercial activities involving the Crypter source
+ * code without disclosing the source code of your own applications.
+ *
+ * Contact the current copyright holder to discuss commercial license options.
+ */
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Enums;
+using Crypter.Common.Primitives;
+using Crypter.Core.DataContextExtensions;
+using Crypter.Core.Identity;
+using Crypter.Core.MediatorMonads;
+using Crypter.Core.Services;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
+using EasyMonads;
+using Hangfire;
+using Microsoft.Extensions.Options;
+
+namespace Crypter.Core.Features.UserAuthentication.Commands;
+
+public sealed record UserRegistrationCommand(RegistrationRequest Request)
+    : IEitherRequest<RegistrationError, Unit>;
+
+internal class UserRegistrationCommandHandler
+    : IEitherRequestHandler<UserRegistrationCommand, RegistrationError, Unit>
+{
+    private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly DataContext _dataContext;
+    private readonly IHangfireBackgroundService _hangfireBackgroundService;
+    private readonly IPasswordHashService _passwordHashService;
+    private readonly ServerPasswordSettings _serverPasswordSettings;
+
+    public UserRegistrationCommandHandler(
+        IBackgroundJobClient backgroundJobClient,
+        DataContext dataContext,
+        IHangfireBackgroundService hangfireBackgroundService,
+        IPasswordHashService passwordHashService,
+        IOptions<ServerPasswordSettings> serverPasswordSettings)
+    {
+        _backgroundJobClient = backgroundJobClient;
+        _dataContext = dataContext;
+        _hangfireBackgroundService = hangfireBackgroundService;
+        _passwordHashService = passwordHashService;
+        _serverPasswordSettings = serverPasswordSettings.Value;
+    }
+    
+    public async Task<Either<RegistrationError, Unit>> Handle(UserRegistrationCommand request, CancellationToken cancellationToken)
+    {
+        return await ValidateRegistrationRequestAsync(request.Request)
+            .BindAsync<RegistrationError, ValidRegistrationRequest, UserEntity>(async validRegistrationRequest => await CreateNewUserEntityAsync(validRegistrationRequest))
+            .DoRightAsync(newUserEntity =>
+            {
+                _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(newUserEntity.Id));
+                return Task.CompletedTask;
+            })
+            .BindAsync<RegistrationError, UserEntity, Unit>(_ => Unit.Default);
+    }
+    
+    private readonly struct ValidRegistrationRequest(
+        Username username,
+        AuthenticationPassword password,
+        Maybe<EmailAddress> emailAddress)
+    {
+        public Username Username { get; init; } = username;
+        public AuthenticationPassword Password { get; init; } = password;
+        public Maybe<EmailAddress> EmailAddress { get; init; } = emailAddress;
+    }
+    
+    private async Task<Either<RegistrationError, ValidRegistrationRequest>> ValidateRegistrationRequestAsync(RegistrationRequest request)
+    {
+        if (request.VersionedPassword.Version != _serverPasswordSettings.ClientVersion)
+        {
+            return RegistrationError.OldPasswordVersion;
+        }
+
+        if (!Username.TryFrom(request.Username, out Username? validUsername))
+        {
+            return RegistrationError.InvalidUsername;
+        }
+
+        if (!AuthenticationPassword.TryFrom(request.VersionedPassword.Password, out AuthenticationPassword? validPassword))
+        {
+            return RegistrationError.InvalidPassword;
+        }
+
+        Maybe<EmailAddress> validatedEmailAddress = Maybe<EmailAddress>.None;
+        if (EmailAddress.TryFrom(request.EmailAddress!, out EmailAddress? validEmailAddress))
+        {
+            validatedEmailAddress = validEmailAddress;
+        }
+
+        if (!string.IsNullOrEmpty(request.EmailAddress) && validatedEmailAddress.IsNone)
+        {
+            return RegistrationError.InvalidEmailAddress;
+        }
+
+        bool isUsernameAvailable = await _dataContext.Users.IsUsernameAvailableAsync(validUsername);
+        if (!isUsernameAvailable)
+        {
+            return RegistrationError.UsernameTaken;
+        }
+
+        bool isEmailAddressAvailable = validatedEmailAddress.IsNone
+            || await _dataContext.Users.IsEmailAddressAvailableAsync(validEmailAddress);
+        if (!isEmailAddressAvailable)
+        {
+            return RegistrationError.EmailAddressTaken;
+        }
+        
+        return new ValidRegistrationRequest(validUsername, validPassword, validatedEmailAddress);
+    }
+
+    private async Task<UserEntity> CreateNewUserEntityAsync(ValidRegistrationRequest request)
+    {
+        SecurePasswordHashOutput passwordHashOutput = _passwordHashService.MakeSecurePasswordHash(request.Password,
+            _passwordHashService.LatestServerPasswordVersion);
+        
+        UserEntity newUser = new UserEntity(
+            id: Guid.NewGuid(),
+            request.Username,
+            request.EmailAddress,
+            passwordHashOutput.Hash,
+            passwordHashOutput.Salt,
+            passwordHashOutput.ServerPasswordVersion,
+            _serverPasswordSettings.ClientVersion,
+            emailVerified: false,
+            created: DateTime.UtcNow,
+            lastLogin: DateTime.MinValue);
+        
+        newUser.Profile = new UserProfileEntity(
+            newUser.Id, 
+            alias: string.Empty,
+            about: string.Empty,
+            image: string.Empty);
+        
+        newUser.PrivacySetting = new UserPrivacySettingEntity(
+            newUser.Id, 
+            allowKeyExchangeRequests: true,
+            UserVisibilityLevel.Everyone,
+            receiveFiles: UserItemTransferPermission.Everyone,
+            receiveMessages: UserItemTransferPermission.Everyone);
+        
+        newUser.NotificationSetting = new UserNotificationSettingEntity(
+            newUser.Id, 
+            enableTransferNotifications: false,
+            emailNotifications: false);
+
+        _dataContext.Users.Add(newUser);
+        await _dataContext.SaveChangesAsync();
+        return newUser;
+    }
+}

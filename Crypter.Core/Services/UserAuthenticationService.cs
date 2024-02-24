@@ -33,7 +33,6 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
-using Crypter.Core.DataContextExtensions;
 using Crypter.Core.Identity;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
@@ -48,7 +47,6 @@ namespace Crypter.Core.Services;
 
 public interface IUserAuthenticationService
 {
-    Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request);
     Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription);
     Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription);
     Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal);
@@ -102,24 +100,6 @@ public class UserAuthenticationService : IUserAuthenticationService
         };
     }
 
-    public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest request)
-    {
-        return from validRegistrationRequest in ValidateRegistrationRequest(request).AsTask()
-            from usernameAvailable in VerifyUsernameIsAvailableAsync(validRegistrationRequest.Username,
-                RegistrationError.UsernameTaken)
-            from emailAddressAvailable in VerifyEmailAddressIsAvailable(validRegistrationRequest.EmailAddress,
-                RegistrationError.EmailAddressTaken)
-            let securePasswordData = _passwordHashService.MakeSecurePasswordHash(validRegistrationRequest.Password,
-                _passwordHashService.LatestServerPasswordVersion)
-            from newUserEntity in Either<RegistrationError, UserEntity>.FromRight(
-                InsertNewUserInContext(validRegistrationRequest.Username, validRegistrationRequest.EmailAddress,
-                    securePasswordData.Salt, securePasswordData.Hash, _passwordHashService.LatestServerPasswordVersion,
-                    _clientPasswordVersion)).AsTask()
-            from entriesModified in Either<RegistrationError, int>.FromRightAsync(SaveContextChangesAsync())
-            let jobId = EnqueueEmailAddressVerificationEmailDelivery(newUserEntity.Id)
-            select Unit.Default;
-    }
-
     /// <summary>
     /// 
     /// </summary>
@@ -164,8 +144,9 @@ public class UserAuthenticationService : IUserAuthenticationService
                 }
 
                 byte[] currentClientPassword = validatedLoginRequest.VersionedPasswords[user.ClientPasswordVersion];
-                bool isMatchingPassword = _passwordHashService.VerifySecurePasswordHash(currentClientPassword,
-                    user.PasswordHash, user.PasswordSalt, user.ServerPasswordVersion);
+                bool isMatchingPassword = AuthenticationPassword.TryFrom(currentClientPassword, out AuthenticationPassword validAuthenticationPassword)
+                    && _passwordHashService.VerifySecurePasswordHash(validAuthenticationPassword,
+                        user.PasswordHash, user.PasswordSalt, user.ServerPasswordVersion);
                 if (!isMatchingPassword)
                 {
                     await HandlePasswordVerificationFailedAsync(user.Id);
@@ -176,7 +157,13 @@ public class UserAuthenticationService : IUserAuthenticationService
                     user.ClientPasswordVersion != _clientPasswordVersion)
                 {
                     byte[] latestClientPassword = validatedLoginRequest.VersionedPasswords[_clientPasswordVersion];
-                    SecurePasswordHashOutput hashOutput = _passwordHashService.MakeSecurePasswordHash(latestClientPassword,
+                    if (!AuthenticationPassword.TryFrom(latestClientPassword,
+                            out AuthenticationPassword latestValidAuthenticationPassword))
+                    {
+                        return LoginError.InvalidPassword;
+                    }
+                    
+                    SecurePasswordHashOutput hashOutput = _passwordHashService.MakeSecurePasswordHash(latestValidAuthenticationPassword,
                         _passwordHashService.LatestServerPasswordVersion);
                     user.PasswordHash = hashOutput.Hash;
                     user.PasswordSalt = hashOutput.Salt;
@@ -234,12 +221,12 @@ public class UserAuthenticationService : IUserAuthenticationService
     public Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId,
         PasswordChallengeRequest request, CancellationToken cancellationToken = default)
     {
-        return from suppliedPassword in ValidateRequestPassword(request.AuthenticationPassword,
+        return from validAuthenticationPassword in ValidateRequestPassword(request.AuthenticationPassword,
                 PasswordChallengeError.InvalidPassword).AsTask()
             from user in FetchUserAsync(userId, PasswordChallengeError.UnknownError, cancellationToken)
             from unit0 in VerifyUserPasswordIsMigrated(user, PasswordChallengeError.PasswordNeedsMigration)
                 .ToLeftEither(Unit.Default).AsTask()
-            from passwordVerified in VerifyPassword(suppliedPassword, user.PasswordHash, user.PasswordSalt,
+            from passwordVerified in VerifyPassword(validAuthenticationPassword, user.PasswordHash, user.PasswordSalt,
                 _passwordHashService.LatestServerPasswordVersion)
                 ? Either<PasswordChallengeError, Unit>.FromRight(Unit.Default).AsTask()
                 : Either<PasswordChallengeError, Unit>.FromLeft(PasswordChallengeError.InvalidPassword).AsTask()
@@ -278,41 +265,10 @@ public class UserAuthenticationService : IUserAuthenticationService
         return new ValidLoginRequest(validUsername, validVersionedPasswords, request.RefreshTokenType);
     }
 
-    private Either<RegistrationError, ValidRegistrationRequest> ValidateRegistrationRequest(RegistrationRequest request)
+    private static Either<T, AuthenticationPassword> ValidateRequestPassword<T>(byte[] password, T error)
     {
-        if (request.VersionedPassword.Version != _clientPasswordVersion)
-        {
-            return RegistrationError.OldPasswordVersion;
-        }
-
-        if (!Username.TryFrom(request.Username, out Username? validUsername))
-        {
-            return RegistrationError.InvalidUsername;
-        }
-
-        if (!ValidateRequestPassword(request.VersionedPassword.Password, RegistrationError.InvalidPassword).IsRight)
-        {
-            return RegistrationError.InvalidPassword;
-        }
-
-        Maybe<EmailAddress> validatedEmailAddress = Maybe<EmailAddress>.None;
-        if (EmailAddress.TryFrom(request.EmailAddress!, out EmailAddress validEmailAddress))
-        {
-            validatedEmailAddress = validEmailAddress;
-        }
-
-        if (!string.IsNullOrEmpty(request.EmailAddress) && validatedEmailAddress.IsNone)
-        {
-            return RegistrationError.InvalidEmailAddress;
-        }
-
-        return new ValidRegistrationRequest(validUsername, request.VersionedPassword.Password, validatedEmailAddress);
-    }
-
-    private static Either<T, byte[]> ValidateRequestPassword<T>(byte[] password, T error)
-    {
-        return AuthenticationPassword.TryFrom(password, out AuthenticationPassword _)
-            ? password
+        return AuthenticationPassword.TryFrom(password, out AuthenticationPassword validAuthenticationPassword)
+            ? validAuthenticationPassword
             : error;
     }
 
@@ -322,29 +278,6 @@ public class UserAuthenticationService : IUserAuthenticationService
                user.ServerPasswordVersion == _passwordHashService.LatestServerPasswordVersion
             ? Maybe<T>.None
             : error;
-    }
-
-    private async Task<Either<T, Unit>> VerifyUsernameIsAvailableAsync<T>(Username username, T error,
-        CancellationToken cancellationToken = default)
-    {
-        bool isUsernameAvailable = await _context.Users.IsUsernameAvailableAsync(username, cancellationToken);
-        return isUsernameAvailable
-            ? Unit.Default
-            : error;
-    }
-
-    private async Task<Either<T, Unit>> VerifyEmailAddressIsAvailable<T>(Maybe<EmailAddress> emailAddress, T error,
-        CancellationToken cancellationToken = default)
-    {
-        return await emailAddress.MatchAsync<Either<T, Unit>>(
-            () => Unit.Default,
-            async x =>
-            {
-                bool isEmailAddressAvailable = await _context.Users.IsEmailAddressAvailableAsync(x, cancellationToken);
-                return isEmailAddressAvailable
-                    ? Unit.Default
-                    : error;
-            });
     }
 
     private static Maybe<Unit> ValidateUserToken(UserTokenEntity token, Guid userId)
@@ -357,20 +290,6 @@ public class UserAuthenticationService : IUserAuthenticationService
             : Maybe<Unit>.None;
     }
 
-    private UserEntity InsertNewUserInContext(Username username, Maybe<EmailAddress> emailAddress, byte[] passwordSalt,
-        byte[] passwordHash, short serverPasswordVersion, short clientPasswordVersion)
-    {
-        UserEntity user = new UserEntity(Guid.NewGuid(), username, emailAddress, passwordHash, passwordSalt,
-            serverPasswordVersion, clientPasswordVersion, false, DateTime.UtcNow, DateTime.MinValue);
-        user.Profile = new UserProfileEntity(user.Id, string.Empty, string.Empty, string.Empty);
-        user.PrivacySetting = new UserPrivacySettingEntity(user.Id, true, UserVisibilityLevel.Everyone,
-            UserItemTransferPermission.Everyone, UserItemTransferPermission.Everyone);
-        user.NotificationSetting = new UserNotificationSettingEntity(user.Id, false, false);
-
-        _context.Users.Add(user);
-        return user;
-    }
-
     private Task<Either<T, UserEntity?>> FetchUserAsync<T>(Guid userId, T error,
         CancellationToken cancellationToken = default)
     {
@@ -379,10 +298,10 @@ public class UserAuthenticationService : IUserAuthenticationService
             error);
     }
 
-    private bool VerifyPassword(byte[] password, byte[] existingPasswordHash, byte[] passwordSalt,
+    private bool VerifyPassword(AuthenticationPassword authenticationPassword, byte[] existingPasswordHash, byte[] passwordSalt,
         short serverPasswordVersion)
     {
-        return _passwordHashService.VerifySecurePasswordHash(password, existingPasswordHash, passwordSalt,
+        return _passwordHashService.VerifySecurePasswordHash(authenticationPassword, existingPasswordHash, passwordSalt,
             serverPasswordVersion);
     }
 
@@ -413,11 +332,6 @@ public class UserAuthenticationService : IUserAuthenticationService
     {
         _context.UserTokens.Remove(token);
         return Unit.Default;
-    }
-
-    private string EnqueueEmailAddressVerificationEmailDelivery(Guid userId)
-    {
-        return _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendEmailVerificationAsync(userId));
     }
 
     private string ScheduleRefreshTokenDeletion(Guid tokenId, DateTime tokenExpiration)
@@ -457,20 +371,6 @@ public class UserAuthenticationService : IUserAuthenticationService
             Username = username;
             VersionedPasswords = versionedPasswords;
             RefreshTokenType = refreshTokenType;
-        }
-    }
-
-    private record ValidRegistrationRequest
-    {
-        public Username Username { get; init; }
-        public byte[] Password { get; init; }
-        public Maybe<EmailAddress> EmailAddress { get; init; }
-
-        public ValidRegistrationRequest(Username username, byte[] password, Maybe<EmailAddress> emailAddress)
-        {
-            Username = username;
-            Password = password;
-            EmailAddress = emailAddress;
         }
     }
 }

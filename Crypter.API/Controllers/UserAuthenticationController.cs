@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -31,11 +31,14 @@ using Crypter.API.Controllers.Base;
 using Crypter.API.Methods;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Core.Features.UserAuthentication.Commands;
 using Crypter.Core.Services;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Unit = EasyMonads.Unit;
 
 namespace Crypter.API.Controllers;
 
@@ -43,10 +46,12 @@ namespace Crypter.API.Controllers;
 [Route("api/user/authentication")]
 public class UserAuthenticationController : CrypterControllerBase
 {
+    private readonly ISender _sender;
     private readonly IUserAuthenticationService _userAuthenticationService;
 
-    public UserAuthenticationController(IUserAuthenticationService userAuthenticationService)
+    public UserAuthenticationController(ISender sender, IUserAuthenticationService userAuthenticationService)
     {
+        _sender = sender;
         _userAuthenticationService = userAuthenticationService;
     }
 
@@ -81,8 +86,9 @@ public class UserAuthenticationController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userAuthenticationService.RegisterAsync(request)
+
+        UserRegistrationCommand command = new UserRegistrationCommand(request);
+        return await _sender.Send(command)
             .MatchAsync(
                 MakeErrorResponse,
                 _ => Ok(),

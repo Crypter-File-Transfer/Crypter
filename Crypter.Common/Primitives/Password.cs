@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -51,7 +51,7 @@ public class Password : ValueOf<string, Password>
             .IsNone;
     }
 
-    public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string value)
+    public static Maybe<StringPrimitiveValidationFailure> CheckValidation(string? value)
     {
         if (value is null)
         {
