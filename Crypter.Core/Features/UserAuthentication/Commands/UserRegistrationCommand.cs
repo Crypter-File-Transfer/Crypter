@@ -85,9 +85,9 @@ internal class UserRegistrationCommandHandler
         AuthenticationPassword password,
         Maybe<EmailAddress> emailAddress)
     {
-        public Username Username { get; init; } = username;
-        public AuthenticationPassword Password { get; init; } = password;
-        public Maybe<EmailAddress> EmailAddress { get; init; } = emailAddress;
+        public Username Username { get; } = username;
+        public AuthenticationPassword Password { get; } = password;
+        public Maybe<EmailAddress> EmailAddress { get; } = emailAddress;
     }
     
     private async Task<Either<RegistrationError, ValidRegistrationRequest>> ValidateRegistrationRequestAsync(RegistrationRequest request)
