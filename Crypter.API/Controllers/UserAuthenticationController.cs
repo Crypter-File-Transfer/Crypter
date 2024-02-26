@@ -163,13 +163,14 @@ public class UserAuthenticationController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-        Either<RefreshError, RefreshResponse> refreshResult = await _userAuthenticationService.RefreshAsync(User, requestUserAgent);
 
-        return refreshResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(RefreshError.UnknownError));
+        string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
+        RefreshUserSessionCommand request = new RefreshUserSessionCommand(User, requestUserAgent);
+        return await _sender.Send(request)
+            .MatchAsync(
+                MakeErrorResponse,
+                Ok,
+                MakeErrorResponse(RefreshError.UnknownError));
     }
 
     /// <summary>
