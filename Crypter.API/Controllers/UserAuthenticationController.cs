@@ -124,11 +124,12 @@ public class UserAuthenticationController : CrypterControllerBase
         }
 
         string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-        Either<LoginError, LoginResponse> loginResult = await _userAuthenticationService.LoginAsync(request, requestUserAgent);
-        return loginResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(LoginError.UnknownError));
+        UserLoginCommand command = new UserLoginCommand(request, requestUserAgent);
+        return await _sender.Send(command)
+            .MatchAsync(
+                MakeErrorResponse,
+                Ok,
+                MakeErrorResponse(LoginError.UnknownError));
     }
 
     /// <summary>

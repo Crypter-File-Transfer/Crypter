@@ -26,7 +26,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
@@ -47,7 +46,6 @@ namespace Crypter.Core.Services;
 
 public interface IUserAuthenticationService
 {
-    Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription);
     Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription);
     Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal);
 
@@ -80,7 +78,6 @@ public class UserAuthenticationService : IUserAuthenticationService
     private readonly IReadOnlyDictionary<TokenType, Func<Guid, RefreshTokenData>> _refreshTokenProviderMap;
 
     private readonly short _clientPasswordVersion;
-    private const int MaximumFailedLoginAttempts = 3;
 
     public UserAuthenticationService(DataContext context, IPasswordHashService passwordHashService,
         ITokenService tokenService, IBackgroundJobClient backgroundJobClient,
@@ -98,96 +95,6 @@ public class UserAuthenticationService : IUserAuthenticationService
             { TokenType.Session, _tokenService.NewSessionToken },
             { TokenType.Device, _tokenService.NewDeviceToken }
         };
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="request"></param>
-    /// <param name="deviceDescription"></param>
-    /// <returns></returns>
-    /// <remarks>
-    /// The reason this does not use Linq query syntax is to save a single trip to the database when querying for the user entity.
-    /// `.Include(x => x.FailedLoginAttempts)` is less likely to be forgotten and break things when the reason for having it is on the very next line.
-    /// </remarks>
-    public async Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest request, string deviceDescription)
-    {
-        Either<LoginError, ValidLoginRequest> validLoginRequest = ValidateLoginRequest(request);
-        return await validLoginRequest.MatchAsync<Either<LoginError, LoginResponse>>(
-            error => error,
-            async validatedLoginRequest =>
-            {
-                UserEntity? user = await _context.Users
-                    .Where(x => x.Username == validatedLoginRequest.Username.Value)
-                    .Include(x => x.FailedLoginAttempts)
-                    .Include(x => x.Consents!.Where(y => y.Active == true))
-                    .Include(x => x.MasterKey)
-                    .Include(x => x.KeyPair)
-                    .FirstOrDefaultAsync();
-
-                if (user is null)
-                {
-                    return LoginError.InvalidUsername;
-                }
-
-                if (user.FailedLoginAttempts!.Count >= MaximumFailedLoginAttempts)
-                {
-                    return LoginError.ExcessiveFailedLoginAttempts;
-                }
-
-                bool requestContainsRequiredPasswordVersions =
-                    validatedLoginRequest.VersionedPasswords.ContainsKey(user.ClientPasswordVersion)
-                    && validatedLoginRequest.VersionedPasswords.ContainsKey(_clientPasswordVersion);
-                if (!requestContainsRequiredPasswordVersions)
-                {
-                    return LoginError.InvalidPasswordVersion;
-                }
-
-                byte[] currentClientPassword = validatedLoginRequest.VersionedPasswords[user.ClientPasswordVersion];
-                bool isMatchingPassword = AuthenticationPassword.TryFrom(currentClientPassword, out AuthenticationPassword validAuthenticationPassword)
-                    && _passwordHashService.VerifySecurePasswordHash(validAuthenticationPassword,
-                        user.PasswordHash, user.PasswordSalt, user.ServerPasswordVersion);
-                if (!isMatchingPassword)
-                {
-                    await HandlePasswordVerificationFailedAsync(user.Id);
-                    return LoginError.InvalidPassword;
-                }
-
-                if (user.ServerPasswordVersion != _passwordHashService.LatestServerPasswordVersion ||
-                    user.ClientPasswordVersion != _clientPasswordVersion)
-                {
-                    byte[] latestClientPassword = validatedLoginRequest.VersionedPasswords[_clientPasswordVersion];
-                    if (!AuthenticationPassword.TryFrom(latestClientPassword,
-                            out AuthenticationPassword latestValidAuthenticationPassword))
-                    {
-                        return LoginError.InvalidPassword;
-                    }
-                    
-                    SecurePasswordHashOutput hashOutput = _passwordHashService.MakeSecurePasswordHash(latestValidAuthenticationPassword,
-                        _passwordHashService.LatestServerPasswordVersion);
-                    user.PasswordHash = hashOutput.Hash;
-                    user.PasswordSalt = hashOutput.Salt;
-                    user.ServerPasswordVersion = _passwordHashService.LatestServerPasswordVersion;
-                    user.ClientPasswordVersion = _clientPasswordVersion;
-                }
-
-                user.LastLogin = DateTime.UtcNow;
-
-                RefreshTokenData refreshToken =
-                    CreateRefreshTokenInContext(user.Id, validatedLoginRequest.RefreshTokenType, deviceDescription);
-                string authToken = MakeAuthenticationToken(user.Id);
-
-                await _context.SaveChangesAsync();
-                ScheduleRefreshTokenDeletion(refreshToken.TokenId, refreshToken.Expiration);
-
-                bool userHasConsentedToRecoveryKeyRisks =
-                    user.Consents!.Any(x => x.ConsentType == ConsentType.RecoveryKeyRisks);
-                bool userNeedsNewKeys = user.MasterKey is null && user.KeyPair is null;
-
-                return new LoginResponse(user.Username, authToken, refreshToken.Token, userNeedsNewKeys,
-                    !userHasConsentedToRecoveryKeyRisks);
-            },
-            LoginError.UnknownError);
     }
 
     public Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal,
@@ -233,38 +140,6 @@ public class UserAuthenticationService : IUserAuthenticationService
             select Unit.Default;
     }
 
-    private Either<LoginError, ValidLoginRequest> ValidateLoginRequest(LoginRequest request)
-    {
-        if (request.VersionedPasswords.All(x => x.Version != _clientPasswordVersion))
-        {
-            return LoginError.InvalidPasswordVersion;
-        }
-
-        if (!Username.TryFrom(request.Username, out var validUsername))
-        {
-            return LoginError.InvalidUsername;
-        }
-
-        Dictionary<int, byte[]> validVersionedPasswords = new Dictionary<int, byte[]>(request.VersionedPasswords.Count);
-        foreach (VersionedPassword versionedPassword in request.VersionedPasswords)
-        {
-            if (versionedPassword.Version > _clientPasswordVersion || versionedPassword.Version < 0 ||
-                validVersionedPasswords.ContainsKey(versionedPassword.Version))
-            {
-                return LoginError.InvalidPasswordVersion;
-            }
-
-            validVersionedPasswords.Add(versionedPassword.Version, versionedPassword.Password);
-        }
-
-        if (!_refreshTokenProviderMap.ContainsKey(request.RefreshTokenType))
-        {
-            return LoginError.InvalidTokenTypeRequested;
-        }
-
-        return new ValidLoginRequest(validUsername, validVersionedPasswords, request.RefreshTokenType);
-    }
-
     private static Either<T, AuthenticationPassword> ValidateRequestPassword<T>(byte[] password, T error)
     {
         return AuthenticationPassword.TryFrom(password, out AuthenticationPassword validAuthenticationPassword)
@@ -303,16 +178,6 @@ public class UserAuthenticationService : IUserAuthenticationService
     {
         return _passwordHashService.VerifySecurePasswordHash(authenticationPassword, existingPasswordHash, passwordSalt,
             serverPasswordVersion);
-    }
-
-    private async Task HandlePasswordVerificationFailedAsync(Guid userId)
-    {
-        UserFailedLoginEntity failedLoginEntity = new UserFailedLoginEntity(Guid.NewGuid(), userId, DateTime.UtcNow);
-        _context.UserFailedLoginAttempts.Add(failedLoginEntity);
-        await _context.SaveChangesAsync(CancellationToken.None);
-        _backgroundJobClient.Schedule(
-            () => _hangfireBackgroundService.DeleteFailedLoginAttemptAsync(failedLoginEntity.Id),
-            failedLoginEntity.Date.AddDays(1));
     }
 
     private static Unit UpdateLastLoginTimeInContext(UserEntity user)
@@ -357,20 +222,5 @@ public class UserAuthenticationService : IUserAuthenticationService
     private Task<int> SaveContextChangesAsync()
     {
         return _context.SaveChangesAsync();
-    }
-
-    private record ValidLoginRequest
-    {
-        public Username Username { get; init; }
-        public Dictionary<int, byte[]> VersionedPasswords { get; init; }
-        public TokenType RefreshTokenType { get; init; }
-
-        public ValidLoginRequest(Username username, Dictionary<int, byte[]> versionedPasswords,
-            TokenType refreshTokenType)
-        {
-            Username = username;
-            VersionedPasswords = versionedPasswords;
-            RefreshTokenType = refreshTokenType;
-        }
     }
 }
