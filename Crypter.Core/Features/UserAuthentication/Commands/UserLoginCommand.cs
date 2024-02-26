@@ -59,7 +59,7 @@ internal sealed class UserLoginCommandHandler
     
     private readonly short _clientPasswordVersion;
     private const int MaximumFailedLoginAttempts = 3;
-    private readonly IReadOnlyDictionary<TokenType, Func<Guid, RefreshTokenData>> _refreshTokenProviderMap;
+    private readonly Dictionary<TokenType, Func<Guid, RefreshTokenData>> _refreshTokenProviderMap;
 
     public UserLoginCommandHandler(
         DataContext dataContext,
@@ -225,7 +225,7 @@ internal sealed class UserLoginCommandHandler
         string authToken = _tokenService.NewAuthenticationToken(userEntity.Id);
 
         await _dataContext.SaveChangesAsync();
-        await PublishRefreshTokenCreatedEventAsync(refreshToken);
+        await Common.PublishRefreshTokenCreatedEventAsync(_publisher, refreshToken);
 
         bool userHasConsentedToRecoveryKeyRisks =
             userEntity.Consents!.Any(x => x.ConsentType == ConsentType.RecoveryKeyRisks);
@@ -240,13 +240,5 @@ internal sealed class UserLoginCommandHandler
         IncorrectPasswordProvidedEvent incorrectPasswordProvidedEvent =
             new IncorrectPasswordProvidedEvent(userId);
         await _publisher.Publish(incorrectPasswordProvidedEvent, CancellationToken.None);
-    }
-
-    private async Task PublishRefreshTokenCreatedEventAsync(RefreshTokenData refreshTokenData)
-    {
-        RefreshTokenCreatedEvent refreshTokenCreatedEvent = new RefreshTokenCreatedEvent(
-            refreshTokenData.TokenId,
-            refreshTokenData.Expiration);
-        await _publisher.Publish(refreshTokenCreatedEvent);
     }
 }

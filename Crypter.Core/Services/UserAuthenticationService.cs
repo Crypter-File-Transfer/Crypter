@@ -25,18 +25,14 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using Crypter.Core.Identity;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
-using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -46,7 +42,6 @@ namespace Crypter.Core.Services;
 
 public interface IUserAuthenticationService
 {
-    Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription);
     Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request,
         CancellationToken cancellationToken = default);
 }
@@ -70,47 +65,18 @@ public class UserAuthenticationService : IUserAuthenticationService
 {
     private readonly DataContext _context;
     private readonly IPasswordHashService _passwordHashService;
-    private readonly ITokenService _tokenService;
-    private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly IHangfireBackgroundService _hangfireBackgroundService;
-    private readonly IReadOnlyDictionary<TokenType, Func<Guid, RefreshTokenData>> _refreshTokenProviderMap;
 
     private readonly short _clientPasswordVersion;
 
-    public UserAuthenticationService(DataContext context, IPasswordHashService passwordHashService,
-        ITokenService tokenService, IBackgroundJobClient backgroundJobClient,
-        IHangfireBackgroundService hangfireBackgroundService, IOptions<ServerPasswordSettings> passwordSettings)
+    public UserAuthenticationService(
+        DataContext context,
+        IPasswordHashService passwordHashService,
+        IOptions<ServerPasswordSettings> passwordSettings)
     {
         _context = context;
         _passwordHashService = passwordHashService;
-        _tokenService = tokenService;
-        _backgroundJobClient = backgroundJobClient;
-        _hangfireBackgroundService = hangfireBackgroundService;
 
         _clientPasswordVersion = passwordSettings.Value.ClientVersion;
-        _refreshTokenProviderMap = new Dictionary<TokenType, Func<Guid, RefreshTokenData>>()
-        {
-            { TokenType.Session, _tokenService.NewSessionToken },
-            { TokenType.Device, _tokenService.NewDeviceToken }
-        };
-    }
-
-    public Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal,
-        string deviceDescription)
-    {
-        return from userId in TokenService.TryParseUserId(claimsPrincipal).ToEither(RefreshError.InvalidToken).AsTask()
-            from tokenId in TokenService.TryParseTokenId(claimsPrincipal).ToEither(RefreshError.InvalidToken).AsTask()
-            from databaseToken in FetchUserTokenAsync(tokenId).ToEitherAsync(RefreshError.InvalidToken)
-            from databaseTokenValidated in ValidateUserToken(databaseToken, userId).ToEither(RefreshError.InvalidToken)
-                .AsTask()
-            let databaseTokenDeleted = DeleteUserTokenInContext(databaseToken)
-            from foundUser in FetchUserAsync(userId, RefreshError.UserNotFound)
-            let lastLoginTimeUpdated = UpdateLastLoginTimeInContext(foundUser)
-            let newRefreshTokenData = CreateRefreshTokenInContext(userId, databaseToken.Type, deviceDescription)
-            let authenticationToken = MakeAuthenticationToken(userId)
-            from entriesModified in Either<RefreshError, int>.FromRightAsync(SaveContextChangesAsync())
-            let jobId = ScheduleRefreshTokenDeletion(newRefreshTokenData.TokenId, newRefreshTokenData.Expiration)
-            select new RefreshResponse(authenticationToken, newRefreshTokenData.Token, databaseToken.Type);
     }
 
     public Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId,
@@ -143,16 +109,6 @@ public class UserAuthenticationService : IUserAuthenticationService
             : error;
     }
 
-    private static Maybe<Unit> ValidateUserToken(UserTokenEntity token, Guid userId)
-    {
-        bool isTokenValid = token.Owner == userId
-                            && token.Expiration >= DateTime.UtcNow;
-
-        return isTokenValid
-            ? Unit.Default
-            : Maybe<Unit>.None;
-    }
-
     private Task<Either<T, UserEntity?>> FetchUserAsync<T>(Guid userId, T error,
         CancellationToken cancellationToken = default)
     {
@@ -166,49 +122,5 @@ public class UserAuthenticationService : IUserAuthenticationService
     {
         return _passwordHashService.VerifySecurePasswordHash(authenticationPassword, existingPasswordHash, passwordSalt,
             serverPasswordVersion);
-    }
-
-    private static Unit UpdateLastLoginTimeInContext(UserEntity user)
-    {
-        user.LastLogin = DateTime.UtcNow;
-        return Unit.Default;
-    }
-
-    private Task<Maybe<UserTokenEntity>> FetchUserTokenAsync(Guid tokenId,
-        CancellationToken cancellationToken = default)
-    {
-        return Maybe<UserTokenEntity>.FromNullableAsync(_context.UserTokens
-            .FindAsync([tokenId], cancellationToken).AsTask());
-    }
-
-    private Unit DeleteUserTokenInContext(UserTokenEntity token)
-    {
-        _context.UserTokens.Remove(token);
-        return Unit.Default;
-    }
-
-    private string ScheduleRefreshTokenDeletion(Guid tokenId, DateTime tokenExpiration)
-    {
-        return _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteUserTokenAsync(tokenId),
-            tokenExpiration - DateTime.UtcNow);
-    }
-
-    private string MakeAuthenticationToken(Guid userId)
-    {
-        return _tokenService.NewAuthenticationToken(userId);
-    }
-
-    private RefreshTokenData CreateRefreshTokenInContext(Guid userId, TokenType tokenType, string deviceDescription)
-    {
-        RefreshTokenData refreshToken = _refreshTokenProviderMap[tokenType].Invoke(userId);
-        UserTokenEntity tokenEntity = new(refreshToken.TokenId, userId, deviceDescription, tokenType,
-            refreshToken.Created, refreshToken.Expiration);
-        _context.UserTokens.Add(tokenEntity);
-        return refreshToken;
-    }
-
-    private Task<int> SaveContextChangesAsync()
-    {
-        return _context.SaveChangesAsync();
     }
 }
