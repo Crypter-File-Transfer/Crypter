@@ -60,7 +60,6 @@ public static class DependencyInjection
         services.TryAddSingleton<ICryptoProvider, DefaultCryptoProvider>();
 
         services.TryAddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
-        services.TryAddScoped<IUserAuthenticationService, UserAuthenticationService>();
         services.TryAddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
 
         services.AddEmailService(options =>
@@ -75,12 +74,12 @@ public static class DependencyInjection
 
         services.AddHashIdService(options => { options.Salt = hashIdSettings.Salt; });
 
-        services.AddUserAuthenticationService(options =>
+        services.Configure<ServerPasswordSettings>(options =>
         {
             options.ClientVersion = serverPasswordSettings.ClientVersion;
             options.ServerVersions = serverPasswordSettings.ServerVersions;
         });
-
+        
         services.AddTokenService(options =>
         {
             options.Audience = tokenSettings.Audience;
