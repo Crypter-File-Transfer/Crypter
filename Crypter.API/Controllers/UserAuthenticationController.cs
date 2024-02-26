@@ -235,10 +235,11 @@ public class UserAuthenticationController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        Either<LogoutError, Unit> logoutResult = await _userAuthenticationService.LogoutAsync(User);
-        return logoutResult.Match(
-            MakeErrorResponse,
-            _ => Ok(),
-            MakeErrorResponse(LogoutError.UnknownError));
+        UserLogoutCommand request = new UserLogoutCommand(User);
+        return await _sender.Send(request)
+            .MatchAsync(
+                MakeErrorResponse,
+                _ => Ok(),
+                MakeErrorResponse(LogoutError.UnknownError));
     }
 }
