@@ -47,8 +47,6 @@ namespace Crypter.Core.Services;
 public interface IUserAuthenticationService
 {
     Task<Either<RefreshError, RefreshResponse>> RefreshAsync(ClaimsPrincipal claimsPrincipal, string deviceDescription);
-    Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal);
-
     Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId, PasswordChallengeRequest request,
         CancellationToken cancellationToken = default);
 }
@@ -113,16 +111,6 @@ public class UserAuthenticationService : IUserAuthenticationService
             from entriesModified in Either<RefreshError, int>.FromRightAsync(SaveContextChangesAsync())
             let jobId = ScheduleRefreshTokenDeletion(newRefreshTokenData.TokenId, newRefreshTokenData.Expiration)
             select new RefreshResponse(authenticationToken, newRefreshTokenData.Token, databaseToken.Type);
-    }
-
-    public Task<Either<LogoutError, Unit>> LogoutAsync(ClaimsPrincipal claimsPrincipal)
-    {
-        return from userId in TokenService.TryParseUserId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
-            from tokenId in TokenService.TryParseTokenId(claimsPrincipal).ToEither(LogoutError.InvalidToken).AsTask()
-            from databaseToken in FetchUserTokenAsync(tokenId).ToEitherAsync(LogoutError.InvalidToken)
-            let databaseTokenDeleted = DeleteUserTokenInContext(databaseToken)
-            from entriesModified in Either<LogoutError, int>.FromRightAsync(SaveContextChangesAsync())
-            select Unit.Default;
     }
 
     public Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(Guid userId,
