@@ -24,10 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Primitives;
 using Crypter.Core.Features.UserAuthentication.Events;
 using Crypter.Core.Identity;
+using Crypter.Core.Services;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
+using EasyMonads;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Unit = EasyMonads.Unit;
 
 
@@ -42,5 +51,55 @@ internal static class Common
             refreshTokenData.Expiration);
         await publisher.Publish(refreshTokenCreatedEvent);
         return Unit.Default;
+    }
+    
+    internal static async Task<Either<PasswordChallengeError, Unit>> TestUserPasswordAsync(
+        DataContext dataContext,
+        IPasswordHashService passwordHashService,
+        Guid userId,
+        byte[] authenticationPassword,
+        short clientPasswordVersion,
+        CancellationToken cancellationToken = default)
+    {
+        return await (from validAuthenticationPassword in ValidateRequestPassword(authenticationPassword,
+                PasswordChallengeError.InvalidPassword).AsTask()
+            from user in FetchUserAsync(PasswordChallengeError.UnknownError)
+            from unit0 in VerifyUserPasswordIsMigrated(user, PasswordChallengeError.PasswordNeedsMigration)
+                .ToLeftEither(Unit.Default).AsTask()
+            from passwordVerified in VerifyPassword(user.PasswordHash, user.PasswordSalt,
+                passwordHashService.LatestServerPasswordVersion)
+                ? Either<PasswordChallengeError, Unit>.FromRight(Unit.Default).AsTask()
+                : Either<PasswordChallengeError, Unit>.FromLeft(PasswordChallengeError.InvalidPassword).AsTask()
+            select Unit.Default);
+        
+        static Either<T, AuthenticationPassword> ValidateRequestPassword<T>(byte[] password, T error)
+        {
+            return AuthenticationPassword.TryFrom(password, out AuthenticationPassword validAuthenticationPassword)
+                ? validAuthenticationPassword
+                : error;
+        }
+
+        Maybe<T> VerifyUserPasswordIsMigrated<T>(UserEntity user, T error)
+        {
+            return user.ClientPasswordVersion == clientPasswordVersion &&
+                   user.ServerPasswordVersion == passwordHashService.LatestServerPasswordVersion
+                ? Maybe<T>.None
+                : error;
+        }
+
+        Task<Either<T, UserEntity?>> FetchUserAsync<T>(T error)
+        {
+            return Either<T, UserEntity?>.FromRightAsync(
+                dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken),
+                error);
+        }
+
+        bool VerifyPassword(byte[] existingPasswordHash, byte[] passwordSalt,
+            short serverPasswordVersion)
+        {
+            return AuthenticationPassword.TryFrom(authenticationPassword, out AuthenticationPassword validAuthenticationPassword)
+                && passwordHashService.VerifySecurePasswordHash(validAuthenticationPassword, existingPasswordHash, passwordSalt,
+                    serverPasswordVersion);
+        }
     }
 }

@@ -25,69 +25,47 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Primitives;
 using Crypter.Core.Identity;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Services;
 using Crypter.DataAccess;
 using EasyMonads;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Crypter.Core.Features.Keys.Queries;
+namespace Crypter.Core.Features.UserAuthentication.Queries;
 
-public record GetMasterKeyProofQuery
-    (Guid UserId, GetMasterKeyRecoveryProofRequest Data) : IEitherRequest<GetMasterKeyRecoveryProofError,
-        GetMasterKeyRecoveryProofResponse>;
+public sealed record TestUserPasswordQuery(Guid UserId, PasswordChallengeRequest Request)
+    : IEitherRequest<PasswordChallengeError, Unit>;
 
-internal sealed class GetMasterKeyProofQueryHandler : IEitherRequestHandler<GetMasterKeyProofQuery,
-    GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>
+internal class TestUserPasswordQueryHandler
+    : IEitherRequestHandler<TestUserPasswordQuery, PasswordChallengeError, Unit>
 {
     private readonly DataContext _dataContext;
     private readonly IPasswordHashService _passwordHashService;
-    
     private readonly short _clientPasswordVersion;
-
-    public GetMasterKeyProofQueryHandler(
+    
+    public TestUserPasswordQueryHandler(
         DataContext dataContext,
         IPasswordHashService passwordHashService,
         IOptions<ServerPasswordSettings> passwordSettings)
     {
         _dataContext = dataContext;
         _passwordHashService = passwordHashService;
-        
         _clientPasswordVersion = passwordSettings.Value.ClientVersion;
     }
-    
-    public async Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> Handle(GetMasterKeyProofQuery request, CancellationToken cancellationToken)
+
+    public async Task<Either<PasswordChallengeError, Unit>> Handle(TestUserPasswordQuery request, CancellationToken cancellationToken)
     {
-        Either<PasswordChallengeError, Unit> testPasswordResult = await UserAuthentication.Common.TestUserPasswordAsync(
+        return await Common.TestUserPasswordAsync(
             _dataContext,
             _passwordHashService,
             request.UserId,
-            request.Data.AuthenticationPassword,
+            request.Request.AuthenticationPassword,
             _clientPasswordVersion,
-            cancellationToken);
-        
-        return await testPasswordResult
-            .MatchAsync<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>>(
-                _ => GetMasterKeyRecoveryProofError.InvalidCredentials,
-                async _ =>
-                {
-                    byte[]? recoveryProof = await _dataContext.UserMasterKeys
-                        .Where(x => x.Owner == request.UserId)
-                        .Select(x => x.RecoveryProof)
-                        .FirstOrDefaultAsync(cancellationToken);
-
-                    return recoveryProof is null
-                        ? GetMasterKeyRecoveryProofError.NotFound
-                        : new GetMasterKeyRecoveryProofResponse(recoveryProof);
-                },
-                GetMasterKeyRecoveryProofError.UnknownError);
+            CancellationToken.None
+            );
     }
 }

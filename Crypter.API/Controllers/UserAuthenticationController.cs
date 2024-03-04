@@ -32,13 +32,12 @@ using Crypter.API.Methods;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Core.Features.UserAuthentication.Commands;
-using Crypter.Core.Services;
+using Crypter.Core.Features.UserAuthentication.Queries;
 using EasyMonads;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Unit = EasyMonads.Unit;
 
 namespace Crypter.API.Controllers;
 
@@ -47,12 +46,10 @@ namespace Crypter.API.Controllers;
 public class UserAuthenticationController : CrypterControllerBase
 {
     private readonly ISender _sender;
-    private readonly IUserAuthenticationService _userAuthenticationService;
 
-    public UserAuthenticationController(ISender sender, IUserAuthenticationService userAuthenticationService)
+    public UserAuthenticationController(ISender sender)
     {
         _sender = sender;
-        _userAuthenticationService = userAuthenticationService;
     }
 
     /// <summary>
@@ -201,13 +198,13 @@ public class UserAuthenticationController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        Either<PasswordChallengeError, Unit> testPasswordResult =
-            await _userAuthenticationService.TestUserPasswordAsync(UserId, request, cancellationToken);
-        return testPasswordResult.Match(
-            MakeErrorResponse,
-            _ => Ok(),
-            MakeErrorResponse(PasswordChallengeError.UnknownError));
+
+        TestUserPasswordQuery query = new TestUserPasswordQuery(UserId, request);
+        return await _sender.Send(query, cancellationToken)
+            .MatchAsync(
+                MakeErrorResponse,
+                _ => Ok(),
+                MakeErrorResponse(PasswordChallengeError.UnknownError));
     }
 
     /// <summary>
