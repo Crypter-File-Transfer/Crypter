@@ -79,7 +79,13 @@ public class UserConsentEntityConfiguration : IEntityTypeConfiguration<UserConse
         builder.Property(x => x.Id)
             .UseIdentityAlwaysColumn();
 
-        builder.Property(x => x.Active);
+        builder.Property(x => x.ConsentType)
+            .HasMaxLength(16)
+            .HasConversion(
+                x => x.ToString(),
+                x => x.Length == 1 && char.IsNumber(x[0])
+                    ? (ConsentType)int.Parse(x)
+                    : (ConsentType)Enum.Parse(typeof(ConsentType), x));
 
         builder.HasIndex(x => x.Owner);
 

@@ -59,6 +59,30 @@ public class UserPrivacySettingEntityConfiguration : IEntityTypeConfiguration<Us
 
         builder.HasKey(x => x.Owner);
 
+        builder.Property(x => x.Visibility)
+            .HasMaxLength(16)
+            .HasConversion(
+                x => x.ToString(),
+                x => x.Length == 1 && char.IsNumber(x[0])
+                    ? (UserVisibilityLevel)int.Parse(x)
+                    : (UserVisibilityLevel)Enum.Parse(typeof(UserVisibilityLevel), x));
+        
+        builder.Property(x => x.ReceiveFiles)
+            .HasMaxLength(16)
+            .HasConversion(
+                x => x.ToString(),
+                x => x.Length == 1 && char.IsNumber(x[0])
+                    ? (UserItemTransferPermission)int.Parse(x)
+                    : (UserItemTransferPermission)Enum.Parse(typeof(UserItemTransferPermission), x));
+        
+        builder.Property(x => x.ReceiveMessages)
+            .HasMaxLength(16)
+            .HasConversion(
+                x => x.ToString(),
+                x => x.Length == 1 && char.IsNumber(x[0])
+                    ? (UserItemTransferPermission)int.Parse(x)
+                    : (UserItemTransferPermission)Enum.Parse(typeof(UserItemTransferPermission), x));
+        
         builder.HasOne(x => x.User)
             .WithOne(x => x.PrivacySetting)
             .HasForeignKey<UserPrivacySettingEntity>(x => x.Owner)

@@ -61,6 +61,14 @@ public class UserTokenEntityConfiguration : IEntityTypeConfiguration<UserTokenEn
 
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.Type)
+            .HasMaxLength(16)
+            .HasConversion(
+                x => x.ToString(),
+                x => x.Length == 1 && char.IsNumber(x[0])
+                    ? (TokenType)int.Parse(x)
+                    : (TokenType)Enum.Parse(typeof(TokenType), x));
+        
         builder.HasOne(x => x.User)
             .WithMany(x => x.Tokens)
             .HasForeignKey(x => x.Owner)
