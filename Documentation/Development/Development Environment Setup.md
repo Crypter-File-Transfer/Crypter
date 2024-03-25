@@ -26,13 +26,7 @@ Refer to the commands below if you decide to run the application using Docker.
 
 ### Run everything
 
-Run
-
-`docker-compose --profile local build`
-
-then run
-
-`docker-compose --profile local up`
+`docker-compose --profile local up -d --build`
 
 You do not need to modify anything in the project for this to work.
 
