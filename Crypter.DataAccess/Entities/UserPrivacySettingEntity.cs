@@ -59,15 +59,6 @@ public class UserPrivacySettingEntityConfiguration : IEntityTypeConfiguration<Us
 
         builder.HasKey(x => x.Owner);
 
-        builder.Property(x => x.Visibility)
-            .HasMaxLength(16);
-        
-        builder.Property(x => x.ReceiveFiles)
-            .HasMaxLength(16);
-        
-        builder.Property(x => x.ReceiveMessages)
-            .HasMaxLength(16);
-        
         builder.HasOne(x => x.User)
             .WithOne(x => x.PrivacySetting)
             .HasForeignKey<UserPrivacySettingEntity>(x => x.Owner)

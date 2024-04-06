@@ -61,9 +61,6 @@ public class UserTokenEntityConfiguration : IEntityTypeConfiguration<UserTokenEn
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Type)
-            .HasMaxLength(16);
-        
         builder.HasOne(x => x.User)
             .WithMany(x => x.Tokens)
             .HasForeignKey(x => x.Owner)

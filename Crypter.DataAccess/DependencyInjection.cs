@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -43,13 +43,13 @@ public static class DependencyInjection
         {
             optionsBuilder.UseNpgsql(connectionString, npgsqlOptionsBuilder =>
                 {
-                    npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), ["57P01"]);
+                    npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), new[] { "57P01" });
                     npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName,
-                        DataContext.SchemaName);
+                        DataContext._schemaName);
                 })
                 .LogTo(
-                    filter: (eventId, _) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
-                    logger: eventData =>
+                    filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
+                    logger: (eventData) =>
                     {
                         ExecutionStrategyEventData? retryEventData = eventData as ExecutionStrategyEventData;
                         IReadOnlyList<Exception>? exceptions = retryEventData?.ExceptionsEncountered;

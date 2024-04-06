@@ -111,10 +111,8 @@ namespace Crypter.DataAccess.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("ConsentType")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
+                    b.Property<int>("ConsentType")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -417,20 +415,14 @@ namespace Crypter.DataAccess.Migrations
                     b.Property<bool>("AllowKeyExchangeRequests")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("ReceiveFiles")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
+                    b.Property<int>("ReceiveFiles")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("ReceiveMessages")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
+                    b.Property<int>("ReceiveMessages")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("Visibility")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
+                    b.Property<int>("Visibility")
+                        .HasColumnType("integer");
 
                     b.HasKey("Owner");
 
@@ -501,10 +493,8 @@ namespace Crypter.DataAccess.Migrations
                     b.Property<Guid>("Owner")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
