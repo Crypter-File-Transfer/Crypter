@@ -41,22 +41,23 @@ public class DataContext : DbContext
     {
     }
 
-    public DbSet<AnonymousFileTransferEntity> AnonymousFileTransfers { get; init; } = null!;
-    public DbSet<AnonymousMessageTransferEntity> AnonymousMessageTransfers { get; init; } = null!;
-    public DbSet<UserConsentEntity> UserConsents { get; init; } = null!;
-    public DbSet<UserContactEntity> UserContacts { get; init; } = null!;
-    public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; init; } = null!;
-    public DbSet<UserEntity> Users { get; init; } = null!;
-    public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; init; } = null!;
-    public DbSet<UserFileTransferEntity> UserFileTransfers { get; init; } = null!;
-    public DbSet<UserKeyPairEntity> UserKeyPairs { get; init; } = null!;
-    public DbSet<UserMasterKeyEntity> UserMasterKeys { get; init; } = null!;
-    public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; init; } = null!;
-    public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; init; } = null!;
-    public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; init; } = null!;
-    public DbSet<UserProfileEntity> UserProfiles { get; init; } = null!;
-    public DbSet<UserRecoveryEntity> UserRecoveries { get; init; } = null!;
-    public DbSet<UserTokenEntity> UserTokens { get; init; } = null!;
+    public DbSet<AnonymousFileTransferEntity> AnonymousFileTransfers { get; init; }
+    public DbSet<AnonymousMessageTransferEntity> AnonymousMessageTransfers { get; init; }
+    public DbSet<EventLogEntity> EventLogs { get; init; }
+    public DbSet<UserConsentEntity> UserConsents { get; init; }
+    public DbSet<UserContactEntity> UserContacts { get; init; }
+    public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; init; }
+    public DbSet<UserEntity> Users { get; init; }
+    public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; init; }
+    public DbSet<UserFileTransferEntity> UserFileTransfers { get; init; }
+    public DbSet<UserKeyPairEntity> UserKeyPairs { get; init; }
+    public DbSet<UserMasterKeyEntity> UserMasterKeys { get; init; }
+    public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; init; }
+    public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; init; }
+    public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; init; }
+    public DbSet<UserProfileEntity> UserProfiles { get; init; }
+    public DbSet<UserRecoveryEntity> UserRecoveries { get; init; }
+    public DbSet<UserTokenEntity> UserTokens { get; init; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

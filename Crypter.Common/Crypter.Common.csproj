@@ -6,7 +6,7 @@
       <LangVersion>12</LangVersion>
    </PropertyGroup>
    <ItemGroup>
-      <PackageReference Include="EasyMonads" Version="2.1.0" />
+      <PackageReference Include="EasyMonads" Version="2.2.0" />
       <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.2.0" />
       <PackageReference Include="ValueOf" Version="2.0.31" />
    </ItemGroup>

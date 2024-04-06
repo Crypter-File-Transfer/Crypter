@@ -29,6 +29,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Core.Exceptions;
 using Crypter.Core.Features.AccountRecovery.Commands;
+using Crypter.Core.Features.EventLog.Commands;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Notifications.Commands;
 using Crypter.Core.Features.Transfer.Commands;
@@ -44,6 +45,9 @@ namespace Crypter.Core.Services;
 
 public interface IHangfireBackgroundService
 {
+    Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, bool emailAddress, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp);
+    Task<Unit> LogFailedUserLoginAsync(string username, string reason, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> SendEmailVerificationAsync(Guid userId);
     Task<Unit> SendTransferNotificationAsync(Guid itemId, TransferItemType itemType);
     Task<Unit> SendRecoveryEmailAsync(string emailAddress);
@@ -90,6 +94,24 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         _logger = logger;
     }
 
+    public Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, bool emailAddress, DateTimeOffset timestamp)
+    {
+        LogUserCreatedCommand request = new LogUserCreatedCommand(userId, emailAddress, timestamp);
+        return _sender.Send(request);
+    }
+    
+    public Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogSuccessfulUserLoginCommand request = new LogSuccessfulUserLoginCommand(userId, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedUserLoginAsync(string username, string reason, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogFailedUserLoginCommand request = new LogFailedUserLoginCommand(username, reason, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+    
     public async Task<Unit> SendEmailVerificationAsync(Guid userId)
     {
         SendVerificationEmailCommand request = new SendVerificationEmailCommand(userId);
