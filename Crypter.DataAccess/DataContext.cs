@@ -41,22 +41,22 @@ public class DataContext : DbContext
     {
     }
 
-    public DbSet<UserEntity> Users { get; init; } = null!;
-    public DbSet<UserProfileEntity> UserProfiles { get; init; } = null!;
-    public DbSet<UserKeyPairEntity> UserKeyPairs { get; init; } = null!;
-    public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; init; } = null!;
-    public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; init; } = null!;
-    public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; init; } = null!;
-    public DbSet<UserTokenEntity> UserTokens { get; init; } = null!;
-    public DbSet<UserContactEntity> UserContacts { get; init; } = null!;
     public DbSet<AnonymousFileTransferEntity> AnonymousFileTransfers { get; init; } = null!;
     public DbSet<AnonymousMessageTransferEntity> AnonymousMessageTransfers { get; init; } = null!;
-    public DbSet<UserFileTransferEntity> UserFileTransfers { get; init; } = null!;
-    public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; init; } = null!;
-    public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; init; } = null!;
-    public DbSet<UserMasterKeyEntity> UserMasterKeys { get; init; } = null!;
     public DbSet<UserConsentEntity> UserConsents { get; init; } = null!;
+    public DbSet<UserContactEntity> UserContacts { get; init; } = null!;
+    public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; init; } = null!;
+    public DbSet<UserEntity> Users { get; init; } = null!;
+    public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; init; } = null!;
+    public DbSet<UserFileTransferEntity> UserFileTransfers { get; init; } = null!;
+    public DbSet<UserKeyPairEntity> UserKeyPairs { get; init; } = null!;
+    public DbSet<UserMasterKeyEntity> UserMasterKeys { get; init; } = null!;
+    public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; init; } = null!;
+    public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; init; } = null!;
+    public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; init; } = null!;
+    public DbSet<UserProfileEntity> UserProfiles { get; init; } = null!;
     public DbSet<UserRecoveryEntity> UserRecoveries { get; init; } = null!;
+    public DbSet<UserTokenEntity> UserTokens { get; init; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
