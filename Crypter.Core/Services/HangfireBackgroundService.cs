@@ -45,7 +45,8 @@ namespace Crypter.Core.Services;
 
 public interface IHangfireBackgroundService
 {
-    Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, bool emailAddress, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp);
+    Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, string deviceDescription, string reason, DateTimeOffset timestamp);
     Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> LogFailedUserLoginAsync(string username, string reason, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> SendEmailVerificationAsync(Guid userId);
@@ -94,9 +95,15 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         _logger = logger;
     }
 
-    public Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, bool emailAddress, DateTimeOffset timestamp)
+    public Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp)
     {
-        LogUserCreatedCommand request = new LogUserCreatedCommand(userId, emailAddress, timestamp);
+        LogSuccessfulUserRegistrationCommand request = new LogSuccessfulUserRegistrationCommand(userId, emailAddress, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, string reason, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogFailedUserRegistrationCommand request = new LogFailedUserRegistrationCommand(username, emailAddress, reason, deviceDescription, timestamp);
         return _sender.Send(request);
     }
     

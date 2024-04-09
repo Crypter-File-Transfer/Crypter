@@ -27,33 +27,32 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Crypter.DataAccess;
-using Crypter.DataAccess.Entities;
-using Crypter.DataAccess.JsonTypes.EventLogAdditionalData;
+using Crypter.Core.Services;
+using Hangfire;
 using MediatR;
-using Unit = EasyMonads.Unit;
 
-namespace Crypter.Core.Features.EventLog.Commands;
+namespace Crypter.Core.Features.UserAuthentication.Events;
 
-public sealed record LogUserCreatedCommand(Guid UserId, bool EmailAddress, DateTimeOffset Timestamp) : IRequest<Unit>;
+public sealed record FailedUserRegistrationEvent(string Username, string? EmailAddress, string DeviceDescription, string Reason, DateTimeOffset Timestamp)
+    : INotification;
 
-internal sealed class LogUserCreatedCommandHandler : IRequestHandler<LogUserCreatedCommand, Unit>
+internal sealed class FailedUserRegistrationEventHandler : INotificationHandler<FailedUserRegistrationEvent>
 {
-    private readonly DataContext _dataContext;
-
-    public LogUserCreatedCommandHandler(DataContext dataContext)
+    private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly IHangfireBackgroundService _hangfireBackgroundService;
+    
+    public FailedUserRegistrationEventHandler(
+        IBackgroundJobClient backgroundJobClient,
+        IHangfireBackgroundService hangfireBackgroundService)
     {
-        _dataContext = dataContext;
+        _backgroundJobClient = backgroundJobClient;
+        _hangfireBackgroundService = hangfireBackgroundService;
     }
-
-    public async Task<Unit> Handle(LogUserCreatedCommand request, CancellationToken cancellationToken)
+    
+    public Task Handle(FailedUserRegistrationEvent notification, CancellationToken cancellationToken)
     {
-        UserRegistrationSuccessAdditionalData additionalData = new UserRegistrationSuccessAdditionalData(request.UserId, request.EmailAddress);
-        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.UserRegistrationSuccess, additionalData, request.Timestamp);
-
-        _dataContext.EventLogs.Add(logEntity);
-        await _dataContext.SaveChangesAsync(CancellationToken.None);
-
-        return Unit.Default;
+        _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.LogFailedUserRegistrationAsync(notification.Username, notification.EmailAddress, notification.Reason, notification.DeviceDescription, notification.Timestamp));
+        return Task.CompletedTask;
     }
 }
+    

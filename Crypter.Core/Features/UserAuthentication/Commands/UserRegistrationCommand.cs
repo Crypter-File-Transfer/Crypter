@@ -38,37 +38,30 @@ using Crypter.Core.Services;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
-using Hangfire;
 using MediatR;
 using Microsoft.Extensions.Options;
 using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.UserAuthentication.Commands;
 
-public sealed record UserRegistrationCommand(RegistrationRequest Request)
+public sealed record UserRegistrationCommand(RegistrationRequest Request, string DeviceDescription)
     : IEitherRequest<RegistrationError, Unit>;
 
 internal class UserRegistrationCommandHandler
     : IEitherRequestHandler<UserRegistrationCommand, RegistrationError, Unit>
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly DataContext _dataContext;
-    private readonly IHangfireBackgroundService _hangfireBackgroundService;
     private readonly IPasswordHashService _passwordHashService;
     private readonly IPublisher _publisher;
     private readonly ServerPasswordSettings _serverPasswordSettings;
 
     public UserRegistrationCommandHandler(
-        IBackgroundJobClient backgroundJobClient,
         DataContext dataContext,
-        IHangfireBackgroundService hangfireBackgroundService,
         IPasswordHashService passwordHashService,
         IPublisher publisher,
         IOptions<ServerPasswordSettings> serverPasswordSettings)
     {
-        _backgroundJobClient = backgroundJobClient;
         _dataContext = dataContext;
-        _hangfireBackgroundService = hangfireBackgroundService;
         _passwordHashService = passwordHashService;
         _publisher = publisher;
         _serverPasswordSettings = serverPasswordSettings.Value;
@@ -80,10 +73,26 @@ internal class UserRegistrationCommandHandler
             .BindAsync<RegistrationError, ValidRegistrationRequest, UserEntity>(async validRegistrationRequest => await CreateNewUserEntityAsync(validRegistrationRequest))
             .DoRightAsync(async newUserEntity =>
             {
-                bool hasEmailAddress = EmailAddress.CheckValidation(newUserEntity.EmailAddress).IsNone;
-                SuccessfulUserRegistrationEvent successfulUserRegistrationEvent = new SuccessfulUserRegistrationEvent(newUserEntity.Id, hasEmailAddress, DateTimeOffset.UtcNow);
+                EmailAddress.TryFrom(newUserEntity.EmailAddress ?? string.Empty, out EmailAddress? outEmailAddress);
+                SuccessfulUserRegistrationEvent successfulUserRegistrationEvent = new SuccessfulUserRegistrationEvent(newUserEntity.Id, outEmailAddress, request.DeviceDescription, DateTimeOffset.UtcNow);
                 await _publisher.Publish(successfulUserRegistrationEvent, CancellationToken.None);
             })
+            .DoLeftOrNeitherAsync(
+                async error =>
+                {
+                    FailedUserRegistrationEvent failedUserRegistrationEvent =
+                        new FailedUserRegistrationEvent(request.Request.Username, request.Request.EmailAddress,
+                            request.DeviceDescription, error.ToString(), DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedUserRegistrationEvent, CancellationToken.None);
+
+                },
+                async () =>
+                {
+                    FailedUserRegistrationEvent failedUserRegistrationEvent =
+                        new FailedUserRegistrationEvent(request.Request.Username, request.Request.EmailAddress,
+                            request.DeviceDescription, RegistrationError.UnknownError.ToString(), DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedUserRegistrationEvent, CancellationToken.None);
+                })
             .BindAsync<RegistrationError, UserEntity, Unit>(_ => Unit.Default);
     }
     

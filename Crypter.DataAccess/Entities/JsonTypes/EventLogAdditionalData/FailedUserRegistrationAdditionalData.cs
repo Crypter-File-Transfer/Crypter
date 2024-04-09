@@ -26,4 +26,4 @@
 
 namespace Crypter.DataAccess.JsonTypes.EventLogAdditionalData;
 
-public sealed record UserLoginSuccessAdditionalData(Guid UserId, string DeviceDescription);
+public sealed record FailedUserRegistrationAdditionalData(string Username, string? EmailAddress, string? Reason, string DeviceDescription);

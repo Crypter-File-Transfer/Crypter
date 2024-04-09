@@ -27,13 +27,15 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Primitives;
 using Crypter.Core.Services;
+using EasyMonads;
 using Hangfire;
 using MediatR;
 
 namespace Crypter.Core.Features.UserAuthentication.Events;
 
-public sealed record SuccessfulUserRegistrationEvent(Guid UserId, bool EmailAddress, DateTimeOffset Timestamp) : INotification;
+public sealed record SuccessfulUserRegistrationEvent(Guid UserId, Maybe<EmailAddress> EmailAddress, string DeviceDescription, DateTimeOffset Timestamp) : INotification;
 
 internal sealed class SuccessfulUserRegistrationEventHandler : INotificationHandler<SuccessfulUserRegistrationEvent>
 {
@@ -50,10 +52,13 @@ internal sealed class SuccessfulUserRegistrationEventHandler : INotificationHand
     
     public Task Handle(SuccessfulUserRegistrationEvent notification, CancellationToken cancellationToken)
     {
+        string? emailAddress = notification.EmailAddress
+            .Match((string?)null, x => x.Value);
+        
         _backgroundJobClient.Enqueue(() => _hangfireBackgroundService
-            .LogSuccessfulUserRegistrationAsync(notification.UserId, notification.EmailAddress, notification.Timestamp));
+            .LogSuccessfulUserRegistrationAsync(notification.UserId, emailAddress, notification.DeviceDescription, notification.Timestamp));
                 
-        if (notification.EmailAddress)
+        if (notification.EmailAddress.IsSome)
         {
             _backgroundJobClient.Enqueue(() => _hangfireBackgroundService
                 .SendEmailVerificationAsync(notification.UserId));

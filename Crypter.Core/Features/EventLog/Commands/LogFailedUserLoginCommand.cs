@@ -48,7 +48,7 @@ internal sealed class LogFailedUserLoginCommandHandler : IRequestHandler<LogFail
     
     public async Task<Unit> Handle(LogFailedUserLoginCommand request, CancellationToken cancellationToken)
     {
-        UserLoginFailedAdditionalData additionalData = new UserLoginFailedAdditionalData(request.Username, request.Reason, request.DeviceDescription);
+        FailedUserLoginAdditionalData additionalData = new FailedUserLoginAdditionalData(request.Username, request.Reason, request.DeviceDescription);
         EventLogEntity logEntity = EventLogEntity.Create(EventLogType.UserLoginFailure, additionalData, request.Timestamp);
 
         _dataContext.EventLogs.Add(logEntity);

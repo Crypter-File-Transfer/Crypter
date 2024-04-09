@@ -35,25 +35,25 @@ using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.EventLog.Commands;
 
-public sealed record LogSuccessfulUserLoginCommand(Guid UserId, string DeviceDescription, DateTimeOffset Timestamp) : IRequest<Unit>;
+public sealed record LogSuccessfulUserRegistrationCommand(Guid UserId, string? EmailAddress, string DeviceDescription, DateTimeOffset Timestamp) : IRequest<Unit>;
 
-internal sealed class LogSuccessfulUserLoginCommandHandler : IRequestHandler<LogSuccessfulUserLoginCommand, Unit>
+internal sealed class LogSuccessfulUserRegistrationCommandHandler : IRequestHandler<LogSuccessfulUserRegistrationCommand, Unit>
 {
     private readonly DataContext _dataContext;
 
-    public LogSuccessfulUserLoginCommandHandler(DataContext dataContext)
+    public LogSuccessfulUserRegistrationCommandHandler(DataContext dataContext)
     {
         _dataContext = dataContext;
     }
-    
-    public async Task<Unit> Handle(LogSuccessfulUserLoginCommand request, CancellationToken cancellationToken)
+
+    public async Task<Unit> Handle(LogSuccessfulUserRegistrationCommand request, CancellationToken cancellationToken)
     {
-        SuccessfulUserLoginAdditionalData additionalData = new SuccessfulUserLoginAdditionalData(request.UserId, request.DeviceDescription);
-        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.UserLoginSuccess, additionalData, request.Timestamp);
+        SuccessfulUserRegistrationAdditionalData additionalData = new SuccessfulUserRegistrationAdditionalData(request.UserId, request.EmailAddress, request.DeviceDescription);
+        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.UserRegistrationSuccess, additionalData, request.Timestamp);
 
         _dataContext.EventLogs.Add(logEntity);
         await _dataContext.SaveChangesAsync(CancellationToken.None);
-        
+
         return Unit.Default;
     }
 }
