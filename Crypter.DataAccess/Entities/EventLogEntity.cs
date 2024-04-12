@@ -25,10 +25,6 @@
  */
 
 using System.Text.Json;
-using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Enums;
-using Crypter.Common.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -40,19 +36,6 @@ public class EventLogEntity : IDisposable
     public EventLogType EventLogType { get; init; }
     public JsonDocument AdditionalData { get; init; }
     public DateTimeOffset Timestamp { get; init; }
-
-    private static JsonSerializerOptions _jsonSerializerOptions = new JsonSerializerOptions
-    {
-        Converters =
-        {
-            new JsonEnumConverter<TransferItemType>(),
-            new JsonEnumConverter<TransferUserType>(),
-            new JsonEnumConverter<LoginError>(),
-            new JsonEnumConverter<RegistrationError>(),
-            new JsonEnumConverter<UploadTransferError>(),
-            new LongStringConverter()
-        }
-    };
 
     private EventLogEntity(EventLogType eventLogType, JsonDocument additionalData, DateTimeOffset timestamp)
     {
@@ -71,7 +54,7 @@ public class EventLogEntity : IDisposable
 
     public static EventLogEntity Create<TAdditionalData>(EventLogType eventLogType, TAdditionalData additionalData, DateTimeOffset timestamp)
     {
-        JsonDocument jsonData = JsonSerializer.SerializeToDocument(additionalData, _jsonSerializerOptions);
+        JsonDocument jsonData = JsonSerializer.SerializeToDocument(additionalData);
         return new EventLogEntity(eventLogType, jsonData, timestamp);
     }
 
