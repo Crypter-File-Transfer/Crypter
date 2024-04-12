@@ -30,6 +30,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
+using Crypter.Core.Features.Transfer.Events;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
@@ -37,8 +38,9 @@ using Crypter.Core.Settings;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
-using Hangfire;
+using MediatR;
 using Microsoft.Extensions.Options;
+using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.Transfer.Commands;
 
@@ -52,25 +54,22 @@ public sealed record SaveFileTransferCommand(
 internal class SaveFileTransferCommandHandler
     : IEitherRequestHandler<SaveFileTransferCommand, UploadTransferError, UploadTransferResponse>
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly DataContext _dataContext;
-    private readonly IHangfireBackgroundService _hangfireBackgroundService;
     private readonly IHashIdService _hashIdService;
+    private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
     private readonly TransferStorageSettings _transferStorageSettings;
 
     public SaveFileTransferCommandHandler(
-        IBackgroundJobClient backgroundJobClient,
         DataContext dataContext,
-        IHangfireBackgroundService hangfireBackgroundService,
         IHashIdService hashIdService,
+        IPublisher publisher,
         ITransferRepository transferRepository,
         IOptions<TransferStorageSettings> transferStorageSettings)
     {
-        _backgroundJobClient = backgroundJobClient;
         _dataContext = dataContext;
-        _hangfireBackgroundService = hangfireBackgroundService;
         _hashIdService = hashIdService;
+        _publisher = publisher;
         _transferRepository = transferRepository;
         _transferStorageSettings = transferStorageSettings.Value;
     }
@@ -79,36 +78,61 @@ internal class SaveFileTransferCommandHandler
         SaveFileTransferCommand request,
         CancellationToken cancellationToken)
     {
+        DateTimeOffset eventTimestamp = DateTimeOffset.UtcNow;
+        Task<Either<UploadTransferError, UploadTransferResponse>> responseTask;
+        
         if (request.Request is null || request.CiphertextStream is null)
         {
-            return UploadTransferError.UnknownError;
+            responseTask = Either<UploadTransferError, UploadTransferResponse>
+                .FromLeft(UploadTransferError.UnknownError)
+                .AsTask();
+        }
+        else
+        {
+            responseTask =
+                from recipientId in Common.ValidateTransferUploadAsync(
+                    _dataContext,
+                    _transferStorageSettings,
+                    request.SenderId,
+                    request.RecipientUsername,
+                    request.Request.LifetimeHours,
+                    request.CiphertextStream.Length)
+                let transferUserType = Common.DetermineUploadTransferUserType(request.SenderId, recipientId)
+                let newTransferId = Guid.NewGuid()
+                from response in SaveFileTransferAsync(
+                    newTransferId,
+                    transferUserType,
+                    request.SenderId,
+                    recipientId,
+                    request.Request,
+                    request.CiphertextStream)
+                let successfulUploadEvent = new SuccessfulTransferUploadEvent(
+                    newTransferId, 
+                    TransferItemType.File,
+                    transferUserType,
+                    request.CiphertextStream.Length,
+                    request.SenderId,
+                    recipientId,
+                    request.RecipientUsername,
+                    response.ExpirationUTC,
+                    eventTimestamp)
+                from sideEffects in Either<UploadTransferError, Unit>.FromRightAsync(
+                    UnitPublisher.Publish(_publisher, successfulUploadEvent))
+                select response;
         }
 
-        Task<Either<UploadTransferError, UploadTransferResponse>> responseTask =
-            from recipientId in Common.ValidateTransferUploadAsync(
-                _dataContext,
-                _transferStorageSettings,
-                request.SenderId,
-                request.RecipientUsername,
-                request.Request.LifetimeHours,
-                request.CiphertextStream.Length)
-            let newTransferId = Guid.NewGuid()
-            let transferUserType = Common.DetermineUploadTransferUserType(request.SenderId, recipientId)
-            from response in SaveFileTransferAsync(
-                newTransferId,
-                transferUserType,
-                request.SenderId,
-                recipientId,
-                request.Request,
-                request.CiphertextStream)
-            from transferNotification in Either<UploadTransferError, Unit>.FromRightAsync(
-                Common.QueueTransferNotificationAsync(_backgroundJobClient, _dataContext, _hangfireBackgroundService,
-                    newTransferId, TransferItemType.File, recipientId))
-            let deletionJobId = Common.ScheduleTransferDeletion(_backgroundJobClient, _hangfireBackgroundService,
-                newTransferId, TransferItemType.File, transferUserType, response.ExpirationUTC)
-            select response;
-        
-        return await responseTask;
+        return await responseTask
+            .DoLeftOrNeitherAsync(
+                async error =>
+                {
+                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.File, error, request.SenderId, request.RecipientUsername, eventTimestamp);
+                    await _publisher.Publish(failedUploadEvent, CancellationToken.None);
+                },
+                async () =>
+                {
+                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.File, UploadTransferError.UnknownError, request.SenderId, request.RecipientUsername, eventTimestamp);
+                    await _publisher.Publish(failedUploadEvent, CancellationToken.None);
+                });
     }
 
     private async Task<Either<UploadTransferError, UploadTransferResponse>> SaveFileTransferAsync(

@@ -27,13 +27,14 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Core.Services;
 using Hangfire;
 using MediatR;
 
 namespace Crypter.Core.Features.UserAuthentication.Events;
 
-public sealed record FailedUserRegistrationEvent(string Username, string? EmailAddress, string DeviceDescription, string Reason, DateTimeOffset Timestamp)
+public sealed record FailedUserRegistrationEvent(string Username, string? EmailAddress, RegistrationError Reason, string DeviceDescription, DateTimeOffset Timestamp)
     : INotification;
 
 internal sealed class FailedUserRegistrationEventHandler : INotificationHandler<FailedUserRegistrationEvent>

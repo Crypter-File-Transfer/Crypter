@@ -27,7 +27,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Enums;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
@@ -36,22 +37,21 @@ using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.EventLog.Commands;
 
-public sealed record LogFailedUserRegistrationCommand(string Username, string? EmailAddress, RegistrationError Reason, string DeviceDescription, DateTimeOffset Timestamp)
-    : IRequest<Unit>;
+public sealed record LogFailedTransferUploadCommand(TransferItemType ItemType, UploadTransferError Reason, Guid? Sender, string? Recipient, DateTimeOffset Timestamp) : IRequest<Unit>;
 
-internal sealed class LogFailedUserRegistrationCommandHandler : IRequestHandler<LogFailedUserRegistrationCommand, Unit>
+internal sealed class LogFailedTransferUploadCommandHandler : IRequestHandler<LogFailedTransferUploadCommand, Unit>
 {
     private readonly DataContext _dataContext;
     
-    public LogFailedUserRegistrationCommandHandler(DataContext dataContext)
+    public LogFailedTransferUploadCommandHandler(DataContext dataContext)
     {
         _dataContext = dataContext;
     }
     
-    public async Task<Unit> Handle(LogFailedUserRegistrationCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(LogFailedTransferUploadCommand request, CancellationToken cancellationToken)
     {
-        FailedUserRegistrationAdditionalData additionalData = new FailedUserRegistrationAdditionalData(request.Username, request.EmailAddress, request.Reason, request.DeviceDescription);
-        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.UserRegistrationFailure, additionalData, request.Timestamp);
+        FailedTransferUploadAdditionalData additionalData = new FailedTransferUploadAdditionalData(request.ItemType, request.Reason, request.Sender, request.Recipient);
+        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferUploadFailure, additionalData, request.Timestamp);
 
         _dataContext.EventLogs.Add(logEntity);
         await _dataContext.SaveChangesAsync(CancellationToken.None);
@@ -59,4 +59,3 @@ internal sealed class LogFailedUserRegistrationCommandHandler : IRequestHandler<
         return Unit.Default;
     }
 }
-    

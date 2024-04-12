@@ -82,7 +82,7 @@ internal class UserRegistrationCommandHandler
                 {
                     FailedUserRegistrationEvent failedUserRegistrationEvent =
                         new FailedUserRegistrationEvent(request.Request.Username, request.Request.EmailAddress,
-                            request.DeviceDescription, error.ToString(), DateTimeOffset.UtcNow);
+                            error, request.DeviceDescription, DateTimeOffset.UtcNow);
                     await _publisher.Publish(failedUserRegistrationEvent, CancellationToken.None);
 
                 },
@@ -90,7 +90,7 @@ internal class UserRegistrationCommandHandler
                 {
                     FailedUserRegistrationEvent failedUserRegistrationEvent =
                         new FailedUserRegistrationEvent(request.Request.Username, request.Request.EmailAddress,
-                            request.DeviceDescription, RegistrationError.UnknownError.ToString(), DateTimeOffset.UtcNow);
+                            RegistrationError.UnknownError, request.DeviceDescription, DateTimeOffset.UtcNow);
                     await _publisher.Publish(failedUserRegistrationEvent, CancellationToken.None);
                 })
             .BindAsync<RegistrationError, UserEntity, Unit>(_ => Unit.Default);

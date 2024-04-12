@@ -104,7 +104,7 @@ internal sealed class UserLoginCommandHandler
                 async error =>
                 {
                     FailedUserLoginEvent failedUserLoginEvent = new FailedUserLoginEvent(request.Request.Username,
-                        error.ToString(), request.DeviceDescription, DateTimeOffset.UtcNow);
+                        error, request.DeviceDescription, DateTimeOffset.UtcNow);
                     await _publisher.Publish(failedUserLoginEvent, CancellationToken.None);
 
                     if (error == LoginError.InvalidPassword)
@@ -117,7 +117,7 @@ internal sealed class UserLoginCommandHandler
                 async () =>
                 {
                     FailedUserLoginEvent failedUserLoginEvent = new FailedUserLoginEvent(request.Request.Username,
-                        LoginError.UnknownError.ToString(), request.DeviceDescription, DateTimeOffset.UtcNow);
+                        LoginError.UnknownError, request.DeviceDescription, DateTimeOffset.UtcNow);
                     await _publisher.Publish(failedUserLoginEvent, CancellationToken.None);
                 });
     }

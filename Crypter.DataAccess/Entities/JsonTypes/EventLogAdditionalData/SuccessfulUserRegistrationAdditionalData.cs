@@ -24,6 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.DataAccess.JsonTypes.EventLogAdditionalData;
+namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 
 public sealed record SuccessfulUserRegistrationAdditionalData(Guid UserId, string? EmailAddress, string DeviceDescription);

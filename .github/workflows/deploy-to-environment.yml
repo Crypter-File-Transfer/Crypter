@@ -12,7 +12,7 @@ on:
           - development
 
 env:
-  db_migration_compose_profile: ${{ (github.event.inputs.environment == 'development' && 'local') || 'web' }}
+  docker_compose_profile: ${{ (github.event.inputs.environment == 'development' && 'local') || 'web' }}
 
 jobs:
   deploy-web-container:
@@ -22,10 +22,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       - name: Stop service
-        uses: appleboy/ssh-action@v0.1.9
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -50,7 +50,7 @@ jobs:
           strip_components: 2
       
       - name: Reload systemctl daemon
-        uses: appleboy/ssh-action@v0.1.9
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -80,27 +80,27 @@ jobs:
           target: crypter-web-container/
 
       - name: Pull latest images
-        uses: appleboy/ssh-action@v0.1.9
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container --profile web pull
+          script: docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} pull
           script_stop: true
 
       - name: Migrate database
-        uses: appleboy/ssh-action@v0.1.9
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container --profile ${{ env.db_migration_compose_profile }} run api /app/efbundle
+          script: docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} run api /app/efbundle
           script_stop: true
 
       - name: Start service
-        uses: appleboy/ssh-action@v0.1.9
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}

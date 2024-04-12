@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,6 +24,26 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
+using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
-public sealed record SuccessfulUserLoginAdditionalData(Guid UserId, string DeviceDescription);
+namespace Crypter.Common.Infrastructure;
+
+public class LongStringConverter : JsonConverter<long>
+{
+    public override bool CanConvert(Type typeToConvert)
+    {
+        return typeToConvert == typeof(long);
+    }
+
+    public override long Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return reader.GetInt64();
+    }
+
+    public override void Write(Utf8JsonWriter writer, long value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ToString());
+    }
+}

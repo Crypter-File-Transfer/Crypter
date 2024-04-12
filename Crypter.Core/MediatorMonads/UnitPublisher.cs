@@ -24,6 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
+using System.Threading.Tasks;
+using MediatR;
+using Unit = EasyMonads.Unit;
 
-public sealed record SuccessfulUserLoginAdditionalData(Guid UserId, string DeviceDescription);
+namespace Crypter.Core.MediatorMonads;
+
+internal static class UnitPublisher
+{
+    internal static async Task<Unit> Publish(IPublisher publisher, INotification notification)
+    {
+        await publisher.Publish(notification);
+        return Unit.Default;
+    }
+}

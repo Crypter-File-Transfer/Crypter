@@ -53,10 +53,6 @@ TokenSettings tokenSettings = builder.Configuration
 string hangfireConnectionString = builder.Configuration
     .GetConnectionString("HangfireConnection") ?? throw new ConfigurationException("HangfireConnection not found");
 
-var foo = builder.Configuration
-    .GetSection("PasswordSettings")
-    .Get<ServerPasswordSettings>();
-
 builder.Services.AddCrypterCore(
         builder.Configuration
             .GetSection("EmailSettings")
