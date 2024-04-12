@@ -24,6 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.DataAccess.JsonTypes.EventLogAdditionalData;
+using System.Text.Json.Serialization;
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Infrastructure;
 
-public sealed record FailedUserLoginAdditionalData(string Username, string Reason, string DeviceDescription);
+namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
+
+public sealed record FailedUserLoginAdditionalData(
+    string Username,
+    [property: JsonConverter(typeof(JsonEnumConverter<LoginError>))] LoginError Reason,
+    string DeviceDescription);

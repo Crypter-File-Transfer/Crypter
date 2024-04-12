@@ -26,6 +26,8 @@
 
 using System;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Core.Exceptions;
 using Crypter.Core.Features.AccountRecovery.Commands;
@@ -45,10 +47,6 @@ namespace Crypter.Core.Services;
 
 public interface IHangfireBackgroundService
 {
-    Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp);
-    Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, string deviceDescription, string reason, DateTimeOffset timestamp);
-    Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp);
-    Task<Unit> LogFailedUserLoginAsync(string username, string reason, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> SendEmailVerificationAsync(Guid userId);
     Task<Unit> SendTransferNotificationAsync(Guid itemId, TransferItemType itemType);
     Task<Unit> SendRecoveryEmailAsync(string emailAddress);
@@ -75,6 +73,13 @@ public interface IHangfireBackgroundService
     Task<Unit> DeleteRecoveryParametersAsync(Guid userId);
     Task<Unit> DeleteUserKeysAsync(Guid userId);
     Task<Unit> DeleteReceivedTransfersAsync(Guid userId);
+    
+    Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp);
+    Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, RegistrationError reason, string deviceDescription, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp);
+    Task<Unit> LogFailedUserLoginAsync(string username, LoginError reason, string deviceDescription, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulTransferUploadAsync(TransferItemType itemType, long size, Guid? sender, string? recipient, DateTimeOffset timestamp);
+    Task<Unit> LogFailedTransferUploadAsync(TransferItemType itemType, UploadTransferError reason, Guid? sender, string? recipient, DateTimeOffset timestamp);
 }
 
 /// <summary>
@@ -95,30 +100,6 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         _logger = logger;
     }
 
-    public Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp)
-    {
-        LogSuccessfulUserRegistrationCommand request = new LogSuccessfulUserRegistrationCommand(userId, emailAddress, deviceDescription, timestamp);
-        return _sender.Send(request);
-    }
-
-    public Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, string reason, string deviceDescription, DateTimeOffset timestamp)
-    {
-        LogFailedUserRegistrationCommand request = new LogFailedUserRegistrationCommand(username, emailAddress, reason, deviceDescription, timestamp);
-        return _sender.Send(request);
-    }
-    
-    public Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp)
-    {
-        LogSuccessfulUserLoginCommand request = new LogSuccessfulUserLoginCommand(userId, deviceDescription, timestamp);
-        return _sender.Send(request);
-    }
-
-    public Task<Unit> LogFailedUserLoginAsync(string username, string reason, string deviceDescription, DateTimeOffset timestamp)
-    {
-        LogFailedUserLoginCommand request = new LogFailedUserLoginCommand(username, reason, deviceDescription, timestamp);
-        return _sender.Send(request);
-    }
-    
     public async Task<Unit> SendEmailVerificationAsync(Guid userId)
     {
         SendVerificationEmailCommand request = new SendVerificationEmailCommand(userId);
@@ -208,13 +189,49 @@ public class HangfireBackgroundService : IHangfireBackgroundService
 
     public async Task<Unit> DeleteUserKeysAsync(Guid userId)
     {
-        var request = new DeleteUserKeysCommand(userId);
+        DeleteUserKeysCommand request = new DeleteUserKeysCommand(userId);
         return await _sender.Send(request);
     }
 
     public Task<Unit> DeleteReceivedTransfersAsync(Guid userId)
     {
         DeleteUserReceivedTransfersCommand request = new DeleteUserReceivedTransfersCommand(userId);
+        return _sender.Send(request);
+    }
+    
+    public Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogSuccessfulUserRegistrationCommand request = new LogSuccessfulUserRegistrationCommand(userId, emailAddress, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, RegistrationError reason, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogFailedUserRegistrationCommand request = new LogFailedUserRegistrationCommand(username, emailAddress, reason, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+    
+    public Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogSuccessfulUserLoginCommand request = new LogSuccessfulUserLoginCommand(userId, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedUserLoginAsync(string username, LoginError reason, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogFailedUserLoginCommand request = new LogFailedUserLoginCommand(username, reason, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogSuccessfulTransferUploadAsync(TransferItemType itemType, long size, Guid? sender, string? recipient, DateTimeOffset timestamp)
+    {
+        LogSuccessfulTransferUploadCommand request = new LogSuccessfulTransferUploadCommand(itemType, size, sender, recipient, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedTransferUploadAsync(TransferItemType itemType, UploadTransferError reason, Guid? sender, string? recipient, DateTimeOffset timestamp)
+    {
+        LogFailedTransferUploadCommand request = new LogFailedTransferUploadCommand(itemType, reason, sender, recipient, timestamp);
         return _sender.Send(request);
     }
 }

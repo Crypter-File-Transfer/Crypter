@@ -32,10 +32,10 @@ namespace Crypter.DataAccess.Entities;
 
 public class EventLogEntity : IDisposable
 {
-    public Guid Id { get; set; }
-    public EventLogType EventLogType { get; set; }
-    public JsonDocument AdditionalData { get; set; }
-    public DateTimeOffset Timestamp { get; set; }
+    public Guid Id { get; init; }
+    public EventLogType EventLogType { get; init; }
+    public JsonDocument AdditionalData { get; init; }
+    public DateTimeOffset Timestamp { get; init; }
 
     private EventLogEntity(EventLogType eventLogType, JsonDocument additionalData, DateTimeOffset timestamp)
     {

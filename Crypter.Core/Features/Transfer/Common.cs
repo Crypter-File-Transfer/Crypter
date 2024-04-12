@@ -6,19 +6,17 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Core.Features.Metrics.Queries;
 using Crypter.Core.LinqExpressions;
-using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Crypter.DataAccess;
 using EasyMonads;
-using Hangfire;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer;
 
 internal static class Common
 {
-    internal const int MaxTransferLifetimeHours = 24;
-    internal const int MinTransferLifetimeHours = 1;
+    private const int MaxTransferLifetimeHours = 24;
+    private const int MinTransferLifetimeHours = 1;
 
     /// <summary>
     /// Validate whether a transfer upload may be completed with the provided parameters.
@@ -85,42 +83,6 @@ internal static class Common
 
         return TransferUserType.Anonymous;
     }
-    
-    internal static async Task<Unit> QueueTransferNotificationAsync(
-        IBackgroundJobClient backgroundJobClient,
-        DataContext dataContext,
-        IHangfireBackgroundService hangfireBackgroundService,
-        Guid itemId,
-        TransferItemType itemType,
-        Maybe<Guid> maybeUserId)
-    {
-        await maybeUserId.IfSomeAsync(
-            async userId =>
-            {
-                bool userExpectsNotification = await dataContext.Users
-                    .Where(x => x.Id == userId)
-                    .Where(x => x.NotificationSetting!.EnableTransferNotifications
-                                && x.EmailVerified
-                                && x.NotificationSetting.EmailNotifications)
-                    .AnyAsync();
-
-                if (userExpectsNotification)
-                {
-                    backgroundJobClient.Enqueue(() =>
-                        hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType));
-                }
-            });
-        return Unit.Default;
-    }
-
-    internal static string ScheduleTransferDeletion(
-        IBackgroundJobClient backgroundJobClient,
-        IHangfireBackgroundService hangfireBackgroundService,
-        Guid itemId, TransferItemType itemType,
-        TransferUserType userType,
-        DateTime itemExpiration)
-        => backgroundJobClient.Schedule(
-            () => hangfireBackgroundService.DeleteTransferAsync(itemId, itemType, userType, true), itemExpiration);
     
     /// <summary>
     /// Query for a transfer recipient's user id.

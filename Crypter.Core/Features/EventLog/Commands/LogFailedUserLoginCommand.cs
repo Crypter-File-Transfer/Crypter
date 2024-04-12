@@ -27,15 +27,16 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
-using Crypter.DataAccess.JsonTypes.EventLogAdditionalData;
+using Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 using MediatR;
 using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.EventLog.Commands;
 
-public sealed record LogFailedUserLoginCommand(string Username, string Reason, string DeviceDescription, DateTimeOffset Timestamp) : IRequest<Unit>;
+public sealed record LogFailedUserLoginCommand(string Username, LoginError Reason, string DeviceDescription, DateTimeOffset Timestamp) : IRequest<Unit>;
 
 internal sealed class LogFailedUserLoginCommandHandler : IRequestHandler<LogFailedUserLoginCommand, Unit>
 {

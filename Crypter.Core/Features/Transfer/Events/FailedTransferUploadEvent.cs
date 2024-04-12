@@ -27,21 +27,23 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Enums;
 using Crypter.Core.Services;
+using EasyMonads;
 using Hangfire;
 using MediatR;
 
-namespace Crypter.Core.Features.UserAuthentication.Events;
+namespace Crypter.Core.Features.Transfer.Events;
 
-public sealed record FailedUserLoginEvent(string Username, LoginError Reason, string DeviceDescription, DateTimeOffset Timestamp) : INotification;
+public sealed record FailedTransferUploadEvent(TransferItemType ItemType, UploadTransferError Reason, Maybe<Guid> Sender, Maybe<string> Recipient, DateTimeOffset Timestamp) : INotification;
 
-internal sealed class FailedUserLoginEventHandler : INotificationHandler<FailedUserLoginEvent>
+internal sealed class FailedTransferUploadEventHandler : INotificationHandler<FailedTransferUploadEvent>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
     
-    public FailedUserLoginEventHandler(
+    public FailedTransferUploadEventHandler(
         IBackgroundJobClient backgroundJobClient,
         IHangfireBackgroundService hangfireBackgroundService)
     {
@@ -49,9 +51,14 @@ internal sealed class FailedUserLoginEventHandler : INotificationHandler<FailedU
         _hangfireBackgroundService = hangfireBackgroundService;
     }
     
-    public Task Handle(FailedUserLoginEvent notification, CancellationToken cancellationToken)
+    public Task Handle(FailedTransferUploadEvent notification, CancellationToken cancellationToken)
     {
-        _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.LogFailedUserLoginAsync(notification.Username, notification.Reason, notification.DeviceDescription, notification.Timestamp));
+        Guid? senderId = notification.Sender
+            .Match((Guid?)null, x => x);
+        string? recipient = notification.Recipient
+            .Match((string?)null, x => x);
+        
+        _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.LogFailedTransferUploadAsync(notification.ItemType, notification.Reason, senderId, recipient, notification.Timestamp));
         return Task.CompletedTask;
     }
 }

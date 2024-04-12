@@ -29,7 +29,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
-using Crypter.DataAccess.JsonTypes.EventLogAdditionalData;
+using Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 using MediatR;
 using Unit = EasyMonads.Unit;
 

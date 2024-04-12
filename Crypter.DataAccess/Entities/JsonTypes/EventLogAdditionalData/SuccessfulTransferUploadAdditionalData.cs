@@ -24,6 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Text.Json.Serialization;
+using Crypter.Common.Enums;
+using Crypter.Common.Infrastructure;
+
 namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 
-public sealed record SuccessfulUserLoginAdditionalData(Guid UserId, string DeviceDescription);
+public sealed record SuccessfulTransferUploadAdditionalData(
+    [property: JsonConverter(typeof(JsonEnumConverter<TransferItemType>))] TransferItemType ItemType,
+    [property: JsonConverter(typeof(LongStringConverter))] long Size,
+    Guid? Sender,
+    string? Recipient);
