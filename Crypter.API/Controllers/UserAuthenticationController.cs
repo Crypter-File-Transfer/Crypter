@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -31,8 +31,10 @@ using Crypter.API.Controllers.Base;
 using Crypter.API.Methods;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Core.Services;
+using Crypter.Core.Features.UserAuthentication.Commands;
+using Crypter.Core.Features.UserAuthentication.Queries;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -43,11 +45,11 @@ namespace Crypter.API.Controllers;
 [Route("api/user/authentication")]
 public class UserAuthenticationController : CrypterControllerBase
 {
-    private readonly IUserAuthenticationService _userAuthenticationService;
+    private readonly ISender _sender;
 
-    public UserAuthenticationController(IUserAuthenticationService userAuthenticationService)
+    public UserAuthenticationController(ISender sender)
     {
-        _userAuthenticationService = userAuthenticationService;
+        _sender = sender;
     }
 
     /// <summary>
@@ -81,8 +83,10 @@ public class UserAuthenticationController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        return await _userAuthenticationService.RegisterAsync(request)
+
+        string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
+        UserRegistrationCommand command = new UserRegistrationCommand(request, requestUserAgent);
+        return await _sender.Send(command)
             .MatchAsync(
                 MakeErrorResponse,
                 _ => Ok(),
@@ -118,11 +122,12 @@ public class UserAuthenticationController : CrypterControllerBase
         }
 
         string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-        Either<LoginError, LoginResponse> loginResult = await _userAuthenticationService.LoginAsync(request, requestUserAgent);
-        return loginResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(LoginError.UnknownError));
+        UserLoginCommand command = new UserLoginCommand(request, requestUserAgent);
+        return await _sender.Send(command)
+            .MatchAsync(
+                MakeErrorResponse,
+                Ok,
+                MakeErrorResponse(LoginError.UnknownError));
     }
 
     /// <summary>
@@ -156,13 +161,14 @@ public class UserAuthenticationController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
-        Either<RefreshError, RefreshResponse> refreshResult = await _userAuthenticationService.RefreshAsync(User, requestUserAgent);
 
-        return refreshResult.Match(
-            MakeErrorResponse,
-            Ok,
-            MakeErrorResponse(RefreshError.UnknownError));
+        string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
+        RefreshUserSessionCommand request = new RefreshUserSessionCommand(User, requestUserAgent);
+        return await _sender.Send(request)
+            .MatchAsync(
+                MakeErrorResponse,
+                Ok,
+                MakeErrorResponse(RefreshError.UnknownError));
     }
 
     /// <summary>
@@ -193,13 +199,13 @@ public class UserAuthenticationController : CrypterControllerBase
             };
 #pragma warning restore CS8524
         }
-        
-        Either<PasswordChallengeError, Unit> testPasswordResult =
-            await _userAuthenticationService.TestUserPasswordAsync(UserId, request, cancellationToken);
-        return testPasswordResult.Match(
-            MakeErrorResponse,
-            _ => Ok(),
-            MakeErrorResponse(PasswordChallengeError.UnknownError));
+
+        TestUserPasswordQuery query = new TestUserPasswordQuery(UserId, request);
+        return await _sender.Send(query, cancellationToken)
+            .MatchAsync(
+                MakeErrorResponse,
+                _ => Ok(),
+                MakeErrorResponse(PasswordChallengeError.UnknownError));
     }
 
     /// <summary>
@@ -228,10 +234,11 @@ public class UserAuthenticationController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        Either<LogoutError, Unit> logoutResult = await _userAuthenticationService.LogoutAsync(User);
-        return logoutResult.Match(
-            MakeErrorResponse,
-            _ => Ok(),
-            MakeErrorResponse(LogoutError.UnknownError));
+        UserLogoutCommand request = new UserLogoutCommand(User);
+        return await _sender.Send(request)
+            .MatchAsync(
+                MakeErrorResponse,
+                _ => Ok(),
+                MakeErrorResponse(LogoutError.UnknownError));
     }
 }

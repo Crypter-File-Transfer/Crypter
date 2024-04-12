@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   api:
     profiles:
@@ -7,7 +6,7 @@ services:
     image: ghcr.io/crypter-file-transfer/${API_IMAGE_NAME:-crypter_api}:latest
     build:
       context: .
-      dockerfile: Crypter.Api/Dockerfile
+      dockerfile: Crypter.API/Dockerfile
     expose:
       - "80"
     environment:

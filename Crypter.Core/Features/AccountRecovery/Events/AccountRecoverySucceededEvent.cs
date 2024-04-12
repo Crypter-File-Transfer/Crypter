@@ -40,14 +40,13 @@ internal sealed class AccountRecoverySucceededEventHandler : INotificationHandle
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
-    private readonly IUserTransferService _userTransferService;
 
-    public AccountRecoverySucceededEventHandler(IBackgroundJobClient backgroundJobClient,
-        IHangfireBackgroundService hangfireBackgroundService, IUserTransferService userTransferService)
+    public AccountRecoverySucceededEventHandler(
+        IBackgroundJobClient backgroundJobClient,
+        IHangfireBackgroundService hangfireBackgroundService)
     {
         _backgroundJobClient = backgroundJobClient;
         _hangfireBackgroundService = hangfireBackgroundService;
-        _userTransferService = userTransferService;
     }
     
     public Task Handle(AccountRecoverySucceededEvent notification, CancellationToken cancellationToken)

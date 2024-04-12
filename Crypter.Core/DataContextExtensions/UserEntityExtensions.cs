@@ -41,6 +41,17 @@ internal static class UserEntityExtensions
             .AnyAsync(x => x.Username == username.Value, cancellationToken);
     }
 
+    /// <summary>
+    /// Checks whether the provided email address is available for the given user.
+    /// </summary>
+    /// <param name="userContext"></param>
+    /// <param name="email"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <remarks>
+    /// Though null and empty email addresses would be considered available, those checks should be performed
+    /// outside of this method.
+    /// </remarks>
     public static async Task<bool> IsEmailAddressAvailableAsync(this DbSet<UserEntity> userContext, EmailAddress email,
         CancellationToken cancellationToken = default)
     {

@@ -58,7 +58,7 @@ public class UserEmailVerificationService : IUserEmailVerificationService
 
     public Task<Maybe<UserEmailAddressVerificationParameters>> GenerateVerificationParametersAsync(Guid userId)
     {
-        return UserEmailVerificationQueries.GenerateVerificationParametersAsync(_dataContext, _cryptoProvider, userId);
+        return Features.UserEmailVerification.Common.GenerateEmailAddressVerificationParametersAsync(_dataContext, _cryptoProvider, userId);
     }
 
     public async Task SaveVerificationParametersAsync(UserEmailAddressVerificationParameters parameters)

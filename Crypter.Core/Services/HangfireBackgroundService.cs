@@ -29,13 +29,13 @@ using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Core.Exceptions;
 using Crypter.Core.Features.AccountRecovery.Commands;
+using Crypter.Core.Features.EventLog.Commands;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Notifications.Commands;
 using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.UserAuthentication.Commands;
 using Crypter.Core.Features.UserEmailVerification.Commands;
-using Crypter.Core.Features.UserToken;
-using Crypter.DataAccess;
+using Crypter.Core.Features.UserToken.Commands;
 using EasyMonads;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -45,6 +45,10 @@ namespace Crypter.Core.Services;
 
 public interface IHangfireBackgroundService
 {
+    Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp);
+    Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, string deviceDescription, string reason, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp);
+    Task<Unit> LogFailedUserLoginAsync(string username, string reason, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> SendEmailVerificationAsync(Guid userId);
     Task<Unit> SendTransferNotificationAsync(Guid itemId, TransferItemType itemType);
     Task<Unit> SendRecoveryEmailAsync(string emailAddress);
@@ -55,16 +59,18 @@ public interface IHangfireBackgroundService
     /// <param name="itemId"></param>
     /// <param name="itemType"></param>
     /// <param name="userType"></param>
-    /// <param name="deleteFromTransferStorage">
-    /// Transfers are streamed from transfer storage to the client.
+    /// <param name="deleteFromTransferRepository">
+    /// Transfers are streamed from the transfer repository to the client.
     /// These streams are sometimes configured to "DeleteOnClose".
-    /// The background service should not delete from transfer storage when "DeleteOnClose" is configured.
+    /// The background service should not attempt to delete from the transfer repository when
+    ///   "DeleteOnClose" is configured, otherwise a background worker might attempt to
+    ///   delete the transfer from storage as the client is still streaming the transfer.
     /// </param>
     /// <returns></returns>
     Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
-        bool deleteFromTransferStorage);
+        bool deleteFromTransferRepository);
 
-    Task DeleteUserTokenAsync(Guid tokenId);
+    Task<Unit> DeleteUserTokenAsync(Guid tokenId);
     Task<Unit> DeleteFailedLoginAttemptAsync(Guid failedAttemptId);
     Task<Unit> DeleteRecoveryParametersAsync(Guid userId);
     Task<Unit> DeleteUserKeysAsync(Guid userId);
@@ -80,17 +86,39 @@ public interface IHangfireBackgroundService
 /// </summary>
 public class HangfireBackgroundService : IHangfireBackgroundService
 {
-    private readonly DataContext _dataContext;
     private readonly ISender _sender;
     private readonly ILogger<HangfireBackgroundService> _logger;
 
-    public HangfireBackgroundService(DataContext dataContext, ISender sender, ILogger<HangfireBackgroundService> logger)
+    public HangfireBackgroundService(ISender sender, ILogger<HangfireBackgroundService> logger)
     {
-        _dataContext = dataContext;
         _sender = sender;
         _logger = logger;
     }
 
+    public Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogSuccessfulUserRegistrationCommand request = new LogSuccessfulUserRegistrationCommand(userId, emailAddress, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, string reason, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogFailedUserRegistrationCommand request = new LogFailedUserRegistrationCommand(username, emailAddress, reason, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+    
+    public Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogSuccessfulUserLoginCommand request = new LogSuccessfulUserLoginCommand(userId, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedUserLoginAsync(string username, string reason, string deviceDescription, DateTimeOffset timestamp)
+    {
+        LogFailedUserLoginCommand request = new LogFailedUserLoginCommand(username, reason, deviceDescription, timestamp);
+        return _sender.Send(request);
+    }
+    
     public async Task<Unit> SendEmailVerificationAsync(Guid userId)
     {
         SendVerificationEmailCommand request = new SendVerificationEmailCommand(userId);
@@ -154,15 +182,16 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     }
 
     public Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
-        bool deleteFromTransferStorage)
+        bool deleteFromTransferRepository)
     {
-        DeleteTransferCommand request = new DeleteTransferCommand(itemId, itemType, userType, deleteFromTransferStorage);
+        DeleteTransferCommand request = new DeleteTransferCommand(itemId, itemType, userType, deleteFromTransferRepository);
         return _sender.Send(request);
     }
 
-    public Task DeleteUserTokenAsync(Guid tokenId)
+    public Task<Unit> DeleteUserTokenAsync(Guid tokenId)
     {
-        return UserTokenCommands.DeleteUserTokenAsync(_dataContext, tokenId);
+        DeleteUserTokenCommand request = new DeleteUserTokenCommand(tokenId);
+        return _sender.Send(request);
     }
 
     public Task<Unit> DeleteFailedLoginAttemptAsync(Guid failedAttemptId)

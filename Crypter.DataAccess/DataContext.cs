@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -31,7 +31,7 @@ namespace Crypter.DataAccess;
 
 public class DataContext : DbContext
 {
-    public const string _schemaName = "crypter";
+    public const string SchemaName = "crypter";
 
     /// <summary>
     /// This constructor is used during migrations.
@@ -41,27 +41,28 @@ public class DataContext : DbContext
     {
     }
 
-    public DbSet<UserEntity> Users { get; set; } = null!;
-    public DbSet<UserProfileEntity> UserProfiles { get; set; } = null!;
-    public DbSet<UserKeyPairEntity> UserKeyPairs { get; set; } = null!;
-    public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; set; } = null!;
-    public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; set; } = null!;
-    public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; set; } = null!;
-    public DbSet<UserTokenEntity> UserTokens { get; set; } = null!;
-    public DbSet<UserContactEntity> UserContacts { get; set; } = null!;
-    public DbSet<AnonymousFileTransferEntity> AnonymousFileTransfers { get; set; } = null!;
-    public DbSet<AnonymousMessageTransferEntity> AnonymousMessageTransfers { get; set; } = null!;
-    public DbSet<UserFileTransferEntity> UserFileTransfers { get; set; } = null!;
-    public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; set; } = null!;
-    public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; set; } = null!;
-    public DbSet<UserMasterKeyEntity> UserMasterKeys { get; set; } = null!;
-    public DbSet<UserConsentEntity> UserConsents { get; set; } = null!;
-    public DbSet<UserRecoveryEntity> UserRecoveries { get; set; } = null!;
+    public DbSet<AnonymousFileTransferEntity> AnonymousFileTransfers { get; init; }
+    public DbSet<AnonymousMessageTransferEntity> AnonymousMessageTransfers { get; init; }
+    public DbSet<EventLogEntity> EventLogs { get; init; }
+    public DbSet<UserConsentEntity> UserConsents { get; init; }
+    public DbSet<UserContactEntity> UserContacts { get; init; }
+    public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; init; }
+    public DbSet<UserEntity> Users { get; init; }
+    public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; init; }
+    public DbSet<UserFileTransferEntity> UserFileTransfers { get; init; }
+    public DbSet<UserKeyPairEntity> UserKeyPairs { get; init; }
+    public DbSet<UserMasterKeyEntity> UserMasterKeys { get; init; }
+    public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; init; }
+    public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; init; }
+    public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; init; }
+    public DbSet<UserProfileEntity> UserProfiles { get; init; }
+    public DbSet<UserRecoveryEntity> UserRecoveries { get; init; }
+    public DbSet<UserTokenEntity> UserTokens { get; init; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.HasPostgresExtension("citext")
-            .HasDefaultSchema(_schemaName)
+            .HasDefaultSchema(SchemaName)
             .ApplyConfigurationsFromAssembly(typeof(DataContext).Assembly);
     }
 }

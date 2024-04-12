@@ -33,8 +33,10 @@ using Crypter.API.Contracts;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Core.Services;
+using Crypter.Core.Features.Transfer.Commands;
+using Crypter.Core.Features.Transfer.Queries;
 using EasyMonads;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -45,10 +47,11 @@ namespace Crypter.API.Controllers;
 [Route("api/message/transfer")]
 public class MessageTransferController : TransferControllerBase
 {
-    public MessageTransferController(ITransferDownloadService transferDownloadService,
-        ITransferUploadService transferUploadService, IUserTransferService userTransferService)
-        : base(transferDownloadService, transferUploadService, userTransferService)
+    private readonly ISender _sender;
+    
+    public MessageTransferController(ISender sender)
     {
+        _sender = sender;
     }
 
     [HttpPost]
@@ -63,8 +66,10 @@ public class MessageTransferController : TransferControllerBase
             : username;
         await using Stream? ciphertextStream = request.Ciphertext?.OpenReadStream();
 
-        return await TransferUploadService
-            .UploadMessageTransferAsync(PossibleUserId, maybeUsername, request.Data, ciphertextStream)
+        SaveMessageTransferCommand command = new SaveMessageTransferCommand(
+            PossibleUserId, maybeUsername, request.Data, ciphertextStream);
+        
+        return await _sender.Send(command)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -73,23 +78,23 @@ public class MessageTransferController : TransferControllerBase
 
     [HttpGet("received")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserReceivedMessageDTO>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserReceivedMessageDTO>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> GetReceivedMessagesAsync(CancellationToken cancellationToken)
     {
-        List<UserReceivedMessageDTO> result =
-            await UserTransferService.GetUserReceivedMessagesAsync(UserId, cancellationToken);
+        UserReceivedMessagesQuery request = new UserReceivedMessagesQuery(UserId);
+        IEnumerable<UserReceivedMessageDTO> result = await _sender.Send(request, cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("sent")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<UserSentMessageDTO>))]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserSentMessageDTO>))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
     public async Task<IActionResult> GetSentMessagesAsync(CancellationToken cancellationToken)
     {
-        List<UserSentMessageDTO>
-            result = await UserTransferService.GetUserSentMessagesAsync(UserId, cancellationToken);
+        UserSentMessagesQuery request = new UserSentMessagesQuery(UserId);
+        IEnumerable<UserSentMessageDTO> result = await _sender.Send(request, cancellationToken);
         return Ok(result);
     }
 
@@ -99,7 +104,8 @@ public class MessageTransferController : TransferControllerBase
     public async Task<IActionResult> GetAnonymousMessagePreviewAsync([FromQuery] string id,
         CancellationToken cancellationToken)
     {
-        return await TransferDownloadService.GetAnonymousMessagePreviewAsync(id, cancellationToken)
+        AnonymousMessagePreviewQuery request = new AnonymousMessagePreviewQuery(id);
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -113,7 +119,8 @@ public class MessageTransferController : TransferControllerBase
     public async Task<IActionResult> GetUserMessagePreviewAsync([FromQuery] string id,
         CancellationToken cancellationToken)
     {
-        return await TransferDownloadService.GetUserMessagePreviewAsync(id, PossibleUserId, cancellationToken)
+        UserMessagePreviewQuery request = new UserMessagePreviewQuery(id, PossibleUserId);
+        return await _sender.Send(request, cancellationToken)
             .MatchAsync(
                 MakeErrorResponse,
                 Ok,
@@ -128,7 +135,10 @@ public class MessageTransferController : TransferControllerBase
     {
         return await DecodeProof(proof)
             .BindAsync(async decodedProof =>
-                await TransferDownloadService.GetAnonymousMessageCiphertextAsync(id, decodedProof))
+            {
+                GetAnonymousMessageCiphertextCommand request = new GetAnonymousMessageCiphertextCommand(id, decodedProof);
+                return await _sender.Send(request);
+            })
             .MatchAsync(
                 MakeErrorResponse,
                 x => new FileStreamResult(x, "application/octet-stream"),
@@ -144,7 +154,11 @@ public class MessageTransferController : TransferControllerBase
     {
         return await DecodeProof(proof)
             .BindAsync(async decodedProof =>
-                await TransferDownloadService.GetUserMessageCiphertextAsync(id, decodedProof, PossibleUserId))
+            {
+                GetUserMessageCiphertextCommand request =
+                    new GetUserMessageCiphertextCommand(id, decodedProof, PossibleUserId);
+                return await _sender.Send(request);
+            })
             .MatchAsync(
                 MakeErrorResponse,
                 x => new FileStreamResult(x, "application/octet-stream"),

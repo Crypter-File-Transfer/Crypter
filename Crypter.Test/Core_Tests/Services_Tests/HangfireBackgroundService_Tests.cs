@@ -28,7 +28,6 @@ using System;
 using System.Threading.Tasks;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
-using Crypter.DataAccess;
 using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,7 +42,6 @@ public class HangfireBackgroundService_Tests
 {
     private WebApplicationFactory<Program>? _factory;
     private IServiceScope? _scope;
-    private DataContext? _dataContext;
     private ISender? _sender;
     private ILogger<HangfireBackgroundService>? _logger;
     private Mock<IEmailService>? _emailServiceMock;
@@ -57,7 +55,6 @@ public class HangfireBackgroundService_Tests
         await AssemblySetup.InitializeRespawnerAsync();
 
         _scope = _factory.Services.CreateScope();
-        _dataContext = _scope.ServiceProvider.GetRequiredService<DataContext>();
         _sender = _scope.ServiceProvider.GetRequiredService<ISender>();
         
         ILoggerFactory factory = _scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
@@ -83,7 +80,7 @@ public class HangfireBackgroundService_Tests
                 It.IsAny<UserEmailAddressVerificationParameters>()))
             .ReturnsAsync((UserEmailAddressVerificationParameters _) => true);
 
-        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext!, _sender!, _logger!);
+        HangfireBackgroundService sut = new HangfireBackgroundService(_sender!, _logger!);
         await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
         _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>()),
@@ -99,7 +96,7 @@ public class HangfireBackgroundService_Tests
                 It.IsAny<int>()))
             .ReturnsAsync((UserRecoveryParameters _, int _) => true);
 
-        HangfireBackgroundService sut = new HangfireBackgroundService(_dataContext!, _sender!, _logger!);
+        HangfireBackgroundService sut = new HangfireBackgroundService(_sender!, _logger!);
         await sut.SendRecoveryEmailAsync("foo@test.com");
 
         _emailServiceMock.Verify(

@@ -28,7 +28,6 @@ using System.Threading.Tasks;
 using Crypter.Core.Identity;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
-using Crypter.Core.Services.UserSettings;
 using Crypter.Core.Settings;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
@@ -61,15 +60,7 @@ public static class DependencyInjection
         services.TryAddSingleton<ICryptoProvider, DefaultCryptoProvider>();
 
         services.TryAddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
-        services.TryAddScoped<ITransferDownloadService, TransferDownloadService>();
-        services.TryAddScoped<ITransferUploadService, TransferUploadService>();
-        services.TryAddScoped<IUserAuthenticationService, UserAuthenticationService>();
         services.TryAddScoped<IUserEmailVerificationService, UserEmailVerificationService>();
-        services.TryAddScoped<IUserTransferService, UserTransferService>();
-        services.TryAddScoped<IUserProfileSettingsService, UserProfileSettingsService>();
-        services.TryAddScoped<IUserContactInfoSettingsService, UserContactInfoSettingsService>();
-        services.TryAddScoped<IUserNotificationSettingsService, UserNotificationSettingService>();
-        services.TryAddScoped<IUserPrivacySettingsService, UserPrivacySettingsService>();
 
         services.AddEmailService(options =>
         {
@@ -83,12 +74,12 @@ public static class DependencyInjection
 
         services.AddHashIdService(options => { options.Salt = hashIdSettings.Salt; });
 
-        services.AddUserAuthenticationService(options =>
+        services.Configure<ServerPasswordSettings>(options =>
         {
             options.ClientVersion = serverPasswordSettings.ClientVersion;
             options.ServerVersions = serverPasswordSettings.ServerVersions;
         });
-
+        
         services.AddTokenService(options =>
         {
             options.Audience = tokenSettings.Audience;

@@ -17,4 +17,8 @@
       <ProjectReference Include="..\Crypter.Common\Crypter.Common.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Entities\JsonTypes\" />
+    </ItemGroup>
+
 </Project>

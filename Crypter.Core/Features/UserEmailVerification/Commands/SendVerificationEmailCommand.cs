@@ -68,8 +68,8 @@ internal sealed class SendVerificationEmailCommandHandler
     
     public async Task<bool> Handle(SendVerificationEmailCommand request, CancellationToken cancellationToken)
     {
-        return await UserEmailVerificationQueries
-            .GenerateVerificationParametersAsync(_dataContext, _cryptoProvider, request.UserId)
+        return await Common
+            .GenerateEmailAddressVerificationParametersAsync(_dataContext, _cryptoProvider, request.UserId)
             .BindAsync<UserEmailAddressVerificationParameters, bool>(async parameters =>
             {
                 bool deliverySuccess = await _emailService.SendEmailVerificationAsync(parameters);

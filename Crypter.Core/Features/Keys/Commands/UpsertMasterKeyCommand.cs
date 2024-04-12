@@ -29,12 +29,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Core.Identity;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Services;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Crypter.Core.Features.Keys.Commands;
 
@@ -44,12 +46,19 @@ public sealed record UpsertMasterKeyCommand(Guid UserId, InsertMasterKeyRequest 
 internal class UpsertMasterKeyCommandHandler : IEitherRequestHandler<UpsertMasterKeyCommand, InsertMasterKeyError, Unit>
 {
     private readonly DataContext _dataContext;
-    private readonly IUserAuthenticationService _userAuthenticationService;
+    private readonly IPasswordHashService _passwordHashService;
+    
+    private readonly short _clientPasswordVersion;
 
-    public UpsertMasterKeyCommandHandler(DataContext dataContext, IUserAuthenticationService userAuthenticationService)
+    public UpsertMasterKeyCommandHandler(
+        DataContext dataContext,
+        IPasswordHashService passwordHashService,
+        IOptions<ServerPasswordSettings> passwordSettings)
     {
         _dataContext = dataContext;
-        _userAuthenticationService = userAuthenticationService;
+        _passwordHashService = passwordHashService;
+        
+        _clientPasswordVersion = passwordSettings.Value.ClientVersion;
     }
 
     public async Task<Either<InsertMasterKeyError, Unit>> Handle(UpsertMasterKeyCommand request, CancellationToken cancellationToken)
@@ -59,13 +68,17 @@ internal class UpsertMasterKeyCommandHandler : IEitherRequestHandler<UpsertMaste
         {
             return InsertMasterKeyError.InvalidMasterKey;
         }
-
-        Either<PasswordChallengeError, Unit> testPasswordResult =
-            await _userAuthenticationService.TestUserPasswordAsync(request.UserId,
-                new PasswordChallengeRequest(request.Data.AuthenticationPassword), CancellationToken.None);
+        
+        Either<PasswordChallengeError, Unit> testPasswordResult = await UserAuthentication.Common.TestUserPasswordAsync(
+            _dataContext,
+            _passwordHashService,
+            request.UserId,
+            request.Data.AuthenticationPassword,
+            _clientPasswordVersion,
+            CancellationToken.None);
         
         return await testPasswordResult.MatchAsync<Either<InsertMasterKeyError, Unit>>(
-            error => InsertMasterKeyError.InvalidPassword,
+            _ => InsertMasterKeyError.InvalidPassword,
             async _ =>
             {
                 UserMasterKeyEntity? masterKeyEntity = await _dataContext.UserMasterKeys

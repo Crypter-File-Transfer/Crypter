@@ -94,6 +94,11 @@ internal sealed class SubmitAccountRecoveryCommandHandler
             return SubmitAccountRecoveryError.InvalidUsername;
         }
 
+        if (!AuthenticationPassword.TryFrom(recoverySubmission.VersionedPassword.Password, out AuthenticationPassword validAuthenticationPassword))
+        {
+            return SubmitAccountRecoveryError.InvalidPassword;
+        }
+        
         UserRecoveryEntity? recoveryEntity = await _dataContext.UserRecoveries
             .Where(x => x.User!.Username == validUsername.Value)
             .FirstOrDefaultAsync();
@@ -169,7 +174,7 @@ internal sealed class SubmitAccountRecoveryCommandHandler
             }
 
             SecurePasswordHashOutput securePasswordData =
-                _passwordHashService.MakeSecurePasswordHash(recoverySubmission.VersionedPassword.Password,
+                _passwordHashService.MakeSecurePasswordHash(validAuthenticationPassword,
                     _passwordHashService.LatestServerPasswordVersion);
 
             user.PasswordHash = securePasswordData.Hash;
