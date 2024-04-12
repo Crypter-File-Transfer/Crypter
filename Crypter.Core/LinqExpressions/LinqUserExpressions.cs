@@ -33,9 +33,9 @@ using Crypter.DataAccess.Entities;
 
 namespace Crypter.Core.LinqExpressions;
 
-public static class LinqUserExpressions
+internal static class LinqUserExpressions
 {
-    public static Expression<Func<UserEntity, bool>> UserPrivacyAllowsVisitor(Guid? visitorId)
+    internal static Expression<Func<UserEntity, bool>> UserPrivacyAllowsVisitor(Guid? visitorId)
     {
         return x => x.Id == visitorId
                       || x.PrivacySetting!.Visibility == UserVisibilityLevel.Everyone
@@ -43,8 +43,19 @@ public static class LinqUserExpressions
                       || (x.PrivacySetting!.Visibility == UserVisibilityLevel.Contacts &&
                           x.Contacts!.Any(y => y.ContactId == visitorId));
     }
+
+    internal static Expression<Func<UserEntity, bool>> UserPrivacyAllowsTransfer(Guid? visitorId, TransferItemType itemType)
+    {
+        return x => x.Id == visitorId
+            || (itemType == TransferItemType.File && x.PrivacySetting!.ReceiveFiles == UserItemTransferPermission.Everyone)
+            || (itemType == TransferItemType.Message && x.PrivacySetting!.ReceiveMessages == UserItemTransferPermission.Everyone)
+            || (itemType == TransferItemType.File && x.PrivacySetting!.ReceiveFiles == UserItemTransferPermission.Authenticated && visitorId != null)
+            || (itemType == TransferItemType.Message && x.PrivacySetting!.ReceiveMessages == UserItemTransferPermission.Authenticated && visitorId != null)
+            || (itemType == TransferItemType.File && x.PrivacySetting!.ReceiveFiles == UserItemTransferPermission.Contacts && x.Contacts!.Any(y => y.ContactId == visitorId))
+            || (itemType == TransferItemType.Message && x.PrivacySetting!.ReceiveMessages == UserItemTransferPermission.Contacts && x.Contacts!.Any(y => y.ContactId == visitorId));
+    }
     
-    public static Expression<Func<UserEntity, bool>> UserProfileIsComplete()
+    internal static Expression<Func<UserEntity, bool>> UserProfileIsComplete()
     {
         return x => x.Profile != null
                       && x.KeyPair != null
@@ -59,7 +70,7 @@ public static class LinqUserExpressions
     /// </summary>
     /// <param name="visitorId"></param>
     /// <returns></returns>
-    public static Expression<Func<UserEntity, UserProfile>> ToUserProfileForVisitor(Guid? visitorId)
+    internal static Expression<Func<UserEntity, UserProfile>> ToUserProfileForVisitor(Guid? visitorId)
     {
         return x => new UserProfile(
             x.Username,
@@ -80,7 +91,7 @@ public static class LinqUserExpressions
             x.EmailVerified);
     }
 
-    public static Expression<Func<UserEntity?, bool>> UserReceivesEmailNotifications()
+    internal static Expression<Func<UserEntity?, bool>> UserReceivesEmailNotifications()
     {
         return x => x != null
                       && x.EmailVerified
@@ -89,7 +100,7 @@ public static class LinqUserExpressions
                       && x.NotificationSetting.EmailNotifications;
     }
 
-    public static Expression<Func<T, bool>> Inverse<T>(this Expression<Func<T, bool>> e)
+    internal static Expression<Func<T, bool>> Inverse<T>(this Expression<Func<T, bool>> e)
     {
         return Expression.Lambda<Func<T, bool>>(Expression.Not(e.Body), e.Parameters[0]);
     }

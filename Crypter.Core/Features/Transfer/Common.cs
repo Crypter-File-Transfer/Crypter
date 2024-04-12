@@ -25,6 +25,7 @@ internal static class Common
     /// <param name="transferStorageSettings"></param>
     /// <param name="senderId"></param>
     /// <param name="recipientUsername"></param>
+    /// <param name="itemType"></param>
     /// <param name="requestedTransferLifetimeHours"></param>
     /// <param name="ciphertextStreamLength"></param>
     /// <returns>
@@ -36,12 +37,13 @@ internal static class Common
         TransferStorageSettings transferStorageSettings,
         Maybe<Guid> senderId,
         Maybe<string> recipientUsername,
+        TransferItemType itemType,
         int requestedTransferLifetimeHours,
         long ciphertextStreamLength)
     {
         Maybe<Guid> recipientId = await recipientUsername
             .BindAsync(async x =>
-                await GetUploadRecipientIdAsync(dataContext, senderId, x));
+                await GetUploadRecipientIdAsync(dataContext, senderId, x, itemType));
 
         if (recipientUsername.IsSome && recipientId.IsNone)
         {
@@ -83,13 +85,14 @@ internal static class Common
 
         return TransferUserType.Anonymous;
     }
-    
+
     /// <summary>
     /// Query for a transfer recipient's user id.
     /// </summary>
     /// <param name="dataContext"></param>
     /// <param name="senderId"></param>
     /// <param name="recipientUsername"></param>
+    /// <param name="itemType"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>
     /// The recipient's id if the recipient exists and their privacy settings permit uploads from the sender.
@@ -99,6 +102,7 @@ internal static class Common
         DataContext dataContext,
         Maybe<Guid> senderId,
         string recipientUsername,
+        TransferItemType itemType,
         CancellationToken cancellationToken = default)
     {
         Guid? nullableSenderId = senderId
@@ -107,6 +111,7 @@ internal static class Common
         var recipientData = await dataContext.Users
             .Where(x => x.Username.ToLower() == recipientUsername.ToLower())
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(nullableSenderId))
+            .Where(LinqUserExpressions.UserPrivacyAllowsTransfer(nullableSenderId, itemType))
             .Select(x => new { x.Id })
             .FirstOrDefaultAsync(cancellationToken);
 

@@ -25,7 +25,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -94,6 +93,7 @@ internal class SaveMessageTransferCommandHandler
                     _transferStorageSettings,
                     request.SenderId,
                     request.RecipientUsername,
+                    TransferItemType.Message,
                     request.Request.LifetimeHours,
                     request.CiphertextStream.Length)
                 let newTransferId = Guid.NewGuid()
