@@ -95,6 +95,7 @@ internal class SaveFileTransferCommandHandler
                     _transferStorageSettings,
                     request.SenderId,
                     request.RecipientUsername,
+                    TransferItemType.File,
                     request.Request.LifetimeHours,
                     request.CiphertextStream.Length)
                 let transferUserType = Common.DetermineUploadTransferUserType(request.SenderId, recipientId)
