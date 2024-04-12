@@ -17,8 +17,8 @@ namespace Crypter.Core.Features.Transfer;
 
 internal static class Common
 {
-    internal const int MaxTransferLifetimeHours = 24;
-    internal const int MinTransferLifetimeHours = 1;
+    private const int MaxTransferLifetimeHours = 24;
+    private const int MinTransferLifetimeHours = 1;
 
     /// <summary>
     /// Validate whether a transfer upload may be completed with the provided parameters.
