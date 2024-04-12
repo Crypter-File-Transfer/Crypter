@@ -25,33 +25,75 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Core.Services;
+using Crypter.DataAccess;
+using EasyMonads;
 using Hangfire;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.Transfer.Events;
 
-public sealed record SuccessfulTransferUploadEvent(TransferItemType ItemType, TransferUserType UserType, long Size, DateTimeOffset Timestamp) : INotification;
+public sealed record SuccessfulTransferUploadEvent(Guid ItemId, TransferItemType ItemType, TransferUserType UserType, long Size, Maybe<Guid> SenderId, Maybe<Guid> RecipientId, Maybe<string> RecipientName, DateTimeOffset ItemExpiration, DateTimeOffset Timestamp) : INotification;
 
 internal sealed class SuccessfulTransferUploadEventHandler : INotificationHandler<SuccessfulTransferUploadEvent>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly DataContext _dataContext;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
     
     public SuccessfulTransferUploadEventHandler(
         IBackgroundJobClient backgroundJobClient,
+        DataContext dataContext,
         IHangfireBackgroundService hangfireBackgroundService)
     {
         _backgroundJobClient = backgroundJobClient;
+        _dataContext = dataContext;
         _hangfireBackgroundService = hangfireBackgroundService;
     }
     
-    public Task Handle(SuccessfulTransferUploadEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(SuccessfulTransferUploadEvent notification, CancellationToken cancellationToken)
     {
-        _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.LogSuccessfulTransferUploadAsync(notification.ItemType, notification.UserType, notification.Size, notification.Timestamp));
-        return Task.CompletedTask;
+        await notification.RecipientId.IfSomeAsync(async recipientId =>
+            await QueueTransferNotificationAsync(notification.ItemId, notification.ItemType, recipientId));
+        
+        _backgroundJobClient.Schedule(() =>
+            _hangfireBackgroundService.DeleteTransferAsync(notification.ItemId, notification.ItemType, notification.UserType, true),
+            notification.ItemExpiration);
+
+        Guid? senderId = notification.SenderId
+            .Match((Guid?)null, x => x);
+
+        string? recipientUsername = notification.RecipientName
+            .Match((string?)null, x => x);
+        
+        _backgroundJobClient.Enqueue(() =>
+            _hangfireBackgroundService.LogSuccessfulTransferUploadAsync(notification.ItemType, notification.UserType, notification.Size, senderId, recipientUsername, notification.Timestamp));
+    }
+    
+    private async Task<Unit> QueueTransferNotificationAsync(
+        Guid itemId,
+        TransferItemType itemType,
+        Guid recipientId)
+    {
+        bool userExpectsNotification = await _dataContext.Users
+            .Where(x => x.Id == recipientId)
+            .Where(x => x.NotificationSetting!.EnableTransferNotifications
+                        && x.EmailVerified
+                        && x.NotificationSetting.EmailNotifications)
+            .AnyAsync();
+
+        if (userExpectsNotification)
+        {
+            _backgroundJobClient.Enqueue(() =>
+                _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType));
+        }
+
+        return Unit.Default;
     }
 }

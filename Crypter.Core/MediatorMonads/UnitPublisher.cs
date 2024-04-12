@@ -24,16 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
-using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Enums;
-using Crypter.Common.Infrastructure;
+using System.Threading.Tasks;
+using MediatR;
+using Unit = EasyMonads.Unit;
 
-namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
+namespace Crypter.Core.MediatorMonads;
 
-public sealed record FailedTransferUploadAdditionalData(
-    [property: JsonConverter(typeof(JsonEnumConverter<TransferItemType>))] TransferItemType ItemType,
-    [property: JsonConverter(typeof(JsonEnumConverter<TransferUserType>))] TransferUserType UserType,
-    [property: JsonConverter(typeof(JsonEnumConverter<UploadTransferError>))] UploadTransferError Reason,
-    Guid? Sender,
-    string? Recipient);
+internal static class UnitPublisher
+{
+    internal static async Task<Unit> Publish(IPublisher publisher, INotification notification)
+    {
+        await publisher.Publish(notification);
+        return Unit.Default;
+    }
+}

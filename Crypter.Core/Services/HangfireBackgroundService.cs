@@ -78,10 +78,8 @@ public interface IHangfireBackgroundService
     Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, RegistrationError reason, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> LogFailedUserLoginAsync(string username, LoginError reason, string deviceDescription, DateTimeOffset timestamp);
-    Task<Unit> LogSuccessfulTransferUploadAsync(TransferItemType itemType, TransferUserType userType, long size, DateTimeOffset timestamp);
-
-    Task<Unit> LogFailedTransferUploadAsync(TransferItemType itemType, TransferUserType userType,
-        UploadTransferError reason, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulTransferUploadAsync(TransferItemType itemType, TransferUserType userType, long size, Guid? sender, string? recipient, DateTimeOffset timestamp);
+    Task<Unit> LogFailedTransferUploadAsync(TransferItemType itemType, TransferUserType userType, UploadTransferError reason, Guid? sender, string? recipient, DateTimeOffset timestamp);
 }
 
 /// <summary>
@@ -225,15 +223,15 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return _sender.Send(request);
     }
 
-    public Task<Unit> LogSuccessfulTransferUploadAsync(TransferItemType itemType, TransferUserType userType, long size, DateTimeOffset timestamp)
+    public Task<Unit> LogSuccessfulTransferUploadAsync(TransferItemType itemType, TransferUserType userType, long size, Guid? sender, string? recipient, DateTimeOffset timestamp)
     {
-        LogSuccessfulTransferUploadCommand request = new LogSuccessfulTransferUploadCommand(itemType, userType, size, timestamp);
+        LogSuccessfulTransferUploadCommand request = new LogSuccessfulTransferUploadCommand(itemType, userType, size, sender, recipient, timestamp);
         return _sender.Send(request);
     }
 
-    public Task<Unit> LogFailedTransferUploadAsync(TransferItemType itemType, TransferUserType userType, UploadTransferError reason, DateTimeOffset timestamp)
+    public Task<Unit> LogFailedTransferUploadAsync(TransferItemType itemType, TransferUserType userType, UploadTransferError reason, Guid? sender, string? recipient, DateTimeOffset timestamp)
     {
-        LogFailedTransferUploadCommand request = new LogFailedTransferUploadCommand(itemType, userType, reason, timestamp);
+        LogFailedTransferUploadCommand request = new LogFailedTransferUploadCommand(itemType, userType, reason, sender, recipient, timestamp);
         return _sender.Send(request);
     }
 }

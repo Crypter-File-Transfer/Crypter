@@ -30,6 +30,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
+using Crypter.Core.Features.Transfer.Events;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
@@ -37,8 +38,9 @@ using Crypter.Core.Settings;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
-using Hangfire;
+using MediatR;
 using Microsoft.Extensions.Options;
+using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.Transfer.Commands;
 
@@ -52,31 +54,29 @@ public sealed record SaveMessageTransferCommand(
 internal class SaveMessageTransferCommandHandler
     : IEitherRequestHandler<SaveMessageTransferCommand, UploadTransferError, UploadTransferResponse>
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly DataContext _dataContext;
-    private readonly IHangfireBackgroundService _hangfireBackgroundService;
     private readonly IHashIdService _hashIdService;
+    private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
     private readonly TransferStorageSettings _transferStorageSettings;
 
     public SaveMessageTransferCommandHandler(
-        IBackgroundJobClient backgroundJobClient,
         DataContext dataContext,
-        IHangfireBackgroundService hangfireBackgroundService,
         IHashIdService hashIdService,
+        IPublisher publisher,
         ITransferRepository transferRepository,
         IOptions<TransferStorageSettings> transferStorageSettings)
     {
-        _backgroundJobClient = backgroundJobClient;
         _dataContext = dataContext;
-        _hangfireBackgroundService = hangfireBackgroundService;
         _hashIdService = hashIdService;
+        _publisher = publisher;
         _transferRepository = transferRepository;
         _transferStorageSettings = transferStorageSettings.Value;
     }
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> Handle(SaveMessageTransferCommand request, CancellationToken cancellationToken)
     {
+        DateTimeOffset eventTimestamp = DateTimeOffset.UtcNow;
         Task<Either<UploadTransferError, UploadTransferResponse>> responseTask;
 
         if (request.Request is null || request.CiphertextStream is null)
@@ -104,28 +104,37 @@ internal class SaveMessageTransferCommandHandler
                     recipientId,
                     request.Request,
                     request.CiphertextStream)
-                from transferNotification in Either<UploadTransferError, Unit>.FromRightAsync(
-                    Common.QueueTransferNotificationAsync(_backgroundJobClient, _dataContext, _hangfireBackgroundService,
-                        newTransferId, TransferItemType.Message, recipientId))
-                let deletionJobId = Common.ScheduleTransferDeletion(_backgroundJobClient, _hangfireBackgroundService,
-                    newTransferId, TransferItemType.Message, transferUserType, response.ExpirationUTC)
+                let successfulUploadEvent = new SuccessfulTransferUploadEvent(
+                    newTransferId, 
+                    TransferItemType.Message,
+                    transferUserType,
+                    request.CiphertextStream.Length,
+                    request.SenderId,
+                    recipientId,
+                    request.RecipientUsername,
+                    response.ExpirationUTC,
+                    eventTimestamp)
+                from sideEffects in Either<UploadTransferError, Unit>.FromRightAsync(
+                    UnitPublisher.Publish(_publisher, successfulUploadEvent))
                 select response;
         }
-        
-        long eventLogStreamLength = request.CiphertextStream?.Length ?? 0;
         
         TransferUserType userTypeInCaseOfFailure = request.SenderId.IsSome || request.RecipientUsername.IsSome
             ? TransferUserType.User
             : TransferUserType.Anonymous;
         
         return await responseTask
-            .DoRightAsync(x => _backgroundJobClient.Enqueue(() =>
-                _hangfireBackgroundService.LogSuccessfulTransferUploadAsync(TransferItemType.Message, x.UserType, eventLogStreamLength, DateTimeOffset.UtcNow)))
             .DoLeftOrNeitherAsync(
-                error => _backgroundJobClient.Enqueue(() =>
-                    _hangfireBackgroundService.LogFailedTransferUploadAsync(TransferItemType.Message, userTypeInCaseOfFailure, error, DateTimeOffset.UtcNow)),
-                () => _backgroundJobClient.Enqueue(() =>
-                    _hangfireBackgroundService.LogFailedTransferUploadAsync(TransferItemType.Message, userTypeInCaseOfFailure, UploadTransferError.UnknownError, DateTimeOffset.UtcNow)));
+                async error =>
+                {
+                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.Message, userTypeInCaseOfFailure, error, request.SenderId, request.RecipientUsername, eventTimestamp);
+                    await _publisher.Publish(failedUploadEvent, CancellationToken.None);
+                },
+                async () =>
+                {
+                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.Message, userTypeInCaseOfFailure, UploadTransferError.UnknownError, request.SenderId, request.RecipientUsername, eventTimestamp);
+                    await _publisher.Publish(failedUploadEvent, CancellationToken.None);
+                });
     }
     
     private async Task<Either<UploadTransferError, UploadTransferResponse>> SaveMessageTransferAsync(
