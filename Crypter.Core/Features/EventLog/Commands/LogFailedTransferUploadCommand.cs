@@ -37,7 +37,7 @@ using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.EventLog.Commands;
 
-public sealed record LogFailedTransferUploadCommand(TransferItemType ItemType, TransferUserType UserType, UploadTransferError Reason, Guid? Sender, string? Recipient, DateTimeOffset Timestamp) : IRequest<Unit>;
+public sealed record LogFailedTransferUploadCommand(TransferItemType ItemType, UploadTransferError Reason, Guid? Sender, string? Recipient, DateTimeOffset Timestamp) : IRequest<Unit>;
 
 internal sealed class LogFailedTransferUploadCommandHandler : IRequestHandler<LogFailedTransferUploadCommand, Unit>
 {
@@ -50,7 +50,7 @@ internal sealed class LogFailedTransferUploadCommandHandler : IRequestHandler<Lo
     
     public async Task<Unit> Handle(LogFailedTransferUploadCommand request, CancellationToken cancellationToken)
     {
-        FailedTransferUploadAdditionalData additionalData = new FailedTransferUploadAdditionalData(request.ItemType, request.UserType, request.Reason, request.Sender, request.Recipient);
+        FailedTransferUploadAdditionalData additionalData = new FailedTransferUploadAdditionalData(request.ItemType, request.Reason, request.Sender, request.Recipient);
         EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferUploadFailure, additionalData, request.Timestamp);
 
         _dataContext.EventLogs.Add(logEntity);

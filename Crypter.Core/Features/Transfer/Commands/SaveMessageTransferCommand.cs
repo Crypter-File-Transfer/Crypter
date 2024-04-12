@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -119,20 +120,16 @@ internal class SaveMessageTransferCommandHandler
                 select response;
         }
         
-        TransferUserType userTypeInCaseOfFailure = request.SenderId.IsSome || request.RecipientUsername.IsSome
-            ? TransferUserType.User
-            : TransferUserType.Anonymous;
-        
         return await responseTask
             .DoLeftOrNeitherAsync(
                 async error =>
                 {
-                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.Message, userTypeInCaseOfFailure, error, request.SenderId, request.RecipientUsername, eventTimestamp);
+                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.Message, error, request.SenderId, request.RecipientUsername, eventTimestamp);
                     await _publisher.Publish(failedUploadEvent, CancellationToken.None);
                 },
                 async () =>
                 {
-                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.Message, userTypeInCaseOfFailure, UploadTransferError.UnknownError, request.SenderId, request.RecipientUsername, eventTimestamp);
+                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.Message, UploadTransferError.UnknownError, request.SenderId, request.RecipientUsername, eventTimestamp);
                     await _publisher.Publish(failedUploadEvent, CancellationToken.None);
                 });
     }
@@ -175,7 +172,7 @@ internal class SaveMessageTransferCommandHandler
     {
         DateTime utcNow = DateTime.UtcNow;
         DateTime utcExpiration = utcNow.AddHours(request.LifetimeHours);
-
+        
         Guid? nullableSenderId = senderId.Match<Guid?>(() => null,x  => x);
         Guid? nullableRecipientId = recipientId.Match<Guid?>(() => null,x  => x);
 

@@ -120,21 +120,17 @@ internal class SaveFileTransferCommandHandler
                     UnitPublisher.Publish(_publisher, successfulUploadEvent))
                 select response;
         }
-        
-        TransferUserType userTypeInCaseOfFailure = request.SenderId.IsSome || request.RecipientUsername.IsSome
-            ? TransferUserType.User
-            : TransferUserType.Anonymous;
-        
+
         return await responseTask
             .DoLeftOrNeitherAsync(
                 async error =>
                 {
-                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.File, userTypeInCaseOfFailure, error, request.SenderId, request.RecipientUsername, eventTimestamp);
+                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.File, error, request.SenderId, request.RecipientUsername, eventTimestamp);
                     await _publisher.Publish(failedUploadEvent, CancellationToken.None);
                 },
                 async () =>
                 {
-                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.File, userTypeInCaseOfFailure, UploadTransferError.UnknownError, request.SenderId, request.RecipientUsername, eventTimestamp);
+                    FailedTransferUploadEvent failedUploadEvent = new FailedTransferUploadEvent(TransferItemType.File, UploadTransferError.UnknownError, request.SenderId, request.RecipientUsername, eventTimestamp);
                     await _publisher.Publish(failedUploadEvent, CancellationToken.None);
                 });
     }

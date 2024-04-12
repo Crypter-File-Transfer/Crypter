@@ -36,7 +36,7 @@ using MediatR;
 
 namespace Crypter.Core.Features.Transfer.Events;
 
-public sealed record FailedTransferUploadEvent(TransferItemType ItemType, TransferUserType UserType, UploadTransferError Reason, Maybe<Guid> Sender, Maybe<string> Recipient, DateTimeOffset Timestamp) : INotification;
+public sealed record FailedTransferUploadEvent(TransferItemType ItemType, UploadTransferError Reason, Maybe<Guid> Sender, Maybe<string> Recipient, DateTimeOffset Timestamp) : INotification;
 
 internal sealed class FailedTransferUploadEventHandler : INotificationHandler<FailedTransferUploadEvent>
 {
@@ -58,7 +58,7 @@ internal sealed class FailedTransferUploadEventHandler : INotificationHandler<Fa
         string? recipient = notification.Recipient
             .Match((string?)null, x => x);
         
-        _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.LogFailedTransferUploadAsync(notification.ItemType, notification.UserType, notification.Reason, senderId, recipient, notification.Timestamp));
+        _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.LogFailedTransferUploadAsync(notification.ItemType, notification.Reason, senderId, recipient, notification.Timestamp));
         return Task.CompletedTask;
     }
 }

@@ -73,7 +73,7 @@ internal sealed class SuccessfulTransferUploadEventHandler : INotificationHandle
             .Match((string?)null, x => x);
         
         _backgroundJobClient.Enqueue(() =>
-            _hangfireBackgroundService.LogSuccessfulTransferUploadAsync(notification.ItemType, notification.UserType, notification.Size, senderId, recipientUsername, notification.Timestamp));
+            _hangfireBackgroundService.LogSuccessfulTransferUploadAsync(notification.ItemType, notification.Size, senderId, recipientUsername, notification.Timestamp));
     }
     
     private async Task<Unit> QueueTransferNotificationAsync(
