@@ -12,7 +12,7 @@ on:
           - development
 
 env:
-  db_migration_compose_profile: ${{ (github.event.inputs.environment == 'development' && 'local') || 'web' }}
+  docker_compose_profile: ${{ (github.event.inputs.environment == 'development' && 'local') || 'web' }}
 
 jobs:
   deploy-web-container:
@@ -86,7 +86,7 @@ jobs:
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container --profile web pull
+          script: docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} pull
           script_stop: true
 
       - name: Migrate database
@@ -96,7 +96,7 @@ jobs:
           port: ${{ secrets.APPSERVER_SSH_PORT }}
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container --profile ${{ env.db_migration_compose_profile }} run api /app/efbundle
+          script: docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} run api /app/efbundle
           script_stop: true
 
       - name: Start service
