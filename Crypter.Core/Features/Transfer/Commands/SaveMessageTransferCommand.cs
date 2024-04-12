@@ -77,36 +77,55 @@ internal class SaveMessageTransferCommandHandler
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> Handle(SaveMessageTransferCommand request, CancellationToken cancellationToken)
     {
+        Task<Either<UploadTransferError, UploadTransferResponse>> responseTask;
+
         if (request.Request is null || request.CiphertextStream is null)
         {
-            return UploadTransferError.UnknownError;
+            responseTask = Either<UploadTransferError, UploadTransferResponse>
+                .FromLeft(UploadTransferError.UnknownError)
+                .AsTask();
+        }
+        else
+        {
+            responseTask =
+                from recipientId in Common.ValidateTransferUploadAsync(
+                    _dataContext,
+                    _transferStorageSettings,
+                    request.SenderId,
+                    request.RecipientUsername,
+                    request.Request.LifetimeHours,
+                    request.CiphertextStream.Length)
+                let newTransferId = Guid.NewGuid()
+                let transferUserType = Common.DetermineUploadTransferUserType(request.SenderId, recipientId)
+                from response in SaveMessageTransferAsync(
+                    newTransferId,
+                    transferUserType,
+                    request.SenderId,
+                    recipientId,
+                    request.Request,
+                    request.CiphertextStream)
+                from transferNotification in Either<UploadTransferError, Unit>.FromRightAsync(
+                    Common.QueueTransferNotificationAsync(_backgroundJobClient, _dataContext, _hangfireBackgroundService,
+                        newTransferId, TransferItemType.Message, recipientId))
+                let deletionJobId = Common.ScheduleTransferDeletion(_backgroundJobClient, _hangfireBackgroundService,
+                    newTransferId, TransferItemType.Message, transferUserType, response.ExpirationUTC)
+                select response;
         }
         
-        Task<Either<UploadTransferError, UploadTransferResponse>> responseTask =
-            from recipientId in Common.ValidateTransferUploadAsync(
-                _dataContext,
-                _transferStorageSettings,
-                request.SenderId,
-                request.RecipientUsername,
-                request.Request.LifetimeHours,
-                request.CiphertextStream.Length)
-            let newTransferId = Guid.NewGuid()
-            let transferUserType = Common.DetermineUploadTransferUserType(request.SenderId, recipientId)
-            from response in SaveMessageTransferAsync(
-                newTransferId,
-                transferUserType,
-                request.SenderId,
-                recipientId,
-                request.Request,
-                request.CiphertextStream)
-            from transferNotification in Either<UploadTransferError, Unit>.FromRightAsync(
-                Common.QueueTransferNotificationAsync(_backgroundJobClient, _dataContext, _hangfireBackgroundService,
-                    newTransferId, TransferItemType.Message, recipientId))
-            let deletionJobId = Common.ScheduleTransferDeletion(_backgroundJobClient, _hangfireBackgroundService,
-                newTransferId, TransferItemType.Message, transferUserType, response.ExpirationUTC)
-            select response;
+        long eventLogStreamLength = request.CiphertextStream?.Length ?? 0;
         
-        return await responseTask;
+        TransferUserType userTypeInCaseOfFailure = request.SenderId.IsSome || request.RecipientUsername.IsSome
+            ? TransferUserType.User
+            : TransferUserType.Anonymous;
+        
+        return await responseTask
+            .DoRightAsync(x => _backgroundJobClient.Enqueue(() =>
+                _hangfireBackgroundService.LogSuccessfulTransferUploadAsync(TransferItemType.Message, x.UserType, eventLogStreamLength, DateTimeOffset.UtcNow)))
+            .DoLeftOrNeitherAsync(
+                error => _backgroundJobClient.Enqueue(() =>
+                    _hangfireBackgroundService.LogFailedTransferUploadAsync(TransferItemType.Message, userTypeInCaseOfFailure, error, DateTimeOffset.UtcNow)),
+                () => _backgroundJobClient.Enqueue(() =>
+                    _hangfireBackgroundService.LogFailedTransferUploadAsync(TransferItemType.Message, userTypeInCaseOfFailure, UploadTransferError.UnknownError, DateTimeOffset.UtcNow)));
     }
     
     private async Task<Either<UploadTransferError, UploadTransferResponse>> SaveMessageTransferAsync(
