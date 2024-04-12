@@ -45,7 +45,7 @@ public static class DependencyInjection
                 {
                     npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), new[] { "57P01" });
                     npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName,
-                        DataContext._schemaName);
+                        DataContext.SchemaName);
                 })
                 .LogTo(
                     filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,

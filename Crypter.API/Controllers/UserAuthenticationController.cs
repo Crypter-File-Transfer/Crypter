@@ -84,7 +84,8 @@ public class UserAuthenticationController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-        UserRegistrationCommand command = new UserRegistrationCommand(request);
+        string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
+        UserRegistrationCommand command = new UserRegistrationCommand(request, requestUserAgent);
         return await _sender.Send(command)
             .MatchAsync(
                 MakeErrorResponse,

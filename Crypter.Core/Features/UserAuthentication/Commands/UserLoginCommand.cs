@@ -61,6 +61,8 @@ internal sealed class UserLoginCommandHandler
     private const int MaximumFailedLoginAttempts = 3;
     private readonly Dictionary<TokenType, Func<Guid, RefreshTokenData>> _refreshTokenProviderMap;
 
+    private UserEntity? _foundUserEntity;
+
     public UserLoginCommandHandler(
         DataContext dataContext,
         IOptions<ServerPasswordSettings> passwordSettings,
@@ -85,12 +87,39 @@ internal sealed class UserLoginCommandHandler
     {
         return await ValidateLoginRequest(request.Request)
             .BindAsync(async validLoginRequest => await (
-                from fetchedUser in FetchUserAsync(validLoginRequest)
-                from passwordVerificationSuccess in VerifyAndUpgradePasswordAsync(validLoginRequest, fetchedUser)
+                from fetchSuccess in FetchUserAsync(validLoginRequest)
+                from passwordVerificationSuccess in VerifyAndUpgradePassword(validLoginRequest, _foundUserEntity!).AsTask()
                 from loginResponse in Either<LoginError, LoginResponse>.FromRightAsync(
-                    CreateLoginResponseAsync(fetchedUser, validLoginRequest.RefreshTokenType, request.DeviceDescription))
+                    CreateLoginResponseAsync(_foundUserEntity!, validLoginRequest.RefreshTokenType,
+                        request.DeviceDescription))
                 select loginResponse)
-            );
+            )
+            .DoRightAsync(async _ =>
+            {
+                SuccessfulUserLoginEvent successfulUserLoginEvent = new SuccessfulUserLoginEvent(_foundUserEntity!.Id,
+                    request.DeviceDescription, _foundUserEntity.LastLogin);
+                await _publisher.Publish(successfulUserLoginEvent, CancellationToken.None);
+            })
+            .DoLeftOrNeitherAsync(
+                async error =>
+                {
+                    FailedUserLoginEvent failedUserLoginEvent = new FailedUserLoginEvent(request.Request.Username,
+                        error.ToString(), request.DeviceDescription, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedUserLoginEvent, CancellationToken.None);
+
+                    if (error == LoginError.InvalidPassword)
+                    {
+                        IncorrectPasswordProvidedEvent incorrectPasswordProvidedEvent = 
+                            new IncorrectPasswordProvidedEvent(_foundUserEntity!.Id);
+                        await _publisher.Publish(incorrectPasswordProvidedEvent, CancellationToken.None);
+                    }
+                },
+                async () =>
+                {
+                    FailedUserLoginEvent failedUserLoginEvent = new FailedUserLoginEvent(request.Request.Username,
+                        LoginError.UnknownError.ToString(), request.DeviceDescription, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedUserLoginEvent, CancellationToken.None);
+                });
     }
     
     private readonly struct ValidLoginRequest(
@@ -135,9 +164,9 @@ internal sealed class UserLoginCommandHandler
         return new ValidLoginRequest(validUsername, validVersionedPasswords, request.RefreshTokenType);
     }
 
-    private async Task<Either<LoginError, UserEntity>> FetchUserAsync(ValidLoginRequest validLoginRequest)
+    private async Task<Either<LoginError, Unit>> FetchUserAsync(ValidLoginRequest validLoginRequest)
     {
-        UserEntity? userEntity = await _dataContext.Users
+        _foundUserEntity = await _dataContext.Users
             .Where(x => x.Username == validLoginRequest.Username.Value)
             .Include(x => x.FailedLoginAttempts)
             .Include(x => x.Consents!.Where(y => y.Active == true))
@@ -145,20 +174,20 @@ internal sealed class UserLoginCommandHandler
             .Include(x => x.KeyPair)
             .FirstOrDefaultAsync();
 
-        if (userEntity is null)
+        if (_foundUserEntity is null)
         {
             return LoginError.InvalidUsername;
         }
 
-        if (userEntity.FailedLoginAttempts!.Count >= MaximumFailedLoginAttempts)
+        if (_foundUserEntity.FailedLoginAttempts!.Count >= MaximumFailedLoginAttempts)
         {
             return LoginError.ExcessiveFailedLoginAttempts;
         }
 
-        return userEntity;
+        return Unit.Default;
     }
     
-    private async Task<Either<LoginError, Unit>> VerifyAndUpgradePasswordAsync(
+    private Either<LoginError, Unit> VerifyAndUpgradePassword(
         ValidLoginRequest validLoginRequest,
         UserEntity userEntity)
     {
@@ -181,7 +210,6 @@ internal sealed class UserLoginCommandHandler
                                       userEntity.ServerPasswordVersion);
         if (!isMatchingPassword)
         {
-            await PublishIncorrectPasswordProvidedEventAsync(userEntity.Id);
             return LoginError.InvalidPassword;
         }
 
@@ -212,6 +240,7 @@ internal sealed class UserLoginCommandHandler
     private async Task<LoginResponse> CreateLoginResponseAsync(UserEntity userEntity, TokenType refreshTokenType, string deviceDescription)
     {
         userEntity.LastLogin = DateTime.UtcNow;
+        
         RefreshTokenData refreshToken = _refreshTokenProviderMap[refreshTokenType].Invoke(userEntity.Id);
         UserTokenEntity tokenEntity = new UserTokenEntity(
             refreshToken.TokenId, 
@@ -220,11 +249,11 @@ internal sealed class UserLoginCommandHandler
             refreshTokenType,
             refreshToken.Created,
             refreshToken.Expiration);
+        
         _dataContext.UserTokens.Add(tokenEntity);
-                
-        string authToken = _tokenService.NewAuthenticationToken(userEntity.Id);
-
         await _dataContext.SaveChangesAsync();
+        
+        string authToken = _tokenService.NewAuthenticationToken(userEntity.Id);
         await Common.PublishRefreshTokenCreatedEventAsync(_publisher, refreshToken);
 
         bool userHasConsentedToRecoveryKeyRisks =
@@ -233,12 +262,5 @@ internal sealed class UserLoginCommandHandler
 
         return new LoginResponse(userEntity.Username, authToken, refreshToken.Token, userNeedsNewKeys,
             !userHasConsentedToRecoveryKeyRisks);
-    }
-    
-    private async Task PublishIncorrectPasswordProvidedEventAsync(Guid userId)
-    {
-        IncorrectPasswordProvidedEvent incorrectPasswordProvidedEvent =
-            new IncorrectPasswordProvidedEvent(userId);
-        await _publisher.Publish(incorrectPasswordProvidedEvent, CancellationToken.None);
     }
 }
