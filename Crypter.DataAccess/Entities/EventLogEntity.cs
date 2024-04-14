@@ -74,6 +74,8 @@ public enum EventLogType
     UserLoginFailure,
     TransferUploadSuccess,
     TransferUploadFailure,
+    TransferPreviewSuccess,
+    TransferPreviewFailure,
     TransferDownloadSuccess,
     TransferDownloadFailure
 }

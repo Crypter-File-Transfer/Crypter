@@ -36,25 +36,25 @@ using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.EventLog.Commands;
 
-public sealed record LogSuccessfulTransferUploadCommand(Guid ItemId, TransferItemType ItemType, long Size, Guid? Sender, string? Recipient, DateTimeOffset Timestamp) : IRequest<Unit>;
+public sealed record LogSuccessfulTransferPreviewCommand(Guid ItemId, TransferItemType ItemType, Guid? UserId, DateTimeOffset Timestamp) : IRequest<Unit>;
 
-internal sealed class LogSuccessfulTransferUploadCommandHandler : IRequestHandler<LogSuccessfulTransferUploadCommand, Unit>
+internal sealed class LogSuccessfulTransferPreviewCommandHandler : IRequestHandler<LogSuccessfulTransferPreviewCommand, Unit>
 {
     private readonly DataContext _dataContext;
 
-    public LogSuccessfulTransferUploadCommandHandler(DataContext dataContext)
+    public LogSuccessfulTransferPreviewCommandHandler(DataContext dataContext)
     {
         _dataContext = dataContext;
     }
-    
-    public async Task<Unit> Handle(LogSuccessfulTransferUploadCommand request, CancellationToken cancellationToken)
+
+    public async Task<Unit> Handle(LogSuccessfulTransferPreviewCommand request, CancellationToken cancellationToken)
     {
-        SuccessfulTransferUploadAdditionalData additionalData = new SuccessfulTransferUploadAdditionalData(request.ItemId, request.ItemType, request.Size, request.Sender, request.Recipient);
-        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferUploadSuccess, additionalData, request.Timestamp);
+        SuccessfulTransferPreviewAdditionalData additionalData = new SuccessfulTransferPreviewAdditionalData(request.ItemId, request.ItemType, request.UserId);
+        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferPreviewSuccess, additionalData, request.Timestamp);
 
         _dataContext.EventLogs.Add(logEntity);
         await _dataContext.SaveChangesAsync(CancellationToken.None);
-        
+
         return Unit.Default;
     }
 }

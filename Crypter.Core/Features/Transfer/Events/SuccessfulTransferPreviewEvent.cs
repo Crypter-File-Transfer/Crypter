@@ -28,33 +28,30 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
-using Crypter.DataAccess;
-using Crypter.DataAccess.Entities;
-using Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
+using Crypter.Core.Services;
+using Hangfire;
 using MediatR;
-using Unit = EasyMonads.Unit;
 
-namespace Crypter.Core.Features.EventLog.Commands;
+namespace Crypter.Core.Features.Transfer.Events;
 
-public sealed record LogSuccessfulTransferUploadCommand(Guid ItemId, TransferItemType ItemType, long Size, Guid? Sender, string? Recipient, DateTimeOffset Timestamp) : IRequest<Unit>;
+public sealed record SuccessfulTransferPreviewEvent(Guid ItemId, TransferItemType ItemType, Guid? UserId, DateTimeOffset Timestamp) : INotification;
 
-internal sealed class LogSuccessfulTransferUploadCommandHandler : IRequestHandler<LogSuccessfulTransferUploadCommand, Unit>
+internal sealed class SuccessfulTransferPreviewEventHandler : INotificationHandler<SuccessfulTransferPreviewEvent>
 {
-    private readonly DataContext _dataContext;
-
-    public LogSuccessfulTransferUploadCommandHandler(DataContext dataContext)
-    {
-        _dataContext = dataContext;
-    }
+    private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly IHangfireBackgroundService _hangfireBackgroundService;
     
-    public async Task<Unit> Handle(LogSuccessfulTransferUploadCommand request, CancellationToken cancellationToken)
+    public SuccessfulTransferPreviewEventHandler(
+        IBackgroundJobClient backgroundJobClient,
+        IHangfireBackgroundService hangfireBackgroundService)
     {
-        SuccessfulTransferUploadAdditionalData additionalData = new SuccessfulTransferUploadAdditionalData(request.ItemId, request.ItemType, request.Size, request.Sender, request.Recipient);
-        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferUploadSuccess, additionalData, request.Timestamp);
+        _backgroundJobClient = backgroundJobClient;
+        _hangfireBackgroundService = hangfireBackgroundService;
+    }
 
-        _dataContext.EventLogs.Add(logEntity);
-        await _dataContext.SaveChangesAsync(CancellationToken.None);
-        
-        return Unit.Default;
+    public Task Handle(SuccessfulTransferPreviewEvent notification, CancellationToken cancellationToken)
+    {
+        _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.LogSuccessfulTransferPreviewAsync(notification.ItemId, notification.ItemType, notification.UserId, notification.Timestamp));
+        return Task.CompletedTask;
     }
 }
