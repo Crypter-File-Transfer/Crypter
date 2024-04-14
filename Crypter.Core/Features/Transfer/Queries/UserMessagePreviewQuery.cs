@@ -30,11 +30,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
+using Crypter.Core.Features.Transfer.Events;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
 using Crypter.DataAccess;
 using EasyMonads;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer.Queries;
@@ -47,12 +49,14 @@ internal class UserMessagePreviewQueryHandler
 {
     private readonly DataContext _dataContext;
     private readonly IHashIdService _hashIdService;
+    private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
 
-    public UserMessagePreviewQueryHandler(DataContext dataContext, IHashIdService hashIdService, ITransferRepository transferRepository)
+    public UserMessagePreviewQueryHandler(DataContext dataContext, IHashIdService hashIdService, IPublisher publisher, ITransferRepository transferRepository)
     {
         _dataContext = dataContext;
         _hashIdService = hashIdService;
+        _publisher = publisher;
         _transferRepository = transferRepository;
     }
 
@@ -61,10 +65,10 @@ internal class UserMessagePreviewQueryHandler
         Guid? nullableRequestorUserId = request.RequestorId
             .Match<Guid?>(() => null, x => x);
 
-        Guid id = _hashIdService.Decode(request.HashId);
+        Guid itemId = _hashIdService.Decode(request.HashId);
 
         MessageTransferPreviewResponse? messagePreview = await _dataContext.UserMessageTransfers
-            .Where(x => x.Id == id)
+            .Where(x => x.Id == itemId)
             .Where(x => x.RecipientId == null || x.RecipientId == nullableRequestorUserId)
             .Select(x => new MessageTransferPreviewResponse(
                 x.Subject,
@@ -86,12 +90,15 @@ internal class UserMessagePreviewQueryHandler
         }
         
         bool ciphertextExists =
-            _transferRepository.TransferExists(id, TransferItemType.Message, TransferUserType.User);
+            _transferRepository.TransferExists(itemId, TransferItemType.Message, TransferUserType.User);
         
         if (!ciphertextExists)
         {
             return TransferPreviewError.NotFound;
         }
+        
+        SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId, TransferItemType.Message, nullableRequestorUserId, DateTimeOffset.UtcNow);
+        await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
         
         return messagePreview;
     }

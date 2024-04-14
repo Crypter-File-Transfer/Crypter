@@ -30,11 +30,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
+using Crypter.Core.Features.Transfer.Events;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
 using Crypter.DataAccess;
 using EasyMonads;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer.Queries;
@@ -47,20 +49,22 @@ internal class AnonymousFilePreviewQueryHandler
 {
     private readonly DataContext _dataContext;
     private readonly IHashIdService _hashIdService;
+    private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
     
-    public AnonymousFilePreviewQueryHandler(DataContext dataContext, IHashIdService hashIdService, ITransferRepository transferRepository)
+    public AnonymousFilePreviewQueryHandler(DataContext dataContext, IHashIdService hashIdService, IPublisher publisher, ITransferRepository transferRepository)
     {
         _dataContext = dataContext;
         _hashIdService = hashIdService;
+        _publisher = publisher;
         _transferRepository = transferRepository;
     }
     
     public async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> Handle(AnonymousFilePreviewQuery request, CancellationToken cancellationToken)
     {
-        Guid id = _hashIdService.Decode(request.HashId);
+        Guid itemId = _hashIdService.Decode(request.HashId);
         FileTransferPreviewResponse? filePreview = await _dataContext.AnonymousFileTransfers
-            .Where(x => x.Id == id)
+            .Where(x => x.Id == itemId)
             .Select(x => new FileTransferPreviewResponse(
                 x.FileName,
                 x.ContentType,
@@ -80,12 +84,15 @@ internal class AnonymousFilePreviewQueryHandler
         }
         
         bool ciphertextExists =
-            _transferRepository.TransferExists(id, TransferItemType.File, TransferUserType.Anonymous);
+            _transferRepository.TransferExists(itemId, TransferItemType.File, TransferUserType.Anonymous);
         
         if (!ciphertextExists)
         {
             return TransferPreviewError.NotFound;
         }
+
+        SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId, TransferItemType.File, null, DateTimeOffset.UtcNow);
+        await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
         
         return filePreview;
     }

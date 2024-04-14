@@ -30,9 +30,7 @@ using Crypter.Common.Infrastructure;
 
 namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 
-public sealed record SuccessfulTransferUploadAdditionalData(
+public sealed record SuccessfulTransferPreviewAdditionalData(
     Guid ItemId,
     [property: JsonConverter(typeof(JsonEnumConverter<TransferItemType>))] TransferItemType ItemType,
-    [property: JsonConverter(typeof(LongStringConverter))] long Size,
-    Guid? Sender,
-    string? Recipient);
+    Guid? User);

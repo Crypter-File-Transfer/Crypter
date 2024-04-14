@@ -30,11 +30,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
+using Crypter.Core.Features.Transfer.Events;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
 using Crypter.DataAccess;
 using EasyMonads;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer.Queries;
@@ -47,20 +49,22 @@ internal class AnonymousMessagePreviewQueryHandler
 {
     private readonly DataContext _dataContext;
     private readonly IHashIdService _hashIdService;
+    private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
 
-    public AnonymousMessagePreviewQueryHandler(DataContext dataContext, IHashIdService hashIdService, ITransferRepository transferRepository)
+    public AnonymousMessagePreviewQueryHandler(DataContext dataContext, IHashIdService hashIdService, IPublisher publisher, ITransferRepository transferRepository)
     {
         _dataContext = dataContext;
         _hashIdService = hashIdService;
+        _publisher = publisher;
         _transferRepository = transferRepository;
     }
     
     public async Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> Handle(AnonymousMessagePreviewQuery request, CancellationToken cancellationToken)
     {
-        Guid id = _hashIdService.Decode(request.HashId);
+        Guid itemId = _hashIdService.Decode(request.HashId);
         MessageTransferPreviewResponse? messagePreview = await _dataContext.AnonymousMessageTransfers
-            .Where(x => x.Id == id)
+            .Where(x => x.Id == itemId)
             .Select(x => new MessageTransferPreviewResponse(
                 x.Subject,
                 x.Size, 
@@ -79,13 +83,16 @@ internal class AnonymousMessagePreviewQueryHandler
         }
         
         bool ciphertextExists = _transferRepository
-            .TransferExists(id, TransferItemType.Message, TransferUserType.Anonymous);
+            .TransferExists(itemId, TransferItemType.Message, TransferUserType.Anonymous);
 
         if (!ciphertextExists)
         {
             return TransferPreviewError.NotFound;
         }
 
+        SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId, TransferItemType.Message, null, DateTimeOffset.UtcNow);
+        await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
+        
         return messagePreview;
     }
 }
