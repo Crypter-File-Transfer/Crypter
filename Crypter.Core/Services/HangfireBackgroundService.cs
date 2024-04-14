@@ -78,7 +78,7 @@ public interface IHangfireBackgroundService
     Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, RegistrationError reason, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> LogSuccessfulUserLoginAsync(Guid userId, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> LogFailedUserLoginAsync(string username, LoginError reason, string deviceDescription, DateTimeOffset timestamp);
-    Task<Unit> LogSuccessfulTransferUploadAsync(TransferItemType itemType, long size, Guid? sender, string? recipient, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulTransferUploadAsync(Guid itemId, TransferItemType itemType, long size, Guid? sender, string? recipient, DateTimeOffset timestamp);
     Task<Unit> LogFailedTransferUploadAsync(TransferItemType itemType, UploadTransferError reason, Guid? sender, string? recipient, DateTimeOffset timestamp);
 }
 
@@ -223,9 +223,9 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return _sender.Send(request);
     }
 
-    public Task<Unit> LogSuccessfulTransferUploadAsync(TransferItemType itemType, long size, Guid? sender, string? recipient, DateTimeOffset timestamp)
+    public Task<Unit> LogSuccessfulTransferUploadAsync(Guid itemId, TransferItemType itemType, long size, Guid? sender, string? recipient, DateTimeOffset timestamp)
     {
-        LogSuccessfulTransferUploadCommand request = new LogSuccessfulTransferUploadCommand(itemType, size, sender, recipient, timestamp);
+        LogSuccessfulTransferUploadCommand request = new LogSuccessfulTransferUploadCommand(itemId, itemType, size, sender, recipient, timestamp);
         return _sender.Send(request);
     }
 

@@ -31,6 +31,7 @@ using Crypter.Common.Infrastructure;
 namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 
 public sealed record SuccessfulTransferUploadAdditionalData(
+    Guid ItemId,
     [property: JsonConverter(typeof(JsonEnumConverter<TransferItemType>))] TransferItemType ItemType,
     [property: JsonConverter(typeof(LongStringConverter))] long Size,
     Guid? Sender,
