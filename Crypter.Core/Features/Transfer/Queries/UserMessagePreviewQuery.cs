@@ -41,7 +41,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer.Queries;
 
-public sealed record UserMessagePreviewQuery(string HashId, Maybe<Guid> RequestorId)
+public sealed record UserMessagePreviewQuery(string HashId, Maybe<Guid> RequesterId)
     : IEitherRequest<TransferPreviewError, MessageTransferPreviewResponse>;
 
 internal class UserMessagePreviewQueryHandler
@@ -62,14 +62,37 @@ internal class UserMessagePreviewQueryHandler
 
     public async Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> Handle(UserMessagePreviewQuery request, CancellationToken cancellationToken)
     {
-        Guid? nullableRequestorUserId = request.RequestorId
+        Guid itemId = _hashIdService.Decode(request.HashId);
+        
+        Guid? nullableRequesterUserId = request.RequesterId
             .Match<Guid?>(() => null, x => x);
 
-        Guid itemId = _hashIdService.Decode(request.HashId);
+        return await GetUserMessagePreviewAsync(itemId, nullableRequesterUserId)
+            .DoRightAsync(async _ =>
+            {
+                SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId, TransferItemType.Message, nullableRequesterUserId, DateTimeOffset.UtcNow);
+                await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
+            })
+            .DoLeftOrNeitherAsync(
+                async error =>
+                {
+                    FailedTransferPreviewEvent failedTransferPreviewEvent =
+                        new FailedTransferPreviewEvent(itemId, TransferItemType.Message, nullableRequesterUserId, error, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedTransferPreviewEvent, CancellationToken.None);
+                },
+                async () =>
+                {
+                    FailedTransferPreviewEvent failedTransferPreviewEvent =
+                        new FailedTransferPreviewEvent(itemId, TransferItemType.Message, nullableRequesterUserId, TransferPreviewError.UnknownError, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedTransferPreviewEvent, CancellationToken.None);
+                });
+    }
 
+    private async Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetUserMessagePreviewAsync(Guid itemId, Guid? requesterUserId)
+    {
         MessageTransferPreviewResponse? messagePreview = await _dataContext.UserMessageTransfers
             .Where(x => x.Id == itemId)
-            .Where(x => x.RecipientId == null || x.RecipientId == nullableRequestorUserId)
+            .Where(x => x.RecipientId == null || x.RecipientId == requesterUserId)
             .Select(x => new MessageTransferPreviewResponse(
                 x.Subject,
                 x.Size,
@@ -82,7 +105,7 @@ internal class UserMessagePreviewQueryHandler
                 x.KeyExchangeNonce,
                 x.Created,
                 x.Expiration))
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(CancellationToken.None);
 
         if (messagePreview is null)
         {
@@ -96,10 +119,7 @@ internal class UserMessagePreviewQueryHandler
         {
             return TransferPreviewError.NotFound;
         }
-        
-        SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId, TransferItemType.Message, nullableRequestorUserId, DateTimeOffset.UtcNow);
-        await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
-        
+
         return messagePreview;
     }
 }

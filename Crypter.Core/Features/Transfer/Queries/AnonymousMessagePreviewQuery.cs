@@ -63,6 +63,31 @@ internal class AnonymousMessagePreviewQueryHandler
     public async Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> Handle(AnonymousMessagePreviewQuery request, CancellationToken cancellationToken)
     {
         Guid itemId = _hashIdService.Decode(request.HashId);
+        return await GetAnonymousMessagePreviewAsync(itemId)
+            .DoRightAsync(
+            async _ =>
+            {
+                SuccessfulTransferPreviewEvent successfulTransferPreviewEvent =
+                    new SuccessfulTransferPreviewEvent(itemId, TransferItemType.Message, null, DateTimeOffset.UtcNow);
+                await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
+            })
+            .DoLeftOrNeitherAsync(
+                async error =>
+                {
+                    FailedTransferPreviewEvent failedTransferPreviewEvent =
+                        new FailedTransferPreviewEvent(itemId, TransferItemType.Message, null, error, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedTransferPreviewEvent, CancellationToken.None);
+                },
+                async () =>
+                {
+                    FailedTransferPreviewEvent failedTransferPreviewEvent =
+                        new FailedTransferPreviewEvent(itemId, TransferItemType.Message, null, TransferPreviewError.UnknownError, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedTransferPreviewEvent, CancellationToken.None);
+                });
+    }
+
+    private async Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> GetAnonymousMessagePreviewAsync(Guid itemId)
+    {
         MessageTransferPreviewResponse? messagePreview = await _dataContext.AnonymousMessageTransfers
             .Where(x => x.Id == itemId)
             .Select(x => new MessageTransferPreviewResponse(
@@ -75,7 +100,7 @@ internal class AnonymousMessagePreviewQueryHandler
                 x.KeyExchangeNonce, 
                 x.Created,
                 x.Expiration))
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(CancellationToken.None);
 
         if (messagePreview is null)
         {
@@ -90,9 +115,6 @@ internal class AnonymousMessagePreviewQueryHandler
             return TransferPreviewError.NotFound;
         }
 
-        SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId, TransferItemType.Message, null, DateTimeOffset.UtcNow);
-        await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
-        
         return messagePreview;
     }
 }

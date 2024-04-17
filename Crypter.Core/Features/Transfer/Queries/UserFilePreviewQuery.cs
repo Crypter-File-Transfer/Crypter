@@ -41,7 +41,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer.Queries;
 
-public sealed record UserFilePreviewQuery(string HashId, Maybe<Guid> RequestorId)
+public sealed record UserFilePreviewQuery(string HashId, Maybe<Guid> RequesterId)
     : IEitherRequest<TransferPreviewError, FileTransferPreviewResponse>;
 
 internal class UserFilePreviewQueryHandler
@@ -62,14 +62,37 @@ internal class UserFilePreviewQueryHandler
     
     public async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> Handle(UserFilePreviewQuery request, CancellationToken cancellationToken)
     {
-        Guid? nullableRequestorUserId = request.RequestorId
+        Guid itemId = _hashIdService.Decode(request.HashId);
+        
+        Guid? nullableRequesterUserId = request.RequesterId
             .Match<Guid?>(() => null, x => x);
 
-        Guid itemId = _hashIdService.Decode(request.HashId);
+        return await GetUserFilePreviewAsync(itemId, nullableRequesterUserId)
+            .DoRightAsync(async _ =>
+            {
+                SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId, TransferItemType.File, nullableRequesterUserId, DateTimeOffset.UtcNow);
+                await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
+            })
+            .DoLeftOrNeitherAsync(
+                async error =>
+                {
+                    FailedTransferPreviewEvent failedTransferPreviewEvent =
+                        new FailedTransferPreviewEvent(itemId, TransferItemType.File, nullableRequesterUserId, error, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedTransferPreviewEvent, CancellationToken.None);
+                },
+                async () =>
+                {
+                    FailedTransferPreviewEvent failedTransferPreviewEvent =
+                        new FailedTransferPreviewEvent(itemId, TransferItemType.File, nullableRequesterUserId, TransferPreviewError.UnknownError, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedTransferPreviewEvent, CancellationToken.None);
+                });
+    }
 
+    private async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetUserFilePreviewAsync(Guid itemId, Guid? requesterUserId)
+    {
         FileTransferPreviewResponse? filePreview = await _dataContext.UserFileTransfers
             .Where(x => x.Id == itemId)
-            .Where(x => x.RecipientId == null || x.RecipientId == nullableRequestorUserId)
+            .Where(x => x.RecipientId == null || x.RecipientId == requesterUserId)
             .Select(x => new FileTransferPreviewResponse(
                 x.FileName,
                 x.ContentType,
@@ -83,7 +106,7 @@ internal class UserFilePreviewQueryHandler
                 x.KeyExchangeNonce,
                 x.Created,
                 x.Expiration))
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(CancellationToken.None);
 
         if (filePreview is null)
         {
@@ -97,10 +120,7 @@ internal class UserFilePreviewQueryHandler
         {
             return TransferPreviewError.NotFound;
         }
-        
-        SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId, TransferItemType.File, nullableRequestorUserId, DateTimeOffset.UtcNow);
-        await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
-        
+
         return filePreview;
     }
 }
