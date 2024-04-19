@@ -28,31 +28,33 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
-using Crypter.Core.Services;
-using Hangfire;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
+using Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 using MediatR;
+using Unit = EasyMonads.Unit;
 
-namespace Crypter.Core.Features.Transfer.Events;
+namespace Crypter.Core.Features.EventLog.Commands;
 
-public sealed record SuccessfulTransferPreviewEvent(Guid ItemId, TransferItemType ItemType, Guid? UserId, DateTimeOffset Timestamp) : INotification;
+public sealed record LogSuccessfulTransferDownloadCommand(Guid ItemId, TransferItemType ItemType, Guid? User, DateTimeOffset Timestamp) : IRequest<Unit>;
 
-internal sealed class SuccessfulTransferPreviewEventHandler : INotificationHandler<SuccessfulTransferPreviewEvent>
+internal sealed class LogSuccessfulTransferDownloadCommandHandler : IRequestHandler<LogSuccessfulTransferDownloadCommand, Unit>
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly IHangfireBackgroundService _hangfireBackgroundService;
-    
-    public SuccessfulTransferPreviewEventHandler(
-        IBackgroundJobClient backgroundJobClient,
-        IHangfireBackgroundService hangfireBackgroundService)
-    {
-        _backgroundJobClient = backgroundJobClient;
-        _hangfireBackgroundService = hangfireBackgroundService;
-    }
+    private readonly DataContext _dataContext;
 
-    public Task Handle(SuccessfulTransferPreviewEvent notification, CancellationToken cancellationToken)
+    public LogSuccessfulTransferDownloadCommandHandler(DataContext dataContext)
     {
-        _backgroundJobClient.Enqueue(() => 
-            _hangfireBackgroundService.LogSuccessfulTransferPreviewAsync(notification.ItemId, notification.ItemType, notification.UserId, notification.Timestamp));
-        return Task.CompletedTask;
+        _dataContext = dataContext;
+    }
+    
+    public async Task<Unit> Handle(LogSuccessfulTransferDownloadCommand request, CancellationToken cancellationToken)
+    {
+        SuccessfulTransferDownloadAdditionalData additionalData = new SuccessfulTransferDownloadAdditionalData(request.ItemId, request.ItemType, request.User);
+        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferDownloadSuccess, additionalData, request.Timestamp);
+
+        _dataContext.EventLogs.Add(logEntity);
+        await _dataContext.SaveChangesAsync(CancellationToken.None);
+        
+        return Unit.Default;
     }
 }

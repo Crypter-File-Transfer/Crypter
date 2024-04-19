@@ -27,39 +27,36 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Core.Services;
-using EasyMonads;
 using Hangfire;
 using MediatR;
 
 namespace Crypter.Core.Features.Transfer.Events;
 
-public sealed record FailedTransferUploadEvent(TransferItemType ItemType, UploadTransferError Reason, Maybe<Guid> Sender, Maybe<string> Recipient, DateTimeOffset Timestamp) : INotification;
+public sealed record SuccessfulTransferDownloadEvent(Guid ItemId, TransferItemType ItemType, TransferUserType UserType, Guid? UserId, bool DeleteItemFromTransferRepository, DateTimeOffset Timestamp) : INotification;
 
-internal sealed class FailedTransferUploadEventHandler : INotificationHandler<FailedTransferUploadEvent>
+internal sealed class SuccessfulTransferDownloadEventHandler : INotificationHandler<SuccessfulTransferDownloadEvent>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
     
-    public FailedTransferUploadEventHandler(
+    public SuccessfulTransferDownloadEventHandler(
         IBackgroundJobClient backgroundJobClient,
         IHangfireBackgroundService hangfireBackgroundService)
     {
         _backgroundJobClient = backgroundJobClient;
         _hangfireBackgroundService = hangfireBackgroundService;
     }
-    
-    public Task Handle(FailedTransferUploadEvent notification, CancellationToken cancellationToken)
+
+    public Task Handle(SuccessfulTransferDownloadEvent notification, CancellationToken cancellationToken)
     {
-        Guid? senderId = notification.Sender
-            .Match((Guid?)null, x => x);
-        string? recipient = notification.Recipient
-            .Match((string?)null, x => x);
+        _backgroundJobClient.Enqueue(() =>
+            _hangfireBackgroundService.DeleteTransferAsync(notification.ItemId, notification.ItemType, notification.UserType, notification.DeleteItemFromTransferRepository));
         
-        _backgroundJobClient.Enqueue(() => 
-            _hangfireBackgroundService.LogFailedTransferUploadAsync(notification.ItemType, notification.Reason, senderId, recipient, notification.Timestamp));
+        _backgroundJobClient.Enqueue(() =>
+            _hangfireBackgroundService.LogSuccessfulTransferDownloadAsync(notification.ItemId, notification.ItemType, notification.UserId, notification.Timestamp));
+        
         return Task.CompletedTask;
     }
 }

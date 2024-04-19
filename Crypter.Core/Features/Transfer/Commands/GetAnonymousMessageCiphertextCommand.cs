@@ -31,13 +31,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
+using Crypter.Core.Features.Transfer.Events;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
 using Crypter.Crypto.Common;
 using Crypter.DataAccess;
 using EasyMonads;
-using Hangfire;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer.Commands;
@@ -48,39 +49,36 @@ public sealed record GetAnonymousMessageCiphertextCommand(string HashId, byte[] 
 internal class GetAnonymousMessageCiphertextCommandHandler
     : IEitherRequestHandler<GetAnonymousMessageCiphertextCommand, DownloadTransferCiphertextError, FileStream>
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly ICryptoProvider _cryptoProvider;
     private readonly DataContext _dataContext;
-    private readonly IHangfireBackgroundService _hangfireBackgroundService;
     private readonly IHashIdService _hashIdService;
+    private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
 
     public GetAnonymousMessageCiphertextCommandHandler(
-        IBackgroundJobClient backgroundJobClient,
         ICryptoProvider cryptoProvider,
         DataContext dataContext,
-        IHangfireBackgroundService hangfireBackgroundService,
         IHashIdService hashIdService,
+        IPublisher publisher,
         ITransferRepository transferRepository)
     {
-        _backgroundJobClient = backgroundJobClient;
         _cryptoProvider = cryptoProvider;
         _dataContext = dataContext;
-        _hangfireBackgroundService = hangfireBackgroundService;
         _hashIdService = hashIdService;
+        _publisher = publisher;
         _transferRepository = transferRepository;
     }
     
     public async Task<Either<DownloadTransferCiphertextError, FileStream>> Handle(GetAnonymousMessageCiphertextCommand request, CancellationToken cancellationToken)
     {
-        Guid id = _hashIdService.Decode(request.HashId);
+        Guid itemId = _hashIdService.Decode(request.HashId);
         var databaseData = await _dataContext.AnonymousMessageTransfers
-            .Where(x => x.Id == id)
+            .Where(x => x.Id == itemId)
             .Select(x => new { x.Proof })
             .FirstOrDefaultAsync(CancellationToken.None);
 
         bool ciphertextExists =
-            _transferRepository.TransferExists(id, TransferItemType.Message, TransferUserType.Anonymous);
+            _transferRepository.TransferExists(itemId, TransferItemType.Message, TransferUserType.Anonymous);
         if (databaseData is null || !ciphertextExists)
         {
             return DownloadTransferCiphertextError.NotFound;
@@ -91,12 +89,14 @@ internal class GetAnonymousMessageCiphertextCommandHandler
             return DownloadTransferCiphertextError.InvalidRecipientProof;
         }
 
-        const bool deleteOnReadCompletion = true;
-        return _transferRepository
-                .GetTransfer(id, TransferItemType.Message, TransferUserType.Anonymous, deleteOnReadCompletion)
-                .IfSome(_ => _backgroundJobClient
-                    .Enqueue(() => _hangfireBackgroundService
-                        .DeleteTransferAsync(id, TransferItemType.Message, TransferUserType.Anonymous, !deleteOnReadCompletion)))
-                .ToEither(DownloadTransferCiphertextError.NotFound);
+        const bool deleteFromTransferRepoUponReadCompletion = true;
+        return await _transferRepository
+            .GetTransfer(itemId, TransferItemType.Message, TransferUserType.Anonymous, deleteFromTransferRepoUponReadCompletion)
+            .IfSomeAsync(async _ =>
+            {
+                SuccessfulTransferDownloadEvent downloadEvent = new SuccessfulTransferDownloadEvent(itemId, TransferItemType.Message, TransferUserType.Anonymous, null, !deleteFromTransferRepoUponReadCompletion, DateTimeOffset.UtcNow);
+                await _publisher.Publish(downloadEvent, CancellationToken.None);
+            })
+            .ToEitherAsync(DownloadTransferCiphertextError.NotFound);
     }
 }
