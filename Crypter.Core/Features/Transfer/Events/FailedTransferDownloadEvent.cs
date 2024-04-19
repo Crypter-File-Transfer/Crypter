@@ -35,14 +35,14 @@ using MediatR;
 
 namespace Crypter.Core.Features.Transfer.Events;
 
-public sealed record FailedTransferPreviewEvent(Guid ItemId, TransferItemType ItemType, Guid? UserId, TransferPreviewError Reason, DateTimeOffset Timestamp) : INotification;
+public sealed record FailedTransferDownloadEvent(Guid ItemId, TransferItemType ItemType, Guid? UserId, DownloadTransferCiphertextError Reason, DateTimeOffset Timestamp) : INotification;
 
-internal sealed class FailedTransferPreviewEventHandler : INotificationHandler<FailedTransferPreviewEvent>
+internal sealed class FailedTransferDownloadEventHandler : INotificationHandler<FailedTransferDownloadEvent>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
     
-    public FailedTransferPreviewEventHandler(
+    public FailedTransferDownloadEventHandler(
         IBackgroundJobClient backgroundJobClient,
         IHangfireBackgroundService hangfireBackgroundService)
     {
@@ -50,10 +50,10 @@ internal sealed class FailedTransferPreviewEventHandler : INotificationHandler<F
         _hangfireBackgroundService = hangfireBackgroundService;
     }
 
-    public Task Handle(FailedTransferPreviewEvent notification, CancellationToken cancellationToken)
+    public Task Handle(FailedTransferDownloadEvent notification, CancellationToken cancellationToken)
     {
         _backgroundJobClient.Enqueue(() =>
-            _hangfireBackgroundService.LogFailedTransferPreviewAsync(notification.ItemId, notification.ItemType, notification.UserId, notification.Reason, notification.Timestamp));
+            _hangfireBackgroundService.LogFailedTransferDownloadAsync(notification.ItemId, notification.ItemType, notification.UserId, notification.Reason, notification.Timestamp));
         return Task.CompletedTask;
     }
 }

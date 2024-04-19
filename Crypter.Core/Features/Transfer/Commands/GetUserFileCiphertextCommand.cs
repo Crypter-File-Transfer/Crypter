@@ -43,7 +43,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer.Commands;
 
-public sealed record GetUserFileCiphertextCommand(string HashId, byte[] Proof, Maybe<Guid> RequestorId)
+public sealed record GetUserFileCiphertextCommand(string HashId, byte[] Proof, Maybe<Guid> RequesterId)
     : IEitherRequest<DownloadTransferCiphertextError, FileStream>;
 
 internal class GetUserFileCiphertextCommandHandler
@@ -54,6 +54,8 @@ internal class GetUserFileCiphertextCommandHandler
     private readonly IHashIdService _hashIdService;
     private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
+
+    private bool _transferHasRecipient;
     
     public GetUserFileCiphertextCommandHandler(
         ICryptoProvider cryptoProvider,
@@ -71,35 +73,56 @@ internal class GetUserFileCiphertextCommandHandler
 
     public async Task<Either<DownloadTransferCiphertextError, FileStream>> Handle(GetUserFileCiphertextCommand request, CancellationToken cancellationToken)
     {
-        Guid? nullableRequesterUserId = request.RequestorId
-            .Match<Guid?>(() => null, x => x);
-
         Guid itemId = _hashIdService.Decode(request.HashId);
+        Guid? nullableRequesterUserId = request.RequesterId
+            .Match<Guid?>(() => null, x => x);
+        
+        return await GetFileStreamAsync(itemId, nullableRequesterUserId, request.Proof)
+            .DoRightAsync(async _ =>
+            {
+                SuccessfulTransferDownloadEvent downloadEvent = new SuccessfulTransferDownloadEvent(itemId, TransferItemType.File, TransferUserType.User, nullableRequesterUserId, !_transferHasRecipient, DateTimeOffset.UtcNow);
+                await _publisher.Publish(downloadEvent, CancellationToken.None);
+            })
+            .DoLeftOrNeitherAsync(
+                async error =>
+                {
+                    FailedTransferDownloadEvent failedTransferDownloadEvent = new FailedTransferDownloadEvent(itemId, TransferItemType.File, nullableRequesterUserId, error, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedTransferDownloadEvent, CancellationToken.None);
+                },
+                async () =>
+                {
+                    FailedTransferDownloadEvent failedTransferDownloadEvent = new FailedTransferDownloadEvent(itemId, TransferItemType.File, nullableRequesterUserId, DownloadTransferCiphertextError.UnknownError, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedTransferDownloadEvent, CancellationToken.None);
+                });
+    }
+
+    private async Task<Either<DownloadTransferCiphertextError, FileStream>> GetFileStreamAsync(Guid itemId, Guid? requesterId, byte[] requestProof)
+    {
         var databaseData = await _dataContext.UserFileTransfers
             .Where(x => x.Id == itemId)
-            .Where(x => x.RecipientId == null || x.RecipientId == nullableRequesterUserId)
+            .Where(x => x.RecipientId == null || x.RecipientId == requesterId)
             .Select(x => new { x.RecipientId, x.Proof })
             .FirstOrDefaultAsync(CancellationToken.None);
 
-        bool ciphertextExists = _transferRepository.TransferExists(itemId, TransferItemType.File, TransferUserType.User);
-        if (databaseData is null || !ciphertextExists)
+        if (databaseData is null)
         {
             return DownloadTransferCiphertextError.NotFound;
         }
-
-        if (!_cryptoProvider.ConstantTime.Equals(databaseData.Proof, request.Proof))
+        
+        bool ciphertextExists = _transferRepository.TransferExists(itemId, TransferItemType.File, TransferUserType.User);
+        if (!ciphertextExists)
+        {
+            return DownloadTransferCiphertextError.NotFound;
+        }
+        
+        if (!_cryptoProvider.ConstantTime.Equals(databaseData.Proof, requestProof))
         {
             return DownloadTransferCiphertextError.InvalidRecipientProof;
         }
 
-        bool deleteFromTransferRepoUponReadCompletion = !databaseData.RecipientId.HasValue;
-        return await _transferRepository
-            .GetTransfer(itemId, TransferItemType.File, TransferUserType.User, deleteFromTransferRepoUponReadCompletion)
-            .IfSomeAsync(async _ =>
-            {
-                SuccessfulTransferDownloadEvent downloadEvent = new SuccessfulTransferDownloadEvent(itemId, TransferItemType.File, TransferUserType.User, nullableRequesterUserId, !deleteFromTransferRepoUponReadCompletion, DateTimeOffset.UtcNow);
-                await _publisher.Publish(downloadEvent, CancellationToken.None);
-            })
-            .ToEitherAsync(DownloadTransferCiphertextError.NotFound);
+        _transferHasRecipient = !databaseData.RecipientId.HasValue;
+        return _transferRepository
+            .GetTransfer(itemId, TransferItemType.File, TransferUserType.User, !_transferHasRecipient)
+            .ToEither(DownloadTransferCiphertextError.NotFound);
     }
 }
