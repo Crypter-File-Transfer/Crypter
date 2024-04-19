@@ -29,31 +29,33 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
-using Crypter.Core.Services;
-using Hangfire;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
+using Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 using MediatR;
+using Unit = EasyMonads.Unit;
 
-namespace Crypter.Core.Features.Transfer.Events;
+namespace Crypter.Core.Features.EventLog.Commands;
 
-public sealed record FailedTransferPreviewEvent(Guid ItemId, TransferItemType ItemType, Guid? UserId, TransferPreviewError Reason, DateTimeOffset Timestamp) : INotification;
+public sealed record LogFailedTransferDownloadCommand(Guid ItemId, TransferItemType ItemType, Guid? UserId, DownloadTransferCiphertextError Reason, DateTimeOffset Timestamp) : IRequest<Unit>;
 
-internal sealed class FailedTransferPreviewEventHandler : INotificationHandler<FailedTransferPreviewEvent>
+internal sealed class LogFailedTransferDownloadCommandHandler : IRequestHandler<LogFailedTransferDownloadCommand, Unit>
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly IHangfireBackgroundService _hangfireBackgroundService;
+    private readonly DataContext _dataContext;
     
-    public FailedTransferPreviewEventHandler(
-        IBackgroundJobClient backgroundJobClient,
-        IHangfireBackgroundService hangfireBackgroundService)
+    public LogFailedTransferDownloadCommandHandler(DataContext dataContext)
     {
-        _backgroundJobClient = backgroundJobClient;
-        _hangfireBackgroundService = hangfireBackgroundService;
+        _dataContext = dataContext;
     }
-
-    public Task Handle(FailedTransferPreviewEvent notification, CancellationToken cancellationToken)
+    
+    public async Task<Unit> Handle(LogFailedTransferDownloadCommand request, CancellationToken cancellationToken)
     {
-        _backgroundJobClient.Enqueue(() =>
-            _hangfireBackgroundService.LogFailedTransferPreviewAsync(notification.ItemId, notification.ItemType, notification.UserId, notification.Reason, notification.Timestamp));
-        return Task.CompletedTask;
+        FailedTransferDownloadAdditionalData additionalData = new FailedTransferDownloadAdditionalData(request.ItemId, request.ItemType, request.UserId, request.Reason);
+        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferDownloadFailure, additionalData, request.Timestamp);
+
+        _dataContext.EventLogs.Add(logEntity);
+        await _dataContext.SaveChangesAsync(CancellationToken.None);
+
+        return Unit.Default;
     }
 }
