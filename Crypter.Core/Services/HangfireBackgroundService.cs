@@ -81,6 +81,7 @@ public interface IHangfireBackgroundService
     Task<Unit> LogSuccessfulTransferUploadAsync(Guid itemId, TransferItemType itemType, long size, Guid? sender, string? recipient, DateTimeOffset timestamp);
     Task<Unit> LogFailedTransferUploadAsync(TransferItemType itemType, UploadTransferError reason, Guid? sender, string? recipient, DateTimeOffset timestamp);
     Task<Unit> LogSuccessfulTransferPreviewAsync(Guid itemId, TransferItemType itemType, Guid? userId, DateTimeOffset timestamp);
+    Task<Unit> LogFailedTransferPreviewAsync(Guid itemId, TransferItemType itemType, Guid? userId, TransferPreviewError reason, DateTimeOffset timestamp);
 }
 
 /// <summary>
@@ -239,6 +240,12 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public Task<Unit> LogSuccessfulTransferPreviewAsync(Guid itemId, TransferItemType itemType, Guid? userId, DateTimeOffset timestamp)
     {
         LogSuccessfulTransferPreviewCommand request = new LogSuccessfulTransferPreviewCommand(itemId, itemType, userId, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedTransferPreviewAsync(Guid itemId, TransferItemType itemType, Guid? userId, TransferPreviewError reason, DateTimeOffset timestamp)
+    {
+        LogFailedTransferPreviewCommand request = new LogFailedTransferPreviewCommand(itemId, itemType, userId, reason, timestamp);
         return _sender.Send(request);
     }
 }
