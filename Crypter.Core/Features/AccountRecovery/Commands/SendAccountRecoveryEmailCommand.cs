@@ -32,6 +32,7 @@ using Crypter.Common.Primitives;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
+using Crypter.Core.Services.Email;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.DigitalSignature;
 using Crypter.DataAccess;
@@ -90,20 +91,19 @@ internal sealed class SendAccountRecoveryEmailCommandHandler
         return await GenerateRecoveryParametersAsync(request.EmailAddress)
             .MatchAsync(
                 left: error => error,
-                rightAsync: async x =>
+                rightAsync: async userRecoveryParameters =>
                 {
-                    bool emailDeliverySuccess = await _emailService.SendAccountRecoveryLinkAsync(x,
-                        AccountRecoveryEmailExpirationMinutes);
+                    bool emailDeliverySuccess = await _emailService.SendAccountRecoveryEmailAsync(userRecoveryParameters, AccountRecoveryEmailExpirationMinutes);
 
                     if (!emailDeliverySuccess)
                     {
                         return SendAccountRecoveryEmailError.EmailFailure;
                     }
 
-                    await SaveRecoveryParametersAsync(x);
+                    await SaveRecoveryParametersAsync(userRecoveryParameters);
 
-                    DateTime recoveryExpiration = x.Created.DateTime.AddMinutes(AccountRecoveryEmailExpirationMinutes);
-                    _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteRecoveryParametersAsync(x.UserId),
+                    DateTime recoveryExpiration = userRecoveryParameters.Created.DateTime.AddMinutes(AccountRecoveryEmailExpirationMinutes);
+                    _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteRecoveryParametersAsync(userRecoveryParameters.UserId),
                         recoveryExpiration);
 
                     return Maybe<SendAccountRecoveryEmailError>.None;

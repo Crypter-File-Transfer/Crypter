@@ -26,7 +26,7 @@
 
 using System.Threading.Tasks;
 using Crypter.Common.Primitives;
-using Crypter.Core.Services;
+using Crypter.Core.Services.Email;
 using Crypter.Core.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -24,11 +24,19 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
+using System;
+using Crypter.Core.Settings;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Crypter.Core.Settings;
+namespace Crypter.Core.Services.Email;
 
-public class CorsSettings
+public static class EmailServiceStartupExtensions
 {
-    public required List<string> AllowedOrigins { get; init; }
+    public static void AddEmailService(this IServiceCollection services, Action<EmailSettings> settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        services.Configure(settings);
+        services.TryAddSingleton<IEmailService, EmailService>();
+    }
 }

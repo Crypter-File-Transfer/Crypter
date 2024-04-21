@@ -34,6 +34,7 @@ using Crypter.Core.Features.AccountRecovery.Commands;
 using Crypter.Core.Features.EventLog.Commands;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Notifications.Commands;
+using Crypter.Core.Features.Reports.Commands;
 using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.UserAuthentication.Commands;
 using Crypter.Core.Features.UserEmailVerification.Commands;
@@ -73,6 +74,8 @@ public interface IHangfireBackgroundService
     Task<Unit> DeleteRecoveryParametersAsync(Guid userId);
     Task<Unit> DeleteUserKeysAsync(Guid userId);
     Task<Unit> DeleteReceivedTransfersAsync(Guid userId);
+
+    Task<Unit> SendApplicationAnalyticsReportAsync();
     
     Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, RegistrationError reason, string deviceDescription, DateTimeOffset timestamp);
@@ -107,9 +110,9 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public async Task<Unit> SendEmailVerificationAsync(Guid userId)
     {
         SendVerificationEmailCommand request = new SendVerificationEmailCommand(userId);
-        bool result = await _sender.Send(request);
+        bool success = await _sender.Send(request);
         
-        if (!result)
+        if (!success)
         {
             _logger.LogError("Failed to send verification email for user: {userId}.", userId);
             throw new HangfireJobException($"{nameof(SendEmailVerificationAsync)} failed.");
@@ -121,9 +124,9 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public async Task<Unit> SendTransferNotificationAsync(Guid itemId, TransferItemType itemType)
     {
         SendTransferNotificationCommand request = new SendTransferNotificationCommand(itemId, itemType);
-        bool result = await _sender.Send(request);
+        bool success = await _sender.Send(request);
 
-        if (!result)
+        if (!success)
         {
             _logger.LogError("Failed to send transfer notification for item: {itemId}; type: {itemType}.",
                 itemId, itemType);
@@ -200,6 +203,20 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     {
         DeleteUserReceivedTransfersCommand request = new DeleteUserReceivedTransfersCommand(userId);
         return _sender.Send(request);
+    }
+
+    public async Task<Unit> SendApplicationAnalyticsReportAsync()
+    {
+        SendApplicationsAnalyticsReportCommand request = new SendApplicationsAnalyticsReportCommand(7);
+        bool success = await _sender.Send(request);
+
+        if (!success)
+        {
+            _logger.LogError("Failed to send application analytics report.");
+            throw new HangfireJobException($"{nameof(SendApplicationAnalyticsReportAsync)} failed.");
+        }
+        
+        return Unit.Default;
     }
     
     public Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp)

@@ -28,6 +28,7 @@ using System;
 using System.Threading.Tasks;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
+using Crypter.Core.Services.Email;
 using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -76,14 +77,14 @@ public class HangfireBackgroundService_Tests
     public async Task Verification_Email_Not_Sent_Without_Verification_Parameters()
     {
         _emailServiceMock!
-            .Setup(x => x.SendEmailVerificationAsync(
+            .Setup(x => x.SendVerificationEmailAsync(
                 It.IsAny<UserEmailAddressVerificationParameters>()))
             .ReturnsAsync((UserEmailAddressVerificationParameters _) => true);
 
         HangfireBackgroundService sut = new HangfireBackgroundService(_sender!, _logger!);
         await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
-        _emailServiceMock.Verify(x => x.SendEmailVerificationAsync(It.IsAny<UserEmailAddressVerificationParameters>()),
+        _emailServiceMock.Verify(x => x.SendVerificationEmailAsync(It.IsAny<UserEmailAddressVerificationParameters>()),
             Times.Never);
     }
 
@@ -91,7 +92,7 @@ public class HangfireBackgroundService_Tests
     public async Task Recovery_Email_Not_Sent_Without_Recovery_Parameters()
     {
         _emailServiceMock!
-            .Setup(x => x.SendAccountRecoveryLinkAsync(
+            .Setup(x => x.SendAccountRecoveryEmailAsync(
                 It.IsAny<UserRecoveryParameters>(),
                 It.IsAny<int>()))
             .ReturnsAsync((UserRecoveryParameters _, int _) => true);
@@ -100,6 +101,6 @@ public class HangfireBackgroundService_Tests
         await sut.SendRecoveryEmailAsync("foo@test.com");
 
         _emailServiceMock.Verify(
-            x => x.SendAccountRecoveryLinkAsync(It.IsAny<UserRecoveryParameters>(), It.IsAny<int>()), Times.Never);
+            x => x.SendAccountRecoveryEmailAsync(It.IsAny<UserRecoveryParameters>(), It.IsAny<int>()), Times.Never);
     }
 }
