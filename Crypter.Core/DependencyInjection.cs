@@ -25,17 +25,21 @@
  */
 
 using System.Threading.Tasks;
+using Crypter.Common.Exceptions;
 using Crypter.Core.Identity;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
+using Crypter.Core.Services.Email;
 using Crypter.Core.Settings;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
 using Crypter.DataAccess;
 using Hangfire;
 using Hangfire.PostgreSql;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -44,6 +48,7 @@ namespace Crypter.Core;
 public static class DependencyInjection
 {
     public static IServiceCollection AddCrypterCore(this IServiceCollection services,
+        AnalyticsSettings analyticsSettings,
         EmailSettings emailSettings,
         HashIdSettings hashIdSettings,
         ServerPasswordSettings serverPasswordSettings,
@@ -73,7 +78,14 @@ public static class DependencyInjection
         });
 
         services.AddHashIdService(options => { options.Salt = hashIdSettings.Salt; });
-
+        
+        services.Configure<AnalyticsSettings>(options =>
+        {
+            options.EnableEmailedReports = analyticsSettings.EnableEmailedReports;
+            options.ReportRecipientEmailAddress = analyticsSettings.ReportRecipientEmailAddress;
+            options.ReportFrequencyDays = analyticsSettings.ReportFrequencyDays;
+        });
+        
         services.Configure<ServerPasswordSettings>(options =>
         {
             options.ClientVersion = serverPasswordSettings.ClientVersion;
@@ -102,12 +114,16 @@ public static class DependencyInjection
 
         return services;
     }
-
+    
     public static IServiceCollection AddBackgroundServer(this IServiceCollection services,
         HangfireSettings hangfireSettings) => services.AddHangfireServer(options => { options.WorkerCount = hangfireSettings.Workers; });
 
-    public static async Task<IApplicationBuilder> MigrateDatabaseAsync(this WebApplication webApplication, DatabaseSettings databaseSettings)
+    public static async Task<IApplicationBuilder> MigrateDatabaseAsync(this WebApplication webApplication)
     {
+        DatabaseSettings databaseSettings = webApplication.Configuration
+            .GetSection("DatabaseSettings")
+            .Get<DatabaseSettings>() ?? throw new ConfigurationException("DatabaseSettings not found");
+        
         if (databaseSettings.MigrateOnStartup)
         {
             using IServiceScope serviceScope = webApplication.Services
@@ -118,6 +134,39 @@ public static class DependencyInjection
                 .GetRequiredService<DataContext>();
             
             await context.Database.MigrateAsync();
+        }
+
+        return webApplication;
+    }
+    
+    public static IApplicationBuilder ScheduleRecurringReports(this WebApplication webApplication)
+    {
+        const string weeklyReportName = "weekly_report";
+        
+        AnalyticsSettings analyticsSettings = webApplication.Configuration
+            .GetSection("AnalyticsSettings")
+            .Get<AnalyticsSettings>() ?? throw new ConfigurationException("AnalyticsSettings not found");
+        
+        using IServiceScope serviceScope = webApplication.Services
+            .GetRequiredService<IServiceScopeFactory>()
+            .CreateScope();
+            
+        IHangfireBackgroundService hangfireBackgroundService = serviceScope.ServiceProvider
+            .GetRequiredService<IHangfireBackgroundService>();
+
+        IRecurringJobManager recurringJobManager = serviceScope.ServiceProvider
+            .GetRequiredService<IRecurringJobManager>();
+        
+        if (analyticsSettings.EnableEmailedReports)
+        {
+            recurringJobManager.AddOrUpdate(
+                weeklyReportName,
+                () => hangfireBackgroundService.SendApplicationAnalyticsReportAsync(),
+                $"0 13 */{analyticsSettings.ReportFrequencyDays} * *");
+        }
+        else
+        {
+            recurringJobManager.RemoveIfExists(weeklyReportName);
         }
 
         return webApplication;

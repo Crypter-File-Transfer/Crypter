@@ -30,36 +30,30 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Core.Services;
-using EasyMonads;
 using Hangfire;
 using MediatR;
 
 namespace Crypter.Core.Features.Transfer.Events;
 
-public sealed record FailedTransferUploadEvent(TransferItemType ItemType, UploadTransferError Reason, Maybe<Guid> Sender, Maybe<string> Recipient, DateTimeOffset Timestamp) : INotification;
+public sealed record FailedTransferPreviewEvent(Guid ItemId, TransferItemType ItemType, Guid? UserId, TransferPreviewError Reason, DateTimeOffset Timestamp) : INotification;
 
-internal sealed class FailedTransferUploadEventHandler : INotificationHandler<FailedTransferUploadEvent>
+internal sealed class FailedTransferPreviewEventHandler : INotificationHandler<FailedTransferPreviewEvent>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
     
-    public FailedTransferUploadEventHandler(
+    public FailedTransferPreviewEventHandler(
         IBackgroundJobClient backgroundJobClient,
         IHangfireBackgroundService hangfireBackgroundService)
     {
         _backgroundJobClient = backgroundJobClient;
         _hangfireBackgroundService = hangfireBackgroundService;
     }
-    
-    public Task Handle(FailedTransferUploadEvent notification, CancellationToken cancellationToken)
+
+    public Task Handle(FailedTransferPreviewEvent notification, CancellationToken cancellationToken)
     {
-        Guid? senderId = notification.Sender
-            .Match((Guid?)null, x => x);
-        string? recipient = notification.Recipient
-            .Match((string?)null, x => x);
-        
-        _backgroundJobClient.Enqueue(() => 
-            _hangfireBackgroundService.LogFailedTransferUploadAsync(notification.ItemType, notification.Reason, senderId, recipient, notification.Timestamp));
+        _backgroundJobClient.Enqueue(() =>
+            _hangfireBackgroundService.LogFailedTransferPreviewAsync(notification.ItemId, notification.ItemType, notification.UserId, notification.Reason, notification.Timestamp));
         return Task.CompletedTask;
     }
 }

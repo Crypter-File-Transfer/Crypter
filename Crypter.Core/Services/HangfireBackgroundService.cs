@@ -34,6 +34,7 @@ using Crypter.Core.Features.AccountRecovery.Commands;
 using Crypter.Core.Features.EventLog.Commands;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Notifications.Commands;
+using Crypter.Core.Features.Reports.Commands;
 using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.UserAuthentication.Commands;
 using Crypter.Core.Features.UserEmailVerification.Commands;
@@ -73,6 +74,8 @@ public interface IHangfireBackgroundService
     Task<Unit> DeleteRecoveryParametersAsync(Guid userId);
     Task<Unit> DeleteUserKeysAsync(Guid userId);
     Task<Unit> DeleteReceivedTransfersAsync(Guid userId);
+
+    Task<Unit> SendApplicationAnalyticsReportAsync();
     
     Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp);
     Task<Unit> LogFailedUserRegistrationAsync(string username, string? emailAddress, RegistrationError reason, string deviceDescription, DateTimeOffset timestamp);
@@ -81,6 +84,9 @@ public interface IHangfireBackgroundService
     Task<Unit> LogSuccessfulTransferUploadAsync(Guid itemId, TransferItemType itemType, long size, Guid? sender, string? recipient, DateTimeOffset timestamp);
     Task<Unit> LogFailedTransferUploadAsync(TransferItemType itemType, UploadTransferError reason, Guid? sender, string? recipient, DateTimeOffset timestamp);
     Task<Unit> LogSuccessfulTransferPreviewAsync(Guid itemId, TransferItemType itemType, Guid? userId, DateTimeOffset timestamp);
+    Task<Unit> LogFailedTransferPreviewAsync(Guid itemId, TransferItemType itemType, Guid? userId, TransferPreviewError reason, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulTransferDownloadAsync(Guid itemId, TransferItemType itemType, Guid? userId, DateTimeOffset timestamp);
+    Task<Unit> LogFailedTransferDownloadAsync(Guid itemId, TransferItemType itemType, Guid? userId, DownloadTransferCiphertextError reason, DateTimeOffset timestamp);
 }
 
 /// <summary>
@@ -104,9 +110,9 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public async Task<Unit> SendEmailVerificationAsync(Guid userId)
     {
         SendVerificationEmailCommand request = new SendVerificationEmailCommand(userId);
-        bool result = await _sender.Send(request);
+        bool success = await _sender.Send(request);
         
-        if (!result)
+        if (!success)
         {
             _logger.LogError("Failed to send verification email for user: {userId}.", userId);
             throw new HangfireJobException($"{nameof(SendEmailVerificationAsync)} failed.");
@@ -118,9 +124,9 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public async Task<Unit> SendTransferNotificationAsync(Guid itemId, TransferItemType itemType)
     {
         SendTransferNotificationCommand request = new SendTransferNotificationCommand(itemId, itemType);
-        bool result = await _sender.Send(request);
+        bool success = await _sender.Send(request);
 
-        if (!result)
+        if (!success)
         {
             _logger.LogError("Failed to send transfer notification for item: {itemId}; type: {itemType}.",
                 itemId, itemType);
@@ -163,8 +169,7 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return Unit.Default;
     }
 
-    public Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
-        bool deleteFromTransferRepository)
+    public Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferRepository)
     {
         DeleteTransferCommand request = new DeleteTransferCommand(itemId, itemType, userType, deleteFromTransferRepository);
         return _sender.Send(request);
@@ -198,6 +203,20 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     {
         DeleteUserReceivedTransfersCommand request = new DeleteUserReceivedTransfersCommand(userId);
         return _sender.Send(request);
+    }
+
+    public async Task<Unit> SendApplicationAnalyticsReportAsync()
+    {
+        SendApplicationsAnalyticsReportCommand request = new SendApplicationsAnalyticsReportCommand(7);
+        bool success = await _sender.Send(request);
+
+        if (!success)
+        {
+            _logger.LogError("Failed to send application analytics report.");
+            throw new HangfireJobException($"{nameof(SendApplicationAnalyticsReportAsync)} failed.");
+        }
+        
+        return Unit.Default;
     }
     
     public Task<Unit> LogSuccessfulUserRegistrationAsync(Guid userId, string? emailAddress, string deviceDescription, DateTimeOffset timestamp)
@@ -239,6 +258,24 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public Task<Unit> LogSuccessfulTransferPreviewAsync(Guid itemId, TransferItemType itemType, Guid? userId, DateTimeOffset timestamp)
     {
         LogSuccessfulTransferPreviewCommand request = new LogSuccessfulTransferPreviewCommand(itemId, itemType, userId, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedTransferPreviewAsync(Guid itemId, TransferItemType itemType, Guid? userId, TransferPreviewError reason, DateTimeOffset timestamp)
+    {
+        LogFailedTransferPreviewCommand request = new LogFailedTransferPreviewCommand(itemId, itemType, userId, reason, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogSuccessfulTransferDownloadAsync(Guid itemId, TransferItemType itemType, Guid? userId, DateTimeOffset timestamp)
+    {
+        LogSuccessfulTransferDownloadCommand request = new LogSuccessfulTransferDownloadCommand(itemId, itemType, userId, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedTransferDownloadAsync(Guid itemId, TransferItemType itemType, Guid? userId, DownloadTransferCiphertextError reason, DateTimeOffset timestamp)
+    {
+        LogFailedTransferDownloadCommand request = new LogFailedTransferDownloadCommand(itemId, itemType, userId, reason, timestamp);
         return _sender.Send(request);
     }
 }

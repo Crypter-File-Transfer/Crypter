@@ -29,37 +29,33 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
-using Crypter.Core.Services;
-using EasyMonads;
-using Hangfire;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
+using Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 using MediatR;
+using Unit = EasyMonads.Unit;
 
-namespace Crypter.Core.Features.Transfer.Events;
+namespace Crypter.Core.Features.EventLog.Commands;
 
-public sealed record FailedTransferUploadEvent(TransferItemType ItemType, UploadTransferError Reason, Maybe<Guid> Sender, Maybe<string> Recipient, DateTimeOffset Timestamp) : INotification;
+public sealed record LogFailedTransferDownloadCommand(Guid ItemId, TransferItemType ItemType, Guid? UserId, DownloadTransferCiphertextError Reason, DateTimeOffset Timestamp) : IRequest<Unit>;
 
-internal sealed class FailedTransferUploadEventHandler : INotificationHandler<FailedTransferUploadEvent>
+internal sealed class LogFailedTransferDownloadCommandHandler : IRequestHandler<LogFailedTransferDownloadCommand, Unit>
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly IHangfireBackgroundService _hangfireBackgroundService;
+    private readonly DataContext _dataContext;
     
-    public FailedTransferUploadEventHandler(
-        IBackgroundJobClient backgroundJobClient,
-        IHangfireBackgroundService hangfireBackgroundService)
+    public LogFailedTransferDownloadCommandHandler(DataContext dataContext)
     {
-        _backgroundJobClient = backgroundJobClient;
-        _hangfireBackgroundService = hangfireBackgroundService;
+        _dataContext = dataContext;
     }
     
-    public Task Handle(FailedTransferUploadEvent notification, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(LogFailedTransferDownloadCommand request, CancellationToken cancellationToken)
     {
-        Guid? senderId = notification.Sender
-            .Match((Guid?)null, x => x);
-        string? recipient = notification.Recipient
-            .Match((string?)null, x => x);
-        
-        _backgroundJobClient.Enqueue(() => 
-            _hangfireBackgroundService.LogFailedTransferUploadAsync(notification.ItemType, notification.Reason, senderId, recipient, notification.Timestamp));
-        return Task.CompletedTask;
+        FailedTransferDownloadAdditionalData additionalData = new FailedTransferDownloadAdditionalData(request.ItemId, request.ItemType, request.UserId, request.Reason);
+        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferDownloadFailure, additionalData, request.Timestamp);
+
+        _dataContext.EventLogs.Add(logEntity);
+        await _dataContext.SaveChangesAsync(CancellationToken.None);
+
+        return Unit.Default;
     }
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -24,11 +24,15 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Enums;
+using Crypter.Common.Infrastructure;
 
-namespace Crypter.Core.Settings;
+namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 
-public class CorsSettings
-{
-    public required List<string> AllowedOrigins { get; init; }
-}
+public sealed record FailedTransferPreviewAdditionalData(
+    Guid ItemId,
+    [property: JsonConverter(typeof(JsonEnumConverter<TransferItemType>))] TransferItemType ItemType,
+    Guid? User,
+    TransferPreviewError Reason);

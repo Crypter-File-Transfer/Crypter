@@ -63,6 +63,31 @@ internal class AnonymousFilePreviewQueryHandler
     public async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> Handle(AnonymousFilePreviewQuery request, CancellationToken cancellationToken)
     {
         Guid itemId = _hashIdService.Decode(request.HashId);
+        return await GetAnonymousFilePreviewAsync(itemId)
+            .DoRightAsync(
+            async _ =>
+            {
+                SuccessfulTransferPreviewEvent successfulTransferPreviewEvent =
+                    new SuccessfulTransferPreviewEvent(itemId, TransferItemType.File, null, DateTimeOffset.UtcNow);
+                await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
+            })
+            .DoLeftOrNeitherAsync(
+                async error =>
+                {
+                    FailedTransferPreviewEvent failedTransferPreviewEvent =
+                        new FailedTransferPreviewEvent(itemId, TransferItemType.File, null, error, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedTransferPreviewEvent, CancellationToken.None);
+                },
+                async () =>
+                {
+                    FailedTransferPreviewEvent failedTransferPreviewEvent =
+                        new FailedTransferPreviewEvent(itemId, TransferItemType.File, null, TransferPreviewError.UnknownError, DateTimeOffset.UtcNow);
+                    await _publisher.Publish(failedTransferPreviewEvent, CancellationToken.None);
+                });
+    }
+
+    private async Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetAnonymousFilePreviewAsync(Guid itemId)
+    {
         FileTransferPreviewResponse? filePreview = await _dataContext.AnonymousFileTransfers
             .Where(x => x.Id == itemId)
             .Select(x => new FileTransferPreviewResponse(
@@ -76,24 +101,19 @@ internal class AnonymousFilePreviewQueryHandler
                 , x.KeyExchangeNonce, 
                 x.Created,
                 x.Expiration))
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(CancellationToken.None);
 
         if (filePreview is null)
         {
             return TransferPreviewError.NotFound;
         }
         
-        bool ciphertextExists =
-            _transferRepository.TransferExists(itemId, TransferItemType.File, TransferUserType.Anonymous);
-        
+        bool ciphertextExists = _transferRepository.TransferExists(itemId, TransferItemType.File, TransferUserType.Anonymous);
         if (!ciphertextExists)
         {
             return TransferPreviewError.NotFound;
         }
 
-        SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId, TransferItemType.File, null, DateTimeOffset.UtcNow);
-        await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
-        
         return filePreview;
     }
 }

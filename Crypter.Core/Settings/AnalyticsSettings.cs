@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -24,11 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
+using Crypter.Common.Primitives;
 
 namespace Crypter.Core.Settings;
 
-public class CorsSettings
+public class AnalyticsSettings
 {
-    public required List<string> AllowedOrigins { get; init; }
+    public required bool EnableEmailedReports { get; set; } = false;
+    public string? ReportRecipientEmailAddress { get; set; }
+    public required int ReportFrequencyDays { get; set; }
 }
