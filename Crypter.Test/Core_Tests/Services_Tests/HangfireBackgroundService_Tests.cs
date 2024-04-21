@@ -26,6 +26,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Crypter.Common.Primitives;
 using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Core.Services.Email;
@@ -77,30 +78,35 @@ public class HangfireBackgroundService_Tests
     public async Task Verification_Email_Not_Sent_Without_Verification_Parameters()
     {
         _emailServiceMock!
-            .Setup(x => x.SendVerificationEmailAsync(
-                It.IsAny<UserEmailAddressVerificationParameters>()))
-            .ReturnsAsync((UserEmailAddressVerificationParameters _) => true);
+            .Setup(x => x.SendAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<EmailAddress>()))
+            .ReturnsAsync((string _, string _, EmailAddress _) => true);
 
         HangfireBackgroundService sut = new HangfireBackgroundService(_sender!, _logger!);
         await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
-        _emailServiceMock.Verify(x => x.SendVerificationEmailAsync(It.IsAny<UserEmailAddressVerificationParameters>()),
-            Times.Never);
+        _emailServiceMock.Verify(x =>
+                x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()),
+                Times.Never);
     }
 
     [Test]
     public async Task Recovery_Email_Not_Sent_Without_Recovery_Parameters()
     {
         _emailServiceMock!
-            .Setup(x => x.SendAccountRecoveryEmailAsync(
-                It.IsAny<UserRecoveryParameters>(),
-                It.IsAny<int>()))
-            .ReturnsAsync((UserRecoveryParameters _, int _) => true);
+            .Setup(x => x.SendAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<EmailAddress>()))
+            .ReturnsAsync((string _, string _, EmailAddress _) => true);
 
         HangfireBackgroundService sut = new HangfireBackgroundService(_sender!, _logger!);
         await sut.SendRecoveryEmailAsync("foo@test.com");
 
-        _emailServiceMock.Verify(
-            x => x.SendAccountRecoveryEmailAsync(It.IsAny<UserRecoveryParameters>(), It.IsAny<int>()), Times.Never);
+        _emailServiceMock.Verify(x =>
+                x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()),
+            Times.Never);
     }
 }
