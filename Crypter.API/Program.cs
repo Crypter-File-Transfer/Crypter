@@ -55,6 +55,10 @@ string hangfireConnectionString = builder.Configuration
 
 builder.Services.AddCrypterCore(
         builder.Configuration
+            .GetSection("AnalyticsSettings")
+            .Get<AnalyticsSettings>()
+        ?? throw new Exception("AnalyticsSettings missing from configuration"),
+        builder.Configuration
             .GetSection("EmailSettings")
             .Get<EmailSettings>()
         ?? throw new Exception("EmailSettings missing from configuration"),
@@ -133,16 +137,14 @@ else
     });
 }
 
-DatabaseSettings dbSettings = app.Configuration
-    .GetSection("DatabaseSettings")
-    .Get<DatabaseSettings>() ?? throw new ConfigurationException("DatabaseSettings not found");
-await app.MigrateDatabaseAsync(dbSettings);
-
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.MapControllers();
+
+await app.MigrateDatabaseAsync();
+app.ScheduleRecurringReports();
 
 await app.RunAsync();

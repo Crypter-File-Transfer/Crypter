@@ -31,7 +31,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using Crypter.Core.LinqExpressions;
-using Crypter.Core.Services;
+using Crypter.Core.Services.Email;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using MediatR;
@@ -86,7 +86,7 @@ internal sealed class SendTransferNotificationCommandHandler
         if (recipient is not null
             && EmailAddress.TryFrom(recipient.EmailAddress!, out EmailAddress validEmailAddress))
         {
-            return await _emailService.SendTransferNotificationAsync(validEmailAddress);
+            return await _emailService.SendTransferNotificationEmailAsync(validEmailAddress);
         }
 
         return true;

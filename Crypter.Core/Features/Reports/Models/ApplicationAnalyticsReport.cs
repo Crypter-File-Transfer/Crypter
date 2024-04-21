@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2023 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,11 +24,21 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
+using System;
 
-namespace Crypter.Core.Settings;
+namespace Crypter.Core.Features.Reports.Models;
 
-public class CorsSettings
-{
-    public required List<string> AllowedOrigins { get; init; }
-}
+internal sealed record ApplicationAnalyticsReport(
+    DateTimeOffset Begin,
+    DateTimeOffset End,
+    TransferAnalytics TransferAnalytics,
+    UserAnalytics UserAnalytics);
+
+internal sealed record TransferAnalytics(
+    int Uploads,
+    int UniquePreviews,
+    int UniqueDownloads);
+
+internal sealed record UserAnalytics(
+    int Registrations,
+    int UniqueLogins);

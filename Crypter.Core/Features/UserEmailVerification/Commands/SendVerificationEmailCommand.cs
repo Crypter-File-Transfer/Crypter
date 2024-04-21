@@ -28,7 +28,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Core.Models;
-using Crypter.Core.Services;
+using Crypter.Core.Services.Email;
 using Crypter.Crypto.Common;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
@@ -72,7 +72,7 @@ internal sealed class SendVerificationEmailCommandHandler
             .GenerateEmailAddressVerificationParametersAsync(_dataContext, _cryptoProvider, request.UserId)
             .BindAsync<UserEmailAddressVerificationParameters, bool>(async parameters =>
             {
-                bool deliverySuccess = await _emailService.SendEmailVerificationAsync(parameters);
+                bool deliverySuccess = await _emailService.SendVerificationEmailAsync(parameters);
                 if (deliverySuccess)
                 {
                     UserEmailVerificationEntity newEntity = new UserEmailVerificationEntity(parameters.UserId,
