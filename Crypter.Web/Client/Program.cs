@@ -26,6 +26,7 @@
 
 using System;
 using BlazorSodium.Extensions;
+using BlazorSodium.Services;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.HttpClients;
 using Crypter.Common.Client.Interfaces.HttpClients;
@@ -43,6 +44,7 @@ using Crypter.Crypto.Providers.Browser;
 using Crypter.Web;
 using Crypter.Web.Models.Settings;
 using Crypter.Web.Repositories;
+using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -99,7 +101,8 @@ builder.Services
     .AddSingleton<IUserNotificationSettingsService, UserNotificationSettingsService>()
     .AddSingleton<IUserPrivacySettingsService, UserPrivacySettingsService>()
     .AddSingleton<TransferHandlerFactory>()
-    .AddSingleton<Func<ICrypterApiClient>>(sp => sp.GetRequiredService<ICrypterApiClient>);
+    .AddSingleton<Func<ICrypterApiClient>>(sp => sp.GetRequiredService<ICrypterApiClient>)
+    .AddSingleton<IStreamSaverService, StreamSaverService>();
 
 if (OperatingSystem.IsBrowser())
 {
