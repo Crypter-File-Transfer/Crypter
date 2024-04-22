@@ -1,7 +1,7 @@
-﻿var _downloadBlob = null;
-var _downloadLink = null;
-var _downloadUrl = "";
-var _fileName = "";
+﻿let _downloadBlob = null;
+let _downloadLink = null;
+let _downloadUrl = "";
+let _fileName = "";
 
 export function createBlob(fileName, contentType, fileBytes) {
    _fileName = fileName;

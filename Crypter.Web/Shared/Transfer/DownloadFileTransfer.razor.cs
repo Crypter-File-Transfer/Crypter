@@ -29,15 +29,24 @@ using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Crypto.Common.StreamEncryption;
 using Crypter.Web.Services;
 using EasyMonads;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 
 namespace Crypter.Web.Shared.Transfer;
 
 [SupportedOSPlatform("browser")]
 public partial class DownloadFileTransfer :  IDisposable
 {
+    [Inject]
+    private IJSRuntime JSRuntime { get; init; } = null!;
+
+    [Inject]
+    private IStreamSaverService StreamSaverService { get; init; } = null!;
+    
     private string _fileName = string.Empty;
     private string _contentType = string.Empty;
     private long _fileSize = 0;
@@ -90,17 +99,19 @@ public partial class DownloadFileTransfer :  IDisposable
             _downloadHandler.SetRecipientInfo(privateKey);
 
             await SetProgressMessage(DecryptingLiteral);
-            Either<DownloadTransferCiphertextError, byte[]> decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
+            Either<DownloadTransferCiphertextError, DecryptionStream> decryptionResponse = await _downloadHandler.DownloadCiphertextAsync();
 
-            decryptionResponse.DoLeftOrNeither(
-                HandleDownloadError,
+            await decryptionResponse
+                .DoRightAsync(async decryptionStream =>
+                {
+                    await StreamSaverService.SaveFileAsync(decryptionStream, _fileName, _contentType, null);
+                    //await JSRuntime.InvokeVoidAsync("sendStreamToServiceWorker", decryptionStream);
+                    DecryptionComplete = true;
+                    await decryptionStream.DisposeAsync();
+                })
+                .DoLeftOrNeitherAsync(
+                    HandleDownloadError,
                 () => HandleDownloadError());
-
-            decryptionResponse.DoRight(x =>
-            {
-                BrowserDownloadFileService.CopyBufferToJavaScript(_fileName, _contentType, x);
-                DecryptionComplete = true;
-            });
         });
 
         DecryptionInProgress = false;

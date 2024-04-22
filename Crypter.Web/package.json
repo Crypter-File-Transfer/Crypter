@@ -1,0 +1,17 @@
+{
+  "name": "crypter",
+  "private": true,
+  "version": "1.0.0",
+  "author": "Jack Edwards",
+  "license": "AGPL-3.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build --config vite.config.js",
+    "buildWorker": "vite build --config vite.sw.config.js"
+  },
+  "devDependencies": {
+    "path": "^0.12.7",
+    "vite": "^4.4.9",
+    "vite-plugin-compression2": "^0.10.3"
+  }
+}

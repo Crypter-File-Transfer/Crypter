@@ -30,4 +30,15 @@
       <ProjectReference Include="..\Crypter.Crypto.Providers.Browser\Crypter.Crypto.Providers.Browser.csproj" />
    </ItemGroup>
 
+   <ItemGroup>
+     <Folder Include="wwwroot\js\dist\serviceWorker\" />
+     <Folder Include="wwwroot\js\dist\streamSaver\" />
+   </ItemGroup>
+
+   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+      <Exec Command="pnpm install --force" />
+      <Exec Command="pnpm run build" />
+      <Exec Command="pnpm run buildWorker" />
+   </Target>
+   
 </Project>

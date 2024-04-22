@@ -22,9 +22,9 @@
    },
 
    SetActivePage: function (page) {
-      var pages = document.getElementsByClassName('page');
-      for (var i = 0; i < pages.length; i++) {
-         if (pages[i].textContent == page) {
+      let pages = document.getElementsByClassName('page');
+      for (let i = 0; i < pages.length; i++) {
+         if (pages[i].textContent === page) {
             pages[i].classList.add('active');
          }
       }
@@ -35,7 +35,7 @@
    },
 
    CollapseNavBar: function () {
-      var nav = document.getElementById('mainNavigation');
+      let nav = document.getElementById('mainNavigation');
       nav.classList.remove('show');
    }
 }
