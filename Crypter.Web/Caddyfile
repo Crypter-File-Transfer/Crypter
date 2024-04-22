@@ -6,6 +6,8 @@
 		format console
 	}
 
+    rewrite /serviceWorker /srv/js/dist/serviceWorker
+
 	handle /api/* {
 		request_body {
 			max_size {$CADDY_MAX_REQUEST_BODY}
@@ -13,6 +15,21 @@
 
 		reverse_proxy {$CRYPTER_API_BASE}
 	}
+
+    handle /srv/js/dist/serviceWorker {
+        root * /srv/js/dist/serviceWorker
+    
+        try_files {path} /serviceWorker.js
+    
+        file_server {
+            precompressed br gzip
+        }
+        
+        header {
+            Service-Worker-Allowed "/"
+            Service-Worker "script"
+        }
+    }
 
 	handle {
 		root * /srv
