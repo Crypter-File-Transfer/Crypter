@@ -32,5 +32,5 @@ public interface IStreamDecrypt
 {
     uint KeySize { get; }
     uint TagSize { get; }
-    byte[] Pull(byte[] ciphertext, int paddingBlockSize, out bool final);
+    byte[] Pull(ReadOnlySpan<byte> ciphertext, int paddingBlockSize, out bool final);
 }
