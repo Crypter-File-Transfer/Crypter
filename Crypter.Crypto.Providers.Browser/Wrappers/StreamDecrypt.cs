@@ -49,10 +49,11 @@ public class StreamDecrypt : IStreamDecrypt
 
     public uint TagSize => SecretStream.A_BYTES;
 
-    public byte[] Pull(ReadOnlySpan<byte> ciphertext, int paddingBlockSize, out bool final)
+    public byte[] Pull(byte[] ciphertext, int paddingBlockSize, out bool final)
     {
+        
         SecretStreamPullData pullData =
-            SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Pull(_stateAddress, ciphertext.ToArray());
+            SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Pull(_stateAddress, ciphertext);
         final = pullData.Tag == SecretStream.TAG_FINAL;
         return _padding.Unpad(pullData.Message.AsSpan(), paddingBlockSize);
     }

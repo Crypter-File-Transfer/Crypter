@@ -43,7 +43,7 @@ public class StreamDecrypt : IStreamDecrypt
 
     public uint TagSize => IncrementalXChaCha20Poly1305.TagSize;
 
-    public byte[] Pull(ReadOnlySpan<byte> ciphertext, int blockSize, out bool final)
+    public byte[] Pull(byte[] ciphertext, int blockSize, out bool final)
     {
         throw new NotImplementedException();
     }
