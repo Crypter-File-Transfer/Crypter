@@ -9,9 +9,7 @@ class StreamSaver {
     public async init() {
         await initializeServiceWorker().catch((error: any): void => {
             console.warn('Failed to initialize service worker: ', error.message);
-        }).finally(() => {
-            console.log("service worker initialization finished from main");
-        });
+        })
     }
 
     public static getInstance(): StreamSaver
@@ -46,8 +44,6 @@ export async function init(): Promise<void> {
 export async function saveFile(stream: DotNetStream, fileName: string, mimeType: string, size: number | undefined): Promise<boolean> {
     let thisInstance: StreamSaver = StreamSaver.getInstance();
     let metaData: FileMetaData = { name: fileName, mimeType: mimeType, size: size };
-    console.log('Sending metadata to service worker');
-    console.log(metaData);
     await thisInstance.saveFile(stream, metaData);
     return true;
 }
