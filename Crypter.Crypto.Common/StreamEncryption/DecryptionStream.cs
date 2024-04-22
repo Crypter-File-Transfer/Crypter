@@ -77,8 +77,8 @@ public class DecryptionStream : Stream
     {
         Console.WriteLine("Reading 1");
         
-        byte[] lengthBuffer = new byte[LengthBufferSize];
-        int lengthBytesRead = _ciphertextStream.Read(lengthBuffer);
+        byte[] lengthBuffer = ArrayPool<byte>.Shared.Rent(LengthBufferSize);
+        int lengthBytesRead = _ciphertextStream.Read(lengthBuffer.AsSpan()[..LengthBufferSize]);
         if (lengthBytesRead == 0)
         {
             return 0;
@@ -86,17 +86,19 @@ public class DecryptionStream : Stream
 
         _ciphertextReadPosition += lengthBytesRead;
         int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+        ArrayPool<byte>.Shared.Return(lengthBuffer);
         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
         AssertBufferSize(buffer.Length, plaintextChunkSize);
 
-        byte[] ciphertextBuffer = new byte[ciphertextChunkSize];
-        int bytesRead = _ciphertextStream.Read(ciphertextBuffer, 0, ciphertextChunkSize);
+        byte[] ciphertextBuffer = ArrayPool<byte>.Shared.Rent(ciphertextChunkSize);
+        int bytesRead = _ciphertextStream.Read(ciphertextBuffer[..ciphertextChunkSize], 0, ciphertextChunkSize);
         _ciphertextReadPosition += bytesRead;
         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
 
         byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer, plaintextChunkSize, out bool final);
         AssertFinal(final);
         plaintext.CopyTo(buffer.AsMemory());
+        ArrayPool<byte>.Shared.Return(ciphertextBuffer);
         return plaintext.Length;
     }
 
@@ -104,8 +106,8 @@ public class DecryptionStream : Stream
     {
         Console.WriteLine("Reading 2");
         
-        Span<byte> lengthBuffer = new byte[LengthBufferSize];
-        int lengthBytesRead = _ciphertextStream.Read(lengthBuffer);
+        byte[] lengthBuffer = ArrayPool<byte>.Shared.Rent(LengthBufferSize);
+        int lengthBytesRead = _ciphertextStream.Read(lengthBuffer.AsSpan()[..LengthBufferSize]);
         if (lengthBytesRead == 0)
         {
             return 0;
@@ -113,17 +115,19 @@ public class DecryptionStream : Stream
 
         _ciphertextReadPosition += lengthBytesRead;
         int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+        ArrayPool<byte>.Shared.Return(lengthBuffer);
         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
         AssertBufferSize(buffer.Length, plaintextChunkSize);
 
-        Span<byte> ciphertextBuffer = new byte[ciphertextChunkSize];
+        byte[] ciphertextBuffer = ArrayPool<byte>.Shared.Rent(ciphertextChunkSize);
         int bytesRead = _ciphertextStream.Read(ciphertextBuffer);
         _ciphertextReadPosition += bytesRead;
         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
 
-        byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer, plaintextChunkSize, out bool final);
+        byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer[..ciphertextChunkSize], plaintextChunkSize, out bool final);
         AssertFinal(final);
         plaintext.CopyTo(buffer);
+        ArrayPool<byte>.Shared.Return(ciphertextBuffer);
         return plaintext.Length;
     }
 
@@ -149,9 +153,9 @@ public class DecryptionStream : Stream
         Console.WriteLine("Parse the first 4 bytes of the chunk to determine how long the ciphertext block is");
         _ciphertextReadPosition += lengthBytesRead;
         int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+        ArrayPool<byte>.Shared.Return(lengthBuffer);
         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
         AssertBufferSize(buffer.Length, plaintextChunkSize);
-        ArrayPool<byte>.Shared.Return(lengthBuffer);
 
         Console.WriteLine("Buffer the ciphertext chunk");
         byte[] ciphertextBuffer = ArrayPool<byte>.Shared.Rent(ciphertextChunkSize);
@@ -160,7 +164,7 @@ public class DecryptionStream : Stream
         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
 
         Console.WriteLine("Decrypt the ciphertext chunk");
-        byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer.AsSpan()[..ciphertextChunkSize], plaintextChunkSize, out bool final);
+        byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer[..ciphertextChunkSize], plaintextChunkSize, out bool final);
         Console.WriteLine("Ciphertext chunk decrypted");
         AssertFinal(final);
         Console.WriteLine("asserted final");
