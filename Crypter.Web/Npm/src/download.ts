@@ -1,7 +1,6 @@
 import FileMetaData from "./interfaces/fileMetaData";
 
 function createDownloadIframe(src: string) {
-    console.log("creating iframe");
     const iframe = document.createElement('iframe');
     iframe.hidden = true;
     iframe.src = src;
@@ -11,13 +10,11 @@ function createDownloadIframe(src: string) {
 }
 
 export async function initializeServiceWorker() {
-    console.log("registering worker");
     await navigator.serviceWorker.register('/serviceWorker',{
         scope: '/'
     }).then((x) => {
         console.log(x);
     });
-    console.log("sw registered");
     serviceWorkerKeepAlive();
 }
 
@@ -34,8 +31,7 @@ export async function openDownloadStream(metaData: FileMetaData) {
             channel.port1.postMessage({ action: 'abort', reason: String(reason) });
         },
     });
-
-    console.log("waking up sw");
+    
     const worker = await wakeUpServiceWorker();
 
     channel.port1.onmessage = ({ data }) => {
@@ -61,10 +57,8 @@ async function wakeUpServiceWorker() {
     const worker = navigator.serviceWorker.controller;
 
     if (worker) {
-        console.log("worker exists");
         worker.postMessage({ action: 'ping' });
     } else {
-        console.log("worker not found");
         const workerUrl = `${document.location.origin}/sw/ping`;
         const response = await fetch(workerUrl);
         const body = await response.text();
