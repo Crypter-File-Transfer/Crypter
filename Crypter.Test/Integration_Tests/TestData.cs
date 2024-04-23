@@ -125,8 +125,7 @@ internal static class TestData
 
         EncryptionStream EncryptionStreamOpener()
         {
-            MemoryStream stream = PlaintextStreamOpener();
-            return new EncryptionStream(stream, stream.Length, encryptionKey, cryptoProvider.StreamEncryptionFactory,
+            return new EncryptionStream(PlaintextStreamOpener, DefaultTransferBytes.Length, encryptionKey, cryptoProvider.StreamEncryptionFactory,
                 128, 64);
         }
     }

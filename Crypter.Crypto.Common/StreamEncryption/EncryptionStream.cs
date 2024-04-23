@@ -38,7 +38,8 @@ public class EncryptionStream : Stream
     private const int LengthBufferSize = sizeof(int);
 
     private readonly IStreamEncrypt _streamEncrypt;
-    private readonly Stream _plaintextStream;
+    private readonly Func<Stream> _plaintextStreamOpener;
+    private Stream? _plaintextStream;
     private readonly long _plaintextSize;
     private readonly int _plaintextReadSize;
     private readonly int _minimumBufferSize;
@@ -51,16 +52,16 @@ public class EncryptionStream : Stream
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="plaintextStream"></param>
+    /// <param name="plaintextStreamOpener"></param>
     /// <param name="plaintextSize"></param>
     /// <param name="encryptionKey"></param>
     /// <param name="streamEncryptionFactory"></param>
     /// <param name="maxReadSize"></param>
     /// <param name="padSize"></param>
-    public EncryptionStream(Stream plaintextStream, long plaintextSize, Span<byte> encryptionKey,
+    public EncryptionStream(Func<Stream> plaintextStreamOpener, long plaintextSize, Span<byte> encryptionKey,
         IStreamEncryptionFactory streamEncryptionFactory, int maxReadSize, int padSize)
     {
-        _plaintextStream = plaintextStream;
+        _plaintextStreamOpener = plaintextStreamOpener;
         _plaintextSize = plaintextSize;
         _plaintextReadSize = maxReadSize;
 
@@ -107,7 +108,8 @@ public class EncryptionStream : Stream
         }
 
         byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
-        int bytesRead = _plaintextStream.Read(plaintextBuffer[.._plaintextReadSize], (int)_plaintextReadPosition, _plaintextReadSize);
+        Stream plaintextStream = GetPlaintextStream();
+        int bytesRead = plaintextStream.Read(plaintextBuffer[.._plaintextReadSize], (int)_plaintextReadPosition, _plaintextReadSize);
         _plaintextReadPosition += bytesRead;
         _finishedReadingPlaintext = _plaintextReadPosition == _plaintextSize;
 
@@ -145,7 +147,8 @@ public class EncryptionStream : Stream
         }
 
         byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
-        int bytesRead = await _plaintextStream.ReadAsync(plaintextBuffer.AsMemory()[.._plaintextReadSize], cancellationToken);
+        Stream plaintextStream = GetPlaintextStream();
+        int bytesRead = await plaintextStream.ReadAsync(plaintextBuffer.AsMemory()[.._plaintextReadSize], cancellationToken);
         _plaintextReadPosition += bytesRead;
         _finishedReadingPlaintext = _plaintextReadPosition == _plaintextSize;
 
@@ -161,6 +164,11 @@ public class EncryptionStream : Stream
         return ciphertext.Length + LengthBufferSize;
     }
 
+    private Stream GetPlaintextStream()
+    {
+        return _plaintextStream ??= _plaintextStreamOpener();
+    }
+    
     private void AssertBufferSize(int bufferSize)
     {
         if (bufferSize < _minimumBufferSize)
@@ -191,20 +199,23 @@ public class EncryptionStream : Stream
 
     public override void Close()
     {
-        _plaintextStream.Close();
+        _plaintextStream?.Close();
         base.Close();
     }
     
     protected override void Dispose(bool disposing)
     {
-        _plaintextStream.Dispose();
+        _plaintextStream?.Dispose();
         base.Dispose(disposing);
     }
     
     public override async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
-        await _plaintextStream.DisposeAsync();
+        if (_plaintextStream is not null)
+        {
+            await _plaintextStream.DisposeAsync(); 
+        }
         await base.DisposeAsync();
     }
 }

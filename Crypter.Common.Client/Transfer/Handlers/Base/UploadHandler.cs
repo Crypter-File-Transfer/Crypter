@@ -128,7 +128,7 @@ public class UploadHandler : IUserUploadHandler
         return (EncryptionStreamOpener, senderPublicKeyToUpload, proof);
 
         EncryptionStream EncryptionStreamOpener()
-            => new EncryptionStream(plaintextStreamOpener(), streamSize, encryptionKey,
+            => new EncryptionStream(plaintextStreamOpener, streamSize, encryptionKey,
                 CryptoProvider.StreamEncryptionFactory, ClientTransferSettings.MaxReadSize, ClientTransferSettings.PadSize);
     }
 }
