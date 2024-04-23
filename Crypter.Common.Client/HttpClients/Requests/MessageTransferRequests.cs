@@ -64,7 +64,10 @@ public class MessageTransferRequests : IMessageTransferRequests
             ? _crypterAuthenticatedHttpClient
             : _crypterHttpClient;
 
-        HttpRequestMessage requestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
+        return await service.SendAsync<UploadTransferResponse>(RequestFactory)
+            .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
+
+        HttpRequestMessage RequestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
         {
             Content = new MultipartFormDataContent
             {
@@ -75,9 +78,6 @@ public class MessageTransferRequests : IMessageTransferRequests
                 { new StreamContent(encryptionStreamOpener()), "Ciphertext", "Ciphertext" }
             }
         };
-
-        return await service.SendAsync<UploadTransferResponse>(requestFactory)
-            .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
     }
 
     public Task<Maybe<List<UserReceivedMessageDTO>>> GetReceivedMessagesAsync()
