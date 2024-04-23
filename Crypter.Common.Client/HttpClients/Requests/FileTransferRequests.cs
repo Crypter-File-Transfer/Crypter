@@ -75,7 +75,7 @@ public class FileTransferRequests : IFileTransferRequests
                     new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"),
                     "Data"
                 },
-                { new StreamContent(encryptionStreamOpener()), "Ciphertext", "Ciphertext" }
+                { new StreamContent(encryptionStreamOpener(), 81_920), "Ciphertext", "Ciphertext" }
             }
         };
     }

@@ -84,6 +84,8 @@ builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =
         .GetRequiredService<ClientApiSettings>();
 
     httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
+    httpClient.Timeout = TimeSpan.FromSeconds(30);
+    httpClient.MaxResponseContentBufferSize = 2 ^ 20;
 });
 
 builder.Services
