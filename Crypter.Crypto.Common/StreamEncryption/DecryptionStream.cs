@@ -202,9 +202,22 @@ public class DecryptionStream : Stream
         }
     }
 
+    public override void Close()
+    {
+        _ciphertextStream.Close();
+        base.Close();
+    }
+    
     protected override void Dispose(bool disposing)
     {
         _ciphertextStream.Dispose();
         base.Dispose(disposing);
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        await _ciphertextStream.DisposeAsync();
+        await base.DisposeAsync();
     }
 }

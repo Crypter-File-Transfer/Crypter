@@ -188,4 +188,23 @@ public class EncryptionStream : Stream
     {
         throw new NotImplementedException();
     }
+
+    public override void Close()
+    {
+        _plaintextStream.Close();
+        base.Close();
+    }
+    
+    protected override void Dispose(bool disposing)
+    {
+        _plaintextStream.Dispose();
+        base.Dispose(disposing);
+    }
+    
+    public override async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        await _plaintextStream.DisposeAsync();
+        await base.DisposeAsync();
+    }
 }
