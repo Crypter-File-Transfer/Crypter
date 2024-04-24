@@ -33,10 +33,11 @@ namespace Crypter.Web.Services;
 
 internal sealed class BrowserHttpMessageHandler : DelegatingHandler
 {
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage requestMessage, CancellationToken cancellationToken)
     {
-        request.SetBrowserRequestStreamingEnabled(true);
-        request.SetBrowserResponseStreamingEnabled(true);
-        return base.SendAsync(request, cancellationToken);
+        var webAssemblyEnableStreamingRequestKey = new HttpRequestOptionsKey<bool>("WebAssemblyEnableStreamingRequest");
+        requestMessage.Options.Set(webAssemblyEnableStreamingRequestKey, true);
+        requestMessage.SetBrowserResponseStreamingEnabled(true);
+        return base.SendAsync(requestMessage, cancellationToken);
     }
 }
