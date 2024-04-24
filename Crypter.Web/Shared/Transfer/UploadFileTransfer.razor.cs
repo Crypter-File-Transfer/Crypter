@@ -97,8 +97,8 @@ public partial class UploadFileTransfer : IDisposable
         Dispose();
         return;
 
-        BufferedStream FileStreamOpener()
-            => new BufferedStream(_selectedFile.OpenReadStream(_selectedFile.Size));
+        Stream FileStreamOpener()
+            => _selectedFile.OpenReadStream(_selectedFile.Size);
     }
 
     private async Task SetProgressMessage(string message)

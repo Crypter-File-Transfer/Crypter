@@ -26,7 +26,6 @@
 
 using System;
 using BlazorSodium.Extensions;
-using BlazorSodium.Services;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.HttpClients;
 using Crypter.Common.Client.Interfaces.HttpClients;
@@ -77,6 +76,7 @@ builder.Services.AddSingleton(sp =>
         ?? throw new ConfigurationException("Failed to load TransferSettings.");
 });
 
+builder.Services.AddTransient<BrowserHttpMessageHandler>();
 builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =>
 {
     ClientApiSettings config = builder.Services
@@ -86,7 +86,7 @@ builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =
     httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
     httpClient.Timeout = TimeSpan.FromSeconds(30);
     httpClient.MaxResponseContentBufferSize = 2 ^ 20;
-});
+}).AddHttpMessageHandler<BrowserHttpMessageHandler>();
 
 builder.Services
     .AddSingleton<IDeviceRepository<BrowserStorageLocation>, BrowserRepository>()
