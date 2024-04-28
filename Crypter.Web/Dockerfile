@@ -24,7 +24,7 @@ COPY Crypter.Crypto.Common/. ./Crypter.Crypto.Common/
 COPY Crypter.Crypto.Providers.Browser/. ./Crypter.Crypto.Providers.Browser/
 COPY Crypter.Web/. ./Crypter.Web/
 
-RUN dotnet publish Crypter.Web --no-restore --configuration release /p:TreatWarningsAsErrors=true /warnaserror --output /app/
+RUN dotnet publish Crypter.Web --no-restore --configuration release -p:BlazorEnableCompression=false /p:TreatWarningsAsErrors=true /warnaserror --output /app/
 
 FROM caddy:2.7-alpine AS webhost
 COPY Crypter.Web/Caddyfile /etc/caddy/Caddyfile
