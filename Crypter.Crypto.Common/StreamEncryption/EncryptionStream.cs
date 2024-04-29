@@ -136,10 +136,11 @@ public class EncryptionStream : Stream
         Stream plaintextStream = GetPlaintextStream();
         
         byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
-        Console.WriteLine($"Reading {_plaintextReadSize} plaintext bytes");
+        Console.WriteLine($"Reading up to {_plaintextReadSize} plaintext bytes");
         int plaintextBytesRead = await plaintextStream.ReadAsync(plaintextBuffer.AsMemory(0, _plaintextReadSize), cancellationToken);
         _plaintextReadPosition += plaintextBytesRead;
         _finishedReadingPlaintext = _plaintextReadPosition == _plaintextSize;
+        Console.WriteLine($"Actually read {plaintextBytesRead} plaintext bytes");
 
         byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
             ? _streamEncrypt.Push(plaintextBuffer[..plaintextBytesRead], _finishedReadingPlaintext)
@@ -149,6 +150,7 @@ public class EncryptionStream : Stream
         Console.WriteLine($"Writing ciphertext, {ciphertext.Length} bytes");
         BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[..LengthBufferSize], ciphertext.Length);
         ciphertext.CopyTo(buffer[LengthBufferSize..]);
+        Console.WriteLine(Convert.ToHexString(buffer.Span));
         return ciphertext.Length + LengthBufferSize;
     }
 
