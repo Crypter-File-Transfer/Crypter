@@ -207,16 +207,14 @@ public class DecryptionStream : Stream
         byte[] ciphertextBuffer = ArrayPool<byte>.Shared.Rent(ciphertextChunkSize);
         Console.WriteLine($"ciphertextBuffer size is {ciphertextBuffer.Length} bytes long");
         Console.WriteLine("Reading ciphertext from ciphertext stream");
-        int ciphertextBytesRead = await _ciphertextStream.ReadAsync(ciphertextBuffer.AsMemory(0, ciphertextChunkSize), cancellationToken);
-        Console.WriteLine($"Read {ciphertextBytesRead} ciphertext bytes from stream");
-        if (ciphertextBytesRead < ciphertextChunkSize)
+        
+        // Looping to ensure the entire ciphertext chunk is read into the ciphertextBuffer
+        // Reading from the ciphertext stream was sometimes returning fewer bytes than requested.
+        int ciphertextBytesRead = 0;
+        while (ciphertextBytesRead < ciphertextChunkSize)
         {
-            Console.WriteLine("Read too few bytes.  What's up with that?");
-            Console.WriteLine("Will try to read more bytes to see what happens");
-            int moreBytesRead = await _ciphertextStream.ReadAsync(
-                ciphertextBuffer.AsMemory(ciphertextBytesRead, ciphertextChunkSize - ciphertextBytesRead),
-                cancellationToken);
-            Console.WriteLine($"This time read {moreBytesRead}");
+            ciphertextBytesRead += await _ciphertextStream.ReadAsync(ciphertextBuffer.AsMemory(ciphertextBytesRead, ciphertextChunkSize - ciphertextBytesRead), cancellationToken);
+            Console.WriteLine($"Read {ciphertextBytesRead} ciphertext bytes from stream");
         }
         _ciphertextReadPosition += ciphertextBytesRead;
         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
