@@ -146,7 +146,6 @@ public class EncryptionStream : Stream
         
         BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[..LengthBufferSize], ciphertext.Length);
         ciphertext.CopyTo(buffer[LengthBufferSize..]);
-        Console.WriteLine(Convert.ToHexString(buffer.Span[..(ciphertext.Length + LengthBufferSize)]));
         return ciphertext.Length + LengthBufferSize;
     }
 
