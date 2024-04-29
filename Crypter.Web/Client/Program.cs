@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Threading;
 using BlazorSodium.Extensions;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.HttpClients;
@@ -84,7 +85,7 @@ builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =
         .GetRequiredService<ClientApiSettings>();
 
     httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
-    httpClient.Timeout = TimeSpan.FromSeconds(30);
+    httpClient.Timeout = Timeout.InfiniteTimeSpan;
     httpClient.MaxResponseContentBufferSize = 2 ^ 20;
 }).AddHttpMessageHandler<BrowserHttpMessageHandler>();
 
