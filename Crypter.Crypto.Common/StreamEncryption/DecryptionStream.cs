@@ -63,12 +63,14 @@ public class DecryptionStream : Stream
         
         byte[] lengthBuffer = ArrayPool<byte>.Shared.Rent(LengthBufferSize);
         totalBytesRead += await ciphertextStream.ReadAsync(lengthBuffer.AsMemory(0, LengthBufferSize));
+        Console.WriteLine($"Total bytes read is {totalBytesRead}");
         int headerSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer.AsSpan(0, LengthBufferSize));
         ArrayPool<byte>.Shared.Return(lengthBuffer);
         Console.WriteLine($"Header size is {headerSize} bytes");
 
         byte[] headerBuffer = ArrayPool<byte>.Shared.Rent(headerSize);
         totalBytesRead += await ciphertextStream.ReadAsync(headerBuffer.AsMemory(0, headerSize));
+        Console.WriteLine($"Total bytes read is {totalBytesRead}");
         IStreamDecrypt streamDecrypt = streamEncryptionFactory.NewDecryptionStream(decryptionKey, headerBuffer.AsSpan(0, headerSize));
         ArrayPool<byte>.Shared.Return(headerBuffer);
         
@@ -210,6 +212,11 @@ public class DecryptionStream : Stream
         if (ciphertextBytesRead < ciphertextChunkSize)
         {
             Console.WriteLine("Read too few bytes.  What's up with that?");
+            Console.WriteLine("Will try to read more bytes to see what happens");
+            int moreBytesRead = await _ciphertextStream.ReadAsync(
+                ciphertextBuffer.AsMemory(ciphertextBytesRead, ciphertextChunkSize - ciphertextBytesRead),
+                cancellationToken);
+            Console.WriteLine($"This time read {moreBytesRead}");
         }
         _ciphertextReadPosition += ciphertextBytesRead;
         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
