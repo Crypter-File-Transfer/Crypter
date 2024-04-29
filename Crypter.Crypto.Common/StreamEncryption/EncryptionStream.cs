@@ -120,12 +120,10 @@ public class EncryptionStream : Stream
 
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        Console.WriteLine($"Buffer size is: {buffer.Length}");
         AssertBufferSize(buffer.Length);
 
         if (_finishedReadingPlaintext)
         {
-            Console.WriteLine("Finished reading plaintext.  Returning.");
             return 0;
         }
         
@@ -136,19 +134,16 @@ public class EncryptionStream : Stream
         Stream plaintextStream = GetPlaintextStream();
         
         byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
-        Console.WriteLine($"Reading up to {_plaintextReadSize} plaintext bytes");
         int plaintextBytesRead = await plaintextStream.ReadAsync(plaintextBuffer.AsMemory(0, _plaintextReadSize), cancellationToken);
         _plaintextReadPosition += plaintextBytesRead;
+        Console.WriteLine($"Advanced read position to {_plaintextReadPosition}");
         _finishedReadingPlaintext = _plaintextReadPosition == _plaintextSize;
-        Console.WriteLine($"Actually read {plaintextBytesRead} plaintext bytes");
 
         byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
             ? _streamEncrypt.Push(plaintextBuffer[..plaintextBytesRead], _finishedReadingPlaintext)
             : _streamEncrypt.Push(plaintextBuffer[.._plaintextReadSize], _finishedReadingPlaintext);
         ArrayPool<byte>.Shared.Return(plaintextBuffer);
         
-        Console.WriteLine($"Writing {ciphertext.Length} ciphertext byte length to buffer, using {LengthBufferSize} bytes");
-        Console.WriteLine($"Writing ciphertext, {ciphertext.Length} bytes");
         BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[..LengthBufferSize], ciphertext.Length);
         ciphertext.CopyTo(buffer[LengthBufferSize..]);
         Console.WriteLine(Convert.ToHexString(buffer.Span[..(ciphertext.Length + LengthBufferSize)]));
@@ -157,17 +152,14 @@ public class EncryptionStream : Stream
 
     private int WriteHeaderBytes(Span<byte> buffer)
     {
-        Console.WriteLine($"Writing {_headerBytes.Length} header byte length to buffer, using {LengthBufferSize} bytes");
         BinaryPrimitives.WriteInt32LittleEndian(buffer[..LengthBufferSize], _headerBytes.Length);
         Console.WriteLine(Convert.ToHexString(buffer[..LengthBufferSize]));
         
-        Console.WriteLine($"Writing {_headerBytes.Length} header bytes to buffer");
         Console.WriteLine(Convert.ToHexString(_headerBytes));
         _headerBytes.CopyTo(buffer[LengthBufferSize..]);
         Console.WriteLine(Convert.ToHexString(buffer[LengthBufferSize..(_headerBytes.Length + LengthBufferSize)]));
         _headerHasBeenReturned = true;
         
-        Console.WriteLine($"Total header chunk length: {_headerBytes.Length + LengthBufferSize}");
         return _headerBytes.Length + LengthBufferSize;
     }
     
