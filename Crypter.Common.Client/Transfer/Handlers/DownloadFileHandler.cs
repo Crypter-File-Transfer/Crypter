@@ -83,9 +83,9 @@ public class DownloadFileHandler : DownloadHandler
         };
 #pragma warning restore CS8524
 
-        return response.Match<Either<DownloadTransferCiphertextError, DecryptionStream>>(
-            left => left,
-            right => new DecryptionStream(right.Stream, right.StreamSize, symmetricKey, CryptoProvider.StreamEncryptionFactory),
+        return await response.MatchAsync<Either<DownloadTransferCiphertextError, DecryptionStream>>(
+            error => error,
+            async response => await DecryptionStream.OpenAsync(response.Stream, response.StreamSize, symmetricKey, CryptoProvider.StreamEncryptionFactory),
             DownloadTransferCiphertextError.UnknownError);
     }
 }

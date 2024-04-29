@@ -105,7 +105,6 @@ public partial class DownloadFileTransfer :  IDisposable
                 .DoRightAsync(async decryptionStream =>
                 {
                     await StreamSaverService.SaveFileAsync(decryptionStream, _fileName, _contentType, null);
-                    //await JSRuntime.InvokeVoidAsync("sendStreamToServiceWorker", decryptionStream);
                     DecryptionComplete = true;
                     await decryptionStream.DisposeAsync();
                 })
