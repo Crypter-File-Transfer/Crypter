@@ -1,3 +1,12 @@
+/*
+ * Original author: ProtonMail
+ * Original source: https://github.com/ProtonMail/WebClients/blob/main/applications/drive/src/app/store/_downloads/fileSaver/fileSaver.ts
+ * Original license: GPLv3
+ * 
+ * Modified by: Jack Edwards
+ * Modified date: April 2024
+ */
+
 import { initializeServiceWorker, openDownloadStream } from "./download";
 import FileMetaData from "./interfaces/fileMetaData";
 import DotNetStream from "./interfaces/dotNetStream";

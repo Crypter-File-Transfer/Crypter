@@ -1,3 +1,12 @@
+/*
+ * Original author: ProtonMail
+ * Original source: https://github.com/ProtonMail/WebClients/blob/main/applications/drive/src/app/store/_downloads/fileSaver/download.ts
+ * Original license: GPLv3
+ * 
+ * Modified by: Jack Edwards
+ * Modified date: April 2024
+ */
+
 import FileMetaData from "./interfaces/fileMetaData";
 
 function createDownloadIframe(src: string) {
