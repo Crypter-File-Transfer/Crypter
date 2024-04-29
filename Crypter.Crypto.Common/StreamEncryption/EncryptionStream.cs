@@ -92,78 +92,79 @@ public class EncryptionStream : Stream
         {
             return 0;
         }
-
-        byte[] lengthBuffer = ArrayPool<byte>.Shared.Rent(LengthBufferSize);
+        
         if (!_headerHasBeenReturned)
         {
-            BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer.AsSpan()[..LengthBufferSize], _headerBytes.Length);
-            lengthBuffer[..LengthBufferSize].CopyTo(buffer.AsMemory()[..LengthBufferSize]);
-            ArrayPool<byte>.Shared.Return(lengthBuffer);
-            _headerBytes.CopyTo(buffer.AsMemory()[LengthBufferSize..]);
-            _headerHasBeenReturned = true;
-
-            Console.WriteLine(Convert.ToHexString(buffer.AsSpan(0, _headerBytes.Length + LengthBufferSize)));
-
-            return _headerBytes.Length + LengthBufferSize;
+            return WriteHeaderBytes(buffer.AsSpan(offset, count));
         }
-
-        byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
+        
         Stream plaintextStream = GetPlaintextStream();
-        int bytesRead = plaintextStream.Read(plaintextBuffer[.._plaintextReadSize], (int)_plaintextReadPosition, _plaintextReadSize);
-        _plaintextReadPosition += bytesRead;
+        
+        byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
+        int plaintextBytesRead = plaintextStream.Read(plaintextBuffer.AsSpan(0, _plaintextReadSize));
+        _plaintextReadPosition += plaintextBytesRead;
         _finishedReadingPlaintext = _plaintextReadPosition == _plaintextSize;
 
-        byte[] ciphertext = bytesRead < _plaintextReadSize
-            ? _streamEncrypt.Push(plaintextBuffer[..bytesRead], _finishedReadingPlaintext)
+        byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
+            ? _streamEncrypt.Push(plaintextBuffer[..plaintextBytesRead], _finishedReadingPlaintext)
             : _streamEncrypt.Push(plaintextBuffer[.._plaintextReadSize], _finishedReadingPlaintext);
         ArrayPool<byte>.Shared.Return(plaintextBuffer);
         
-        BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer, ciphertext.Length);
-        lengthBuffer[..LengthBufferSize].CopyTo(buffer.AsMemory()[..LengthBufferSize]);
-        ArrayPool<byte>.Shared.Return(lengthBuffer);
-        ciphertext.CopyTo(buffer.AsMemory()[LengthBufferSize..]);
+        BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(offset, LengthBufferSize), ciphertext.Length);
+
+        int bufferCiphertextStartingPosition = offset + LengthBufferSize;
+        int bufferCiphertextLength = count - LengthBufferSize;
+        ciphertext.CopyTo(buffer.AsMemory(bufferCiphertextStartingPosition, bufferCiphertextLength));
         return ciphertext.Length + LengthBufferSize;
     }
 
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
+        Console.WriteLine($"Buffer size is: {buffer.Length}");
         AssertBufferSize(buffer.Length);
 
         if (_finishedReadingPlaintext)
         {
+            Console.WriteLine("Finished reading plaintext.  Returning.");
             return 0;
         }
-
-        byte[] lengthBuffer = ArrayPool<byte>.Shared.Rent(LengthBufferSize);
+        
         if (!_headerHasBeenReturned)
         {
-            BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer.AsSpan()[..LengthBufferSize], _headerBytes.Length);
-            lengthBuffer[..LengthBufferSize].CopyTo(buffer[..LengthBufferSize]);
-            ArrayPool<byte>.Shared.Return(lengthBuffer);
-            _headerBytes.CopyTo(buffer[LengthBufferSize..]);
-            _headerHasBeenReturned = true;
-
-            return _headerBytes.Length + LengthBufferSize;
+            return WriteHeaderBytes(buffer.Span);
         }
-
-        byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
         Stream plaintextStream = GetPlaintextStream();
-        int bytesRead = await plaintextStream.ReadAsync(plaintextBuffer.AsMemory()[.._plaintextReadSize], cancellationToken);
-        _plaintextReadPosition += bytesRead;
+        
+        byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
+        Console.WriteLine($"Reading {_plaintextReadSize} plaintext bytes");
+        int plaintextBytesRead = await plaintextStream.ReadAsync(plaintextBuffer.AsMemory(0, _plaintextReadSize), cancellationToken);
+        _plaintextReadPosition += plaintextBytesRead;
         _finishedReadingPlaintext = _plaintextReadPosition == _plaintextSize;
 
-        byte[] ciphertext = bytesRead < _plaintextReadSize
-            ? _streamEncrypt.Push(plaintextBuffer[..bytesRead], _finishedReadingPlaintext)
+        byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
+            ? _streamEncrypt.Push(plaintextBuffer[..plaintextBytesRead], _finishedReadingPlaintext)
             : _streamEncrypt.Push(plaintextBuffer[.._plaintextReadSize], _finishedReadingPlaintext);
         ArrayPool<byte>.Shared.Return(plaintextBuffer);
         
-        BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer.AsSpan()[..LengthBufferSize], ciphertext.Length);
-        lengthBuffer[..LengthBufferSize].CopyTo(buffer[..LengthBufferSize]);
-        ArrayPool<byte>.Shared.Return(lengthBuffer);
+        Console.WriteLine($"Writing ciphertext, {ciphertext.Length} bytes");
+        BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[..LengthBufferSize], ciphertext.Length);
         ciphertext.CopyTo(buffer[LengthBufferSize..]);
         return ciphertext.Length + LengthBufferSize;
     }
 
+    private int WriteHeaderBytes(Span<byte> buffer)
+    {
+        Console.WriteLine($"Writing {_headerBytes.Length} header byte length to buffer, using {LengthBufferSize} bytes");
+        BinaryPrimitives.WriteInt32LittleEndian(buffer[..LengthBufferSize], _headerBytes.Length);
+        
+        Console.WriteLine($"Writing {_headerBytes.Length} header bytes to buffer");
+        _headerBytes.CopyTo(buffer[LengthBufferSize..]);
+        _headerHasBeenReturned = true;
+        
+        Console.WriteLine($"Total header chunk length: {_headerBytes.Length + LengthBufferSize}");
+        return _headerBytes.Length + LengthBufferSize;
+    }
+    
     private Stream GetPlaintextStream()
     {
         return _plaintextStream ??= _plaintextStreamOpener();
