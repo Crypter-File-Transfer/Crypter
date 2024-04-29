@@ -147,6 +147,7 @@ public class EncryptionStream : Stream
             : _streamEncrypt.Push(plaintextBuffer[.._plaintextReadSize], _finishedReadingPlaintext);
         ArrayPool<byte>.Shared.Return(plaintextBuffer);
         
+        Console.WriteLine($"Writing {ciphertext.Length} ciphertext byte length to buffer, using {LengthBufferSize} bytes");
         Console.WriteLine($"Writing ciphertext, {ciphertext.Length} bytes");
         BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[..LengthBufferSize], ciphertext.Length);
         ciphertext.CopyTo(buffer[LengthBufferSize..]);
