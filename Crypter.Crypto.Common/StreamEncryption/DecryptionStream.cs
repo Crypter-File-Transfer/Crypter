@@ -189,11 +189,11 @@ public class DecryptionStream : Stream
         byte[] lengthBuffer = ArrayPool<byte>.Shared.Rent(LengthBufferSize);
         Console.WriteLine("Reading length from ciphertext stream");
         int lengthBytesRead = await _ciphertextStream.ReadAsync(lengthBuffer.AsMemory(0, LengthBufferSize), cancellationToken);
+        Console.WriteLine($"Read {lengthBytesRead} length bytes from stream");
         if (lengthBytesRead == 0)
         {
             return 0;
         }
-        Console.WriteLine($"Ciphertext length is {lengthBytesRead} bytes");
         
         _ciphertextReadPosition += lengthBytesRead;
         int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer.AsSpan(0, LengthBufferSize));
@@ -203,9 +203,14 @@ public class DecryptionStream : Stream
         AssertBufferSize(buffer.Length, plaintextChunkSize);
         
         byte[] ciphertextBuffer = ArrayPool<byte>.Shared.Rent(ciphertextChunkSize);
+        Console.WriteLine($"ciphertextBuffer size is {ciphertextBuffer.Length} bytes long");
         Console.WriteLine("Reading ciphertext from ciphertext stream");
-        int ciphertextBytesRead = await _ciphertextStream.ReadAsync(ciphertextBuffer.AsMemory()[..ciphertextChunkSize], cancellationToken);
+        int ciphertextBytesRead = await _ciphertextStream.ReadAsync(ciphertextBuffer.AsMemory(0, ciphertextChunkSize), cancellationToken);
         Console.WriteLine($"Read {ciphertextBytesRead} ciphertext bytes from stream");
+        if (ciphertextBytesRead < ciphertextChunkSize)
+        {
+            Console.WriteLine("Read too few bytes.  What's up with that?");
+        }
         _ciphertextReadPosition += ciphertextBytesRead;
         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
         

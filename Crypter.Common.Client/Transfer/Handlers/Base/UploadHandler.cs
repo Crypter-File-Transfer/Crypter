@@ -129,6 +129,6 @@ public class UploadHandler : IUserUploadHandler
 
         EncryptionStream EncryptionStreamOpener()
             => new EncryptionStream(plaintextStreamOpener, streamSize, encryptionKey,
-                CryptoProvider.StreamEncryptionFactory, ClientTransferSettings.MaxReadSize, ClientTransferSettings.PadSize);
+                CryptoProvider.StreamEncryptionFactory, ClientTransferSettings.MaxReadSize - Convert.ToInt32(CryptoProvider.StreamEncryptionFactory.TagSize), ClientTransferSettings.PadSize);
     }
 }
