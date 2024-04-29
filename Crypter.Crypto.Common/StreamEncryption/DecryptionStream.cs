@@ -45,7 +45,58 @@ public class DecryptionStream : Stream
     private long _ciphertextReadPosition;
     private bool _finishedReadingCiphertext;
 
-    public DecryptionStream(Stream ciphertextStream, long streamSize, Span<byte> decryptionKey,
+    /// <summary>
+    /// Open a decryption stream in asynchronous scenarios.
+    /// </summary>
+    /// <param name="ciphertextStream"></param>
+    /// <param name="streamSize"></param>
+    /// <param name="decryptionKey"></param>
+    /// <param name="streamEncryptionFactory"></param>
+    /// <returns></returns>
+    public static async Task<DecryptionStream> OpenAsync(
+        Stream ciphertextStream,
+        long streamSize,
+        byte[] decryptionKey,
+        IStreamEncryptionFactory streamEncryptionFactory)
+    {
+        int totalBytesRead = 0;
+        
+        byte[] lengthBuffer = ArrayPool<byte>.Shared.Rent(LengthBufferSize);
+        totalBytesRead += await ciphertextStream.ReadAsync(lengthBuffer.AsMemory()[..LengthBufferSize]);
+        int headerSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer.AsSpan()[..LengthBufferSize]);
+        ArrayPool<byte>.Shared.Return(lengthBuffer);
+
+        byte[] headerBuffer = ArrayPool<byte>.Shared.Rent(headerSize);
+        totalBytesRead += await ciphertextStream.ReadAsync(headerBuffer.AsMemory()[..headerSize]);
+        IStreamDecrypt streamDecrypt = streamEncryptionFactory.NewDecryptionStream(decryptionKey, headerBuffer.AsSpan()[..headerSize]);
+        ArrayPool<byte>.Shared.Return(headerBuffer);
+        
+        return new DecryptionStream(ciphertextStream, streamSize, totalBytesRead, streamDecrypt);
+    }
+    
+    private DecryptionStream(
+        Stream ciphertextStream,
+        long streamSize,
+        long startingStreamPosition,
+        IStreamDecrypt openStreamDecrypt)
+    {
+        _ciphertextStream = ciphertextStream;
+        _ciphertextStreamSize = streamSize;
+        _ciphertextReadPosition = startingStreamPosition;
+        _streamDecrypt = openStreamDecrypt;
+    }
+    
+    /// <summary>
+    /// Open a decryption stream in synchronous scenarios.
+    /// </summary>
+    /// <param name="ciphertextStream"></param>
+    /// <param name="streamSize"></param>
+    /// <param name="decryptionKey"></param>
+    /// <param name="streamEncryptionFactory"></param>
+    public DecryptionStream(
+        Stream ciphertextStream,
+        long streamSize,
+        Span<byte> decryptionKey,
         IStreamEncryptionFactory streamEncryptionFactory)
     {
         _ciphertextStream = ciphertextStream;
