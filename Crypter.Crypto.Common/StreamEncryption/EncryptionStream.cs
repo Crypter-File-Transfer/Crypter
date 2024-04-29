@@ -150,7 +150,7 @@ public class EncryptionStream : Stream
         Console.WriteLine($"Writing ciphertext, {ciphertext.Length} bytes");
         BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[..LengthBufferSize], ciphertext.Length);
         ciphertext.CopyTo(buffer[LengthBufferSize..]);
-        Console.WriteLine(Convert.ToHexString(buffer.Span));
+        Console.WriteLine(Convert.ToHexString(buffer.Span[..(ciphertext.Length + LengthBufferSize)]));
         return ciphertext.Length + LengthBufferSize;
     }
 
@@ -158,9 +158,12 @@ public class EncryptionStream : Stream
     {
         Console.WriteLine($"Writing {_headerBytes.Length} header byte length to buffer, using {LengthBufferSize} bytes");
         BinaryPrimitives.WriteInt32LittleEndian(buffer[..LengthBufferSize], _headerBytes.Length);
+        Console.WriteLine(Convert.ToHexString(buffer[..LengthBufferSize]));
         
         Console.WriteLine($"Writing {_headerBytes.Length} header bytes to buffer");
+        Console.WriteLine(Convert.ToHexString(_headerBytes));
         _headerBytes.CopyTo(buffer[LengthBufferSize..]);
+        Console.WriteLine(Convert.ToHexString(buffer[LengthBufferSize..(_headerBytes.Length + LengthBufferSize)]));
         _headerHasBeenReturned = true;
         
         Console.WriteLine($"Total header chunk length: {_headerBytes.Length + LengthBufferSize}");
