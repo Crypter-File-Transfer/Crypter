@@ -1,3 +1,5 @@
 Blazor.start({
-    environment: "Development"
+    environment: window.location.hostname === "localhost"
+        ? "Development"
+        : "Production"
 });
