@@ -53,8 +53,11 @@ public class FileTransferRequests : IFileTransferRequests
     }
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(
-        Maybe<string> recipientUsername, UploadFileTransferRequest uploadRequest,
-        Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication)
+        Maybe<string> recipientUsername,
+        UploadFileTransferRequest uploadRequest,
+        Func<Action<double>?, EncryptionStream> encryptionStreamOpener,
+        bool withAuthentication,
+        Action<double>? updateCallback = null)
     {
         string url = recipientUsername.Match(
             () => "api/file/transfer",
@@ -75,7 +78,7 @@ public class FileTransferRequests : IFileTransferRequests
                     new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"),
                     "Data"
                 },
-                { new StreamContent(encryptionStreamOpener(), 81_920), "Ciphertext", "Ciphertext" }
+                { new StreamContent(encryptionStreamOpener(updateCallback)), "Ciphertext", "Ciphertext" }
             }
         };
     }

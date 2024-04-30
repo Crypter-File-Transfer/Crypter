@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Transfer.Handlers;
@@ -32,6 +33,7 @@ using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
 using EasyMonads;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.VisualBasic;
 
 namespace Crypter.Web.Shared.Transfer;
 
@@ -86,13 +88,13 @@ public partial class UploadFileTransfer : IDisposable
         EncryptionInProgress = true;
         ErrorMessage = string.Empty;
 
-        await SetProgressMessage("Encrypting file");
+        await SetProgressMessageAsync("Encrypting file");
 
         UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(FileStreamOpener,
             _selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType, ExpirationHours);
 
         SetHandlerUserInfo(fileUploader);
-        Either<UploadTransferError, UploadHandlerResponse> uploadResponse = await fileUploader.UploadAsync();
+        Either<UploadTransferError, UploadHandlerResponse> uploadResponse = await fileUploader.UploadAsync(SetUploadPercentage);
         await HandleUploadResponse(uploadResponse);
         Dispose();
         return;
@@ -101,13 +103,19 @@ public partial class UploadFileTransfer : IDisposable
             => _selectedFile.OpenReadStream(_selectedFile.Size);
     }
 
-    private async Task SetProgressMessage(string message)
+    private async Task SetProgressMessageAsync(string message)
     {
         UploadStatusMessage = message;
         StateHasChanged();
         await Task.Delay(400);
     }
 
+    private void SetUploadPercentage(double percentage)
+    {
+        UploadStatusMessage = Strings.FormatPercent(percentage);
+        InvokeAsync(StateHasChanged);
+    }
+    
     public void Dispose()
     {
         _selectedFile = null;

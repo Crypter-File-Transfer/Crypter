@@ -37,8 +37,8 @@ namespace Crypter.Common.Client.Interfaces.Requests;
 public interface IFileTransferRequests
 {
     Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<string> recipientUsername,
-        UploadFileTransferRequest uploadRequest, Func<EncryptionStream> encryptionStreamOpener,
-        bool withAuthentication);
+        UploadFileTransferRequest uploadRequest, Func<Action<double>?, EncryptionStream> encryptionStreamOpener,
+        bool withAuthentication, Action<double>? updateCallback = null);
 
     Task<Maybe<List<UserReceivedFileDTO>>> GetReceivedFilesAsync();
     Task<Maybe<List<UserSentFileDTO>>> GetSentFilesAsync();

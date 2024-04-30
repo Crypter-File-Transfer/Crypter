@@ -85,7 +85,7 @@ internal class GetReceivedMessageTransfers_Tests
         InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
         Either<InsertKeyPairError, Unit> __ = await _client!.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest uploadMessageRequest = new UploadMessageTransferRequest(
             TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,

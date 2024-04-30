@@ -54,7 +54,7 @@ public class MessageTransferRequests : IMessageTransferRequests
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(
         Maybe<string> recipientUsername, UploadMessageTransferRequest uploadRequest,
-        Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication)
+        Func<Action<double>?, EncryptionStream> encryptionStreamOpener, bool withAuthentication)
     {
         string url = recipientUsername.Match(
             () => "api/message/transfer",
@@ -75,7 +75,7 @@ public class MessageTransferRequests : IMessageTransferRequests
                     new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"),
                     "Data"
                 },
-                { new StreamContent(encryptionStreamOpener()), "Ciphertext", "Ciphertext" }
+                { new StreamContent(encryptionStreamOpener(null)), "Ciphertext", "Ciphertext" }
             }
         };
     }

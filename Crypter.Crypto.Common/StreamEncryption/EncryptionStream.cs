@@ -44,7 +44,8 @@ public class EncryptionStream : Stream
     private readonly int _plaintextReadSize;
     private readonly int _minimumBufferSize;
     private readonly byte[] _headerBytes;
-
+    private readonly Action<double>? _updateCallback;
+    
     private bool _finishedReadingPlaintext;
     private long _plaintextReadPosition;
     private bool _headerHasBeenReturned;
@@ -58,12 +59,20 @@ public class EncryptionStream : Stream
     /// <param name="streamEncryptionFactory"></param>
     /// <param name="maxReadSize"></param>
     /// <param name="padSize"></param>
-    public EncryptionStream(Func<Stream> plaintextStreamOpener, long plaintextSize, Span<byte> encryptionKey,
-        IStreamEncryptionFactory streamEncryptionFactory, int maxReadSize, int padSize)
+    /// <param name="updateCallback"></param>
+    public EncryptionStream(
+        Func<Stream> plaintextStreamOpener,
+        long plaintextSize,
+        Span<byte> encryptionKey,
+        IStreamEncryptionFactory streamEncryptionFactory,
+        int maxReadSize,
+        int padSize,
+        Action<double>? updateCallback = null)
     {
         _plaintextStreamOpener = plaintextStreamOpener;
         _plaintextSize = plaintextSize;
         _plaintextReadSize = maxReadSize;
+        _updateCallback = updateCallback;
 
         _streamEncrypt = streamEncryptionFactory.NewEncryptionStream(padSize);
         _headerBytes = _streamEncrypt.GenerateHeader(encryptionKey);
@@ -115,6 +124,8 @@ public class EncryptionStream : Stream
         int bufferCiphertextStartingPosition = offset + LengthBufferSize;
         int bufferCiphertextLength = count - LengthBufferSize;
         ciphertext.CopyTo(buffer.AsMemory(bufferCiphertextStartingPosition, bufferCiphertextLength));
+        
+        _updateCallback?.Invoke(Convert.ToDouble(_plaintextReadPosition) / Convert.ToDouble(_plaintextSize));
         return ciphertext.Length + LengthBufferSize;
     }
 
@@ -136,7 +147,6 @@ public class EncryptionStream : Stream
         byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
         int plaintextBytesRead = await plaintextStream.ReadAsync(plaintextBuffer.AsMemory(0, _plaintextReadSize), cancellationToken);
         _plaintextReadPosition += plaintextBytesRead;
-        Console.WriteLine($"Advanced read position to {_plaintextReadPosition}");
         _finishedReadingPlaintext = _plaintextReadPosition == _plaintextSize;
 
         byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
@@ -146,17 +156,15 @@ public class EncryptionStream : Stream
         
         BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[..LengthBufferSize], ciphertext.Length);
         ciphertext.CopyTo(buffer[LengthBufferSize..]);
+        
+        _updateCallback?.Invoke(Convert.ToDouble(_plaintextReadPosition) / Convert.ToDouble(_plaintextSize));
         return ciphertext.Length + LengthBufferSize;
     }
 
     private int WriteHeaderBytes(Span<byte> buffer)
     {
         BinaryPrimitives.WriteInt32LittleEndian(buffer[..LengthBufferSize], _headerBytes.Length);
-        Console.WriteLine(Convert.ToHexString(buffer[..LengthBufferSize]));
-        
-        Console.WriteLine(Convert.ToHexString(_headerBytes));
         _headerBytes.CopyTo(buffer[LengthBufferSize..]);
-        Console.WriteLine(Convert.ToHexString(buffer[LengthBufferSize..(_headerBytes.Length + LengthBufferSize)]));
         _headerHasBeenReturned = true;
         
         return _headerBytes.Length + LengthBufferSize;

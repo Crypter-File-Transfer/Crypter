@@ -66,7 +66,7 @@ internal class UploadMessageTransfer_Tests
     [Test]
     public async Task Upload_Anonymous_Message_Transfer_Works()
     {
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
             TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
@@ -127,7 +127,7 @@ internal class UploadMessageTransfer_Tests
             Either<RegistrationError, Unit> _ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
         });
 
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
             senderPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
@@ -141,7 +141,7 @@ internal class UploadMessageTransfer_Tests
     [Test]
     public async Task Upload_User_Message_Transfer_Fails_When_Recipient_Does_Not_Exist()
     {
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
             null, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
@@ -156,7 +156,7 @@ internal class UploadMessageTransfer_Tests
     [Test]
     public void Upload_Authenticated_Message_Transfer_Throws_When_Not_Authenticated()
     {
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
             null, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
@@ -188,7 +188,7 @@ internal class UploadMessageTransfer_Tests
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);
 
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
             null, TestData.DefaultKeyExchangeNonce, keyExchangeProof,

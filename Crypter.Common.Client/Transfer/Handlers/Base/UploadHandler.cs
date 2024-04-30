@@ -96,7 +96,7 @@ public class UploadHandler : IUserUploadHandler
         RecipientPublicKey = recipientKeyPair.PublicKey;
     }
 
-    protected (Func<EncryptionStream> encryptionStreamOpener, byte[]? senderPublicKey, byte[] proof) GetEncryptionInfo(
+    protected (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[]? senderPublicKey, byte[] proof) GetEncryptionInfo(
         Func<Stream> plaintextStreamOpener, long streamSize)
     {
         if (RecipientUsername.IsNone)
@@ -127,8 +127,14 @@ public class UploadHandler : IUserUploadHandler
 
         return (EncryptionStreamOpener, senderPublicKeyToUpload, proof);
 
-        EncryptionStream EncryptionStreamOpener()
-            => new EncryptionStream(plaintextStreamOpener, streamSize, encryptionKey,
-                CryptoProvider.StreamEncryptionFactory, ClientTransferSettings.MaxReadSize, ClientTransferSettings.PadSize);
+        EncryptionStream EncryptionStreamOpener(Action<double>? updateCallback = null)
+            => new EncryptionStream(
+                plaintextStreamOpener,
+                streamSize, 
+                encryptionKey,
+                CryptoProvider.StreamEncryptionFactory,
+                ClientTransferSettings.MaxReadSize,
+                ClientTransferSettings.PadSize,
+                updateCallback);
     }
 }
