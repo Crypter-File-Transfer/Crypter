@@ -61,8 +61,6 @@ internal sealed class ApplicationAnalyticsReportQueryHandler
             .Where(eventLog => eventLog.Timestamp <= now && eventLog.Timestamp >= reportBegin)
             .ToListAsync(cancellationToken);
 
-        Console.WriteLine(JsonSerializer.Serialize(events));
-        
         TransferAnalytics transferAnalytics = new TransferAnalytics(
             Uploads: events
                 .Count(x => x.EventLogType == EventLogType.TransferUploadSuccess),
