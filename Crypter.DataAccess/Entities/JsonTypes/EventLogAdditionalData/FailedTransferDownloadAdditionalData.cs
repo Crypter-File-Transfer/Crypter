@@ -33,6 +33,6 @@ namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 
 public sealed record FailedTransferDownloadAdditionalData(
     Guid ItemId,
-    [property: JsonConverter(typeof(JsonEnumConverter<TransferItemType>))] TransferItemType ItemType,
+    TransferItemType ItemType,
     Guid? User,
-    [property: JsonConverter(typeof(JsonEnumConverter<DownloadTransferCiphertextError>))] DownloadTransferCiphertextError Reason);
+    DownloadTransferCiphertextError Reason);
