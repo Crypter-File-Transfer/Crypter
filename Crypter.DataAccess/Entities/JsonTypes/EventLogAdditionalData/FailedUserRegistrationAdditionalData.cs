@@ -33,5 +33,5 @@ namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 public sealed record FailedUserRegistrationAdditionalData(
     string Username,
     string? EmailAddress,
-    [property: JsonConverter(typeof(JsonEnumConverter<RegistrationError>))] RegistrationError Reason,
+    RegistrationError Reason,
     string DeviceDescription);

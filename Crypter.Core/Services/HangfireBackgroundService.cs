@@ -35,6 +35,8 @@ using Crypter.Core.Features.EventLog.Commands;
 using Crypter.Core.Features.Keys.Commands;
 using Crypter.Core.Features.Notifications.Commands;
 using Crypter.Core.Features.Reports.Commands;
+using Crypter.Core.Features.Reports.Models;
+using Crypter.Core.Features.Reports.Queries;
 using Crypter.Core.Features.Transfer.Commands;
 using Crypter.Core.Features.UserAuthentication.Commands;
 using Crypter.Core.Features.UserEmailVerification.Commands;
@@ -207,8 +209,11 @@ public class HangfireBackgroundService : IHangfireBackgroundService
 
     public async Task<Unit> SendApplicationAnalyticsReportAsync()
     {
-        SendApplicationsAnalyticsReportCommand request = new SendApplicationsAnalyticsReportCommand(7);
-        bool success = await _sender.Send(request);
+        ApplicationAnalyticsReportQuery reportRequest = new ApplicationAnalyticsReportQuery(7);
+        ApplicationAnalyticsReport report = await _sender.Send(reportRequest);
+        
+        SendApplicationsAnalyticsReportCommand emailRequest = new SendApplicationsAnalyticsReportCommand(report);
+        bool success = await _sender.Send(emailRequest);
 
         if (!success)
         {

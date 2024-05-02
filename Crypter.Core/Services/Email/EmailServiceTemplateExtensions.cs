@@ -91,12 +91,11 @@ public static class EmailServiceTemplateExtensions
     /// <returns></returns>
     internal static async Task<bool> SendApplicationAnalyticsReportEmailAsync(this IEmailService emailService, EmailAddress emailAddress, ApplicationAnalyticsReport reportData)
     {
-        string message = $"To: {reportData.End}" +
-                         $"From: {reportData.Begin}" +
-                         $"Uploads: {reportData.TransferAnalytics.Uploads}" +
-                         $"Unique previews: {reportData.TransferAnalytics.UniquePreviews}" +
-                         $"Unique downloads: {reportData.TransferAnalytics.UniqueDownloads}" +
-                         $"New users: {reportData.UserAnalytics.Registrations}" +
+        string message = $"Period: {reportData.Begin} to {reportData.End}\n" +
+                         $"Uploads: {reportData.TransferAnalytics.Uploads}\n" +
+                         $"Unique previews: {reportData.TransferAnalytics.UniquePreviews}\n" +
+                         $"Unique downloads: {reportData.TransferAnalytics.UniqueDownloads}\n" +
+                         $"New users: {reportData.UserAnalytics.Registrations}\n" +
                          $"Unique logins: {reportData.UserAnalytics.UniqueLogins}";
         return await emailService.SendAsync("Crypter Analytics", message, emailAddress);
     }
