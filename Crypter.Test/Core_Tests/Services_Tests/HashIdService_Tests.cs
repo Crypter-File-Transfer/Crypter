@@ -27,6 +27,7 @@
 using System;
 using Crypter.Core.Services;
 using Crypter.Core.Settings;
+using EasyMonads;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
@@ -55,8 +56,8 @@ public class HashIdService_Tests
         Guid guid = Guid.NewGuid();
 
         string hash = _sut!.Encode(guid);
-        Guid decodedHash = _sut.Decode(hash);
+        Maybe<Guid> decodedHash = _sut.Decode(hash);
 
-        Assert.That(decodedHash, Is.EqualTo(guid));
+        Assert.That(decodedHash.SomeOrDefault(), Is.EqualTo(guid));
     }
 }
