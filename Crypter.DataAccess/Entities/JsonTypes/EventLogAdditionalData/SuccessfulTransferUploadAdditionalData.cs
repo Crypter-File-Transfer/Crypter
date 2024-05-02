@@ -32,7 +32,7 @@ namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 
 public sealed record SuccessfulTransferUploadAdditionalData(
     Guid ItemId,
-    [property: JsonConverter(typeof(JsonEnumConverter<TransferItemType>))] TransferItemType ItemType,
-    [property: JsonConverter(typeof(LongStringConverter))] long Size,
+    TransferItemType ItemType,
+    long Size,
     Guid? Sender,
     string? Recipient);

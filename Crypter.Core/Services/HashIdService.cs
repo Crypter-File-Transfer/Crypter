@@ -26,6 +26,7 @@
 
 using System;
 using Crypter.Core.Settings;
+using EasyMonads;
 using HashidsNet;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -36,7 +37,7 @@ namespace Crypter.Core.Services;
 public interface IHashIdService
 {
     string Encode(Guid id);
-    Guid Decode(string hash);
+    Maybe<Guid> Decode(string hash);
 }
 
 public static class HashIdServiceExtensions
@@ -69,7 +70,7 @@ public class HashIdService : IHashIdService
         return _lib.EncodeHex(hexString);
     }
 
-    public Guid Decode(string hash)
+    public Maybe<Guid> Decode(string hash)
     {
         string hexString = _lib.DecodeHex(hash);
 
@@ -81,6 +82,13 @@ public class HashIdService : IHashIdService
             bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
         }
 
-        return new Guid(bytes);
+        try
+        {
+            return new Guid(bytes);
+        }
+        catch
+        {
+            return Maybe<Guid>.None;
+        }
     }
 }

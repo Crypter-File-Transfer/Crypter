@@ -32,5 +32,5 @@ namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 
 public sealed record FailedUserLoginAdditionalData(
     string Username,
-    [property: JsonConverter(typeof(JsonEnumConverter<LoginError>))] LoginError Reason,
+    LoginError Reason,
     string DeviceDescription);

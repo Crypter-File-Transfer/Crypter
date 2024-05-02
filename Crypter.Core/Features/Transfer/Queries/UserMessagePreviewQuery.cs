@@ -62,28 +62,34 @@ internal class UserMessagePreviewQueryHandler
 
     public async Task<Either<TransferPreviewError, MessageTransferPreviewResponse>> Handle(UserMessagePreviewQuery request, CancellationToken cancellationToken)
     {
-        Guid itemId = _hashIdService.Decode(request.HashId);
+        Guid? itemId = _hashIdService.Decode(request.HashId)
+            .Match((Guid?)null, x => x);
+
+        if (!itemId.HasValue)
+        {
+            return TransferPreviewError.NotFound;
+        }
         
         Guid? nullableRequesterUserId = request.RequesterId
             .Match<Guid?>(() => null, x => x);
 
-        return await GetUserMessagePreviewAsync(itemId, nullableRequesterUserId)
+        return await GetUserMessagePreviewAsync(itemId.Value, nullableRequesterUserId)
             .DoRightAsync(async _ =>
             {
-                SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId, TransferItemType.Message, nullableRequesterUserId, DateTimeOffset.UtcNow);
+                SuccessfulTransferPreviewEvent successfulTransferPreviewEvent = new SuccessfulTransferPreviewEvent(itemId.Value, TransferItemType.Message, nullableRequesterUserId, DateTimeOffset.UtcNow);
                 await _publisher.Publish(successfulTransferPreviewEvent, CancellationToken.None);
             })
             .DoLeftOrNeitherAsync(
                 async error =>
                 {
                     FailedTransferPreviewEvent failedTransferPreviewEvent =
-                        new FailedTransferPreviewEvent(itemId, TransferItemType.Message, nullableRequesterUserId, error, DateTimeOffset.UtcNow);
+                        new FailedTransferPreviewEvent(itemId.Value, TransferItemType.Message, nullableRequesterUserId, error, DateTimeOffset.UtcNow);
                     await _publisher.Publish(failedTransferPreviewEvent, CancellationToken.None);
                 },
                 async () =>
                 {
                     FailedTransferPreviewEvent failedTransferPreviewEvent =
-                        new FailedTransferPreviewEvent(itemId, TransferItemType.Message, nullableRequesterUserId, TransferPreviewError.UnknownError, DateTimeOffset.UtcNow);
+                        new FailedTransferPreviewEvent(itemId.Value, TransferItemType.Message, nullableRequesterUserId, TransferPreviewError.UnknownError, DateTimeOffset.UtcNow);
                     await _publisher.Publish(failedTransferPreviewEvent, CancellationToken.None);
                 });
     }
