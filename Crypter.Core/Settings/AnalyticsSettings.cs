@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Primitives;
+using System;
 
 namespace Crypter.Core.Settings;
 
@@ -32,5 +32,6 @@ public class AnalyticsSettings
 {
     public required bool EnableEmailedReports { get; set; } = false;
     public string? ReportRecipientEmailAddress { get; set; }
-    public required int ReportFrequencyDays { get; set; }
+    public DayOfWeek? DayOfWeek { get; set; }
+    public int? Hour { get; set; }
 }

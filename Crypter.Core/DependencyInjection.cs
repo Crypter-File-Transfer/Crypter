@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.Threading.Tasks;
 using Crypter.Common.Exceptions;
 using Crypter.Core.Identity;
@@ -83,7 +84,8 @@ public static class DependencyInjection
         {
             options.EnableEmailedReports = analyticsSettings.EnableEmailedReports;
             options.ReportRecipientEmailAddress = analyticsSettings.ReportRecipientEmailAddress;
-            options.ReportFrequencyDays = analyticsSettings.ReportFrequencyDays;
+            options.DayOfWeek = analyticsSettings.DayOfWeek;
+            options.Hour = analyticsSettings.Hour;
         });
         
         services.Configure<ServerPasswordSettings>(options =>
@@ -157,12 +159,12 @@ public static class DependencyInjection
         IRecurringJobManager recurringJobManager = serviceScope.ServiceProvider
             .GetRequiredService<IRecurringJobManager>();
         
-        if (analyticsSettings.EnableEmailedReports)
+        if (analyticsSettings is { EnableEmailedReports: true, DayOfWeek: not null, Hour: not null })
         {
             recurringJobManager.AddOrUpdate(
                 weeklyReportName,
                 () => hangfireBackgroundService.SendApplicationAnalyticsReportAsync(),
-                $"0 13 */{analyticsSettings.ReportFrequencyDays} * *");
+                Cron.Weekly(analyticsSettings.DayOfWeek.Value, analyticsSettings.Hour.Value));
         }
         else
         {
