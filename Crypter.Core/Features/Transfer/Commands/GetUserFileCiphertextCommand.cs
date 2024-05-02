@@ -73,25 +73,32 @@ internal class GetUserFileCiphertextCommandHandler
 
     public async Task<Either<DownloadTransferCiphertextError, FileStream>> Handle(GetUserFileCiphertextCommand request, CancellationToken cancellationToken)
     {
-        Guid itemId = _hashIdService.Decode(request.HashId);
+        Guid? itemId = _hashIdService.Decode(request.HashId)
+            .Match((Guid?)null, x => x);
+
+        if (!itemId.HasValue)
+        {
+            return DownloadTransferCiphertextError.NotFound;
+        }
+        
         Guid? nullableRequesterUserId = request.RequesterId
             .Match<Guid?>(() => null, x => x);
         
-        return await GetFileStreamAsync(itemId, nullableRequesterUserId, request.Proof)
+        return await GetFileStreamAsync(itemId.Value, nullableRequesterUserId, request.Proof)
             .DoRightAsync(async _ =>
             {
-                SuccessfulTransferDownloadEvent downloadEvent = new SuccessfulTransferDownloadEvent(itemId, TransferItemType.File, TransferUserType.User, nullableRequesterUserId, !_transferHasRecipient, DateTimeOffset.UtcNow);
+                SuccessfulTransferDownloadEvent downloadEvent = new SuccessfulTransferDownloadEvent(itemId.Value, TransferItemType.File, TransferUserType.User, nullableRequesterUserId, !_transferHasRecipient, DateTimeOffset.UtcNow);
                 await _publisher.Publish(downloadEvent, CancellationToken.None);
             })
             .DoLeftOrNeitherAsync(
                 async error =>
                 {
-                    FailedTransferDownloadEvent failedTransferDownloadEvent = new FailedTransferDownloadEvent(itemId, TransferItemType.File, nullableRequesterUserId, error, DateTimeOffset.UtcNow);
+                    FailedTransferDownloadEvent failedTransferDownloadEvent = new FailedTransferDownloadEvent(itemId.Value, TransferItemType.File, nullableRequesterUserId, error, DateTimeOffset.UtcNow);
                     await _publisher.Publish(failedTransferDownloadEvent, CancellationToken.None);
                 },
                 async () =>
                 {
-                    FailedTransferDownloadEvent failedTransferDownloadEvent = new FailedTransferDownloadEvent(itemId, TransferItemType.File, nullableRequesterUserId, DownloadTransferCiphertextError.UnknownError, DateTimeOffset.UtcNow);
+                    FailedTransferDownloadEvent failedTransferDownloadEvent = new FailedTransferDownloadEvent(itemId.Value, TransferItemType.File, nullableRequesterUserId, DownloadTransferCiphertextError.UnknownError, DateTimeOffset.UtcNow);
                     await _publisher.Publish(failedTransferDownloadEvent, CancellationToken.None);
                 });
     }
