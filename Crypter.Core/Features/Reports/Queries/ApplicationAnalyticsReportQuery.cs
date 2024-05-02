@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -54,47 +55,37 @@ internal sealed class ApplicationAnalyticsReportQueryHandler
     public async Task<ApplicationAnalyticsReport> Handle(ApplicationAnalyticsReportQuery request, CancellationToken cancellationToken)
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
-        DateTimeOffset reportBegin = DateTimeOffset.Now.AddDays(-request.ReportPeriodDays);
+        DateTimeOffset reportBegin = DateTimeOffset.UtcNow.AddDays(-request.ReportPeriodDays);
         
-        var reportData = await _dataContext.EventLogs
+        List<EventLogEntity> events = await _dataContext.EventLogs
             .Where(eventLog => eventLog.Timestamp <= now && eventLog.Timestamp >= reportBegin)
-            .GroupBy(eventLog => eventLog.EventLogType)
-            .Select(groupedEvents => new
-            {
-                successfulUploads = groupedEvents
-                    .Count(x => x.EventLogType == EventLogType.TransferUploadSuccess),
-                successfulPreviews = groupedEvents
-                    .Where(x => x.EventLogType == EventLogType.TransferPreviewSuccess)
-                    .ToList(),
-                successfulDownloads = groupedEvents
-                    .Where(x => x.EventLogType == EventLogType.TransferDownloadSuccess)
-                    .ToList(),
-                successfulRegistrations = groupedEvents
-                    .Count(x => x.EventLogType == EventLogType.UserRegistrationSuccess),
-                successfulLogins = groupedEvents
-                    .Where(x => x.EventLogType == EventLogType.UserLoginSuccess)
-                    .ToList()
-            })
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
+        Console.WriteLine(JsonSerializer.Serialize(events));
+        
         TransferAnalytics transferAnalytics = new TransferAnalytics(
-            Uploads: reportData?.successfulUploads ?? 0,
-            UniquePreviews: reportData?.successfulPreviews
+            Uploads: events
+                .Count(x => x.EventLogType == EventLogType.TransferUploadSuccess),
+            UniquePreviews: events
+                .Where(x => x.EventLogType == EventLogType.TransferPreviewSuccess)
                 .Select(x => x.AdditionalData.Deserialize<SuccessfulTransferPreviewAdditionalData>())
                 .DistinctBy(x => x?.ItemId ?? Guid.Empty)
-                .Count() ?? 0,
-            UniqueDownloads: reportData?.successfulDownloads
+                .Count(),
+            UniqueDownloads: events
+                .Where(x => x.EventLogType == EventLogType.TransferDownloadSuccess)
                 .Select(x => x.AdditionalData.Deserialize<SuccessfulTransferDownloadAdditionalData>())
                 .DistinctBy(x => x?.ItemId ?? Guid.Empty)
-                .Count() ?? 0
+                .Count()
         );
 
         UserAnalytics userAnalytics = new UserAnalytics(
-            UniqueLogins: reportData?.successfulLogins
+            UniqueLogins: events
+                .Where(x => x.EventLogType == EventLogType.UserLoginSuccess)
                 .Select(x => x.AdditionalData.Deserialize<SuccessfulUserLoginAdditionalData>())
                 .DistinctBy(x => x?.UserId ?? Guid.Empty)
-                .Count() ?? 0,
-            Registrations: reportData?.successfulRegistrations ?? 0
+                .Count(),
+            Registrations: events
+                .Count(x => x.EventLogType == EventLogType.UserRegistrationSuccess)
         );
 
         return new ApplicationAnalyticsReport(
