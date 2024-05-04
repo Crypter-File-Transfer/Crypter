@@ -48,7 +48,7 @@ public partial class UploadFileTransfer : IDisposable
 
     protected override void OnInitialized()
     {
-        _maxFileSizeBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
+        _maxFileSizeBytes = UploadSettings.MaximumTransferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
     }
 
     private void HandleDragEnter()
@@ -70,7 +70,7 @@ public partial class UploadFileTransfer : IDisposable
 
         if (file.Size > _maxFileSizeBytes)
         {
-            ErrorMessage = $"The max file size is {UploadSettings.MaximumTransferSizeMiB} MB.";
+            ErrorMessage = $"The max file size is {UploadSettings.MaximumTransferSizeMB} MB.";
             return;
         }
 
