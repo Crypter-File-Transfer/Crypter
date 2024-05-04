@@ -84,7 +84,7 @@ a, .btn-link {
 }
 
 .loading-progress circle:last-child {
-    stroke: #1b6ec2;
+    stroke: black;
     stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
     transition: stroke-dasharray 0.05s ease-in-out;
 }
@@ -98,6 +98,28 @@ a, .btn-link {
 
 .loading-progress-text:after {
     content: var(--blazor-load-percentage-text, "Loading");
+}
+
+.loading-ellipsis:after {
+    display: inline-block;
+    animation: ellipsis steps(1,end) 1s infinite;
+    content: '\00a0\00a0\00a0';
+}
+
+@keyframes ellipsis {
+    0%   { content: '\00a0\00a0\00a0'; }
+    25%  { content: '.\00a0\00a0'; }
+    50%  { content: '..\00a0'; }
+    75%  { content: '...'; }
+    100% { content: '\00a0\00a0\00a0'; }
+}
+
+@-webkit-keyframes ellipsis {
+    0%   { content: '\00a0\00a0\00a0'; }
+    25%  { content: '.\00a0\00a0'; }
+    50%  { content: '..\00a0'; }
+    75%  { content: '...'; }
+    100% { content: '\00a0\00a0\00a0'; }
 }
 
 code {
