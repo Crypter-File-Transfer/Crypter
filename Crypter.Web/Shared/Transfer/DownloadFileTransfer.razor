@@ -53,7 +53,7 @@
                             <span class="fw-bold">Type: </span>@(string.IsNullOrEmpty(_contentType) ? "{ unknown }" : _contentType)
                         </li>
                         <li class="list-group-item">
-                            <span class="fw-bold">Encrypted Size: </span>@(ByteSize.FromBytes(_fileSize).ToBinaryString())
+                            <span class="fw-bold">Encrypted Size: </span>@(ByteSize.FromBytes(_fileSize).ToString())
                         </li>
                         <li class="list-group-item">
                             <span class="fw-bold">Created: </span>@Created
