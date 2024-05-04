@@ -37,8 +37,9 @@
 
    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
       <Exec Command="pnpm install --force" />
-      <Exec Command="pnpm run build" />
-      <Exec Command="pnpm run buildWorker" />
+      <Exec Command="pnpm run buildFunctions" />
+      <Exec Command="pnpm run buildStreamSaver" />
+      <Exec Command="pnpm run buildServiceWorker" />
    </Target>
    
 </Project>

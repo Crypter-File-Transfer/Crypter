@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2023 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,12 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Client.Transfer.Models;
+using System.Runtime.InteropServices.JavaScript;
+using System.Runtime.Versioning;
+using System.Threading.Tasks;
 
-public class ClientTransferSettings
+namespace Crypter.Web.Services;
+
+[SupportedOSPlatform("browser")]
+public static partial class BrowserFunctions
 {
-    public short MaximumStreamSizeMB { get; init; }
-    public short MaximumBufferSizeMB { get; init; }
-    public int MaxReadSize { get; init; }
-    public int PadSize { get; init; }
+    public static async Task InitializeAsync()
+    {
+        await JSHost.ImportAsync("functions", "../js/dist/functions.bundle.js");
+    }
+
+    [JSImport("browserSupportsRequestStreaming", "functions")]
+    public static partial bool BrowserSupportsRequestStreaming();
 }

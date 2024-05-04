@@ -27,11 +27,14 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Web.Services;
 using EasyMonads;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.VisualBasic;
 
@@ -40,15 +43,19 @@ namespace Crypter.Web.Shared.Transfer;
 public partial class UploadFileTransfer : IDisposable
 {
     private IBrowserFile? _selectedFile;
-    
-    private long _maxFileSizeBytes = 0;
+
+    private bool _browserSupportsRequestStreaming;
+    private long _maxStreamSizeMB = 0;
+    private long _maxBufferSizeMB = 0;
     private string _dropClass = string.Empty;
     private const string DropzoneDrag = "dropzone-drag";
     private const string NoFileSelected = "No file selected.";
 
     protected override void OnInitialized()
     {
-        _maxFileSizeBytes = UploadSettings.MaximumTransferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _browserSupportsRequestStreaming = OperatingSystem.IsBrowser() && BrowserFunctions.BrowserSupportsRequestStreaming();
+        _maxStreamSizeMB = UploadSettings.MaximumStreamSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _maxBufferSizeMB = UploadSettings.MaximumBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
     }
 
     private void HandleDragEnter()
@@ -67,10 +74,16 @@ public partial class UploadFileTransfer : IDisposable
         ErrorMessage = string.Empty;
 
         IBrowserFile file = e.File;
-
-        if (file.Size > _maxFileSizeBytes)
+        
+        if (_browserSupportsRequestStreaming && file.Size > _maxStreamSizeMB)
         {
-            ErrorMessage = $"The max file size is {UploadSettings.MaximumTransferSizeMB} MB.";
+            ErrorMessage = $"The max file size is {UploadSettings.MaximumStreamSizeMB} MB.";
+            return;
+        }
+
+        if (!_browserSupportsRequestStreaming && file.Size > _maxBufferSizeMB)
+        {
+            ErrorMessage = $"The max file size for this browser is {UploadSettings.MaximumBufferSizeMB} MB. Switch to a Chromium-based browser for files up to {UploadSettings.MaximumStreamSizeMB} MB.";
             return;
         }
 

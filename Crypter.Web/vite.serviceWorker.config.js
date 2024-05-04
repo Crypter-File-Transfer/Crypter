@@ -7,7 +7,7 @@ export default defineConfig({
         target: 'esnext',
         minify: false,
         lib: {
-            entry: path.resolve(__dirname, 'Npm/src/serviceWorker.ts'),
+            entry: path.resolve(__dirname, 'Npm/src/streamSaver/serviceWorker.ts'),
             formats: ['es'],
             fileName: 'serviceWorker',
         },

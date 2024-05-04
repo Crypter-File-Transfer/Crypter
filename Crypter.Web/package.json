@@ -6,8 +6,9 @@
   "license": "AGPL-3.0",
   "type": "module",
   "scripts": {
-    "build": "vite build --config vite.config.js",
-    "buildWorker": "vite build --config vite.sw.config.js"
+    "buildFunctions": "vite build --config vite.functions.config.js",
+    "buildStreamSaver": "vite build --config vite.streamSaver.config.js",
+    "buildServiceWorker": "vite build --config vite.serviceWorker.config.js"
   },
   "devDependencies": {
     "path": "^0.12.7",

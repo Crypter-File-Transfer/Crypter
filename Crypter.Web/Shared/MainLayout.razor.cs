@@ -72,7 +72,8 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
         {
             BlazorSodiumService.InitializeAsync(),
             BrowserDownloadFileService.InitializeAsync(),
-            StreamSaverService.InitializeAsync()
+            StreamSaverService.InitializeAsync(),
+            BrowserFunctions.InitializeAsync()
         });
 
         ServicesInitialized = true;

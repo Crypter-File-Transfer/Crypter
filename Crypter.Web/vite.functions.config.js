@@ -7,18 +7,13 @@ export default defineConfig({
         target: 'esnext',
         minify: false,
         lib: {
-            entry: path.resolve(__dirname, 'Npm/src/streamSaver.ts'),
-            
+            entry: path.resolve(__dirname, 'Npm/src/functions.ts'),
             formats: ['es'],
-            fileName: 'streamSaver.bundle',
+            fileName: 'functions.bundle',
         },
-        outDir: path.resolve(__dirname, 'wwwroot/js/dist/streamSaver'),
-        sourcemap: false,
-        rollupOptions: {
-            external: [
-                "Npm/src/serviceWorker.ts"
-            ],
-        }
+        outDir: path.resolve(__dirname, 'wwwroot/js/dist'),
+        emptyOutDir: false,
+        sourcemap: false
     },
     plugins: [
         compression({
