@@ -1,31 +1,4 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
- *
- * This file is part of the Crypter file transfer project.
- *
- * Crypter is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The Crypter source code is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- * You can be released from the requirements of the aforementioned license
- * by purchasing a commercial license. Buying such a license is mandatory
- * as soon as you develop commercial activities involving the Crypter source
- * code without disclosing the source code of your own applications.
- *
- * Contact the current copyright holder to discuss commercial license options.
- */
-
-using System;
-using System.IO;
+﻿using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,7 +9,6 @@ using Crypter.Core.LinqExpressions;
 using Crypter.Core.Settings;
 using Crypter.DataAccess;
 using EasyMonads;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer;
@@ -55,16 +27,19 @@ internal static class Common
     /// <param name="recipientUsername"></param>
     /// <param name="itemType"></param>
     /// <param name="requestedTransferLifetimeHours"></param>
-    /// <param name="ciphertext"></param>
-    /// <returns></returns>
-    internal static async Task<Either<UploadTransferError, ValidTransferData>> ValidateTransferToRecipientAsync(
+    /// <param name="ciphertextStreamLength"></param>
+    /// <returns>
+    /// A possible Guid in case the transfer may be completed.
+    /// An error in case the transfer parameters failed validation.
+    /// </returns>
+    internal static async Task<Either<UploadTransferError, Maybe<Guid>>> ValidateTransferUploadAsync(
         DataContext dataContext,
         TransferStorageSettings transferStorageSettings,
         Maybe<Guid> senderId,
         Maybe<string> recipientUsername,
         TransferItemType itemType,
         int requestedTransferLifetimeHours,
-        IFormFile ciphertext)
+        long ciphertextStreamLength)
     {
         Maybe<Guid> recipientId = await recipientUsername
             .BindAsync(async x =>
@@ -75,13 +50,8 @@ internal static class Common
             return UploadTransferError.RecipientNotFound;
         }
 
-        // Copy the ciphertext bytes to a staging area
-        string stagedFileName = Path.GetTempFileName();
-        await using FileStream stagedFileStream = new FileStream(stagedFileName, FileMode.Open, FileAccess.Write);
-        await ciphertext.CopyToAsync(stagedFileStream);
-        
         bool sufficientDiskSpace =
-            await HasSpaceForTransferAsync(dataContext, transferStorageSettings, stagedFileStream.Position);
+            await HasSpaceForTransferAsync(dataContext, transferStorageSettings, ciphertextStreamLength);
         if (!sufficientDiskSpace)
         {
             return UploadTransferError.OutOfSpace;
@@ -92,7 +62,7 @@ internal static class Common
             return UploadTransferError.InvalidRequestedLifetimeHours;
         }
 
-        return new ValidTransferData(recipientId, stagedFileName, stagedFileStream.Position);
+        return recipientId;
     }
     
     /// <summary>

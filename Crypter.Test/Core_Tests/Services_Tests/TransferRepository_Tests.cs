@@ -68,14 +68,10 @@ internal class TransferRepository_Tests
     [TestCase(TransferUserType.User)]
     public async Task Files_Can_Be_Saved_And_Read_Async(TransferUserType userType)
     {
-        byte[] buffer = [0x01, 0x02, 0x03, 0x04];
+        byte[] buffer = new byte[] { 0x01, 0x02, 0x03, 0x04 };
         Guid itemGuid = Guid.NewGuid();
         MemoryStream memoryStream = new MemoryStream(buffer);
-
-        string tempFilePath = Path.GetTempFileName();
-        await File.WriteAllBytesAsync(tempFilePath, buffer);
-        
-        bool saveSuccess = _sut!.MoveStagedTransferToRepository(itemGuid, TransferItemType.File, userType, tempFilePath);
+        bool saveSuccess = await _sut!.SaveTransferAsync(itemGuid, TransferItemType.File, userType, memoryStream);
         Assert.That(saveSuccess, Is.True);
         await memoryStream.DisposeAsync();
 

@@ -65,9 +65,10 @@ public class FileTransferController : TransferControllerBase
         Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
             ? Maybe<string>.None
             : username;
+        await using Stream? ciphertextStream = request.Ciphertext?.OpenReadStream();
 
         SaveFileTransferCommand command = new SaveFileTransferCommand(
-            PossibleUserId, maybeUsername, request.Data, request.Ciphertext);
+            PossibleUserId, maybeUsername, request.Data, ciphertextStream);
         
         return await _sender.Send(command)
             .MatchAsync(

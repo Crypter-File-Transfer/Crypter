@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
@@ -38,7 +39,6 @@ using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Unit = EasyMonads.Unit;
 
@@ -48,7 +48,7 @@ public sealed record SaveFileTransferCommand(
     Maybe<Guid> SenderId,
     Maybe<string> RecipientUsername,
     UploadFileTransferRequest? Request,
-    IFormFile? Ciphertext)
+    Stream? CiphertextStream)
     : IEitherRequest<UploadTransferError, UploadTransferResponse>;
 
 internal class SaveFileTransferCommandHandler
@@ -81,7 +81,7 @@ internal class SaveFileTransferCommandHandler
         DateTimeOffset eventTimestamp = DateTimeOffset.UtcNow;
         Task<Either<UploadTransferError, UploadTransferResponse>> responseTask;
         
-        if (request.Request is null || request.Ciphertext is null)
+        if (request.Request is null || request.CiphertextStream is null)
         {
             responseTask = Either<UploadTransferError, UploadTransferResponse>
                 .FromLeft(UploadTransferError.UnknownError)
@@ -90,31 +90,30 @@ internal class SaveFileTransferCommandHandler
         else
         {
             responseTask =
-                from validTransferData in Common.ValidateTransferToRecipientAsync(
+                from recipientId in Common.ValidateTransferUploadAsync(
                     _dataContext,
                     _transferStorageSettings,
                     request.SenderId,
                     request.RecipientUsername,
                     TransferItemType.File,
                     request.Request.LifetimeHours,
-                    request.Ciphertext)
-                let transferUserType = Common.DetermineUploadTransferUserType(request.SenderId, validTransferData.RecipientId)
+                    request.CiphertextStream.Length)
+                let transferUserType = Common.DetermineUploadTransferUserType(request.SenderId, recipientId)
                 let newTransferId = Guid.NewGuid()
                 from response in SaveFileTransferAsync(
                     newTransferId,
                     transferUserType,
                     request.SenderId,
-                    validTransferData.RecipientId,
+                    recipientId,
                     request.Request,
-                    validTransferData.StagedFilePath,
-                    validTransferData.FileLength)
+                    request.CiphertextStream)
                 let successfulUploadEvent = new SuccessfulTransferUploadEvent(
                     newTransferId, 
                     TransferItemType.File,
                     transferUserType,
-                    validTransferData.FileLength,
+                    request.CiphertextStream.Length,
                     request.SenderId,
-                    validTransferData.RecipientId,
+                    recipientId,
                     request.RecipientUsername,
                     response.ExpirationUTC,
                     eventTimestamp)
@@ -143,14 +142,13 @@ internal class SaveFileTransferCommandHandler
         Maybe<Guid> senderId,
         Maybe<Guid> recipientId,
         UploadFileTransferRequest request,
-        string stagedFilePath,
-        long fileLength)
+        Stream ciphertextStream)
     {
-        bool storageSuccess = _transferRepository.MoveStagedTransferToRepository(
+        bool storageSuccess = await _transferRepository.SaveTransferAsync(
             newTransferId,
             TransferItemType.File,
             transferUserType,
-            stagedFilePath);
+            ciphertextStream);
                 
         if (!storageSuccess)
         {
@@ -161,7 +159,7 @@ internal class SaveFileTransferCommandHandler
             newTransferId,
             senderId,
             recipientId,
-            fileLength,
+            ciphertextStream.Length,
             request,
             transferUserType);
     }
