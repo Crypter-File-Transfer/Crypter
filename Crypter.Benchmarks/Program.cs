@@ -24,24 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-using System.IO;
-
 namespace Crypter.Benchmarks;
 
 internal class Program
 {
     internal static void Main(string[] args)
     {
-        using FileStream fs = new FileStream("test.txt", FileMode.Create, FileAccess.Write);
-        for (int i = 0; i < 250; i++)
-        {
-            byte[] buffer = new byte[1000000];
-            Random.Shared.NextBytes(buffer);
-            fs.Write(buffer);
-        }
-
-        fs.Flush();
         //BenchmarkRunner.Run<TransferStorageService_Benchmarks>();
     }
 }
