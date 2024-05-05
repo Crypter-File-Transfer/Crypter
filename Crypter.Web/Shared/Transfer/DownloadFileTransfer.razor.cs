@@ -27,6 +27,7 @@
 using System;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Crypto.Common.StreamEncryption;
@@ -46,7 +47,10 @@ public partial class DownloadFileTransfer
 
     [Inject]
     private IFileSaverService FileSaverService { get; init; } = null!;
+
+    protected bool FileCannotBeDownloadedOnThisBrowser { get; set; } = false;
     
+    private long _maxBufferSizeMB = 0;
     private string _fileName = string.Empty;
     private string _contentType = string.Empty;
     private long _fileSize = 0;
@@ -55,6 +59,10 @@ public partial class DownloadFileTransfer
 
     protected override async Task OnInitializedAsync()
     {
+        TransmissionType = FileSaverService.SupportsStreamingDownloads
+            ? TransferTransmissionType.Stream
+            : TransferTransmissionType.Buffer;
+        _maxBufferSizeMB = (TransferSettings.MaximumBufferSizeMB + 1) * Convert.ToInt64(Math.Pow(10, 6));
         await PrepareFilePreviewAsync();
         FinishedLoading = true;
     }
@@ -74,6 +82,11 @@ public partial class DownloadFileTransfer
             SpecificRecipient = !string.IsNullOrEmpty(x.Recipient);
         });
 
+        if (TransmissionType == TransferTransmissionType.Buffer && _fileSize > _maxBufferSizeMB)
+        {
+            FileCannotBeDownloadedOnThisBrowser = true;
+        }
+        
         ItemFound = previewResponse.IsRight;
     }
 

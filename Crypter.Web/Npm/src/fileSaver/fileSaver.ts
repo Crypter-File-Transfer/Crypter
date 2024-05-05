@@ -82,7 +82,6 @@ export async function initializeAsync() : Promise<void> {
 
 export function browserSupportsStreamingDownloads(): boolean {
     let thisInstance: FileSaver = FileSaver.getInstance();
-    console.log(thisInstance.IsServiceWorkerAvailable);
     return thisInstance.IsServiceWorkerAvailable;
 }
 
