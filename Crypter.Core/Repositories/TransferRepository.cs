@@ -26,7 +26,6 @@
 
 using System;
 using System.IO;
-using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Core.Settings;
 using EasyMonads;
@@ -39,11 +38,8 @@ namespace Crypter.Core.Repositories;
 public interface ITransferRepository
 {
     bool TransferExists(Guid id, TransferItemType itemType, TransferUserType userType);
-
-    Maybe<FileStream> GetTransfer(Guid id, TransferItemType itemType, TransferUserType userType,
-        bool deleteOnReadCompletion);
-
-    Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream stream);
+    Maybe<FileStream> GetTransfer(Guid id, TransferItemType itemType, TransferUserType userType, bool deleteOnReadCompletion);
+    bool MoveStagedTransferToRepository(Guid id, TransferItemType itemType, TransferUserType userType, string stagedFilePath);
     void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType);
 }
 
@@ -92,8 +88,8 @@ public class TransferRepository : ITransferRepository
             : Maybe<FileStream>.None;
     }
 
-    public async Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType,
-        Stream stream)
+    public bool MoveStagedTransferToRepository(Guid id, TransferItemType itemType, TransferUserType userType,
+        string stagedFilePath)
     {
         string directory = GetTransferDirectory(itemType, userType);
         string filepath = Path.Join(directory, id.ToString());
@@ -105,20 +101,17 @@ public class TransferRepository : ITransferRepository
                 Directory.CreateDirectory(directory);
             }
 
-            using FileStream ciphertextStream = File.OpenWrite(filepath);
-            await stream.CopyToAsync(ciphertextStream);
-            await ciphertextStream.FlushAsync();
-            ciphertextStream.Dispose();
+            File.Move(stagedFilePath, filepath);
         }
         catch (OperationCanceledException)
         {
-            DeleteTransfer(id, TransferItemType.Message, userType);
+            DeleteTransfer(id, itemType, userType);
             throw;
         }
         catch (Exception)
         {
             // todo - log something
-            DeleteTransfer(id, TransferItemType.Message, userType);
+            DeleteTransfer(id, itemType, userType);
             return false;
         }
 

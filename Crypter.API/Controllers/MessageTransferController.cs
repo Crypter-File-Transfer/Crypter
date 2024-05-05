@@ -25,7 +25,6 @@
  */
 
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.API.Attributes;
@@ -64,10 +63,9 @@ public class MessageTransferController : TransferControllerBase
         Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
             ? Maybe<string>.None
             : username;
-        await using Stream? ciphertextStream = request.Ciphertext?.OpenReadStream();
 
         SaveMessageTransferCommand command = new SaveMessageTransferCommand(
-            PossibleUserId, maybeUsername, request.Data, ciphertextStream);
+            PossibleUserId, maybeUsername, request.Data, request.Ciphertext);
         
         return await _sender.Send(command)
             .MatchAsync(

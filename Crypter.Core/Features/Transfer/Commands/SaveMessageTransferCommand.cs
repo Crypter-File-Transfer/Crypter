@@ -25,7 +25,6 @@
  */
 
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
@@ -39,6 +38,7 @@ using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Unit = EasyMonads.Unit;
 
@@ -48,7 +48,7 @@ public sealed record SaveMessageTransferCommand(
     Maybe<Guid> SenderId,
     Maybe<string> RecipientUsername,
     UploadMessageTransferRequest? Request,
-    Stream? CiphertextStream)
+    IFormFile? Ciphertext)
     : IEitherRequest<UploadTransferError, UploadTransferResponse>;
 
 internal class SaveMessageTransferCommandHandler
@@ -79,7 +79,7 @@ internal class SaveMessageTransferCommandHandler
         DateTimeOffset eventTimestamp = DateTimeOffset.UtcNow;
         Task<Either<UploadTransferError, UploadTransferResponse>> responseTask;
 
-        if (request.Request is null || request.CiphertextStream is null)
+        if (request.Request is null || request.Ciphertext is null)
         {
             responseTask = Either<UploadTransferError, UploadTransferResponse>
                 .FromLeft(UploadTransferError.UnknownError)
@@ -88,30 +88,31 @@ internal class SaveMessageTransferCommandHandler
         else
         {
             responseTask =
-                from recipientId in Common.ValidateTransferUploadAsync(
+                from validTransferData in Common.ValidateTransferToRecipientAsync(
                     _dataContext,
                     _transferStorageSettings,
                     request.SenderId,
                     request.RecipientUsername,
                     TransferItemType.Message,
                     request.Request.LifetimeHours,
-                    request.CiphertextStream.Length)
+                    request.Ciphertext)
                 let newTransferId = Guid.NewGuid()
-                let transferUserType = Common.DetermineUploadTransferUserType(request.SenderId, recipientId)
+                let transferUserType = Common.DetermineUploadTransferUserType(request.SenderId, validTransferData.RecipientId)
                 from response in SaveMessageTransferAsync(
                     newTransferId,
                     transferUserType,
                     request.SenderId,
-                    recipientId,
+                    validTransferData.RecipientId,
                     request.Request,
-                    request.CiphertextStream)
+                    validTransferData.StagedFilePath,
+                    validTransferData.FileLength)
                 let successfulUploadEvent = new SuccessfulTransferUploadEvent(
                     newTransferId, 
                     TransferItemType.Message,
                     transferUserType,
-                    request.CiphertextStream.Length,
+                    validTransferData.FileLength,
                     request.SenderId,
-                    recipientId,
+                    validTransferData.RecipientId,
                     request.RecipientUsername,
                     response.ExpirationUTC,
                     eventTimestamp)
@@ -140,13 +141,14 @@ internal class SaveMessageTransferCommandHandler
         Maybe<Guid> senderId,
         Maybe<Guid> recipientId,
         UploadMessageTransferRequest request,
-        Stream ciphertextStream)
+        string stagedFilePath,
+        long fileLength)
     {
-        bool storageSuccess = await _transferRepository.SaveTransferAsync(
+        bool storageSuccess = _transferRepository.MoveStagedTransferToRepository(
             newTransferId,
             TransferItemType.Message,
             transferUserType,
-            ciphertextStream);
+            stagedFilePath);
                 
         if (!storageSuccess)
         {
@@ -157,7 +159,7 @@ internal class SaveMessageTransferCommandHandler
             newTransferId,
             senderId,
             recipientId,
-            ciphertextStream.Length,
+            fileLength,
             request,
             transferUserType);
     }
