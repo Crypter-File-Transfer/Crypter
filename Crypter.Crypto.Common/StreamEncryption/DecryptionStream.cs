@@ -208,7 +208,6 @@ public class DecryptionStream : Stream
             ciphertextBytesRead += await _ciphertextStream.ReadAsync(ciphertextBuffer.AsMemory(ciphertextBytesRead, ciphertextChunkSize - ciphertextBytesRead), cancellationToken);
         }
         _ciphertextReadPosition += ciphertextBytesRead;
-        Console.WriteLine($"Advanced read position to {_ciphertextReadPosition}");
         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
         
         byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer.AsSpan(0, ciphertextChunkSize), plaintextChunkSize, out bool final);
