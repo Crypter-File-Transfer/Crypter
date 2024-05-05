@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,6 +39,14 @@ internal sealed class BrowserHttpMessageHandler : DelegatingHandler
         var webAssemblyEnableStreamingRequestKey = new HttpRequestOptionsKey<bool>("WebAssemblyEnableStreamingRequest");
         requestMessage.Options.Set(webAssemblyEnableStreamingRequestKey, true);
         requestMessage.SetBrowserResponseStreamingEnabled(true);
-        return base.SendAsync(requestMessage, cancellationToken);
+        try
+        {
+            return base.SendAsync(requestMessage, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            throw;
+        }
     }
 }
