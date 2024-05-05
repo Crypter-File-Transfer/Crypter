@@ -13,18 +13,5 @@ export default defineConfig({
         },
         outDir: path.resolve(__dirname, 'wwwroot/js/dist/serviceWorker'),
         sourcemap: false,
-    },
-    plugins: [
-        compression({
-            algorithm: 'gzip',
-            ext: /\.(js|css|html|svg)$/,
-            exclude: [/\.(br)$/, /\.(gz)$/]
-        }),
-        compression({
-            algorithm: 'brotliCompress',
-            ext: /\.(js|css|html|svg)$/,
-            exclude: [/\.(br)$/, /\.(gz)$/],
-            options: { level: 11 }
-        })
-    ],
+    }
 });

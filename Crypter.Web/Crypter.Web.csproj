@@ -10,9 +10,10 @@
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <StartupObject />
-
       <EmccInitialHeapSize>134217728</EmccInitialHeapSize>
-
+      <CompressionExcludePatterns>
+         blazorSodium.bundle.js
+      </CompressionExcludePatterns>
       <LangVersion>12</LangVersion>
    </PropertyGroup>
 
@@ -29,12 +30,7 @@
       <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
       <ProjectReference Include="..\Crypter.Crypto.Providers.Browser\Crypter.Crypto.Providers.Browser.csproj" />
    </ItemGroup>
-
-   <ItemGroup>
-     <Folder Include="wwwroot\js\dist\serviceWorker\" />
-     <Folder Include="wwwroot\js\dist\streamSaver\" />
-   </ItemGroup>
-
+   
    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
       <Exec Command="pnpm install --force" />
       <Exec Command="pnpm run buildFunctions" />

@@ -15,21 +15,8 @@ export default defineConfig({
         sourcemap: false,
         rollupOptions: {
             external: [
-                "Npm/src/serviceWorker.ts"
+                "Npm/src/serviceWorker/serviceWorker.ts"
             ],
         }
-    },
-    plugins: [
-        compression({
-            algorithm: 'gzip',
-            ext: /\.(js|css|html|svg)$/,
-            exclude: [/\.(br)$/, /\.(gz)$/]
-        }),
-        compression({
-            algorithm: 'brotliCompress',
-            ext: /\.(js|css|html|svg)$/,
-            exclude: [/\.(br)$/, /\.(gz)$/],
-            options: { level: 11 }
-        })
-    ],
+    }
 });
