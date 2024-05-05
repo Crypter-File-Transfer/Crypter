@@ -4,10 +4,21 @@
  * Original license: GPLv3
  * 
  * Modified by: Jack Edwards
- * Modified date: April 2024
+ * Modified date: May 2024
  */
 
 import FileMetaData from "./interfaces/fileMetaData";
+import { isEdge, isEdgeChromium, isIos, isSafari } from "../browser";
+
+/**
+ * Safari and Edge don't support returning stream as a response.
+ * Safari - has everything but fails to stream a response from SW.
+ * Edge - doesn't support ReadableStream() constructor, but supports it in chromium version.
+ * IOS - forces all browsers to use webkit, so same problems as safari in all browsers.
+ * For them download is done in-memory using blob response.
+ */
+export const serviceWorkerNotSupported = () =>
+    !('serviceWorker' in navigator) || isSafari() || (isEdge() && !isEdgeChromium()) || isIos();
 
 function createDownloadIframe(src: string) {
     const iframe = document.createElement('iframe');
@@ -18,7 +29,11 @@ function createDownloadIframe(src: string) {
     return iframe;
 }
 
-export async function initializeServiceWorker() {
+export async function registerServiceWorker() :Promise<void> {
+    if (serviceWorkerNotSupported()) {
+        throw new Error('Saving file via stream is not supported by this browser');
+    }
+
     await navigator.serviceWorker.register('/serviceWorker',{
         scope: '/'
     }).then((x) => {

@@ -272,8 +272,8 @@ public class DecryptionStream : Stream
 
     public override async ValueTask DisposeAsync()
     {
-        GC.SuppressFinalize(this);
         await _ciphertextStream.DisposeAsync();
         await base.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

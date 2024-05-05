@@ -72,19 +72,6 @@
                             <div class="alert alert-success text-center" role="alert">
                                 Decryption successful!
                             </div>
-                            <p class="card-text fst-italic">Click 'Download' to save the decrypted file to your device</p>
-                            <div class="mb-3" hidden="@_localDownloadInProgress">
-                                <button type="button" class="btn btn-primary" @onclick="@(async () => await DownloadFileAsync())">Download</button>
-                            </div>
-
-                            <div hidden="@(!_localDownloadInProgress)">
-                                <div class="text-center">
-                                    Downloading
-                                </div>
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
                         }
                         else if (DecryptionInProgress)
                         {

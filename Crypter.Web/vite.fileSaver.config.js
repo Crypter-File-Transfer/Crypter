@@ -1,5 +1,4 @@
 import path from 'path';
-import compression from 'vite-plugin-compression2';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -7,15 +6,15 @@ export default defineConfig({
         target: 'esnext',
         minify: false,
         lib: {
-            entry: path.resolve(__dirname, 'Npm/src/streamSaver/streamSaver.ts'),
+            entry: path.resolve(__dirname, 'Npm/src/fileSaver/fileSaver.ts'),
             formats: ['es'],
-            fileName: 'streamSaver.bundle',
+            fileName: 'fileSaver.bundle',
         },
-        outDir: path.resolve(__dirname, 'wwwroot/js/dist/streamSaver'),
+        outDir: path.resolve(__dirname, 'wwwroot/js/dist/fileSaver'),
         sourcemap: false,
         rollupOptions: {
             external: [
-                "Npm/src/serviceWorker/serviceWorker.ts"
+                "Npm/src/fileSaver/serviceWorker.ts"
             ],
         }
     }

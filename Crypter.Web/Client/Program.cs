@@ -103,13 +103,14 @@ builder.Services
     .AddSingleton<IUserNotificationSettingsService, UserNotificationSettingsService>()
     .AddSingleton<IUserPrivacySettingsService, UserPrivacySettingsService>()
     .AddSingleton<TransferHandlerFactory>()
-    .AddSingleton<Func<ICrypterApiClient>>(sp => sp.GetRequiredService<ICrypterApiClient>)
-    .AddSingleton<IStreamSaverService, StreamSaverService>();
+    .AddSingleton<Func<ICrypterApiClient>>(sp => sp.GetRequiredService<ICrypterApiClient>);
 
 if (OperatingSystem.IsBrowser())
 {
     builder.Services.AddBlazorSodium();
-    builder.Services.AddSingleton<ICryptoProvider, BrowserCryptoProvider>();
+    builder.Services
+        .AddSingleton<ICryptoProvider, BrowserCryptoProvider>()
+        .AddSingleton<IFileSaverService, FileSaverService>();
 }
 
 WebAssemblyHost host = builder.Build();

@@ -7,12 +7,17 @@
   "type": "module",
   "scripts": {
     "buildFunctions": "vite build --config vite.functions.config.js",
-    "buildStreamSaver": "vite build --config vite.streamSaver.config.js",
+    "buildFileSaver": "vite build --config vite.fileSaver.config.js",
     "buildServiceWorker": "vite build --config vite.serviceWorker.config.js"
   },
   "devDependencies": {
     "path": "^0.12.7",
-    "vite": "^4.4.9",
-    "vite-plugin-compression2": "^0.10.3"
+    "vite": "^4.4.9"
+  },
+  "dependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/ua-parser-js": "^0.7.39",
+    "file-saver": "^2.0.5",
+    "ua-parser-js": "^1.0.37"
   }
 }
