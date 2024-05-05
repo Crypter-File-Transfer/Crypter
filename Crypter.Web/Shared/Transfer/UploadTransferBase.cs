@@ -26,6 +26,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Client.Transfer.Handlers.Base;
@@ -63,9 +64,11 @@ public class UploadTransferBase : ComponentBase
 
     [CascadingParameter] public BasicModal ModalForUserRecipient { get; set; } = null!;
 
+    protected TransferTransmissionType TransmissionType = TransferTransmissionType.Buffer;
     protected bool EncryptionInProgress = false;
     protected string ErrorMessage = string.Empty;
     protected string UploadStatusMessage = string.Empty;
+    protected double? UploadStatusPercent = null;
 
     private const string UnknownError = "An error occurred.";
     private const string ServerOutOfSpace = "Server is out of space. Try again later.";

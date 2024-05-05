@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -24,40 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Runtime.Versioning;
-using System.Threading.Tasks;
-using Crypter.Web.Shared.Modal.Template;
-using Crypter.Web.Shared.Transfer;
-using EasyMonads;
-using Microsoft.AspNetCore.Components;
+namespace Crypter.Common.Client.Enums;
 
-namespace Crypter.Web.Shared.Modal;
-
-[SupportedOSPlatform("browser")]
-public partial class UploadFileTransferModal
+public enum TransferTransmissionType
 {
-    [Parameter] public required string InstanceId { get; set; }
-
-    [Parameter] public required Maybe<string> RecipientUsername { get; set; }
-
-    [Parameter] public required Maybe<byte[]> RecipientPublicKey { get; set; }
-
-    [Parameter] public required EventCallback ModalClosedCallback { get; set; }
-
-    private ModalBehavior _modalBehaviorRef = null!;
-    private UploadFileTransfer _uploadComponent = null!;
-
-    private int _expirationHours;
-
-    public void Open()
-    {
-        _modalBehaviorRef.Open();
-    }
-
-    public async Task CloseAsync()
-    {
-        _uploadComponent.Dispose();
-        await ModalClosedCallback.InvokeAsync();
-        _modalBehaviorRef.Close();
-    }
+    Buffer,
+    Stream
 }
