@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -39,6 +40,7 @@ using EasyMonads;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Crypter.API.Controllers;
@@ -57,6 +59,7 @@ public class FileTransferController : TransferControllerBase
     [HttpPost]
     [MaybeAuthorize]
     [RequestFormLimits(MultipartBodyLengthLimit = long.MaxValue)]
+    [RequestTimeout(300000)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> UploadFileTransferAsync([FromQuery] string? username,
@@ -128,6 +131,7 @@ public class FileTransferController : TransferControllerBase
     }
 
     [HttpGet("ciphertext/anonymous")]
+    [RequestTimeout(300000)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
@@ -147,6 +151,7 @@ public class FileTransferController : TransferControllerBase
 
     [HttpGet("ciphertext/user")]
     [MaybeAuthorize]
+    [RequestTimeout(300000)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(FileStreamResult))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
