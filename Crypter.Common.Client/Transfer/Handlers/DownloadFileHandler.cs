@@ -85,7 +85,7 @@ public class DownloadFileHandler : DownloadHandler
 
         return await response.MatchAsync<Either<DownloadTransferCiphertextError, DecryptionStream>>(
             error => error,
-            async response => await DecryptionStream.OpenAsync(response.Stream, response.StreamSize, symmetricKey, CryptoProvider.StreamEncryptionFactory),
+            async streamDownloadResponse => await DecryptionStream.OpenAsync(streamDownloadResponse.Stream, streamDownloadResponse.StreamSize, symmetricKey, CryptoProvider.StreamEncryptionFactory),
             DownloadTransferCiphertextError.UnknownError);
     }
 }
