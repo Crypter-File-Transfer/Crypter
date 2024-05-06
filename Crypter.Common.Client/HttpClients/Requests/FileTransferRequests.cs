@@ -53,8 +53,11 @@ public class FileTransferRequests : IFileTransferRequests
     }
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(
-        Maybe<string> recipientUsername, UploadFileTransferRequest uploadRequest,
-        Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication)
+        Maybe<string> recipientUsername,
+        UploadFileTransferRequest uploadRequest,
+        Func<Action<double>?, EncryptionStream> encryptionStreamOpener,
+        bool withAuthentication,
+        Action<double>? updateCallback = null)
     {
         string url = recipientUsername.Match(
             () => "api/file/transfer",
@@ -64,7 +67,10 @@ public class FileTransferRequests : IFileTransferRequests
             ? _crypterAuthenticatedHttpClient
             : _crypterHttpClient;
 
-        HttpRequestMessage requestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
+        return await service.SendAsync<UploadTransferResponse>(RequestFactory)
+            .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
+
+        HttpRequestMessage RequestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
         {
             Content = new MultipartFormDataContent
             {
@@ -72,12 +78,9 @@ public class FileTransferRequests : IFileTransferRequests
                     new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"),
                     "Data"
                 },
-                { new StreamContent(encryptionStreamOpener()), "Ciphertext", "Ciphertext" }
+                { new StreamContent(encryptionStreamOpener(updateCallback)), "Ciphertext", "Ciphertext" }
             }
         };
-
-        return await service.SendAsync<UploadTransferResponse>(requestFactory)
-            .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
     }
 
     public Task<Maybe<List<UserReceivedFileDTO>>> GetReceivedFilesAsync()

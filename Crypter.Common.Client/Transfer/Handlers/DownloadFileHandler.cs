@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -34,6 +34,7 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Common;
+using Crypter.Crypto.Common.StreamEncryption;
 using EasyMonads;
 
 namespace Crypter.Common.Client.Transfer.Handlers;
@@ -62,7 +63,7 @@ public class DownloadFileHandler : DownloadHandler
         return response;
     }
 
-    public async Task<Either<DownloadTransferCiphertextError, byte[]>> DownloadCiphertextAsync()
+    public async Task<Either<DownloadTransferCiphertextError, DecryptionStream>> DownloadCiphertextAsync()
     {
         byte[] symmetricKey = SymmetricKey.Match(
             () => throw new Exception("Missing symmetric key"),
@@ -82,9 +83,9 @@ public class DownloadFileHandler : DownloadHandler
         };
 #pragma warning restore CS8524
 
-        return response.Match<Either<DownloadTransferCiphertextError, byte[]>>(
-            left => left,
-            right => Decrypt(symmetricKey, right.Stream, right.StreamSize),
+        return await response.MatchAsync<Either<DownloadTransferCiphertextError, DecryptionStream>>(
+            error => error,
+            async streamDownloadResponse => await DecryptionStream.OpenAsync(streamDownloadResponse.Stream, streamDownloadResponse.StreamSize, symmetricKey, CryptoProvider.StreamEncryptionFactory),
             DownloadTransferCiphertextError.UnknownError);
     }
 }

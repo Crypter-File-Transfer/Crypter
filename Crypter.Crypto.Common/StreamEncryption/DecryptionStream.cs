@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
 using System.Security.Cryptography;
@@ -35,7 +36,7 @@ namespace Crypter.Crypto.Common.StreamEncryption;
 
 public class DecryptionStream : Stream
 {
-    private const int _lengthBufferSize = sizeof(int);
+    private const int LengthBufferSize = sizeof(int);
 
     private readonly IStreamDecrypt _streamDecrypt;
     private readonly Stream _ciphertextStream;
@@ -44,12 +45,63 @@ public class DecryptionStream : Stream
     private long _ciphertextReadPosition;
     private bool _finishedReadingCiphertext;
 
-    public DecryptionStream(Stream ciphertextStream, long streamSize, Span<byte> decryptionKey,
+    /// <summary>
+    /// Open a decryption stream in asynchronous scenarios.
+    /// </summary>
+    /// <param name="ciphertextStream"></param>
+    /// <param name="streamSize"></param>
+    /// <param name="decryptionKey"></param>
+    /// <param name="streamEncryptionFactory"></param>
+    /// <returns></returns>
+    public static async Task<DecryptionStream> OpenAsync(
+        Stream ciphertextStream,
+        long streamSize,
+        byte[] decryptionKey,
+        IStreamEncryptionFactory streamEncryptionFactory)
+    {
+        int totalBytesRead = 0;
+        
+        byte[] lengthBuffer = ArrayPool<byte>.Shared.Rent(LengthBufferSize);
+        totalBytesRead += await ciphertextStream.ReadAsync(lengthBuffer.AsMemory(0, LengthBufferSize));
+        int headerSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer.AsSpan(0, LengthBufferSize));
+        ArrayPool<byte>.Shared.Return(lengthBuffer);
+
+        byte[] headerBuffer = ArrayPool<byte>.Shared.Rent(headerSize);
+        totalBytesRead += await ciphertextStream.ReadAsync(headerBuffer.AsMemory(0, headerSize));
+        IStreamDecrypt streamDecrypt = streamEncryptionFactory.NewDecryptionStream(decryptionKey, headerBuffer.AsSpan(0, headerSize));
+        ArrayPool<byte>.Shared.Return(headerBuffer);
+        
+        return new DecryptionStream(ciphertextStream, streamSize, totalBytesRead, streamDecrypt);
+    }
+    
+    private DecryptionStream(
+        Stream ciphertextStream,
+        long streamSize,
+        long startingStreamPosition,
+        IStreamDecrypt openStreamDecrypt)
+    {
+        _ciphertextStream = ciphertextStream;
+        _ciphertextStreamSize = streamSize;
+        _ciphertextReadPosition = startingStreamPosition;
+        _streamDecrypt = openStreamDecrypt;
+    }
+    
+    /// <summary>
+    /// Open a decryption stream in synchronous scenarios.
+    /// </summary>
+    /// <param name="ciphertextStream"></param>
+    /// <param name="streamSize"></param>
+    /// <param name="decryptionKey"></param>
+    /// <param name="streamEncryptionFactory"></param>
+    public DecryptionStream(
+        Stream ciphertextStream,
+        long streamSize,
+        Span<byte> decryptionKey,
         IStreamEncryptionFactory streamEncryptionFactory)
     {
         _ciphertextStream = ciphertextStream;
         _ciphertextStreamSize = streamSize;
-        Span<byte> lengthBuffer = stackalloc byte[_lengthBufferSize];
+        Span<byte> lengthBuffer = stackalloc byte[LengthBufferSize];
         _ciphertextReadPosition += ciphertextStream.Read(lengthBuffer);
         int headerSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
         Span<byte> headerBuffer = stackalloc byte[headerSize];
@@ -64,42 +116,44 @@ public class DecryptionStream : Stream
 
     public override bool CanWrite => false;
 
-    public override long Length => throw new NotImplementedException();
+    public override long Length => _ciphertextStreamSize;
 
     public override long Position
     {
-        get { throw new NotSupportedException(); }
+        get => _ciphertextReadPosition;
         set { throw new NotSupportedException(); }
     }
 
     public override int Read(byte[] buffer, int offset, int count)
     {
-        byte[] lengthBuffer = new byte[_lengthBufferSize];
-        int lengthBytesRead = _ciphertextStream.Read(lengthBuffer);
+        byte[] lengthBuffer = ArrayPool<byte>.Shared.Rent(LengthBufferSize);
+        int lengthBytesRead = _ciphertextStream.Read(lengthBuffer.AsSpan(0, LengthBufferSize));
         if (lengthBytesRead == 0)
         {
             return 0;
         }
 
         _ciphertextReadPosition += lengthBytesRead;
-        int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+        int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer.AsSpan(0, LengthBufferSize));
+        ArrayPool<byte>.Shared.Return(lengthBuffer);
         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
         AssertBufferSize(buffer.Length, plaintextChunkSize);
 
-        byte[] ciphertextBuffer = new byte[ciphertextChunkSize];
-        int bytesRead = _ciphertextStream.Read(ciphertextBuffer, 0, ciphertextChunkSize);
+        byte[] ciphertextBuffer = ArrayPool<byte>.Shared.Rent(ciphertextChunkSize);
+        int bytesRead = _ciphertextStream.Read(ciphertextBuffer[..ciphertextChunkSize], 0, ciphertextChunkSize);
         _ciphertextReadPosition += bytesRead;
         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
 
-        byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer, plaintextChunkSize, out bool final);
+        byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer.AsSpan(0, ciphertextChunkSize), plaintextChunkSize, out bool final);
         AssertFinal(final);
         plaintext.CopyTo(buffer.AsMemory());
+        ArrayPool<byte>.Shared.Return(ciphertextBuffer);
         return plaintext.Length;
     }
 
     public override int Read(Span<byte> buffer)
     {
-        Span<byte> lengthBuffer = new byte[_lengthBufferSize];
+        Span<byte> lengthBuffer = stackalloc byte[LengthBufferSize];
         int lengthBytesRead = _ciphertextStream.Read(lengthBuffer);
         if (lengthBytesRead == 0)
         {
@@ -111,7 +165,7 @@ public class DecryptionStream : Stream
         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
         AssertBufferSize(buffer.Length, plaintextChunkSize);
 
-        Span<byte> ciphertextBuffer = new byte[ciphertextChunkSize];
+        Span<byte> ciphertextBuffer = stackalloc byte[ciphertextChunkSize];
         int bytesRead = _ciphertextStream.Read(ciphertextBuffer);
         _ciphertextReadPosition += bytesRead;
         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
@@ -122,29 +176,44 @@ public class DecryptionStream : Stream
         return plaintext.Length;
     }
 
+    /// <summary>
+    /// Read from the decryption stream asynchronously.
+    /// </summary>
+    /// <param name="buffer"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <remarks>This gets used during streamed web downloads!</remarks>
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        byte[] lengthBuffer = new byte[_lengthBufferSize];
-        int lengthBytesRead = await _ciphertextStream.ReadAsync(lengthBuffer.AsMemory(), cancellationToken);
+        byte[] lengthBuffer = ArrayPool<byte>.Shared.Rent(LengthBufferSize);
+        int lengthBytesRead = await _ciphertextStream.ReadAsync(lengthBuffer.AsMemory(0, LengthBufferSize), cancellationToken);
         if (lengthBytesRead == 0)
         {
             return 0;
         }
-
+        
         _ciphertextReadPosition += lengthBytesRead;
-        int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+        int ciphertextChunkSize = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer.AsSpan(0, LengthBufferSize));
+        ArrayPool<byte>.Shared.Return(lengthBuffer);
         int plaintextChunkSize = ciphertextChunkSize - (int)_streamDecrypt.TagSize;
         AssertBufferSize(buffer.Length, plaintextChunkSize);
-
-        byte[] ciphertextBuffer = new byte[ciphertextChunkSize];
-        int bytesRead = await _ciphertextStream.ReadAsync(
-            ciphertextBuffer.AsMemory((int)_ciphertextReadPosition, ciphertextChunkSize), cancellationToken);
-        _ciphertextReadPosition += bytesRead;
+        
+        byte[] ciphertextBuffer = ArrayPool<byte>.Shared.Rent(ciphertextChunkSize);
+        
+        // Looping to ensure the entire ciphertext chunk is read into the ciphertextBuffer
+        // Reading from the ciphertext stream was sometimes returning fewer bytes than requested.
+        int ciphertextBytesRead = 0;
+        while (ciphertextBytesRead < ciphertextChunkSize)
+        {
+            ciphertextBytesRead += await _ciphertextStream.ReadAsync(ciphertextBuffer.AsMemory(ciphertextBytesRead, ciphertextChunkSize - ciphertextBytesRead), cancellationToken);
+        }
+        _ciphertextReadPosition += ciphertextBytesRead;
         _finishedReadingCiphertext = _ciphertextReadPosition == _ciphertextStreamSize;
-
-        byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer, plaintextChunkSize, out bool final);
+        
+        byte[] plaintext = _streamDecrypt.Pull(ciphertextBuffer.AsSpan(0, ciphertextChunkSize), plaintextChunkSize, out bool final);
         AssertFinal(final);
         plaintext.CopyTo(buffer);
+        ArrayPool<byte>.Shared.Return(ciphertextBuffer);
         return plaintext.Length;
     }
 
@@ -189,9 +258,22 @@ public class DecryptionStream : Stream
         }
     }
 
+    public override void Close()
+    {
+        _ciphertextStream.Close();
+        base.Close();
+    }
+    
     protected override void Dispose(bool disposing)
     {
         _ciphertextStream.Dispose();
         base.Dispose(disposing);
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        await _ciphertextStream.DisposeAsync();
+        await base.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 }

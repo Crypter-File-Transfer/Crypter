@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.IO;
 using System.Threading;
@@ -37,12 +38,14 @@ public class EncryptionStream : Stream
     private const int LengthBufferSize = sizeof(int);
 
     private readonly IStreamEncrypt _streamEncrypt;
-    private readonly Stream _plaintextStream;
+    private readonly Func<Stream> _plaintextStreamOpener;
+    private Stream? _plaintextStream;
     private readonly long _plaintextSize;
     private readonly int _plaintextReadSize;
     private readonly int _minimumBufferSize;
     private readonly byte[] _headerBytes;
-
+    private readonly Action<double>? _updateCallback;
+    
     private bool _finishedReadingPlaintext;
     private long _plaintextReadPosition;
     private bool _headerHasBeenReturned;
@@ -50,18 +53,26 @@ public class EncryptionStream : Stream
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="plaintextStream"></param>
+    /// <param name="plaintextStreamOpener"></param>
     /// <param name="plaintextSize"></param>
     /// <param name="encryptionKey"></param>
     /// <param name="streamEncryptionFactory"></param>
     /// <param name="maxReadSize"></param>
     /// <param name="padSize"></param>
-    public EncryptionStream(Stream plaintextStream, long plaintextSize, Span<byte> encryptionKey,
-        IStreamEncryptionFactory streamEncryptionFactory, int maxReadSize, int padSize)
+    /// <param name="updateCallback"></param>
+    public EncryptionStream(
+        Func<Stream> plaintextStreamOpener,
+        long plaintextSize,
+        Span<byte> encryptionKey,
+        IStreamEncryptionFactory streamEncryptionFactory,
+        int maxReadSize,
+        int padSize,
+        Action<double>? updateCallback = null)
     {
-        _plaintextStream = plaintextStream;
+        _plaintextStreamOpener = plaintextStreamOpener;
         _plaintextSize = plaintextSize;
         _plaintextReadSize = maxReadSize;
+        _updateCallback = updateCallback;
 
         _streamEncrypt = streamEncryptionFactory.NewEncryptionStream(padSize);
         _headerBytes = _streamEncrypt.GenerateHeader(encryptionKey);
@@ -90,32 +101,31 @@ public class EncryptionStream : Stream
         {
             return 0;
         }
-
-        byte[] lengthBuffer = new byte[LengthBufferSize];
+        
         if (!_headerHasBeenReturned)
         {
-            BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer, _headerBytes.Length);
-            lengthBuffer.CopyTo(buffer.AsMemory()[..LengthBufferSize]);
-            _headerBytes.CopyTo(buffer.AsMemory()[LengthBufferSize..]);
-            _headerHasBeenReturned = true;
-
-            Console.WriteLine(Convert.ToHexString(buffer.AsSpan(0, _headerBytes.Length + LengthBufferSize)));
-
-            return _headerBytes.Length + LengthBufferSize;
+            return WriteHeaderBytes(buffer.AsSpan(offset, count));
         }
-
-        byte[] plaintextBuffer = new byte[_plaintextReadSize];
-        int bytesRead = _plaintextStream.Read(plaintextBuffer, (int)_plaintextReadPosition, _plaintextReadSize);
-        _plaintextReadPosition += bytesRead;
+        
+        Stream plaintextStream = GetPlaintextStream();
+        
+        byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
+        int plaintextBytesRead = plaintextStream.Read(plaintextBuffer.AsSpan(0, _plaintextReadSize));
+        _plaintextReadPosition += plaintextBytesRead;
         _finishedReadingPlaintext = _plaintextReadPosition == _plaintextSize;
 
-        byte[] ciphertext = bytesRead < _plaintextReadSize
-            ? _streamEncrypt.Push(plaintextBuffer[..bytesRead], _finishedReadingPlaintext)
-            : _streamEncrypt.Push(plaintextBuffer, _finishedReadingPlaintext);
+        byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
+            ? _streamEncrypt.Push(plaintextBuffer[..plaintextBytesRead], _finishedReadingPlaintext)
+            : _streamEncrypt.Push(plaintextBuffer[.._plaintextReadSize], _finishedReadingPlaintext);
+        ArrayPool<byte>.Shared.Return(plaintextBuffer);
+        
+        BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(offset, LengthBufferSize), ciphertext.Length);
 
-        BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer, ciphertext.Length);
-        lengthBuffer.CopyTo(buffer.AsMemory()[..LengthBufferSize]);
-        ciphertext.CopyTo(buffer.AsMemory()[LengthBufferSize..]);
+        int bufferCiphertextStartingPosition = offset + LengthBufferSize;
+        int bufferCiphertextLength = count - LengthBufferSize;
+        ciphertext.CopyTo(buffer.AsMemory(bufferCiphertextStartingPosition, bufferCiphertextLength));
+        
+        _updateCallback?.Invoke(Convert.ToDouble(_plaintextReadPosition) / Convert.ToDouble(_plaintextSize));
         return ciphertext.Length + LengthBufferSize;
     }
 
@@ -127,34 +137,44 @@ public class EncryptionStream : Stream
         {
             return 0;
         }
-
-        byte[] lengthBuffer = new byte[LengthBufferSize];
+        
         if (!_headerHasBeenReturned)
         {
-            BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer, _headerBytes.Length);
-            lengthBuffer.CopyTo(buffer[..LengthBufferSize]);
-            _headerBytes.CopyTo(buffer[LengthBufferSize..]);
-            _headerHasBeenReturned = true;
-
-            return _headerBytes.Length + LengthBufferSize;
+            return WriteHeaderBytes(buffer.Span);
         }
-
-        byte[] plaintextBuffer = new byte[_plaintextReadSize];
-        int bytesRead =
-            await _plaintextStream.ReadAsync(plaintextBuffer.AsMemory()[.._plaintextReadSize], cancellationToken);
-        _plaintextReadPosition += bytesRead;
+        Stream plaintextStream = GetPlaintextStream();
+        
+        byte[] plaintextBuffer = ArrayPool<byte>.Shared.Rent(_plaintextReadSize);
+        int plaintextBytesRead = await plaintextStream.ReadAsync(plaintextBuffer.AsMemory(0, _plaintextReadSize), cancellationToken);
+        _plaintextReadPosition += plaintextBytesRead;
         _finishedReadingPlaintext = _plaintextReadPosition == _plaintextSize;
 
-        byte[] ciphertext = bytesRead < _plaintextReadSize
-            ? _streamEncrypt.Push(plaintextBuffer[..bytesRead], _finishedReadingPlaintext)
-            : _streamEncrypt.Push(plaintextBuffer, _finishedReadingPlaintext);
-
-        BinaryPrimitives.WriteInt32LittleEndian(lengthBuffer, ciphertext.Length);
-        lengthBuffer.CopyTo(buffer[..LengthBufferSize]);
+        byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
+            ? _streamEncrypt.Push(plaintextBuffer[..plaintextBytesRead], _finishedReadingPlaintext)
+            : _streamEncrypt.Push(plaintextBuffer[.._plaintextReadSize], _finishedReadingPlaintext);
+        ArrayPool<byte>.Shared.Return(plaintextBuffer);
+        
+        BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[..LengthBufferSize], ciphertext.Length);
         ciphertext.CopyTo(buffer[LengthBufferSize..]);
+        
+        _updateCallback?.Invoke(Convert.ToDouble(_plaintextReadPosition) / Convert.ToDouble(_plaintextSize));
         return ciphertext.Length + LengthBufferSize;
     }
 
+    private int WriteHeaderBytes(Span<byte> buffer)
+    {
+        BinaryPrimitives.WriteInt32LittleEndian(buffer[..LengthBufferSize], _headerBytes.Length);
+        _headerBytes.CopyTo(buffer[LengthBufferSize..]);
+        _headerHasBeenReturned = true;
+        
+        return _headerBytes.Length + LengthBufferSize;
+    }
+    
+    private Stream GetPlaintextStream()
+    {
+        return _plaintextStream ??= _plaintextStreamOpener();
+    }
+    
     private void AssertBufferSize(int bufferSize)
     {
         if (bufferSize < _minimumBufferSize)
@@ -181,5 +201,27 @@ public class EncryptionStream : Stream
     public override void Write(byte[] buffer, int offset, int count)
     {
         throw new NotImplementedException();
+    }
+
+    public override void Close()
+    {
+        _plaintextStream?.Close();
+        base.Close();
+    }
+    
+    protected override void Dispose(bool disposing)
+    {
+        _plaintextStream?.Dispose();
+        base.Dispose(disposing);
+    }
+    
+    public override async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        if (_plaintextStream is not null)
+        {
+            await _plaintextStream.DisposeAsync(); 
+        }
+        await base.DisposeAsync();
     }
 }

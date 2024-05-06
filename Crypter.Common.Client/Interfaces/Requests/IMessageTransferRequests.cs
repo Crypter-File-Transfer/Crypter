@@ -38,7 +38,7 @@ public interface IMessageTransferRequests
 {
     Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(
         Maybe<string> recipientUsername, UploadMessageTransferRequest uploadRequest,
-        Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication);
+        Func<Action<double>?, EncryptionStream> encryptionStreamOpener, bool withAuthentication);
 
     Task<Maybe<List<UserReceivedMessageDTO>>> GetReceivedMessagesAsync();
     Task<Maybe<List<UserSentMessageDTO>>> GetSentMessagesAsync();

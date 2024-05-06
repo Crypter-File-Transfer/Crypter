@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Crypter.Web.Shared.Modal.Template;
 using Crypter.Web.Shared.Transfer;
@@ -32,6 +33,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.Modal;
 
+[SupportedOSPlatform("browser")]
 public partial class UploadFileTransferModal
 {
     [Parameter] public required string InstanceId { get; set; }

@@ -53,7 +53,7 @@
                             <span class="fw-bold">Type: </span>@(string.IsNullOrEmpty(_contentType) ? "{ unknown }" : _contentType)
                         </li>
                         <li class="list-group-item">
-                            <span class="fw-bold">Encrypted Size: </span>@(ByteSize.FromBytes(_fileSize).ToBinaryString())
+                            <span class="fw-bold">Encrypted Size: </span>@(ByteSize.FromBytes(_fileSize).ToString())
                         </li>
                         <li class="list-group-item">
                             <span class="fw-bold">Created: </span>@Created
@@ -67,23 +67,17 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-body text-center">
-                        @if (DecryptionComplete)
+                        @if (FileCannotBeDownloadedOnThisBrowser)
+                        {
+                            <div class="alert alert-warning text-center" role="alert">
+                                This file is too large to download on this browser.
+                                Try using a different browser.
+                            </div>
+                        }
+                        else if (DecryptionComplete)
                         {
                             <div class="alert alert-success text-center" role="alert">
-                                Decryption successful!
-                            </div>
-                            <p class="card-text fst-italic">Click 'Download' to save the decrypted file to your device</p>
-                            <div class="mb-3" hidden="@_localDownloadInProgress">
-                                <button type="button" class="btn btn-primary" @onclick="@(async () => await DownloadFileAsync())">Download</button>
-                            </div>
-
-                            <div hidden="@(!_localDownloadInProgress)">
-                                <div class="text-center">
-                                    Downloading
-                                </div>
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
+                                Decryption successful! Check your downloads folder.
                             </div>
                         }
                         else if (DecryptionInProgress)
@@ -98,7 +92,7 @@
                         else
                         {
                             <h5 class="card-title">Ready to Decrypt</h5>
-                            <p class="card-text fst-italic">Click 'Decrypt' to decrypt the file</p>
+                            <p class="card-text fst-italic">Click 'Decrypt' to decrypt and download the file</p>
 
                             @if (!DecryptionInProgress)
                             {

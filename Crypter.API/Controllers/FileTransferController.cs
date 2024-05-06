@@ -56,6 +56,7 @@ public class FileTransferController : TransferControllerBase
 
     [HttpPost]
     [MaybeAuthorize]
+    [RequestFormLimits(MultipartBodyLengthLimit = long.MaxValue)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> UploadFileTransferAsync([FromQuery] string? username,

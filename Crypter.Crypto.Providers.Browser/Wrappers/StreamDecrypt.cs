@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Buffers;
 using System.Runtime.Versioning;
 using BlazorSodium.Sodium;
 using BlazorSodium.Sodium.Models;
@@ -51,8 +52,10 @@ public class StreamDecrypt : IStreamDecrypt
 
     public byte[] Pull(ReadOnlySpan<byte> ciphertext, int paddingBlockSize, out bool final)
     {
-        SecretStreamPullData pullData =
-            SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Pull(_stateAddress, ciphertext.ToArray());
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(ciphertext.Length);
+        ciphertext.CopyTo(buffer);
+        SecretStreamPullData pullData = SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Pull(_stateAddress, buffer[..ciphertext.Length]);
+        ArrayPool<byte>.Shared.Return(buffer);
         final = pullData.Tag == SecretStream.TAG_FINAL;
         return _padding.Unpad(pullData.Message.AsSpan(), paddingBlockSize);
     }

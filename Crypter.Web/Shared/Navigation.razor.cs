@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Interfaces.Repositories;
@@ -36,6 +37,7 @@ using Microsoft.JSInterop;
 
 namespace Crypter.Web.Shared;
 
+[SupportedOSPlatform("browser")]
 public partial class Navigation : IDisposable
 {
     [Inject] private IJSRuntime JsRuntime { get; init; } = null!;

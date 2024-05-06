@@ -1,5 +1,13 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
 WORKDIR /source/
+
+SHELL ["/bin/bash", "-c"]
+
+RUN apt-get update -yq && apt-get upgrade -yq && apt-get install -yq curl git nano
+RUN curl -fsSL https://deb.nodesource.com/setup_21.x | bash - && apt-get install -yq nodejs
+RUN npm install --global pnpm \
+    && SHELL=bash pnpm setup \
+    && source /root/.bashrc
 
 COPY ../*.sln .
 COPY ../Crypter.Common/*.csproj ./Crypter.Common/

@@ -63,7 +63,7 @@ public class UploadFileHandler : UploadHandler
         _transferInfoSet = true;
     }
 
-    public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync()
+    public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Action<double>? updateCallback = null)
     {
         if (!_transferInfoSet)
         {
@@ -72,11 +72,11 @@ public class UploadFileHandler : UploadHandler
                 .AsTask();
         }
         
-        (Func<EncryptionStream> encryptionStreamOpener, byte[]? senderPublicKey, byte[] proof) = GetEncryptionInfo(_fileStreamOpener!, _fileSize);
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[]? senderPublicKey, byte[] proof) = GetEncryptionInfo(_fileStreamOpener!, _fileSize);
         UploadFileTransferRequest request = new UploadFileTransferRequest(_fileName!, _fileContentType!, senderPublicKey,
             KeyExchangeNonce, proof, ExpirationHours);
         return CrypterApiClient.FileTransfer
-            .UploadFileTransferAsync(RecipientUsername, request, encryptionStreamOpener, SenderDefined)
+            .UploadFileTransferAsync(RecipientUsername, request, encryptionStreamOpener, SenderDefined, updateCallback)
             .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x =>
                 new UploadHandlerResponse(x.HashId, ExpirationHours, TransferItemType.File, x.UserType,
                     RecipientKeySeed));

@@ -67,7 +67,7 @@ internal class DownloadMessageTransfer_Tests
     [Test]
     public async Task Download_Anonymous_Message_Transfer_Works()
     {
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(TestData.DefaultTransferMessageSubject,
             TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce, keyExchangeProof,
@@ -132,7 +132,7 @@ internal class DownloadMessageTransfer_Tests
             Either<RegistrationError, Unit> _ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
         });
 
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadMessageTransferRequest uploadRequest = new UploadMessageTransferRequest(
             TestData.DefaultTransferMessageSubject, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,

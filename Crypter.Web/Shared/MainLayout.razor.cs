@@ -52,6 +52,8 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
 
     [Inject] private IDeviceRepository<BrowserStorageLocation> BrowserRepository { get; init; } = null!;
 
+    [Inject] private IFileSaverService FileSaverService { get; init; } = null!;
+    
     protected BasicModal BasicModal { get; set; } = null!;
     protected RecoveryKeyModal RecoveryKeyModal { get; set; } = null!;
     protected TransferSuccessModal TransferSuccessModal { get; set; } = null!;
@@ -69,7 +71,8 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
         await Task.WhenAll(new Task[]
         {
             BlazorSodiumService.InitializeAsync(),
-            BrowserDownloadFileService.InitializeAsync()
+            FileSaverService.InitializeAsync(),
+            BrowserFunctions.InitializeAsync()
         });
 
         ServicesInitialized = true;

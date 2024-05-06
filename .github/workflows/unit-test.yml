@@ -11,10 +11,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+    - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d #v3
+      with:
+        version: 8
+      
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 9.0.x
 
     - name: Install wasm-tools
       run: dotnet workload install wasm-tools

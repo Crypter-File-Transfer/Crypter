@@ -35,6 +35,7 @@ using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Common;
+using Crypter.Crypto.Common.StreamEncryption;
 using EasyMonads;
 
 namespace Crypter.Common.Client.Transfer.Handlers;
@@ -83,12 +84,23 @@ public class DownloadMessageHandler : DownloadHandler
         };
 #pragma warning restore CS8524
 
-        return response.Match<Either<DownloadTransferCiphertextError, string>>(
-            left => left,
-            right =>
+        return await response.MatchAsync<Either<DownloadTransferCiphertextError, string>>(
+            error => error,
+            async streamDownloadResponse =>
             {
-                byte[] plaintext = Decrypt(symmetricKey, right.Stream, right.StreamSize);
-                return Encoding.UTF8.GetString(plaintext);
+                await using DecryptionStream decryptionStream = await DecryptionStream.OpenAsync(streamDownloadResponse.Stream,
+                    streamDownloadResponse.StreamSize, symmetricKey, CryptoProvider.StreamEncryptionFactory);
+                
+                byte[] plaintextBuffer = new byte[checked((int)streamDownloadResponse.StreamSize)];
+                int plaintextPosition = 0;
+                int bytesRead;
+                do
+                {
+                    bytesRead = await decryptionStream.ReadAsync(plaintextBuffer.AsMemory(plaintextPosition));
+                    plaintextPosition += bytesRead;
+                } while (bytesRead > 0);
+                
+                return Encoding.UTF8.GetString(plaintextBuffer[..plaintextPosition]);
             },
             DownloadTransferCiphertextError.UnknownError);
     }

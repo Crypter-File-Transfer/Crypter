@@ -85,7 +85,7 @@ internal class GetReceivedFileTransfers_Tests
         InsertKeyPairRequest insertKeyPairRequest = TestData.GetInsertKeyPairRequest();
         Either<InsertKeyPairError, Unit> __ = await _client!.UserKey.InsertKeyPairAsync(insertKeyPairRequest);
 
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadFileTransferRequest uploadFileTransferRequest = new UploadFileTransferRequest(
             TestData.DefaultTransferFileName, TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey,

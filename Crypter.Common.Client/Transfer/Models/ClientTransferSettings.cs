@@ -28,7 +28,8 @@ namespace Crypter.Common.Client.Transfer.Models;
 
 public class ClientTransferSettings
 {
-    public short MaximumTransferSizeMiB { get; init; }
+    public short MaximumStreamSizeMB { get; init; }
+    public short MaximumBufferSizeMB { get; init; }
     public int MaxReadSize { get; init; }
     public int PadSize { get; init; }
 }

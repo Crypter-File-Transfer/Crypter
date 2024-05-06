@@ -71,7 +71,7 @@ public class UploadMessageHandler : UploadHandler
                 .AsTask();
         }
         
-        (Func<EncryptionStream> encryptionStreamOpener, byte[]? senderPublicKey, byte[] proof) = GetEncryptionInfo(_messageStreamOpener!, _messageSize);
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[]? senderPublicKey, byte[] proof) = GetEncryptionInfo(_messageStreamOpener!, _messageSize);
         UploadMessageTransferRequest request = new UploadMessageTransferRequest(_messageSubject!, senderPublicKey,
             KeyExchangeNonce, proof, ExpirationHours);
         return CrypterApiClient.MessageTransfer

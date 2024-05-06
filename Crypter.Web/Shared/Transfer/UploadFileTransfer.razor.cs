@@ -25,28 +25,41 @@
  */
 
 using System;
+using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Web.Services;
 using EasyMonads;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.VisualBasic;
 
 namespace Crypter.Web.Shared.Transfer;
 
+[SupportedOSPlatform("browser")]
 public partial class UploadFileTransfer : IDisposable
 {
     private IBrowserFile? _selectedFile;
     
-    private long _maxFileSizeBytes = 0;
+    private long _maxStreamSizeMB = 0;
+    private long _maxBufferSizeMB = 0;
     private string _dropClass = string.Empty;
     private const string DropzoneDrag = "dropzone-drag";
     private const string NoFileSelected = "No file selected.";
 
     protected override void OnInitialized()
     {
-        _maxFileSizeBytes = UploadSettings.MaximumTransferSizeMiB * (long)Math.Pow(2, 20);
+        TransmissionType = BrowserFunctions.BrowserSupportsRequestStreaming()
+            ? TransferTransmissionType.Stream
+            : TransferTransmissionType.Buffer;
+        _maxStreamSizeMB = UploadSettings.MaximumStreamSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _maxBufferSizeMB = UploadSettings.MaximumBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
     }
 
     private void HandleDragEnter()
@@ -65,14 +78,19 @@ public partial class UploadFileTransfer : IDisposable
         ErrorMessage = string.Empty;
 
         IBrowserFile file = e.File;
-
-        if (file.Size > _maxFileSizeBytes)
+        
+        switch (TransmissionType)
         {
-            ErrorMessage = $"The max file size is {UploadSettings.MaximumTransferSizeMiB} MB.";
-            return;
+            case TransferTransmissionType.Stream when file.Size > _maxStreamSizeMB:
+                ErrorMessage = $"The max file size is {UploadSettings.MaximumStreamSizeMB} MB.";
+                return;
+            case TransferTransmissionType.Buffer when file.Size > _maxBufferSizeMB:
+                ErrorMessage = $"The max file size for this browser is {UploadSettings.MaximumBufferSizeMB} MB. Switch to a Chromium-based browser for files up to {UploadSettings.MaximumStreamSizeMB} MB.";
+                return;
+            default:
+                _selectedFile = file;
+                break;
         }
-
-        _selectedFile = file;
     }
 
     protected async Task OnEncryptClicked()
@@ -86,13 +104,27 @@ public partial class UploadFileTransfer : IDisposable
         EncryptionInProgress = true;
         ErrorMessage = string.Empty;
 
-        await SetProgressMessage("Encrypting file");
+        await SetProgressMessageAsync("Encrypting file");
 
         UploadFileHandler fileUploader = TransferHandlerFactory.CreateUploadFileHandler(FileStreamOpener,
             _selectedFile.Name, _selectedFile.Size, _selectedFile.ContentType, ExpirationHours);
 
         SetHandlerUserInfo(fileUploader);
-        Either<UploadTransferError, UploadHandlerResponse> uploadResponse = await fileUploader.UploadAsync();
+
+        Action<double>? progressUpdater = TransmissionType switch
+        {
+            TransferTransmissionType.Buffer => null,
+            TransferTransmissionType.Stream => SetUploadPercentage,
+            _ => null
+        };
+
+        Either<UploadTransferError, UploadHandlerResponse> uploadResponse = await fileUploader.UploadAsync(progressUpdater);
+
+        if (TransmissionType == TransferTransmissionType.Stream)
+        {
+            await Task.Delay(400);
+        }
+        
         await HandleUploadResponse(uploadResponse);
         Dispose();
         return;
@@ -101,18 +133,25 @@ public partial class UploadFileTransfer : IDisposable
             => _selectedFile.OpenReadStream(_selectedFile.Size);
     }
 
-    private async Task SetProgressMessage(string message)
+    private async Task SetProgressMessageAsync(string message)
     {
         UploadStatusMessage = message;
         StateHasChanged();
         await Task.Delay(400);
     }
 
+    private void SetUploadPercentage(double percentage)
+    {
+        UploadStatusPercent = percentage;
+        InvokeAsync(StateHasChanged);
+    }
+    
     public void Dispose()
     {
         _selectedFile = null;
         EncryptionInProgress = false;
         _dropClass = string.Empty;
+        UploadStatusPercent = null;
         GC.SuppressFinalize(this);
     }
 }

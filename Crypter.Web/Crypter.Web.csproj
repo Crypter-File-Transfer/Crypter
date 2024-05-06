@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
    <PropertyGroup>
-      <TargetFramework>net8.0</TargetFramework>
+      <TargetFramework>net9.0</TargetFramework>
       <Nullable>enable</Nullable>
       <ImplicitUsings>disable</ImplicitUsings>
       <ApplicationIcon />
@@ -10,17 +10,18 @@
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <StartupObject />
-
       <EmccInitialHeapSize>134217728</EmccInitialHeapSize>
-
+      <CompressionExcludePatterns>
+         blazorSodium.bundle.js
+      </CompressionExcludePatterns>
       <LangVersion>12</LangVersion>
    </PropertyGroup>
 
    <ItemGroup>
       <PackageReference Include="ByteSize" Version="2.1.2" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.4" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.4" />
-      <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.0-preview.2.24128.4" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.0-preview.2.24128.4" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0-preview.2.24128.5" />
    </ItemGroup>
 
    <ItemGroup>
@@ -29,5 +30,12 @@
       <ProjectReference Include="..\Crypter.Crypto.Common\Crypter.Crypto.Common.csproj" />
       <ProjectReference Include="..\Crypter.Crypto.Providers.Browser\Crypter.Crypto.Providers.Browser.csproj" />
    </ItemGroup>
-
+   
+   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+      <Exec Command="pnpm install --force" />
+      <Exec Command="pnpm run buildFunctions" />
+      <Exec Command="pnpm run buildFileSaver" />
+      <Exec Command="pnpm run buildServiceWorker" />
+   </Target>
+   
 </Project>
