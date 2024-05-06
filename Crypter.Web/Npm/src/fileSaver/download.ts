@@ -37,7 +37,7 @@ export async function registerServiceWorker() :Promise<void> {
     await navigator.serviceWorker.register('/serviceWorker',{
         scope: '/'
     }).then((x) => {
-        console.log(x);
+        console.log("Service worker registered");
     });
     serviceWorkerKeepAlive();
 }
