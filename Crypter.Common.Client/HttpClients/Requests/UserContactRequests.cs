@@ -45,7 +45,7 @@ public class UserContactRequests : IUserContactRequests
 
     public Task<Maybe<List<UserContact>>> GetUserContactsAsync()
     {
-        string url = "api/user/contact";
+        const string url = "api/user/contact";
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserContact>>(url);
     }
 

@@ -85,13 +85,13 @@ public class FileTransferRequests : IFileTransferRequests
 
     public Task<Maybe<List<UserReceivedFileDTO>>> GetReceivedFilesAsync()
     {
-        string url = "api/file/transfer/received";
+        const string url = "api/file/transfer/received";
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserReceivedFileDTO>>(url);
     }
 
     public Task<Maybe<List<UserSentFileDTO>>> GetSentFilesAsync()
     {
-        string url = "api/file/transfer/sent";
+        const string url = "api/file/transfer/sent";
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserSentFileDTO>>(url);
     }
 

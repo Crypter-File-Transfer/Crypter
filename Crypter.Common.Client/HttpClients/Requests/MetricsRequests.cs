@@ -17,7 +17,7 @@ public class MetricsRequests : IMetricsRequests
 
     public Task<Maybe<PublicStorageMetricsResponse>> GetPublicStorageMetricsAsync()
     {
-        string url = "api/metrics/storage/public";
+        const string url = "api/metrics/storage/public";
         return _crypterHttpClient.GetMaybeAsync<PublicStorageMetricsResponse>(url);
     }
 }
