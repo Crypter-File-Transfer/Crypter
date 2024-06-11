@@ -54,21 +54,21 @@ public class UserAuthenticationRequests : IUserAuthenticationRequests
 
     public Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest registerRequest)
     {
-        string url = "api/user/authentication/register";
+        const string url = "api/user/authentication/register";
         return _crypterHttpClient.PostEitherUnitResponseAsync(url, registerRequest)
             .ExtractErrorCode<RegistrationError, Unit>();
     }
 
     public Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest)
     {
-        string url = "api/user/authentication/login";
+        const string url = "api/user/authentication/login";
         return _crypterHttpClient.PostEitherAsync<LoginRequest, LoginResponse>(url, loginRequest)
             .ExtractErrorCode<LoginError, LoginResponse>();
     }
 
     public async Task<Either<RefreshError, RefreshResponse>> RefreshSessionAsync()
     {
-        string url = "api/user/authentication/refresh";
+        const string url = "api/user/authentication/refresh";
         Either<RefreshError, RefreshResponse> response = await _crypterAuthenticatedHttpClient
             .GetEitherAsync<RefreshResponse>(url, true)
             .ExtractErrorCode<RefreshError, RefreshResponse>();
@@ -80,14 +80,14 @@ public class UserAuthenticationRequests : IUserAuthenticationRequests
     public Task<Either<PasswordChallengeError, Unit>> PasswordChallengeAsync(
         PasswordChallengeRequest testPasswordRequest)
     {
-        string url = "api/user/authentication/password/challenge";
+        const string url = "api/user/authentication/password/challenge";
         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, testPasswordRequest)
             .ExtractErrorCode<PasswordChallengeError, Unit>();
     }
 
     public Task<Either<LogoutError, Unit>> LogoutAsync()
     {
-        string url = "api/user/authentication/logout";
+        const string url = "api/user/authentication/logout";
         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, true)
             .ExtractErrorCode<LogoutError, Unit>();
     }

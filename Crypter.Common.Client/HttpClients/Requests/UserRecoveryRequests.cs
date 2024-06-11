@@ -52,7 +52,7 @@ public class UserRecoveryRequests : IUserRecoveryRequests
 
     public Task<Either<SubmitAccountRecoveryError, Unit>> SubmitRecoveryAsync(AccountRecoverySubmission submission)
     {
-        string url = "api/user/recovery";
+        const string url = "api/user/recovery";
         return _crypterHttpClient.PostEitherUnitResponseAsync(url, submission)
             .ExtractErrorCode<SubmitAccountRecoveryError, Unit>();
     }

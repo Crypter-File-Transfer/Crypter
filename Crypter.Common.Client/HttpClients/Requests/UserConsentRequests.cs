@@ -42,7 +42,7 @@ public class UserConsentRequests : IUserConsentRequests
 
     public Task<Maybe<Unit>> ConsentToRecoveryKeyRisksAsync()
     {
-        string url = "api/user/consent/recovery-key-risk";
+        const string url = "api/user/consent/recovery-key-risk";
         return _crypterAuthenticatedHttpClient.PostMaybeUnitResponseAsync(url);
     }
 }

@@ -82,13 +82,13 @@ public class MessageTransferRequests : IMessageTransferRequests
 
     public Task<Maybe<List<UserReceivedMessageDTO>>> GetReceivedMessagesAsync()
     {
-        string url = "api/message/transfer/received";
+        const string url = "api/message/transfer/received";
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserReceivedMessageDTO>>(url);
     }
 
     public Task<Maybe<List<UserSentMessageDTO>>> GetSentMessagesAsync()
     {
-        string url = "api/message/transfer/sent";
+        const string url = "api/message/transfer/sent";
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserSentMessageDTO>>(url);
     }
 

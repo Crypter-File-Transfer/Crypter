@@ -43,14 +43,14 @@ public class UserKeyRequests : IUserKeyRequests
 
     public Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync()
     {
-        string url = "api/user/key/master";
+        const string url = "api/user/key/master";
         return _crypterAuthenticatedHttpClient.GetEitherAsync<GetMasterKeyResponse>(url)
             .ExtractErrorCode<GetMasterKeyError, GetMasterKeyResponse>();
     }
 
     public Task<Either<InsertMasterKeyError, Unit>> InsertMasterKeyAsync(InsertMasterKeyRequest request)
     {
-        string url = "api/user/key/master";
+        const string url = "api/user/key/master";
         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<InsertMasterKeyError, Unit>();
     }
@@ -58,7 +58,7 @@ public class UserKeyRequests : IUserKeyRequests
     public Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>>
         GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
     {
-        string url = "api/user/key/master/recovery-proof/challenge";
+        const string url = "api/user/key/master/recovery-proof/challenge";
         return _crypterAuthenticatedHttpClient
             .PostEitherAsync<GetMasterKeyRecoveryProofRequest, GetMasterKeyRecoveryProofResponse>(url, request)
             .ExtractErrorCode<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>();
@@ -66,14 +66,14 @@ public class UserKeyRequests : IUserKeyRequests
 
     public Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync()
     {
-        string url = "api/user/key/private";
+        const string url = "api/user/key/private";
         return _crypterAuthenticatedHttpClient.GetEitherAsync<GetPrivateKeyResponse>(url)
             .ExtractErrorCode<GetPrivateKeyError, GetPrivateKeyResponse>();
     }
 
     public Task<Either<InsertKeyPairError, Unit>> InsertKeyPairAsync(InsertKeyPairRequest request)
     {
-        string url = "api/user/key/private";
+        const string url = "api/user/key/private";
         return _crypterAuthenticatedHttpClient.PutEitherUnitResponseAsync(url, request)
             .ExtractErrorCode<InsertKeyPairError, Unit>();
     }
