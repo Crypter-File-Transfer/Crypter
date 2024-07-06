@@ -37,6 +37,8 @@ public partial class UploadMessageTransfer : IDisposable
 
     protected async Task OnEncryptClicked()
     {
+        await FileSaverService.UnregisterServiceWorkerAsync();
+        
         EncryptionInProgress = true;
         ErrorMessage = string.Empty;
 

@@ -29,7 +29,7 @@ function createDownloadIframe(src: string) {
     return iframe;
 }
 
-export async function registerServiceWorker() :Promise<void> {
+export async function registerServiceWorkerInternal() :Promise<void> {
     if (serviceWorkerNotSupported()) {
         throw new Error('Saving file via stream is not supported by this browser');
     }
@@ -37,9 +37,27 @@ export async function registerServiceWorker() :Promise<void> {
     await navigator.serviceWorker.register('/serviceWorker',{
         scope: '/'
     }).then((x) => {
-        console.log("Service worker registered");
+        console.log("Registered service worker");
     });
+    
     serviceWorkerKeepAlive();
+}
+
+export async function unregisterServiceWorkerInternal() : Promise<void> {
+    if (serviceWorkerNotSupported()) {
+        return;
+    }
+    
+    const serviceWorkerRegistrations = await navigator.serviceWorker.getRegistrations();
+    for (const registration of serviceWorkerRegistrations) {
+        await registration.unregister().then(x => {
+            if (x) {
+                console.log("Unregistered service worker");
+            } else {
+                console.error("Failed to unregister service worker.")
+            }
+        });
+    }
 }
 
 export async function openDownloadStream(metaData: FileMetaData) {
