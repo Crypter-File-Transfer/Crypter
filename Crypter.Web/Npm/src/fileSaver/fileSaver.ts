@@ -8,10 +8,10 @@
  */
 
 import {
-    registerServiceWorkerInternal,
+    registerServiceWorker,
     openDownloadStream,
-    unregisterServiceWorkerInternal,
-    serviceWorkerNotSupported
+    serviceWorkerNotSupported,
+    registerNoOpServiceWorker
 } from "./download";
 import { saveAs } from "file-saver";
 import FileMetaData from "./interfaces/fileMetaData";
@@ -23,7 +23,7 @@ class FileSaver {
     public IsServiceWorkerAvailable: boolean = false;
 
     public async initialize() {
-        await registerServiceWorkerInternal()
+        await registerServiceWorker()
             .then(() => this.IsServiceWorkerAvailable = true)
             .catch((error) : void => {
                 this.IsServiceWorkerAvailable = false;
@@ -31,8 +31,8 @@ class FileSaver {
             });
     }
 
-    public async unregisterServiceWorker() {
-        await unregisterServiceWorkerInternal();
+    public async deactivateServiceWorker() {
+        await registerNoOpServiceWorker();
     }
     
     public static getInstance(): FileSaver
@@ -89,9 +89,9 @@ export async function initializeAsync() : Promise<void> {
     await thisInstance.initialize();
 }
 
-export async function unregisterServiceWorkerAsync() : Promise<void> {
+export async function deactivateServiceWorkerAsync() : Promise<void> {
     let thisInstance: FileSaver = FileSaver.getInstance();
-    await thisInstance.unregisterServiceWorker();
+    await thisInstance.deactivateServiceWorker();
 }
 
 export function browserSupportsStreamingDownloads(): boolean {

@@ -104,7 +104,7 @@ public partial class UploadFileTransfer : IDisposable
         EncryptionInProgress = true;
         ErrorMessage = string.Empty;
 
-        await FileSaverService.UnregisterServiceWorkerAsync();
+        await FileSaverService.DeactivateServiceWorkerAsync();
         
         await SetProgressMessageAsync("Encrypting file");
 

@@ -61,7 +61,7 @@ function createDownloadStream(port: MessagePort) {
     });
 }
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
     void (self as any).skipWaiting();
 });
 

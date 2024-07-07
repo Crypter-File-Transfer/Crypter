@@ -115,7 +115,7 @@ public partial class DownloadFileTransfer
                 .DoRightAsync(async decryptionStream =>
                 {
                     await FileSaverService.SaveFileAsync(decryptionStream, _fileName, _contentType, null);
-                    await FileSaverService.UnregisterServiceWorkerAsync();
+                    await FileSaverService.DeactivateServiceWorkerAsync();
                     DecryptionComplete = true;
                     await decryptionStream.DisposeAsync();
                 })

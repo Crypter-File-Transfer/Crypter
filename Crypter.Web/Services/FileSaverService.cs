@@ -37,7 +37,7 @@ public interface IFileSaverService
     bool SupportsStreamingDownloads { get; }
     
     Task InitializeAsync(bool registerServiceWorker = false);
-    Task UnregisterServiceWorkerAsync();
+    Task DeactivateServiceWorkerAsync();
     Task SaveFileAsync(Stream stream, string fileName, string mimeType, long? size);
 }
 
@@ -61,12 +61,12 @@ public class FileSaverService(IJSRuntime jsRuntime) : IFileSaverService
         }
     }
 
-    public async Task UnregisterServiceWorkerAsync()
+    public async Task DeactivateServiceWorkerAsync()
     {
         if (OperatingSystem.IsBrowser())
         {
             _moduleReference = await jsRuntime.InvokeAsync<IJSInProcessObjectReference>("import", "../js/dist/fileSaver/fileSaver.bundle.js");
-            await _moduleReference.InvokeVoidAsync("unregisterServiceWorkerAsync");
+            await _moduleReference.InvokeVoidAsync("deactivateServiceWorkerAsync");
         }
     }
     

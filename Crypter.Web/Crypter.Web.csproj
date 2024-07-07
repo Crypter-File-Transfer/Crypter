@@ -36,6 +36,7 @@
       <Exec Command="pnpm run buildFunctions" />
       <Exec Command="pnpm run buildFileSaver" />
       <Exec Command="pnpm run buildServiceWorker" />
+      <Exec Command="pnpm run buildServiceWorkerNoOp" />
    </Target>
    
 </Project>

@@ -29,35 +29,30 @@ function createDownloadIframe(src: string) {
     return iframe;
 }
 
-export async function registerServiceWorkerInternal() :Promise<void> {
+export async function registerServiceWorker() :Promise<void> {
     if (serviceWorkerNotSupported()) {
         throw new Error('Saving file via stream is not supported by this browser');
     }
 
     await navigator.serviceWorker.register('/serviceWorker',{
         scope: '/'
-    }).then((x) => {
+    }).then(() => {
         console.log("Registered service worker");
     });
     
     serviceWorkerKeepAlive();
 }
 
-export async function unregisterServiceWorkerInternal() : Promise<void> {
+export async function registerNoOpServiceWorker() : Promise<void> {
     if (serviceWorkerNotSupported()) {
         return;
     }
-    
-    const serviceWorkerRegistrations = await navigator.serviceWorker.getRegistrations();
-    for (const registration of serviceWorkerRegistrations) {
-        await registration.unregister().then(x => {
-            if (x) {
-                console.log("Unregistered service worker");
-            } else {
-                console.error("Failed to unregister service worker.")
-            }
-        });
-    }
+
+    await navigator.serviceWorker.register('/serviceWorker.noOp',{
+        scope: '/'
+    }).then(() => {
+        console.log("Registered no op service worker");
+    });
 }
 
 export async function openDownloadStream(metaData: FileMetaData) {
@@ -91,7 +86,11 @@ export async function openDownloadStream(metaData: FileMetaData) {
 
 function serviceWorkerKeepAlive() {
     const interval = setInterval(() => {
-        wakeUpServiceWorker().catch(() => clearInterval(interval));
+        wakeUpServiceWorker()
+        .catch((error) => {
+            console.error(error);
+            clearInterval(interval)
+        });
     }, 10000);
 }
 

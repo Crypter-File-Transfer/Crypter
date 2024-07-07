@@ -71,7 +71,7 @@ public partial class DownloadMessageTransfer
             return;
         }
 
-        await FileSaverService.UnregisterServiceWorkerAsync();
+        await FileSaverService.DeactivateServiceWorkerAsync();
         
         DecryptionInProgress = true;
 

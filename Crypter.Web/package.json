@@ -8,7 +8,8 @@
   "scripts": {
     "buildFunctions": "vite build --config vite.functions.config.js",
     "buildFileSaver": "vite build --config vite.fileSaver.config.js",
-    "buildServiceWorker": "vite build --config vite.serviceWorker.config.js"
+    "buildServiceWorker": "vite build --config vite.serviceWorker.config.js",
+    "buildServiceWorkerNoOp": "vite build --config vite.serviceWorker.noOp.config.js"
   },
   "devDependencies": {
     "path": "^0.12.7",
