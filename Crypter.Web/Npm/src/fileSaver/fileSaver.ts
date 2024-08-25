@@ -7,7 +7,12 @@
  * Modified date: April 2024
  */
 
-import { registerServiceWorker, openDownloadStream } from "./download";
+import {
+    registerServiceWorker,
+    openDownloadStream,
+    serviceWorkerNotSupported,
+    registerNoOpServiceWorker
+} from "./download";
 import { saveAs } from "file-saver";
 import FileMetaData from "./interfaces/fileMetaData";
 import DotNetStream from "./interfaces/dotNetStream";
@@ -17,7 +22,7 @@ class FileSaver {
     private static _instance: FileSaver;
     public IsServiceWorkerAvailable: boolean = false;
 
-    public async initializeAsync() {
+    public async initialize() {
         await registerServiceWorker()
             .then(() => this.IsServiceWorkerAvailable = true)
             .catch((error) : void => {
@@ -26,6 +31,10 @@ class FileSaver {
             });
     }
 
+    public async deactivateServiceWorker() {
+        await registerNoOpServiceWorker();
+    }
+    
     public static getInstance(): FileSaver
     {
         return this._instance || (this._instance = new this());
@@ -77,12 +86,16 @@ class FileSaver {
 
 export async function initializeAsync() : Promise<void> {
     let thisInstance: FileSaver = FileSaver.getInstance();
-    await thisInstance.initializeAsync();
+    await thisInstance.initialize();
+}
+
+export async function deactivateServiceWorkerAsync() : Promise<void> {
+    let thisInstance: FileSaver = FileSaver.getInstance();
+    await thisInstance.deactivateServiceWorker();
 }
 
 export function browserSupportsStreamingDownloads(): boolean {
-    let thisInstance: FileSaver = FileSaver.getInstance();
-    return thisInstance.IsServiceWorkerAvailable;
+    return !serviceWorkerNotSupported();
 }
 
 export async function saveFileAsync(streamRef: DotNetStream, fileName: string, mimeType: string, size: number | undefined) : Promise<void> {

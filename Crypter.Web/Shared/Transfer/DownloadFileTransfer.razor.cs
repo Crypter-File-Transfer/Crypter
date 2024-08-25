@@ -45,9 +45,6 @@ public partial class DownloadFileTransfer
     [Inject]
     private IJSRuntime JSRuntime { get; init; } = null!;
 
-    [Inject]
-    private IFileSaverService FileSaverService { get; init; } = null!;
-
     protected bool FileCannotBeDownloadedOnThisBrowser { get; set; } = false;
     
     private long _maxBufferSizeMB = 0;
@@ -97,6 +94,8 @@ public partial class DownloadFileTransfer
             ErrorMessage = "Download handler not assigned.";
             return;
         }
+
+        await FileSaverService.InitializeAsync(true);
         
         DecryptionInProgress = true;
 
@@ -118,6 +117,7 @@ public partial class DownloadFileTransfer
                     await FileSaverService.SaveFileAsync(decryptionStream, _fileName, _contentType, null);
                     DecryptionComplete = true;
                     await decryptionStream.DisposeAsync();
+                    await FileSaverService.DeactivateServiceWorkerAsync();
                 })
                 .DoLeftOrNeitherAsync(
                     HandleDownloadError,

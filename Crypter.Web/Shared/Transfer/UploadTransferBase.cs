@@ -33,6 +33,7 @@ using Crypter.Common.Client.Transfer.Handlers.Base;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
+using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
@@ -51,6 +52,8 @@ public class UploadTransferBase : ComponentBase
     [Inject] protected ClientTransferSettings UploadSettings { get; init; } = null!;
 
     [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; init; } = null!;
+
+    [Inject] protected IFileSaverService FileSaverService { get; init; } = null!;
 
     [Parameter] public Maybe<string> RecipientUsername { get; set; }
 

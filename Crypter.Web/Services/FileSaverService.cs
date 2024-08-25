@@ -36,7 +36,8 @@ public interface IFileSaverService
 {
     bool SupportsStreamingDownloads { get; }
     
-    Task InitializeAsync();
+    Task InitializeAsync(bool registerServiceWorker = false);
+    Task DeactivateServiceWorkerAsync();
     Task SaveFileAsync(Stream stream, string fileName, string mimeType, long? size);
 }
 
@@ -46,15 +47,29 @@ public class FileSaverService(IJSRuntime jsRuntime) : IFileSaverService
     public bool SupportsStreamingDownloads { get => BrowserSupportsStreamingDownloads(); }
     private IJSInProcessObjectReference? _moduleReference;
 
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(bool registerServiceWorker = false)
+    {
+        if (OperatingSystem.IsBrowser())
+        {
+            _moduleReference ??= await jsRuntime.InvokeAsync<IJSInProcessObjectReference>("import",
+                "../js/dist/fileSaver/fileSaver.bundle.js");
+
+            if (registerServiceWorker)
+            {
+                await _moduleReference.InvokeVoidAsync("initializeAsync");
+            }
+        }
+    }
+
+    public async Task DeactivateServiceWorkerAsync()
     {
         if (OperatingSystem.IsBrowser())
         {
             _moduleReference = await jsRuntime.InvokeAsync<IJSInProcessObjectReference>("import", "../js/dist/fileSaver/fileSaver.bundle.js");
-            await _moduleReference.InvokeVoidAsync("initializeAsync");
+            await _moduleReference.InvokeVoidAsync("deactivateServiceWorkerAsync");
         }
     }
-
+    
     public async Task SaveFileAsync(Stream stream, string fileName, string mimeType, long? size)
     {
         using DotNetStreamReference streamReference = new DotNetStreamReference(stream, leaveOpen: false);

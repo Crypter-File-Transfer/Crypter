@@ -55,7 +55,15 @@ public class FileTransferController : TransferControllerBase
     {
         _sender = sender;
     }
-
+    
+    /// <summary>
+    /// The ideal way to upload a file of any size.
+    /// However, the endpoints to receive chunked files is preferred while this Chromium issue remains unaddressed:
+    /// https://issues.chromium.org/issues/339788214
+    /// </summary>
+    /// <param name="username"></param>
+    /// <param name="request"></param>
+    /// <returns></returns>
     [HttpPost]
     [MaybeAuthorize]
     [RequestFormLimits(MultipartBodyLengthLimit = long.MaxValue)]
