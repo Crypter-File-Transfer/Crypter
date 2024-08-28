@@ -26,7 +26,7 @@ COPY Crypter.Web/. ./Crypter.Web/
 
 RUN dotnet publish Crypter.Web --no-restore --configuration release /p:TreatWarningsAsErrors=true /warnaserror --output /app/
 
-FROM caddy:2.7-alpine AS webhost
+FROM caddy:2.8-alpine AS webhost
 COPY Crypter.Web/Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/wwwroot/ /srv/
 EXPOSE 80
