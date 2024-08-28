@@ -57,7 +57,7 @@ public class ExceptionHandlerMiddleware
             ErrorResponseItem errorItem =
                 new ErrorResponseItem((int)InfrastructureErrorCode.InvalidEnumValueErrorCode, ex.Message);
             ErrorResponse errorResponse =
-                new ErrorResponse((int)HttpStatusCode.BadRequest, new List<ErrorResponseItem> { errorItem });
+                new ErrorResponse((int)HttpStatusCode.BadRequest, [errorItem]);
             await response.WriteAsJsonAsync(errorResponse);
         }
         catch (TaskCanceledException)
