@@ -70,8 +70,6 @@ public partial class DownloadMessageTransfer
             ErrorMessage = "Download handler not assigned.";
             return;
         }
-
-        await FileSaverService.DeactivateServiceWorkerAsync();
         
         DecryptionInProgress = true;
 
