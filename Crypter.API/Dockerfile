@@ -1,7 +1,7 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /source/
 
-RUN dotnet tool install --global dotnet-ef --version 9.0.0-preview.7.24405.3
+RUN dotnet tool install --global dotnet-ef --version 8.0.*
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
 COPY ../*.sln ./
@@ -24,7 +24,7 @@ COPY Crypter.DataAccess/. ./Crypter.DataAccess/
 RUN dotnet publish Crypter.API --configuration release --no-self-contained /p:TreatWarningsAsErrors=true /warnaserror --output /app/
 RUN dotnet-ef migrations bundle --project Crypter.DataAccess --startup-project Crypter.API --configuration release --no-build --target-runtime linux-x64 --output /app/efbundle --verbose
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-preview AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app ./
 CMD ["dotnet", "Crypter.API.dll"]
