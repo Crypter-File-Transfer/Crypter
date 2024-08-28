@@ -9,12 +9,14 @@
    </PropertyGroup>
 
    <ItemGroup>
+      <PackageReference Include="Azure.Identity" Version="1.12.0" />
       <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0-preview.3.24172.13" />
       <PackageReference Include="Moq" Version="4.20.70" />
       <PackageReference Include="NUnit" Version="4.2.1" />
       <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
       <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
       <PackageReference Include="Respawn" Version="6.2.1" />
+      <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
       <PackageReference Include="Testcontainers" Version="3.9.0" />
       <PackageReference Include="TestContainers.Container.Database.PostgreSql" Version="1.5.4" />
       <PackageReference Include="Testcontainers.PostgreSql" Version="3.9.0" />
