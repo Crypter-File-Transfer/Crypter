@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
    <PropertyGroup>
-      <TargetFramework>net9.0</TargetFramework>
+      <TargetFramework>net8.0</TargetFramework>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <IsPackable>false</IsPackable>
       <LangVersion>12</LangVersion>
@@ -28,9 +28,9 @@
 
    <ItemGroup>
       <ProjectReference Include="..\Crypter.API\Crypter.API.csproj" />
+      <ProjectReference Include="..\Crypter.Common.Client\Crypter.Common.Client.csproj" />
       <ProjectReference Include="..\Crypter.Core\Crypter.Core.csproj" />
       <ProjectReference Include="..\Crypter.Crypto.Providers.Default\Crypter.Crypto.Providers.Default.csproj" />
-      <ProjectReference Include="..\Crypter.Web\Crypter.Web.csproj" />
    </ItemGroup>
 
    <ItemGroup>
