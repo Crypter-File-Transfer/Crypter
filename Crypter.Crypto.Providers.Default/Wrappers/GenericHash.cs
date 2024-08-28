@@ -44,7 +44,7 @@ public class GenericHash : IGenericHash
     {
         byte[] buffer = new byte[size];
 
-        if (key == default)
+        if (key.IsEmpty)
         {
             BLAKE2b.ComputeHash(buffer, data);
         }
@@ -61,7 +61,7 @@ public class GenericHash : IGenericHash
         byte[] buffer = new byte[size];
         byte[] dataBytes = Encoding.UTF8.GetBytes(data);
 
-        if (key == default)
+        if (key.IsEmpty)
         {
             BLAKE2b.ComputeHash(buffer, dataBytes);
         }
