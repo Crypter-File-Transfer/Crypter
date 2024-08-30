@@ -117,7 +117,6 @@ public partial class DownloadFileTransfer
                     await FileSaverService.SaveFileAsync(decryptionStream, _fileName, _contentType, null);
                     DecryptionComplete = true;
                     await decryptionStream.DisposeAsync();
-                    await FileSaverService.DeactivateServiceWorkerAsync();
                 })
                 .DoLeftOrNeitherAsync(
                     HandleDownloadError,
