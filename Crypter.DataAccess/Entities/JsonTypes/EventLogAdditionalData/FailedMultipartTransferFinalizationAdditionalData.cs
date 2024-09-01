@@ -32,5 +32,5 @@ namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 public sealed record FailedMultipartTransferFinalizationAdditionalData(
     string HashId,
     TransferItemType ItemType,
-    Guid SenderId,
+    Guid UserId,
     FinalizeMultipartFileTransferError Reason);

@@ -36,9 +36,11 @@ using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.EventLog.Commands;
 
-public sealed record LogSuccessfulMultipartTransferFinalizationCommand(Guid ItemId, TransferItemType ItemType, DateTimeOffset Timestamp) : IRequest<Unit>;
+public sealed record LogSuccessfulMultipartTransferFinalizationCommand(Guid ItemId, TransferItemType ItemType, DateTimeOffset Timestamp)
+    : IRequest<Unit>;
 
-internal sealed class LogSuccessfulMultipartTransferFinalizationCommandHandler : IRequestHandler<LogSuccessfulMultipartTransferFinalizationCommand, Unit>
+internal sealed class LogSuccessfulMultipartTransferFinalizationCommandHandler
+    : IRequestHandler<LogSuccessfulMultipartTransferFinalizationCommand, Unit>
 {
     private readonly DataContext _dataContext;
     

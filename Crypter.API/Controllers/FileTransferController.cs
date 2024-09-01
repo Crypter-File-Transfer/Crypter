@@ -92,7 +92,7 @@ public class FileTransferController : TransferControllerBase
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> InitializeChunkedFileTransferAsync([FromQuery] string? username,
+    public async Task<IActionResult> InitializeMultipartFileTransferAsync([FromQuery] string? username,
         [FromBody] UploadFileTransferRequest request)
     {
         Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
@@ -112,7 +112,7 @@ public class FileTransferController : TransferControllerBase
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> UploadFileTransferChunkAsync([FromQuery] string id, [FromQuery] int position,
+    public async Task<IActionResult> UploadMultipartFileTransferAsync([FromQuery] string id, [FromQuery] int position,
         [FromForm] IFormFile? part)
     {
         SaveMultipartFileTransferCommand command = new SaveMultipartFileTransferCommand(UserId, id, position, part?.OpenReadStream());
@@ -140,7 +140,7 @@ public class FileTransferController : TransferControllerBase
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> FinalizeChunkedFileTransferAsync([FromQuery] string id)
+    public async Task<IActionResult> FinalizeMultipartFileTransferAsync([FromQuery] string id)
     {
         FinalizeMultipartFileTransferCommand command = new FinalizeMultipartFileTransferCommand(UserId, id);
         return await _sender.Send(command)
@@ -249,5 +249,30 @@ public class FileTransferController : TransferControllerBase
                 MakeErrorResponse,
                 x => new FileStreamResult(x, "application/octet-stream"),
                 MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
+    }
+
+    [HttpPost("multipart/abandon")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> AbandonMultipartFileTransferAsync([FromQuery] string id)
+    {
+        AbandonMultipartFileTransferCommand command = new AbandonMultipartFileTransferCommand(UserId, id);
+        return await _sender.Send(command)
+            .MatchAsync(
+                left: MakeErrorResponse,
+                right: _ => Accepted(),
+                neither: MakeErrorResponse(AbandonMultipartFileTransferError.UnknownError));
+        
+        IActionResult MakeErrorResponse(AbandonMultipartFileTransferError error)
+        {
+#pragma warning disable CS8524
+            return error switch
+            {
+                AbandonMultipartFileTransferError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+                AbandonMultipartFileTransferError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+        }
     }
 }

@@ -29,8 +29,8 @@ using Crypter.Common.Enums;
 
 namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 
-public sealed record FailedMultipartTransferInitializationAdditionalData(
+public sealed record FailedMultipartTransferAbandonAdditionalData(
+    string HashId,
     TransferItemType ItemType,
-    UploadTransferError Reason,
-    Guid UserId,
-    string? Recipient);
+    Guid SenderId,
+    AbandonMultipartFileTransferError Reason);

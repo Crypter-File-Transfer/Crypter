@@ -27,35 +27,39 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
+using Crypter.Core.Services;
 using Crypter.DataAccess;
-using Crypter.DataAccess.Entities;
-using Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
+using Hangfire;
 using MediatR;
-using Unit = EasyMonads.Unit;
 
-namespace Crypter.Core.Features.EventLog.Commands;
+namespace Crypter.Core.Features.Transfer.Events;
 
-public sealed record LogFailedMultipartTransferInitializationCommand(TransferItemType ItemType, UploadTransferError Reason, Guid Sender, string? Recipient, DateTimeOffset Timestamp) : IRequest<Unit>;
+public sealed record SuccessfulMultipartFileTransferAbandonEvent(Guid ItemId, TransferItemType ItemType, DateTimeOffset Timestamp)
+    : INotification;
 
-internal sealed class LogFailedMultipartTransferInitializationCommandHandler : IRequestHandler<LogFailedMultipartTransferInitializationCommand, Unit>
+internal class SuccessfulMultipartFileTransferAbandonEventHandler
+    : INotificationHandler<SuccessfulMultipartFileTransferAbandonEvent>
 {
+    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly DataContext _dataContext;
-    
-    public LogFailedMultipartTransferInitializationCommandHandler(DataContext dataContext)
+    private readonly IHangfireBackgroundService _hangfireBackgroundService;
+
+    public SuccessfulMultipartFileTransferAbandonEventHandler(
+        IBackgroundJobClient backgroundJobClient,
+        DataContext dataContext,
+        IHangfireBackgroundService hangfireBackgroundService)
     {
+        _backgroundJobClient = backgroundJobClient;
         _dataContext = dataContext;
+        _hangfireBackgroundService = hangfireBackgroundService;
     }
     
-    public async Task<Unit> Handle(LogFailedMultipartTransferInitializationCommand request, CancellationToken cancellationToken)
+    public Task Handle(SuccessfulMultipartFileTransferAbandonEvent notification, CancellationToken cancellationToken)
     {
-        FailedMultipartTransferInitializationAdditionalData additionalData = new FailedMultipartTransferInitializationAdditionalData(request.ItemType, request.Reason, request.Sender, request.Recipient);
-        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferMultipartInitializationFailure, additionalData, request.Timestamp);
+        _backgroundJobClient.Enqueue(() =>
+            _hangfireBackgroundService.LogSuccessfulMultipartTransferAbandonmentAsync(notification.ItemId, TransferItemType.File, notification.Timestamp));
 
-        _dataContext.EventLogs.Add(logEntity);
-        await _dataContext.SaveChangesAsync(CancellationToken.None);
-
-        return Unit.Default;
+        return Task.CompletedTask;
     }
 }

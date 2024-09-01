@@ -95,6 +95,8 @@ public interface IHangfireBackgroundService
     Task<Unit> LogFailedMultipartTransferUploadAsync(string hashId, TransferItemType itemType, Guid userId, UploadMultipartFileTransferError reason, DateTimeOffset timestamp);
     Task<Unit> LogSuccessfulMultipartTransferFinalizationAsync(Guid itemId, TransferItemType itemType, DateTimeOffset timestamp);
     Task<Unit> LogFailedMultipartTransferFinalizationAsync(string hashId, TransferItemType itemType, Guid userId, FinalizeMultipartFileTransferError reason, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulMultipartTransferAbandonmentAsync(Guid itemId, TransferItemType itemType, DateTimeOffset timestamp);
+    Task<Unit> LogFailedMultipartTransferAbandonmentAsync(string hashId, TransferItemType itemType, Guid userId, AbandonMultipartFileTransferError reason, DateTimeOffset timestamp);
 }
 
 /// <summary>
@@ -323,6 +325,18 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public Task<Unit> LogFailedMultipartTransferFinalizationAsync(string hashId, TransferItemType itemType, Guid userId, FinalizeMultipartFileTransferError reason, DateTimeOffset timestamp)
     {
         LogFailedMultipartTransferFinalizationCommand request = new LogFailedMultipartTransferFinalizationCommand(hashId, itemType, userId, reason, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogSuccessfulMultipartTransferAbandonmentAsync(Guid itemId, TransferItemType itemType, DateTimeOffset timestamp)
+    {
+        LogSuccessfulMultipartTransferAbandonCommand request = new LogSuccessfulMultipartTransferAbandonCommand(itemId, itemType, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedMultipartTransferAbandonmentAsync(string hashId, TransferItemType itemType, Guid userId, AbandonMultipartFileTransferError reason, DateTimeOffset timestamp)
+    {
+        LogFailedMultipartTransferAbandonCommand request = new LogFailedMultipartTransferAbandonCommand(hashId, itemType, userId, reason, timestamp);
         return _sender.Send(request);
     }
 }
