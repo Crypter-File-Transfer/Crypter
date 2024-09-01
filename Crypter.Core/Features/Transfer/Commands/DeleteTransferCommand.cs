@@ -126,6 +126,7 @@ internal sealed class DeleteTransferCommandHandler : IRequestHandler<DeleteTrans
         if (request.DeleteFromTransferStorage)
         {
             _transferRepository.DeleteTransfer(request.ItemId, request.ItemType, request.UserType);
+            _transferRepository.DeleteTransferParts(request.ItemId, request.ItemType, request.UserType);
         }
 
         return Unit.Default;
