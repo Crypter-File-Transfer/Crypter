@@ -29,33 +29,45 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Core.Services;
+using Crypter.DataAccess;
+using EasyMonads;
 using Hangfire;
 using MediatR;
 
 namespace Crypter.Core.Features.Transfer.Events;
 
-public sealed record SuccessfulMultipartFileTransferFinalizationEvent(Guid ItemId, DateTimeOffset Timestamp)
+public sealed record SuccessfulMultipartFileTransferFinalizationEvent(Guid ItemId, Maybe<Guid> RecipientId, DateTimeOffset Timestamp)
     : INotification;
 
 internal sealed class SuccessfulMultipartFileTransferFinalizationEventHandler
     : INotificationHandler<SuccessfulMultipartFileTransferFinalizationEvent>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly DataContext _dataContext;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
 
     public SuccessfulMultipartFileTransferFinalizationEventHandler(
         IBackgroundJobClient backgroundJobClient,
+        DataContext dataContext,
         IHangfireBackgroundService hangfireBackgroundService)
     {
         _backgroundJobClient = backgroundJobClient;
+        _dataContext = dataContext;
         _hangfireBackgroundService = hangfireBackgroundService;
     }
 
-    public Task Handle(SuccessfulMultipartFileTransferFinalizationEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(SuccessfulMultipartFileTransferFinalizationEvent notification, CancellationToken cancellationToken)
     {
+        await notification.RecipientId.IfSomeAsync(async recipientId =>
+            await Common.QueueTransferNotificationAsync(
+                _dataContext,
+                _backgroundJobClient,
+                _hangfireBackgroundService,
+                notification.ItemId,
+                TransferItemType.File,
+                recipientId));
+        
         _backgroundJobClient.Enqueue(() =>
             _hangfireBackgroundService.LogSuccessfulMultipartTransferFinalizationAsync(notification.ItemId, TransferItemType.File, notification.Timestamp));
-        
-        return Task.CompletedTask;
     }
 }

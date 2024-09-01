@@ -41,6 +41,7 @@ using EasyMonads;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Guid = System.Guid;
 using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.Transfer.Commands;
@@ -81,6 +82,9 @@ internal class FinalizeMultipartFileTransferCommandHandler
                 from finalizeResult in FinalizeAsync(request, additionalData).ToLeftEitherAsync(Unit.Default)
                 let successfulMultipartFinalizeEvent = new SuccessfulMultipartFileTransferFinalizationEvent(
                     additionalData.InitializedTransferEntity.Id,
+                    additionalData.InitializedTransferEntity.RecipientId.HasValue
+                        ? Maybe<Guid>.None
+                        : additionalData.InitializedTransferEntity.RecipientId.Value,
                     utcNow)
                 from sideEffects in Either<FinalizeMultipartFileTransferError, Unit>.FromRightAsync(
                     UnitPublisher.Publish(_publisher, successfulMultipartFinalizeEvent))
