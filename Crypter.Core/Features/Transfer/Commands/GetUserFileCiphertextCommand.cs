@@ -108,6 +108,7 @@ internal class GetUserFileCiphertextCommandHandler
         var databaseData = await _dataContext.UserFileTransfers
             .Where(x => x.Id == itemId)
             .Where(x => x.RecipientId == null || x.RecipientId == requesterId)
+            .Where(x => !x.Parts)
             .Select(x => new { x.RecipientId, x.Proof })
             .FirstOrDefaultAsync(CancellationToken.None);
 
