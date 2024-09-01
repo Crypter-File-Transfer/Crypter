@@ -82,9 +82,7 @@ internal class FinalizeMultipartFileTransferCommandHandler
                 from finalizeResult in FinalizeAsync(request, additionalData).ToLeftEitherAsync(Unit.Default)
                 let successfulMultipartFinalizeEvent = new SuccessfulMultipartFileTransferFinalizationEvent(
                     additionalData.InitializedTransferEntity.Id,
-                    additionalData.InitializedTransferEntity.RecipientId.HasValue
-                        ? Maybe<Guid>.None
-                        : additionalData.InitializedTransferEntity.RecipientId.Value,
+                    additionalData.InitializedTransferEntity.RecipientId ?? Maybe<Guid>.None,
                     utcNow)
                 from sideEffects in Either<FinalizeMultipartFileTransferError, Unit>.FromRightAsync(
                     UnitPublisher.Publish(_publisher, successfulMultipartFinalizeEvent))
