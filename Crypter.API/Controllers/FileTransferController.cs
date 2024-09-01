@@ -26,6 +26,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.API.Attributes;
@@ -119,17 +120,17 @@ public class FileTransferController : TransferControllerBase
             .MatchAsync(
                 left: MakeErrorResponse,
                 right: _ => Accepted(),
-                neither: MakeErrorResponse(UploadMultiepartFileTransferError.UnknownError));
+                neither: MakeErrorResponse(UploadMultipartFileTransferError.UnknownError));
             
-        IActionResult MakeErrorResponse(UploadMultiepartFileTransferError error)
+        IActionResult MakeErrorResponse(UploadMultipartFileTransferError error)
         {
 #pragma warning disable CS8524
             return error switch
             {
-                UploadMultiepartFileTransferError.OutOfSpace => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
-                UploadMultiepartFileTransferError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
-                UploadMultiepartFileTransferError.AggregateTooLarge
-                    or UploadMultiepartFileTransferError.UnknownError=> MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+                UploadMultipartFileTransferError.OutOfSpace => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
+                UploadMultipartFileTransferError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+                UploadMultipartFileTransferError.AggregateTooLarge
+                    or UploadMultipartFileTransferError.UnknownError=> MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
         }
