@@ -39,7 +39,7 @@ internal static class Common
         Maybe<string> recipientUsername,
         TransferItemType itemType,
         int requestedTransferLifetimeHours,
-        long ciphertextStreamLength)
+        long? ciphertextStreamLength)
     {
         Maybe<Guid> recipientId = await recipientUsername
             .BindAsync(async x =>
@@ -50,13 +50,16 @@ internal static class Common
             return UploadTransferError.RecipientNotFound;
         }
 
-        bool sufficientDiskSpace =
-            await HasSpaceForTransferAsync(dataContext, transferStorageSettings, ciphertextStreamLength);
-        if (!sufficientDiskSpace)
+        if (ciphertextStreamLength.HasValue)
         {
-            return UploadTransferError.OutOfSpace;
+            bool sufficientDiskSpace =
+                await HasSpaceForTransferAsync(dataContext, transferStorageSettings, ciphertextStreamLength.Value);
+            if (!sufficientDiskSpace)
+            {
+                return UploadTransferError.OutOfSpace;
+            }
         }
-
+        
         if (requestedTransferLifetimeHours is > MaxTransferLifetimeHours or < MinTransferLifetimeHours)
         {
             return UploadTransferError.InvalidRequestedLifetimeHours;

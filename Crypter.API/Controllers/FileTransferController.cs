@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -88,6 +87,65 @@ public class FileTransferController : TransferControllerBase
                 neither: MakeErrorResponse(UploadTransferError.UnknownError));
     }
 
+    [HttpPost("multipart/initialize")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> InitializeChunkedFileTransferAsync([FromQuery] string? username,
+        [FromBody] UploadFileTransferRequest request)
+    {
+        Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
+            ? Maybe<string>.None
+            : username;
+
+        InitializeMultipartFileTransferCommand command = new InitializeMultipartFileTransferCommand(UserId, maybeUsername, request);
+        return await _sender.Send(command)
+            .MatchAsync(
+                left: MakeErrorResponse,
+                right: Ok,
+                neither: MakeErrorResponse(UploadTransferError.UnknownError));
+    }
+    
+    [HttpPost("multipart/upload")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> UploadFileTransferChunkAsync([FromQuery] string id, [FromQuery] int position,
+        [FromForm] IFormFile? part)
+    {
+        SaveMultipartFileTransferCommand command = new SaveMultipartFileTransferCommand(UserId, id, position, part?.OpenReadStream());
+        return await _sender.Send(command)
+            .MatchAsync(
+                left: MakeErrorResponse,
+                right: _ => Accepted(),
+                neither: MakeErrorResponse(UploadMultiepartFileTransferError.UnknownError));
+            
+        IActionResult MakeErrorResponse(UploadMultiepartFileTransferError error)
+        {
+#pragma warning disable CS8524
+            return error switch
+            {
+                UploadMultiepartFileTransferError.OutOfSpace => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
+                UploadMultiepartFileTransferError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+                UploadMultiepartFileTransferError.AggregateTooLarge
+                    or UploadMultiepartFileTransferError.UnknownError=> MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+            };
+#pragma warning restore CS8524
+        }
+    }
+    
+    /*
+    [HttpPost("multipart/finalize")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> FinalizeChunkedFileTransferAsync()
+    {
+        
+    }
+    */
+    
     [HttpGet("received")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserReceivedFileDTO>))]

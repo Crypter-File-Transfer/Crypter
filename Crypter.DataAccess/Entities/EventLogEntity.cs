@@ -78,6 +78,9 @@ public enum EventLogType
     TransferPreviewFailure,
     TransferDownloadSuccess,
     TransferDownloadFailure
+    TransferDownloadFailure,
+    TransferMultipartInitializationSuccess,
+    TransferMultipartInitializationFailure,
 }
 
 public class EventLogEntityConfiguration : IEntityTypeConfiguration<EventLogEntity>

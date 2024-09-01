@@ -89,6 +89,10 @@ public interface IHangfireBackgroundService
     Task<Unit> LogFailedTransferPreviewAsync(Guid itemId, TransferItemType itemType, Guid? userId, TransferPreviewError reason, DateTimeOffset timestamp);
     Task<Unit> LogSuccessfulTransferDownloadAsync(Guid itemId, TransferItemType itemType, Guid? userId, DateTimeOffset timestamp);
     Task<Unit> LogFailedTransferDownloadAsync(Guid itemId, TransferItemType itemType, Guid? userId, DownloadTransferCiphertextError reason, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulTransferInitializationAsync(Guid itemId, TransferItemType itemType, Guid sender, string? recipient, DateTimeOffset timestamp);
+    Task<Unit> LogFailedTransferInitializationAsync(TransferItemType itemType, UploadTransferError reason, Guid sender, string? recipient, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulMultipartTransferUploadAsync(Guid itemId, TransferItemType itemType, DateTimeOffset timestamp);
+    Task<Unit> LogFailedMultipartTransferUploadAsync(string hashId, TransferItemType itemType, Guid userId, UploadMultipartFileTransferError reason, DateTimeOffset timestamp);
 }
 
 /// <summary>
@@ -281,6 +285,30 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public Task<Unit> LogFailedTransferDownloadAsync(Guid itemId, TransferItemType itemType, Guid? userId, DownloadTransferCiphertextError reason, DateTimeOffset timestamp)
     {
         LogFailedTransferDownloadCommand request = new LogFailedTransferDownloadCommand(itemId, itemType, userId, reason, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogSuccessfulTransferInitializationAsync(Guid itemId, TransferItemType itemType, Guid sender, string? recipient, DateTimeOffset timestamp)
+    {
+        LogSuccessfulMultipartTransferInitializationCommand request = new LogSuccessfulMultipartTransferInitializationCommand(itemId, itemType, sender, recipient, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedTransferInitializationAsync(TransferItemType itemType, UploadTransferError reason, Guid sender, string? recipient, DateTimeOffset timestamp)
+    {
+        LogFailedMultipartTransferInitializationCommand request = new LogFailedMultipartTransferInitializationCommand(itemType, reason, sender, recipient, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogSuccessfulMultipartTransferUploadAsync(Guid itemId, TransferItemType itemType, DateTimeOffset timestamp)
+    {
+        LogSuccessfulMultipartTransferUploadCommand request = new LogSuccessfulMultipartTransferUploadCommand(itemId, itemType, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedMultipartTransferUploadAsync(string hashId, TransferItemType itemType, Guid userId, UploadMultipartFileTransferError reason, DateTimeOffset timestamp)
+    {
+        LogFailedMultipartTransferUploadCommand request = new LogFailedMultipartTransferUploadCommand(hashId, itemType, userId, reason, timestamp);
         return _sender.Send(request);
     }
 }
