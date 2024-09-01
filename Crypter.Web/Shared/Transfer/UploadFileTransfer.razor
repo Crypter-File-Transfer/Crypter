@@ -63,7 +63,7 @@
 
 <div class="encrypt-status text-center" hidden="@(!EncryptionInProgress)">
     <h3>@UploadStatusMessage</h3>
-    @if (TransmissionType == TransferTransmissionType.Stream)
+    @if (TransmissionType is TransferTransmissionType.Stream or TransferTransmissionType.Multipart)
     {
         <div class="progress">
             <div class="progress-bar" role="progressbar" style="transition:none;width: @((UploadStatusPercent ?? 0) * 100)%" aria-valuenow="@(UploadStatusPercent ?? 0)" aria-valuemin="0" aria-valuemax="1"></div>

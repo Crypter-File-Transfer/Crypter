@@ -25,9 +25,7 @@
  */
 
 using System;
-using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Enums;
@@ -36,9 +34,7 @@ using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Web.Services;
 using EasyMonads;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.VisualBasic;
 
 namespace Crypter.Web.Shared.Transfer;
 
@@ -57,9 +53,9 @@ public partial class UploadFileTransfer : IDisposable
     {
         TransmissionType = BrowserFunctions.BrowserSupportsRequestStreaming()
             ? TransferTransmissionType.Stream
-            : TransferTransmissionType.Buffer;
-        _maxStreamSizeMB = UploadSettings.MaximumStreamSizeMB * Convert.ToInt64(Math.Pow(10, 6));
-        _maxBufferSizeMB = UploadSettings.MaximumBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+            : TransferTransmissionType.Multipart;
+        _maxStreamSizeMB = UploadSettings.MaximumUploadSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _maxBufferSizeMB = UploadSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
     }
 
     private void HandleDragEnter()
@@ -81,11 +77,12 @@ public partial class UploadFileTransfer : IDisposable
         
         switch (TransmissionType)
         {
+            case TransferTransmissionType.Multipart when file.Size > _maxStreamSizeMB:
             case TransferTransmissionType.Stream when file.Size > _maxStreamSizeMB:
-                ErrorMessage = $"The max file size is {UploadSettings.MaximumStreamSizeMB} MB.";
+                ErrorMessage = $"The max file size is {UploadSettings.MaximumUploadSizeMB} MB.";
                 return;
             case TransferTransmissionType.Buffer when file.Size > _maxBufferSizeMB:
-                ErrorMessage = $"The max file size for this browser is {UploadSettings.MaximumBufferSizeMB} MB. Switch to a Chromium-based browser for files up to {UploadSettings.MaximumStreamSizeMB} MB.";
+                ErrorMessage = $"The max file size for this browser is {UploadSettings.MaximumUploadBufferSizeMB} MB. Switch to a Chromium-based browser for files up to {UploadSettings.MaximumUploadSizeMB} MB.";
                 return;
             default:
                 _selectedFile = file;
@@ -120,7 +117,7 @@ public partial class UploadFileTransfer : IDisposable
 
         Either<UploadTransferError, UploadHandlerResponse> uploadResponse = await fileUploader.UploadAsync(progressUpdater);
 
-        if (TransmissionType == TransferTransmissionType.Stream)
+        if (TransmissionType is TransferTransmissionType.Stream or TransferTransmissionType.Multipart)
         {
             await Task.Delay(400);
         }

@@ -56,7 +56,7 @@ public partial class ServerDiskSpaceComponent
             false,
             x =>
             {
-                long maxUploadBytes = UploadSettings.MaximumStreamSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+                long maxUploadBytes = UploadSettings.MaximumUploadSizeMB * Convert.ToInt64(Math.Pow(10, 6));
                 return x.Available > maxUploadBytes;
             });
     }

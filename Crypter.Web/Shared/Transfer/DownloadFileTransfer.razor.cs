@@ -31,7 +31,6 @@ using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Crypto.Common.StreamEncryption;
-using Crypter.Web.Services;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -45,7 +44,7 @@ public partial class DownloadFileTransfer
     [Inject]
     private IJSRuntime JSRuntime { get; init; } = null!;
 
-    protected bool FileCannotBeDownloadedOnThisBrowser { get; set; } = false;
+    private bool FileCannotBeDownloadedOnThisBrowser { get; set; }
     
     private long _maxBufferSizeMB = 0;
     private string _fileName = string.Empty;
@@ -59,7 +58,7 @@ public partial class DownloadFileTransfer
         TransmissionType = FileSaverService.SupportsStreamingDownloads
             ? TransferTransmissionType.Stream
             : TransferTransmissionType.Buffer;
-        _maxBufferSizeMB = (TransferSettings.MaximumBufferSizeMB + 1) * Convert.ToInt64(Math.Pow(10, 6));
+        _maxBufferSizeMB = (TransferSettings.MaximumUploadBufferSizeMB + 1) * Convert.ToInt64(Math.Pow(10, 6));
         await PrepareFilePreviewAsync();
         FinishedLoading = true;
     }

@@ -29,5 +29,6 @@ namespace Crypter.Common.Client.Enums;
 public enum TransferTransmissionType
 {
     Buffer,
-    Stream
+    Stream,
+    Multipart
 }
