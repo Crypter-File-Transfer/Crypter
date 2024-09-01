@@ -45,13 +45,8 @@ public interface ITransferRepository
     Maybe<FileStream> GetTransfer(Guid id, TransferItemType itemType, TransferUserType userType,
         bool deleteOnReadCompletion);
 
-    /// <summary>
-    /// Get the sum of the size of existing parts for a multipart transfer.
-    /// </summary>
-    /// <param name="id"></param>
-    /// <param name="itemType"></param>
-    /// <param name="userType"></param>
-    /// <returns></returns>
+    long GetTransferSize(Guid id, TransferItemType itemType, TransferUserType userType);
+    
     long GetTransferPartsSize(Guid id, TransferItemType itemType, TransferUserType userType);
     
     Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream stream);
@@ -106,6 +101,13 @@ public class TransferRepository : ITransferRepository
             : Maybe<FileStream>.None;
     }
 
+    public long GetTransferSize(Guid id, TransferItemType itemType, TransferUserType userType)
+    {
+        string filepath = GetTransferPath(id, itemType, userType);
+        FileInfo fileInfo = new FileInfo(filepath);
+        return fileInfo.Length;
+    }
+    
     public long GetTransferPartsSize(Guid id, TransferItemType itemType, TransferUserType userType)
     {
         string directory = GetTransferPartsDirectory(itemType, userType, id);

@@ -93,6 +93,8 @@ public interface IHangfireBackgroundService
     Task<Unit> LogFailedTransferInitializationAsync(TransferItemType itemType, UploadTransferError reason, Guid sender, string? recipient, DateTimeOffset timestamp);
     Task<Unit> LogSuccessfulMultipartTransferUploadAsync(Guid itemId, TransferItemType itemType, DateTimeOffset timestamp);
     Task<Unit> LogFailedMultipartTransferUploadAsync(string hashId, TransferItemType itemType, Guid userId, UploadMultipartFileTransferError reason, DateTimeOffset timestamp);
+    Task<Unit> LogSuccessfulMultipartTransferFinalizationAsync(Guid itemId, TransferItemType itemType, DateTimeOffset timestamp);
+    Task<Unit> LogFailedMultipartTransferFinalizationAsync(string hashId, TransferItemType itemType, Guid userId, FinalizeMultipartFileTransferError reason, DateTimeOffset timestamp);
 }
 
 /// <summary>
@@ -309,6 +311,18 @@ public class HangfireBackgroundService : IHangfireBackgroundService
     public Task<Unit> LogFailedMultipartTransferUploadAsync(string hashId, TransferItemType itemType, Guid userId, UploadMultipartFileTransferError reason, DateTimeOffset timestamp)
     {
         LogFailedMultipartTransferUploadCommand request = new LogFailedMultipartTransferUploadCommand(hashId, itemType, userId, reason, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogSuccessfulMultipartTransferFinalizationAsync(Guid itemId, TransferItemType itemType, DateTimeOffset timestamp)
+    {
+        LogSuccessfulMultipartTransferFinalizationCommand request = new LogSuccessfulMultipartTransferFinalizationCommand(itemId, itemType, timestamp);
+        return _sender.Send(request);
+    }
+
+    public Task<Unit> LogFailedMultipartTransferFinalizationAsync(string hashId, TransferItemType itemType, Guid userId, FinalizeMultipartFileTransferError reason, DateTimeOffset timestamp)
+    {
+        LogFailedMultipartTransferFinalizationCommand request = new LogFailedMultipartTransferFinalizationCommand(hashId, itemType, userId, reason, timestamp);
         return _sender.Send(request);
     }
 }

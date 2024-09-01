@@ -24,12 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 
 namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 
-public sealed record SuccessfulTransferInitializationAdditionalData(
-    Guid ItemId,
+public sealed record FailedMultipartTransferInitializationAdditionalData(
     TransferItemType ItemType,
-    Guid Sender,
+    UploadTransferError Reason,
+    Guid? Sender,
     string? Recipient);

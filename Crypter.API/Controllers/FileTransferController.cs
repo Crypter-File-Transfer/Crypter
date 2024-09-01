@@ -127,25 +127,39 @@ public class FileTransferController : TransferControllerBase
 #pragma warning disable CS8524
             return error switch
             {
-                UploadMultipartFileTransferError.OutOfSpace => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
+                UploadMultipartFileTransferError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
                 UploadMultipartFileTransferError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
                 UploadMultipartFileTransferError.AggregateTooLarge
-                    or UploadMultipartFileTransferError.UnknownError=> MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+                    or UploadMultipartFileTransferError.OutOfSpace=> MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
             };
 #pragma warning restore CS8524
         }
     }
     
-    /*
     [HttpPost("multipart/finalize")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
-    public async Task<IActionResult> FinalizeChunkedFileTransferAsync()
+    public async Task<IActionResult> FinalizeChunkedFileTransferAsync([FromQuery] string id)
     {
+        FinalizeMultipartFileTransferCommand command = new FinalizeMultipartFileTransferCommand(UserId, id);
+        return await _sender.Send(command)
+            .MatchAsync(
+                left: MakeErrorResponse,
+                right: _ => Accepted(),
+                neither: MakeErrorResponse(FinalizeMultipartFileTransferError.UnknownError));
         
+        IActionResult MakeErrorResponse(FinalizeMultipartFileTransferError error)
+        {
+#pragma warning disable CS8524
+            return error switch
+            {
+                FinalizeMultipartFileTransferError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+                FinalizeMultipartFileTransferError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+        }
     }
-    */
     
     [HttpGet("received")]
     [Authorize]

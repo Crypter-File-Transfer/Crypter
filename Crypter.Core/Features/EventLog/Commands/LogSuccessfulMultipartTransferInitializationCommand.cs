@@ -49,7 +49,7 @@ internal sealed class LogSuccessfulMultipartTransferInitializationCommandHandler
 
     public async Task<Unit> Handle(LogSuccessfulMultipartTransferInitializationCommand request, CancellationToken cancellationToken)
     {
-        SuccessfulTransferInitializationAdditionalData additionalData = new SuccessfulTransferInitializationAdditionalData(request.ItemId, request.ItemType, request.Sender, request.Recipient);
+        SuccessfulMultipartTransferInitializationAdditionalData additionalData = new SuccessfulMultipartTransferInitializationAdditionalData(request.ItemId, request.ItemType, request.Sender, request.Recipient);
         EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferMultipartInitializationSuccess, additionalData, request.Timestamp);
 
         _dataContext.EventLogs.Add(logEntity);

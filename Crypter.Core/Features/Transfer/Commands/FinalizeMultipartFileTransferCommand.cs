@@ -26,7 +26,6 @@
 
 using System;
 using System.Data;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -36,50 +35,40 @@ using Crypter.Core.Features.Transfer.Events;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
-using Crypter.Core.Settings;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Options;
 using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.Transfer.Commands;
 
-public sealed record SaveMultipartFileTransferCommand(
-    Guid SenderId,
-    string HashId,
-    int Position,
-    Stream? CiphertextStream)
-    : IEitherRequest<UploadMultipartFileTransferError, Unit>;
+public sealed record FinalizeMultipartFileTransferCommand(Guid SenderId, string HashId)
+    : IEitherRequest<FinalizeMultipartFileTransferError, Unit>;
 
-internal class SaveMultipartFileTransferCommandHandler
-    : IEitherRequestHandler<SaveMultipartFileTransferCommand, UploadMultipartFileTransferError, Unit>
+internal class FinalizeMultipartFileTransferCommandHandler
+    : IEitherRequestHandler<FinalizeMultipartFileTransferCommand, FinalizeMultipartFileTransferError, Unit>
 {
     private readonly DataContext _dataContext;
     private readonly IHashIdService _hashIdService;
     private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
-    private readonly TransferStorageSettings _transferStorageSettings;
-
-    public SaveMultipartFileTransferCommandHandler(
+    
+    public FinalizeMultipartFileTransferCommandHandler(
         DataContext dataContext,
         IHashIdService hashIdService,
         IPublisher publisher,
-        ITransferRepository transferRepository,
-        IOptions<TransferStorageSettings> transferStorageSettings)
+        ITransferRepository transferRepository)
     {
         _dataContext = dataContext;
         _hashIdService = hashIdService;
         _publisher = publisher;
         _transferRepository = transferRepository;
-        _transferStorageSettings = transferStorageSettings.Value;
     }
 
-    public async Task<Either<UploadMultipartFileTransferError, Unit>> Handle(SaveMultipartFileTransferCommand request,
-        CancellationToken cancellationToken)
+    public async Task<Either<FinalizeMultipartFileTransferError, Unit>> Handle(FinalizeMultipartFileTransferCommand request, CancellationToken cancellationToken)
     {
         await using IDbContextTransaction transaction = await _dataContext.Database
             .BeginTransactionAsync(IsolationLevel.Serializable, CancellationToken.None);
@@ -87,29 +76,29 @@ internal class SaveMultipartFileTransferCommandHandler
         try
         {
             DateTimeOffset utcNow = DateTimeOffset.UtcNow;
-            Task<Either<UploadMultipartFileTransferError, Unit>> responseTask =
+            Task<Either<FinalizeMultipartFileTransferError, Unit>> responseTask =
                 from additionalData in ValidateRequestAsync(request)
-                from saveResult in SavePartAsync(request, additionalData).ToLeftEitherAsync(Unit.Default)
-                let successfulMultipartUploadEvent = new SuccessfulMultipartFileTransferUploadEvent(
+                from finalizeResult in FinalizeAsync(request, additionalData).ToLeftEitherAsync(Unit.Default)
+                let successfulMultipartFinalizeEvent = new SuccessfulMultipartFileTransferFinalizationEvent(
                     additionalData.InitializedTransferEntity.Id,
                     utcNow)
-                from sideEffects in Either<UploadMultipartFileTransferError, Unit>.FromRightAsync(
-                    UnitPublisher.Publish(_publisher, successfulMultipartUploadEvent))
-                select saveResult;
+                from sideEffects in Either<FinalizeMultipartFileTransferError, Unit>.FromRightAsync(
+                    UnitPublisher.Publish(_publisher, successfulMultipartFinalizeEvent))
+                select finalizeResult;
 
             return await responseTask
                 .DoLeftOrNeitherAsync(
                     async error =>
                     {
-                        FailedMultipartFileTransferUploadEvent failedMultipartUploadEvent =
-                            new FailedMultipartFileTransferUploadEvent(request.HashId, request.SenderId, error, utcNow);
-                        await _publisher.Publish(failedMultipartUploadEvent, CancellationToken.None);
+                        FailedMultipartFileTransferFinalizationEvent failedMultipartFinalizationEvent =
+                            new FailedMultipartFileTransferFinalizationEvent(request.HashId, request.SenderId, error, utcNow);
+                        await _publisher.Publish(failedMultipartFinalizationEvent, CancellationToken.None);
                     },
                     async () =>
                     {
-                        FailedMultipartFileTransferUploadEvent failedMultipartUploadEvent =
-                            new FailedMultipartFileTransferUploadEvent(request.HashId, request.SenderId, UploadMultipartFileTransferError.UnknownError, utcNow);
-                        await _publisher.Publish(failedMultipartUploadEvent, CancellationToken.None);
+                        FailedMultipartFileTransferFinalizationEvent failedMultipartFinalizationEvent =
+                            new FailedMultipartFileTransferFinalizationEvent(request.HashId, request.SenderId, FinalizeMultipartFileTransferError.UnknownError, utcNow);
+                        await _publisher.Publish(failedMultipartFinalizationEvent, CancellationToken.None);
                     });
         }
         finally
@@ -118,19 +107,14 @@ internal class SaveMultipartFileTransferCommandHandler
         }
     }
 
-    private async Task<Either<UploadMultipartFileTransferError, ValidRequestData>> ValidateRequestAsync(SaveMultipartFileTransferCommand request)
+    private async Task<Either<FinalizeMultipartFileTransferError, ValidRequestData>> ValidateRequestAsync(FinalizeMultipartFileTransferCommand request)
     {
         Guid? itemId = _hashIdService.Decode(request.HashId)
             .Match((Guid?)null, x => x);
 
         if (!itemId.HasValue)
         {
-            return UploadMultipartFileTransferError.NotFound;
-        }
-        
-        if (request.CiphertextStream is null)
-        {
-            return UploadMultipartFileTransferError.UnknownError;
+            return FinalizeMultipartFileTransferError.NotFound;
         }
         
         UserFileTransferEntity? initializedTransferEntity = await _dataContext.UserFileTransfers
@@ -140,49 +124,40 @@ internal class SaveMultipartFileTransferCommandHandler
             .FirstOrDefaultAsync(CancellationToken.None);
         if (initializedTransferEntity is null)
         {
-            return UploadMultipartFileTransferError.NotFound;
+            return FinalizeMultipartFileTransferError.NotFound;
         }
-        
-        long maximumTransferSize = Convert.ToInt64(_transferStorageSettings.MaximumTransferSizeMB * Math.Pow(10, 6));
-        long updatedTransferSize = _transferRepository.GetTransferPartsSize(itemId.Value, TransferItemType.File, TransferUserType.User)
-            + request.CiphertextStream.Length;
 
-        if (updatedTransferSize > maximumTransferSize)
-        {
-            return UploadMultipartFileTransferError.AggregateTooLarge;
-        }
-        
-        return new ValidRequestData(initializedTransferEntity, updatedTransferSize);
+        return new ValidRequestData(initializedTransferEntity);
     }
 
-    private async Task<Maybe<UploadMultipartFileTransferError>> SavePartAsync(SaveMultipartFileTransferCommand request, ValidRequestData additionalData)
+    private async Task<Maybe<FinalizeMultipartFileTransferError>> FinalizeAsync(FinalizeMultipartFileTransferCommand request, ValidRequestData additionalData)
     {
-        bool saveSuccess = await _transferRepository.SaveTransferPartAsync(
+        bool finalizeSuccess = await _transferRepository.JoinTransferPartsAsync(
             additionalData.InitializedTransferEntity.Id,
             TransferItemType.File,
-            TransferUserType.User,
-            request.CiphertextStream!,
-            request.Position);
+            TransferUserType.User);
 
-        if (!saveSuccess)
+        if (!finalizeSuccess)
         {
-            return UploadMultipartFileTransferError.UnknownError;
+            return FinalizeMultipartFileTransferError.UnknownError;
         }
-        
-        additionalData.InitializedTransferEntity.Size = additionalData.UpdatedTransferSize;
+
+        additionalData.InitializedTransferEntity.Parts = false;
+        additionalData.InitializedTransferEntity.Size = _transferRepository.GetTransferSize(
+            additionalData.InitializedTransferEntity.Id,
+            TransferItemType.File,
+            TransferUserType.User);
         await _dataContext.SaveChangesAsync();
         return default;
     }
-
-    private class ValidRequestData
+    
+    private sealed class ValidRequestData
     {
         public UserFileTransferEntity InitializedTransferEntity { get; init; }
-        public long UpdatedTransferSize { get; init; }
-
-        public ValidRequestData(UserFileTransferEntity initializedTransferEntity, long updatedTransferSize)
+        
+        public ValidRequestData(UserFileTransferEntity initializedTransferEntity)
         {
             InitializedTransferEntity = initializedTransferEntity;
-            UpdatedTransferSize = updatedTransferSize;
         }
     }
 }

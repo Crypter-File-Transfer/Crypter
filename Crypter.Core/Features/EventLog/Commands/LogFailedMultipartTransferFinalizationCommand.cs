@@ -37,21 +37,21 @@ using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.EventLog.Commands;
 
-public sealed record LogFailedMultipartTransferInitializationCommand(TransferItemType ItemType, UploadTransferError Reason, Guid? Sender, string? Recipient, DateTimeOffset Timestamp) : IRequest<Unit>;
+public sealed record class LogFailedMultipartTransferFinalizationCommand(string HashId, TransferItemType ItemType, Guid SenderId, FinalizeMultipartFileTransferError Reason, DateTimeOffset Timestamp) : IRequest<Unit>;
 
-internal sealed class LogFailedMultipartTransferInitializationCommandHandler : IRequestHandler<LogFailedMultipartTransferInitializationCommand, Unit>
+internal sealed class LogFailedMultipartTransferFinalizationCommandHandler : IRequestHandler<LogFailedMultipartTransferFinalizationCommand, Unit>
 {
     private readonly DataContext _dataContext;
     
-    public LogFailedMultipartTransferInitializationCommandHandler(DataContext dataContext)
+    public LogFailedMultipartTransferFinalizationCommandHandler(DataContext dataContext)
     {
         _dataContext = dataContext;
     }
     
-    public async Task<Unit> Handle(LogFailedMultipartTransferInitializationCommand request, CancellationToken cancellationToken)
+    public async Task<Unit> Handle(LogFailedMultipartTransferFinalizationCommand request, CancellationToken cancellationToken)
     {
-        FailedMultipartTransferInitializationAdditionalData additionalData = new FailedMultipartTransferInitializationAdditionalData(request.ItemType, request.Reason, request.Sender, request.Recipient);
-        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferMultipartInitializationFailure, additionalData, request.Timestamp);
+        FailedMultipartTransferFinalizationAdditionalData additionalData = new FailedMultipartTransferFinalizationAdditionalData(request.HashId, request.ItemType, request.SenderId, request.Reason);
+        EventLogEntity logEntity = EventLogEntity.Create(EventLogType.TransferMultipartUploadFinalizationFailure, additionalData, request.Timestamp);
 
         _dataContext.EventLogs.Add(logEntity);
         await _dataContext.SaveChangesAsync(CancellationToken.None);
