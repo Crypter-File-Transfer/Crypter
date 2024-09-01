@@ -71,7 +71,7 @@ public class FileTransferController : TransferControllerBase
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> UploadFileTransferAsync([FromQuery] string? username,
-        [FromForm] UploadFileTransferReceipt request)
+        [FromForm] UploadFileTransferBundle request)
     {
         Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
             ? Maybe<string>.None
