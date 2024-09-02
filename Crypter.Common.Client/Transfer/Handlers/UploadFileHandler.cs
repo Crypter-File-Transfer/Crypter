@@ -25,13 +25,16 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Transfer.Handlers.Base;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
+using Crypter.Common.Mappers;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.StreamEncryption;
 using EasyMonads;
@@ -63,7 +66,7 @@ public class UploadFileHandler : UploadHandler
         _transferInfoSet = true;
     }
 
-    public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Action<double>? updateCallback = null)
+    public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Action<double>? updateCallback = null, bool multipart = false)
     {
         if (!_transferInfoSet)
         {
@@ -75,10 +78,70 @@ public class UploadFileHandler : UploadHandler
         (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[]? senderPublicKey, byte[] proof) = GetEncryptionInfo(_fileStreamOpener!, _fileSize);
         UploadFileTransferRequest request = new UploadFileTransferRequest(_fileName!, _fileContentType!, senderPublicKey,
             KeyExchangeNonce, proof, ExpirationHours);
-        return CrypterApiClient.FileTransfer
-            .UploadFileTransferAsync(RecipientUsername, request, encryptionStreamOpener, SenderDefined, updateCallback)
-            .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x =>
-                new UploadHandlerResponse(x.HashId, ExpirationHours, TransferItemType.File, x.UserType,
-                    RecipientKeySeed));
+        
+        if (multipart)
+        {
+            // Initialize
+            return CrypterApiClient.FileTransfer
+                // Initialize
+                .InitializeMultipartFileTransferAsync(RecipientUsername, request)
+
+                // Upload
+                .BindAsync(async initializeResult =>
+                {
+                    Either<UploadMultipartFileTransferError, Unit> uploadResult =
+                        Either<UploadMultipartFileTransferError, Unit>.Neither;
+                    EncryptionStream encryptionStream = encryptionStreamOpener(updateCallback);
+                    long maximumReadLength = ClientTransferSettings.MaximumMultipartUploadPartSizeMB *
+                                             Convert.ToInt64(Math.Pow(10, 6));
+                    foreach (var iterable in SplitEncryptionStream(encryptionStream, maximumReadLength)
+                                 .Select((x, y) => new { StreamOpener = x, Index = y }))
+                    {
+                        uploadResult = await CrypterApiClient.FileTransfer.UploadMultipartFileTransferAsync(
+                            initializeResult.HashId,
+                            iterable.Index, iterable.StreamOpener);
+                        if (!uploadResult.IsRight)
+                        {
+                            break;
+                        }
+                    }
+
+                    return await uploadResult
+                        .MapLeft(error => error.ConvertToUploadTransferError())
+                        .BindAsync(async _ => await CrypterApiClient.FileTransfer.FinalizeMultipartFileTransferAsync(initializeResult.HashId)
+                            .MapLeftAsync<FinalizeMultipartFileTransferError, Unit, UploadTransferError>(error => error.ConvertToUploadTransferError()))
+                        .MapAsync<UploadTransferError, Unit, UploadHandlerResponse>(_ => new UploadHandlerResponse(initializeResult.HashId, ExpirationHours, TransferItemType.File, initializeResult.TransferUserType, RecipientKeySeed))
+                        .DoLeftOrNeitherAsync(
+                            leftAsync: async _ => await CrypterApiClient.FileTransfer.AbandonMultipartFileTransferAsync(initializeResult.HashId),
+                            neitherAsync: async () => await CrypterApiClient.FileTransfer.AbandonMultipartFileTransferAsync(initializeResult.HashId));
+                });
+        }
+        else
+        {
+            return CrypterApiClient.FileTransfer
+                .UploadFileTransferAsync(RecipientUsername, request, encryptionStreamOpener, SenderDefined, updateCallback)
+                .MapAsync<UploadTransferError, UploadTransferResponse, UploadHandlerResponse>(x =>
+                    new UploadHandlerResponse(x.HashId, ExpirationHours, TransferItemType.File, x.UserType,
+                        RecipientKeySeed));
+        }
+        
+        IEnumerable<Func<MemoryStream>> SplitEncryptionStream(EncryptionStream encryptionStream, long maximumReadLength)
+        {
+            int bytesRead = 0;
+            do
+            {
+                byte[] buffer = new byte[maximumReadLength];
+                bytesRead = encryptionStream.Read(buffer);
+                if (bytesRead > 0)
+                {
+                    yield return () =>
+                    {
+                        MemoryStream memoryStream = new MemoryStream();
+                        memoryStream.Write(buffer, 0, bytesRead);
+                        return memoryStream;
+                    };
+                }
+            } while (bytesRead > 0);
+        }
     }
 }

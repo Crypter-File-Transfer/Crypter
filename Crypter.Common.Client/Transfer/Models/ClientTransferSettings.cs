@@ -41,7 +41,7 @@ public class ClientTransferSettings
     /// <summary>
     /// Set the limit for the maximum request body size when uploading files using multiple requests.
     /// </summary>
-    public short MaximumUploadChunkSizeMB { get; init; }
+    public short MaximumMultipartUploadPartSizeMB { get; init; }
     
     /// <summary>
     /// Set the limit for the maximum file siez when uploading files using multiple requests.

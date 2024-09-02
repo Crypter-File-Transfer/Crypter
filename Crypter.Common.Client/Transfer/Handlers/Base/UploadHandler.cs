@@ -42,19 +42,16 @@ public class UploadHandler : IUserUploadHandler
     protected readonly ICryptoProvider CryptoProvider;
     protected readonly ClientTransferSettings ClientTransferSettings;
 
-    protected TransferUserType TransferUserType = TransferUserType.Anonymous;
-
     protected int ExpirationHours;
 
     protected bool SenderDefined;
 
-    protected byte[] KeyExchangeNonce;
+    protected readonly byte[] KeyExchangeNonce;
     protected Maybe<byte[]> SenderPrivateKey = Maybe<byte[]>.None;
 
     protected Maybe<string> RecipientUsername = Maybe<string>.None;
     protected Maybe<byte[]> RecipientKeySeed = Maybe<byte[]>.None;
-
-    protected Maybe<byte[]> RecipientPrivateKey = Maybe<byte[]>.None;
+    
     protected Maybe<byte[]> RecipientPublicKey = Maybe<byte[]>.None;
 
     protected UploadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
@@ -70,13 +67,11 @@ public class UploadHandler : IUserUploadHandler
     public void SetSenderInfo(byte[] privateKey)
     {
         SenderDefined = true;
-        TransferUserType = TransferUserType.User;
         SenderPrivateKey = privateKey;
     }
 
     public void SetRecipientInfo(string username, byte[] publicKey)
     {
-        TransferUserType = TransferUserType.User;
         RecipientUsername = username;
         RecipientPublicKey = publicKey;
     }
@@ -92,7 +87,6 @@ public class UploadHandler : IUserUploadHandler
         Span<byte> seed = CryptoProvider.Random.GenerateRandomBytes((int)CryptoProvider.KeyExchange.SeedSize);
         RecipientKeySeed = seed.ToArray();
         X25519KeyPair recipientKeyPair = CryptoProvider.KeyExchange.GenerateKeyPairDeterministic(seed);
-        RecipientPrivateKey = recipientKeyPair.PrivateKey;
         RecipientPublicKey = recipientKeyPair.PublicKey;
     }
 

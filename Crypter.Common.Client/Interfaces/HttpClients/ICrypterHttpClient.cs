@@ -51,7 +51,7 @@ public interface ICrypterHttpClient
     Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri);
 
     Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri);
-
+    
     Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync<TRequest>(string uri, TRequest body)
         where TRequest : class;
 
@@ -59,4 +59,6 @@ public interface ICrypterHttpClient
 
     Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)
         where TResponse : class;
+
+    Task<Either<ErrorResponse, Unit>> SendAsync(Func<HttpRequestMessage> requestFactory);
 }

@@ -122,6 +122,12 @@ public class CrypterHttpClient : ICrypterHttpClient
         return await SendRequestEitherResponseAsync<TResponse>(request);
     }
 
+    public async Task<Either<ErrorResponse, Unit>> SendAsync(Func<HttpRequestMessage> requestFactory)
+    {
+        using HttpRequestMessage request = requestFactory();
+        return await SendRequestEitherUnitResponseAsync(request);
+    }
+    
     private static HttpRequestMessage MakeRequestMessage<TRequest>(HttpMethod method, string uri, TRequest body)
         where TRequest : class
     {

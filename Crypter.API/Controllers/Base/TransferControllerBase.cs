@@ -54,6 +54,7 @@ public abstract class TransferControllerBase : CrypterControllerBase
         {
             UploadTransferError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
             UploadTransferError.InvalidRequestedLifetimeHours
+                or UploadTransferError.TooLarge
                 or UploadTransferError.OutOfSpace => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
             UploadTransferError.RecipientNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
         };
