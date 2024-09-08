@@ -27,7 +27,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Transfer.Handlers.Base;
@@ -66,7 +65,7 @@ public class UploadFileHandler : UploadHandler
         _transferInfoSet = true;
     }
 
-    public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Action<double>? updateCallback = null, bool multipart = false)
+    public Task<Either<UploadTransferError, UploadHandlerResponse>> UploadAsync(Action<double>? updateCallback = null)
     {
         if (!_transferInfoSet)
         {
@@ -74,12 +73,12 @@ public class UploadFileHandler : UploadHandler
                 .From(UploadTransferError.UnknownError)
                 .AsTask();
         }
-        
+
         (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[]? senderPublicKey, byte[] proof) = GetEncryptionInfo(_fileStreamOpener!, _fileSize);
         UploadFileTransferRequest request = new UploadFileTransferRequest(_fileName!, _fileContentType!, senderPublicKey,
             KeyExchangeNonce, proof, ExpirationHours);
         
-        if (multipart)
+        if (SenderDefined)
         {
             // Initialize
             return CrypterApiClient.FileTransfer
@@ -89,21 +88,22 @@ public class UploadFileHandler : UploadHandler
                 // Upload
                 .BindAsync(async initializeResult =>
                 {
-                    Either<UploadMultipartFileTransferError, Unit> uploadResult =
-                        Either<UploadMultipartFileTransferError, Unit>.Neither;
+                    Either<UploadMultipartFileTransferError, Unit> uploadResult = Either<UploadMultipartFileTransferError, Unit>.Neither;
                     EncryptionStream encryptionStream = encryptionStreamOpener(updateCallback);
-                    long maximumReadLength = ClientTransferSettings.MaximumMultipartUploadPartSizeMB *
-                                             Convert.ToInt64(Math.Pow(10, 6));
-                    foreach (var iterable in SplitEncryptionStream(encryptionStream, maximumReadLength)
-                                 .Select((x, y) => new { StreamOpener = x, Index = y }))
+                    long maximumReadLength = ClientTransferSettings.MaximumMultipartUploadPartSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+                    
+                    IAsyncEnumerator<Func<MemoryStream>> enumerable = SplitEncryptionStreamAsync(encryptionStream, maximumReadLength).GetAsyncEnumerator();
+                    int currentPosition = 0;
+                    while (await enumerable.MoveNextAsync())
                     {
                         uploadResult = await CrypterApiClient.FileTransfer.UploadMultipartFileTransferAsync(
-                            initializeResult.HashId,
-                            iterable.Index, iterable.StreamOpener);
+                            initializeResult.HashId, currentPosition, enumerable.Current);
                         if (!uploadResult.IsRight)
                         {
                             break;
                         }
+
+                        currentPosition++;
                     }
 
                     return await uploadResult
@@ -125,23 +125,19 @@ public class UploadFileHandler : UploadHandler
                         RecipientKeySeed));
         }
         
-        IEnumerable<Func<MemoryStream>> SplitEncryptionStream(EncryptionStream encryptionStream, long maximumReadLength)
+        async IAsyncEnumerable<Func<MemoryStream>> SplitEncryptionStreamAsync(EncryptionStream encryptionStream, long maximumReadLength)
         {
-            int bytesRead = 0;
+            bool endOfStream;
             do
             {
                 byte[] buffer = new byte[maximumReadLength];
-                bytesRead = encryptionStream.Read(buffer);
-                if (bytesRead > 0)
+                int bytesRead = await encryptionStream.ReadAsync(buffer);
+                endOfStream = bytesRead == 0;
+                if (!endOfStream)
                 {
-                    yield return () =>
-                    {
-                        MemoryStream memoryStream = new MemoryStream();
-                        memoryStream.Write(buffer, 0, bytesRead);
-                        return memoryStream;
-                    };
+                    yield return () => new MemoryStream(buffer, 0, bytesRead);
                 }
-            } while (bytesRead > 0);
+            } while (!endOfStream);
         }
     }
 }

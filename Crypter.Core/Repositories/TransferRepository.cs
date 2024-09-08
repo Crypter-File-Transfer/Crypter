@@ -112,11 +112,16 @@ public class TransferRepository : ITransferRepository
     {
         string directory = GetTransferPartsDirectory(itemType, userType, id);
         DirectoryInfo directoryInfo = new DirectoryInfo(directory);
-        return directoryInfo
-            .EnumerateFiles()
-            .Select(x => x.Length)
-            .DefaultIfEmpty(0)
-            .Sum(x => Convert.ToInt64(x / Math.Pow(10, 6)));
+        if (directoryInfo.Exists)
+        {
+            return directoryInfo
+                .EnumerateFiles()
+                .Select(x => x.Length)
+                .DefaultIfEmpty(0)
+                .Sum(x => Convert.ToInt64(x / Math.Pow(10, 6)));
+        }
+
+        return 0;
     }
     
     public async Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType,
@@ -185,14 +190,15 @@ public class TransferRepository : ITransferRepository
         
         List<string> filenames = Directory
             .EnumerateFiles(partsDirectory)
-            .Order()
+            .OrderBy(x => int.Parse(Path.GetFileNameWithoutExtension(x)))
             .ToList();
 
-        bool sequentialFilenames = !filenames
-            .Where((name, index) => Path.GetFileNameWithoutExtension(name) != index.ToString())
+        bool nonSequentialFilenames = filenames
+            .Select(x => int.Parse(Path.GetFileNameWithoutExtension(x)))
+            .Where((name, index) => name != index)
             .Any();
 
-        if (!sequentialFilenames)
+        if (nonSequentialFilenames)
         {
             return false;
         }

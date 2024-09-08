@@ -25,7 +25,6 @@
  */
 
 using System;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -81,12 +80,10 @@ internal class SaveMultipartFileTransferCommandHandler
     public async Task<Either<UploadMultipartFileTransferError, Unit>> Handle(SaveMultipartFileTransferCommand request,
         CancellationToken cancellationToken)
     {
-        await using IDbContextTransaction transaction = await _dataContext.Database
-            .BeginTransactionAsync(IsolationLevel.Serializable, CancellationToken.None);
-
-        try
+        DateTimeOffset utcNow = DateTimeOffset.UtcNow;
+        IExecutionStrategy executionStrategy = _dataContext.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync(async () =>
         {
-            DateTimeOffset utcNow = DateTimeOffset.UtcNow;
             Task<Either<UploadMultipartFileTransferError, Unit>> responseTask =
                 from additionalData in ValidateRequestAsync(request)
                 from saveResult in SavePartAsync(request, additionalData).ToLeftEitherAsync(Unit.Default)
@@ -111,11 +108,7 @@ internal class SaveMultipartFileTransferCommandHandler
                             new FailedMultipartFileTransferUploadEvent(request.HashId, request.SenderId, UploadMultipartFileTransferError.UnknownError, utcNow);
                         await _publisher.Publish(failedMultipartUploadEvent, CancellationToken.None);
                     });
-        }
-        finally
-        {
-            await transaction.CommitAsync(CancellationToken.None);
-        }
+        });
     }
 
     private async Task<Either<UploadMultipartFileTransferError, ValidRequestData>> ValidateRequestAsync(SaveMultipartFileTransferCommand request)

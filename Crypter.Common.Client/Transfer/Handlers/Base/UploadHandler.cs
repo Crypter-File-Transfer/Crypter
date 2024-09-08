@@ -28,7 +28,6 @@ using System;
 using System.IO;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Transfer.Models;
-using Crypter.Common.Enums;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.KeyExchange;
 using Crypter.Crypto.Common.StreamEncryption;

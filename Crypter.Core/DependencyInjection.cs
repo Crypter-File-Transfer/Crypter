@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Threading.Tasks;
 using Crypter.Common.Exceptions;
 using Crypter.Core.Identity;
@@ -37,7 +36,6 @@ using Crypter.Crypto.Providers.Default;
 using Crypter.DataAccess;
 using Hangfire;
 using Hangfire.PostgreSql;
-using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -108,6 +106,7 @@ public static class DependencyInjection
         {
             options.AllocatedGB = transferStorageSettings.AllocatedGB;
             options.Location = transferStorageSettings.Location;
+            options.MaximumTransferSizeMB = transferStorageSettings.MaximumTransferSizeMB;
         });
 
         services.AddHangfire(config => config

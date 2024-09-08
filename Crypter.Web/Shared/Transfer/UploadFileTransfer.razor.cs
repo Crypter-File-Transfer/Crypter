@@ -51,9 +51,14 @@ public partial class UploadFileTransfer : IDisposable
 
     protected override void OnInitialized()
     {
-        TransmissionType = BrowserFunctions.BrowserSupportsRequestStreaming()
-            ? TransferTransmissionType.Stream
-            : TransferTransmissionType.Multipart;
+        if (UserSessionService.Session.IsSome)
+        {
+            TransmissionType = TransferTransmissionType.Multipart;
+        }
+        else if (BrowserFunctions.BrowserSupportsRequestStreaming())
+        {
+            TransmissionType = TransferTransmissionType.Stream;
+        }
         _maxStreamSizeMB = UploadSettings.MaximumUploadSizeMB * Convert.ToInt64(Math.Pow(10, 6));
         _maxBufferSizeMB = UploadSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
     }
@@ -108,12 +113,14 @@ public partial class UploadFileTransfer : IDisposable
 
         SetHandlerUserInfo(fileUploader);
 
+#pragma warning disable CS8524
         Action<double>? progressUpdater = TransmissionType switch
         {
             TransferTransmissionType.Buffer => null,
-            TransferTransmissionType.Stream => SetUploadPercentage,
-            _ => null
+            TransferTransmissionType.Stream
+                or TransferTransmissionType.Multipart => SetUploadPercentage
         };
+#pragma warning restore CS8524
 
         Either<UploadTransferError, UploadHandlerResponse> uploadResponse = await fileUploader.UploadAsync(progressUpdater);
 

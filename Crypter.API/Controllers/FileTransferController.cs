@@ -113,9 +113,9 @@ public class FileTransferController : TransferControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> UploadMultipartFileTransferAsync([FromQuery] string id, [FromQuery] int position,
-        [FromForm] IFormFile? cipertext)
+        [FromForm] IFormFile? ciphertext)
     {
-        SaveMultipartFileTransferCommand command = new SaveMultipartFileTransferCommand(UserId, id, position, cipertext?.OpenReadStream());
+        SaveMultipartFileTransferCommand command = new SaveMultipartFileTransferCommand(UserId, id, position, ciphertext?.OpenReadStream());
         return await _sender.Send(command)
             .MatchAsync(
                 left: MakeErrorResponse,

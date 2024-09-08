@@ -25,7 +25,6 @@
  */
 
 using System;
-using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -70,12 +69,10 @@ internal class AbandonMultipartFileTransferCommandHandler
 
     public async Task<Either<AbandonMultipartFileTransferError, Unit>> Handle(AbandonMultipartFileTransferCommand request, CancellationToken cancellationToken)
     {
-        await using IDbContextTransaction transaction = await _dataContext.Database
-            .BeginTransactionAsync(IsolationLevel.Serializable, CancellationToken.None);
-
-        try
+        DateTimeOffset utcNow = DateTimeOffset.UtcNow;
+        IExecutionStrategy executionStrategy = _dataContext.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync(async () =>
         {
-            DateTimeOffset utcNow = DateTimeOffset.UtcNow;
             Task<Either<AbandonMultipartFileTransferError, Unit>> responseTask =
                 from additionalData in ValidateRequestAsync(request)
                 from abandonResult in Either<AbandonMultipartFileTransferError, Unit>.FromRightAsync(
@@ -100,14 +97,11 @@ internal class AbandonMultipartFileTransferCommandHandler
                     async () =>
                     {
                         FailedMultipartFileTransferAbandonEvent failedMultipartAbandonEvent =
-                            new FailedMultipartFileTransferAbandonEvent(request.HashId, request.SenderId, AbandonMultipartFileTransferError.UnknownError, utcNow);
+                            new FailedMultipartFileTransferAbandonEvent(request.HashId, request.SenderId,
+                                AbandonMultipartFileTransferError.UnknownError, utcNow);
                         await _publisher.Publish(failedMultipartAbandonEvent, CancellationToken.None);
                     });
-        }
-        finally
-        {
-            await transaction.CommitAsync(CancellationToken.None);
-        }
+        });
     }
 
     private async Task<Either<AbandonMultipartFileTransferError, ValidRequestData>> ValidateRequestAsync(AbandonMultipartFileTransferCommand request)

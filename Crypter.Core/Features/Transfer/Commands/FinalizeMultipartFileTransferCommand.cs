@@ -25,7 +25,6 @@
  */
 
 using System;
-using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -71,15 +70,13 @@ internal class FinalizeMultipartFileTransferCommandHandler
 
     public async Task<Either<FinalizeMultipartFileTransferError, Unit>> Handle(FinalizeMultipartFileTransferCommand request, CancellationToken cancellationToken)
     {
-        await using IDbContextTransaction transaction = await _dataContext.Database
-            .BeginTransactionAsync(IsolationLevel.Serializable, CancellationToken.None);
-
-        try
+        DateTimeOffset utcNow = DateTimeOffset.UtcNow;
+        IExecutionStrategy executionStrategy = _dataContext.Database.CreateExecutionStrategy();
+        return await executionStrategy.ExecuteAsync(async () =>
         {
-            DateTimeOffset utcNow = DateTimeOffset.UtcNow;
             Task<Either<FinalizeMultipartFileTransferError, Unit>> responseTask =
                 from additionalData in ValidateRequestAsync(request)
-                from finalizeResult in FinalizeAsync(request, additionalData).ToLeftEitherAsync(Unit.Default)
+                from finalizeResult in FinalizeAsync(additionalData).ToLeftEitherAsync(Unit.Default)
                 let successfulMultipartFinalizeEvent = new SuccessfulMultipartFileTransferFinalizationEvent(
                     additionalData.InitializedTransferEntity.Id,
                     additionalData.InitializedTransferEntity.RecipientId ?? Maybe<Guid>.None,
@@ -93,20 +90,18 @@ internal class FinalizeMultipartFileTransferCommandHandler
                     async error =>
                     {
                         FailedMultipartFileTransferFinalizationEvent failedMultipartFinalizationEvent =
-                            new FailedMultipartFileTransferFinalizationEvent(request.HashId, request.SenderId, error, utcNow);
+                            new FailedMultipartFileTransferFinalizationEvent(request.HashId, request.SenderId, error,
+                                utcNow);
                         await _publisher.Publish(failedMultipartFinalizationEvent, CancellationToken.None);
                     },
                     async () =>
                     {
                         FailedMultipartFileTransferFinalizationEvent failedMultipartFinalizationEvent =
-                            new FailedMultipartFileTransferFinalizationEvent(request.HashId, request.SenderId, FinalizeMultipartFileTransferError.UnknownError, utcNow);
+                            new FailedMultipartFileTransferFinalizationEvent(request.HashId, request.SenderId,
+                                FinalizeMultipartFileTransferError.UnknownError, utcNow);
                         await _publisher.Publish(failedMultipartFinalizationEvent, CancellationToken.None);
                     });
-        }
-        finally
-        {
-            await transaction.CommitAsync(CancellationToken.None);
-        }
+        });
     }
 
     private async Task<Either<FinalizeMultipartFileTransferError, ValidRequestData>> ValidateRequestAsync(FinalizeMultipartFileTransferCommand request)
@@ -132,7 +127,7 @@ internal class FinalizeMultipartFileTransferCommandHandler
         return new ValidRequestData(initializedTransferEntity);
     }
 
-    private async Task<Maybe<FinalizeMultipartFileTransferError>> FinalizeAsync(FinalizeMultipartFileTransferCommand request, ValidRequestData additionalData)
+    private async Task<Maybe<FinalizeMultipartFileTransferError>> FinalizeAsync(ValidRequestData additionalData)
     {
         bool finalizeSuccess = await _transferRepository.JoinTransferPartsAsync(
             additionalData.InitializedTransferEntity.Id,
