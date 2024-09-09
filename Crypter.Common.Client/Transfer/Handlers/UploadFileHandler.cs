@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -90,9 +91,7 @@ public class UploadFileHandler : UploadHandler
                 {
                     Either<UploadMultipartFileTransferError, Unit> uploadResult = Either<UploadMultipartFileTransferError, Unit>.Neither;
                     EncryptionStream encryptionStream = encryptionStreamOpener(updateCallback);
-                    long maximumReadLength = ClientTransferSettings.MaximumMultipartUploadPartSizeMB * Convert.ToInt64(Math.Pow(10, 6));
-                    
-                    IAsyncEnumerator<Func<MemoryStream>> enumerable = SplitEncryptionStreamAsync(encryptionStream, maximumReadLength).GetAsyncEnumerator();
+                    IAsyncEnumerator<Func<MemoryStream>> enumerable = SplitEncryptionStreamAsync(encryptionStream).GetAsyncEnumerator();
                     int currentPosition = 0;
                     while (await enumerable.MoveNextAsync())
                     {
@@ -125,17 +124,24 @@ public class UploadFileHandler : UploadHandler
                         RecipientKeySeed));
         }
         
-        async IAsyncEnumerable<Func<MemoryStream>> SplitEncryptionStreamAsync(EncryptionStream encryptionStream, long maximumReadLength)
+        async IAsyncEnumerable<Func<MemoryStream>> SplitEncryptionStreamAsync(EncryptionStream encryptionStream)
         {
             bool endOfStream;
             do
             {
-                byte[] buffer = new byte[maximumReadLength];
+                byte[] buffer = ArrayPool<byte>.Shared.Rent(encryptionStream.MinimumBufferSize);
                 int bytesRead = await encryptionStream.ReadAsync(buffer);
                 endOfStream = bytesRead == 0;
                 if (!endOfStream)
                 {
-                    yield return () => new MemoryStream(buffer, 0, bytesRead);
+                    try
+                    {
+                        yield return () => new MemoryStream(buffer, 0, bytesRead);
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(buffer, clearArray: true);   
+                    }
                 }
             } while (!endOfStream);
         }
