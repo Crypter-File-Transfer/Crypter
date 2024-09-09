@@ -117,7 +117,7 @@ public class EncryptionStream : Stream
         byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
             ? _streamEncrypt.Push(plaintextBuffer[..plaintextBytesRead], _finishedReadingPlaintext)
             : _streamEncrypt.Push(plaintextBuffer[.._plaintextReadSize], _finishedReadingPlaintext);
-        ArrayPool<byte>.Shared.Return(plaintextBuffer);
+        ArrayPool<byte>.Shared.Return(plaintextBuffer, clearArray: true);
         
         BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(offset, LengthBufferSize), ciphertext.Length);
 
@@ -152,7 +152,7 @@ public class EncryptionStream : Stream
         byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
             ? _streamEncrypt.Push(plaintextBuffer[..plaintextBytesRead], _finishedReadingPlaintext)
             : _streamEncrypt.Push(plaintextBuffer[.._plaintextReadSize], _finishedReadingPlaintext);
-        ArrayPool<byte>.Shared.Return(plaintextBuffer);
+        ArrayPool<byte>.Shared.Return(plaintextBuffer, clearArray: true);
         
         BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[..LengthBufferSize], ciphertext.Length);
         ciphertext.CopyTo(buffer[LengthBufferSize..]);
