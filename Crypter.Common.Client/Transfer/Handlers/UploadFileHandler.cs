@@ -96,7 +96,7 @@ public class UploadFileHandler : UploadHandler
 
                     ParallelOptions parallelOptions = new ParallelOptions
                     {
-                        MaxDegreeOfParallelism = 10
+                        MaxDegreeOfParallelism = 100
                     };
                     SemaphoreSlim uploadLock = new SemaphoreSlim(1);
                     bool fault = false;
