@@ -102,6 +102,7 @@ internal class GetAnonymousFileCiphertextCommandHandler
     {
         var databaseData = await _dataContext.AnonymousFileTransfers
             .Where(x => x.Id == itemId)
+            .Where(x => !x.Parts)
             .Select(x => new { x.Proof })
             .FirstOrDefaultAsync(CancellationToken.None);
 

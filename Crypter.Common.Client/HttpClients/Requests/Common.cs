@@ -60,11 +60,44 @@ internal static class Common
     /// <remarks>
     /// Need to refactor Crypter.Web and other client services to handle multiple error codes.
     /// </remarks>
+    internal static Task<Either<TErrorCode, Unit>> ExtractErrorCode<TErrorCode>(this Task<Either<ErrorResponse, Unit>> response)
+    {
+        return response
+            .MapLeftAsync<ErrorResponse, Unit, TErrorCode>(x => 
+                x.Errors.Select(y => (TErrorCode)(object)y.ErrorCode).First());
+    }
+    
+    /// <summary>
+    /// Lift the first error code out of the API error response.
+    /// </summary>
+    /// <typeparam name="TErrorCode"></typeparam>
+    /// <typeparam name="TResponse"></typeparam>
+    /// <param name="response"></param>
+    /// <returns></returns>
+    /// <remarks>
+    /// Need to refactor Crypter.Web and other client services to handle multiple error codes.
+    /// </remarks>
     internal static Task<Either<TErrorCode, TResponse>> ExtractErrorCode<TErrorCode, TResponse>(
         this Task<Either<ErrorResponse, TResponse>> response)
     {
         return response
             .MapLeftAsync<ErrorResponse, TResponse, TErrorCode>(x =>
                 x.Errors.Select(y => (TErrorCode)(object)y.ErrorCode).First());
+    }
+
+    /// <summary>
+    /// Lift the first error code out of the API error response.
+    /// </summary>
+    /// <param name="response"></param>
+    /// <typeparam name="TErrorCode"></typeparam>
+    /// <returns></returns>
+    /// <remarks>
+    /// Need to refactor Crypter.Web and other client services to handle multiple error codes.
+    /// </remarks>
+    internal static Task<Maybe<TErrorCode>> ExtractErrorCode<TErrorCode>(
+        this Task<Maybe<ErrorResponse>> response)
+    {
+        return response
+            .MapAsync(x => x.Errors.Select(y => (TErrorCode)(object)y.ErrorCode).First());
     }
 }

@@ -34,6 +34,8 @@ namespace Crypter.DataAccess;
 
 public static class DependencyInjection
 {
+    private static readonly string[] RetryableErrorCodes = ["57P01"];
+
     public static IServiceCollection AddDataAccess(this IServiceCollection services, string connectionString)
     {
         ServiceProvider serviceProvider = services.BuildServiceProvider();
@@ -43,13 +45,13 @@ public static class DependencyInjection
         {
             optionsBuilder.UseNpgsql(connectionString, npgsqlOptionsBuilder =>
                 {
-                    npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), new[] { "57P01" });
+                    npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), RetryableErrorCodes);
                     npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName,
                         DataContext.SchemaName);
                 })
                 .LogTo(
-                    filter: (eventId, level) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
-                    logger: (eventData) =>
+                    filter: (eventId, _) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
+                    logger: eventData =>
                     {
                         ExecutionStrategyEventData? retryEventData = eventData as ExecutionStrategyEventData;
                         IReadOnlyList<Exception>? exceptions = retryEventData?.ExceptionsEncountered;

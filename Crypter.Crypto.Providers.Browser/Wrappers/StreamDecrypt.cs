@@ -55,7 +55,7 @@ public class StreamDecrypt : IStreamDecrypt
         byte[] buffer = ArrayPool<byte>.Shared.Rent(ciphertext.Length);
         ciphertext.CopyTo(buffer);
         SecretStreamPullData pullData = SecretStream.Crypto_SecretStream_XChaCha20Poly1305_Pull(_stateAddress, buffer[..ciphertext.Length]);
-        ArrayPool<byte>.Shared.Return(buffer);
+        ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
         final = pullData.Tag == SecretStream.TAG_FINAL;
         return _padding.Unpad(pullData.Message.AsSpan(), paddingBlockSize);
     }

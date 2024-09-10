@@ -19,7 +19,7 @@ namespace Crypter.DataAccess.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("crypter")
-                .HasAnnotation("ProductVersion", "8.0.1")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
@@ -48,6 +48,11 @@ namespace Crypter.DataAccess.Migrations
                     b.Property<byte[]>("KeyExchangeNonce")
                         .IsRequired()
                         .HasColumnType("bytea");
+
+                    b.Property<bool>("Parts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<byte[]>("Proof")
                         .IsRequired()
@@ -287,6 +292,11 @@ namespace Crypter.DataAccess.Migrations
                     b.Property<byte[]>("KeyExchangeNonce")
                         .IsRequired()
                         .HasColumnType("bytea");
+
+                    b.Property<bool>("Parts")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<byte[]>("Proof")
                         .IsRequired()

@@ -24,10 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
-using Crypter.Common.Infrastructure;
 
 namespace Crypter.DataAccess.Entities.JsonTypes.EventLogAdditionalData;
 

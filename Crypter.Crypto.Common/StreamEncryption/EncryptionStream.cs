@@ -42,13 +42,14 @@ public class EncryptionStream : Stream
     private Stream? _plaintextStream;
     private readonly long _plaintextSize;
     private readonly int _plaintextReadSize;
-    private readonly int _minimumBufferSize;
     private readonly byte[] _headerBytes;
     private readonly Action<double>? _updateCallback;
     
     private bool _finishedReadingPlaintext;
     private long _plaintextReadPosition;
     private bool _headerHasBeenReturned;
+    
+    public int MinimumBufferSize { get; init; }
 
     /// <summary>
     /// 
@@ -76,9 +77,9 @@ public class EncryptionStream : Stream
 
         _streamEncrypt = streamEncryptionFactory.NewEncryptionStream(padSize);
         _headerBytes = _streamEncrypt.GenerateHeader(encryptionKey);
-        _minimumBufferSize = LengthBufferSize + maxReadSize + padSize + (int)_streamEncrypt.TagSize;
+        MinimumBufferSize = LengthBufferSize + maxReadSize + padSize + (int)_streamEncrypt.TagSize;
     }
-
+    
     public override bool CanRead => true;
 
     public override bool CanSeek => false;
@@ -117,7 +118,7 @@ public class EncryptionStream : Stream
         byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
             ? _streamEncrypt.Push(plaintextBuffer[..plaintextBytesRead], _finishedReadingPlaintext)
             : _streamEncrypt.Push(plaintextBuffer[.._plaintextReadSize], _finishedReadingPlaintext);
-        ArrayPool<byte>.Shared.Return(plaintextBuffer);
+        ArrayPool<byte>.Shared.Return(plaintextBuffer, clearArray: true);
         
         BinaryPrimitives.WriteInt32LittleEndian(buffer.AsSpan(offset, LengthBufferSize), ciphertext.Length);
 
@@ -152,7 +153,7 @@ public class EncryptionStream : Stream
         byte[] ciphertext = plaintextBytesRead < _plaintextReadSize
             ? _streamEncrypt.Push(plaintextBuffer[..plaintextBytesRead], _finishedReadingPlaintext)
             : _streamEncrypt.Push(plaintextBuffer[.._plaintextReadSize], _finishedReadingPlaintext);
-        ArrayPool<byte>.Shared.Return(plaintextBuffer);
+        ArrayPool<byte>.Shared.Return(plaintextBuffer, clearArray: true);
         
         BinaryPrimitives.WriteInt32LittleEndian(buffer.Span[..LengthBufferSize], ciphertext.Length);
         ciphertext.CopyTo(buffer[LengthBufferSize..]);
@@ -177,9 +178,9 @@ public class EncryptionStream : Stream
     
     private void AssertBufferSize(int bufferSize)
     {
-        if (bufferSize < _minimumBufferSize)
+        if (bufferSize < MinimumBufferSize)
         {
-            throw new ArgumentOutOfRangeException($"buffer size must be greater than or equal {_minimumBufferSize}");
+            throw new ArgumentOutOfRangeException($"buffer size must be greater than or equal {MinimumBufferSize}");
         }
     }
 

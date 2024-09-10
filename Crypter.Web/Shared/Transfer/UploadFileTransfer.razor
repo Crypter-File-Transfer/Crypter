@@ -34,7 +34,7 @@
                     <i class="bi bi-file-arrow-up d-block fs-1 my-3"></i>
                     <span class="fw-bold">Choose a file</span> or drag it here to upload
                 </p>
-                <InputFile id="fileInput" OnChange="@HandleFileInputChange" @ondragenter="@HandleDragEnter" @ondragleave="@HandleDragLeave"/>
+                <InputFile id="fileInput" OnChange="@HandleFileInputChangeAsync" @ondragenter="@HandleDragEnter" @ondragleave="@HandleDragLeave"/>
             </div>
             <div hidden="@(string.IsNullOrEmpty(ErrorMessage))" class="validation-errors my-3">
                 <div class="alert alert-danger" role="alert">
@@ -63,16 +63,16 @@
 
 <div class="encrypt-status text-center" hidden="@(!EncryptionInProgress)">
     <h3>@UploadStatusMessage</h3>
-    @if (TransmissionType == TransferTransmissionType.Stream)
-    {
-        <div class="progress">
-            <div class="progress-bar" role="progressbar" style="transition:none;width: @((UploadStatusPercent ?? 0) * 100)%" aria-valuenow="@(UploadStatusPercent ?? 0)" aria-valuemin="0" aria-valuemax="1"></div>
-        </div>
-    }
-    else
+    @if (TransmissionType is TransferTransmissionType.Buffer)
     {
         <div class="spinner-border" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>   
+    }
+    else
+    {
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" style="transition:none;width: @((UploadStatusPercent ?? 0) * 100)%" aria-valuenow="@(UploadStatusPercent ?? 0)" aria-valuemin="0" aria-valuemax="1"></div>
+        </div>
     }
 </div>

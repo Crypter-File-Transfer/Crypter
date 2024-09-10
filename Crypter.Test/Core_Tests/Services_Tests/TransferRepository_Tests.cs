@@ -52,7 +52,8 @@ internal class TransferRepository_Tests
         TransferStorageSettings settings = new TransferStorageSettings
         {
             AllocatedGB = 1,
-            Location = AssemblySetup.FileStorageLocation!
+            Location = AssemblySetup.FileStorageLocation!,
+            MaximumTransferSizeMB = 1
         };
         IOptions<TransferStorageSettings> options = Options.Create(settings);
         _sut = new TransferRepository(options);

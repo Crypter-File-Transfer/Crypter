@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.API.Attributes;
@@ -71,7 +71,7 @@ public class FileTransferController : TransferControllerBase
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> UploadFileTransferAsync([FromQuery] string? username,
-        [FromForm] UploadFileTransferReceipt request)
+        [FromForm] UploadFileTransferBundle request)
     {
         Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
             ? Maybe<string>.None
@@ -88,6 +88,79 @@ public class FileTransferController : TransferControllerBase
                 neither: MakeErrorResponse(UploadTransferError.UnknownError));
     }
 
+    [HttpPost("multipart/initialize")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> InitializeMultipartFileTransferAsync([FromQuery] string? username,
+        [FromBody] UploadFileTransferRequest request)
+    {
+        Maybe<string> maybeUsername = string.IsNullOrEmpty(username)
+            ? Maybe<string>.None
+            : username;
+
+        InitializeMultipartFileTransferCommand command = new InitializeMultipartFileTransferCommand(UserId, maybeUsername, request);
+        return await _sender.Send(command)
+            .MatchAsync(
+                left: MakeErrorResponse,
+                right: Ok,
+                neither: MakeErrorResponse(UploadTransferError.UnknownError));
+    }
+    
+    [HttpPost("multipart/upload")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> UploadMultipartFileTransferAsync([FromQuery] string id, [FromQuery] int position,
+        [FromForm] IFormFile? ciphertext)
+    {
+        SaveMultipartFileTransferCommand command = new SaveMultipartFileTransferCommand(UserId, id, position, ciphertext?.OpenReadStream());
+        return await _sender.Send(command)
+            .MatchAsync(
+                left: MakeErrorResponse,
+                right: _ => Accepted(),
+                neither: MakeErrorResponse(UploadMultipartFileTransferError.UnknownError));
+            
+        IActionResult MakeErrorResponse(UploadMultipartFileTransferError error)
+        {
+#pragma warning disable CS8524
+            return error switch
+            {
+                UploadMultipartFileTransferError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+                UploadMultipartFileTransferError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error),
+                UploadMultipartFileTransferError.AggregateTooLarge
+                    or UploadMultipartFileTransferError.OutOfSpace=> MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+            };
+#pragma warning restore CS8524
+        }
+    }
+    
+    [HttpPost("multipart/finalize")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> FinalizeMultipartFileTransferAsync([FromQuery] string id)
+    {
+        FinalizeMultipartFileTransferCommand command = new FinalizeMultipartFileTransferCommand(UserId, id);
+        return await _sender.Send(command)
+            .MatchAsync(
+                left: MakeErrorResponse,
+                right: _ => Accepted(),
+                neither: MakeErrorResponse(FinalizeMultipartFileTransferError.UnknownError));
+        
+        IActionResult MakeErrorResponse(FinalizeMultipartFileTransferError error)
+        {
+#pragma warning disable CS8524
+            return error switch
+            {
+                FinalizeMultipartFileTransferError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+                FinalizeMultipartFileTransferError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+        }
+    }
+    
     [HttpGet("received")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<UserReceivedFileDTO>))]
@@ -176,5 +249,30 @@ public class FileTransferController : TransferControllerBase
                 MakeErrorResponse,
                 x => new FileStreamResult(x, "application/octet-stream"),
                 MakeErrorResponse(DownloadTransferCiphertextError.UnknownError));
+    }
+
+    [HttpPost("multipart/abandon")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadTransferResponse))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    public async Task<IActionResult> AbandonMultipartFileTransferAsync([FromQuery] string id)
+    {
+        AbandonMultipartFileTransferCommand command = new AbandonMultipartFileTransferCommand(UserId, id);
+        return await _sender.Send(command)
+            .MatchAsync(
+                left: MakeErrorResponse,
+                right: _ => Accepted(),
+                neither: MakeErrorResponse(AbandonMultipartFileTransferError.UnknownError));
+        
+        IActionResult MakeErrorResponse(AbandonMultipartFileTransferError error)
+        {
+#pragma warning disable CS8524
+            return error switch
+            {
+                AbandonMultipartFileTransferError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+                AbandonMultipartFileTransferError.NotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+        }
     }
 }

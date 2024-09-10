@@ -60,7 +60,13 @@ internal sealed class SuccessfulTransferUploadEventHandler : INotificationHandle
     public async Task Handle(SuccessfulTransferUploadEvent notification, CancellationToken cancellationToken)
     {
         await notification.RecipientId.IfSomeAsync(async recipientId =>
-            await QueueTransferNotificationAsync(notification.ItemId, notification.ItemType, recipientId));
+            await Common.QueueTransferNotificationAsync(
+                _dataContext,
+                _backgroundJobClient,
+                _hangfireBackgroundService,
+                notification.ItemId,
+                notification.ItemType,
+                recipientId));
         
         _backgroundJobClient.Schedule(() =>
             _hangfireBackgroundService.DeleteTransferAsync(notification.ItemId, notification.ItemType, notification.UserType, true),
@@ -74,26 +80,5 @@ internal sealed class SuccessfulTransferUploadEventHandler : INotificationHandle
         
         _backgroundJobClient.Enqueue(() =>
             _hangfireBackgroundService.LogSuccessfulTransferUploadAsync(notification.ItemId, notification.ItemType, notification.Size, senderId, recipientUsername, notification.Timestamp));
-    }
-    
-    private async Task<Unit> QueueTransferNotificationAsync(
-        Guid itemId,
-        TransferItemType itemType,
-        Guid recipientId)
-    {
-        bool userExpectsNotification = await _dataContext.Users
-            .Where(x => x.Id == recipientId)
-            .Where(x => x.NotificationSetting!.EnableTransferNotifications
-                        && x.EmailVerified
-                        && x.NotificationSetting.EmailNotifications)
-            .AnyAsync();
-
-        if (userExpectsNotification)
-        {
-            _backgroundJobClient.Enqueue(() =>
-                _hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType));
-        }
-
-        return Unit.Default;
     }
 }

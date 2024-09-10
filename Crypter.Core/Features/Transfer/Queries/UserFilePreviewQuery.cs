@@ -99,6 +99,7 @@ internal class UserFilePreviewQueryHandler
         FileTransferPreviewResponse? filePreview = await _dataContext.UserFileTransfers
             .Where(x => x.Id == itemId)
             .Where(x => x.RecipientId == null || x.RecipientId == requesterUserId)
+            .Where(x => !x.Parts)
             .Select(x => new FileTransferPreviewResponse(
                 x.FileName,
                 x.ContentType,

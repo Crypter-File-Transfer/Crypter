@@ -30,4 +30,9 @@ public interface IFileTransfer : ITransferBase
 {
     string FileName { get; set; }
     string ContentType { get; set; }
+    
+    /// <summary>
+    /// Indicates whether the file is currently saved whole or still being uploaded in parts.
+    /// </summary>
+    bool Parts { get; set; }
 }

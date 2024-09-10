@@ -25,9 +25,7 @@
  */
 
 using System;
-using System.Globalization;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Enums;
@@ -36,9 +34,7 @@ using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Web.Services;
 using EasyMonads;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.VisualBasic;
 
 namespace Crypter.Web.Shared.Transfer;
 
@@ -47,19 +43,19 @@ public partial class UploadFileTransfer : IDisposable
 {
     private IBrowserFile? _selectedFile;
     
-    private long _maxStreamSizeMB = 0;
     private long _maxBufferSizeMB = 0;
+    private long _maxStreamSizeMB = 0;
+    private long _maxMultipartSizeMB = 0;
+    
     private string _dropClass = string.Empty;
     private const string DropzoneDrag = "dropzone-drag";
     private const string NoFileSelected = "No file selected.";
 
     protected override void OnInitialized()
     {
-        TransmissionType = BrowserFunctions.BrowserSupportsRequestStreaming()
-            ? TransferTransmissionType.Stream
-            : TransferTransmissionType.Buffer;
-        _maxStreamSizeMB = UploadSettings.MaximumStreamSizeMB * Convert.ToInt64(Math.Pow(10, 6));
-        _maxBufferSizeMB = UploadSettings.MaximumBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _maxBufferSizeMB = UploadSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _maxStreamSizeMB = UploadSettings.MaximumUploadStreamSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _maxMultipartSizeMB = UploadSettings.MaximumMultipartUploadSizeMB * Convert.ToInt64(Math.Pow(10, 6));
     }
 
     private void HandleDragEnter()
@@ -72,24 +68,34 @@ public partial class UploadFileTransfer : IDisposable
         _dropClass = string.Empty;
     }
 
-    private void HandleFileInputChange(InputFileChangeEventArgs e)
+    private async Task HandleFileInputChangeAsync(InputFileChangeEventArgs e)
     {
         _dropClass = string.Empty;
         ErrorMessage = string.Empty;
 
         IBrowserFile file = e.File;
         
+        if (await UserSessionService.IsLoggedInAsync())
+        {
+            TransmissionType = TransferTransmissionType.Multipart;
+        }
+        else if (BrowserFunctions.BrowserSupportsRequestStreaming())
+        {
+            TransmissionType = TransferTransmissionType.Stream;
+        }
+        
+        // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (TransmissionType)
         {
-            case TransferTransmissionType.Stream when file.Size > _maxStreamSizeMB:
-                ErrorMessage = $"The max file size is {UploadSettings.MaximumStreamSizeMB} MB.";
-                return;
             case TransferTransmissionType.Buffer when file.Size > _maxBufferSizeMB:
-                ErrorMessage = $"The max file size for this browser is {UploadSettings.MaximumBufferSizeMB} MB. Switch to a Chromium-based browser for files up to {UploadSettings.MaximumStreamSizeMB} MB.";
+                ErrorMessage = $"The max file size is {UploadSettings.MaximumUploadBufferSizeMB} MB. Login for file sizes up to {UploadSettings.MaximumMultipartUploadSizeMB} MB.";
                 return;
-            default:
-                _selectedFile = file;
-                break;
+            case TransferTransmissionType.Stream when file.Size > _maxStreamSizeMB:
+                ErrorMessage = $"The max file size is {UploadSettings.MaximumUploadStreamSizeMB} MB.";
+                return;
+            case TransferTransmissionType.Multipart when file.Size > _maxMultipartSizeMB:
+                ErrorMessage = $"The max file size is {UploadSettings.MaximumMultipartUploadSizeMB} MB.";
+                return;
         }
     }
 
@@ -100,7 +106,7 @@ public partial class UploadFileTransfer : IDisposable
             ErrorMessage = NoFileSelected;
             return;
         }
-
+        
         EncryptionInProgress = true;
         ErrorMessage = string.Empty;
         
@@ -111,16 +117,18 @@ public partial class UploadFileTransfer : IDisposable
 
         SetHandlerUserInfo(fileUploader);
 
+#pragma warning disable CS8524
         Action<double>? progressUpdater = TransmissionType switch
         {
             TransferTransmissionType.Buffer => null,
-            TransferTransmissionType.Stream => SetUploadPercentage,
-            _ => null
+            TransferTransmissionType.Stream
+                or TransferTransmissionType.Multipart => SetUploadPercentage
         };
+#pragma warning restore CS8524
 
         Either<UploadTransferError, UploadHandlerResponse> uploadResponse = await fileUploader.UploadAsync(progressUpdater);
 
-        if (TransmissionType == TransferTransmissionType.Stream)
+        if (TransmissionType is TransferTransmissionType.Stream or TransferTransmissionType.Multipart)
         {
             await Task.Delay(400);
         }

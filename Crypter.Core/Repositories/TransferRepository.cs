@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,7 +25,9 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Core.Settings;
@@ -43,18 +45,26 @@ public interface ITransferRepository
     Maybe<FileStream> GetTransfer(Guid id, TransferItemType itemType, TransferUserType userType,
         bool deleteOnReadCompletion);
 
+    long GetTransferSize(Guid id, TransferItemType itemType, TransferUserType userType);
+    
+    long GetTransferPartsSize(Guid id, TransferItemType itemType, TransferUserType userType);
+    
     Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream stream);
+    
+    Task<bool> SaveTransferPartAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream partStream, int partPosition);
+
+    Task<bool> JoinTransferPartsAsync(Guid id, TransferItemType itemType, TransferUserType userType);
+    
     void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType);
+
+    void DeleteTransferParts(Guid id, TransferItemType itemType, TransferUserType userType);
 }
 
 public static class TransferRepositoryExtensions
 {
     public static void AddTransferRepository(this IServiceCollection services, Action<TransferStorageSettings> settings)
     {
-        if (settings is null)
-        {
-            throw new ArgumentNullException(nameof(settings));
-        }
+        ArgumentNullException.ThrowIfNull(settings);
 
         services.Configure(settings);
         services.TryAddSingleton<ITransferRepository, TransferRepository>();
@@ -63,6 +73,7 @@ public static class TransferRepositoryExtensions
 
 public class TransferRepository : ITransferRepository
 {
+    private const string PartialDirectoryName = "partials";
     private readonly TransferStorageSettings _transferStorageSettings;
 
     public TransferRepository(IOptions<TransferStorageSettings> transferStorageSettings)
@@ -72,16 +83,14 @@ public class TransferRepository : ITransferRepository
 
     public bool TransferExists(Guid id, TransferItemType itemType, TransferUserType userType)
     {
-        string directory = GetTransferDirectory(itemType, userType);
-        string filepath = Path.Join(directory, id.ToString());
+        string filepath = GetTransferPath(id, itemType, userType);
         return File.Exists(filepath);
     }
 
     public Maybe<FileStream> GetTransfer(Guid id, TransferItemType itemType, TransferUserType userType,
         bool deleteOnReadCompletion)
     {
-        string directory = GetTransferDirectory(itemType, userType);
-        string filepath = Path.Join(directory, id.ToString());
+        string filepath = GetTransferPath(id, itemType, userType);
 
         FileOptions fileOption = deleteOnReadCompletion
             ? FileOptions.DeleteOnClose
@@ -92,58 +101,196 @@ public class TransferRepository : ITransferRepository
             : Maybe<FileStream>.None;
     }
 
+    public long GetTransferSize(Guid id, TransferItemType itemType, TransferUserType userType)
+    {
+        string filepath = GetTransferPath(id, itemType, userType);
+        FileInfo fileInfo = new FileInfo(filepath);
+        return fileInfo.Length;
+    }
+    
+    public long GetTransferPartsSize(Guid id, TransferItemType itemType, TransferUserType userType)
+    {
+        string directory = GetTransferPartsDirectory(itemType, userType, id);
+        DirectoryInfo directoryInfo = new DirectoryInfo(directory);
+        if (directoryInfo.Exists)
+        {
+            return directoryInfo
+                .EnumerateFiles()
+                .Select(x => x.Length)
+                .DefaultIfEmpty(0)
+                .Sum(x => Convert.ToInt64(x / Math.Pow(10, 6)));
+        }
+
+        return 0;
+    }
+    
     public async Task<bool> SaveTransferAsync(Guid id, TransferItemType itemType, TransferUserType userType,
         Stream stream)
     {
         string directory = GetTransferDirectory(itemType, userType);
-        string filepath = Path.Join(directory, id.ToString());
+        string filepath = GetTransferPath(id, itemType, userType);
 
         try
         {
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            using FileStream ciphertextStream = File.OpenWrite(filepath);
-            await stream.CopyToAsync(ciphertextStream);
-            await ciphertextStream.FlushAsync();
-            ciphertextStream.Dispose();
+            EnsureDirectoryExists(directory);
+            await using FileStream fileStream = File.OpenWrite(filepath);
+            await stream.CopyToAsync(fileStream);
+            await fileStream.FlushAsync();
         }
         catch (OperationCanceledException)
         {
-            DeleteTransfer(id, TransferItemType.Message, userType);
+            DeleteTransfer(id, itemType, userType);
             throw;
         }
         catch (Exception)
         {
             // todo - log something
-            DeleteTransfer(id, TransferItemType.Message, userType);
+            DeleteTransfer(id, itemType, userType);
             return false;
         }
 
         return true;
     }
 
+    public async Task<bool> SaveTransferPartAsync(Guid id, TransferItemType itemType, TransferUserType userType, Stream partStream, int partPosition)
+    {
+        string directory = GetTransferPartsDirectory(itemType, userType, id);
+        string filepath = Path.Join(directory, $"{partPosition}.part");
+        
+        try
+        {
+            EnsureDirectoryExists(directory);
+            await using FileStream fileStream = File.OpenWrite(filepath);
+            await partStream.CopyToAsync(fileStream);
+            await fileStream.FlushAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            DeleteTransferParts(id, itemType, userType);
+            throw;
+        }
+        catch (Exception)
+        {
+            // todo - log something
+            DeleteTransferParts(id, itemType, userType);
+            return false;
+        }
+
+        return true;
+    }
+
+    public async Task<bool> JoinTransferPartsAsync(Guid id, TransferItemType itemType, TransferUserType userType)
+    {
+        string partsDirectory = GetTransferPartsDirectory(itemType, userType, id);
+
+        if (!Directory.Exists(partsDirectory))
+        {
+            return false;
+        }
+        
+        List<string> filenames = Directory
+            .EnumerateFiles(partsDirectory)
+            .OrderBy(x => int.Parse(Path.GetFileNameWithoutExtension(x)))
+            .ToList();
+
+        bool nonSequentialFilenames = filenames
+            .Select(x => int.Parse(Path.GetFileNameWithoutExtension(x)))
+            .Where((name, index) => name != index)
+            .Any();
+
+        if (nonSequentialFilenames)
+        {
+            return false;
+        }
+        
+        string filepath = GetTransferPath(id, itemType, userType);
+        if (File.Exists(filepath))
+        {
+            return false;
+        }
+
+        try
+        {
+            await using FileStream fileStream = File.OpenWrite(filepath);
+            foreach (string filename in filenames)
+            {
+                await using FileStream filePart = File.OpenRead(filename);
+                await filePart.CopyToAsync(fileStream);
+            }
+            
+            DeleteTransferParts(id, itemType, userType);
+        }
+        catch (OperationCanceledException)
+        {
+            DeleteTransfer(id, itemType, userType);
+            throw;
+        }
+        catch (Exception)
+        {
+            // todo - log something
+            DeleteTransfer(id, itemType, userType);
+            return false;
+        }
+
+        return true;
+    }
+    
     public void DeleteTransfer(Guid id, TransferItemType itemType, TransferUserType userType)
     {
-        string directory = GetTransferDirectory(itemType, userType);
-        string filepath = Path.Join(directory, id.ToString());
+        string filepath = GetTransferPath(id, itemType, userType);
         if (File.Exists(filepath))
         {
             File.Delete(filepath);
         }
     }
 
+    public void DeleteTransferParts(Guid id, TransferItemType itemType, TransferUserType userType)
+    {
+        string directory = GetTransferPartsDirectory(itemType, userType, id);
+        if (Directory.Exists(directory))
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    private string GetTransferPath(Guid id, TransferItemType itemType, TransferUserType userType)
+    {
+        string directory = GetTransferDirectory(itemType, userType);
+        return Path.Join(directory, id.ToString());
+    }
+    
     private string GetTransferDirectory(TransferItemType itemType, TransferUserType userType)
     {
-        string[] directoryParts = new string[]
-        {
+        return GetBaseTransferDirectory(itemType, userType);
+    }
+
+    private string GetTransferPartsDirectory(TransferItemType itemType, TransferUserType userType, Guid itemId)
+    {
+        string[] directoryParts =
+        [
+            GetBaseTransferDirectory(itemType, userType),
+            PartialDirectoryName,
+            itemId.ToString()
+        ];
+        return Path.Join(directoryParts);
+    }
+
+    private string GetBaseTransferDirectory(TransferItemType itemType, TransferUserType userType)
+    {
+        string[] directoryParts =
+        [
             _transferStorageSettings.Location,
             userType.ToString().ToLower(),
             itemType.ToString().ToLower()
-        };
-
+        ];
         return Path.Join(directoryParts);
+    }
+
+    private static void EnsureDirectoryExists(string directory)
+    {
+        if (!Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
     }
 }

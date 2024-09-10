@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Transfer;
@@ -37,9 +38,21 @@ namespace Crypter.Common.Client.Interfaces.Requests;
 public interface IFileTransferRequests
 {
     Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(Maybe<string> recipientUsername,
-        UploadFileTransferRequest uploadRequest, Func<Action<double>?, EncryptionStream> encryptionStreamOpener,
-        bool withAuthentication, Action<double>? updateCallback = null);
+        UploadFileTransferRequest uploadRequest,
+        Func<Action<double>?, EncryptionStream> encryptionStreamOpener,
+        bool withAuthentication,
+        Action<double>? updateCallback = null);
 
+    Task<Either<UploadTransferError, InitiateMultipartFileTransferResponse>> InitializeMultipartFileTransferAsync(
+        Maybe<string> recipientUsername,
+        UploadFileTransferRequest uploadRequest);
+    Task<Either<UploadMultipartFileTransferError, Unit>> UploadMultipartFileTransferAsync(
+        string hashId,
+        int position,
+        Func<Stream> encryptionStreamOpener);
+    Task<Either<FinalizeMultipartFileTransferError, Unit>> FinalizeMultipartFileTransferAsync(string hashId);
+    Task<Either<AbandonMultipartFileTransferError, Unit>> AbandonMultipartFileTransferAsync(string hashId);
+    
     Task<Maybe<List<UserReceivedFileDTO>>> GetReceivedFilesAsync();
     Task<Maybe<List<UserSentFileDTO>>> GetSentFilesAsync();
     Task<Either<TransferPreviewError, FileTransferPreviewResponse>> GetAnonymousFilePreviewAsync(string hashId);
