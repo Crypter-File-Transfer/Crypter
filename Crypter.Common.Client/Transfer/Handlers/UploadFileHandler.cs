@@ -158,17 +158,29 @@ public class UploadFileHandler : UploadHandler
         
         async IAsyncEnumerable<Func<MemoryStream>> SplitEncryptionStreamAsync(EncryptionStream encryptionStream)
         {
-            bool endOfStream;
+            bool endOfStream = false;
             do
             {
-                byte[] buffer = ArrayPool<byte>.Shared.Rent(encryptionStream.MinimumBufferSize);
-                int bytesRead = await encryptionStream.ReadAsync(buffer);
-                endOfStream = bytesRead == 0;
-                if (!endOfStream)
+                int bufferSize = ClientTransferSettings.MaximumMultipartReadBlocks * encryptionStream.MinimumBufferSize;
+                byte[] buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
+
+                int totalBytesRead = 0;
+                for (int i = 0; i < ClientTransferSettings.MaximumMultipartReadBlocks; i++)
+                {
+                    int bytesRead = await encryptionStream.ReadAsync(buffer.AsMemory(totalBytesRead, encryptionStream.MinimumBufferSize));
+                    totalBytesRead += bytesRead;
+                    if (bytesRead == 0)
+                    {
+                        endOfStream = true;
+                        break;
+                    }
+                }
+                
+                if (totalBytesRead > 0)
                 {
                     try
                     {
-                        yield return () => new MemoryStream(buffer, 0, bytesRead);
+                        yield return () => new MemoryStream(buffer, 0, totalBytesRead);
                     }
                     finally
                     {

@@ -39,6 +39,16 @@ public class ClientTransferSettings
     public short MaximumUploadStreamSizeMB { get; init; }
     
     /// <summary>
+    /// Set the limit for the number of blocks in a single multipart request body.
+    /// </summary>
+    public short MaximumMultipartReadBlocks { get; init; }
+    
+    /// <summary>
+    /// Set the maximum degrees of parallelism for multipart uploads.
+    /// </summary>
+    public int MaximumDegreesOfMultipartParallelism { get; init; }
+    
+    /// <summary>
     /// Set the limit for the maximum file siez when uploading files using multiple requests.
     /// </summary>
     public short MaximumUploadSizeMB { get; init; }
@@ -52,9 +62,4 @@ public class ClientTransferSettings
     /// Set the maximum number of bytes to use as padding when encrypting a file or message.
     /// </summary>
     public int PadSize { get; init; }
-    
-    /// <summary>
-    /// Set the maximum degrees of parallelism for multipart uploads.
-    /// </summary>
-    public int MaximumDegreesOfMultipartParallelism { get; init; }
 }
