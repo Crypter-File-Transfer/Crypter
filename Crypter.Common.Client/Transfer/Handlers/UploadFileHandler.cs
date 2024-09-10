@@ -28,6 +28,8 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Transfer.Handlers.Base;
@@ -89,23 +91,52 @@ public class UploadFileHandler : UploadHandler
                 // Upload
                 .BindAsync(async initializeResult =>
                 {
-                    Either<UploadMultipartFileTransferError, Unit> uploadResult = Either<UploadMultipartFileTransferError, Unit>.Neither;
+                    Dictionary<int, Task<Either<UploadMultipartFileTransferError, Unit>>> indexedUploadResults = new Dictionary<int, Task<Either<UploadMultipartFileTransferError, Unit>>>();
                     EncryptionStream encryptionStream = encryptionStreamOpener(updateCallback);
-                    IAsyncEnumerator<Func<MemoryStream>> enumerable = SplitEncryptionStreamAsync(encryptionStream).GetAsyncEnumerator();
+                    IAsyncEnumerable<Func<MemoryStream>> asyncEnumerable = SplitEncryptionStreamAsync(encryptionStream);
+
+                    SemaphoreSlim uploadLock = new SemaphoreSlim(1);
+                    bool fault = false;
                     int currentPosition = 0;
-                    while (await enumerable.MoveNextAsync())
+                    await Parallel.ForEachAsync(asyncEnumerable, async (streamOpener, _) =>
                     {
-                        uploadResult = await CrypterApiClient.FileTransfer.UploadMultipartFileTransferAsync(
-                            initializeResult.HashId, currentPosition, enumerable.Current);
-                        if (!uploadResult.IsRight)
+                        if (!fault)
                         {
-                            break;
+                            try
+                            {
+                                await uploadLock.WaitAsync(CancellationToken.None);
+                                Task<Either<UploadMultipartFileTransferError, Unit>> uploadTask = CrypterApiClient
+                                    .FileTransfer
+                                    .UploadMultipartFileTransferAsync(initializeResult.HashId, currentPosition,
+                                        streamOpener)
+                                    .ContinueWith(x =>
+                                    {
+                                        if (!x.Result.IsRight)
+                                        {
+                                            fault = true;
+                                        }
+
+                                        return x.Result;
+                                    }, CancellationToken.None);
+                                indexedUploadResults.Add(currentPosition, uploadTask);
+                                currentPosition++;
+                                uploadLock.Release();
+                                await uploadTask;
+                            }
+                            catch (Exception)
+                            {
+                                fault = true;
+                                throw;
+                            }
                         }
+                    });
 
-                        currentPosition++;
-                    }
-
-                    return await uploadResult
+                    Either<UploadMultipartFileTransferError, Unit> errorOrSuccess = indexedUploadResults
+                        .OrderBy(x => x.Key)
+                        .Select(x => x.Value.Result)
+                        .FirstOrDefault(x => x.IsLeft || x.IsNeither, Either<UploadMultipartFileTransferError, Unit>.FromRight(Unit.Default));
+                    
+                    return await errorOrSuccess
                         .MapLeft(error => error.ConvertToUploadTransferError())
                         .BindAsync(async _ => await CrypterApiClient.FileTransfer.FinalizeMultipartFileTransferAsync(initializeResult.HashId)
                             .MapLeftAsync<FinalizeMultipartFileTransferError, Unit, UploadTransferError>(error => error.ConvertToUploadTransferError()))
