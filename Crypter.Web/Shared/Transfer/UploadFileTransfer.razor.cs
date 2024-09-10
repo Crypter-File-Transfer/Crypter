@@ -51,14 +51,6 @@ public partial class UploadFileTransfer : IDisposable
 
     protected override void OnInitialized()
     {
-        if (UserSessionService.Session.IsSome)
-        {
-            TransmissionType = TransferTransmissionType.Multipart;
-        }
-        else if (BrowserFunctions.BrowserSupportsRequestStreaming())
-        {
-            TransmissionType = TransferTransmissionType.Stream;
-        }
         _maxStreamSizeMB = UploadSettings.MaximumUploadSizeMB * Convert.ToInt64(Math.Pow(10, 6));
         _maxBufferSizeMB = UploadSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
     }
@@ -103,6 +95,15 @@ public partial class UploadFileTransfer : IDisposable
             return;
         }
 
+        if (await UserSessionService.IsLoggedInAsync())
+        {
+            TransmissionType = TransferTransmissionType.Multipart;
+        }
+        else if (BrowserFunctions.BrowserSupportsRequestStreaming())
+        {
+            TransmissionType = TransferTransmissionType.Stream;
+        }
+        
         EncryptionInProgress = true;
         ErrorMessage = string.Empty;
         
