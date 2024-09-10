@@ -57,8 +57,7 @@ public class UploadFileHandler : UploadHandler
     {
     }
 
-    internal void SetTransferInfo(Func<Stream> fileStreamOpener, string fileName, long fileSize, string fileContentType,
-        int expirationHours)
+    internal void SetTransferInfo(Func<Stream> fileStreamOpener, string fileName, long fileSize, string fileContentType, int expirationHours)
     {
         _fileStreamOpener = fileStreamOpener;
         _fileName = fileName;
@@ -95,20 +94,22 @@ public class UploadFileHandler : UploadHandler
                     EncryptionStream encryptionStream = encryptionStreamOpener(updateCallback);
                     IAsyncEnumerable<Func<MemoryStream>> asyncEnumerable = SplitEncryptionStreamAsync(encryptionStream);
 
+                    ParallelOptions parallelOptions = new ParallelOptions
+                    {
+                        MaxDegreeOfParallelism = 10
+                    };
                     SemaphoreSlim uploadLock = new SemaphoreSlim(1);
                     bool fault = false;
                     int currentPosition = 0;
-                    await Parallel.ForEachAsync(asyncEnumerable, async (streamOpener, _) =>
+                    await Parallel.ForEachAsync(asyncEnumerable, parallelOptions, async (streamOpener, _) =>
                     {
                         if (!fault)
                         {
                             try
                             {
                                 await uploadLock.WaitAsync(CancellationToken.None);
-                                Task<Either<UploadMultipartFileTransferError, Unit>> uploadTask = CrypterApiClient
-                                    .FileTransfer
-                                    .UploadMultipartFileTransferAsync(initializeResult.HashId, currentPosition,
-                                        streamOpener)
+                                Task<Either<UploadMultipartFileTransferError, Unit>> uploadTask = CrypterApiClient.FileTransfer
+                                    .UploadMultipartFileTransferAsync(initializeResult.HashId, currentPosition, streamOpener)
                                     .ContinueWith(x =>
                                     {
                                         if (!x.Result.IsRight)
