@@ -68,12 +68,21 @@ public partial class UploadFileTransfer : IDisposable
         _dropClass = string.Empty;
     }
 
-    private void HandleFileInputChange(InputFileChangeEventArgs e)
+    private async Task HandleFileInputChangeAsync(InputFileChangeEventArgs e)
     {
         _dropClass = string.Empty;
         ErrorMessage = string.Empty;
 
         IBrowserFile file = e.File;
+        
+        if (await UserSessionService.IsLoggedInAsync())
+        {
+            TransmissionType = TransferTransmissionType.Multipart;
+        }
+        else if (BrowserFunctions.BrowserSupportsRequestStreaming())
+        {
+            TransmissionType = TransferTransmissionType.Stream;
+        }
         
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (TransmissionType)
@@ -96,15 +105,6 @@ public partial class UploadFileTransfer : IDisposable
         {
             ErrorMessage = NoFileSelected;
             return;
-        }
-
-        if (await UserSessionService.IsLoggedInAsync())
-        {
-            TransmissionType = TransferTransmissionType.Multipart;
-        }
-        else if (BrowserFunctions.BrowserSupportsRequestStreaming())
-        {
-            TransmissionType = TransferTransmissionType.Stream;
         }
         
         EncryptionInProgress = true;

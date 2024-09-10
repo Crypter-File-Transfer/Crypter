@@ -34,7 +34,7 @@
                     <i class="bi bi-file-arrow-up d-block fs-1 my-3"></i>
                     <span class="fw-bold">Choose a file</span> or drag it here to upload
                 </p>
-                <InputFile id="fileInput" OnChange="@HandleFileInputChange" @ondragenter="@HandleDragEnter" @ondragleave="@HandleDragLeave"/>
+                <InputFile id="fileInput" OnChange="@HandleFileInputChangeAsync" @ondragenter="@HandleDragEnter" @ondragleave="@HandleDragLeave"/>
             </div>
             <div hidden="@(string.IsNullOrEmpty(ErrorMessage))" class="validation-errors my-3">
                 <div class="alert alert-danger" role="alert">
