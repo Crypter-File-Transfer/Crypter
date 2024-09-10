@@ -96,7 +96,7 @@ public class UploadFileHandler : UploadHandler
 
                     ParallelOptions parallelOptions = new ParallelOptions
                     {
-                        MaxDegreeOfParallelism = ClientTransferSettings.MaximumDegreesOfMultipartParallelism
+                        MaxDegreeOfParallelism = ClientTransferSettings.MaximumMultipartParallelism
                     };
                     SemaphoreSlim uploadLock = new SemaphoreSlim(1);
                     bool fault = false;
