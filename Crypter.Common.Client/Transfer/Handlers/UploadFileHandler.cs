@@ -103,11 +103,13 @@ public class UploadFileHandler : UploadHandler
                     int currentPosition = 0;
                     await Parallel.ForEachAsync(asyncEnumerable, parallelOptions, async (streamOpener, _) =>
                     {
+                        Console.WriteLine($"Looping: {currentPosition}");
                         if (!fault)
                         {
                             try
                             {
                                 await uploadLock.WaitAsync(CancellationToken.None);
+                                Console.WriteLine($"Acquired lock: {currentPosition}");
                                 Task<Either<UploadMultipartFileTransferError, Unit>> uploadTask = CrypterApiClient.FileTransfer
                                     .UploadMultipartFileTransferAsync(initializeResult.HashId, currentPosition, streamOpener)
                                     .ContinueWith(x =>
@@ -121,7 +123,9 @@ public class UploadFileHandler : UploadHandler
                                     }, CancellationToken.None);
                                 indexedUploadResults.Add(currentPosition, uploadTask);
                                 currentPosition++;
+                                Console.WriteLine($"Releasing lock: {currentPosition - 1}");
                                 uploadLock.Release();
+                                Console.WriteLine($"Lock released: {currentPosition - 1}. Awaiting...");
                                 await uploadTask;
                             }
                             catch (Exception)
