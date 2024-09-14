@@ -255,7 +255,7 @@ internal class SubmitRecovery_Tests
                     new VersionedPassword(Encoding.UTF8.GetBytes(TestData.DefaultPassword), 1);
 
                 ReplacementMasterKeyInformation replacementMasterKeyInformation =
-                    new ReplacementMasterKeyInformation(recoveryKey.Proof, Array.Empty<byte>(), Array.Empty<byte>(), Array.Empty<byte>());
+                    new ReplacementMasterKeyInformation(recoveryKey.Proof, [], [], []);
 
                 AccountRecoverySubmission submission = new AccountRecoverySubmission(TestData.DefaultUsername, encodedRecoveryCode,
                     encodedRecoverySignature, versionedPassword, replacementMasterKeyInformation);

@@ -24,6 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
@@ -106,5 +110,75 @@ internal class InitiateMultipartFileTransfer_Tests
             await _client!.FileTransfer.InitializeMultipartFileTransferAsync(recipientUsername, request);
 
         Assert.That(result.IsRight, Is.True);
+    }
+
+    [Test]
+    public void Initiate_Multipart_File_Transfer_Throws_When_Not_Authenticated()
+    {
+        DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
+        (_, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(
+            cryptoProvider.StreamEncryptionFactory.KeySize, TestData.DefaultPrivateKey, TestData.AlternatePublicKey,
+            TestData.DefaultKeyExchangeNonce);
+        
+        UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
+            TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
+            proof, TestData.DefaultTransferLifetimeHours);
+
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _client!.FileTransfer.InitializeMultipartFileTransferAsync(Maybe<string>.None, request));
+    }
+    
+    [Test]
+    public async Task Initiate_Multipart_File_Transfer_Requires_Authorization()
+    {
+        DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
+        (_, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(
+            cryptoProvider.StreamEncryptionFactory.KeySize, TestData.DefaultPrivateKey, TestData.AlternatePublicKey,
+            TestData.DefaultKeyExchangeNonce);
+        
+        UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
+            TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
+            proof, TestData.DefaultTransferLifetimeHours);
+        
+        using HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, "api/file/transfer/multipart/initialize");
+        requestMessage.Content = JsonContent.Create(request);
+        using HttpClient rawClient = _factory!.CreateClient();
+        HttpResponseMessage response = await rawClient.SendAsync(requestMessage);
+        
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task Initiate_Multipart_File_Transfer_Fails_When_Recipient_Does_Not_Exist()
+    {
+        {
+            RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+            Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
+        
+            LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+            Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
+
+            await loginResult.DoRightAsync(async loginResponse =>
+            {
+                await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
+                await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
+            });
+
+            Assert.That(registrationResult.IsRight, Is.True);
+            Assert.That(loginResult.IsRight, Is.True);
+        }
+        
+        DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
+        (_, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(
+            cryptoProvider.StreamEncryptionFactory.KeySize, TestData.DefaultPrivateKey, TestData.AlternatePublicKey,
+            TestData.DefaultKeyExchangeNonce);
+        
+        UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
+            TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
+            proof, TestData.DefaultTransferLifetimeHours);
+        Either<UploadTransferError, InitiateMultipartFileTransferResponse> result =
+            await _client!.FileTransfer.InitializeMultipartFileTransferAsync("John Smith", request);
+
+        Assert.That(result.IsLeft, Is.True);
     }
 }
