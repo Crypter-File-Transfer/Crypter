@@ -27,6 +27,7 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -159,13 +160,16 @@ public class UploadFileHandler : UploadHandler
         async IAsyncEnumerable<Func<MemoryStream>> SplitEncryptionStreamAsync(EncryptionStream encryptionStream)
         {
             bool endOfStream = false;
+            Stopwatch loopStopwatch = new Stopwatch();
+            short blocksPerRequest = ClientTransferSettings.InitialMultipartReadBlocks;
             do
             {
-                int bufferSize = ClientTransferSettings.MaximumMultipartReadBlocks * encryptionStream.MinimumBufferSize;
+                loopStopwatch.Restart();
+                int bufferSize = blocksPerRequest * encryptionStream.MinimumBufferSize;
                 byte[] buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
 
                 int totalBytesRead = 0;
-                for (int i = 0; i < ClientTransferSettings.MaximumMultipartReadBlocks; i++)
+                for (int i = 0; i < blocksPerRequest; i++)
                 {
                     int bytesRead = await encryptionStream.ReadAsync(buffer.AsMemory(totalBytesRead, encryptionStream.MinimumBufferSize));
                     totalBytesRead += bytesRead;
@@ -186,6 +190,15 @@ public class UploadFileHandler : UploadHandler
                     {
                         ArrayPool<byte>.Shared.Return(buffer, clearArray: true);   
                     }
+                }
+
+                if (loopStopwatch.Elapsed < TimeSpan.FromSeconds(1) && blocksPerRequest < ClientTransferSettings.MaximumMultipartReadBlocks)
+                {
+                    blocksPerRequest += 5;
+                }
+                else if (loopStopwatch.Elapsed > TimeSpan.FromSeconds(1) && blocksPerRequest > ClientTransferSettings.InitialMultipartReadBlocks)
+                {
+                    blocksPerRequest -= 5;
                 }
             } while (!endOfStream);
         }

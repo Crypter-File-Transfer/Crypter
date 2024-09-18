@@ -49,6 +49,11 @@ public class ClientTransferSettings
     public short MaximumMultipartReadBlocks { get; init; }
     
     /// <summary>
+    /// Set the initial number of read blocks in a single multipart request body.
+    /// </summary>
+    public short InitialMultipartReadBlocks { get; init; }
+    
+    /// <summary>
     /// Set the maximum degrees of parallelism for multipart uploads.
     /// </summary>
     public int MaximumMultipartParallelism { get; init; }
