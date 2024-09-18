@@ -24,6 +24,7 @@ COPY Crypter.Crypto.Common/. ./Crypter.Crypto.Common/
 COPY Crypter.Crypto.Providers.Browser/. ./Crypter.Crypto.Providers.Browser/
 COPY Crypter.Web/. ./Crypter.Web/
 
+RUN dotnet workload install wasm-tools
 RUN dotnet publish Crypter.Web --no-restore --configuration release /p:TreatWarningsAsErrors=true /warnaserror --output /app/
 
 FROM caddy:2.8-alpine AS webhost
