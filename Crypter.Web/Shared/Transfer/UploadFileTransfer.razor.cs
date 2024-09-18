@@ -83,23 +83,28 @@ public partial class UploadFileTransfer : IDisposable
         {
             TransmissionType = TransferTransmissionType.Stream;
         }
-        
+
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (TransmissionType)
         {
             case TransferTransmissionType.Buffer when file.Size > _maxBufferSizeMB:
                 ErrorMessage = $"The max file size is {UploadSettings.MaximumUploadBufferSizeMB} MB. Login for file sizes up to {UploadSettings.MaximumMultipartUploadSizeMB} MB.";
-                return;
+                break;
             case TransferTransmissionType.Stream when file.Size > _maxStreamSizeMB:
                 ErrorMessage = $"The max file size is {UploadSettings.MaximumUploadStreamSizeMB} MB.";
-                return;
+                break;
             case TransferTransmissionType.Multipart when file.Size > _maxMultipartSizeMB:
                 ErrorMessage = $"The max file size is {UploadSettings.MaximumMultipartUploadSizeMB} MB.";
-                return;
+                break;
+            default:
+                _selectedFile = file;
+                break;
         }
+        
+        StateHasChanged();
     }
 
-    protected async Task OnEncryptClicked()
+    private async Task OnEncryptClicked()
     {
         if (_selectedFile is null)
         {
