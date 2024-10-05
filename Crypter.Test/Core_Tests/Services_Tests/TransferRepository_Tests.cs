@@ -31,6 +31,7 @@ using Crypter.Common.Enums;
 using Crypter.Core.Repositories;
 using Crypter.Core.Settings;
 using EasyMonads;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
@@ -56,7 +57,9 @@ internal class TransferRepository_Tests
             MaximumTransferSizeMB = 1
         };
         IOptions<TransferStorageSettings> options = Options.Create(settings);
-        _sut = new TransferRepository(options);
+        LoggerFactory loggerFactory = new LoggerFactory();
+        Logger<TransferRepository> logger = new Logger<TransferRepository>(loggerFactory);
+        _sut = new TransferRepository(options, logger);
     }
 
     [TearDown]

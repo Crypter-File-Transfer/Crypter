@@ -179,7 +179,7 @@ public class UploadMultipartFileTransfer_Tests
         {
             Either<UploadMultipartFileTransferError, Unit> response =
                 await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 0, RandomByteStreamOpener());
-            Assert.That(response.IsRight, Is.False);
+            Assert.That(response.IsLeft, Is.True);
 
             response.DoLeftOrNeither(
                 left: x => Assert.That(x, Is.EqualTo(UploadMultipartFileTransferError.AggregateTooLarge)),
