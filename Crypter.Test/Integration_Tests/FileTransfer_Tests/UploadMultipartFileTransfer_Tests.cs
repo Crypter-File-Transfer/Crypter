@@ -67,7 +67,7 @@ public class UploadMultipartFileTransfer_Tests
         await AssemblySetup.ResetServerDataAsync();
     }
 
-    private async Task<string> InitiateMultipartFileTransfer()
+    private async Task LoginAsync()
     {
         RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
         Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
@@ -83,6 +83,11 @@ public class UploadMultipartFileTransfer_Tests
 
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);
+    }
+    
+    private async Task<string> InitiateMultipartFileTransferAsync()
+    {
+        await LoginAsync();
         
         DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
         (_, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(
@@ -104,7 +109,7 @@ public class UploadMultipartFileTransfer_Tests
     [Test]
     public async Task Upload_Multipart_File_Transfer_Works()
     {
-        string hashId = await InitiateMultipartFileTransfer();
+        string hashId = await InitiateMultipartFileTransferAsync();
         (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, _) = TestData.GetDefaultEncryptionStream();
         Either<UploadMultipartFileTransferError, Unit> uploadResult =
             await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 0, () => encryptionStreamOpener(null));
@@ -115,10 +120,11 @@ public class UploadMultipartFileTransfer_Tests
     [Test]
     public async Task Upload_Multipart_File_Transfer_Throws_When_Not_Authenticated()
     {
+        string hashId = await InitiateMultipartFileTransferAsync();
+        
         await _clientTokenRepository!.DeleteAuthenticationTokenAsync();
         await _clientTokenRepository!.DeleteRefreshTokenAsync();
         
-        string hashId = await InitiateMultipartFileTransfer();
         (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, _) = TestData.GetDefaultEncryptionStream();
         Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 0, () => encryptionStreamOpener(null)));
@@ -145,6 +151,7 @@ public class UploadMultipartFileTransfer_Tests
     [Test]
     public async Task Upload_Multipart_File_Transfer_Fails_When_Not_Initialized()
     {
+        await LoginAsync();
         const string uninitializedHashId = "test";
         (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, _) = TestData.GetDefaultEncryptionStream();
         Either<UploadMultipartFileTransferError, Unit> response = await _client!.FileTransfer.UploadMultipartFileTransferAsync(uninitializedHashId, 0,
@@ -160,7 +167,7 @@ public class UploadMultipartFileTransfer_Tests
     public async Task Upload_Multipart_File_Transfer_Fails_When_Aggregate_Becomes_Too_Large()
     {
         Random random = new Random();
-        string hashId = await InitiateMultipartFileTransfer();
+        string hashId = await InitiateMultipartFileTransferAsync();
 
         for (int i = 0; i < 9; i++)
         {
