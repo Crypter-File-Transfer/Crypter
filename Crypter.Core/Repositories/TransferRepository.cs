@@ -117,6 +117,11 @@ public class TransferRepository : ITransferRepository
         DirectoryInfo directoryInfo = new DirectoryInfo(directory);
         if (directoryInfo.Exists)
         {
+            foreach (FileInfo file in directoryInfo.EnumerateFiles())
+            {
+                _logger.LogError($"{file.Name}, {file.Length}");
+            }
+            
             return directoryInfo
                 .EnumerateFiles()
                 .Select(x => x.Length)

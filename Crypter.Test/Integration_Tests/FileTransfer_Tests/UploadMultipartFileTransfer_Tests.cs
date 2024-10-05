@@ -182,7 +182,7 @@ public class UploadMultipartFileTransfer_Tests
 
         {
             Either<UploadMultipartFileTransferError, Unit> response =
-                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 10, () => new MemoryStream(buffer));
+                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 9, () => new MemoryStream(buffer));
             Assert.That(response.IsLeft, Is.True);
 
             response.DoLeftOrNeither(
