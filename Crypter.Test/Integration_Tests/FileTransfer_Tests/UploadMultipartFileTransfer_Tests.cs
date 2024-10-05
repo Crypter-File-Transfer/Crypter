@@ -172,13 +172,13 @@ public class UploadMultipartFileTransfer_Tests
         for (int i = 0; i < 9; i++)
         {
             Either<UploadMultipartFileTransferError, Unit> response =
-                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 0, RandomByteStreamOpener());
+                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, i, RandomByteStreamOpener());
             Assert.That(response.IsRight, Is.True);
         }
 
         {
             Either<UploadMultipartFileTransferError, Unit> response =
-                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 0, RandomByteStreamOpener());
+                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 10, RandomByteStreamOpener());
             Assert.That(response.IsLeft, Is.True);
 
             response.DoLeftOrNeither(

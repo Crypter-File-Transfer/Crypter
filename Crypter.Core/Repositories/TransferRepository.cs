@@ -117,21 +117,13 @@ public class TransferRepository : ITransferRepository
         DirectoryInfo directoryInfo = new DirectoryInfo(directory);
         if (directoryInfo.Exists)
         {
-            foreach (var foo in directoryInfo.EnumerateFiles())
-            {
-                _logger.LogError($"Logging file attributes: {foo.Name}, {foo.Length}");
-            }
-            
-            long partSize = directoryInfo
+            return directoryInfo
                 .EnumerateFiles()
                 .Select(x => x.Length)
                 .DefaultIfEmpty(0)
                 .Sum(x => Convert.ToInt64(x / Math.Pow(10, 6)));
-            _logger.LogError($"Part size: {partSize}");
-            return partSize;
         }
 
-        _logger.LogError("Directory not found");
         return 0;
     }
     

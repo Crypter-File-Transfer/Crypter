@@ -42,7 +42,6 @@ using EasyMonads;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Unit = EasyMonads.Unit;
 
@@ -63,23 +62,19 @@ internal class SaveMultipartFileTransferCommandHandler
     private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
     private readonly TransferStorageSettings _transferStorageSettings;
-    private readonly ILogger<SaveMultipartFileTransferCommandHandler> _logger;
 
     public SaveMultipartFileTransferCommandHandler(
         DataContext dataContext,
         IHashIdService hashIdService,
         IPublisher publisher,
         ITransferRepository transferRepository,
-        IOptions<TransferStorageSettings> transferStorageSettings,
-        ILogger<SaveMultipartFileTransferCommandHandler> logger)
+        IOptions<TransferStorageSettings> transferStorageSettings)
     {
         _dataContext = dataContext;
         _hashIdService = hashIdService;
         _publisher = publisher;
         _transferRepository = transferRepository;
         _transferStorageSettings = transferStorageSettings.Value;
-
-        _logger = logger;
     }
 
     public async Task<Either<UploadMultipartFileTransferError, Unit>> Handle(SaveMultipartFileTransferCommand request,
@@ -144,8 +139,6 @@ internal class SaveMultipartFileTransferCommandHandler
         long maximumTransferSize = Convert.ToInt64(_transferStorageSettings.MaximumTransferSizeMB * Math.Pow(10, 6));
         long updatedTransferSize = _transferRepository.GetTransferPartsSize(itemId.Value, TransferItemType.File, TransferUserType.User)
             + request.CiphertextStream.Length;
-        
-        _logger.LogError(updatedTransferSize.ToString());
 
         if (updatedTransferSize > maximumTransferSize)
         {
