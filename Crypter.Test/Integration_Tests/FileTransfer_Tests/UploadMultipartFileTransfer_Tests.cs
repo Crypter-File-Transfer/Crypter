@@ -167,33 +167,27 @@ public class UploadMultipartFileTransfer_Tests
     public async Task Upload_Multipart_File_Transfer_Fails_When_Aggregate_Becomes_Too_Large()
     {
         Random random = new Random();
+        int bufferSize = Convert.ToInt32(Math.Pow(10, 5)) + 1;
+        byte[] buffer = new byte[bufferSize];
+        random.NextBytes(buffer);
+        
         string hashId = await InitiateMultipartFileTransferAsync();
-
+        
         for (int i = 0; i < 9; i++)
         {
             Either<UploadMultipartFileTransferError, Unit> response =
-                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, i, RandomByteStreamOpener());
+                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, i, () => new MemoryStream(buffer));
             Assert.That(response.IsRight, Is.True);
         }
 
         {
             Either<UploadMultipartFileTransferError, Unit> response =
-                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 10, RandomByteStreamOpener());
+                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 10, () => new MemoryStream(buffer));
             Assert.That(response.IsLeft, Is.True);
 
             response.DoLeftOrNeither(
                 left: x => Assert.That(x, Is.EqualTo(UploadMultipartFileTransferError.AggregateTooLarge)),
                 neither: Assert.Fail);
-        }
-        
-        return;
-
-        Func<Stream> RandomByteStreamOpener()
-        {
-            int bufferSize = Convert.ToInt32(Math.Pow(10, 5)) + 1;
-            byte[] buffer = new byte[bufferSize];
-            random.NextBytes(buffer);
-            return () => new MemoryStream(buffer);
         }
     }
 }
