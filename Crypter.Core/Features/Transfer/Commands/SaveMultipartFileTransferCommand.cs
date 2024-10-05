@@ -143,7 +143,6 @@ internal class SaveMultipartFileTransferCommandHandler
         long maximumTransferSize = Convert.ToInt64(_transferStorageSettings.MaximumTransferSizeMB * Math.Pow(10, 6));
         long updatedTransferSize = _transferRepository.GetTransferPartsSize(itemId.Value, TransferItemType.File, TransferUserType.User)
             + request.CiphertextStream.Length;
-        _logger.LogError(updatedTransferSize.ToString());
 
         if (updatedTransferSize > maximumTransferSize)
         {

@@ -117,16 +117,11 @@ public class TransferRepository : ITransferRepository
         DirectoryInfo directoryInfo = new DirectoryInfo(directory);
         if (directoryInfo.Exists)
         {
-            foreach (FileInfo file in directoryInfo.EnumerateFiles())
-            {
-                _logger.LogError($"{file.Name}, {file.Length}");
-            }
-            
             return directoryInfo
                 .EnumerateFiles()
                 .Select(x => x.Length)
                 .DefaultIfEmpty(0)
-                .Sum(x => Convert.ToInt64(x / Math.Pow(10, 6)));
+                .Sum();
         }
 
         return 0;
