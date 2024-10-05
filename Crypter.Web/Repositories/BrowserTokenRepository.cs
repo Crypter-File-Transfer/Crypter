@@ -75,4 +75,14 @@ public class BrowserTokenRepository : ITokenRepository
     {
         return _browserRepository.GetItemAsync<TokenObject>(DeviceStorageObjectType.RefreshToken);
     }
+
+    public Task<Unit> DeleteAuthenticationTokenAsync()
+    {
+        return _browserRepository.RemoveItemAsync(DeviceStorageObjectType.AuthenticationToken);
+    }
+    
+    public Task<Unit> DeleteRefreshTokenAsync()
+    {
+        return _browserRepository.RemoveItemAsync(DeviceStorageObjectType.RefreshToken);
+    }
 }

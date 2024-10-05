@@ -49,7 +49,7 @@ public class UploadTransferBase : ComponentBase
 
     [Inject] protected NavigationManager NavigationManager { get; init; } = null!;
 
-    [Inject] protected ClientTransferSettings UploadSettings { get; init; } = null!;
+    [Inject] protected ClientTransferSettings ClientTransferSettings { get; init; } = null!;
 
     [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; init; } = null!;
 

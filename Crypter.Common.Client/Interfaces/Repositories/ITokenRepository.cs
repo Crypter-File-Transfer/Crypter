@@ -40,4 +40,6 @@ public interface ITokenRepository
     Task<Maybe<TokenObject>> GetRefreshTokenAsync();
     Task<Unit> StoreAuthenticationTokenAsync(string token);
     Task<Unit> StoreRefreshTokenAsync(string token, TokenType tokenType);
+    Task<Unit> DeleteAuthenticationTokenAsync();
+    Task<Unit> DeleteRefreshTokenAsync();
 }
