@@ -33,7 +33,6 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Enums;
 using Crypter.Crypto.Providers.Default;
 using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -70,22 +69,7 @@ internal class InitiateMultipartFileTransfer_Tests
     [TestCase(true)]
     public async Task Initiate_Multipart_File_Transfer_Works(bool recipientDefined)
     {
-        {
-            RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-            Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
-        
-            LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-            Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
-
-            await loginResult.DoRightAsync(async loginResponse =>
-            {
-                await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-                await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-            });
-
-            Assert.That(registrationResult.IsRight, Is.True);
-            Assert.That(loginResult.IsRight, Is.True);
-        }
+        await TestMethods.LoginAsync(_client!, _clientTokenRepository!);
 
         Maybe<string> recipientUsername = recipientDefined
             ? "Samwise"
@@ -151,22 +135,7 @@ internal class InitiateMultipartFileTransfer_Tests
     [Test]
     public async Task Initiate_Multipart_File_Transfer_Fails_When_Recipient_Does_Not_Exist()
     {
-        {
-            RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-            Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
-        
-            LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-            Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
-
-            await loginResult.DoRightAsync(async loginResponse =>
-            {
-                await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-                await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-            });
-
-            Assert.That(registrationResult.IsRight, Is.True);
-            Assert.That(loginResult.IsRight, Is.True);
-        }
+        await TestMethods.LoginAsync(_client!, _clientTokenRepository!);
         
         DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
         (_, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(

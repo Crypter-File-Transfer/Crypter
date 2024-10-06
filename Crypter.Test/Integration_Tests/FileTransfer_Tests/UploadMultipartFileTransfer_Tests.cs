@@ -32,10 +32,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.Transfer;
-using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Enums;
 using Crypter.Crypto.Common.StreamEncryption;
-using Crypter.Crypto.Providers.Default;
 using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
@@ -43,7 +40,7 @@ using NUnit.Framework;
 namespace Crypter.Test.Integration_Tests.FileTransfer_Tests;
 
 [TestFixture]
-public class UploadMultipartFileTransfer_Tests
+public sealed class UploadMultipartFileTransfer_Tests
 {
     private WebApplicationFactory<Program>? _factory;
     private ICrypterApiClient? _client;
@@ -66,50 +63,11 @@ public class UploadMultipartFileTransfer_Tests
         }
         await AssemblySetup.ResetServerDataAsync();
     }
-
-    private async Task LoginAsync()
-    {
-        RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
-    
-        LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
-        Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
-
-        await loginResult.DoRightAsync(async loginResponse =>
-        {
-            await _clientTokenRepository!.StoreAuthenticationTokenAsync(loginResponse.AuthenticationToken);
-            await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
-        });
-
-        Assert.That(registrationResult.IsRight, Is.True);
-        Assert.That(loginResult.IsRight, Is.True);
-    }
-    
-    private async Task<string> InitiateMultipartFileTransferAsync()
-    {
-        await LoginAsync();
-        
-        DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
-        (_, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(
-            cryptoProvider.StreamEncryptionFactory.KeySize, TestData.DefaultPrivateKey, TestData.AlternatePublicKey,
-            TestData.DefaultKeyExchangeNonce);
-    
-        UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
-            TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
-            proof, TestData.DefaultTransferLifetimeHours);
-        Either<UploadTransferError, InitiateMultipartFileTransferResponse> initializationResult =
-            await _client!.FileTransfer.InitializeMultipartFileTransferAsync(Maybe<string>.None, request);
-
-        return initializationResult
-            .Select(x => x.HashId)
-            .DoLeftOrNeither(Assert.Fail)
-            .RightOrDefault(string.Empty);
-    }
     
     [Test]
     public async Task Upload_Multipart_File_Transfer_Works()
     {
-        string hashId = await InitiateMultipartFileTransferAsync();
+        string hashId = await TestMethods.InitiateMultipartFileTransferAsync(_client!, _clientTokenRepository!);
         (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, _) = TestData.GetDefaultEncryptionStream();
         Either<UploadMultipartFileTransferError, Unit> uploadResult =
             await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 0, () => encryptionStreamOpener(null));
@@ -120,7 +78,7 @@ public class UploadMultipartFileTransfer_Tests
     [Test]
     public async Task Upload_Multipart_File_Transfer_Throws_When_Not_Authenticated()
     {
-        string hashId = await InitiateMultipartFileTransferAsync();
+        string hashId = await TestMethods.InitiateMultipartFileTransferAsync(_client!, _clientTokenRepository!);
         
         await _clientTokenRepository!.DeleteAuthenticationTokenAsync();
         await _clientTokenRepository!.DeleteRefreshTokenAsync();
@@ -151,7 +109,7 @@ public class UploadMultipartFileTransfer_Tests
     [Test]
     public async Task Upload_Multipart_File_Transfer_Fails_When_Not_Initialized()
     {
-        await LoginAsync();
+        await TestMethods.LoginAsync(_client!, _clientTokenRepository!);
         const string uninitializedHashId = "test";
         (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, _) = TestData.GetDefaultEncryptionStream();
         Either<UploadMultipartFileTransferError, Unit> response = await _client!.FileTransfer.UploadMultipartFileTransferAsync(uninitializedHashId, 0,
@@ -171,23 +129,25 @@ public class UploadMultipartFileTransfer_Tests
         byte[] buffer = new byte[bufferSize];
         random.NextBytes(buffer);
         
-        string hashId = await InitiateMultipartFileTransferAsync();
+        string hashId = await TestMethods.InitiateMultipartFileTransferAsync(_client!, _clientTokenRepository!);
         
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < 10; i++)
         {
             Either<UploadMultipartFileTransferError, Unit> response =
                 await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, i, () => new MemoryStream(buffer));
-            Assert.That(response.IsRight, Is.True);
-        }
 
-        {
-            Either<UploadMultipartFileTransferError, Unit> response =
-                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 9, () => new MemoryStream(buffer));
-            Assert.That(response.IsLeft, Is.True);
-
-            response.DoLeftOrNeither(
-                left: x => Assert.That(x, Is.EqualTo(UploadMultipartFileTransferError.AggregateTooLarge)),
-                neither: Assert.Fail);
+            if (i < 9)
+            {
+                Assert.That(response.IsRight, Is.True);
+            }
+            else
+            {
+                // The final request should exceed the maximum, aggregate file size
+                Assert.That(response.IsLeft, Is.True);
+                response.DoLeftOrNeither(
+                    left: x => Assert.That(x, Is.EqualTo(UploadMultipartFileTransferError.AggregateTooLarge)),
+                    neither: Assert.Fail);
+            }
         }
     }
 }
