@@ -166,4 +166,22 @@ internal class DownloadFileTransfer_Tests
             })
             .DoLeftOrNeitherAsync(Assert.Fail);
     }
+
+    [Test]
+    public async Task Download_Multipart_File_Transfer_Works()
+    {
+        string hashId = await TestMethods.InitiateMultipartFileTransferAsync(_client!, _clientTokenRepository!);
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] proof) = TestData.GetDefaultEncryptionStream();
+        
+        await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 0, () => encryptionStreamOpener(null));
+        await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 1, () => encryptionStreamOpener(null));
+        await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 2, () => encryptionStreamOpener(null));
+        await _client!.FileTransfer.FinalizeMultipartFileTransferAsync(hashId);
+        
+        Either<DownloadTransferCiphertextError, StreamDownloadResponse> downloadResult =
+            await _client!.FileTransfer.GetUserFileCiphertextAsync(hashId, proof, false);
+
+        Assert.That(downloadResult.IsRight, Is.True);
+        downloadResult.DoRight(x => { Assert.DoesNotThrow(() => x.Stream.ReadByte()); });
+    }
 }

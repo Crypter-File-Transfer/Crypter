@@ -53,9 +53,9 @@ public partial class UploadFileTransfer : IDisposable
 
     protected override void OnInitialized()
     {
-        _maxBufferSizeMB = UploadSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
-        _maxStreamSizeMB = UploadSettings.MaximumUploadStreamSizeMB * Convert.ToInt64(Math.Pow(10, 6));
-        _maxMultipartSizeMB = UploadSettings.MaximumMultipartUploadSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _maxBufferSizeMB = ClientTransferSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _maxStreamSizeMB = ClientTransferSettings.MaximumUploadStreamSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _maxMultipartSizeMB = ClientTransferSettings.MaximumMultipartUploadSizeMB * Convert.ToInt64(Math.Pow(10, 6));
     }
 
     private void HandleDragEnter()
@@ -88,13 +88,13 @@ public partial class UploadFileTransfer : IDisposable
         switch (TransmissionType)
         {
             case TransferTransmissionType.Buffer when file.Size > _maxBufferSizeMB:
-                ErrorMessage = $"The max file size is {UploadSettings.MaximumUploadBufferSizeMB} MB. Login for file sizes up to {UploadSettings.MaximumMultipartUploadSizeMB} MB.";
+                ErrorMessage = $"The max file size is {ClientTransferSettings.MaximumUploadBufferSizeMB} MB. Login for file sizes up to {ClientTransferSettings.MaximumMultipartUploadSizeMB} MB.";
                 break;
             case TransferTransmissionType.Stream when file.Size > _maxStreamSizeMB:
-                ErrorMessage = $"The max file size is {UploadSettings.MaximumUploadStreamSizeMB} MB.";
+                ErrorMessage = $"The max file size is {ClientTransferSettings.MaximumUploadStreamSizeMB} MB.";
                 break;
             case TransferTransmissionType.Multipart when file.Size > _maxMultipartSizeMB:
-                ErrorMessage = $"The max file size is {UploadSettings.MaximumMultipartUploadSizeMB} MB.";
+                ErrorMessage = $"The max file size is {ClientTransferSettings.MaximumMultipartUploadSizeMB} MB.";
                 break;
             default:
                 _selectedFile = file;

@@ -34,6 +34,7 @@ using Crypter.Core.Settings;
 using EasyMonads;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Crypter.Core.Repositories;
@@ -75,10 +76,12 @@ public class TransferRepository : ITransferRepository
 {
     private const string PartialDirectoryName = "partials";
     private readonly TransferStorageSettings _transferStorageSettings;
+    private readonly ILogger<TransferRepository> _logger;
 
-    public TransferRepository(IOptions<TransferStorageSettings> transferStorageSettings)
+    public TransferRepository(IOptions<TransferStorageSettings> transferStorageSettings, ILogger<TransferRepository> logger)
     {
         _transferStorageSettings = transferStorageSettings.Value;
+        _logger = logger;
     }
 
     public bool TransferExists(Guid id, TransferItemType itemType, TransferUserType userType)
@@ -118,7 +121,7 @@ public class TransferRepository : ITransferRepository
                 .EnumerateFiles()
                 .Select(x => x.Length)
                 .DefaultIfEmpty(0)
-                .Sum(x => Convert.ToInt64(x / Math.Pow(10, 6)));
+                .Sum();
         }
 
         return 0;
@@ -166,12 +169,13 @@ public class TransferRepository : ITransferRepository
         }
         catch (OperationCanceledException)
         {
+            _logger.LogError("Failed to save transfer part. Operation canceled.");
             DeleteTransferParts(id, itemType, userType);
             throw;
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            // todo - log something
+            _logger.LogError(exception, "Failed to save transfer part. Unknown exception.");
             DeleteTransferParts(id, itemType, userType);
             return false;
         }

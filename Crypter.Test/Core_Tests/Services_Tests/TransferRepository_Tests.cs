@@ -31,6 +31,7 @@ using Crypter.Common.Enums;
 using Crypter.Core.Repositories;
 using Crypter.Core.Settings;
 using EasyMonads;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
@@ -56,7 +57,9 @@ internal class TransferRepository_Tests
             MaximumTransferSizeMB = 1
         };
         IOptions<TransferStorageSettings> options = Options.Create(settings);
-        _sut = new TransferRepository(options);
+        LoggerFactory loggerFactory = new LoggerFactory();
+        Logger<TransferRepository> logger = new Logger<TransferRepository>(loggerFactory);
+        _sut = new TransferRepository(options, logger);
     }
 
     [TearDown]
@@ -69,7 +72,7 @@ internal class TransferRepository_Tests
     [TestCase(TransferUserType.User)]
     public async Task Files_Can_Be_Saved_And_Read_Async(TransferUserType userType)
     {
-        byte[] buffer = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+        byte[] buffer = [0x01, 0x02, 0x03, 0x04];
         Guid itemGuid = Guid.NewGuid();
         MemoryStream memoryStream = new MemoryStream(buffer);
         bool saveSuccess = await _sut!.SaveTransferAsync(itemGuid, TransferItemType.File, userType, memoryStream);
