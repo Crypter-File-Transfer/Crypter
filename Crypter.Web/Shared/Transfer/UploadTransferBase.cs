@@ -26,12 +26,14 @@
 
 using System;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Client.Transfer.Handlers.Base;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
+using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
@@ -47,9 +49,11 @@ public class UploadTransferBase : ComponentBase
 
     [Inject] protected NavigationManager NavigationManager { get; init; } = null!;
 
-    [Inject] protected ClientTransferSettings UploadSettings { get; init; } = null!;
+    [Inject] protected ClientTransferSettings ClientTransferSettings { get; init; } = null!;
 
     [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; init; } = null!;
+
+    [Inject] protected IFileSaverService FileSaverService { get; init; } = null!;
 
     [Parameter] public Maybe<string> RecipientUsername { get; set; }
 
@@ -63,9 +67,11 @@ public class UploadTransferBase : ComponentBase
 
     [CascadingParameter] public BasicModal ModalForUserRecipient { get; set; } = null!;
 
+    protected TransferTransmissionType TransmissionType = TransferTransmissionType.Buffer;
     protected bool EncryptionInProgress = false;
     protected string ErrorMessage = string.Empty;
     protected string UploadStatusMessage = string.Empty;
+    protected double? UploadStatusPercent = null;
 
     private const string UnknownError = "An error occurred.";
     private const string ServerOutOfSpace = "Server is out of space. Try again later.";

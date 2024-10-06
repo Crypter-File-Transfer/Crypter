@@ -92,7 +92,7 @@ public static class EmailServiceTemplateExtensions
     internal static async Task<bool> SendApplicationAnalyticsReportEmailAsync(this IEmailService emailService, EmailAddress emailAddress, ApplicationAnalyticsReport reportData)
     {
         string message = $"Period: {reportData.Begin} to {reportData.End}\n" +
-                         $"Uploads: {reportData.TransferAnalytics.Uploads}\n" +
+                         $"Uploads: {reportData.TransferAnalytics.SuccessfulUploads}\n" +
                          $"Unique previews: {reportData.TransferAnalytics.UniquePreviews}\n" +
                          $"Unique downloads: {reportData.TransferAnalytics.UniqueDownloads}\n" +
                          $"New users: {reportData.UserAnalytics.Registrations}\n" +

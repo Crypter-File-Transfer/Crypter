@@ -111,8 +111,8 @@ internal static class TestData
     internal const string DefaultTransferMessageSubject = "hello there";
     internal static byte[] DefaultTransferBytes => "unit testing is great"u8.ToArray();
     internal const int DefaultTransferLifetimeHours = 24;
-
-    internal static (Func<EncryptionStream> encryptionStreamOpener, byte[] proof) GetDefaultEncryptionStream()
+    
+    internal static (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] proof) GetDefaultEncryptionStream()
     {
         DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
         (byte[] encryptionKey, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(
@@ -123,11 +123,10 @@ internal static class TestData
 
         MemoryStream PlaintextStreamOpener() => new MemoryStream(DefaultTransferBytes);
 
-        EncryptionStream EncryptionStreamOpener()
+        EncryptionStream EncryptionStreamOpener(Action<double>? updateCallback = null)
         {
-            MemoryStream stream = PlaintextStreamOpener();
-            return new EncryptionStream(stream, stream.Length, encryptionKey, cryptoProvider.StreamEncryptionFactory,
-                128, 64);
+            return new EncryptionStream(PlaintextStreamOpener, DefaultTransferBytes.Length, encryptionKey, cryptoProvider.StreamEncryptionFactory,
+                128, 64, updateCallback);
         }
     }
 

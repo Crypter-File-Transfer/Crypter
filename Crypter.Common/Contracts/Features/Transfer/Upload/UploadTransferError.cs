@@ -31,5 +31,6 @@ public enum UploadTransferError
     UnknownError,
     InvalidRequestedLifetimeHours,
     OutOfSpace,
-    RecipientNotFound
+    RecipientNotFound,
+    TooLarge
 }

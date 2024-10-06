@@ -97,6 +97,7 @@ internal class AnonymousFilePreviewQueryHandler
     {
         FileTransferPreviewResponse? filePreview = await _dataContext.AnonymousFileTransfers
             .Where(x => x.Id == itemId)
+            .Where(x => !x.Parts)
             .Select(x => new FileTransferPreviewResponse(
                 x.FileName,
                 x.ContentType,

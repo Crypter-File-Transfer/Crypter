@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts;
@@ -57,7 +56,7 @@ public class ExceptionHandlerMiddleware
             ErrorResponseItem errorItem =
                 new ErrorResponseItem((int)InfrastructureErrorCode.InvalidEnumValueErrorCode, ex.Message);
             ErrorResponse errorResponse =
-                new ErrorResponse((int)HttpStatusCode.BadRequest, new List<ErrorResponseItem> { errorItem });
+                new ErrorResponse((int)HttpStatusCode.BadRequest, [errorItem]);
             await response.WriteAsJsonAsync(errorResponse);
         }
         catch (TaskCanceledException)

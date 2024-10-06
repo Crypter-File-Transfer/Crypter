@@ -68,4 +68,16 @@ public class MemoryTokenRepository : ITokenRepository
         _repository.Add(RefreshTokenLiteral, tokenObject);
         return Unit.Default.AsTask();
     }
+
+    public Task<Unit> DeleteAuthenticationTokenAsync()
+    {
+        _repository.Remove(AuthTokenLiteral);
+        return Unit.Default.AsTask();
+    }
+
+    public Task<Unit> DeleteRefreshTokenAsync()
+    {
+        _repository.Remove(RefreshTokenLiteral);
+        return Unit.Default.AsTask();
+    }
 }

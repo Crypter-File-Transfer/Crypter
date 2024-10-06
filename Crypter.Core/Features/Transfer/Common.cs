@@ -6,9 +6,11 @@ using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Core.Features.Metrics.Queries;
 using Crypter.Core.LinqExpressions;
+using Crypter.Core.Services;
 using Crypter.Core.Settings;
 using Crypter.DataAccess;
 using EasyMonads;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.Transfer;
@@ -39,7 +41,7 @@ internal static class Common
         Maybe<string> recipientUsername,
         TransferItemType itemType,
         int requestedTransferLifetimeHours,
-        long ciphertextStreamLength)
+        long? ciphertextStreamLength)
     {
         Maybe<Guid> recipientId = await recipientUsername
             .BindAsync(async x =>
@@ -50,13 +52,16 @@ internal static class Common
             return UploadTransferError.RecipientNotFound;
         }
 
-        bool sufficientDiskSpace =
-            await HasSpaceForTransferAsync(dataContext, transferStorageSettings, ciphertextStreamLength);
-        if (!sufficientDiskSpace)
+        if (ciphertextStreamLength.HasValue)
         {
-            return UploadTransferError.OutOfSpace;
+            bool sufficientDiskSpace =
+                await HasSpaceForTransferAsync(dataContext, transferStorageSettings, ciphertextStreamLength.Value);
+            if (!sufficientDiskSpace)
+            {
+                return UploadTransferError.OutOfSpace;
+            }
         }
-
+        
         if (requestedTransferLifetimeHours is > MaxTransferLifetimeHours or < MinTransferLifetimeHours)
         {
             return UploadTransferError.InvalidRequestedLifetimeHours;
@@ -86,6 +91,30 @@ internal static class Common
         return TransferUserType.Anonymous;
     }
 
+    internal static async Task<Unit> QueueTransferNotificationAsync(
+        DataContext dataContext,
+        IBackgroundJobClient backgroundJobClient,
+        IHangfireBackgroundService hangfireBackgroundService,
+        Guid itemId,
+        TransferItemType itemType,
+        Guid recipientId)
+    {
+        bool userExpectsNotification = await dataContext.Users
+            .Where(x => x.Id == recipientId)
+            .Where(x => x.NotificationSetting!.EnableTransferNotifications
+                        && x.EmailVerified
+                        && x.NotificationSetting.EmailNotifications)
+            .AnyAsync();
+
+        if (userExpectsNotification)
+        {
+            backgroundJobClient.Enqueue(() =>
+                hangfireBackgroundService.SendTransferNotificationAsync(itemId, itemType));
+        }
+
+        return Unit.Default;
+    }
+    
     /// <summary>
     /// Query for a transfer recipient's user id.
     /// </summary>

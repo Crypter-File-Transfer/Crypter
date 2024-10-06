@@ -54,8 +54,6 @@ internal class GetAnonymousMessageCiphertextCommandHandler
     private readonly IHashIdService _hashIdService;
     private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
-
-    private const bool DeleteFileUponReadCompletion = true;
     
     public GetAnonymousMessageCiphertextCommandHandler(
         ICryptoProvider cryptoProvider,
@@ -84,7 +82,7 @@ internal class GetAnonymousMessageCiphertextCommandHandler
         return await GetFileStreamAsync(itemId.Value, request.Proof)
             .DoRightAsync(async _ =>
             {
-                SuccessfulTransferDownloadEvent downloadEvent = new SuccessfulTransferDownloadEvent(itemId.Value, TransferItemType.Message, TransferUserType.Anonymous, null, !DeleteFileUponReadCompletion, DateTimeOffset.UtcNow);
+                SuccessfulTransferDownloadEvent downloadEvent = new SuccessfulTransferDownloadEvent(itemId.Value, TransferItemType.Message, TransferUserType.Anonymous, null, false, DateTimeOffset.UtcNow);
                 await _publisher.Publish(downloadEvent, CancellationToken.None);
             })
             .DoLeftOrNeitherAsync(
@@ -124,7 +122,7 @@ internal class GetAnonymousMessageCiphertextCommandHandler
         }
         
         return _transferRepository
-            .GetTransfer(itemId, TransferItemType.Message, TransferUserType.Anonymous, DeleteFileUponReadCompletion)
+            .GetTransfer(itemId, TransferItemType.Message, TransferUserType.Anonymous, true)
             .ToEither(DownloadTransferCiphertextError.NotFound);
     }
 }

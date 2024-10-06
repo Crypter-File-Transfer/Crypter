@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Threading;
 using BlazorSodium.Extensions;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.HttpClients;
@@ -43,6 +44,7 @@ using Crypter.Crypto.Providers.Browser;
 using Crypter.Web;
 using Crypter.Web.Models.Settings;
 using Crypter.Web.Repositories;
+using Crypter.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -71,10 +73,11 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton(sp =>
 {
     IConfiguration config = sp.GetRequiredService<IConfiguration>();
-    return config.GetSection("TransferSettings").Get<ClientTransferSettings>()
-        ?? throw new ConfigurationException("Failed to load TransferSettings.");
+    return config.GetSection("ClientTransferSettings").Get<ClientTransferSettings>()
+        ?? throw new ConfigurationException("Failed to load ClientTransferSettings.");
 });
 
+builder.Services.AddTransient<BrowserHttpMessageHandler>();
 builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =>
 {
     ClientApiSettings config = builder.Services
@@ -82,7 +85,8 @@ builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =
         .GetRequiredService<ClientApiSettings>();
 
     httpClient.BaseAddress = new Uri(config.ApiBaseUrl);
-});
+    httpClient.Timeout = Timeout.InfiniteTimeSpan;
+}).AddHttpMessageHandler<BrowserHttpMessageHandler>();
 
 builder.Services
     .AddSingleton<IDeviceRepository<BrowserStorageLocation>, BrowserRepository>()
@@ -104,7 +108,9 @@ builder.Services
 if (OperatingSystem.IsBrowser())
 {
     builder.Services.AddBlazorSodium();
-    builder.Services.AddSingleton<ICryptoProvider, BrowserCryptoProvider>();
+    builder.Services
+        .AddSingleton<ICryptoProvider, BrowserCryptoProvider>()
+        .AddSingleton<IFileSaverService, FileSaverService>();
 }
 
 WebAssemblyHost host = builder.Build();

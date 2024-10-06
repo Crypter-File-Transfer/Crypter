@@ -81,7 +81,7 @@ internal class GetSentFileTransfers_Tests
             await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadFileTransferRequest uploadFileRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,

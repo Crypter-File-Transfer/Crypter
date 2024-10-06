@@ -87,7 +87,7 @@ internal class GetUserFileCiphertextCommandHandler
         return await GetFileStreamAsync(itemId.Value, nullableRequesterUserId, request.Proof)
             .DoRightAsync(async _ =>
             {
-                SuccessfulTransferDownloadEvent downloadEvent = new SuccessfulTransferDownloadEvent(itemId.Value, TransferItemType.File, TransferUserType.User, nullableRequesterUserId, !_transferHasRecipient, DateTimeOffset.UtcNow);
+                SuccessfulTransferDownloadEvent downloadEvent = new SuccessfulTransferDownloadEvent(itemId.Value, TransferItemType.File, TransferUserType.User, nullableRequesterUserId, _transferHasRecipient, DateTimeOffset.UtcNow);
                 await _publisher.Publish(downloadEvent, CancellationToken.None);
             })
             .DoLeftOrNeitherAsync(
@@ -108,6 +108,7 @@ internal class GetUserFileCiphertextCommandHandler
         var databaseData = await _dataContext.UserFileTransfers
             .Where(x => x.Id == itemId)
             .Where(x => x.RecipientId == null || x.RecipientId == requesterId)
+            .Where(x => !x.Parts)
             .Select(x => new { x.RecipientId, x.Proof })
             .FirstOrDefaultAsync(CancellationToken.None);
 
@@ -127,7 +128,7 @@ internal class GetUserFileCiphertextCommandHandler
             return DownloadTransferCiphertextError.InvalidRecipientProof;
         }
 
-        _transferHasRecipient = !databaseData.RecipientId.HasValue;
+        _transferHasRecipient = databaseData.RecipientId.HasValue;
         return _transferRepository
             .GetTransfer(itemId, TransferItemType.File, TransferUserType.User, !_transferHasRecipient)
             .ToEither(DownloadTransferCiphertextError.NotFound);

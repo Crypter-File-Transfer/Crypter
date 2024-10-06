@@ -6,24 +6,52 @@ on:
 
 jobs:
   build-and-test:
+    runs-on: ubuntu-latest
 
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d #v3
+        with:
+          version: 8
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore Crypter.Test
+
+      - name: Build
+        run: dotnet build Crypter.Test --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test Crypter.Test --configuration Release --no-build --verbosity normal
+
+  build-and-test-web:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      
+    - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d #v3
+      with:
+        version: 8
+      
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 9.0.x
 
     - name: Install wasm-tools
       run: dotnet workload install wasm-tools
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore Crypter.Test.Web
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build Crypter.Test.Web --configuration Release --no-restore
 
     - name: Test
-      run: dotnet test --configuration Release --no-build --verbosity normal
+      run: dotnet test Crypter.Test.Web --configuration Release --no-build --verbosity normal

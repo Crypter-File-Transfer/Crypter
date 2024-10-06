@@ -100,8 +100,7 @@ public class DownloadHandler : IUserDownloadHandler
 
     protected byte[] Decrypt(byte[] key, Stream ciphertext, long streamSize)
     {
-        using DecryptionStream decryptionStream =
-            new DecryptionStream(ciphertext, streamSize, key, CryptoProvider.StreamEncryptionFactory);
+        using DecryptionStream decryptionStream = new DecryptionStream(ciphertext, streamSize, key, CryptoProvider.StreamEncryptionFactory);
         byte[] plaintextBuffer = new byte[checked((int)streamSize)];
         int plaintextPosition = 0;
         int bytesRead;

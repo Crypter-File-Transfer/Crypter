@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -50,9 +50,11 @@ public class UserFileTransferEntity : IUserTransfer, IFileTransfer
     // IFileTransfer
     public string FileName { get; set; }
     public string ContentType { get; set; }
+    public bool Parts { get; set; }
 
     public UserFileTransferEntity(Guid id, long size, byte[]? publicKey, byte[] keyExchangeNonce, byte[] proof,
-        DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType)
+        DateTime created, DateTime expiration, Guid? senderId, Guid? recipientId, string fileName, string contentType,
+        bool parts)
     {
         Id = id;
         Size = size;
@@ -65,6 +67,7 @@ public class UserFileTransferEntity : IUserTransfer, IFileTransfer
         RecipientId = recipientId;
         FileName = fileName;
         ContentType = contentType;
+        Parts = parts;
     }
 }
 
@@ -93,5 +96,9 @@ public class UserFileTransferEntityConfiguration : IEntityTypeConfiguration<User
 
         builder.Property(x => x.ContentType)
             .IsRequired();
+
+        builder.Property(x => x.Parts)
+            .IsRequired()
+            .HasDefaultValue(false);
     }
 }

@@ -2,11 +2,11 @@
 
 ## Licensing
 
-Crypter is open-source software with a dual license.
+Crypter is open-source software with a dual license, with one exception.
 
 ### Personal and Non-Commercial Use
 
-For free, non-commercial use, Crypter is licensed under the AGPLv3.
+The entirety of Crypter is licensed under the AGPLv3 for free and non-commercial use.
 
 A copy of the AGLPv3 is provided in [LICENSE.md](LICENSE.md).
 
@@ -15,6 +15,12 @@ A copy of the AGLPv3 is provided in [LICENSE.md](LICENSE.md).
 Contact the current copyright holder in order to purchase a commercial license.
 
 Email: <jackedwards@protonmail.com>
+
+### Exception
+
+A portion of the Crypter.Web source code was originally authored by [ProtonMail](https://github.com/ProtonMail) and licensed under [GPLv3](https://github.com/ProtonMail/WebClients/blob/main/LICENSE).
+Therefore, the requirement to obtain a commercial license does not apply to the Crypter.Web project. 
+Crypter.Web is only licensed under the AGPLv3 license.
 
 ## Getting Started
 

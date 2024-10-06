@@ -1,0 +1,125 @@
+﻿/*
+ * Copyright (C) 2024 Crypter File Transfer
+ *
+ * This file is part of the Crypter file transfer project.
+ *
+ * Crypter is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The Crypter source code is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * You can be released from the requirements of the aforementioned license
+ * by purchasing a commercial license. Buying such a license is mandatory
+ * as soon as you develop commercial activities involving the Crypter source
+ * code without disclosing the source code of your own applications.
+ *
+ * Contact the current copyright holder to discuss commercial license options.
+ */
+
+using System.Threading.Tasks;
+using Crypter.Common.Client.Enums;
+using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Models;
+using Crypter.Common.Primitives;
+using Crypter.Web.Repositories;
+using EasyMonads;
+using Moq;
+using NUnit.Framework;
+
+namespace Crypter.Test.Web;
+
+[TestFixture]
+public class BrowserUserSessionRepository_Tests
+{
+    private Mock<IDeviceRepository<BrowserStorageLocation>>? _browserStorageMock;
+
+    [SetUp]
+    public void Setup()
+    {
+        _browserStorageMock = new Mock<IDeviceRepository<BrowserStorageLocation>>();
+    }
+
+    [Test]
+    public async Task Repository_Stores_User_Session_In_Session_Storage()
+    {
+        _browserStorageMock!
+            .Setup(x => x.SetItemAsync(
+                DeviceStorageObjectType.UserSession,
+                It.IsAny<UserSession>(),
+                BrowserStorageLocation.SessionStorage))
+            .ReturnsAsync((DeviceStorageObjectType _, UserSession _, BrowserStorageLocation _) => Unit.Default);
+
+        BrowserUserSessionRepository sut = new BrowserUserSessionRepository(_browserStorageMock!.Object);
+
+        UserSession session = new UserSession(Username.From("foo"), false, UserSession.LATEST_SCHEMA);
+        await sut.StoreUserSessionAsync(session, false);
+
+        _browserStorageMock!.Verify(
+            x => x.SetItemAsync(DeviceStorageObjectType.UserSession, It.IsAny<UserSession>(),
+                BrowserStorageLocation.SessionStorage), Times.Once);
+    }
+
+    [Test]
+    public async Task Repository_Stores_User_Session_In_Local_Storage()
+    {
+        _browserStorageMock!
+            .Setup(x => x.SetItemAsync(
+                DeviceStorageObjectType.UserSession,
+                It.IsAny<UserSession>(),
+                BrowserStorageLocation.LocalStorage))
+            .ReturnsAsync((DeviceStorageObjectType _, UserSession _, BrowserStorageLocation _) => Unit.Default);
+
+        BrowserUserSessionRepository sut = new BrowserUserSessionRepository(_browserStorageMock!.Object);
+
+        UserSession session = new UserSession(Username.From("foo"), true, UserSession.LATEST_SCHEMA);
+        await sut.StoreUserSessionAsync(session, true);
+
+        _browserStorageMock!.Verify(
+            x => x.SetItemAsync(DeviceStorageObjectType.UserSession, It.IsAny<UserSession>(),
+                BrowserStorageLocation.LocalStorage), Times.Once);
+    }
+
+    [Test]
+    public async Task Repository_Gets_Some_User_Session()
+    {
+        _browserStorageMock!
+            .Setup(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession))
+            .ReturnsAsync((DeviceStorageObjectType _) =>
+                new UserSession("foo", true, UserSession.LATEST_SCHEMA));
+
+        BrowserUserSessionRepository sut = new BrowserUserSessionRepository(_browserStorageMock!.Object);
+
+        Maybe<UserSession> fetchedSession = await sut.GetUserSessionAsync();
+        fetchedSession.IfNone(Assert.Fail);
+        fetchedSession.IfSome(x =>
+        {
+            Assert.That(x.Username, Is.EqualTo("foo"));
+            Assert.That(x.RememberUser, Is.True);
+        });
+
+        _browserStorageMock!.Verify(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession), Times.Once);
+    }
+
+    [Test]
+    public async Task Repository_Gets_None_User_Session()
+    {
+        _browserStorageMock!
+            .Setup(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession))
+            .ReturnsAsync((DeviceStorageObjectType _) => Maybe<UserSession>.None);
+
+        BrowserUserSessionRepository sut = new BrowserUserSessionRepository(_browserStorageMock!.Object);
+
+        Maybe<UserSession> fetchedSession = await sut.GetUserSessionAsync();
+        Assert.That(fetchedSession.IsNone, Is.True);
+
+        _browserStorageMock!.Verify(x => x.GetItemAsync<UserSession>(DeviceStorageObjectType.UserSession), Times.Once);
+    }
+}

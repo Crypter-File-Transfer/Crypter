@@ -14,6 +14,34 @@
 		reverse_proxy {$CRYPTER_API_BASE}
 	}
 
+    handle /serviceWorker {
+        root * /srv
+        rewrite * js/dist/serviceWorker/serviceWorker.js
+    
+        file_server {
+            precompressed br gzip
+        }
+        
+        header {
+            Service-Worker-Allowed "/"
+            Service-Worker "script"
+        }
+    }
+    
+    handle /serviceWorker.noOp {
+        root * /srv
+        rewrite * js/dist/serviceWorker.noOp/serviceWorker.noOp.js
+    
+        file_server {
+            precompressed br gzip
+        }
+        
+        header {
+            Service-Worker-Allowed "/"
+            Service-Worker "script"
+        }
+    }
+
 	handle {
 		root * /srv
 		try_files {path} /index.html

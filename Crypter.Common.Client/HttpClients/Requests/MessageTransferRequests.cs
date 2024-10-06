@@ -54,7 +54,7 @@ public class MessageTransferRequests : IMessageTransferRequests
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadMessageTransferAsync(
         Maybe<string> recipientUsername, UploadMessageTransferRequest uploadRequest,
-        Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication)
+        Func<Action<double>?, EncryptionStream> encryptionStreamOpener, bool withAuthentication)
     {
         string url = recipientUsername.Match(
             () => "api/message/transfer",
@@ -64,7 +64,10 @@ public class MessageTransferRequests : IMessageTransferRequests
             ? _crypterAuthenticatedHttpClient
             : _crypterHttpClient;
 
-        HttpRequestMessage requestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
+        return await service.SendAsync<UploadTransferResponse>(RequestFactory)
+            .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
+
+        HttpRequestMessage RequestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
         {
             Content = new MultipartFormDataContent
             {
@@ -72,23 +75,20 @@ public class MessageTransferRequests : IMessageTransferRequests
                     new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"),
                     "Data"
                 },
-                { new StreamContent(encryptionStreamOpener()), "Ciphertext", "Ciphertext" }
+                { new StreamContent(encryptionStreamOpener(null)), "Ciphertext", "Ciphertext" }
             }
         };
-
-        return await service.SendAsync<UploadTransferResponse>(requestFactory)
-            .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
     }
 
     public Task<Maybe<List<UserReceivedMessageDTO>>> GetReceivedMessagesAsync()
     {
-        string url = "api/message/transfer/received";
+        const string url = "api/message/transfer/received";
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserReceivedMessageDTO>>(url);
     }
 
     public Task<Maybe<List<UserSentMessageDTO>>> GetSentMessagesAsync()
     {
-        string url = "api/message/transfer/sent";
+        const string url = "api/message/transfer/sent";
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserSentMessageDTO>>(url);
     }
 

@@ -25,9 +25,12 @@
  */
 
 using System;
+using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Transfer;
+using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Enums;
+using Crypter.Web.Services;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 using Microsoft.IdentityModel.Tokens;
@@ -44,11 +47,16 @@ public class DownloadTransferBase : ComponentBase
     [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; init; } = null!;
 
     [Inject] protected ICryptoProvider CryptoProvider { get; init; } = null!;
+    
+    [Inject] protected ClientTransferSettings TransferSettings { get; init; } = null!;
+
+    [Inject] protected IFileSaverService FileSaverService { get; init; } = null!;
 
     [Parameter] public required string TransferHashId { get; set; }
 
     [Parameter] public TransferUserType UserType { get; set; }
 
+    protected TransferTransmissionType TransmissionType = TransferTransmissionType.Buffer;
     protected bool FinishedLoading = false;
     protected bool ItemFound = false;
     protected bool DecryptionInProgress = false;

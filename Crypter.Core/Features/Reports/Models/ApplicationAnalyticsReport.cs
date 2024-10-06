@@ -35,7 +35,8 @@ internal sealed record ApplicationAnalyticsReport(
     UserAnalytics UserAnalytics);
 
 internal sealed record TransferAnalytics(
-    int Uploads,
+    int SuccessfulUploads,
+    int FailedUploads,
     int UniquePreviews,
     int UniqueDownloads);
 

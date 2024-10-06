@@ -1,0 +1,24 @@
+{
+  "name": "crypter",
+  "private": true,
+  "version": "1.0.0",
+  "author": "Jack Edwards",
+  "license": "AGPL-3.0",
+  "type": "module",
+  "scripts": {
+    "buildFunctions": "vite build --config vite.functions.config.js",
+    "buildFileSaver": "vite build --config vite.fileSaver.config.js",
+    "buildServiceWorker": "vite build --config vite.serviceWorker.config.js",
+    "buildServiceWorkerNoOp": "vite build --config vite.serviceWorker.noOp.config.js"
+  },
+  "devDependencies": {
+    "path": "^0.12.7",
+    "vite": "^4.4.9"
+  },
+  "dependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/ua-parser-js": "^0.7.39",
+    "file-saver": "^2.0.5",
+    "ua-parser-js": "^1.0.37"
+  }
+}

@@ -34,7 +34,7 @@ using MediatR;
 
 namespace Crypter.Core.Features.Transfer.Events;
 
-public sealed record SuccessfulTransferDownloadEvent(Guid ItemId, TransferItemType ItemType, TransferUserType UserType, Guid? UserId, bool DeleteItemFromTransferRepository, DateTimeOffset Timestamp) : INotification;
+public sealed record SuccessfulTransferDownloadEvent(Guid ItemId, TransferItemType ItemType, TransferUserType UserType, Guid? UserId, bool TransferHasRecipient, DateTimeOffset Timestamp) : INotification;
 
 internal sealed class SuccessfulTransferDownloadEventHandler : INotificationHandler<SuccessfulTransferDownloadEvent>
 {
@@ -51,8 +51,13 @@ internal sealed class SuccessfulTransferDownloadEventHandler : INotificationHand
 
     public Task Handle(SuccessfulTransferDownloadEvent notification, CancellationToken cancellationToken)
     {
-        _backgroundJobClient.Enqueue(() =>
-            _hangfireBackgroundService.DeleteTransferAsync(notification.ItemId, notification.ItemType, notification.UserType, notification.DeleteItemFromTransferRepository));
+        // If the transfer does not have a specific recipient, then delete it from the database.
+        // Do not attempt to delete the transfer from the transfer repository, as the client may still be downloading it.
+        if (!notification.TransferHasRecipient)
+        {
+            _backgroundJobClient.Enqueue(() =>
+                _hangfireBackgroundService.DeleteTransferAsync(notification.ItemId, notification.ItemType, notification.UserType, false));
+        }
         
         _backgroundJobClient.Enqueue(() =>
             _hangfireBackgroundService.LogSuccessfulTransferDownloadAsync(notification.ItemId, notification.ItemType, notification.UserId, notification.Timestamp));

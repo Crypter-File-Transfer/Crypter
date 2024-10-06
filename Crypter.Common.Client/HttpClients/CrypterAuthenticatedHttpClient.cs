@@ -64,7 +64,7 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        _tokenProviderMap = new()
+        _tokenProviderMap = new Dictionary<bool, Func<Task<Maybe<TokenObject>>>>
         {
             { false, _tokenRepository.GetAuthenticationTokenAsync },
             { true, _tokenRepository.GetRefreshTokenAsync }
@@ -212,6 +212,12 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         return await DeserializeResponseAsync<TResponse>(response);
     }
 
+    public async Task<Either<ErrorResponse, Unit>> SendAsync(Func<HttpRequestMessage> requestFactory)
+    {
+        using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
+        return await DeserializeEitherUnitResponseAsync(response);
+    }
+
     private static Func<HttpRequestMessage> MakeRequestMessageFactory(HttpMethod method, string uri)
     {
         return () => new HttpRequestMessage(method, uri);
@@ -308,7 +314,7 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
 
         return Unit.Default;
     }
-
+    
     private async Task<Either<ErrorResponse, TResponse>> DeserializeResponseAsync<TResponse>(
         HttpResponseMessage response)
     {

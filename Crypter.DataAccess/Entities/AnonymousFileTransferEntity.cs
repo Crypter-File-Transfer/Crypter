@@ -43,9 +43,10 @@ public class AnonymousFileTransferEntity : IFileTransfer
     // IFileTransfer
     public string FileName { get; set; }
     public string ContentType { get; set; }
+    public bool Parts { get; set; }
 
     public AnonymousFileTransferEntity(Guid id, long size, byte[] publicKey, byte[] keyExchangeNonce, byte[] proof,
-        DateTime created, DateTime expiration, string fileName, string contentType)
+        DateTime created, DateTime expiration, string fileName, string contentType, bool parts)
     {
         Id = id;
         Size = size;
@@ -56,6 +57,7 @@ public class AnonymousFileTransferEntity : IFileTransfer
         Expiration = expiration;
         FileName = fileName;
         ContentType = contentType;
+        Parts = parts;
     }
 }
 
@@ -78,5 +80,9 @@ public class AnonymousFileTransferEntityConfiguration : IEntityTypeConfiguration
 
         builder.Property(x => x.ContentType)
             .IsRequired();
+
+        builder.Property(x => x.Parts)
+            .IsRequired()
+            .HasDefaultValue(false);
     }
 }

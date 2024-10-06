@@ -452,3 +452,9 @@ Volumes/API/storage/
 Volumes/Caddy/tls/
 Volumes/PostgreSQL/data
 Volumes/Caddy/data
+
+# Compiled javascript
+Crypter.Web/wwwroot/js/dist
+
+# pnpm lock file
+Crypter.Web/pnpm-lock.yaml

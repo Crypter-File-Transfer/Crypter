@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -53,8 +54,11 @@ public class FileTransferRequests : IFileTransferRequests
     }
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> UploadFileTransferAsync(
-        Maybe<string> recipientUsername, UploadFileTransferRequest uploadRequest,
-        Func<EncryptionStream> encryptionStreamOpener, bool withAuthentication)
+        Maybe<string> recipientUsername,
+        UploadFileTransferRequest uploadRequest,
+        Func<Action<double>?, EncryptionStream> encryptionStreamOpener,
+        bool withAuthentication,
+        Action<double>? updateCallback = null)
     {
         string url = recipientUsername.Match(
             () => "api/file/transfer",
@@ -64,7 +68,10 @@ public class FileTransferRequests : IFileTransferRequests
             ? _crypterAuthenticatedHttpClient
             : _crypterHttpClient;
 
-        HttpRequestMessage requestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
+        return await service.SendAsync<UploadTransferResponse>(RequestFactory)
+            .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
+
+        HttpRequestMessage RequestFactory() => new HttpRequestMessage(HttpMethod.Post, url)
         {
             Content = new MultipartFormDataContent
             {
@@ -72,23 +79,66 @@ public class FileTransferRequests : IFileTransferRequests
                     new StringContent(JsonSerializer.Serialize(uploadRequest), Encoding.UTF8, "application/json"),
                     "Data"
                 },
+                { new StreamContent(encryptionStreamOpener(updateCallback)), "Ciphertext", "Ciphertext" }
+            }
+        };
+    }
+
+    public async Task<Either<UploadTransferError, InitiateMultipartFileTransferResponse>> InitializeMultipartFileTransferAsync(
+            Maybe<string> recipientUsername,
+            UploadFileTransferRequest uploadRequest)
+    {
+        string url = recipientUsername.Match(
+            () => "api/file/transfer/multipart/initialize",
+            x => $"api/file/transfer/multipart/initialize?username={x}");
+
+        return await _crypterAuthenticatedHttpClient
+            .PostEitherAsync<UploadFileTransferRequest, InitiateMultipartFileTransferResponse>(url, uploadRequest)
+            .ExtractErrorCode<UploadTransferError, InitiateMultipartFileTransferResponse>();
+    }
+
+    public async Task<Either<UploadMultipartFileTransferError, Unit>> UploadMultipartFileTransferAsync(
+        string hashId,
+        int position,
+        Func<Stream> encryptionStreamOpener)
+    {
+        string uploadUrl = $"api/file/transfer/multipart/upload?id={hashId}&position={position}";
+        return await _crypterAuthenticatedHttpClient.SendAsync(UploadRequestFactory)
+            .ExtractErrorCode<UploadMultipartFileTransferError>();
+
+        HttpRequestMessage UploadRequestFactory() => new HttpRequestMessage(HttpMethod.Post, uploadUrl)
+        {
+            Content = new MultipartFormDataContent
+            {
                 { new StreamContent(encryptionStreamOpener()), "Ciphertext", "Ciphertext" }
             }
         };
-
-        return await service.SendAsync<UploadTransferResponse>(requestFactory)
-            .ExtractErrorCode<UploadTransferError, UploadTransferResponse>();
     }
 
+    public async Task<Either<FinalizeMultipartFileTransferError, Unit>> FinalizeMultipartFileTransferAsync(string hashId)
+    {
+        string url = $"api/file/transfer/multipart/finalize?id={hashId}";
+        return await _crypterAuthenticatedHttpClient
+            .PostEitherUnitResponseAsync(url)
+            .ExtractErrorCode<FinalizeMultipartFileTransferError, Unit>();
+    }
+
+    public async Task<Either<AbandonMultipartFileTransferError, Unit>> AbandonMultipartFileTransferAsync(string hashId)
+    {
+        string url = $"api/file/transfer/multipart/abandon?id={hashId}";
+        return await _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url)
+            .ExtractErrorCode<AbandonMultipartFileTransferError>();
+    }
+    
     public Task<Maybe<List<UserReceivedFileDTO>>> GetReceivedFilesAsync()
     {
-        string url = "api/file/transfer/received";
+        const string url = "api/file/transfer/received";
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserReceivedFileDTO>>(url);
     }
 
     public Task<Maybe<List<UserSentFileDTO>>> GetSentFilesAsync()
     {
-        string url = "api/file/transfer/sent";
+        const string url = "api/file/transfer/sent";
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<List<UserSentFileDTO>>(url);
     }
 

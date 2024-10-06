@@ -56,6 +56,7 @@ internal class UserReceivedFilesQueryHandler
     {
         var receivedFiles = await _dataContext.UserFileTransfers
             .Where(x => x.RecipientId == request.UserId)
+            .Where(x => !x.Parts)
             .OrderBy(x => x.Expiration)
             .Select(x => new { x.Id, x.FileName, x.Sender!.Username, x.Sender!.Profile!.Alias, x.Expiration })
             .ToListAsync(cancellationToken);

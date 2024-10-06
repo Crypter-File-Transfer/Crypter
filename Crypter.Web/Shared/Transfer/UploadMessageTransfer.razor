@@ -36,7 +36,7 @@
             <label>Message</label>
             <textarea class="form-control" @bind="MessageBody" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@_maxMessageLength"></textarea>
             <label>
-                <small class="align-text-bottom">@(_maxMessageLength - MessageBody.Count()) remaining</small>
+                <small class="align-text-bottom">@(_maxMessageLength - MessageBody.Length) remaining</small>
             </label>
         </div>
     </div>

@@ -189,7 +189,8 @@ internal class SaveFileTransferCommandHandler
                 created: utcNow,
                 expiration: utcExpiration,
                 fileName: request.Filename,
-                contentType: request.ContentType);
+                contentType: request.ContentType,
+                parts: false);
             _dataContext.AnonymousFileTransfers.Add(transferEntity);
         }
         else
@@ -205,7 +206,8 @@ internal class SaveFileTransferCommandHandler
                 senderId: nullableSenderId,
                 recipientId: nullableRecipientId,
                 fileName: request.Filename,
-                contentType: request.ContentType);
+                contentType: request.ContentType,
+                parts: false);
             _dataContext.UserFileTransfers.Add(transferEntity);
         }
 

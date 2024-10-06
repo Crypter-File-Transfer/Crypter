@@ -67,7 +67,7 @@ internal class DownloadFileTransfer_Tests
     [Test]
     public async Task Download_Anonymous_File_Transfer_Works()
     {
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
@@ -134,7 +134,7 @@ internal class DownloadFileTransfer_Tests
             Either<RegistrationError, Unit> _ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
         });
 
-        (Func<EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
             TestData.GetDefaultEncryptionStream();
         UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
@@ -165,5 +165,23 @@ internal class DownloadFileTransfer_Tests
                 result.DoRight(x => { Assert.DoesNotThrow(() => x.Stream.ReadByte()); });
             })
             .DoLeftOrNeitherAsync(Assert.Fail);
+    }
+
+    [Test]
+    public async Task Download_Multipart_File_Transfer_Works()
+    {
+        string hashId = await TestMethods.InitiateMultipartFileTransferAsync(_client!, _clientTokenRepository!);
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] proof) = TestData.GetDefaultEncryptionStream();
+        
+        await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 0, () => encryptionStreamOpener(null));
+        await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 1, () => encryptionStreamOpener(null));
+        await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, 2, () => encryptionStreamOpener(null));
+        await _client!.FileTransfer.FinalizeMultipartFileTransferAsync(hashId);
+        
+        Either<DownloadTransferCiphertextError, StreamDownloadResponse> downloadResult =
+            await _client!.FileTransfer.GetUserFileCiphertextAsync(hashId, proof, false);
+
+        Assert.That(downloadResult.IsRight, Is.True);
+        downloadResult.DoRight(x => { Assert.DoesNotThrow(() => x.Stream.ReadByte()); });
     }
 }
