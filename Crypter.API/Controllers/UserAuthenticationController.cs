@@ -31,6 +31,7 @@ using Crypter.API.Controllers.Base;
 using Crypter.API.Methods;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Contracts.Features.UserAuthentication.PasswordChange;
 using Crypter.Core.Features.UserAuthentication.Commands;
 using Crypter.Core.Features.UserAuthentication.Queries;
 using EasyMonads;
@@ -110,8 +111,7 @@ public class UserAuthenticationController : CrypterControllerBase
             return error switch
             {
                 LoginError.UnknownError
-                    or LoginError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError,
-                        error),
+                    or LoginError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
                 LoginError.InvalidUsername
                     or LoginError.InvalidPassword
                     or LoginError.InvalidTokenTypeRequested
@@ -208,6 +208,40 @@ public class UserAuthenticationController : CrypterControllerBase
                 MakeErrorResponse(PasswordChallengeError.UnknownError));
     }
 
+    /// <summary>
+    /// Handle a request to change the password for an authorized user
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    [HttpPost("password")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+    public async Task<IActionResult> PasswordChangeAsync([FromBody] PasswordChangeRequest request)
+    {
+        IActionResult MakeErrorResponse(PasswordChangeError error)
+        {
+#pragma warning disable CS8524
+            return error switch
+            {
+                PasswordChangeError.UnknownError
+                    or PasswordChangeError.PasswordHashFailure => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+                PasswordChangeError.InvalidPassword
+                    or PasswordChangeError.InvalidOldPasswordVersion
+                    or PasswordChangeError.InvalidNewPasswordVersion => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+            };
+#pragma warning restore CS8524
+        }
+        
+        ChangeUserPasswordCommand command = new ChangeUserPasswordCommand(UserId, request);
+        return await _sender.Send(command)
+            .MatchAsync(
+                MakeErrorResponse,
+                _ => Ok(),
+                MakeErrorResponse(PasswordChangeError.UnknownError));
+    }
+    
     /// <summary>
     /// Clears the provided refresh token from the database, ensuring it cannot be used for subsequent requests.
     /// </summary>

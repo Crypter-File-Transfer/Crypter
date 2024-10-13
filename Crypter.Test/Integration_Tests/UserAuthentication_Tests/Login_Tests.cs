@@ -61,8 +61,7 @@ internal class Login_Tests
     [Test]
     public async Task Login_Works()
     {
-        RegistrationRequest registrationRequest =
-            TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
         Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
@@ -84,8 +83,7 @@ internal class Login_Tests
     [Test]
     public async Task Login_Fails_Invalid_Password()
     {
-        RegistrationRequest registrationRequest =
-            TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
         Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
@@ -100,14 +98,12 @@ internal class Login_Tests
     [Test]
     public async Task Login_Fails_Invalid_Password_Version()
     {
-        RegistrationRequest registrationRequest =
-            TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
         Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
         VersionedPassword correctPassword = loginRequest.VersionedPasswords.First();
-        VersionedPassword invalidPassword =
-            new VersionedPassword(correctPassword.Password, (short)(correctPassword.Version - 1));
+        VersionedPassword invalidPassword = new VersionedPassword(correctPassword.Password, (short)(correctPassword.Version - 1));
         loginRequest.VersionedPasswords = [invalidPassword];
         Either<LoginError, LoginResponse> result = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
