@@ -45,7 +45,7 @@ public partial class UserSettingsKeys : IDisposable
 
     [Inject] private IJSRuntime JsRuntime { get; init; } = null!;
 
-    private PasswordModal _passwordModal = null!;
+    private PasswordChallengeModal _passwordModal = null!;
 
     private string _privateKey = string.Empty;
     private string _recoveryKey = string.Empty;

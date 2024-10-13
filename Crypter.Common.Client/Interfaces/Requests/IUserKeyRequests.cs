@@ -35,8 +35,7 @@ public interface IUserKeyRequests
     Task<Either<GetMasterKeyError, GetMasterKeyResponse>> GetMasterKeyAsync();
     Task<Either<InsertMasterKeyError, Unit>> InsertMasterKeyAsync(InsertMasterKeyRequest request);
 
-    Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(
-        GetMasterKeyRecoveryProofRequest request);
+    Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request);
 
     Task<Either<GetPrivateKeyError, GetPrivateKeyResponse>> GetPrivateKeyAsync();
     Task<Either<InsertKeyPairError, Unit>> InsertKeyPairAsync(InsertKeyPairRequest request);

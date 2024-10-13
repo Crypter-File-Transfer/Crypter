@@ -55,8 +55,7 @@ public class UserKeyRequests : IUserKeyRequests
             .ExtractErrorCode<InsertMasterKeyError, Unit>();
     }
 
-    public Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>>
-        GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
+    public Task<Either<GetMasterKeyRecoveryProofError, GetMasterKeyRecoveryProofResponse>> GetMasterKeyRecoveryProofAsync(GetMasterKeyRecoveryProofRequest request)
     {
         const string url = "api/user/key/master/recovery-proof/challenge";
         return _crypterAuthenticatedHttpClient
