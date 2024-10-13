@@ -33,11 +33,15 @@ public class PasswordChangeRequest
 {
     public List<VersionedPassword> OldVersionedPasswords { get; set; }
     public VersionedPassword NewVersionedPassword { get; set; }
+    public byte[] EncryptedMasterKey { get; set; }
+    public byte[] Nonce { get; set; }
 
     [JsonConstructor]
-    public PasswordChangeRequest(List<VersionedPassword> oldVersionedPasswords, VersionedPassword newVersionedPassword)
+    public PasswordChangeRequest(List<VersionedPassword> oldVersionedPasswords, VersionedPassword newVersionedPassword, byte[] encryptedMasterKey, byte[] nonce)
     {
         OldVersionedPasswords = oldVersionedPasswords;
         NewVersionedPassword = newVersionedPassword;
+        EncryptedMasterKey = encryptedMasterKey;
+        Nonce = nonce;
     }
 }

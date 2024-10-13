@@ -55,10 +55,7 @@ internal class ChangeUserPasswordCommandHandler
     private readonly ServerPasswordSettings _serverPasswordSettings;
 
 
-    public ChangeUserPasswordCommandHandler(
-        DataContext dataContext,
-        IPasswordHashService passwordHashService,
-        IOptions<ServerPasswordSettings> serverPasswordSettings)
+    public ChangeUserPasswordCommandHandler(DataContext dataContext, IPasswordHashService passwordHashService, IOptions<ServerPasswordSettings> serverPasswordSettings)
     {
         _dataContext = dataContext;
         _passwordHashService = passwordHashService;
@@ -70,7 +67,9 @@ internal class ChangeUserPasswordCommandHandler
         return await ValidatePasswordChangeRequest(request.Request)
             .BindAsync(async validPasswordChangeRequest => await (
                 from foundUser in GetUserAsync(request.UserId)
-                from passwordVerificationSuccess in VerifyAndChangePasswordAsync(validPasswordChangeRequest, foundUser)
+                from passwordVerificationSuccess in VerifyAndChangePasswordAsync(validPasswordChangeRequest, foundUser).AsTask()
+                from updateMasterKeyResult in Either<PasswordChangeError, Unit>.From(UpdateUserMasterKey(foundUser, request.Request.EncryptedMasterKey, request.Request.Nonce)).AsTask()
+                from _ in Either<PasswordChangeError, Unit>.FromRightAsync(SaveChangesAsync())
                 select Unit.Default)
             );
     }
@@ -95,6 +94,7 @@ internal class ChangeUserPasswordCommandHandler
     private async Task<Either<PasswordChangeError, UserEntity>> GetUserAsync(Guid userId)
     {
         UserEntity? foundUser = await _dataContext.Users
+            .Include(x => x.MasterKey)
             .Where(x => x.Id == userId)
             .FirstOrDefaultAsync();
 
@@ -106,7 +106,7 @@ internal class ChangeUserPasswordCommandHandler
         return foundUser;
     }
     
-    private async Task<Either<PasswordChangeError, Unit>> VerifyAndChangePasswordAsync(ValidPasswordChangeRequest validChangePasswordRequest, UserEntity userEntity)
+    private Either<PasswordChangeError, Unit> VerifyAndChangePasswordAsync(ValidPasswordChangeRequest validChangePasswordRequest, UserEntity userEntity)
     {
         bool requestContainsUserClientPasswordVersion = validChangePasswordRequest.OldVersionedPasswords.ContainsKey(userEntity.ClientPasswordVersion);
         if (!requestContainsUserClientPasswordVersion)
@@ -138,8 +138,6 @@ internal class ChangeUserPasswordCommandHandler
         userEntity.PasswordSalt = hashOutput.Salt;
         userEntity.ServerPasswordVersion = _passwordHashService.LatestServerPasswordVersion;
         userEntity.ClientPasswordVersion = _serverPasswordSettings.ClientVersion;
-
-        await _dataContext.SaveChangesAsync();
         
         return Unit.Default;
     }
@@ -159,5 +157,19 @@ internal class ChangeUserPasswordCommandHandler
         }
 
         return clientPasswords.ToDictionary(x => x.Version, x => x.Password);
+    }
+
+    private Unit UpdateUserMasterKey(UserEntity userEntity, byte[] encryptedMasterKey, byte[] nonce)
+    {
+        userEntity.MasterKey!.EncryptedKey = encryptedMasterKey;
+        userEntity.MasterKey!.Nonce = nonce;
+        userEntity.MasterKey!.Updated = DateTime.UtcNow;
+        return Unit.Default;
+    }
+
+    private async Task<Unit> SaveChangesAsync()
+    {
+        await _dataContext.SaveChangesAsync();
+        return Unit.Default;
     }
 }

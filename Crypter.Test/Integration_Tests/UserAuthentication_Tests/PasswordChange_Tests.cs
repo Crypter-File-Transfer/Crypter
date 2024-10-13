@@ -29,6 +29,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Contracts.Features.UserAuthentication.PasswordChange;
 using Crypter.Common.Enums;
@@ -90,17 +91,30 @@ internal class PasswordChange_Tests
             await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
+        (_, InsertMasterKeyRequest masterKeyRequest) = TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
+        Either<InsertMasterKeyError, Unit> masterKeyResult = await _client!.UserKey.InsertMasterKeyAsync(masterKeyRequest);
+        
         List<VersionedPassword> oldPasswords = [TestData.GetVersionedPassword(TestData.DefaultPassword, 1)];
         VersionedPassword newPassword = TestData.GetVersionedPassword(updatedPassword, 1);
-        PasswordChangeRequest request = new PasswordChangeRequest(oldPasswords, newPassword);
+        (byte[] masterKey, byte[] nonce) = TestData.GetRandomMasterKey();
+        PasswordChangeRequest request = new PasswordChangeRequest(oldPasswords, newPassword, masterKey, nonce);
         Either<PasswordChangeError, Unit> result = await _client!.UserAuthentication.ChangePasswordAsync(request);
 
+        UserMasterKeyEntity masterKeyEntity = await _dataContext!.UserMasterKeys
+            .Where(x => x.User!.Username == TestData.DefaultUsername)
+            .FirstAsync();
+        
         LoginRequest newLoginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, updatedPassword);
         Either<LoginError, LoginResponse> newLoginResult = await _client!.UserAuthentication.LoginAsync(newLoginRequest);
         
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);
+        Assert.That(masterKeyResult.IsRight, Is.True);
         Assert.That(result.IsRight, Is.True);
+        Assert.That(masterKeyEntity.EncryptedKey, Is.Not.EqualTo(masterKeyRequest.EncryptedKey));
+        Assert.That(masterKeyEntity.Nonce, Is.Not.EqualTo(masterKeyRequest.Nonce));
+        Assert.That(masterKeyEntity.EncryptedKey, Is.EqualTo(masterKey));
+        Assert.That(masterKeyEntity.Nonce, Is.EqualTo(nonce));
         Assert.That(newLoginResult.IsRight, Is.True);
     }
 
@@ -121,6 +135,9 @@ internal class PasswordChange_Tests
             await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
+        (_, InsertMasterKeyRequest masterKeyRequest) = TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
+        Either<InsertMasterKeyError, Unit> masterKeyResult = await _client!.UserKey.InsertMasterKeyAsync(masterKeyRequest);
+        
         UserEntity userEntity = await _dataContext!.Users
             .AsTracking()
             .Where(x => x.Username == TestData.DefaultUsername)
@@ -131,7 +148,8 @@ internal class PasswordChange_Tests
         
         List<VersionedPassword> oldPasswords = [TestData.GetVersionedPassword(TestData.DefaultPassword, 0)];
         VersionedPassword newPassword = TestData.GetVersionedPassword(updatedPassword, 1);
-        PasswordChangeRequest request = new PasswordChangeRequest(oldPasswords, newPassword);
+        (byte[] masterKey, byte[] nonce) = TestData.GetRandomMasterKey();
+        PasswordChangeRequest request = new PasswordChangeRequest(oldPasswords, newPassword, masterKey, nonce);
         await _client!.UserAuthentication.ChangePasswordAsync(request);
 
         IServiceScope newScope = _factory!.Services.CreateScope();
@@ -159,14 +177,24 @@ internal class PasswordChange_Tests
             await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
+        (_, InsertMasterKeyRequest masterKeyRequest) = TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
+        Either<InsertMasterKeyError, Unit> masterKeyResult = await _client!.UserKey.InsertMasterKeyAsync(masterKeyRequest);
+        
         List<VersionedPassword> oldPasswords = [TestData.GetVersionedPassword("not the right password", 1)];
         VersionedPassword newPassword = TestData.GetVersionedPassword("new password", 1);
-        PasswordChangeRequest request = new PasswordChangeRequest(oldPasswords, newPassword);
+        (byte[] masterKey, byte[] nonce) = TestData.GetRandomMasterKey();
+        PasswordChangeRequest request = new PasswordChangeRequest(oldPasswords, newPassword, masterKey, nonce);
         Either<PasswordChangeError, Unit> result = await _client!.UserAuthentication.ChangePasswordAsync(request);
+        
+        UserMasterKeyEntity masterKeyEntity = await _dataContext!.UserMasterKeys
+            .Where(x => x.User!.Username == TestData.DefaultUsername)
+            .FirstAsync();
         
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);
         Assert.That(result.IsLeft, Is.True);
+        Assert.That(masterKeyEntity.EncryptedKey, Is.EqualTo(masterKeyRequest.EncryptedKey));
+        Assert.That(masterKeyEntity.Nonce, Is.EqualTo(masterKeyRequest.Nonce));
     }
 
     [Test]
@@ -184,13 +212,23 @@ internal class PasswordChange_Tests
             await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
+        (_, InsertMasterKeyRequest masterKeyRequest) = TestData.GetInsertMasterKeyRequest(TestData.DefaultPassword);
+        Either<InsertMasterKeyError, Unit> masterKeyResult = await _client!.UserKey.InsertMasterKeyAsync(masterKeyRequest);
+        
         List<VersionedPassword> oldPasswords = [TestData.GetVersionedPassword(TestData.DefaultPassword, 0)];
         VersionedPassword newPassword = TestData.GetVersionedPassword("new password", 1);
-        PasswordChangeRequest request = new PasswordChangeRequest(oldPasswords, newPassword);
+        (byte[] masterKey, byte[] nonce) = TestData.GetRandomMasterKey();
+        PasswordChangeRequest request = new PasswordChangeRequest(oldPasswords, newPassword, masterKey, nonce);
         Either<PasswordChangeError, Unit> result = await _client!.UserAuthentication.ChangePasswordAsync(request);
+        
+        UserMasterKeyEntity masterKeyEntity = await _dataContext!.UserMasterKeys
+            .Where(x => x.User!.Username == TestData.DefaultUsername)
+            .FirstAsync();
         
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);
         Assert.That(result.IsLeft, Is.True);
+        Assert.That(masterKeyEntity.EncryptedKey, Is.EqualTo(masterKeyRequest.EncryptedKey));
+        Assert.That(masterKeyEntity.Nonce, Is.EqualTo(masterKeyRequest.Nonce));
     }
 }

@@ -146,6 +146,19 @@ internal static class TestData
         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
         return new VersionedPassword(passwordBytes, version);
     }
+
+    internal static (byte[] masterKey, byte[] nonce) GetRandomMasterKey()
+    {
+        Random random = new Random();
+        
+        byte[] randomBytesMasterKey = new byte[32];
+        random.NextBytes(randomBytesMasterKey);
+
+        byte[] randomBytesNonce = new byte[32];
+        random.NextBytes(randomBytesNonce);
+
+        return (randomBytesMasterKey, randomBytesNonce);
+    }
     
     internal static (byte[] masterKey, InsertMasterKeyRequest request) GetInsertMasterKeyRequest(string password)
     {
@@ -153,17 +166,13 @@ internal static class TestData
 
         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
 
-        byte[] randomBytesMasterKey = new byte[32];
-        random.NextBytes(randomBytesMasterKey);
-
-        byte[] randomBytesNonce = new byte[32];
-        random.NextBytes(randomBytesNonce);
+        (byte[] masterKey, byte[] nonce) = GetRandomMasterKey();
 
         byte[] randomBytesRecoveryProof = new byte[32];
         random.NextBytes(randomBytesRecoveryProof);
 
-        InsertMasterKeyRequest request = new InsertMasterKeyRequest(passwordBytes, randomBytesMasterKey, randomBytesNonce, randomBytesRecoveryProof);
-        return (randomBytesMasterKey, request);
+        InsertMasterKeyRequest request = new InsertMasterKeyRequest(passwordBytes, masterKey, nonce, randomBytesRecoveryProof);
+        return (masterKey, request);
     }
 
     internal static InsertKeyPairRequest GetInsertKeyPairRequest()
