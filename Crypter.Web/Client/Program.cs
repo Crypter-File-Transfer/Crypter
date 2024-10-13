@@ -102,6 +102,7 @@ builder.Services
     .AddSingleton<IUserContactInfoSettingsService, UserContactInfoSettingsService>()
     .AddSingleton<IUserNotificationSettingsService, UserNotificationSettingsService>()
     .AddSingleton<IUserPrivacySettingsService, UserPrivacySettingsService>()
+    .AddSingleton<IUserPasswordChangeService, UserPasswordChangeService>()
     .AddSingleton<TransferHandlerFactory>()
     .AddSingleton<Func<ICrypterApiClient>>(sp => sp.GetRequiredService<ICrypterApiClient>);
 
