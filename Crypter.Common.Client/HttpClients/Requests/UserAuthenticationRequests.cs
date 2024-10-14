@@ -29,6 +29,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Contracts.Features.UserAuthentication.PasswordChange;
 using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients.Requests;
@@ -77,14 +78,20 @@ public class UserAuthenticationRequests : IUserAuthenticationRequests
         return response;
     }
 
-    public Task<Either<PasswordChallengeError, Unit>> PasswordChallengeAsync(
-        PasswordChallengeRequest testPasswordRequest)
+    public Task<Either<PasswordChallengeError, Unit>> PasswordChallengeAsync(PasswordChallengeRequest testPasswordRequest)
     {
         const string url = "api/user/authentication/password/challenge";
         return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, testPasswordRequest)
             .ExtractErrorCode<PasswordChallengeError, Unit>();
     }
 
+    public Task<Either<PasswordChangeError, Unit>> ChangePasswordAsync(PasswordChangeRequest passwordChangeRequest)
+    {
+        const string url = "api/user/authentication/password";
+        return _crypterAuthenticatedHttpClient.PostEitherUnitResponseAsync(url, passwordChangeRequest)
+            .ExtractErrorCode<PasswordChangeError, Unit>();
+    }
+    
     public Task<Either<LogoutError, Unit>> LogoutAsync()
     {
         const string url = "api/user/authentication/logout";

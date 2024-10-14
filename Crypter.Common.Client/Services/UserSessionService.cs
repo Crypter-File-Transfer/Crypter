@@ -139,22 +139,18 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
                 () => LoginError.PasswordHashFailure,
                 async versionedPassword =>
                 {
-                    List<VersionedPassword> versionedPasswords = new List<VersionedPassword> { versionedPassword };
-                    var loginTask = from loginResponse in LoginRecursiveAsync(username, password, versionedPasswords,
-                            _trustDeviceRefreshTokenTypeMap[rememberUser])
-                        from unit0 in Either<LoginError, Unit>.FromRightAsync(StoreSessionInfo(loginResponse,
-                            rememberUser))
+                    List<VersionedPassword> versionedPasswords = [versionedPassword];
+                    var loginTask = from loginResponse in LoginRecursiveAsync(username, password, versionedPasswords, _trustDeviceRefreshTokenTypeMap[rememberUser])
+                        from unit0 in Either<LoginError, Unit>.FromRightAsync(StoreSessionInfo(loginResponse, rememberUser))
                         select loginResponse;
 
                     Either<LoginError, LoginResponse> loginResult = await loginTask;
-                    loginResult.DoRight(x => HandleUserLoggedInEvent(username, password, versionedPassword,
-                        rememberUser, x.UploadNewKeys, x.ShowRecoveryKey));
+                    loginResult.DoRight(x => HandleUserLoggedInEvent(username, password, versionedPassword, rememberUser, x.UploadNewKeys, x.ShowRecoveryKey));
                     return loginResult.Map(_ => Unit.Default);
                 });
     }
 
-    private Task<Either<LoginError, LoginResponse>> LoginRecursiveAsync(Username username, Password password,
-        List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+    private Task<Either<LoginError, LoginResponse>> LoginRecursiveAsync(Username username, Password password, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
     {
         return SendLoginRequestAsync(username, versionedPasswords, refreshTokenType)
             .MatchAsync(
@@ -164,15 +160,13 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
                     if (error == LoginError.InvalidPasswordVersion && oldestPasswordVersionAttempted > 0)
                     {
                         return await _userPasswordService
-                            .DeriveUserAuthenticationPasswordAsync(username, password,
-                                oldestPasswordVersionAttempted - 1)
+                            .DeriveUserAuthenticationPasswordAsync(username, password, oldestPasswordVersionAttempted - 1)
                             .MatchAsync(
                                 () => LoginError.PasswordHashFailure,
                                 async previousVersionedPassword =>
                                 {
                                     versionedPasswords.Add(previousVersionedPassword);
-                                    return await LoginRecursiveAsync(username, password, versionedPasswords,
-                                        refreshTokenType);
+                                    return await LoginRecursiveAsync(username, password, versionedPasswords, refreshTokenType);
                                 });
                     }
                     else
@@ -257,15 +251,13 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
 
     #endregion
 
-    private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username,
-        List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+    private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
     {
         LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType);
         return _crypterApiClient.UserAuthentication.LoginAsync(loginRequest);
     }
 
-    private Task<Either<PasswordChallengeError, Unit>> SendTestPasswordRequestAsync(Username username,
-        Password password)
+    private Task<Either<PasswordChallengeError, Unit>> SendTestPasswordRequestAsync(Username username, Password password)
     {
         return _userPasswordService
             .DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
@@ -285,7 +277,6 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
             x => Username.From(x.Username));
 
         var response = await SendTestPasswordRequestAsync(username, password);
-
         if (response.IsRight)
         {
             HandleTestPasswordSuccessEvent(username, password);
@@ -297,7 +288,7 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
 
     private Task<Unit> StoreSessionInfo(LoginResponse response, bool rememberUser)
     {
-        var sessionInfo = new UserSession(response.Username, rememberUser, UserSession.LATEST_SCHEMA);
+        UserSession sessionInfo = new UserSession(response.Username, rememberUser, UserSession.LATEST_SCHEMA);
         Session = sessionInfo;
 
         return Task.Run(async () =>

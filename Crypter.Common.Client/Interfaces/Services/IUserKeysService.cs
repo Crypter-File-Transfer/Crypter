@@ -39,10 +39,7 @@ public interface IUserKeysService
 
     Task DownloadExistingKeysAsync(Username username, Password password, bool trustDevice);
     Task DownloadExistingKeysAsync(byte[] credentialKey, bool trustDevice);
-
-    Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, Password password,
-        VersionedPassword versionedPassword, bool trustDevice);
-
-    Task<Maybe<RecoveryKey>> UploadNewKeysAsync(VersionedPassword versionedPassword, byte[] credentialKey,
-        bool trustDevice);
+    
+    Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, Password password, VersionedPassword versionedPassword, bool trustDevice);
+    Task<Maybe<RecoveryKey>> UploadNewKeysAsync(VersionedPassword versionedPassword, byte[] credentialKey, bool trustDevice);
 }

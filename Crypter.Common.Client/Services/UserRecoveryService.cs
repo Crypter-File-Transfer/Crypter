@@ -79,15 +79,12 @@ public class UserRecoveryService : IUserRecoveryService
                     },
                     x =>
                     {
-                        byte[] nonce =
-                            _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.NonceSize);
-                        byte[] encryptedMasterKey =
-                            _cryptoProvider.Encryption.Encrypt(derivatives.CredentialKey, nonce, x.MasterKey);
+                        byte[] nonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.NonceSize);
+                        byte[] encryptedMasterKey = _cryptoProvider.Encryption.Encrypt(derivatives.CredentialKey, nonce, x.MasterKey);
                         byte[] newRecoveryProof = _cryptoProvider.Random.GenerateRandomBytes(32);
                         
                         RecoveryKey newRecoveryKey = new RecoveryKey(x.MasterKey, newRecoveryProof);
-                        ReplacementMasterKeyInformation replacementMasterKeyInformation = new ReplacementMasterKeyInformation(x.Proof,
-                            newRecoveryProof, encryptedMasterKey, nonce);
+                        ReplacementMasterKeyInformation replacementMasterKeyInformation = new ReplacementMasterKeyInformation(x.Proof, newRecoveryProof, encryptedMasterKey, nonce);
 
                         return new RecoveryParameters
                             {
@@ -121,8 +118,7 @@ public class UserRecoveryService : IUserRecoveryService
 
     public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword)
     {
-        GetMasterKeyRecoveryProofRequest request =
-            new GetMasterKeyRecoveryProofRequest(versionedPassword.Password);
+        GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(versionedPassword.Password);
         return _crypterApiClient.UserKey.GetMasterKeyRecoveryProofAsync(request)
             .ToMaybeTask()
             .MapAsync(x => new RecoveryKey(masterKey, x.Proof));

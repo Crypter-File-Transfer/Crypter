@@ -66,12 +66,10 @@ internal class PasswordChallenge_Tests
     [Test]
     public async Task Password_Challenge_Works()
     {
-        RegistrationRequest registrationRequest =
-            TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
         Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
-        LoginRequest loginRequest =
-            TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
         Either<LoginError, LoginResponse> loginResult = await _client!.UserAuthentication.LoginAsync(loginRequest);
 
         await loginResult.DoRightAsync(async loginResponse =>
