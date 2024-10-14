@@ -115,55 +115,64 @@ internal static class TestData
     internal static (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] proof) GetDefaultEncryptionStream()
     {
         DefaultCryptoProvider cryptoProvider = new DefaultCryptoProvider();
-        (byte[] encryptionKey, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(
-            cryptoProvider.StreamEncryptionFactory.KeySize, DefaultPrivateKey, AlternatePublicKey,
-            DefaultKeyExchangeNonce);
+        (byte[] encryptionKey, byte[] proof) = cryptoProvider.KeyExchange.GenerateEncryptionKey(cryptoProvider.StreamEncryptionFactory.KeySize, DefaultPrivateKey, AlternatePublicKey, DefaultKeyExchangeNonce);
 
         return (EncryptionStreamOpener, proof);
-
+        
         MemoryStream PlaintextStreamOpener() => new MemoryStream(DefaultTransferBytes);
-
+        
         EncryptionStream EncryptionStreamOpener(Action<double>? updateCallback = null)
         {
-            return new EncryptionStream(PlaintextStreamOpener, DefaultTransferBytes.Length, encryptionKey, cryptoProvider.StreamEncryptionFactory,
-                128, 64, updateCallback);
+            return new EncryptionStream(PlaintextStreamOpener, DefaultTransferBytes.Length, encryptionKey, cryptoProvider.StreamEncryptionFactory, 128, 64, updateCallback);
         }
     }
 
-    internal static RegistrationRequest GetRegistrationRequest(string username, string password,
-        string? emailAddress = null)
+    internal static RegistrationRequest GetRegistrationRequest(string username, string password, string? emailAddress = null)
     {
         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
         VersionedPassword versionedPassword = new VersionedPassword(passwordBytes, 1);
         return new RegistrationRequest(username, versionedPassword, emailAddress);
     }
 
-    internal static LoginRequest GetLoginRequest(string username, string password,
-        TokenType tokenType = TokenType.Session)
+    internal static LoginRequest GetLoginRequest(string username, string password, TokenType tokenType = TokenType.Session)
     {
         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
         VersionedPassword versionedPassword = new VersionedPassword(passwordBytes, 1);
         return new LoginRequest(username, [versionedPassword], tokenType);
     }
 
-    internal static (byte[] masterKey, InsertMasterKeyRequest request) GetInsertMasterKeyRequest(string password)
+    internal static VersionedPassword GetVersionedPassword(string password, short version)
+    {
+        byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+        return new VersionedPassword(passwordBytes, version);
+    }
+
+    internal static (byte[] masterKey, byte[] nonce) GetRandomMasterKey()
     {
         Random random = new Random();
-
-        byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-
+        
         byte[] randomBytesMasterKey = new byte[32];
         random.NextBytes(randomBytesMasterKey);
 
         byte[] randomBytesNonce = new byte[32];
         random.NextBytes(randomBytesNonce);
 
+        return (randomBytesMasterKey, randomBytesNonce);
+    }
+    
+    internal static (byte[] masterKey, InsertMasterKeyRequest request) GetInsertMasterKeyRequest(string password)
+    {
+        Random random = new Random();
+
+        byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+
+        (byte[] masterKey, byte[] nonce) = GetRandomMasterKey();
+
         byte[] randomBytesRecoveryProof = new byte[32];
         random.NextBytes(randomBytesRecoveryProof);
 
-        InsertMasterKeyRequest request = new InsertMasterKeyRequest(passwordBytes, randomBytesMasterKey,
-            randomBytesNonce, randomBytesRecoveryProof);
-        return (randomBytesMasterKey, request);
+        InsertMasterKeyRequest request = new InsertMasterKeyRequest(passwordBytes, masterKey, nonce, randomBytesRecoveryProof);
+        return (masterKey, request);
     }
 
     internal static InsertKeyPairRequest GetInsertKeyPairRequest()

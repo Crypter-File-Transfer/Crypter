@@ -59,11 +59,9 @@ public class UserNotificationSettingsService : IUserNotificationSettingsService,
         return _notificationSettings;
     }
 
-    public async Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(
-        NotificationSettings newNotificationSettings)
+    public async Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings)
     {
-        Either<UpdateNotificationSettingsError, NotificationSettings> result =
-            await _crypterApiClient.UserSetting.UpdateNotificationSettingsAsync(newNotificationSettings);
+        Either<UpdateNotificationSettingsError, NotificationSettings> result = await _crypterApiClient.UserSetting.UpdateNotificationSettingsAsync(newNotificationSettings);
         _notificationSettings = result.ToMaybe();
         return result;
     }

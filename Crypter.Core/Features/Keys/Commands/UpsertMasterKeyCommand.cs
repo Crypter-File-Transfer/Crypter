@@ -63,8 +63,7 @@ internal class UpsertMasterKeyCommandHandler : IEitherRequestHandler<UpsertMaste
 
     public async Task<Either<InsertMasterKeyError, Unit>> Handle(UpsertMasterKeyCommand request, CancellationToken cancellationToken)
     {
-        if (!MasterKeyValidators.ValidateMasterKeyInformation(request.Data.EncryptedKey, request.Data.Nonce,
-                request.Data.RecoveryProof))
+        if (!MasterKeyValidators.ValidateMasterKeyInformation(request.Data.EncryptedKey, request.Data.Nonce, request.Data.RecoveryProof))
         {
             return InsertMasterKeyError.InvalidMasterKey;
         }

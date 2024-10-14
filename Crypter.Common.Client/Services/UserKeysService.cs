@@ -93,16 +93,14 @@ public class UserKeysService : IUserKeysService, IDisposable
     private Task<Maybe<byte[]>> DownloadAndDecryptMasterKey(byte[] credentialKey)
     {
         return _crypterApiClient.UserKey.GetMasterKeyAsync()
-            .MapAsync<GetMasterKeyError, GetMasterKeyResponse, byte[]>(x =>
-                _cryptoProvider.Encryption.Decrypt(credentialKey, x.Nonce, x.EncryptedKey))
+            .MapAsync<GetMasterKeyError, GetMasterKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(credentialKey, x.Nonce, x.EncryptedKey))
             .ToMaybeTask();
     }
 
     private Task<Maybe<byte[]>> DownloadAndDecryptPrivateKey(byte[] masterKey)
     {
         return _crypterApiClient.UserKey.GetPrivateKeyAsync()
-            .MapAsync<GetPrivateKeyError, GetPrivateKeyResponse, byte[]>(x =>
-                _cryptoProvider.Encryption.Decrypt(masterKey, x.Nonce, x.EncryptedKey))
+            .MapAsync<GetPrivateKeyError, GetPrivateKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(masterKey, x.Nonce, x.EncryptedKey))
             .ToMaybeTask();
     }
 
@@ -110,16 +108,14 @@ public class UserKeysService : IUserKeysService, IDisposable
 
     #region Upload New Keys
 
-    public Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, Password password,
-        VersionedPassword versionedPassword, bool trustDevice)
+    public Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, Password password, VersionedPassword versionedPassword, bool trustDevice)
     {
         return _userPasswordService
             .DeriveUserCredentialKeyAsync(username, password, _userPasswordService.CurrentPasswordVersion)
             .BindAsync(credentialKey => UploadNewKeysAsync(versionedPassword, credentialKey, trustDevice));
     }
 
-    public Task<Maybe<RecoveryKey>> UploadNewKeysAsync(VersionedPassword versionedPassword, byte[] credentialKey,
-        bool trustDevice)
+    public Task<Maybe<RecoveryKey>> UploadNewKeysAsync(VersionedPassword versionedPassword, byte[] credentialKey, bool trustDevice)
     {
         return UploadNewMasterKeyAsync(versionedPassword, credentialKey)
             .BindAsync(recoveryKey => UploadNewUserKeyPairAsync(recoveryKey.MasterKey)
@@ -134,8 +130,7 @@ public class UserKeysService : IUserKeysService, IDisposable
         byte[] encryptedMasterKey = _cryptoProvider.Encryption.Encrypt(credentialKey, nonce, newMasterKey);
         byte[] recoveryProof = _cryptoProvider.Random.GenerateRandomBytes(32);
 
-        InsertMasterKeyRequest request =
-            new InsertMasterKeyRequest(versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof);
+        InsertMasterKeyRequest request = new InsertMasterKeyRequest(versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof);
         return _crypterApiClient.UserKey.InsertMasterKeyAsync(request)
             .ToMaybeTask()
             .BindAsync(_ => new RecoveryKey(newMasterKey, request.RecoveryProof));

@@ -77,8 +77,7 @@ public class UserPasswordService : IUserPasswordService
         };
     }
 
-    public async Task<Maybe<VersionedPassword>> DeriveUserAuthenticationPasswordAsync(Username username,
-        Password password, int passwordVersion)
+    public async Task<Maybe<VersionedPassword>> DeriveUserAuthenticationPasswordAsync(Username username, Password password, int passwordVersion)
     {
 #pragma warning disable CS0618
         return passwordVersion switch
@@ -101,8 +100,7 @@ public class UserPasswordService : IUserPasswordService
         return new VersionedPassword(hashedPassword, 0);
     }
 
-    private async Task<Maybe<VersionedPassword>> DeriveArgonAuthenticationPasswordAsync(Username username,
-        Password password)
+    private async Task<Maybe<VersionedPassword>> DeriveArgonAuthenticationPasswordAsync(Username username, Password password)
     {
         OnPasswordHashBeginEvent(PasswordHashType.AuthenticationKey);
         await Task.Delay(1);
