@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+/*
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,25 +24,34 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Crypter.DataAccess;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Unit = EasyMonads.Unit;
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication;
+namespace Crypter.Core.Features.UserAuthentication.Commands;
 
-public class LoginResponse
+public sealed record DeleteMultiFactorChallengeCommand(Guid MultiFactorChallengeId) : IRequest<Unit>;
+
+internal sealed class DeleteMultiFactorChallengeCommandHandler : IRequestHandler<DeleteMultiFactorChallengeCommand, Unit>
 {
-    public string Username { get; init; }
-    public string AuthenticationToken { get; init; }
-    public string RefreshToken { get; init; }
-    public bool UploadNewKeys { get; init; }
-    public bool ShowRecoveryKey { get; init; }
+    private readonly DataContext _dataContext;
 
-    [JsonConstructor]
-    public LoginResponse(string username, string authenticationToken, string refreshToken, bool uploadNewKeys, bool showRecoveryKey)
+    public DeleteMultiFactorChallengeCommandHandler(DataContext dataContext)
     {
-        Username = username;
-        AuthenticationToken = authenticationToken;
-        RefreshToken = refreshToken;
-        UploadNewKeys = uploadNewKeys;
-        ShowRecoveryKey = showRecoveryKey;
+        _dataContext = dataContext;
+    }
+    
+    public async Task<Unit> Handle(DeleteMultiFactorChallengeCommand request, CancellationToken cancellationToken)
+    {
+        await _dataContext.UserMultiFactorChallenges
+            .Where(x => x.Id == request.MultiFactorChallengeId)
+            .ExecuteDeleteAsync(CancellationToken.None);
+
+        return Unit.Default;
     }
 }

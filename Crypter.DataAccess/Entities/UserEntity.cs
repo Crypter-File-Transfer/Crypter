@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -41,6 +41,7 @@ public class UserEntity
     public short ServerPasswordVersion { get; set; }
     public short ClientPasswordVersion { get; set; }
     public bool EmailVerified { get; set; }
+    public bool RequireTwoFactorAuthentication { get; set; }
     public DateTime Created { get; set; }
     public DateTime LastLogin { get; set; }
 
@@ -60,6 +61,7 @@ public class UserEntity
     public List<UserMessageTransferEntity>? ReceivedMessageTransfers { get; set; }
     public List<UserFailedLoginEntity>? FailedLoginAttempts { get; set; }
     public List<UserConsentEntity>? Consents { get; set; }
+    public List<UserMultiFactorChallengeEntity> MultiFactorChallenges { get; set; }
 
     /// <summary>
     /// Please avoid using this.
@@ -141,6 +143,10 @@ public class UserEntityConfiguration : IEntityTypeConfiguration<UserEntity>
             .WithOne(x => x.Recipient)
             .HasForeignKey(x => x.RecipientId);
 
+        builder.HasMany(x => x.MultiFactorChallenges)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.Owner);
+        
         builder.HasIndex(x => x.Username)
             .IsUnique();
 

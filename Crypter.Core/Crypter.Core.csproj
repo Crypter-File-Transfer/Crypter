@@ -18,6 +18,7 @@
       <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="8.0.10" />
       <PackageReference Include="MimeKit" Version="4.8.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <PackageReference Include="OneOf" Version="3.0.271" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.1.2" />
    </ItemGroup>
 

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2023 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -28,21 +28,13 @@ using System.Text.Json.Serialization;
 
 namespace Crypter.Common.Contracts.Features.UserAuthentication;
 
-public class LoginResponse
+public class ChallengeResponse
 {
-    public string Username { get; init; }
-    public string AuthenticationToken { get; init; }
-    public string RefreshToken { get; init; }
-    public bool UploadNewKeys { get; init; }
-    public bool ShowRecoveryKey { get; init; }
+    public string ChallengeHash { get; init; }
 
     [JsonConstructor]
-    public LoginResponse(string username, string authenticationToken, string refreshToken, bool uploadNewKeys, bool showRecoveryKey)
+    public ChallengeResponse(string challengeHash)
     {
-        Username = username;
-        AuthenticationToken = authenticationToken;
-        RefreshToken = refreshToken;
-        UploadNewKeys = uploadNewKeys;
-        ShowRecoveryKey = showRecoveryKey;
+        ChallengeHash = challengeHash;
     }
 }

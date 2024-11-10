@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+/*
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,25 +24,38 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication;
+namespace Crypter.DataAccess.Entities;
 
-public class LoginResponse
+public class UserMultiFactorChallengeEntity
 {
-    public string Username { get; init; }
-    public string AuthenticationToken { get; init; }
-    public string RefreshToken { get; init; }
-    public bool UploadNewKeys { get; init; }
-    public bool ShowRecoveryKey { get; init; }
+    public Guid Id { get; set; }
+    public Guid Owner { get; set; }
+    public string VerificationCode { get; set; }
+    public DateTime Created { get; set; }
+    
+    public UserEntity User { get; set; }
 
-    [JsonConstructor]
-    public LoginResponse(string username, string authenticationToken, string refreshToken, bool uploadNewKeys, bool showRecoveryKey)
+    public UserMultiFactorChallengeEntity(Guid id, Guid owner, string verificationCode, DateTime created)
     {
-        Username = username;
-        AuthenticationToken = authenticationToken;
-        RefreshToken = refreshToken;
-        UploadNewKeys = uploadNewKeys;
-        ShowRecoveryKey = showRecoveryKey;
+        Id = id;
+        Owner = owner;
+        VerificationCode = verificationCode;
+        Created = created;
+    }
+}
+
+public class UserMultiFactorChallengeEntityConfiguration : IEntityTypeConfiguration<UserMultiFactorChallengeEntity>
+{
+    public void Configure(EntityTypeBuilder<UserMultiFactorChallengeEntity> builder)
+    {
+        builder.ToTable("UserMultiFactorChallenge");
+
+        builder.HasKey(x => x.Id);
+        
+        builder.Property(x => x.VerificationCode)
+            .HasMaxLength(8);
     }
 }

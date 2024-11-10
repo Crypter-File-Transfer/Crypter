@@ -30,4 +30,5 @@ public interface IRandom
 {
     uint GenerateRandomNumber();
     byte[] GenerateRandomBytes(int size);
+    string GenerateRandomString(int length, string alphabet);
 }

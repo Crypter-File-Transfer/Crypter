@@ -101,6 +101,7 @@ public class UserAuthenticationController : CrypterControllerBase
     /// <returns></returns>
     [HttpPost("login")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(LoginResponse))]
+    [ProducesResponseType(StatusCodes.Status307TemporaryRedirect, Type = typeof(ChallengeResponse))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponse))]
     public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request)
@@ -126,7 +127,7 @@ public class UserAuthenticationController : CrypterControllerBase
         return await _sender.Send(command)
             .MatchAsync(
                 MakeErrorResponse,
-                Ok,
+                x => Ok(x.Value),
                 MakeErrorResponse(LoginError.UnknownError));
     }
 
@@ -161,7 +162,6 @@ public class UserAuthenticationController : CrypterControllerBase
 #pragma warning restore CS8524
         }
 
-
         string requestUserAgent = HeadersParser.GetUserAgent(HttpContext.Request.Headers);
         RefreshUserSessionCommand request = new RefreshUserSessionCommand(User, requestUserAgent);
         return await _sender.Send(request)
@@ -182,8 +182,7 @@ public class UserAuthenticationController : CrypterControllerBase
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponse))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-    public async Task<IActionResult> PasswordChallengeAsync([FromBody] PasswordChallengeRequest request,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> PasswordChallengeAsync([FromBody] PasswordChallengeRequest request, CancellationToken cancellationToken)
     {
         IActionResult MakeErrorResponse(PasswordChallengeError error)
         {
