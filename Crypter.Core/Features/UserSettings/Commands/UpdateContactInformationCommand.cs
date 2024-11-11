@@ -97,14 +97,12 @@ internal sealed class UpdateContactInformationCommandHandler
             return UpdateContactInfoSettingsError.UserNotFound;
         }
 
-        if (user.ClientPasswordVersion != _serverPasswordSettings.ClientVersion
-            || user.ServerPasswordVersion != _passwordHashService.LatestServerPasswordVersion)
+        if (user.ClientPasswordVersion != _serverPasswordSettings.ClientVersion || user.ServerPasswordVersion != _passwordHashService.LatestServerPasswordVersion)
         {
             return UpdateContactInfoSettingsError.PasswordNeedsMigration;
         }
 
-        bool correctPasswordProvided = _passwordHashService.VerifySecurePasswordHash(validAuthenticationPassword,
-            user.PasswordHash, user.PasswordSalt, _passwordHashService.LatestServerPasswordVersion);
+        bool correctPasswordProvided = _passwordHashService.VerifySecurePasswordHash(validAuthenticationPassword, user.PasswordHash, user.PasswordSalt, _passwordHashService.LatestServerPasswordVersion);
         if (!correctPasswordProvided)
         {
             return UpdateContactInfoSettingsError.InvalidPassword;
@@ -127,10 +125,10 @@ internal sealed class UpdateContactInformationCommandHandler
                 () => null,
                 x => x.Value);
             user.EmailVerified = false;
+            user.RequireTwoFactorAuthentication = false;
             await _dataContext.SaveChangesAsync(CancellationToken.None);
 
-            EmailAddressChangedEvent emailAddressChangedEvent =
-                new EmailAddressChangedEvent(request.UserId, newEmailAddress);
+            EmailAddressChangedEvent emailAddressChangedEvent = new EmailAddressChangedEvent(request.UserId, newEmailAddress);
             await _publisher.Publish(emailAddressChangedEvent, CancellationToken.None);
         }
 
