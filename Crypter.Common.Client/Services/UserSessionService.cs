@@ -254,7 +254,7 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
 
     private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
     {
-        LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType);
+        LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType, null);
         return _crypterApiClient.UserAuthentication.LoginAsync(loginRequest);
     }
 
