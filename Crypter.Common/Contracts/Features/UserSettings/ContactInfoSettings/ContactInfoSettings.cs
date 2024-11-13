@@ -30,10 +30,12 @@ public class ContactInfoSettings
 {
     public string? EmailAddress { get; init; }
     public bool EmailAddressVerified { get; init; }
+    public bool MultiFactorAuthenticationEnabled { get; init; }
 
-    public ContactInfoSettings(string? emailAddress, bool emailAddressVerified)
+    public ContactInfoSettings(string? emailAddress, bool emailAddressVerified, bool multiFactorAuthenticationEnabled)
     {
         EmailAddress = emailAddress;
         EmailAddressVerified = emailAddressVerified;
+        MultiFactorAuthenticationEnabled = multiFactorAuthenticationEnabled;
     }
 }

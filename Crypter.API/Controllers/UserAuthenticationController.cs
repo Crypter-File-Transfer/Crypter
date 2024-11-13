@@ -31,7 +31,6 @@ using Crypter.API.Controllers.Base;
 using Crypter.API.Methods;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserAuthentication.PasswordChange;
 using Crypter.Core.Features.UserAuthentication.Commands;
 using Crypter.Core.Features.UserAuthentication.Queries;
 using EasyMonads;
@@ -117,7 +116,8 @@ public class UserAuthenticationController : CrypterControllerBase
                     or LoginError.InvalidPassword
                     or LoginError.InvalidTokenTypeRequested
                     or LoginError.ExcessiveFailedLoginAttempts
-                    or LoginError.InvalidPasswordVersion => MakeErrorResponseBase(HttpStatusCode.BadRequest, error)
+                    or LoginError.InvalidPasswordVersion => MakeErrorResponseBase(HttpStatusCode.BadRequest, error),
+                LoginError.InvalidMultiFactorChallenge => MakeErrorResponseBase(HttpStatusCode.TemporaryRedirect, error)
             };
 #pragma warning restore CS8524
         }

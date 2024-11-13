@@ -50,10 +50,14 @@ public partial class UserSettingsAccountInfo
     private string _passwordChangeNewPassword = string.Empty;
     private string _passwordChangeConfirmPassword = string.Empty;
 
+    private bool _multiFactorAuthentication = false;
+    private bool _multiFactorAuthenticationEdit = false;
+    
     private bool _isDataReady = false;
     private bool _isEditingEmailAddress = false;
     private bool _isEditingPassword = false;
-
+    private bool _isEditingMultiFactorAuthentication = false;
+    
     private string _emailAddressError = string.Empty;
     private string _emailAddressPasswordError = string.Empty;
     private string _genericEmailAddressError = string.Empty;
@@ -63,6 +67,8 @@ public partial class UserSettingsAccountInfo
     private string _confirmPasswordError = string.Empty;
     private string _passwordChangeError = string.Empty;
 
+    private string _multiFactorAuthenticationError = string.Empty;
+    
     protected override async Task OnInitializedAsync()
     {
         await UserContactInfoSettingsService.GetContactInfoSettingsAsync()
@@ -86,6 +92,11 @@ public partial class UserSettingsAccountInfo
     {
         _isEditingPassword = true;
     }
+
+    private void OnEditMultiFactorAuthenticationClicked()
+    {
+        _isEditingMultiFactorAuthentication = true;
+    }
     
     private void OnCancelForEditContactInfoClicked()
     {
@@ -104,6 +115,12 @@ public partial class UserSettingsAccountInfo
         _isEditingPassword = false;
 
     }
+
+    private void OnCancelForMultiFactorAuthenticationClicked()
+    {
+        _multiFactorAuthenticationEdit = _multiFactorAuthentication;
+        _isEditingMultiFactorAuthentication = false;
+    }
     
     private void ResetContactInfoErrors()
     {
@@ -119,6 +136,11 @@ public partial class UserSettingsAccountInfo
         _newPasswordError = string.Empty;
         _confirmPasswordError = string.Empty;
         _passwordChangeError = string.Empty;
+    }
+
+    private void ResetMultiFactorAuthenticationErrors()
+    {
+        _multiFactorAuthenticationError = string.Empty;
     }
     
     private async Task OnSaveContactInfoClickedAsync()
@@ -185,6 +207,11 @@ public partial class UserSettingsAccountInfo
                 () => HandlePasswordChangeError());
     }
 
+    private async Task OnSaveMultiFactorAuthenticationClickedAsync()
+    {
+        ResetMultiFactorAuthenticationErrors();
+    }
+    
     private void HandleContactInfoUpdateError(UpdateContactInfoSettingsError error = UpdateContactInfoSettingsError.UnknownError)
     {
         switch (error)

@@ -26,11 +26,12 @@
 
 namespace Crypter.Common.Contracts.Features.UserAuthentication;
 
-public enum PasswordChangeError
+public class MultiFactorChangeRequest
 {
-    UnknownError,
-    InvalidPassword,
-    InvalidOldPasswordVersion,
-    InvalidNewPasswordVersion,
-    PasswordHashFailure
+    public bool EnableMultiFactorAuthentication { get; set; }
+
+    public MultiFactorChangeRequest(bool enableMultiFactorAuthentication)
+    {
+        EnableMultiFactorAuthentication = enableMultiFactorAuthentication;
+    }
 }
