@@ -53,7 +53,7 @@ This should also aid developers in deciding where to add a new API endpoint or w
    * PUT /api/user/key/private
 
 * User Recovery
-   * GET /api/user/recovery?email={emailAdress}
+   * GET /api/user/recovery?email={emailAddress}
    * POST /api/user/recovery
 
 * User Settings

@@ -4,10 +4,10 @@
  * Original license: GPLv3
  * 
  * Modified by: Jack Edwards
- * Modified date: May 2024
+ * Modified date: May 2024, December 2024
  */
 
-import UAParser from 'ua-parser-js';
+import { UAParser } from 'ua-parser-js';
 
 const uaParser = new UAParser();
 const ua = uaParser.getResult();

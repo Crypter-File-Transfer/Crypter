@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0-preview AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /source/
 
 SHELL ["/bin/bash", "-c"]
@@ -27,7 +27,7 @@ COPY Crypter.Web/. ./Crypter.Web/
 RUN dotnet workload install wasm-tools
 RUN dotnet publish Crypter.Web --no-restore --configuration release /p:TreatWarningsAsErrors=true /warnaserror --output /app/
 
-FROM caddy:2.8-alpine AS webhost
+FROM caddy:2.9-alpine AS webhost
 COPY Crypter.Web/Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/wwwroot/ /srv/
 EXPOSE 80
