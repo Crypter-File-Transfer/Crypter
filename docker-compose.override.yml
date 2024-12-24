@@ -7,7 +7,7 @@ services:
     profiles:
       - db
       - local
-    image: postgres:15.2
+    image: postgres:15.10
     expose:
       - "5432"
     ports:

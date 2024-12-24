@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
    <PropertyGroup>
-      <TargetFramework>net8.0</TargetFramework>
+      <TargetFramework>net9.0</TargetFramework>
       <ImplicitUsings>disable</ImplicitUsings>
       <Nullable>enable</Nullable>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -9,7 +9,7 @@
    </PropertyGroup>
 
    <ItemGroup>
-      <PackageReference Include="Geralt" Version="3.1.0" />
+      <PackageReference Include="Geralt" Version="3.3.0" />
    </ItemGroup>
 
    <ItemGroup>
