@@ -53,8 +53,7 @@ public class UploadHandler : IUserUploadHandler
     
     protected Maybe<byte[]> RecipientPublicKey = Maybe<byte[]>.None;
 
-    protected UploadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        ClientTransferSettings clientTransferSettings)
+    protected UploadHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, ClientTransferSettings clientTransferSettings)
     {
         CrypterApiClient = crypterApiClient;
         CryptoProvider = cryptoProvider;
