@@ -59,6 +59,11 @@ public class ClientTransferSettings
     public int MaximumMultipartParallelism { get; init; }
     
     /// <summary>
+    /// Set the number of seconds the adaptive multipart upload algorithm will target for individual upload requests.
+    /// </summary>
+    public int TargetMultipartUploadMilliseconds { get; init; }
+    
+    /// <summary>
     /// Set the number of bytes of plaintext to read at one time when encrypting a file or message.
     /// </summary>
     public int MaxReadSize { get; init; }

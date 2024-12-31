@@ -46,11 +46,9 @@ public class UploadMessageHandler : UploadHandler
     private int _messageSize;
     private bool _transferInfoSet;
 
-    public UploadMessageHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        ClientTransferSettings clientTransferSettings)
+    public UploadMessageHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, ClientTransferSettings clientTransferSettings)
         : base(crypterApiClient, cryptoProvider, clientTransferSettings)
-    {
-    }
+    { }
 
     internal void SetTransferInfo(string messageSubject, string messageBody, int expirationHours)
     {

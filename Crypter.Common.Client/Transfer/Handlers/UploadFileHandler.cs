@@ -52,11 +52,9 @@ public class UploadFileHandler : UploadHandler
     private string? _fileContentType;
     private bool _transferInfoSet;
 
-    public UploadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        ClientTransferSettings clientTransferSettings)
+    public UploadFileHandler(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, ClientTransferSettings clientTransferSettings)
         : base(crypterApiClient, cryptoProvider, clientTransferSettings)
-    {
-    }
+    { }
 
     internal void SetTransferInfo(Func<Stream> fileStreamOpener, string fileName, long fileSize, string fileContentType, int expirationHours)
     {
@@ -99,7 +97,7 @@ public class UploadFileHandler : UploadHandler
                     {
                         MaxDegreeOfParallelism = ClientTransferSettings.MaximumMultipartParallelism
                     };
-                    SemaphoreSlim uploadLock = new SemaphoreSlim(1);
+                    SemaphoreSlim readLock = new SemaphoreSlim(1);
                     bool fault = false;
                     int currentPosition = 0;
                     await Parallel.ForEachAsync(asyncEnumerable, parallelOptions, async (streamOpener, _) =>
@@ -108,7 +106,7 @@ public class UploadFileHandler : UploadHandler
                         {
                             try
                             {
-                                await uploadLock.WaitAsync(CancellationToken.None);
+                                await readLock.WaitAsync(CancellationToken.None);
                                 Task<Either<UploadMultipartFileTransferError, Unit>> uploadTask = CrypterApiClient.FileTransfer
                                     .UploadMultipartFileTransferAsync(initializeResult.HashId, currentPosition, streamOpener)
                                     .ContinueWith(x =>
@@ -122,7 +120,7 @@ public class UploadFileHandler : UploadHandler
                                     }, CancellationToken.None);
                                 indexedUploadResults.Add(currentPosition, uploadTask);
                                 currentPosition++;
-                                uploadLock.Release();
+                                readLock.Release();
                                 await uploadTask;
                             }
                             catch (Exception)
@@ -161,7 +159,7 @@ public class UploadFileHandler : UploadHandler
         {
             bool endOfStream = false;
             Stopwatch loopStopwatch = new Stopwatch();
-            short blocksPerRequest = ClientTransferSettings.InitialMultipartReadBlocks;
+            int blocksPerRequest = ClientTransferSettings.InitialMultipartReadBlocks;
             do
             {
                 loopStopwatch.Restart();
@@ -191,15 +189,11 @@ public class UploadFileHandler : UploadHandler
                         ArrayPool<byte>.Shared.Return(buffer, clearArray: true);   
                     }
                 }
-
-                if (loopStopwatch.Elapsed < TimeSpan.FromSeconds(1) && blocksPerRequest < ClientTransferSettings.MaximumMultipartReadBlocks)
-                {
-                    blocksPerRequest += 5;
-                }
-                else if (loopStopwatch.Elapsed > TimeSpan.FromSeconds(1) && blocksPerRequest > ClientTransferSettings.InitialMultipartReadBlocks)
-                {
-                    blocksPerRequest -= 5;
-                }
+                
+                double factor = ClientTransferSettings.TargetMultipartUploadMilliseconds / loopStopwatch.Elapsed.TotalMilliseconds;
+                int optimalBlocksPerRequest = Convert.ToInt32(blocksPerRequest * factor);
+                int lowerBound = Math.Max(ClientTransferSettings.InitialMultipartReadBlocks, optimalBlocksPerRequest);
+                blocksPerRequest = Math.Min(ClientTransferSettings.MaximumMultipartReadBlocks, lowerBound);
             } while (!endOfStream);
         }
     }

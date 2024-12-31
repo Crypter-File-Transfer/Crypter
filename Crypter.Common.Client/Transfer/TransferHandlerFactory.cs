@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -51,34 +51,30 @@ public class TransferHandlerFactory
         _clientTransferSettings = clientTransferSettings;
     }
 
-    public UploadFileHandler CreateUploadFileHandler(Func<Stream> fileStreamOpener, string fileName, long fileSize,
-        string fileContentType, int expirationHours)
+    public UploadFileHandler CreateUploadFileHandler(Func<Stream> fileStreamOpener, string fileName, long fileSize, string fileContentType, int expirationHours)
     {
-        var handler = new UploadFileHandler(_crypterApiClient, _cryptoProvider, _clientTransferSettings);
+        UploadFileHandler handler = new UploadFileHandler(_crypterApiClient, _cryptoProvider, _clientTransferSettings);
         handler.SetTransferInfo(fileStreamOpener, fileName, fileSize, fileContentType, expirationHours);
         return handler;
     }
 
-    public UploadMessageHandler CreateUploadMessageHandler(string messageSubject, string messageBody,
-        int expirationHours)
+    public UploadMessageHandler CreateUploadMessageHandler(string messageSubject, string messageBody, int expirationHours)
     {
-        var handler = new UploadMessageHandler(_crypterApiClient, _cryptoProvider, _clientTransferSettings);
+        UploadMessageHandler handler = new UploadMessageHandler(_crypterApiClient, _cryptoProvider, _clientTransferSettings);
         handler.SetTransferInfo(messageSubject, messageBody, expirationHours);
         return handler;
     }
 
     public DownloadFileHandler CreateDownloadFileHandler(string hashId, TransferUserType userType)
     {
-        var handler =
-            new DownloadFileHandler(_crypterApiClient, _cryptoProvider, _userSessionService, _clientTransferSettings);
+        DownloadFileHandler handler = new DownloadFileHandler(_crypterApiClient, _cryptoProvider, _userSessionService, _clientTransferSettings);
         handler.SetTransferInfo(hashId, userType);
         return handler;
     }
 
     public DownloadMessageHandler CreateDownloadMessageHandler(string hashId, TransferUserType userType)
     {
-        var handler =
-            new DownloadMessageHandler(_crypterApiClient, _cryptoProvider, _userSessionService, _clientTransferSettings);
+        DownloadMessageHandler handler = new DownloadMessageHandler(_crypterApiClient, _cryptoProvider, _userSessionService, _clientTransferSettings);
         handler.SetTransferInfo(hashId, userType);
         return handler;
     }
