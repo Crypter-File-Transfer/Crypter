@@ -9,10 +9,10 @@ on:
         type: choice
         options:
           - production
-          - development
+          - staging
 
 env:
-  docker_compose_profile: ${{ (github.event.inputs.environment == 'development' && 'local') || 'web' }}
+  docker_compose_profile: ${{ (github.event.inputs.environment == 'staging' && 'local') || 'web' }}
 
 jobs:
   deploy-web-container:
@@ -68,8 +68,8 @@ jobs:
           source: docker-compose.yml
           target: crypter-web-container/
 
-      - name: Push latest Docker Compose override file if deploying to Development server
-        if: github.event.inputs.environment == 'development'
+      - name: Push latest Docker Compose override file if deploying to Staging server
+        if: github.event.inputs.environment == 'staging'
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
