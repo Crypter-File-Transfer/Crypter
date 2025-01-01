@@ -13,7 +13,7 @@ on:
         type: choice
         options:
           - production
-          - development
+          - staging
 
 env:
   registry: ghcr.io/${{ github.repository_owner }}
@@ -37,6 +37,7 @@ jobs:
         working-directory: ${{ env.project_root }}
         run: |
           sed -i 's|${API_BASE_URL}|${{ vars.API_BASE_URL }}|g' wwwroot/appsettings.json
+          sed -i 's|${API_BASE_URL}|${{ vars.API_BASE_URL }}|g' wwwroot/appsettings.Staging.json
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

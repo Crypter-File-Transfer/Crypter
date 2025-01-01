@@ -2,10 +2,12 @@ version: 2
 updates:
   - package-ecosystem: "nuget"
     directory: "/"
+    target-branch: "stable"
     schedule:
       interval: "monthly"
       
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "stable"
     schedule:
       interval: "monthly"
