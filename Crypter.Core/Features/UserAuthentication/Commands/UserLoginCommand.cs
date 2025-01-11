@@ -89,9 +89,7 @@ internal sealed class UserLoginCommandHandler
             .BindAsync(async validLoginRequest => await (
                 from foundUser in GetUserAsync(validLoginRequest)
                 from passwordVerificationSuccess in VerifyAndUpgradePassword(validLoginRequest, foundUser).AsTask()
-                from loginResponse in Either<LoginError, LoginResponse>.FromRightAsync(
-                    CreateLoginResponseAsync(foundUser, validLoginRequest.RefreshTokenType,
-                        request.DeviceDescription))
+                from loginResponse in CreateLoginResponseAsync(foundUser, validLoginRequest.RefreshTokenType, request.DeviceDescription)
                 select loginResponse)
             )
             .DoRightAsync(async _ =>
@@ -205,7 +203,7 @@ internal sealed class UserLoginCommandHandler
         return Unit.Default;
     }
 
-    private async Task<LoginResponse> CreateLoginResponseAsync(UserEntity userEntity, TokenType refreshTokenType, string deviceDescription)
+    private async Task<Either<LoginError, LoginResponse>> CreateLoginResponseAsync(UserEntity userEntity, TokenType refreshTokenType, string deviceDescription)
     {
         userEntity.LastLogin = DateTime.UtcNow;
         
@@ -224,12 +222,10 @@ internal sealed class UserLoginCommandHandler
         string authToken = _tokenService.NewAuthenticationToken(userEntity.Id);
         await Common.PublishRefreshTokenCreatedEventAsync(_publisher, refreshToken);
 
-        bool userHasConsentedToRecoveryKeyRisks =
-            userEntity.Consents!.Any(x => x.ConsentType == ConsentType.RecoveryKeyRisks);
-        bool userNeedsNewKeys = userEntity.MasterKey is null && userEntity.KeyPair is null;
+        bool userHasConsentedToRecoveryKeyRisks = userEntity.Consents!
+            .Any(x => x.ConsentType == ConsentType.RecoveryKeyRisks);
 
-        return new LoginResponse(userEntity.Username, authToken, refreshToken.Token, userNeedsNewKeys,
-            !userHasConsentedToRecoveryKeyRisks);
+        return new LoginResponse(userEntity.Username, authToken, refreshToken.Token, !userHasConsentedToRecoveryKeyRisks);
     }
     
     private Either<LoginError, IDictionary<short, byte[]>> GetValidClientPasswords(List<VersionedPassword> clientPasswords)

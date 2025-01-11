@@ -24,10 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Threading.Tasks;
-using Crypter.Common.Client.Models;
-using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Primitives;
+using System;
+using Crypter.Common.Client.Events;
 using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Services;
@@ -36,10 +34,5 @@ public interface IUserKeysService
 {
     Maybe<byte[]> MasterKey { get; }
     Maybe<byte[]> PrivateKey { get; }
-
-    Task DownloadExistingKeysAsync(Username username, Password password, bool trustDevice);
-    Task DownloadExistingKeysAsync(byte[] credentialKey, bool trustDevice);
-    
-    Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, Password password, VersionedPassword versionedPassword, bool trustDevice);
-    Task<Maybe<RecoveryKey>> UploadNewKeysAsync(VersionedPassword versionedPassword, byte[] credentialKey, bool trustDevice);
+    event EventHandler<RecoveryKeyCreatedEventArgs> RecoveryKeyCreatedEventHandler;
 }

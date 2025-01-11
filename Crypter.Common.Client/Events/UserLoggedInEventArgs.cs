@@ -36,17 +36,14 @@ public class UserLoggedInEventArgs : EventArgs
     public Password Password { get; init; }
     public VersionedPassword VersionedPassword { get; init; }
     public bool RememberUser { get; init; }
-    public bool UploadNewKeys { get; init; }
     public bool ShowRecoveryKeyModal { get; init; }
 
-    public UserLoggedInEventArgs(Username username, Password password, VersionedPassword versionedPassword,
-        bool rememberUser, bool uploadNewKeys, bool showRecoveryKeyModal)
+    public UserLoggedInEventArgs(Username username, Password password, VersionedPassword versionedPassword, bool rememberUser, bool showRecoveryKeyModal)
     {
         Username = username;
         Password = password;
         VersionedPassword = versionedPassword;
         RememberUser = rememberUser;
-        UploadNewKeys = uploadNewKeys;
         ShowRecoveryKeyModal = showRecoveryKeyModal;
     }
 }
