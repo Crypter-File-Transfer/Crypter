@@ -33,17 +33,14 @@ public class LoginResponse
     public string Username { get; init; }
     public string AuthenticationToken { get; init; }
     public string RefreshToken { get; init; }
-    public bool UploadNewKeys { get; init; }
     public bool ShowRecoveryKey { get; init; }
 
     [JsonConstructor]
-    public LoginResponse(string username, string authenticationToken, string refreshToken, bool uploadNewKeys,
-        bool showRecoveryKey)
+    public LoginResponse(string username, string authenticationToken, string refreshToken, bool showRecoveryKey)
     {
         Username = username;
         AuthenticationToken = authenticationToken;
         RefreshToken = refreshToken;
-        UploadNewKeys = uploadNewKeys;
         ShowRecoveryKey = showRecoveryKey;
     }
 }
