@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,8 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-using Crypter.Common.Client.Events;
+using System.Threading.Tasks;
+using Crypter.Common.Client.Models;
+using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Primitives;
 using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Services;
@@ -34,5 +36,21 @@ public interface IUserKeysService
 {
     Maybe<byte[]> MasterKey { get; }
     Maybe<byte[]> PrivateKey { get; }
-    event EventHandler<EmitRecoveryKeyEventArgs> EmitRecoveryKeyEventHandler;
+    
+    /// <summary>
+    /// Derive a recovery key from the provided parameters.
+    /// </summary>
+    /// <param name="masterKey"></param>
+    /// <param name="username"></param>
+    /// <param name="password">A valid, plaintext password.</param>
+    /// <returns></returns>
+    Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, Password password);
+
+    /// <summary>
+    /// Derive a recovery key from the provided parameters.
+    /// </summary>
+    /// <param name="masterKey"></param>
+    /// <param name="versionedPassword">A hashed password.</param>
+    /// <returns></returns>
+    Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword);
 }

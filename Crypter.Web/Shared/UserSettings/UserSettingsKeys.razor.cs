@@ -40,9 +40,7 @@ public partial class UserSettingsKeys : IDisposable
     [Inject] private IUserSessionService UserSessionService { get; init; } = null!;
 
     [Inject] private IUserKeysService UserKeysService { get; init; } = null!;
-
-    [Inject] private IUserRecoveryService UserRecoveryService { get; init; } = null!;
-
+    
     [Inject] private IJSRuntime JsRuntime { get; init; } = null!;
 
     private PasswordChallengeModal _passwordModal = null!;
@@ -62,7 +60,7 @@ public partial class UserSettingsKeys : IDisposable
     private async void OnPasswordTestSuccess(object? sender, UserPasswordTestSuccessEventArgs args)
     {
         _recoveryKey = await UserKeysService.MasterKey
-            .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, args.Username, args.Password))
+            .BindAsync(async masterKey => await UserKeysService.DeriveRecoveryKeyAsync(masterKey, args.Username, args.Password))
             .MatchAsync(
                 () => "An error occurred",
                 x => x.ToBase64String());
