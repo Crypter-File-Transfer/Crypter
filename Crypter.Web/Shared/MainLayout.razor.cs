@@ -63,8 +63,7 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        UserSessionService.UserLoggedInEventHandler += HandleUserLoggedInEvent;
-        UserKeysService.RecoveryKeyCreatedEventHandler += HandleRecoveryKeyCreatedEvent;
+        UserKeysService.EmitRecoveryKeyEventHandler += HandleRecoveryKeyCreatedEvent;
         UserPasswordService.PasswordHashBeginEventHandler += ShowPasswordHashingModal;
         UserPasswordService.PasswordHashEndEventHandler += ClosePasswordHashingModal;
         await BrowserRepository.InitializeAsync();
@@ -74,15 +73,7 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
         ServicesInitialized = true;
     }
 
-    private async void HandleUserLoggedInEvent(object? _, UserLoggedInEventArgs args)
-    {
-        if (args.ShowRecoveryKeyModal)
-        {
-            await RecoveryKeyModal.OpenAsync(args.VersionedPassword);
-        }
-    }
-
-    private void HandleRecoveryKeyCreatedEvent(object? _, RecoveryKeyCreatedEventArgs args)
+    private void HandleRecoveryKeyCreatedEvent(object? _, EmitRecoveryKeyEventArgs args)
     {
         RecoveryKeyModal.Open(args.RecoveryKey);
     }
@@ -112,8 +103,7 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
 
     public void Dispose()
     {
-        UserSessionService.UserLoggedInEventHandler -= HandleUserLoggedInEvent;
-        UserKeysService.RecoveryKeyCreatedEventHandler -= HandleRecoveryKeyCreatedEvent;
+        UserKeysService.EmitRecoveryKeyEventHandler -= HandleRecoveryKeyCreatedEvent;
         UserPasswordService.PasswordHashBeginEventHandler -= ShowPasswordHashingModal;
         UserPasswordService.PasswordHashEndEventHandler -= ClosePasswordHashingModal;
         GC.SuppressFinalize(this);

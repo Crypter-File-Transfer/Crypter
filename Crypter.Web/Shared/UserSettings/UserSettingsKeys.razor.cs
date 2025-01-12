@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -62,8 +62,7 @@ public partial class UserSettingsKeys : IDisposable
     private async void OnPasswordTestSuccess(object? sender, UserPasswordTestSuccessEventArgs args)
     {
         _recoveryKey = await UserKeysService.MasterKey
-            .BindAsync(async masterKey =>
-                await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, args.Username, args.Password))
+            .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, args.Username, args.Password))
             .MatchAsync(
                 () => "An error occurred",
                 x => x.ToBase64String());

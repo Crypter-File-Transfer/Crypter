@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,12 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
-using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Web.Shared.Modal.Template;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
@@ -50,39 +48,16 @@ public partial class RecoveryKeyModal
     private string _recoveryKey = string.Empty;
 
     private ModalBehavior _modalBehaviorRef = null!;
-    
-    private bool _isOpen = false;
-
-    public async Task OpenAsync(VersionedPassword versionedPassword)
-    {
-        if (!_isOpen)
-        {
-            _isOpen = true;
-            Maybe<RecoveryKey> recoveryKey = await UserKeysService.MasterKey
-                .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, versionedPassword));
-            _recoveryKey = RecoveryKeyToString(recoveryKey);
-            _modalBehaviorRef.Open();
-        }
-    }
 
     public void Open(Maybe<RecoveryKey> recoveryKey)
     {
-        if (!_isOpen)
-        {
-            _isOpen = true;
-            _recoveryKey = RecoveryKeyToString(recoveryKey);
-            _modalBehaviorRef.Open();
-        }
-    }
-
-    private string RecoveryKeyToString(Maybe<RecoveryKey> recoveryKey)
-    {
-        return recoveryKey
+        _recoveryKey = recoveryKey
             .Match(
                 none: () => "An error occurred",
                 some: x => x.ToBase64String());
+        _modalBehaviorRef.Open();
     }
-
+    
     private async Task CopyRecoveryKeyToClipboardAsync()
     {
         await JsRuntime.InvokeVoidAsync("Crypter.CopyToClipboard", _recoveryKey, "recoveryKeyModalCopyTooltip");
@@ -92,6 +67,5 @@ public partial class RecoveryKeyModal
     {
         await CrypterApiService.UserConsent.ConsentToRecoveryKeyRisksAsync();
         _modalBehaviorRef.Close();
-        _isOpen = false;
     }
 }

@@ -33,6 +33,7 @@ using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Primitives;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.KeyExchange;
 using EasyMonads;
@@ -46,19 +47,21 @@ public class UserKeysService : IUserKeysService, IDisposable
     private readonly IUserPasswordService _userPasswordService;
     private readonly IUserKeysRepository _userKeysRepository;
     private readonly IUserSessionService _userSessionService;
+    private readonly IUserRecoveryService _userRecoveryService;
 
-    private EventHandler<RecoveryKeyCreatedEventArgs>? _recoveryKeyCreatedEventHandler;
+    private EventHandler<EmitRecoveryKeyEventArgs>? _emitRecoveryKeyEventHandler;
     
     public Maybe<byte[]> MasterKey { get; private set; } = Maybe<byte[]>.None;
     public Maybe<byte[]> PrivateKey { get; private set; } = Maybe<byte[]>.None;
     
-    public UserKeysService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService)
+    public UserKeysService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService, IUserRecoveryService userRecoveryService)
     {
         _crypterApiClient = crypterApiClient;
         _userPasswordService = userPasswordService;
         _cryptoProvider = cryptoProvider;
         _userKeysRepository = userKeysRepository;
         _userSessionService = userSessionService;
+        _userRecoveryService = userRecoveryService;
 
         _userSessionService.ServiceInitializedEventHandler += InitializeAsync;
         _userSessionService.UserLoggedInEventHandler += HandleUserLoginAsync;
@@ -84,10 +87,19 @@ public class UserKeysService : IUserKeysService, IDisposable
             .IfSomeAsync(async carryData =>
             {
                 await StoreSecretKeysAsync(carryData.MasterKey, carryData.PrivateKey, args.RememberUser);
-                carryData.NewRecoveryKey.IfSome(HandleRecoveryKeyCreatedEvent);
+                await carryData.NewRecoveryKey
+                    .IfSome(HandleEmitRecoveryKeyEvent)
+                    .IfNoneAsync(async () =>
+                    {
+                        if (args.ShowRecoveryKeyModal)
+                        {
+                            await _userRecoveryService.DeriveRecoveryKeyAsync(carryData.MasterKey, args.VersionedPassword)
+                                .IfSomeAsync(HandleEmitRecoveryKeyEvent);
+                        }
+                    });
             });
     }
-
+    
     /// <summary>
     /// Get the existing master key from the API and decrypt it.
     /// If the master key does not already exist, create and upload a new one.
@@ -176,15 +188,15 @@ public class UserKeysService : IUserKeysService, IDisposable
         await _userKeysRepository.StorePrivateKeyAsync(privateKey, trustDevice);
     }
 
-    private void HandleRecoveryKeyCreatedEvent(RecoveryKey recoveryKey) =>
-        _recoveryKeyCreatedEventHandler?.Invoke(this, new RecoveryKeyCreatedEventArgs(recoveryKey));
+    private void HandleEmitRecoveryKeyEvent(RecoveryKey recoveryKey) =>
+        _emitRecoveryKeyEventHandler?.Invoke(this, new EmitRecoveryKeyEventArgs(recoveryKey));
     
-    public event EventHandler<RecoveryKeyCreatedEventArgs> RecoveryKeyCreatedEventHandler
+    public event EventHandler<EmitRecoveryKeyEventArgs> EmitRecoveryKeyEventHandler
     {
-        add => _recoveryKeyCreatedEventHandler = 
-            (EventHandler<RecoveryKeyCreatedEventArgs>)Delegate.Combine(_recoveryKeyCreatedEventHandler, value);
-        remove => _recoveryKeyCreatedEventHandler =
-            (EventHandler<RecoveryKeyCreatedEventArgs>?)Delegate.Remove(_recoveryKeyCreatedEventHandler, value);
+        add => _emitRecoveryKeyEventHandler = 
+            (EventHandler<EmitRecoveryKeyEventArgs>)Delegate.Combine(_emitRecoveryKeyEventHandler, value);
+        remove => _emitRecoveryKeyEventHandler =
+            (EventHandler<EmitRecoveryKeyEventArgs>?)Delegate.Remove(_emitRecoveryKeyEventHandler, value);
     }
     
     private void Recycle(object? _, EventArgs __)
