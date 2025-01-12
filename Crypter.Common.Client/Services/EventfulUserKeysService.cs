@@ -32,19 +32,22 @@ using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
 using Crypter.Crypto.Common;
 using EasyMonads;
+using Microsoft.Extensions.Logging;
 
 namespace Crypter.Common.Client.Services;
 
 public sealed class EventfulUserKeysService : UserKeysService, IEventfulUserKeysService, IDisposable
 {
+    private readonly ILogger<EventfulUserKeysService> _logger;
     private readonly IUserSessionService _userSessionService;
     private EventHandler<EmitRecoveryKeyEventArgs>? _emitRecoveryKeyEventHandler;
     private event EventHandler? _prepareUserKeysBeginEventHandler;
     private event EventHandler? _prepareUserKeysEndEventHandler;
     
-    public EventfulUserKeysService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService)
-        : base(crypterApiClient, cryptoProvider, userPasswordService, userKeysRepository)
+    public EventfulUserKeysService(ILogger<EventfulUserKeysService> logger, ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService)
+        : base(logger, crypterApiClient, cryptoProvider, userPasswordService, userKeysRepository)
     {
+        _logger = logger;
         _userSessionService = userSessionService;
         
         _userSessionService.ServiceInitializedEventHandler += InitializeAsync;
@@ -54,8 +57,10 @@ public sealed class EventfulUserKeysService : UserKeysService, IEventfulUserKeys
     
     private async void InitializeAsync(object? _, UserSessionServiceInitializedEventArgs args)
     {
+        _logger.LogDebug("Initializing");
         if (args.IsLoggedIn)
         {
+            _logger.LogDebug($"Loading secret keys from {nameof(UserKeysRepository)}");
             MasterKey = await UserKeysRepository.GetMasterKeyAsync();
             PrivateKey = await UserKeysRepository.GetPrivateKeyAsync();
         }
@@ -121,12 +126,14 @@ public sealed class EventfulUserKeysService : UserKeysService, IEventfulUserKeys
     
     private void Recycle(object? _, EventArgs __)
     {
+        _logger.LogDebug("Recycling");
         MasterKey = Maybe<byte[]>.None;
         PrivateKey = Maybe<byte[]>.None;
     }
 
     public void Dispose()
     {
+        _logger.LogDebug("Disposing");
         _userSessionService.ServiceInitializedEventHandler -= InitializeAsync;
         _userSessionService.UserLoggedInEventHandler -= HandleUserLoginAsync;
         _userSessionService.UserLoggedOutEventHandler -= Recycle;
