@@ -39,8 +39,6 @@ public sealed class EventfulUserKeysService : UserKeysService, IEventfulUserKeys
 {
     private readonly IUserSessionService _userSessionService;
     private EventHandler<EmitRecoveryKeyEventArgs>? _emitRecoveryKeyEventHandler;
-    private event EventHandler? _prepareUserKeysBeginEventHandler;
-    private event EventHandler? _prepareUserKeysEndEventHandler;
     
     public EventfulUserKeysService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository, IUserSessionService userSessionService)
         : base(crypterApiClient, cryptoProvider, userPasswordService, userKeysRepository)
@@ -64,7 +62,6 @@ public sealed class EventfulUserKeysService : UserKeysService, IEventfulUserKeys
     private async void HandleUserLoginAsync(object? _, UserLoggedInEventArgs args)
     {
         await UserPasswordService.DeriveUserCredentialKeyAsync(args.Username, args.Password, UserPasswordService.CurrentPasswordVersion)
-            .IfSomeAsync(_ => HandlePrepareUserKeysBeginEvent())
             .BindAsync(async credentialKey => await GetOrCreateMasterKeyAsync(args.VersionedPassword, credentialKey)
                 .BindAsync(x => new { CredentialKey = credentialKey, x.MasterKey, x.NewRecoveryKey }))
             .BindAsync(async carryData => await GetOrCreateKeyPairAsync(carryData.MasterKey)
@@ -72,7 +69,6 @@ public sealed class EventfulUserKeysService : UserKeysService, IEventfulUserKeys
             .IfSomeAsync(async carryData =>
             {
                 await StoreSecretKeysAsync(carryData.MasterKey, carryData.PrivateKey, args.RememberUser);
-                HandlePrepareUserKeysEndEvent();
                 await carryData.NewRecoveryKey
                     .IfSome(HandleEmitRecoveryKeyEvent)
                     .IfNoneAsync(async () =>
@@ -89,34 +85,12 @@ public sealed class EventfulUserKeysService : UserKeysService, IEventfulUserKeys
     private void HandleEmitRecoveryKeyEvent(RecoveryKey recoveryKey) =>
         _emitRecoveryKeyEventHandler?.Invoke(this, new EmitRecoveryKeyEventArgs(recoveryKey));
     
-    private void HandlePrepareUserKeysBeginEvent() =>
-        _prepareUserKeysBeginEventHandler?.Invoke(this, EventArgs.Empty);
-    
-    private void HandlePrepareUserKeysEndEvent() =>
-        _prepareUserKeysEndEventHandler?.Invoke(this, EventArgs.Empty);
-    
     public event EventHandler<EmitRecoveryKeyEventArgs> EmitRecoveryKeyEventHandler
     {
         add => _emitRecoveryKeyEventHandler = 
             (EventHandler<EmitRecoveryKeyEventArgs>)Delegate.Combine(_emitRecoveryKeyEventHandler, value);
         remove => _emitRecoveryKeyEventHandler =
             (EventHandler<EmitRecoveryKeyEventArgs>?)Delegate.Remove(_emitRecoveryKeyEventHandler, value);
-    }
-    
-    public event EventHandler PrepareUserKeysBeginEventHandler
-    {
-        add => _prepareUserKeysBeginEventHandler = 
-            (EventHandler)Delegate.Combine(_prepareUserKeysBeginEventHandler, value);
-        remove => _prepareUserKeysBeginEventHandler =
-            (EventHandler?)Delegate.Remove(_prepareUserKeysBeginEventHandler, value);
-    }
-    
-    public event EventHandler PrepareUserKeysEndEventHandler
-    {
-        add => _prepareUserKeysEndEventHandler = 
-            (EventHandler)Delegate.Combine(_prepareUserKeysEndEventHandler, value);
-        remove => _prepareUserKeysEndEventHandler =
-            (EventHandler?)Delegate.Remove(_prepareUserKeysEndEventHandler, value);
     }
     
     private void Recycle(object? _, EventArgs __)

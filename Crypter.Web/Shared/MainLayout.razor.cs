@@ -71,18 +71,6 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
         ServicesInitialized = true;
     }
 
-    private void ShowUserKeysProgressModal(object? _, EventArgs __)
-    {
-        SpinnerModal.Open("Preparing Secret Keys",
-            "Please wait while your secret keys are being prepared.",
-            Maybe<EventCallback>.None);
-    }
-
-    private async void CloseUserKeysProgressModal(object? _, EventArgs __)
-    {
-        await SpinnerModal.CloseAsync();
-    }
-
     private void HandleRecoveryKeyCreatedEvent(object? _, EmitRecoveryKeyEventArgs args)
     {
         RecoveryKeyModal.Open(args.RecoveryKey);

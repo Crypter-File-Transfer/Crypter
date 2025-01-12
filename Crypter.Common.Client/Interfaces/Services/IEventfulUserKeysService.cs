@@ -32,6 +32,4 @@ namespace Crypter.Common.Client.Interfaces.Services;
 public interface IEventfulUserKeysService
 {
     event EventHandler<EmitRecoveryKeyEventArgs> EmitRecoveryKeyEventHandler;
-    event EventHandler PrepareUserKeysBeginEventHandler;
-    event EventHandler PrepareUserKeysEndEventHandler;
 }
