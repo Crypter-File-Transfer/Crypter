@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
@@ -49,22 +50,37 @@ public partial class RecoveryKeyModal
     private string _recoveryKey = string.Empty;
 
     private ModalBehavior _modalBehaviorRef = null!;
+    
+    private bool _isOpen = false;
 
     public async Task OpenAsync(VersionedPassword versionedPassword)
     {
-        Maybe<RecoveryKey> recoveryKey = await UserKeysService.MasterKey
-            .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, versionedPassword));
-
-        Open(recoveryKey);
+        if (!_isOpen)
+        {
+            _isOpen = true;
+            Maybe<RecoveryKey> recoveryKey = await UserKeysService.MasterKey
+                .BindAsync(async masterKey => await UserRecoveryService.DeriveRecoveryKeyAsync(masterKey, versionedPassword));
+            _recoveryKey = RecoveryKeyToString(recoveryKey);
+            _modalBehaviorRef.Open();
+        }
     }
 
     public void Open(Maybe<RecoveryKey> recoveryKey)
     {
-        _recoveryKey = recoveryKey
+        if (!_isOpen)
+        {
+            _isOpen = true;
+            _recoveryKey = RecoveryKeyToString(recoveryKey);
+            _modalBehaviorRef.Open();
+        }
+    }
+
+    private string RecoveryKeyToString(Maybe<RecoveryKey> recoveryKey)
+    {
+        return recoveryKey
             .Match(
                 none: () => "An error occurred",
                 some: x => x.ToBase64String());
-        _modalBehaviorRef.Open();
     }
 
     private async Task CopyRecoveryKeyToClipboardAsync()
@@ -76,5 +92,6 @@ public partial class RecoveryKeyModal
     {
         await CrypterApiService.UserConsent.ConsentToRecoveryKeyRisksAsync();
         _modalBehaviorRef.Close();
+        _isOpen = false;
     }
 }
