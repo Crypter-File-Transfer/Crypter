@@ -49,6 +49,7 @@ using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 
 namespace Crypter.Test.Integration_Tests.UserRecovery_Tests;
@@ -116,7 +117,7 @@ internal class SubmitRecovery_Tests
 
             UserPasswordService userPasswordService = new UserPasswordService(_cryptoProvider!);
             IUserKeysRepository userKeysRepository = new MemoryKeysRepository();
-            UserKeysService userKeysService = new UserKeysService(_client, new DefaultCryptoProvider(), userPasswordService, userKeysRepository);
+            UserKeysService userKeysService = new UserKeysService(NullLogger<UserKeysService>.Instance, _client, new DefaultCryptoProvider(), userPasswordService, userKeysRepository);
             recoveryKey = await userKeysService.DeriveRecoveryKeyAsync(masterKey, registrationRequest.VersionedPassword);
             recoveryKey.IfNone(Assert.Fail);
         }
@@ -209,7 +210,7 @@ internal class SubmitRecovery_Tests
 
         UserPasswordService userPasswordService = new UserPasswordService(_cryptoProvider!);
         IUserKeysRepository userKeysRepository = new MemoryKeysRepository();
-        UserKeysService userKeysService = new UserKeysService(_client, new DefaultCryptoProvider(), userPasswordService, userKeysRepository);
+        UserKeysService userKeysService = new UserKeysService(NullLogger<UserKeysService>.Instance, _client, new DefaultCryptoProvider(), userPasswordService, userKeysRepository);
         Maybe<RecoveryKey> recoveryKeyResponse = await userKeysService.DeriveRecoveryKeyAsync(masterKey, registrationRequest.VersionedPassword);
 
         await recoveryKeyResponse

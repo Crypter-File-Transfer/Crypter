@@ -35,24 +35,54 @@ using Crypter.Common.Primitives;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.KeyExchange;
 using EasyMonads;
+using Microsoft.Extensions.Logging;
 
 namespace Crypter.Common.Client.Services;
 
 public class UserKeysService : IUserKeysService
 {
-    protected readonly ICrypterApiClient CrypterApiClient;
-    protected readonly ICryptoProvider CryptoProvider;
+    private readonly ILogger<UserKeysService> _logger;
+    private readonly ICrypterApiClient _crypterApiClient;
+    private readonly ICryptoProvider _cryptoProvider;
     protected readonly IUserPasswordService UserPasswordService;
     protected readonly IUserKeysRepository UserKeysRepository;
-    
-    public Maybe<byte[]> MasterKey { get; protected set; } = Maybe<byte[]>.None;
-    public Maybe<byte[]> PrivateKey { get; protected set; } = Maybe<byte[]>.None;
-    
-    public UserKeysService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository)
+    private Maybe<byte[]> _masterKey = Maybe<byte[]>.None;
+    private Maybe<byte[]> _privateKey = Maybe<byte[]>.None;
+
+    public Maybe<byte[]> MasterKey
     {
-        CrypterApiClient = crypterApiClient;
+        get
+        {
+            _logger.LogDebug("Getting MasterKey. IsSome: {isSome}", _masterKey.IsSome);
+            return _masterKey;
+        }
+        protected set
+        {
+            _logger.LogDebug("Setting MasterKey. IsSome: {isSome}", value.IsSome);
+            _masterKey = value;
+        }
+    }
+
+    public Maybe<byte[]> PrivateKey
+    {
+        get
+        {
+            _logger.LogDebug("Getting PrivateKey. IsSome: {isSome}", _privateKey.IsSome);
+            return _privateKey;
+        }
+        protected set
+        {
+            _logger.LogDebug("Setting PrivateKey. IsSome: {isSome}", value.IsSome);
+            _privateKey = value;
+        }
+    }
+
+    public UserKeysService(ILogger<UserKeysService> logger, ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository)
+    {
+        _logger = logger;
+        _crypterApiClient = crypterApiClient;
         UserPasswordService = userPasswordService;
-        CryptoProvider = cryptoProvider;
+        _cryptoProvider = cryptoProvider;
         UserKeysRepository = userKeysRepository;
     }
     
@@ -66,7 +96,7 @@ public class UserKeysService : IUserKeysService
     public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword)
     {
         GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(versionedPassword.Password);
-        return CrypterApiClient.UserKey.GetMasterKeyRecoveryProofAsync(request)
+        return _crypterApiClient.UserKey.GetMasterKeyRecoveryProofAsync(request)
             .ToMaybeTask()
             .MapAsync(x => new RecoveryKey(masterKey, x.Proof));
     }
@@ -80,10 +110,10 @@ public class UserKeysService : IUserKeysService
     /// <returns></returns>
     protected async Task<Maybe<GetOrCreateMasterKeyResult>> GetOrCreateMasterKeyAsync(VersionedPassword versionedPassword, byte[] credentialKey)
     {
-        return await CrypterApiClient.UserKey.GetMasterKeyAsync()
+        return await _crypterApiClient.UserKey.GetMasterKeyAsync()
             .BindAsync<GetMasterKeyError, GetMasterKeyResponse, GetOrCreateMasterKeyResult>(x =>
             {
-                byte[] decryptedMasterKey = CryptoProvider.Encryption.Decrypt(credentialKey, x.Nonce, x.EncryptedKey);
+                byte[] decryptedMasterKey = _cryptoProvider.Encryption.Decrypt(credentialKey, x.Nonce, x.EncryptedKey);
                 return new GetOrCreateMasterKeyResult(decryptedMasterKey, Maybe<RecoveryKey>.None);
             })
             .MatchAsync(
@@ -107,10 +137,10 @@ public class UserKeysService : IUserKeysService
     /// <returns></returns>
     protected async Task<Maybe<GetOrCreateKeyPairResult>> GetOrCreateKeyPairAsync(byte[] masterKey)
     {
-        return await CrypterApiClient.UserKey.GetPrivateKeyAsync()
+        return await _crypterApiClient.UserKey.GetPrivateKeyAsync()
             .BindAsync<GetPrivateKeyError, GetPrivateKeyResponse, GetOrCreateKeyPairResult>(x =>
             {
-                byte[] decryptedPrivateKey = CryptoProvider.Encryption.Decrypt(masterKey, x.Nonce, x.EncryptedKey);
+                byte[] decryptedPrivateKey = _cryptoProvider.Encryption.Decrypt(masterKey, x.Nonce, x.EncryptedKey);
                 return new GetOrCreateKeyPairResult(decryptedPrivateKey);
             })
             .MatchAsync(
@@ -128,31 +158,32 @@ public class UserKeysService : IUserKeysService
     
     private Task<Maybe<GetOrCreateMasterKeyResult>> UploadNewMasterKeyAsync(VersionedPassword versionedPassword, byte[] credentialKey)
     {
-        byte[] newMasterKey = CryptoProvider.Random.GenerateRandomBytes((int)CryptoProvider.Encryption.KeySize);
-        byte[] nonce = CryptoProvider.Random.GenerateRandomBytes((int)CryptoProvider.Encryption.NonceSize);
-        byte[] encryptedMasterKey = CryptoProvider.Encryption.Encrypt(credentialKey, nonce, newMasterKey);
-        byte[] recoveryProof = CryptoProvider.Random.GenerateRandomBytes(32);
+        byte[] newMasterKey = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.KeySize);
+        byte[] nonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.NonceSize);
+        byte[] encryptedMasterKey = _cryptoProvider.Encryption.Encrypt(credentialKey, nonce, newMasterKey);
+        byte[] recoveryProof = _cryptoProvider.Random.GenerateRandomBytes(32);
 
         InsertMasterKeyRequest request = new InsertMasterKeyRequest(versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof);
-        return CrypterApiClient.UserKey.InsertMasterKeyAsync(request)
+        return _crypterApiClient.UserKey.InsertMasterKeyAsync(request)
             .ToMaybeTask()
             .BindAsync(_ => new GetOrCreateMasterKeyResult(newMasterKey, new RecoveryKey(newMasterKey, request.RecoveryProof)));
     }
 
     private Task<Maybe<GetOrCreateKeyPairResult>> UploadNewUserKeyPairAsync(byte[] masterKey)
     {
-        X25519KeyPair keyPair = CryptoProvider.KeyExchange.GenerateKeyPair();
-        byte[] nonce = CryptoProvider.Random.GenerateRandomBytes((int)CryptoProvider.Encryption.NonceSize);
-        byte[] encryptedPrivateKey = CryptoProvider.Encryption.Encrypt(masterKey, nonce, keyPair.PrivateKey);
+        X25519KeyPair keyPair = _cryptoProvider.KeyExchange.GenerateKeyPair();
+        byte[] nonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.NonceSize);
+        byte[] encryptedPrivateKey = _cryptoProvider.Encryption.Encrypt(masterKey, nonce, keyPair.PrivateKey);
 
         InsertKeyPairRequest request = new InsertKeyPairRequest(encryptedPrivateKey, keyPair.PublicKey, nonce);
-        return CrypterApiClient.UserKey.InsertKeyPairAsync(request)
+        return _crypterApiClient.UserKey.InsertKeyPairAsync(request)
             .ToMaybeTask()
             .BindAsync(_ => new GetOrCreateKeyPairResult(keyPair.PrivateKey));
     }
     
     protected async Task StoreSecretKeysAsync(byte[] masterKey, byte[] privateKey, bool trustDevice)
     {
+        _logger.LogDebug("Storing secret keys");
         MasterKey = masterKey;
         PrivateKey = privateKey;
         await UserKeysRepository.StoreMasterKeyAsync(masterKey, trustDevice);
