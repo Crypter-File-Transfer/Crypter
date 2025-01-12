@@ -43,10 +43,8 @@ namespace Crypter.Web.Shared;
 public class MainLayoutBase : LayoutComponentBase, IDisposable
 {
     [Inject] private IBlazorSodiumService BlazorSodiumService { get; init; } = null!;
-
-    [Inject] private IUserSessionService UserSessionService { get; init; } = null!;
-
-    [Inject] private IUserKeysService UserKeysService { get; init; } = null!;
+    
+    [Inject] private IEventfulUserKeysService EventfulUserKeysService { get; init; } = null!;
 
     [Inject] private IUserPasswordService UserPasswordService { get; init; } = null!;
 
@@ -63,7 +61,7 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        UserKeysService.EmitRecoveryKeyEventHandler += HandleRecoveryKeyCreatedEvent;
+        EventfulUserKeysService.EmitRecoveryKeyEventHandler += HandleRecoveryKeyCreatedEvent;
         UserPasswordService.PasswordHashBeginEventHandler += ShowPasswordHashingModal;
         UserPasswordService.PasswordHashEndEventHandler += ClosePasswordHashingModal;
         await BrowserRepository.InitializeAsync();
@@ -103,7 +101,7 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
 
     public void Dispose()
     {
-        UserKeysService.EmitRecoveryKeyEventHandler -= HandleRecoveryKeyCreatedEvent;
+        EventfulUserKeysService.EmitRecoveryKeyEventHandler -= HandleRecoveryKeyCreatedEvent;
         UserPasswordService.PasswordHashBeginEventHandler -= ShowPasswordHashingModal;
         UserPasswordService.PasswordHashEndEventHandler -= ClosePasswordHashingModal;
         GC.SuppressFinalize(this);

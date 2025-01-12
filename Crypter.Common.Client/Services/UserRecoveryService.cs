@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -29,7 +29,6 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.AccountRecovery.SubmitRecovery;
-using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Primitives;
 using Crypter.Crypto.Common;
@@ -105,21 +104,6 @@ public class UserRecoveryService : IUserRecoveryService
                     .MapAsync<SubmitAccountRecoveryError, Unit, Maybe<RecoveryKey>>(_ => x.RecoveryArtifacts
                         .Select(y => y.NewRecoveryKey));
             });
-    }
-
-    public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, Password password)
-    {
-        return _userPasswordService
-            .DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .BindAsync(versionedPassword => DeriveRecoveryKeyAsync(masterKey, versionedPassword));
-    }
-
-    public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword)
-    {
-        GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(versionedPassword.Password);
-        return _crypterApiClient.UserKey.GetMasterKeyRecoveryProofAsync(request)
-            .ToMaybeTask()
-            .MapAsync(x => new RecoveryKey(masterKey, x.Proof));
     }
     
     private struct PasswordDerivatives

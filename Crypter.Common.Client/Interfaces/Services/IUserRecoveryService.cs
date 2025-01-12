@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -27,7 +27,6 @@
 using System.Threading.Tasks;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.AccountRecovery.SubmitRecovery;
-using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Primitives;
 using EasyMonads;
 
@@ -35,23 +34,6 @@ namespace Crypter.Common.Client.Interfaces.Services;
 
 public interface IUserRecoveryService
 {
-    /// <summary>
-    /// Derive a recovery key from the provided parameters.
-    /// </summary>
-    /// <param name="masterKey"></param>
-    /// <param name="username"></param>
-    /// <param name="password">A valid, plaintext password.</param>
-    /// <returns></returns>
-    Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, Password password);
-
-    /// <summary>
-    /// Derive a recovery key from the provided parameters.
-    /// </summary>
-    /// <param name="masterKey"></param>
-    /// <param name="versionedPassword">A hashed password.</param>
-    /// <returns></returns>
-    Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword);
-
     /// <summary>
     /// Request an account recovery email.
     /// The email, if received, will contain a temporary link to proceed with account recovery.
