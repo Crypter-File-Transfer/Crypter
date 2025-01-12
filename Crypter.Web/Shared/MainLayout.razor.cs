@@ -62,6 +62,8 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
     protected override async Task OnInitializedAsync()
     {
         EventfulUserKeysService.EmitRecoveryKeyEventHandler += HandleRecoveryKeyCreatedEvent;
+        EventfulUserKeysService.PrepareUserKeysBeginEventHandler += ShowUserKeysProgressModal;
+        EventfulUserKeysService.PrepareUserKeysEndEventHandler += CloseUserKeysProgressModal;
         UserPasswordService.PasswordHashBeginEventHandler += ShowPasswordHashingModal;
         UserPasswordService.PasswordHashEndEventHandler += ClosePasswordHashingModal;
         await BrowserRepository.InitializeAsync();
