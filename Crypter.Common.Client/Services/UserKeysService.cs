@@ -78,13 +78,13 @@ public class UserKeysService : IUserKeysService, IDisposable
     {
         await _userPasswordService.DeriveUserCredentialKeyAsync(args.Username, args.Password, _userPasswordService.CurrentPasswordVersion)
             .BindAsync(async credentialKey => await GetOrCreateMasterKeyAsync(args.VersionedPassword, credentialKey)
-                .BindAsync(x => new { CredentialKey = credentialKey, x.MasterKey, x.RecoveryKey }))
+                .BindAsync(x => new { CredentialKey = credentialKey, x.MasterKey, x.NewRecoveryKey }))
             .BindAsync(async carryData => await GetOrCreateKeyPairAsync(carryData.MasterKey)
-                .BindAsync(x => new { carryData.CredentialKey, carryData.MasterKey, x.PrivateKey, carryData.RecoveryKey }))
+                .BindAsync(x => new { carryData.CredentialKey, carryData.MasterKey, x.PrivateKey, carryData.NewRecoveryKey }))
             .IfSomeAsync(async carryData =>
             {
                 await StoreSecretKeysAsync(carryData.MasterKey, carryData.PrivateKey, args.RememberUser);
-                carryData.RecoveryKey.IfSome(HandleRecoveryKeyCreatedEvent);
+                carryData.NewRecoveryKey.IfSome(HandleRecoveryKeyCreatedEvent);
             });
     }
 
@@ -204,12 +204,12 @@ public class UserKeysService : IUserKeysService, IDisposable
     private sealed record GetOrCreateMasterKeyResult
     {
         public byte[] MasterKey { get; }
-        public Maybe<RecoveryKey> RecoveryKey { get; }
+        public Maybe<RecoveryKey> NewRecoveryKey { get; }
 
-        public GetOrCreateMasterKeyResult(byte[] masterKey, Maybe<RecoveryKey> recoveryKey)
+        public GetOrCreateMasterKeyResult(byte[] masterKey, Maybe<RecoveryKey> newRecoveryKey)
         {
             MasterKey = masterKey;
-            RecoveryKey = recoveryKey;
+            NewRecoveryKey = newRecoveryKey;
         }
     }
 
