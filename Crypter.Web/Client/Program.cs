@@ -97,6 +97,7 @@ builder.Services
     .AddSingleton<IUserContactsService, UserContactsService>()
     .AddSingleton<IUserPasswordService, UserPasswordService>()
     .AddSingleton<IUserRecoveryService, UserRecoveryService>()
+    .AddSingleton<IEventfulUserKeysService, EventfulUserKeysService>()
     .AddSingleton<IUserKeysService, UserKeysService>()
     .AddSingleton<IUserProfileSettingsService, UserProfileSettingsService>()
     .AddSingleton<IUserContactInfoSettingsService, UserContactInfoSettingsService>()
