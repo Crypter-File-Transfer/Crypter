@@ -34,5 +34,5 @@ public interface IUserKeysService
 {
     Maybe<byte[]> MasterKey { get; }
     Maybe<byte[]> PrivateKey { get; }
-    event EventHandler<RecoveryKeyCreatedEventArgs> RecoveryKeyCreatedEventHandler;
+    event EventHandler<EmitRecoveryKeyEventArgs> EmitRecoveryKeyEventHandler;
 }

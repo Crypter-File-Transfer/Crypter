@@ -43,8 +43,7 @@ public class UserRecoveryService : IUserRecoveryService
     private readonly ICryptoProvider _cryptoProvider;
     private readonly IUserPasswordService _userPasswordService;
 
-    public UserRecoveryService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        IUserPasswordService userPasswordService)
+    public UserRecoveryService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService)
     {
         _crypterApiClient = crypterApiClient;
         _cryptoProvider = cryptoProvider;
@@ -62,8 +61,7 @@ public class UserRecoveryService : IUserRecoveryService
         Either<SubmitAccountRecoveryError, PasswordDerivatives> passwordDerivatives = await _userPasswordService
             .DeriveUserAuthenticationPasswordAsync(username, newPassword, _userPasswordService.CurrentPasswordVersion)
             .ToEitherAsync(SubmitAccountRecoveryError.PasswordHashFailure)
-            .MapAsync(async versionedPassword => await _userPasswordService.DeriveUserCredentialKeyAsync(username,
-                    newPassword, _userPasswordService.CurrentPasswordVersion)
+            .MapAsync(async versionedPassword => await _userPasswordService.DeriveUserCredentialKeyAsync(username, newPassword, _userPasswordService.CurrentPasswordVersion)
                 .ToEitherAsync(SubmitAccountRecoveryError.PasswordHashFailure)
                 .BindAsync<SubmitAccountRecoveryError, byte[], PasswordDerivatives>(credentialKey => new PasswordDerivatives
                 {
