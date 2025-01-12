@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,9 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Threading.Tasks;
-using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Services;
@@ -37,93 +35,128 @@ using Crypter.Common.Primitives;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.KeyExchange;
 using EasyMonads;
+using Microsoft.Extensions.Logging;
 
 namespace Crypter.Common.Client.Services;
 
-public class UserKeysService : IUserKeysService, IDisposable
+public class UserKeysService : IUserKeysService
 {
+    private readonly ILogger<UserKeysService> _logger;
     private readonly ICrypterApiClient _crypterApiClient;
     private readonly ICryptoProvider _cryptoProvider;
-    private readonly IUserPasswordService _userPasswordService;
-    private readonly IUserKeysRepository _userKeysRepository;
-    private readonly IUserSessionService _userSessionService;
+    protected readonly IUserPasswordService UserPasswordService;
+    protected readonly IUserKeysRepository UserKeysRepository;
+    private Maybe<byte[]> _masterKey = Maybe<byte[]>.None;
+    private Maybe<byte[]> _privateKey = Maybe<byte[]>.None;
 
-    public Maybe<byte[]> MasterKey { get; private set; } = Maybe<byte[]>.None;
-    public Maybe<byte[]> PrivateKey { get; private set; } = Maybe<byte[]>.None;
-
-    public UserKeysService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository,
-        IUserSessionService userSessionService)
+    public Maybe<byte[]> MasterKey
     {
-        _crypterApiClient = crypterApiClient;
-        _userPasswordService = userPasswordService;
-        _cryptoProvider = cryptoProvider;
-        _userKeysRepository = userKeysRepository;
-        _userSessionService = userSessionService;
-
-        _userSessionService.ServiceInitializedEventHandler += InitializeAsync;
-        _userSessionService.UserLoggedOutEventHandler += Recycle;
-    }
-
-    private async void InitializeAsync(object? _, UserSessionServiceInitializedEventArgs args)
-    {
-        if (args.IsLoggedIn)
+        get
         {
-            MasterKey = await _userKeysRepository.GetMasterKeyAsync();
-            PrivateKey = await _userKeysRepository.GetPrivateKeyAsync();
+            _logger.LogDebug("Getting MasterKey. IsSome: {isSome}", _masterKey.IsSome);
+            return _masterKey;
+        }
+        protected set
+        {
+            _logger.LogDebug("Setting MasterKey. IsSome: {isSome}", value.IsSome);
+            _masterKey = value;
         }
     }
 
-    #region Download Existing Keys
-
-    public Task DownloadExistingKeysAsync(Username username, Password password, bool trustDevice)
+    public Maybe<byte[]> PrivateKey
     {
-        return _userPasswordService
-            .DeriveUserCredentialKeyAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .IfSomeAsync(credentialKey => DownloadExistingKeysAsync(credentialKey, trustDevice));
+        get
+        {
+            _logger.LogDebug("Getting PrivateKey. IsSome: {isSome}", _privateKey.IsSome);
+            return _privateKey;
+        }
+        protected set
+        {
+            _logger.LogDebug("Setting PrivateKey. IsSome: {isSome}", value.IsSome);
+            _privateKey = value;
+        }
     }
 
-    public Task DownloadExistingKeysAsync(byte[] credentialKey, bool trustDevice)
+    public UserKeysService(ILogger<UserKeysService> logger, ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService, IUserKeysRepository userKeysRepository)
     {
-        return DownloadAndDecryptMasterKey(credentialKey)
-            .BindAsync(masterKey => DownloadAndDecryptPrivateKey(masterKey)
-                .IfSomeAsync(privateKey => StoreSecretKeys(masterKey, privateKey, trustDevice)));
+        _logger = logger;
+        _crypterApiClient = crypterApiClient;
+        UserPasswordService = userPasswordService;
+        _cryptoProvider = cryptoProvider;
+        UserKeysRepository = userKeysRepository;
+    }
+    
+    public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, Password password)
+    {
+        return UserPasswordService
+            .DeriveUserAuthenticationPasswordAsync(username, password, UserPasswordService.CurrentPasswordVersion)
+            .BindAsync(versionedPassword => DeriveRecoveryKeyAsync(masterKey, versionedPassword));
     }
 
-    private Task<Maybe<byte[]>> DownloadAndDecryptMasterKey(byte[] credentialKey)
+    public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword)
     {
-        return _crypterApiClient.UserKey.GetMasterKeyAsync()
-            .MapAsync<GetMasterKeyError, GetMasterKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(credentialKey, x.Nonce, x.EncryptedKey))
-            .ToMaybeTask();
+        GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(versionedPassword.Password);
+        return _crypterApiClient.UserKey.GetMasterKeyRecoveryProofAsync(request)
+            .ToMaybeTask()
+            .MapAsync(x => new RecoveryKey(masterKey, x.Proof));
+    }
+    
+    /// <summary>
+    /// Get the existing master key from the API and decrypt it.
+    /// If the master key does not already exist, create and upload a new one.
+    /// </summary>
+    /// <param name="versionedPassword"></param>
+    /// <param name="credentialKey"></param>
+    /// <returns></returns>
+    protected async Task<Maybe<GetOrCreateMasterKeyResult>> GetOrCreateMasterKeyAsync(VersionedPassword versionedPassword, byte[] credentialKey)
+    {
+        return await _crypterApiClient.UserKey.GetMasterKeyAsync()
+            .BindAsync<GetMasterKeyError, GetMasterKeyResponse, GetOrCreateMasterKeyResult>(x =>
+            {
+                byte[] decryptedMasterKey = _cryptoProvider.Encryption.Decrypt(credentialKey, x.Nonce, x.EncryptedKey);
+                return new GetOrCreateMasterKeyResult(decryptedMasterKey, Maybe<RecoveryKey>.None);
+            })
+            .MatchAsync(
+                neither: Maybe<GetOrCreateMasterKeyResult>.None,
+                leftAsync: async x =>
+#pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
+                    x switch
+#pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
+                    {
+                        GetMasterKeyError.UnknownError => await Maybe<GetOrCreateMasterKeyResult>.None.AsTask(),
+                        GetMasterKeyError.NotFound => await UploadNewMasterKeyAsync(versionedPassword, credentialKey)
+                    },
+                right: x => x);
     }
 
-    private Task<Maybe<byte[]>> DownloadAndDecryptPrivateKey(byte[] masterKey)
+    /// <summary>
+    /// Get the existing private key from the API and decrypt it.
+    /// If the private key does not already exist, create and upload a new key pair.
+    /// </summary>
+    /// <param name="masterKey"></param>
+    /// <returns></returns>
+    protected async Task<Maybe<GetOrCreateKeyPairResult>> GetOrCreateKeyPairAsync(byte[] masterKey)
     {
-        return _crypterApiClient.UserKey.GetPrivateKeyAsync()
-            .MapAsync<GetPrivateKeyError, GetPrivateKeyResponse, byte[]>(x => _cryptoProvider.Encryption.Decrypt(masterKey, x.Nonce, x.EncryptedKey))
-            .ToMaybeTask();
+        return await _crypterApiClient.UserKey.GetPrivateKeyAsync()
+            .BindAsync<GetPrivateKeyError, GetPrivateKeyResponse, GetOrCreateKeyPairResult>(x =>
+            {
+                byte[] decryptedPrivateKey = _cryptoProvider.Encryption.Decrypt(masterKey, x.Nonce, x.EncryptedKey);
+                return new GetOrCreateKeyPairResult(decryptedPrivateKey);
+            })
+            .MatchAsync(
+                neither: Maybe<GetOrCreateKeyPairResult>.None,
+                leftAsync: async x =>
+#pragma warning disable CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
+                    x switch
+#pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
+                    {
+                        GetPrivateKeyError.UnkownError => await Maybe<GetOrCreateKeyPairResult>.None.AsTask(),
+                        GetPrivateKeyError.NotFound => await UploadNewUserKeyPairAsync(masterKey)
+                    },
+                right: x => x);
     }
-
-    #endregion
-
-    #region Upload New Keys
-
-    public Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, Password password, VersionedPassword versionedPassword, bool trustDevice)
-    {
-        return _userPasswordService
-            .DeriveUserCredentialKeyAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .BindAsync(credentialKey => UploadNewKeysAsync(versionedPassword, credentialKey, trustDevice));
-    }
-
-    public Task<Maybe<RecoveryKey>> UploadNewKeysAsync(VersionedPassword versionedPassword, byte[] credentialKey, bool trustDevice)
-    {
-        return UploadNewMasterKeyAsync(versionedPassword, credentialKey)
-            .BindAsync(recoveryKey => UploadNewUserKeyPairAsync(recoveryKey.MasterKey)
-                .IfSomeAsync(privateKey => StoreSecretKeys(recoveryKey.MasterKey, privateKey, trustDevice))
-                .BindAsync(_ => recoveryKey));
-    }
-
-    private Task<Maybe<RecoveryKey>> UploadNewMasterKeyAsync(VersionedPassword versionedPassword, byte[] credentialKey)
+    
+    private Task<Maybe<GetOrCreateMasterKeyResult>> UploadNewMasterKeyAsync(VersionedPassword versionedPassword, byte[] credentialKey)
     {
         byte[] newMasterKey = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.KeySize);
         byte[] nonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.NonceSize);
@@ -133,10 +166,10 @@ public class UserKeysService : IUserKeysService, IDisposable
         InsertMasterKeyRequest request = new InsertMasterKeyRequest(versionedPassword.Password, encryptedMasterKey, nonce, recoveryProof);
         return _crypterApiClient.UserKey.InsertMasterKeyAsync(request)
             .ToMaybeTask()
-            .BindAsync(_ => new RecoveryKey(newMasterKey, request.RecoveryProof));
+            .BindAsync(_ => new GetOrCreateMasterKeyResult(newMasterKey, new RecoveryKey(newMasterKey, request.RecoveryProof)));
     }
 
-    private Task<Maybe<byte[]>> UploadNewUserKeyPairAsync(byte[] masterKey)
+    private Task<Maybe<GetOrCreateKeyPairResult>> UploadNewUserKeyPairAsync(byte[] masterKey)
     {
         X25519KeyPair keyPair = _cryptoProvider.KeyExchange.GenerateKeyPair();
         byte[] nonce = _cryptoProvider.Random.GenerateRandomBytes((int)_cryptoProvider.Encryption.NonceSize);
@@ -145,30 +178,37 @@ public class UserKeysService : IUserKeysService, IDisposable
         InsertKeyPairRequest request = new InsertKeyPairRequest(encryptedPrivateKey, keyPair.PublicKey, nonce);
         return _crypterApiClient.UserKey.InsertKeyPairAsync(request)
             .ToMaybeTask()
-            .BindAsync(_ => keyPair.PrivateKey);
+            .BindAsync(_ => new GetOrCreateKeyPairResult(keyPair.PrivateKey));
     }
-
-    #endregion
-
-    private async Task<Unit> StoreSecretKeys(byte[] masterKey, byte[] privateKey, bool trustDevice)
+    
+    protected async Task StoreSecretKeysAsync(byte[] masterKey, byte[] privateKey, bool trustDevice)
     {
+        _logger.LogDebug("Storing secret keys");
         MasterKey = masterKey;
         PrivateKey = privateKey;
-        await _userKeysRepository.StoreMasterKeyAsync(masterKey, trustDevice);
-        await _userKeysRepository.StorePrivateKeyAsync(privateKey, trustDevice);
-        return Unit.Default;
+        await UserKeysRepository.StoreMasterKeyAsync(masterKey, trustDevice);
+        await UserKeysRepository.StorePrivateKeyAsync(privateKey, trustDevice);
+    }
+    
+    protected sealed record GetOrCreateMasterKeyResult
+    {
+        public byte[] MasterKey { get; }
+        public Maybe<RecoveryKey> NewRecoveryKey { get; }
+
+        public GetOrCreateMasterKeyResult(byte[] masterKey, Maybe<RecoveryKey> newRecoveryKey)
+        {
+            MasterKey = masterKey;
+            NewRecoveryKey = newRecoveryKey;
+        }
     }
 
-    private void Recycle(object? _, EventArgs __)
+    protected sealed record GetOrCreateKeyPairResult
     {
-        MasterKey = Maybe<byte[]>.None;
-        PrivateKey = Maybe<byte[]>.None;
-    }
+        public byte[] PrivateKey { get; }
 
-    public void Dispose()
-    {
-        _userSessionService.ServiceInitializedEventHandler -= InitializeAsync;
-        _userSessionService.UserLoggedOutEventHandler -= Recycle;
-        GC.SuppressFinalize(this);
+        public GetOrCreateKeyPairResult(byte[] privateKey)
+        {
+            PrivateKey = privateKey;
+        }
     }
 }

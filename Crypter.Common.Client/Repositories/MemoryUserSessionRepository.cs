@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -25,32 +25,29 @@
  */
 
 using System.Threading.Tasks;
-using Crypter.Web.Shared.Modal.Template;
+using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Models;
 using EasyMonads;
-using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared.Modal;
+namespace Crypter.Common.Client.Repositories;
 
-public partial class SpinnerModal
+public class MemoryUserSessionRepository : IUserSessionRepository
 {
-    private string _subject = string.Empty;
-    private string _message = string.Empty;
+    Maybe<UserSession> _userSession;
 
-    private Maybe<EventCallback> _modalClosedCallback;
-    private ModalBehavior _modalBehaviorRef = null!;
-
-    public void Open(string subject, string message, Maybe<EventCallback> modalClosedCallback)
+    public MemoryUserSessionRepository()
     {
-        _subject = subject;
-        _message = message;
-        _modalClosedCallback = modalClosedCallback;
-
-        _modalBehaviorRef.Open();
+        _userSession = Maybe<UserSession>.None;
+    }
+    
+    public Task<Maybe<UserSession>> GetUserSessionAsync()
+    {
+        return _userSession.AsTask();
     }
 
-    public async Task CloseAsync()
+    public Task StoreUserSessionAsync(UserSession userSession, bool rememberUser)
     {
-        await _modalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
-        _modalBehaviorRef.Close();
+        _userSession = userSession;
+        return Task.CompletedTask;
     }
 }

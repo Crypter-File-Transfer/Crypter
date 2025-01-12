@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -24,33 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Threading.Tasks;
-using Crypter.Web.Shared.Modal.Template;
-using EasyMonads;
-using Microsoft.AspNetCore.Components;
+using System;
+using Crypter.Common.Client.Events;
 
-namespace Crypter.Web.Shared.Modal;
+namespace Crypter.Common.Client.Interfaces.Services;
 
-public partial class SpinnerModal
+public interface IEventfulUserKeysService
 {
-    private string _subject = string.Empty;
-    private string _message = string.Empty;
-
-    private Maybe<EventCallback> _modalClosedCallback;
-    private ModalBehavior _modalBehaviorRef = null!;
-
-    public void Open(string subject, string message, Maybe<EventCallback> modalClosedCallback)
-    {
-        _subject = subject;
-        _message = message;
-        _modalClosedCallback = modalClosedCallback;
-
-        _modalBehaviorRef.Open();
-    }
-
-    public async Task CloseAsync()
-    {
-        await _modalClosedCallback.IfSomeAsync(async x => await x.InvokeAsync());
-        _modalBehaviorRef.Close();
-    }
+    event EventHandler<EmitRecoveryKeyEventArgs> EmitRecoveryKeyEventHandler;
+    event EventHandler PrepareUserKeysBeginEventHandler;
+    event EventHandler PrepareUserKeysEndEventHandler;
 }

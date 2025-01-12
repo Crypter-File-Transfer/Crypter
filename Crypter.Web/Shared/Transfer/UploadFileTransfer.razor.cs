@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -138,7 +138,7 @@ public partial class UploadFileTransfer : IDisposable
             await Task.Delay(400);
         }
         
-        await HandleUploadResponse(uploadResponse);
+        await HandleUploadResponseAsync(uploadResponse);
         Dispose();
         return;
 

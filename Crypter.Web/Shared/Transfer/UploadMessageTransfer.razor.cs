@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,7 +25,12 @@
  */
 
 using System;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Transfer.Handlers;
+using Crypter.Common.Client.Transfer.Models;
+using Crypter.Common.Contracts.Features.Transfer;
+using EasyMonads;
 
 namespace Crypter.Web.Shared.Transfer;
 
@@ -40,17 +45,16 @@ public partial class UploadMessageTransfer : IDisposable
         EncryptionInProgress = true;
         ErrorMessage = string.Empty;
 
-        await SetProgressMessage("Encrypting message");
-        var messageUploader =
-            TransferHandlerFactory.CreateUploadMessageHandler(MessageSubject, MessageBody, ExpirationHours);
+        await SetProgressMessageAsync("Encrypting message");
+        UploadMessageHandler messageUploader = TransferHandlerFactory.CreateUploadMessageHandler(MessageSubject, MessageBody, ExpirationHours);
 
         SetHandlerUserInfo(messageUploader);
-        var uploadResponse = await messageUploader.UploadAsync();
-        await HandleUploadResponse(uploadResponse);
+        Either<UploadTransferError, UploadHandlerResponse> uploadResponse = await messageUploader.UploadAsync();
+        await HandleUploadResponseAsync(uploadResponse);
         Dispose();
     }
 
-    protected async Task SetProgressMessage(string message)
+    protected async Task SetProgressMessageAsync(string message)
     {
         UploadStatusMessage = message;
         StateHasChanged();

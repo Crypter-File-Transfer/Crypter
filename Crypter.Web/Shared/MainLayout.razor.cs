@@ -43,10 +43,8 @@ namespace Crypter.Web.Shared;
 public class MainLayoutBase : LayoutComponentBase, IDisposable
 {
     [Inject] private IBlazorSodiumService BlazorSodiumService { get; init; } = null!;
-
-    [Inject] private IUserSessionService UserSessionService { get; init; } = null!;
-
-    [Inject] private IUserKeysService UserKeysService { get; init; } = null!;
+    
+    [Inject] private IEventfulUserKeysService EventfulUserKeysService { get; init; } = null!;
 
     [Inject] private IUserPasswordService UserPasswordService { get; init; } = null!;
 
@@ -63,44 +61,36 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        UserSessionService.UserLoggedInEventHandler += HandleUserLoggedInEvent;
+        EventfulUserKeysService.EmitRecoveryKeyEventHandler += HandleRecoveryKeyCreatedEvent;
+        EventfulUserKeysService.PrepareUserKeysBeginEventHandler += ShowUserKeysProgressModal;
+        EventfulUserKeysService.PrepareUserKeysEndEventHandler += CloseUserKeysProgressModal;
         UserPasswordService.PasswordHashBeginEventHandler += ShowPasswordHashingModal;
         UserPasswordService.PasswordHashEndEventHandler += ClosePasswordHashingModal;
         await BrowserRepository.InitializeAsync();
 
-        await Task.WhenAll(new Task[]
-        {
-            BlazorSodiumService.InitializeAsync(),
-            FileSaverService.InitializeAsync(),
-            BrowserFunctions.InitializeAsync()
-        });
+        await Task.WhenAll(BlazorSodiumService.InitializeAsync(), FileSaverService.InitializeAsync(), BrowserFunctions.InitializeAsync());
 
         ServicesInitialized = true;
     }
 
-    private async void HandleUserLoggedInEvent(object? sender, UserLoggedInEventArgs args)
+    private void ShowUserKeysProgressModal(object? _, EventArgs __)
     {
-        await UserPasswordService
-            .DeriveUserCredentialKeyAsync(args.Username, args.Password, UserPasswordService.CurrentPasswordVersion)
-            .IfSomeAsync(async credentialKey =>
-            {
-                if (args.UploadNewKeys)
-                {
-                    await UserKeysService.UploadNewKeysAsync(args.VersionedPassword, credentialKey, args.RememberUser);
-                }
-                else
-                {
-                    await UserKeysService.DownloadExistingKeysAsync(credentialKey, args.RememberUser);
-                }
-
-                if (args.ShowRecoveryKeyModal)
-                {
-                    await RecoveryKeyModal.OpenAsync(args.VersionedPassword);
-                }
-            });
+        SpinnerModal.Open("Preparing Secret Keys",
+            "Please wait while your secret keys are being prepared.",
+            Maybe<EventCallback>.None);
     }
 
-    private void ShowPasswordHashingModal(object? sender, PasswordHashBeginEventArgs args)
+    private async void CloseUserKeysProgressModal(object? _, EventArgs __)
+    {
+        await SpinnerModal.CloseAsync();
+    }
+
+    private void HandleRecoveryKeyCreatedEvent(object? _, EmitRecoveryKeyEventArgs args)
+    {
+        RecoveryKeyModal.Open(args.RecoveryKey);
+    }
+    
+    private void ShowPasswordHashingModal(object? _, PasswordHashBeginEventArgs args)
     {
         switch (args.HashType)
         {
@@ -118,14 +108,14 @@ public class MainLayoutBase : LayoutComponentBase, IDisposable
         }
     }
 
-    private async void ClosePasswordHashingModal(object? sender, PasswordHashEndEventArgs args)
+    private async void ClosePasswordHashingModal(object? _, PasswordHashEndEventArgs args)
     {
         await SpinnerModal.CloseAsync();
     }
 
     public void Dispose()
     {
-        UserSessionService.UserLoggedInEventHandler -= HandleUserLoggedInEvent;
+        EventfulUserKeysService.EmitRecoveryKeyEventHandler -= HandleRecoveryKeyCreatedEvent;
         UserPasswordService.PasswordHashBeginEventHandler -= ShowPasswordHashingModal;
         UserPasswordService.PasswordHashEndEventHandler -= ClosePasswordHashingModal;
         GC.SuppressFinalize(this);

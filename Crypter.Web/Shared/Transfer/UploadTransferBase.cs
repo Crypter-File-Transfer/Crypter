@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -33,7 +33,6 @@ using Crypter.Common.Client.Transfer.Handlers.Base;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
-using Crypter.Web.Services;
 using Crypter.Web.Shared.Modal;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
@@ -52,8 +51,6 @@ public class UploadTransferBase : ComponentBase
     [Inject] protected ClientTransferSettings ClientTransferSettings { get; init; } = null!;
 
     [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; init; } = null!;
-
-    [Inject] protected IFileSaverService FileSaverService { get; init; } = null!;
 
     [Parameter] public Maybe<string> RecipientUsername { get; set; }
 
@@ -99,7 +96,7 @@ public class UploadTransferBase : ComponentBase
         });
     }
 
-    protected async Task HandleUploadResponse(Either<UploadTransferError, UploadHandlerResponse> uploadResponse)
+    protected async Task HandleUploadResponseAsync(Either<UploadTransferError, UploadHandlerResponse> uploadResponse)
     {
         await uploadResponse
             .DoRightAsync(async response =>
