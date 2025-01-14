@@ -24,9 +24,14 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Crypter.API.Controllers.Base;
+using Crypter.Common.Contracts.Features.UserConsents;
 using Crypter.Core.Features.UserConsent.Commands;
+using Crypter.Core.Features.UserConsent.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -45,14 +50,25 @@ public class ConsentController : CrypterControllerBase
         _sender = sender;
     }
 
-    [HttpPost("recovery-key-risk")]
+    [HttpGet]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Dictionary<UserConsentType, DateTimeOffset?>))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
+    public async Task<IActionResult> GetUserConsentsAsync(CancellationToken cancellationToken)
+    {
+        GetUserConsentsQuery query = new GetUserConsentsQuery(UserId);
+        Dictionary<UserConsentType, DateTimeOffset?> result = await _sender.Send(query, cancellationToken);
+        return Ok(result);
+    }
+    
+    [HttpPost]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(void))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(void))]
-    public async Task<IActionResult> ConsentToRecoveryKeyRisksAsync()
+    public async Task<IActionResult> ConsentAsync(UserConsentRequest request)
     {
-        SaveAcknowledgementOfRecoveryKeyRisksCommand request = new SaveAcknowledgementOfRecoveryKeyRisksCommand(UserId);
-        await _sender.Send(request);
+        SaveUserConsentCommand command = new SaveUserConsentCommand(UserId, request.ConsentType);
+        await _sender.Send(command, CancellationToken.None);
         return Ok();
     }
 }

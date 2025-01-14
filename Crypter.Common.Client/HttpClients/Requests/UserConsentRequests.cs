@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,9 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Requests;
+using Crypter.Common.Contracts.Features.UserConsents;
 using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients.Requests;
@@ -40,9 +43,16 @@ public class UserConsentRequests : IUserConsentRequests
         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
     }
 
-    public Task<Maybe<Unit>> ConsentToRecoveryKeyRisksAsync()
+    public Task<Maybe<Dictionary<UserConsentType, DateTimeOffset?>>> GetUserConsentsAsync()
     {
-        const string url = "api/user/consent/recovery-key-risk";
-        return _crypterAuthenticatedHttpClient.PostMaybeUnitResponseAsync(url);
+        const string url = "api/user/consent";
+        return _crypterAuthenticatedHttpClient.GetMaybeAsync<Dictionary<UserConsentType, DateTimeOffset?>>(url);
+    }
+    
+    public Task<Maybe<Unit>> ConsentAsync(UserConsentType consentType)
+    {
+        const string url = "api/user/consent";
+        UserConsentRequest request = new UserConsentRequest(consentType);
+        return _crypterAuthenticatedHttpClient.PostMaybeUnitResponseAsync(url, request);
     }
 }
