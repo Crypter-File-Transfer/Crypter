@@ -31,7 +31,6 @@ using System.Threading.Tasks;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Contacts;
-using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using Crypter.Core.Features.UserContacts.Commands;
 using Crypter.Core.Features.UserContacts.Queries;
 using EasyMonads;
