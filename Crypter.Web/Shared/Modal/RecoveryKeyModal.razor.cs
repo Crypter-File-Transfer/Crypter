@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
+using Crypter.Common.Contracts.Features.UserConsents;
 using Crypter.Web.Shared.Modal.Template;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
@@ -65,7 +66,7 @@ public partial class RecoveryKeyModal
 
     private async Task OnAcknowledgedClickedAsync()
     {
-        await CrypterApiService.UserConsent.ConsentToRecoveryKeyRisksAsync();
+        await CrypterApiService.UserConsent.ConsentAsync(UserConsentType.RecoveryKeyRisks);
         _modalBehaviorRef.Close();
     }
 }

@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -26,19 +26,15 @@
 
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication;
+namespace Crypter.Common.Contracts.Features.UserConsents;
 
-public class LoginResponse
+public sealed record UserConsentRequest
 {
-    public string Username { get; init; }
-    public string AuthenticationToken { get; init; }
-    public string RefreshToken { get; init; }
+    public UserConsentType ConsentType { get; init; }
 
     [JsonConstructor]
-    public LoginResponse(string username, string authenticationToken, string refreshToken)
+    public UserConsentRequest(UserConsentType consentType)
     {
-        Username = username;
-        AuthenticationToken = authenticationToken;
-        RefreshToken = refreshToken;
+        ConsentType = consentType;
     }
 }

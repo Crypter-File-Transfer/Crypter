@@ -35,6 +35,7 @@ using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Contracts.Features.UserConsents;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using EasyMonads;
@@ -144,9 +145,16 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
                         from unit0 in Either<LoginError, Unit>.FromRightAsync(StoreSessionInfo(loginResponse, rememberUser))
                         select loginResponse;
 
-                    Either<LoginError, LoginResponse> loginResult = await loginTask;
-                    loginResult.DoRight(x => HandleUserLoggedInEvent(username, password, versionedPassword, rememberUser, x.ShowRecoveryKey));
-                    return loginResult.Map(_ => Unit.Default);
+                    return await loginTask
+                        .DoRightAsync(async x =>
+                        {
+                            bool showRecoveryKeyModal = await _crypterApiClient.UserConsent.GetUserConsentsAsync()
+                                .MatchAsync(
+                                    none: () => false,
+                                    some: y => y.TryGetValue(UserConsentType.RecoveryKeyRisks, out DateTimeOffset? value) && !value.HasValue);
+                            HandleUserLoggedInEvent(username, password, versionedPassword, rememberUser, showRecoveryKeyModal);
+                        })
+                        .BindAsync<LoginError, LoginResponse, Unit>(_ => Unit.Default);
                 });
     }
 
