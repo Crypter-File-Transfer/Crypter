@@ -154,6 +154,16 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         return await DeserializeResponseAsync<TResponse>(response);
     }
 
+    public async Task<Maybe<Unit>> PostMaybeUnitResponseAsync<TRequest>(string uri, TRequest body)
+        where TRequest : class
+    {
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
+        using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
+        return response.IsSuccessStatusCode
+            ? Unit.Default
+            : Maybe<Unit>.None;
+    }
+    
     public async Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri)
     {
         Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri);

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,12 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserConsents;
 using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Requests;
 
 public interface IUserConsentRequests
 {
-    Task<Maybe<Unit>> ConsentToRecoveryKeyRisksAsync();
+    Task<Maybe<Dictionary<UserConsentType, DateTimeOffset?>>> GetUserConsentsAsync();
+    Task<Maybe<Unit>> ConsentAsync(UserConsentType consentType);
 }

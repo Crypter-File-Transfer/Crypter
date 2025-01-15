@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -29,6 +29,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.AccountRecovery.SubmitRecovery;
+using Crypter.Common.Contracts.Features.UserConsents;
 using Crypter.Common.Infrastructure;
 using Crypter.Common.Primitives;
 using Crypter.Core.Features.AccountRecovery.Events;
@@ -163,8 +164,8 @@ internal sealed class SubmitAccountRecoveryCommandHandler
 
             UserConsentEntity? latestRecoveryConsent = await _dataContext.UserConsents
                 .Where(x => x.Owner == user.Id)
-                .Where(x => x.ConsentType == ConsentType.RecoveryKeyRisks)
-                .OrderBy(x => x.Created)
+                .Where(x => x.ConsentType == UserConsentType.RecoveryKeyRisks)
+                .OrderBy(x => x.Activated)
                 .FirstOrDefaultAsync();
 
             if (latestRecoveryConsent is not null)

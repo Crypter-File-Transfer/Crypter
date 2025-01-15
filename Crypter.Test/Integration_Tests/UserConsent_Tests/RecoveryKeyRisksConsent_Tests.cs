@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Contracts.Features.UserConsents;
 using Crypter.Common.Enums;
 using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -63,8 +64,7 @@ internal class RecoveryKeyRisksConsent_Tests
     [Test]
     public async Task Consent_To_Recovery_Key_Risks_Works_Async()
     {
-        RegistrationRequest registrationRequest =
-            TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
+        RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword);
         Either<RegistrationError, Unit> registrationResult = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         LoginRequest loginRequest = TestData.GetLoginRequest(TestData.DefaultUsername, TestData.DefaultPassword);
@@ -76,7 +76,7 @@ internal class RecoveryKeyRisksConsent_Tests
             await _clientTokenRepository!.StoreRefreshTokenAsync(loginResponse.RefreshToken, TokenType.Session);
         });
 
-        Maybe<Unit> result = await _client!.UserConsent.ConsentToRecoveryKeyRisksAsync();
+        Maybe<Unit> result = await _client!.UserConsent.ConsentAsync(UserConsentType.RecoveryKeyRisks);
 
         Assert.That(registrationResult.IsRight, Is.True);
         Assert.That(loginResult.IsRight, Is.True);
