@@ -1,4 +1,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG GIT_VERSION_TAG=0.0.0
+ARG GIT_VERSION_TAG_FULL=0.0.0
+ARG VCS_URL
+ENV VCS_URL=$VCS_URL
+
 WORKDIR /source/
 
 SHELL ["/bin/bash", "-c"]
@@ -23,9 +28,10 @@ COPY Crypter.Common.Client/. ./Crypter.Common.Client/
 COPY Crypter.Crypto.Common/. ./Crypter.Crypto.Common/
 COPY Crypter.Crypto.Providers.Browser/. ./Crypter.Crypto.Providers.Browser/
 COPY Crypter.Web/. ./Crypter.Web/
+COPY .git/. ./.git/
 
 RUN dotnet workload install wasm-tools
-RUN dotnet publish Crypter.Web --no-restore --configuration release /p:TreatWarningsAsErrors=true /warnaserror --output /app/
+RUN dotnet publish Crypter.Web --no-restore --configuration release /p:TreatWarningsAsErrors=true /warnaserror --output /app/ /p:Version=$GIT_VERSION_TAG /p:InformationalVersion=$GIT_VERSION_TAG_FULL
 
 FROM caddy:2.9-alpine AS webhost
 COPY Crypter.Web/Caddyfile /etc/caddy/Caddyfile

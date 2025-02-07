@@ -57,6 +57,13 @@ jobs:
             latest=${{ (github.event_name == 'workflow_dispatch' && 'true') || 'auto' }}
           images: ${{ env.registry }}/${{ vars.WEB_IMAGE_NAME }}
 
+      - name: Gather version info
+        uses: actions-ecosystem/action-regex-match@v2
+        id: version-match
+        with:
+          text: ${{ (github.event_name == 'workflow_dispatch' && '0.0.0') || github.ref_name }}
+          regex: '^[vV]?((?:[0-9]+\.){1,3}[0-9]+)$'
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -65,3 +72,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_VERSION_TAG=${{ steps.version-match.outputs.match != '' && steps.version-match.outputs.group1 || '0.0.0' }}
+            GIT_VERSION_TAG_FULL=${{ steps.version-match.outputs.match || '0.0.0' }}
+            VCS_URL=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.url'] }}

@@ -25,4 +25,9 @@
       <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
    </ItemGroup>
+   <ItemGroup>
+      <AssemblyAttribute Include="Crypter.Common.Attributes.VersionControlMetadataAttribute">
+         <_Parameter1>$(VCS_URL)</_Parameter1>
+      </AssemblyAttribute>
+   </ItemGroup>
 </Project>

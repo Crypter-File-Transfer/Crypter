@@ -39,6 +39,12 @@
       <ProjectReference Include="..\Crypter.Crypto.Providers.Browser\Crypter.Crypto.Providers.Browser.csproj" />
    </ItemGroup>
    
+   <ItemGroup>
+      <AssemblyAttribute Include="Crypter.Common.Attributes.VersionControlMetadataAttribute">
+         <_Parameter1>$(VCS_URL)</_Parameter1>
+      </AssemblyAttribute>
+   </ItemGroup>
+   
    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
       <Exec Command="pnpm install --force" />
       <Exec Command="pnpm run buildFunctions" />
