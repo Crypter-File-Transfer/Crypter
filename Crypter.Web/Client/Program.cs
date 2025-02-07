@@ -39,6 +39,7 @@ using Crypter.Common.Client.Services.UserSettings;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Exceptions;
+using Crypter.Common.Services;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Browser;
 using Crypter.Web;
@@ -104,6 +105,8 @@ builder.Services
     .AddSingleton<IUserNotificationSettingsService, UserNotificationSettingsService>()
     .AddSingleton<IUserPrivacySettingsService, UserPrivacySettingsService>()
     .AddSingleton<IUserPasswordChangeService, UserPasswordChangeService>()
+    .AddSingleton<IVersionService, VersionService>()
+
     .AddSingleton<TransferHandlerFactory>()
     .AddSingleton<Func<ICrypterApiClient>>(sp => sp.GetRequiredService<ICrypterApiClient>)
 
