@@ -47,6 +47,7 @@ public class CrypterApiClient : ICrypterApiClient
     public IUserKeyRequests UserKey { get; init; }
     public IUserRecoveryRequests UserRecovery { get; init; }
     public IUserSettingRequests UserSetting { get; init; }
+    public IVersionRequests ApiVersion { get; init; }
 
     public CrypterApiClient(HttpClient httpClient, ITokenRepository tokenRepository)
     {
@@ -65,6 +66,7 @@ public class CrypterApiClient : ICrypterApiClient
         UserKey = new UserKeyRequests(crypterAuthenticatedHttpClient);
         UserRecovery = new UserRecoveryRequests(crypterHttpClient);
         UserSetting = new UserSettingRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
+        ApiVersion = new VersionRequests(crypterHttpClient);
     }
 
     public event EventHandler RefreshTokenRejectedEventHandler

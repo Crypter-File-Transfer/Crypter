@@ -43,4 +43,5 @@ public interface ICrypterApiClient
     IUserKeyRequests UserKey { get; }
     IUserRecoveryRequests UserRecovery { get; }
     IUserSettingRequests UserSetting { get; }
+    IVersionRequests ApiVersion { get; }
 }
