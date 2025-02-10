@@ -29,7 +29,7 @@ using System.Reflection;
 
 namespace Crypter.Common.Infrastructure
 {
-    public record class ProductVersion(string Version, string? Hash);
+    public record ProductVersion(string Version, string? Hash);
 
     public static class AssemblyVersionProvider
     {
@@ -66,7 +66,7 @@ namespace Crypter.Common.Infrastructure
             {
                 string versionPath = isRelease ? RELEASE_PATH : COMMIT_PATH;
                 string version = isRelease ? productVersion : (hash ?? string.Empty);
-                return $"{versionUrlBase}/{(versionPath)}/{version}" ?? string.Empty;
+                return $"{versionUrlBase}/{versionPath}/{version}";
             }
             return string.Empty;
         }
