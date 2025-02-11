@@ -73,6 +73,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            GIT_VERSION_TAG=${{ steps.version-match.outputs.match != '' && steps.version-match.outputs.group1 || '0.0.0' }}
-            GIT_VERSION_TAG_FULL=${{ steps.version-match.outputs.match || '0.0.0' }}
             VCS_URL=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.url'] }}

@@ -1,6 +1,4 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-ARG GIT_VERSION_TAG=0.0.0
-ARG GIT_VERSION_TAG_FULL=0.0.0
 ARG VCS_URL
 ENV VCS_URL=$VCS_URL
 WORKDIR /source/

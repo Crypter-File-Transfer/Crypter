@@ -25,6 +25,7 @@
  */
 
 using Crypter.Common.Infrastructure;
+using System;
 
 namespace Crypter.Common.Services
 {
@@ -43,16 +44,16 @@ namespace Crypter.Common.Services
         public string VersionUrl { get; }
         public bool IsRelease { get; }
 
-        private const string DEFAULT_VERSION = "1.0.0";
-        private const string DEFAULT_BUILDER_VERSION = "0.0.0";
+        private const string DEFAULT_MINVER_VERSION = "0.0.0";
+        private const string MINVER_PRE_RELEASE_SUFFIX = "pre";
 
         public VersionService()
         {
             ProductVersion? productVersion = AssemblyVersionProvider.GetEntryAssemblyVersionInfo();
 
             VersionHash = productVersion?.Hash;
-            ProductVersion = productVersion?.Version ?? DEFAULT_VERSION;
-            IsRelease = ProductVersion != DEFAULT_VERSION && ProductVersion != DEFAULT_BUILDER_VERSION;
+            ProductVersion = productVersion?.Version ?? DEFAULT_MINVER_VERSION;
+            IsRelease = ProductVersion != DEFAULT_MINVER_VERSION && !ProductVersion.Contains(MINVER_PRE_RELEASE_SUFFIX, StringComparison.InvariantCultureIgnoreCase);
             VersionUrl = VersionUrlProvider.GetVersionUrl(IsRelease, VersionHash, ProductVersion);
         }
     }

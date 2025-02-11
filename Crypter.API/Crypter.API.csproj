@@ -22,12 +22,22 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
+      <PackageReference Include="MinVer" Version="6.0.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
       <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
    </ItemGroup>
    <ItemGroup>
       <AssemblyAttribute Include="Crypter.Common.Attributes.VersionControlMetadataAttribute">
          <_Parameter1>$(VCS_URL)</_Parameter1>
+         <_Parameter2>$(MinVerTagPrefix)</_Parameter2>
       </AssemblyAttribute>
    </ItemGroup>
+   <PropertyGroup Label="MinVer">
+      <MinVerTagPrefix>v</MinVerTagPrefix>
+      <MinVerVerbosity>normal</MinVerVerbosity>
+      <MinVerDefaultPreReleaseIdentifiers>pre</MinVerDefaultPreReleaseIdentifiers>
+   </PropertyGroup>
 </Project>

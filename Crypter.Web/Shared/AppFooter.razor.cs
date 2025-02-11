@@ -50,9 +50,9 @@ namespace Crypter.Web.Shared
         protected override async Task OnInitializedAsync()
         {
             Maybe<VersionResponse> response = await CrypterApiService.ApiVersion.GetApiVersionAsync();
-            _apiVersion = response.Match("1.0.0", x => x.IsRelease ? x.ProductVersion : $"SHA: {x.VersionHash?[..7] ?? "???"}");
+            _apiVersion = response.Match("0.0.0", x => x.ProductVersion);
             _apiVersionUrl = response.Match(string.Empty, x => x.VersionSystemUrl);
-            _clientVersion = VersionService.IsRelease ? VersionService.ProductVersion : $"SHA: {VersionService.VersionHash?[..7] ?? "???"}";
+            _clientVersion = VersionService.ProductVersion;
             _clientVersionUrl = VersionService.VersionUrl;
         }
 

@@ -32,10 +32,12 @@ namespace Crypter.Common.Attributes
     public class VersionControlMetadataAttribute :Attribute
     {
         public string BaseUrl { get; }
+        public string? MinVerTagPrefix { get; }
         
-        public VersionControlMetadataAttribute(string value)
+        public VersionControlMetadataAttribute(string url, string? tagPrefix)
         {
-            BaseUrl = value;
+            BaseUrl = url;
+            MinVerTagPrefix = tagPrefix;
         }
     }
 }
