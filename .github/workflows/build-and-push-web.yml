@@ -57,13 +57,6 @@ jobs:
             latest=${{ (github.event_name == 'workflow_dispatch' && 'true') || 'auto' }}
           images: ${{ env.registry }}/${{ vars.WEB_IMAGE_NAME }}
 
-      - name: Gather version info
-        uses: actions-ecosystem/action-regex-match@v2
-        id: version-match
-        with:
-          text: ${{ (github.event_name == 'workflow_dispatch' && '0.0.0') || github.ref_name }}
-          regex: '^[vV]?((?:[0-9]+\.){1,3}[0-9]+)$'
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
