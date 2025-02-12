@@ -66,3 +66,6 @@ This should also aid developers in deciding where to add a new API endpoint or w
    * POST /api/user/setting/notification
    * GET /api/user/setting/privacy
    * PUT /api/user/setting/
+
+* Version
+   * GET /api/version

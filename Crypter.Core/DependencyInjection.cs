@@ -26,6 +26,7 @@
 
 using System.Threading.Tasks;
 using Crypter.Common.Exceptions;
+using Crypter.Common.Services;
 using Crypter.Core.Identity;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
@@ -62,6 +63,7 @@ public static class DependencyInjection
 
         services.TryAddSingleton<IPasswordHashService, PasswordHashService>();
         services.TryAddSingleton<ICryptoProvider, DefaultCryptoProvider>();
+        services.TryAddSingleton<IVersionService, VersionService>();
 
         services.TryAddScoped<IHangfireBackgroundService, HangfireBackgroundService>();
         services.TryAddScoped<IUserEmailVerificationService, UserEmailVerificationService>();

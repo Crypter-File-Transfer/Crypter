@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -29,7 +29,6 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.AccountRecovery.SubmitRecovery;
-using Crypter.Common.Contracts.Features.Keys;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Primitives;
 using Crypter.Crypto.Common;
@@ -43,8 +42,7 @@ public class UserRecoveryService : IUserRecoveryService
     private readonly ICryptoProvider _cryptoProvider;
     private readonly IUserPasswordService _userPasswordService;
 
-    public UserRecoveryService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider,
-        IUserPasswordService userPasswordService)
+    public UserRecoveryService(ICrypterApiClient crypterApiClient, ICryptoProvider cryptoProvider, IUserPasswordService userPasswordService)
     {
         _crypterApiClient = crypterApiClient;
         _cryptoProvider = cryptoProvider;
@@ -62,8 +60,7 @@ public class UserRecoveryService : IUserRecoveryService
         Either<SubmitAccountRecoveryError, PasswordDerivatives> passwordDerivatives = await _userPasswordService
             .DeriveUserAuthenticationPasswordAsync(username, newPassword, _userPasswordService.CurrentPasswordVersion)
             .ToEitherAsync(SubmitAccountRecoveryError.PasswordHashFailure)
-            .MapAsync(async versionedPassword => await _userPasswordService.DeriveUserCredentialKeyAsync(username,
-                    newPassword, _userPasswordService.CurrentPasswordVersion)
+            .MapAsync(async versionedPassword => await _userPasswordService.DeriveUserCredentialKeyAsync(username, newPassword, _userPasswordService.CurrentPasswordVersion)
                 .ToEitherAsync(SubmitAccountRecoveryError.PasswordHashFailure)
                 .BindAsync<SubmitAccountRecoveryError, byte[], PasswordDerivatives>(credentialKey => new PasswordDerivatives
                 {
@@ -107,21 +104,6 @@ public class UserRecoveryService : IUserRecoveryService
                     .MapAsync<SubmitAccountRecoveryError, Unit, Maybe<RecoveryKey>>(_ => x.RecoveryArtifacts
                         .Select(y => y.NewRecoveryKey));
             });
-    }
-
-    public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, Password password)
-    {
-        return _userPasswordService
-            .DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
-            .BindAsync(versionedPassword => DeriveRecoveryKeyAsync(masterKey, versionedPassword));
-    }
-
-    public Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword)
-    {
-        GetMasterKeyRecoveryProofRequest request = new GetMasterKeyRecoveryProofRequest(versionedPassword.Password);
-        return _crypterApiClient.UserKey.GetMasterKeyRecoveryProofAsync(request)
-            .ToMaybeTask()
-            .MapAsync(x => new RecoveryKey(masterKey, x.Proof));
     }
     
     private struct PasswordDerivatives

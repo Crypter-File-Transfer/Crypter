@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -35,6 +35,7 @@ using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.UserAuthentication;
+using Crypter.Common.Contracts.Features.UserConsents;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using EasyMonads;
@@ -140,13 +141,20 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
                 async versionedPassword =>
                 {
                     List<VersionedPassword> versionedPasswords = [versionedPassword];
-                    var loginTask = from loginResponse in LoginRecursiveAsync(username, password, versionedPasswords, _trustDeviceRefreshTokenTypeMap[rememberUser])
+                    Task<Either<LoginError, LoginResponse>> loginTask = from loginResponse in LoginRecursiveAsync(username, password, versionedPasswords, _trustDeviceRefreshTokenTypeMap[rememberUser])
                         from unit0 in Either<LoginError, Unit>.FromRightAsync(StoreSessionInfo(loginResponse, rememberUser))
                         select loginResponse;
 
-                    Either<LoginError, LoginResponse> loginResult = await loginTask;
-                    loginResult.DoRight(x => HandleUserLoggedInEvent(username, password, versionedPassword, rememberUser, x.UploadNewKeys, x.ShowRecoveryKey));
-                    return loginResult.Map(_ => Unit.Default);
+                    return await loginTask
+                        .DoRightAsync(async x =>
+                        {
+                            bool showRecoveryKeyModal = await _crypterApiClient.UserConsent.GetUserConsentsAsync()
+                                .MatchAsync(
+                                    none: () => false,
+                                    some: y => y.TryGetValue(UserConsentType.RecoveryKeyRisks, out DateTimeOffset? value) && !value.HasValue);
+                            HandleUserLoggedInEvent(username, password, versionedPassword, rememberUser, showRecoveryKeyModal);
+                        })
+                        .BindAsync<LoginError, LoginResponse, Unit>(_ => Unit.Default);
                 });
     }
 
@@ -169,10 +177,8 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
                                     return await LoginRecursiveAsync(username, password, versionedPasswords, refreshTokenType);
                                 });
                     }
-                    else
-                    {
-                        return error;
-                    }
+
+                    return error;
                 },
                 response => response,
                 LoginError.UnknownError);
@@ -203,11 +209,8 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
     private void HandleServiceInitializedEvent() =>
         _serviceInitializedEventHandler?.Invoke(this, new UserSessionServiceInitializedEventArgs(Session.IsSome));
 
-    private void HandleUserLoggedInEvent(Username username, Password password, VersionedPassword versionedPassword,
-        bool rememberUser, bool uploadNewKeys, bool showRecoveryKeyModal) =>
-        _userLoggedInEventHandler?.Invoke(this,
-            new UserLoggedInEventArgs(username, password, versionedPassword, rememberUser, uploadNewKeys,
-                showRecoveryKeyModal));
+    private void HandleUserLoggedInEvent(Username username, Password password, VersionedPassword versionedPassword, bool rememberUser, bool showRecoveryKeyModal) =>
+        _userLoggedInEventHandler?.Invoke(this, new UserLoggedInEventArgs(username, password, versionedPassword, rememberUser, showRecoveryKeyModal));
 
     private void HandleUserLoggedOutEvent() =>
         _userLoggedOutEventHandler?.Invoke(this, EventArgs.Empty);
@@ -218,11 +221,9 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
     public event EventHandler<UserSessionServiceInitializedEventArgs> ServiceInitializedEventHandler
     {
         add => _serviceInitializedEventHandler =
-            (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Combine(_serviceInitializedEventHandler,
-                value);
+            (EventHandler<UserSessionServiceInitializedEventArgs>)Delegate.Combine(_serviceInitializedEventHandler, value);
         remove => _serviceInitializedEventHandler =
-            (EventHandler<UserSessionServiceInitializedEventArgs>?)Delegate.Remove(_serviceInitializedEventHandler,
-                value);
+            (EventHandler<UserSessionServiceInitializedEventArgs>?)Delegate.Remove(_serviceInitializedEventHandler, value);
     }
 
     public event EventHandler<UserLoggedInEventArgs> UserLoggedInEventHandler

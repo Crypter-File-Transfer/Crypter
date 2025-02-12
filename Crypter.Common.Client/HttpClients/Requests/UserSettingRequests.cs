@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -41,8 +41,7 @@ public class UserSettingRequests : IUserSettingRequests
     private readonly ICrypterHttpClient _crypterHttpClient;
     private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
 
-    public UserSettingRequests(ICrypterHttpClient crypterHttpClient,
-        ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
+    public UserSettingRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
     {
         _crypterHttpClient = crypterHttpClient;
         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
@@ -54,8 +53,7 @@ public class UserSettingRequests : IUserSettingRequests
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<ProfileSettings>(url);
     }
 
-    public Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(
-        ProfileSettings newProfileSettings)
+    public Task<Either<SetProfileSettingsError, ProfileSettings>> SetProfileSettingsAsync(ProfileSettings newProfileSettings)
     {
         const string url = "api/user/setting/profile";
         return _crypterAuthenticatedHttpClient.PutEitherAsync<ProfileSettings, ProfileSettings>(url, newProfileSettings)
@@ -68,8 +66,7 @@ public class UserSettingRequests : IUserSettingRequests
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<ContactInfoSettings>(url);
     }
 
-    public Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(
-        UpdateContactInfoSettingsRequest newContactInfoSettings)
+    public Task<Either<UpdateContactInfoSettingsError, ContactInfoSettings>> UpdateContactInfoSettingsAsync(UpdateContactInfoSettingsRequest newContactInfoSettings)
     {
         const string url = "api/user/setting/contact";
         return _crypterAuthenticatedHttpClient
@@ -83,8 +80,7 @@ public class UserSettingRequests : IUserSettingRequests
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<NotificationSettings>(url);
     }
 
-    public Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(
-        NotificationSettings newNotificationSettings)
+    public Task<Either<UpdateNotificationSettingsError, NotificationSettings>> UpdateNotificationSettingsAsync(NotificationSettings newNotificationSettings)
     {
         const string url = "api/user/setting/notification";
         return _crypterAuthenticatedHttpClient
@@ -98,16 +94,14 @@ public class UserSettingRequests : IUserSettingRequests
         return _crypterAuthenticatedHttpClient.GetMaybeAsync<PrivacySettings>(url);
     }
 
-    public Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(
-        PrivacySettings newPrivacySettings)
+    public Task<Either<SetPrivacySettingsError, PrivacySettings>> SetPrivacySettingsAsync(PrivacySettings newPrivacySettings)
     {
         const string url = "api/user/setting/privacy";
         return _crypterAuthenticatedHttpClient.PutEitherAsync<PrivacySettings, PrivacySettings>(url, newPrivacySettings)
             .ExtractErrorCode<SetPrivacySettingsError, PrivacySettings>();
     }
 
-    public Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(
-        VerifyEmailAddressRequest verificationInfo)
+    public Task<Either<VerifyEmailAddressError, Unit>> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest verificationInfo)
     {
         const string url = "api/user/setting/contact/verify";
         return _crypterHttpClient.PostEitherUnitResponseAsync(url, verificationInfo)

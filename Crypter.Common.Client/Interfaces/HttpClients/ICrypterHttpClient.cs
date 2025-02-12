@@ -47,8 +47,11 @@ public interface ICrypterHttpClient
     Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body)
         where TRequest : class
         where TResponse : class;
-
+    
     Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri);
+
+    Task<Maybe<Unit>> PostMaybeUnitResponseAsync<TRequest>(string uri, TRequest body)
+        where TRequest : class;
 
     Task<Either<ErrorResponse, Unit>> PostEitherUnitResponseAsync(string uri);
     

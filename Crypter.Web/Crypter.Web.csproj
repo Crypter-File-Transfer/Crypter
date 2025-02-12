@@ -28,8 +28,12 @@
    <ItemGroup>
       <PackageReference Include="ByteSize" Version="2.1.2" />
       <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.1" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+      <PackageReference Include="MinVer" Version="6.0.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
    </ItemGroup>
 
    <ItemGroup>
@@ -39,6 +43,19 @@
       <ProjectReference Include="..\Crypter.Crypto.Providers.Browser\Crypter.Crypto.Providers.Browser.csproj" />
    </ItemGroup>
    
+   <ItemGroup>
+      <AssemblyAttribute Include="Crypter.Common.Attributes.VersionControlMetadataAttribute">
+         <_Parameter1>$(VCS_URL)</_Parameter1>
+         <_Parameter2>$(MinVerTagPrefix)</_Parameter2>
+      </AssemblyAttribute>
+   </ItemGroup>
+
+   <PropertyGroup Label="MinVer">
+      <MinVerTagPrefix>v</MinVerTagPrefix>
+      <MinVerVerbosity>normal</MinVerVerbosity>
+      <MinVerDefaultPreReleaseIdentifiers>pre</MinVerDefaultPreReleaseIdentifiers>
+   </PropertyGroup>
+
    <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
       <Exec Command="pnpm install --force" />
       <Exec Command="pnpm run buildFunctions" />

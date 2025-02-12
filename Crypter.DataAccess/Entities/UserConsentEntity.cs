@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Contracts.Features.UserConsents;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -43,29 +44,21 @@ public class UserConsentEntity
 {
     public long Id { get; set; }
     public Guid Owner { get; set; }
-    public ConsentType ConsentType { get; set; }
-    public DateTime Created { get; set; }
+    public UserConsentType ConsentType { get; set; }
+    public DateTime Activated { get; set; }
     public DateTime? Deactivated { get; set; }
     public bool Active { get; set; }
 
     public UserEntity? User { get; set; }
 
-    public UserConsentEntity(Guid owner, ConsentType consentType, bool active, DateTime created,
-        DateTime? deactivated = null)
+    public UserConsentEntity(Guid owner, UserConsentType consentType, bool active, DateTime activated, DateTime? deactivated = null)
     {
         Owner = owner;
         ConsentType = consentType;
         Active = active;
-        Created = created;
+        Activated = activated;
         Deactivated = deactivated;
     }
-}
-
-public enum ConsentType
-{
-    TermsOfService,
-    PrivacyPolicy,
-    RecoveryKeyRisks
 }
 
 public class UserConsentEntityConfiguration : IEntityTypeConfiguration<UserConsentEntity>

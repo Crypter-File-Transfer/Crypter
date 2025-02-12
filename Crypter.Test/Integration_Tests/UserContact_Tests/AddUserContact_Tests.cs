@@ -28,7 +28,6 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Contracts.Features.Contacts;
-using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using EasyMonads;

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -36,10 +36,21 @@ public interface IUserKeysService
 {
     Maybe<byte[]> MasterKey { get; }
     Maybe<byte[]> PrivateKey { get; }
-
-    Task DownloadExistingKeysAsync(Username username, Password password, bool trustDevice);
-    Task DownloadExistingKeysAsync(byte[] credentialKey, bool trustDevice);
     
-    Task<Maybe<RecoveryKey>> UploadNewKeysAsync(Username username, Password password, VersionedPassword versionedPassword, bool trustDevice);
-    Task<Maybe<RecoveryKey>> UploadNewKeysAsync(VersionedPassword versionedPassword, byte[] credentialKey, bool trustDevice);
+    /// <summary>
+    /// Derive a recovery key from the provided parameters.
+    /// </summary>
+    /// <param name="masterKey"></param>
+    /// <param name="username"></param>
+    /// <param name="password">A valid, plaintext password.</param>
+    /// <returns></returns>
+    Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, Username username, Password password);
+
+    /// <summary>
+    /// Derive a recovery key from the provided parameters.
+    /// </summary>
+    /// <param name="masterKey"></param>
+    /// <param name="versionedPassword">A hashed password.</param>
+    /// <returns></returns>
+    Task<Maybe<RecoveryKey>> DeriveRecoveryKeyAsync(byte[] masterKey, VersionedPassword versionedPassword);
 }

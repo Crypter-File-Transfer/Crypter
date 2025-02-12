@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -76,7 +76,7 @@ internal sealed class UserLoginCommandHandler
         _tokenService = tokenService;
         
         _clientPasswordVersion = passwordSettings.Value.ClientVersion;
-        _refreshTokenProviderMap = new Dictionary<TokenType, Func<Guid, RefreshTokenData>>()
+        _refreshTokenProviderMap = new Dictionary<TokenType, Func<Guid, RefreshTokenData>>
         {
             { TokenType.Session, _tokenService.NewSessionToken },
             { TokenType.Device, _tokenService.NewDeviceToken }
@@ -89,9 +89,7 @@ internal sealed class UserLoginCommandHandler
             .BindAsync(async validLoginRequest => await (
                 from foundUser in GetUserAsync(validLoginRequest)
                 from passwordVerificationSuccess in VerifyAndUpgradePassword(validLoginRequest, foundUser).AsTask()
-                from loginResponse in Either<LoginError, LoginResponse>.FromRightAsync(
-                    CreateLoginResponseAsync(foundUser, validLoginRequest.RefreshTokenType,
-                        request.DeviceDescription))
+                from loginResponse in CreateLoginResponseAsync(foundUser, validLoginRequest.RefreshTokenType, request.DeviceDescription)
                 select loginResponse)
             )
             .DoRightAsync(async _ =>
@@ -145,7 +143,6 @@ internal sealed class UserLoginCommandHandler
         _foundUserEntity = await _dataContext.Users
             .Where(x => x.Username == validLoginRequest.Username.Value)
             .Include(x => x.FailedLoginAttempts)
-            .Include(x => x.Consents!.Where(y => y.Active == true))
             .Include(x => x.MasterKey)
             .Include(x => x.KeyPair)
             .FirstOrDefaultAsync();
@@ -205,7 +202,7 @@ internal sealed class UserLoginCommandHandler
         return Unit.Default;
     }
 
-    private async Task<LoginResponse> CreateLoginResponseAsync(UserEntity userEntity, TokenType refreshTokenType, string deviceDescription)
+    private async Task<Either<LoginError, LoginResponse>> CreateLoginResponseAsync(UserEntity userEntity, TokenType refreshTokenType, string deviceDescription)
     {
         userEntity.LastLogin = DateTime.UtcNow;
         
@@ -223,13 +220,8 @@ internal sealed class UserLoginCommandHandler
         
         string authToken = _tokenService.NewAuthenticationToken(userEntity.Id);
         await Common.PublishRefreshTokenCreatedEventAsync(_publisher, refreshToken);
-
-        bool userHasConsentedToRecoveryKeyRisks =
-            userEntity.Consents!.Any(x => x.ConsentType == ConsentType.RecoveryKeyRisks);
-        bool userNeedsNewKeys = userEntity.MasterKey is null && userEntity.KeyPair is null;
-
-        return new LoginResponse(userEntity.Username, authToken, refreshToken.Token, userNeedsNewKeys,
-            !userHasConsentedToRecoveryKeyRisks);
+        
+        return new LoginResponse(userEntity.Username, authToken, refreshToken.Token);
     }
     
     private Either<LoginError, IDictionary<short, byte[]>> GetValidClientPasswords(List<VersionedPassword> clientPasswords)

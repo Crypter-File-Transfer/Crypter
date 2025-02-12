@@ -32,6 +32,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: 'true'
 
       - name: Replace tokens in configuration
         working-directory: ${{ env.project_root }}
@@ -65,3 +68,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VCS_URL=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.url'] }}

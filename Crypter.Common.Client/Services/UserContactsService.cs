@@ -33,7 +33,6 @@ using Crypter.Common.Client.Events;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Contracts.Features.Contacts;
-using Crypter.Common.Contracts.Features.Contacts.RequestErrorCodes;
 using EasyMonads;
 
 namespace Crypter.Common.Client.Services;

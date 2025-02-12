@@ -39,6 +39,7 @@ using Crypter.Common.Client.Services.UserSettings;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Exceptions;
+using Crypter.Common.Services;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Browser;
 using Crypter.Web;
@@ -49,12 +50,14 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 WebAssemblyHostBuilder builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 Console.WriteLine($"Environment: {builder.HostEnvironment.Environment}");
+builder.Logging.SetMinimumLevel(builder.Configuration.GetValue<LogLevel?>("LoggingConfiguration:MinimumLogLevel") ?? LogLevel.Information);
 
 builder.Services.AddSingleton(sp =>
 {
@@ -97,14 +100,19 @@ builder.Services
     .AddSingleton<IUserContactsService, UserContactsService>()
     .AddSingleton<IUserPasswordService, UserPasswordService>()
     .AddSingleton<IUserRecoveryService, UserRecoveryService>()
-    .AddSingleton<IUserKeysService, UserKeysService>()
     .AddSingleton<IUserProfileSettingsService, UserProfileSettingsService>()
     .AddSingleton<IUserContactInfoSettingsService, UserContactInfoSettingsService>()
     .AddSingleton<IUserNotificationSettingsService, UserNotificationSettingsService>()
     .AddSingleton<IUserPrivacySettingsService, UserPrivacySettingsService>()
     .AddSingleton<IUserPasswordChangeService, UserPasswordChangeService>()
+    .AddSingleton<IVersionService, VersionService>()
+
     .AddSingleton<TransferHandlerFactory>()
-    .AddSingleton<Func<ICrypterApiClient>>(sp => sp.GetRequiredService<ICrypterApiClient>);
+    .AddSingleton<Func<ICrypterApiClient>>(sp => sp.GetRequiredService<ICrypterApiClient>)
+
+    .AddSingleton<EventfulUserKeysService>()
+    .AddSingleton<IUserKeysService>(x => x.GetRequiredService<EventfulUserKeysService>())
+    .AddSingleton<IEventfulUserKeysService>(x => x.GetRequiredService<EventfulUserKeysService>());
 
 if (OperatingSystem.IsBrowser())
 {

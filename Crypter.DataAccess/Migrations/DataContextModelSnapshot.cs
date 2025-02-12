@@ -19,7 +19,7 @@ namespace Crypter.DataAccess.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("crypter")
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
@@ -137,14 +137,14 @@ namespace Crypter.DataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
 
+                    b.Property<DateTime>("Activated")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
                     b.Property<int>("ConsentType")
                         .HasColumnType("integer");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("Deactivated")
                         .HasColumnType("timestamp with time zone");
