@@ -1,4 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG VCS_URL
+ENV VCS_URL=$VCS_URL
 WORKDIR /source/
 
 RUN dotnet tool install --global dotnet-ef --version 9.0.*
@@ -20,6 +22,7 @@ COPY Crypter.Core/. ./Crypter.Core/
 COPY Crypter.Crypto.Common/. ./Crypter.Crypto.Common/
 COPY Crypter.Crypto.Providers.Default/. ./Crypter.Crypto.Providers.Default/
 COPY Crypter.DataAccess/. ./Crypter.DataAccess/
+COPY .git/. ./.git/
 
 RUN dotnet publish Crypter.API --configuration release --no-self-contained /p:TreatWarningsAsErrors=true /warnaserror --output /app/
 RUN dotnet-ef migrations bundle --project Crypter.DataAccess --startup-project Crypter.API --configuration release --no-build --target-runtime linux-x64 --output /app/efbundle --verbose

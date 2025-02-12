@@ -65,3 +65,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VCS_URL=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.url'] }}

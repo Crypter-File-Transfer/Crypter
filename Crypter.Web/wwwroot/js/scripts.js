@@ -37,5 +37,19 @@
    CollapseNavBar: function () {
       let nav = document.getElementById('mainNavigation');
       nav.classList.remove('show');
-   }
+    },
+
+    InitVersionPopover: function () {
+        const infoBtn = document.getElementById('info-icon');
+        if (infoBtn) {
+            const popoverOptions = {
+                content: document.getElementById('version-content'),
+                html: true,
+                placement: 'top',
+                trigger: 'click focus'
+            };
+            new bootstrap.Popover(infoBtn, popoverOptions);
+        }
+    }
 }
+
