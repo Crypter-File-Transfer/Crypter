@@ -32,6 +32,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: 'true'
 
       - name: Replace tokens in configuration
         working-directory: ${{ env.project_root }}
