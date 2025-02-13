@@ -92,7 +92,7 @@ internal static class Common
         Task<Either<T, UserEntity?>> FetchUserAsync<T>(T error)
         {
             return Either<T, UserEntity?>.FromRightAsync(
-                dataContext.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken),
+                dataContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId, cancellationToken),
                 error);
         }
 

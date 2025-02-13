@@ -52,19 +52,17 @@ internal class InsertKeyPairCommandHandler
     public async Task<Either<InsertKeyPairError, Unit>> Handle(InsertKeyPairCommand request,
         CancellationToken cancellationToken)
     {
-        UserKeyPairEntity? keyPairEntity = await _dataContext.UserKeyPairs
-            .FirstOrDefaultAsync(x => x.Owner == request.UserId, CancellationToken.None);
+        bool keyPairExists = await _dataContext.UserKeyPairs.AnyAsync(x => x.Owner == request.UserId, CancellationToken.None);
 
-        if (keyPairEntity is null)
+        if (!keyPairExists)
         {
             UserKeyPairEntity newEntity = new UserKeyPairEntity(request.UserId, request.Data.EncryptedPrivateKey,
                 request.Data.PublicKey, request.Data.Nonce, DateTime.UtcNow);
             _dataContext.UserKeyPairs.Add(newEntity);
             await _dataContext.SaveChangesAsync(CancellationToken.None);
+            return Unit.Default;
         }
 
-        return keyPairEntity is null
-            ? Unit.Default
-            : InsertKeyPairError.KeyPairAlreadyExists;
+        return InsertKeyPairError.KeyPairAlreadyExists;
     }
 }
