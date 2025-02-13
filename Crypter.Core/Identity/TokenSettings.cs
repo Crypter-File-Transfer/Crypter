@@ -30,7 +30,6 @@ public class TokenSettings
 {
     public required string Audience { get; set; }
     public required string Issuer { get; set; }
-    public required string SecretKey { get; set; }
     public required int AuthenticationTokenLifetimeMinutes { get; set; }
     public required int SessionTokenLifetimeMinutes { get; set; }
     public required int DeviceTokenLifetimeDays { get; set; }

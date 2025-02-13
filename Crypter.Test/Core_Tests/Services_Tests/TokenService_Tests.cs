@@ -46,7 +46,6 @@ public class TokenService_Tests
         {
             Audience = "test aud",
             Issuer = "test iss",
-            SecretKey = "They're taking the hobbits to Isengard!",
             AuthenticationTokenLifetimeMinutes = 5,
             SessionTokenLifetimeMinutes = 30,
             DeviceTokenLifetimeDays = 5
