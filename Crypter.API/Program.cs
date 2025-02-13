@@ -57,29 +57,29 @@ builder.Services.AddCrypterCore(
         builder.Configuration
             .GetSection("AnalyticsSettings")
             .Get<AnalyticsSettings>()
-        ?? throw new Exception("AnalyticsSettings missing from configuration"),
+        ?? throw new ConfigurationException("AnalyticsSettings missing from configuration"),
         builder.Configuration
             .GetSection("EmailSettings")
             .Get<EmailSettings>()
-        ?? throw new Exception("EmailSettings missing from configuration"),
+        ?? throw new ConfigurationException("EmailSettings missing from configuration"),
         builder.Configuration
             .GetSection("HashIdSettings")
             .Get<HashIdSettings>()
-        ?? throw new Exception("HashIdSettings missing from configuration"),
+        ?? throw new ConfigurationException("HashIdSettings missing from configuration"),
         builder.Configuration
             .GetSection("PasswordSettings")
             .Get<ServerPasswordSettings>()
-        ?? throw new Exception("PasswordSettings missing from configuration"),
+        ?? throw new ConfigurationException("PasswordSettings missing from configuration"),
         tokenSettings,
         builder.Configuration
             .GetSection("TransferStorageSettings")
             .Get<TransferStorageSettings>()
-        ?? throw new Exception("TransferStorageSettings missing from configuration"),
+        ?? throw new ConfigurationException("TransferStorageSettings missing from configuration"),
         builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? throw new Exception("DefaultConnection missing from configuration"),
+        ?? throw new ConfigurationException("DefaultConnection missing from configuration"),
         hangfireConnectionString)
     .AddBackgroundServer(builder.Configuration.GetSection("HangfireSettings").Get<HangfireSettings>()
-                         ?? throw new Exception("HangfireSettings missing from configuration"));
+                         ?? throw new ConfigurationException("HangfireSettings missing from configuration"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearerConfiguration(tokenSettings);
