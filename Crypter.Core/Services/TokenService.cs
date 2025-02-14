@@ -28,7 +28,6 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using System.Text;
 using Crypter.Common.Exceptions;
 using Crypter.Core.Identity;
 using EasyMonads;
@@ -36,6 +35,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using ScottBrady.IdentityModel;
+using ScottBrady.IdentityModel.Crypto;
 
 namespace Crypter.Core.Services;
 
@@ -45,6 +46,7 @@ public interface ITokenService
     RefreshTokenData NewSessionToken(Guid userId);
     RefreshTokenData NewDeviceToken(Guid userId);
     Maybe<ClaimsPrincipal> ValidateToken(string token);
+    JsonWebKey PublicJWK();
 }
 
 public static class TokenServiceExtensions
@@ -156,17 +158,23 @@ public class TokenService : ITokenService
             claims.AddClaim(jtiClaim);
         }
 
-        var tokenKeyBytes = Encoding.UTF8.GetBytes(_tokenSettings.SecretKey);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = claims,
             Audience = _tokenSettings.Audience,
             Issuer = _tokenSettings.Issuer,
             Expires = expiration,
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKeyBytes),
-                SecurityAlgorithms.HmacSha256Signature)
+            SigningCredentials = new SigningCredentials(TokenKeyProvider.PrivateKey, ExtendedSecurityAlgorithms.EdDsa)
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
+    }
+
+    public JsonWebKey PublicJWK()
+    {
+        JsonWebKey key = ExtendedJsonWebKeyConverter.ConvertFromEdDsaSecurityKey(TokenKeyProvider.PublicKey);
+        key.D = null; // that should be private
+        key.Use = JsonWebKeyUseNames.Sig;
+        return key;
     }
 }
