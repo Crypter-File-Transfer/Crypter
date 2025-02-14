@@ -30,7 +30,6 @@ using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
 using Crypter.Core.Services;
-using Crypter.DataAccess;
 using Hangfire;
 using MediatR;
 
@@ -43,16 +42,13 @@ internal class FailedMultipartFileTransferAbandonEventHandler
     : INotificationHandler<FailedMultipartFileTransferAbandonEvent>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly DataContext _dataContext;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
 
     public FailedMultipartFileTransferAbandonEventHandler(
         IBackgroundJobClient backgroundJobClient,
-        DataContext dataContext,
         IHangfireBackgroundService hangfireBackgroundService)
     {
         _backgroundJobClient = backgroundJobClient;
-        _dataContext = dataContext;
         _hangfireBackgroundService = hangfireBackgroundService;
     }
     
