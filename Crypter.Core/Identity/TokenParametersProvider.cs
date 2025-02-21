@@ -24,8 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Core.Identity.Tokens;
 using Microsoft.IdentityModel.Tokens;
-using ScottBrady.IdentityModel.Crypto;
 
 namespace Crypter.Core.Identity;
 
@@ -40,11 +40,10 @@ public static class TokenParametersProvider
             ValidIssuer = tokenSettings.Issuer,
             ValidateIssuer = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = TokenKeyProvider.PublicKey,
             ValidateLifetime = true,
             ClockSkew = TokenValidationParameters.DefaultClockSkew,
             RequireExpirationTime = true,
-            ValidAlgorithms = new[] { ExtendedSecurityAlgorithms.EdDsa }
+            ValidAlgorithms = new[] { EdDsaAlgorithm.Name }
         };
     }
 }

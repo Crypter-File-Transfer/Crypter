@@ -23,16 +23,65 @@
  *
  * Contact the current copyright holder to discuss commercial license options.
  */
-using ScottBrady.IdentityModel.Crypto;
-using ScottBrady.IdentityModel.Tokens;
+using Crypter.Core.Identity.Tokens;
+using Microsoft.IdentityModel.Tokens;
+using System;
+using ICrypterCryptoProvider = Crypter.Crypto.Common.ICryptoProvider;
 
 namespace Crypter.Core.Identity
 {
-    public static class TokenKeyProvider
+    public interface ITokenKeyProvider
     {
-        private static readonly EdDsa _algorithm = EdDsa.Create(ExtendedSecurityAlgorithms.Curves.Ed448);
+        AsymmetricSecurityKey PublicKey { get; }
+        AsymmetricSecurityKey PrivateKey { get; }
+        JsonWebKey PublicJWK { get; }
+    }
 
-        public static EdDsaSecurityKey PublicKey => new EdDsaSecurityKey(_algorithm);
-        public static EdDsaSecurityKey PrivateKey => new EdDsaSecurityKey(_algorithm);
+    public class TokenKeyProvider : ITokenKeyProvider
+    {
+        public readonly EdDsaSecurityKey _publicKey;
+        public readonly EdDsaSecurityKey _privateKey;
+
+        public AsymmetricSecurityKey PublicKey => _publicKey;
+        public AsymmetricSecurityKey PrivateKey => _privateKey;
+
+        public JsonWebKey PublicJWK => _publicKey.AsJWK();
+
+        public TokenKeyProvider(ICrypterCryptoProvider cryptoProvider, TokenSettings settings)
+        {
+            EdDsaAlgorithm? edDsa;
+            if (settings.RequirePersistentSigningKey)
+            {
+                if (settings.SigningKeyGenerationStrategy == SigningKeyGenerationStrategy.Always)
+                {
+                    edDsa = EdDsaAlgorithm.Create(cryptoProvider);
+                    edDsa.TryExportPrivateKey(settings.PersistentSigningKeyLocation!, settings.PersistentSigningKeyPassword);
+                }
+                else
+                {
+                    try
+                    {
+                        edDsa = EdDsaAlgorithm.FromPrivateKeyFile(settings.PersistentSigningKeyLocation!, settings.PersistentSigningKeyPassword, cryptoProvider);
+                    }
+                    catch (Exception)
+                    {
+                        if (settings.SigningKeyGenerationStrategy == SigningKeyGenerationStrategy.Never)
+                        {
+                            throw;
+                        }
+                        // SigningKeyGenerationStrategy.WhenMissing
+                        edDsa = EdDsaAlgorithm.Create(cryptoProvider);
+                        edDsa.TryExportPrivateKey(settings.PersistentSigningKeyLocation!, settings.PersistentSigningKeyPassword);
+                    }
+                }
+            }
+            else
+            {
+                edDsa = EdDsaAlgorithm.Create(cryptoProvider);
+            }
+            
+            _privateKey = new EdDsaSecurityKey(edDsa);
+            _publicKey = new EdDsaSecurityKey(edDsa);
+        }
     }
 }

@@ -30,13 +30,13 @@ using System.Linq;
 using System.Security.Claims;
 using Crypter.Common.Exceptions;
 using Crypter.Core.Identity;
+using Crypter.Core.Identity.Tokens;
 using EasyMonads;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using ScottBrady.IdentityModel;
-using ScottBrady.IdentityModel.Crypto;
+using ICrypterCryptoProvider = Crypter.Crypto.Common.ICryptoProvider;
 
 namespace Crypter.Core.Services;
 
@@ -47,6 +47,7 @@ public interface ITokenService
     RefreshTokenData NewDeviceToken(Guid userId);
     Maybe<ClaimsPrincipal> ValidateToken(string token);
     JsonWebKey PublicJWK();
+    TokenValidationParameters TokenValidationParameters { get; }
 }
 
 public static class TokenServiceExtensions
@@ -66,10 +67,22 @@ public static class TokenServiceExtensions
 public class TokenService : ITokenService
 {
     private readonly TokenSettings _tokenSettings;
+    private readonly ITokenKeyProvider _tokenKeyProvider;
 
-    public TokenService(IOptions<TokenSettings> tokenSettings)
+    public TokenValidationParameters TokenValidationParameters
+    {
+        get
+        {
+            var parameters = TokenParametersProvider.GetTokenValidationParameters(_tokenSettings);
+            parameters.IssuerSigningKey = _tokenKeyProvider.PublicKey;
+            return parameters;
+        }
+    }
+
+    public TokenService(IOptions<TokenSettings> tokenSettings, ICrypterCryptoProvider cryptoProvider)
     {
         _tokenSettings = tokenSettings.Value;
+        _tokenKeyProvider = new TokenKeyProvider(cryptoProvider, _tokenSettings);
     }
 
     public string NewAuthenticationToken(Guid userId)
@@ -94,11 +107,9 @@ public class TokenService : ITokenService
 
     public Maybe<ClaimsPrincipal> ValidateToken(string token)
     {
-        var validationParameters = TokenParametersProvider.GetTokenValidationParameters(_tokenSettings);
-
         try
         {
-            return new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out _);
+            return new JwtSecurityTokenHandler().ValidateToken(token, TokenValidationParameters, out _);
         }
         catch (Exception)
         {
@@ -164,7 +175,7 @@ public class TokenService : ITokenService
             Audience = _tokenSettings.Audience,
             Issuer = _tokenSettings.Issuer,
             Expires = expiration,
-            SigningCredentials = new SigningCredentials(TokenKeyProvider.PrivateKey, ExtendedSecurityAlgorithms.EdDsa)
+            SigningCredentials = new SigningCredentials(_tokenKeyProvider.PrivateKey, EdDsaAlgorithm.Name)
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
@@ -172,7 +183,7 @@ public class TokenService : ITokenService
 
     public JsonWebKey PublicJWK()
     {
-        JsonWebKey key = ExtendedJsonWebKeyConverter.ConvertFromEdDsaSecurityKey(TokenKeyProvider.PublicKey);
+        JsonWebKey key = _tokenKeyProvider.PublicJWK;
         key.D = null; // that should be private
         key.Use = JsonWebKeyUseNames.Sig;
         return key;

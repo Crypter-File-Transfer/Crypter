@@ -101,6 +101,10 @@ public static class DependencyInjection
             options.AuthenticationTokenLifetimeMinutes = tokenSettings.AuthenticationTokenLifetimeMinutes;
             options.SessionTokenLifetimeMinutes = tokenSettings.SessionTokenLifetimeMinutes;
             options.DeviceTokenLifetimeDays = tokenSettings.DeviceTokenLifetimeDays;
+            options.RequirePersistentSigningKey = tokenSettings.RequirePersistentSigningKey;
+            options.PersistentSigningKeyLocation = tokenSettings.PersistentSigningKeyLocation;
+            options.PersistentSigningKeyPassword = tokenSettings.PersistentSigningKeyPassword;
+            options.SigningKeyGenerationStrategy = tokenSettings.SigningKeyGenerationStrategy;
         });
 
         services.AddTransferRepository(options =>

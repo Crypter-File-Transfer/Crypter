@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -43,12 +42,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 TokenSettings tokenSettings = builder.Configuration
     .GetSection("TokenSettings")
     .Get<TokenSettings>() ?? throw new ConfigurationException("TokenSettings not found");
+tokenSettings.Validate();
 
 string hangfireConnectionString = builder.Configuration
     .GetConnectionString("HangfireConnection") ?? throw new ConfigurationException("HangfireConnection not found");
@@ -81,8 +82,9 @@ builder.Services.AddCrypterCore(
     .AddBackgroundServer(builder.Configuration.GetSection("HangfireSettings").Get<HangfireSettings>()
                          ?? throw new ConfigurationException("HangfireSettings missing from configuration"));
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearerConfiguration(tokenSettings);
+builder.Services.AddTransient<IConfigureOptions<JwtBearerOptions>, JwtBearerConfiguration>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
 builder.Services.AddCors();
 builder.Services.AddControllers()
