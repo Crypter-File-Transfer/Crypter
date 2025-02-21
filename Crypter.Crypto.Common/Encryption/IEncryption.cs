@@ -34,6 +34,8 @@ public interface IEncryption
     uint NonceSize { get; }
     byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> plaintext);
     byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, string plaintext);
+    byte[] Encrypt(string passPhrase, ReadOnlySpan<byte> plainText);
     byte[] Decrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext);
+    byte[] Decrypt(string passPhrase, ReadOnlySpan<byte> cipherText);
     string DecryptToString(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext);
 }
