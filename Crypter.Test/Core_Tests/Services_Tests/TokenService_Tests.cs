@@ -27,9 +27,12 @@
 using System;
 using System.Security.Claims;
 using Crypter.Core.Identity;
+using Crypter.Core.Identity.Tokens;
 using Crypter.Core.Services;
+using Crypter.Crypto.Providers.Default;
 using EasyMonads;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using NUnit.Framework;
 
 namespace Crypter.Test.Core_Tests.Services_Tests;
@@ -48,7 +51,8 @@ public class TokenService_Tests
             Issuer = "test iss",
             AuthenticationTokenLifetimeMinutes = 5,
             SessionTokenLifetimeMinutes = 30,
-            DeviceTokenLifetimeDays = 5
+            DeviceTokenLifetimeDays = 5,
+            RequirePersistentSigningKey = false,
         };
 
         _tokenSettings = Options.Create(tokenSettings);
@@ -59,7 +63,7 @@ public class TokenService_Tests
     {
         Guid userId = Guid.NewGuid();
 
-        TokenService sut = new TokenService(_tokenSettings!);
+        TokenService sut = new TokenService(_tokenSettings!, new DefaultCryptoProvider());
         string token = sut.NewAuthenticationToken(userId);
 
         Assert.That(token, Is.Not.Null);
@@ -80,7 +84,7 @@ public class TokenService_Tests
     {
         Guid userId = Guid.NewGuid();
 
-        TokenService sut = new TokenService(_tokenSettings!);
+        TokenService sut = new TokenService(_tokenSettings!, new DefaultCryptoProvider());
         DateTime tokenCreatedUtc = DateTime.UtcNow;
         DateTime expectedTokenExpiration = tokenCreatedUtc.AddMinutes(_tokenSettings!.Value.SessionTokenLifetimeMinutes);
         RefreshTokenData tokenData = sut.NewSessionToken(userId);
@@ -108,7 +112,7 @@ public class TokenService_Tests
     {
         Guid userId = Guid.NewGuid();
 
-        TokenService sut = new TokenService(_tokenSettings!);
+        TokenService sut = new TokenService(_tokenSettings!, new DefaultCryptoProvider());
         DateTime tokenCreatedUtc = DateTime.UtcNow;
         DateTime expectedTokenExpiration = tokenCreatedUtc.AddDays(_tokenSettings!.Value.DeviceTokenLifetimeDays);
         RefreshTokenData tokenData = sut.NewDeviceToken(userId);
@@ -129,5 +133,17 @@ public class TokenService_Tests
             Maybe<Guid> maybeTokenId = TokenService.TryParseTokenId(claimsPrincipal);
             maybeTokenId.IfNone(Assert.Fail);
         });
+    }
+
+    [Test]
+    public void Can_Create_Public_JWK()
+    {
+        TokenService sut = new TokenService(_tokenSettings!, new DefaultCryptoProvider());
+
+        JsonWebKey jwk = sut.PublicJWK();        
+        
+        Assert.That(jwk.Alg == EdDsaAlgorithm.Name);
+        Assert.That(jwk.D, Is.Null);
+        Assert.That(jwk.Crv == "Ed25519");
     }
 }
