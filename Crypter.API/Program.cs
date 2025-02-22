@@ -121,8 +121,15 @@ if (app.Environment.IsDevelopment())
         x.AllowAnyOrigin();
     });
 
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwagger(c =>
+    {
+        c.RouteTemplate = "api/swagger/{documentname}/swagger.json";
+    });
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/api/swagger/v1/swagger.json", "Crypter.API");
+        c.RoutePrefix = "api/swagger";
+    });
 }
 else
 {
