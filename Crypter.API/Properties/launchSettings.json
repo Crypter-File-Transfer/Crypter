@@ -12,7 +12,7 @@
       "Crypter.API": {
          "commandName": "Project",
          "launchBrowser": true,
-         "launchUrl": "swagger",
+         "launchUrl": "api/swagger",
          "environmentVariables": {
             "ASPNETCORE_ENVIRONMENT": "Development"
          },
