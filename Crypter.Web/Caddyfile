@@ -14,6 +14,14 @@
 		reverse_proxy {$CRYPTER_API_BASE}
 	}
 
+	handle /.well-known/* {
+		request_body {
+			max_size {$CADDY_MAX_REQUEST_BODY}
+		}
+
+		reverse_proxy {$CRYPTER_API_BASE}
+	}
+
     handle /serviceWorker {
         root * /srv
         rewrite * js/dist/serviceWorker/serviceWorker.js
