@@ -15,10 +15,6 @@
 	}
 
 	handle /.well-known/* {
-		request_body {
-			max_size {$CADDY_MAX_REQUEST_BODY}
-		}
-
 		reverse_proxy {$CRYPTER_API_BASE}
 	}
 
