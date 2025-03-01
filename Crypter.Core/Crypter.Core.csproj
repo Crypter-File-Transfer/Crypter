@@ -14,7 +14,7 @@
       <PackageReference Include="Hashids.net" Version="1.7.0" />
       <PackageReference Include="MailKit" Version="4.10.0" />
       <PackageReference Include="MediatR" Version="12.4.1" />
-      <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="9.0.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="9.0.2" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.0" />
    </ItemGroup>
