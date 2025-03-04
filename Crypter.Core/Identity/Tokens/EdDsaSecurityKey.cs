@@ -24,6 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Geralt;
 using Microsoft.IdentityModel.Tokens;
 using System;
 
@@ -31,6 +32,8 @@ namespace Crypter.Core.Identity.Tokens
 {
     public class EdDsaSecurityKey : AsymmetricSecurityKey
     {
+        public const string JsonWebKeyKeyType_OctetKeyPair = "OKP";
+
         public EdDsaAlgorithm Algorithm { get; }
 
         public EdDsaSecurityKey(EdDsaAlgorithm algorithm)
@@ -51,10 +54,10 @@ namespace Crypter.Core.Identity.Tokens
         {
             return new JsonWebKey
             {
-                Crv = "Ed25519",
+                Crv = nameof(Ed25519),
                 X = Algorithm.KeyPair?.PublicKey != null ? Base64UrlEncoder.Encode(Algorithm.KeyPair?.PublicKey) : null,
                 D = Algorithm.KeyPair?.PrivateKey != null ? Base64UrlEncoder.Encode(Algorithm.KeyPair?.PrivateKey) : null,
-                Kty = "OKP",
+                Kty = JsonWebKeyKeyType_OctetKeyPair,
                 Alg = EdDsaAlgorithm.Name,
                 CryptoProviderFactory = CryptoProviderFactory,
             };

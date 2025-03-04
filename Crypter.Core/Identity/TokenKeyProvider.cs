@@ -25,19 +25,11 @@
  */
 using Crypter.Core.Identity.Tokens;
 using Microsoft.IdentityModel.Tokens;
-using System;
 using ICrypterCryptoProvider = Crypter.Crypto.Common.ICryptoProvider;
 
 namespace Crypter.Core.Identity
 {
-    public interface ITokenKeyProvider
-    {
-        AsymmetricSecurityKey PublicKey { get; }
-        AsymmetricSecurityKey PrivateKey { get; }
-        JsonWebKey PublicJWK { get; }
-    }
-
-    public class TokenKeyProvider : ITokenKeyProvider
+    public class TokenKeyProvider
     {
         public readonly EdDsaSecurityKey _publicKey;
         public readonly EdDsaSecurityKey _privateKey;
@@ -49,37 +41,7 @@ namespace Crypter.Core.Identity
 
         public TokenKeyProvider(ICrypterCryptoProvider cryptoProvider, TokenSettings settings)
         {
-            EdDsaAlgorithm? edDsa;
-            if (settings.RequirePersistentSigningKey)
-            {
-                if (settings.SigningKeyGenerationStrategy == SigningKeyGenerationStrategy.Always)
-                {
-                    edDsa = EdDsaAlgorithm.Create(cryptoProvider);
-                    edDsa.TryExportPrivateKey(settings.PersistentSigningKeyLocation!, settings.PersistentSigningKeyPassword);
-                }
-                else
-                {
-                    try
-                    {
-                        edDsa = EdDsaAlgorithm.FromPrivateKeyFile(settings.PersistentSigningKeyLocation!, settings.PersistentSigningKeyPassword, cryptoProvider);
-                    }
-                    catch (Exception)
-                    {
-                        if (settings.SigningKeyGenerationStrategy == SigningKeyGenerationStrategy.Never)
-                        {
-                            throw;
-                        }
-                        // SigningKeyGenerationStrategy.WhenMissing
-                        edDsa = EdDsaAlgorithm.Create(cryptoProvider);
-                        edDsa.TryExportPrivateKey(settings.PersistentSigningKeyLocation!, settings.PersistentSigningKeyPassword);
-                    }
-                }
-            }
-            else
-            {
-                edDsa = EdDsaAlgorithm.Create(cryptoProvider);
-            }
-            
+            EdDsaAlgorithm edDsa = EdDsaAlgorithm.Create(cryptoProvider, settings.SigningKeySeed);
             _privateKey = new EdDsaSecurityKey(edDsa);
             _publicKey = new EdDsaSecurityKey(edDsa);
         }

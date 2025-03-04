@@ -31,61 +31,13 @@ using NUnit.Framework;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Geralt;
 
 namespace Crypter.Test.Core_Tests.Identity_Tests
 {
     [TestFixture]
     public class EdDsa_Tests
     {
-        private const string KeyPathSimple = "./simple.private";
-        private const string KeyPathEncrypted = "./encrypted.private";
-        private const string KeyEncriptionPassword = "Pass123";
-
-        [Test]
-        public void Can_Persist_Simple_EdDsa_Private_Key()
-        {
-            EdDsaAlgorithm alg = EdDsaAlgorithm.Create(new DefaultCryptoProvider());
-            Assert.That(alg, Is.Not.Null);
-            
-            alg.TryExportPrivateKey(KeyPathSimple, null);
-
-            Assert.That(File.Exists(KeyPathSimple));
-            Assert.That(new FileInfo(KeyPathSimple).Length > 0); 
-            File.Delete(KeyPathSimple);
-        }
-
-        [Test]
-        public void Can_Persist_Encrypted_EdDsa_Private_Key()
-        {
-            EdDsaAlgorithm alg = EdDsaAlgorithm.Create(new DefaultCryptoProvider());
-            Assert.That(alg, Is.Not.Null);
-
-            alg.TryExportPrivateKey(KeyPathEncrypted, KeyEncriptionPassword);
-
-            Assert.That(File.Exists(KeyPathEncrypted));
-            Assert.That(new FileInfo(KeyPathEncrypted).Length > 0);
-            File.Delete(KeyPathEncrypted);
-        }
-
-        [Test]
-        public void Can_Decrypt_EdDsa_Private_Key()
-        {
-            ICryptoProvider cryptoProvider = new DefaultCryptoProvider();
-            EdDsaAlgorithm alg = EdDsaAlgorithm.Create(cryptoProvider);
-            Assert.That(alg, Is.Not.Null);
-
-            alg.TryExportPrivateKey(KeyPathEncrypted, KeyEncriptionPassword);
-
-            Assert.That(File.Exists(KeyPathEncrypted));
-
-            EdDsaAlgorithm algImported = EdDsaAlgorithm.FromPrivateKeyFile(KeyPathEncrypted, KeyEncriptionPassword, cryptoProvider);
-
-            Assert.That(algImported.KeyPair.PrivateKey.Length > 0);
-            Assert.That(Enumerable.SequenceEqual(alg.KeyPair.PublicKey, algImported.KeyPair.PublicKey));
-            Assert.That(Enumerable.SequenceEqual(alg.KeyPair.PrivateKey, algImported.KeyPair.PrivateKey));
-
-            File.Delete(KeyPathEncrypted);
-        }
 
         [Test]
         public void Can_Generate_And_Verify_EdDsa_Siganture()
@@ -100,6 +52,24 @@ namespace Crypter.Test.Core_Tests.Identity_Tests
             byte[] signature = alg.Sign(toSignBytes);
 
             Assert.That(alg.Verify(toSignBytes, signature));
+        }
+
+        [Test]
+        [Description("It's more a test for Geralt, but it makes sure that JWT signature verification is fine between restarts.")]
+        public void Geralt_Generates_Same_Key_With_Same_Seed()
+        {
+            string seed = "abcdabcdabcdabcdabcdabcdabcdabcd";
+            byte[] seedSpan = Encoding.UTF8.GetBytes(seed);
+
+            byte[] privateKey1 = new byte[Ed25519.PrivateKeySize];
+            byte[] publicKey1 = new byte[Ed25519.PublicKeySize];
+            Ed25519.GenerateKeyPair(publicKey1, privateKey1, seedSpan);
+
+            byte[] privateKey2 = new byte[Ed25519.PrivateKeySize];
+            byte[] publicKey2 = new byte[Ed25519.PublicKeySize];
+            Ed25519.GenerateKeyPair(publicKey2, privateKey2, seedSpan);
+
+            Assert.That(privateKey1.SequenceEqual(privateKey2));
         }
     }
 }

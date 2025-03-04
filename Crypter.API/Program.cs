@@ -49,7 +49,6 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 TokenSettings tokenSettings = builder.Configuration
     .GetSection("TokenSettings")
     .Get<TokenSettings>() ?? throw new ConfigurationException("TokenSettings not found");
-tokenSettings.Validate();
 
 string hangfireConnectionString = builder.Configuration
     .GetConnectionString("HangfireConnection") ?? throw new ConfigurationException("HangfireConnection not found");
@@ -82,7 +81,7 @@ builder.Services.AddCrypterCore(
     .AddBackgroundServer(builder.Configuration.GetSection("HangfireSettings").Get<HangfireSettings>()
                          ?? throw new ConfigurationException("HangfireSettings missing from configuration"));
 
-builder.Services.AddTransient<IConfigureOptions<JwtBearerOptions>, JwtBearerConfiguration>();
+builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>, JwtBearerConfiguration>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 

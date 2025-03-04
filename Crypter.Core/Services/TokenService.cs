@@ -67,7 +67,7 @@ public static class TokenServiceExtensions
 public class TokenService : ITokenService
 {
     private readonly TokenSettings _tokenSettings;
-    private readonly ITokenKeyProvider _tokenKeyProvider;
+    private readonly TokenKeyProvider _tokenKeyProvider;
 
     public TokenValidationParameters TokenValidationParameters
     {

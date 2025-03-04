@@ -25,7 +25,6 @@
  */
 
 using System;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using Crypter.Crypto.Common;
@@ -47,10 +46,10 @@ namespace Crypter.Core.Identity.Tokens
             KeyPair = CryptoProvider.DigitalSignature.GenerateKeyPair();
         }
 
-        private EdDsaAlgorithm(ICryptoProvider signer, Ed25519KeyPair keyPair)
+        private EdDsaAlgorithm(ICryptoProvider signer, string seed)
         {
             CryptoProvider = signer;
-            KeyPair = keyPair;
+            KeyPair = CryptoProvider.DigitalSignature.GenerateKeyPair(seed);
         }
 
         public static EdDsaAlgorithm Create(ICryptoProvider? cryptoProvider)
@@ -58,11 +57,16 @@ namespace Crypter.Core.Identity.Tokens
             return cryptoProvider == null ? throw new ArgumentNullException(nameof(cryptoProvider)) : new EdDsaAlgorithm(cryptoProvider);
         }
 
+        public static EdDsaAlgorithm Create(ICryptoProvider? cryptoProvider, string seed)
+        {
+            return cryptoProvider == null ? throw new ArgumentNullException(nameof(cryptoProvider)) : new EdDsaAlgorithm(cryptoProvider, seed);
+        }
+
         public override string SignatureAlgorithm => Name;
 
-        public override KeySizes[] LegalKeySizes => [new KeySizes(32, 32, 0)];
+        public override KeySizes[] LegalKeySizes => [new KeySizes(Ed25519.PublicKeySize, Ed25519.PrivateKeySize, 32)];
 
-        public override int KeySize => KeyPair?.PrivateKey?.Length ?? KeyPair?.PublicKey?.Length ?? throw new InvalidOperationException("Missing EdDsa key");
+        public override int KeySize => KeyPair.PrivateKey.Length > 0 ? KeyPair.PrivateKey.Length : KeyPair.PublicKey.Length;
 
         public byte[] Sign(byte[] input) => CryptoProvider.DigitalSignature.GenerateSignature(KeyPair.PrivateKey, input);
 
@@ -76,43 +80,6 @@ namespace Crypter.Core.Identity.Tokens
             if (signatureLength <= 0) throw new ArgumentException($"{nameof(signatureLength)} must be greater than 0");
 
             return Verify(input.Skip(inputOffset).Take(inputLength).ToArray(), signature.Skip(signatureOffset).Take(signatureLength).ToArray());
-        }
-
-        public static EdDsaAlgorithm FromPrivateKeyFile(string privateKeyFilePath, string? passPhrase, ICryptoProvider cryptoProvider)
-        {
-            try
-            {
-                using StreamReader streamReader = new StreamReader(privateKeyFilePath);
-                string[]? encodedPrivateKey = streamReader.ReadLine()?.TrimStart().Split(" ");
-                if (encodedPrivateKey != null)
-                {
-                    byte[] publicKey = new byte[Ed25519.PublicKeySize];
-                    byte[] decodedPrivateKey = passPhrase != null ?
-                        cryptoProvider.Encryption.Decrypt(passPhrase, Encodings.FromBase64(encodedPrivateKey[0])) :
-                        Encodings.FromBase64(encodedPrivateKey[0]);
-                    
-                    Ed25519.ComputePublicKey(publicKey, decodedPrivateKey);
-                    return new EdDsaAlgorithm(cryptoProvider, new Ed25519KeyPair(decodedPrivateKey, publicKey));                    
-                }
-                throw new InvalidDataException("Unable to process private key file.");
-            }
-            catch (Exception ex)
-            {
-                throw new IOException("Unable to read/process the private key file.", ex);
-            }
-        }
-
-        public void TryExportPrivateKey(string filePath, string? passPhrase)
-        {
-            if (Path.GetDirectoryName(filePath) is string directory) {
-                Directory.CreateDirectory(directory);
-            }
-
-            string? encodedPrivateKey = passPhrase != null ?
-                Encodings.ToBase64(CryptoProvider.Encryption.Encrypt(passPhrase, KeyPair.PrivateKey)) :
-                Encodings.ToBase64(KeyPair.PrivateKey);            
-
-            File.WriteAllText(filePath, encodedPrivateKey!);
         }
     }
 }
