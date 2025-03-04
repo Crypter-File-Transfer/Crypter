@@ -38,8 +38,8 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
     {
         private readonly IPasswordHash _passwordHash;
 
-        public uint KeySize => ChaCha20Poly1305.KeySize;
-        public uint NonceSize => ChaCha20Poly1305.NonceSize;
+        public uint KeySize => XChaCha20Poly1305.KeySize;
+        public uint NonceSize => XChaCha20Poly1305.NonceSize;
 
         public Encryption(IPasswordHash passwordHash)
         {
@@ -48,8 +48,8 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
 
         public byte[] Decrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
         {
-            Span<byte> decryptedText = new byte[ciphertext.Length - ChaCha20Poly1305.TagSize];
-            ChaCha20Poly1305.Decrypt(decryptedText, ciphertext, nonce, key);
+            Span<byte> decryptedText = new byte[ciphertext.Length - XChaCha20Poly1305.TagSize];
+            XChaCha20Poly1305.Decrypt(decryptedText, ciphertext, nonce, key);
             return decryptedText.ToArray();
         }
 
@@ -73,9 +73,9 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
 
         public byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> plaintext)
         {
-            Span<byte> encryptedText = new byte[plaintext.Length + ChaCha20Poly1305.TagSize];
-            ChaCha20Poly1305.Encrypt(encryptedText, plaintext, nonce, key);
-            return encryptedText.ToArray();            
+            Span<byte> encryptedText = new byte[plaintext.Length + XChaCha20Poly1305.TagSize];
+            XChaCha20Poly1305.Encrypt(encryptedText, plaintext, nonce, key);
+            return encryptedText.ToArray();
         }
 
         public byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, string plaintext)
