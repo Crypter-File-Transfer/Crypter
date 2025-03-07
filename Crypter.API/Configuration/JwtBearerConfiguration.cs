@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,20 +24,28 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Core.Identity;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.DependencyInjection;
+using Crypter.Core.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 
 namespace Crypter.API.Configuration;
 
-internal static class JwtBearerConfiguration
+public class JwtBearerConfiguration : IConfigureNamedOptions<JwtBearerOptions>
 {
-    internal static AuthenticationBuilder AddJwtBearerConfiguration(this AuthenticationBuilder builder,
-        TokenSettings tokenSettings)
+    private readonly ITokenService _tokenService;
+
+    public JwtBearerConfiguration(ITokenService tokenService)
     {
-        return builder.AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = TokenParametersProvider.GetTokenValidationParameters(tokenSettings);
-        });
+        _tokenService = tokenService;
+    }
+
+    public void Configure(string? name, JwtBearerOptions options)
+    {
+        options.TokenValidationParameters = _tokenService.TokenValidationParameters;
+    }
+
+    public void Configure(JwtBearerOptions options)
+    {
+        options.TokenValidationParameters = _tokenService.TokenValidationParameters;
     }
 }

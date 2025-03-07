@@ -13,6 +13,7 @@ services:
       ASPNETCORE_ENVIRONMENT: ${API_ASPNETCORE_ENVIRONMENT-Production}
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_TransferStorageSettings__Location: /mnt/storage
+      ASPNETCORE_TransferStorageSettings__TokenSettings__SigningKeySeed: ${API_JWT_SIGN_SEED}
       CUSTOMCONNSTR_DefaultConnection: host=${POSTGRES_HOST:-db};database=crypter;user id=crypter_user;pwd=${POSTGRES_USER_PASSWORD:-DEFAULT_PASSWORD};
       CUSTOMCONNSTR_HangfireConnection: host=${POSTGRES_HANGFIRE_HOST:-db};database=crypter_hangfire;user id=crypter_hangfire_user;pwd=${POSTGRES_HANGFIRE_USER_PASSWORD:-DEFAULT_PASSWORD};
     volumes:

@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Runtime.Versioning;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Common.ConstantTime;
@@ -49,7 +48,7 @@ public class DefaultCryptoProvider : ICryptoProvider
     public IConstantTime ConstantTime { get; init; }
     public ICryptoHash CryptoHash { get; init; }
     public IDigitalSignature DigitalSignature { get; init; }
-    public IEncryption Encryption => throw new NotImplementedException();
+    public IEncryption Encryption { get; init; }
     public IGenericHash GenericHash { get; init; }
     public IKeyExchange KeyExchange { get; init; }
     public IPadding Padding { get; init; }
@@ -63,6 +62,7 @@ public class DefaultCryptoProvider : ICryptoProvider
         ConstantTime = new ConstantTime();
         CryptoHash = new CryptoHash();
         DigitalSignature = new DigitalSignature();
+        Encryption = new Encryption();
         GenericHash = new GenericHash();
         Padding = new Padding();
         PasswordHash = new PasswordHash();

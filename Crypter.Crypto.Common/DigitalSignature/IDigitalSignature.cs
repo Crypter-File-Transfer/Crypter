@@ -31,6 +31,7 @@ namespace Crypter.Crypto.Common.DigitalSignature;
 public interface IDigitalSignature
 {
     Ed25519KeyPair GenerateKeyPair();
+    Ed25519KeyPair GenerateKeyPair(string seed);
     byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message);
     bool VerifySignature(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> message, ReadOnlySpan<byte> signature);
 }

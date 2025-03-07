@@ -24,7 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text;
+using Crypter.Core.Identity.Tokens;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Crypter.Core.Identity;
@@ -40,11 +40,10 @@ public static class TokenParametersProvider
             ValidIssuer = tokenSettings.Issuer,
             ValidateIssuer = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenSettings.SecretKey)),
             ValidateLifetime = true,
             ClockSkew = TokenValidationParameters.DefaultClockSkew,
             RequireExpirationTime = true,
-            ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 }
+            ValidAlgorithms = new[] { EdDsaAlgorithm.Name }
         };
     }
 }

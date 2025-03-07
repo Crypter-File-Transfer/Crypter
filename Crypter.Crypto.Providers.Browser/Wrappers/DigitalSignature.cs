@@ -26,6 +26,7 @@
 
 using System;
 using System.Runtime.Versioning;
+using System.Text;
 using BlazorSodium.Sodium;
 using Crypter.Crypto.Common.DigitalSignature;
 
@@ -37,6 +38,17 @@ public class DigitalSignature : IDigitalSignature
     public Ed25519KeyPair GenerateKeyPair()
     {
         BlazorSodium.Sodium.Models.Ed25519KeyPair keyPair = PublicKeySignature.Crypto_Sign_KeyPair();
+        return new Ed25519KeyPair(keyPair.PrivateKey, keyPair.PublicKey);
+    }
+
+    public virtual Ed25519KeyPair GenerateKeyPair(string seed)
+    {
+        byte[] seedBytes = Encoding.UTF8.GetBytes(seed);
+        if (seedBytes.Length != PublicKeySignature.SEED_BYTES)
+        {
+            throw new ArgumentOutOfRangeException(nameof(seed));
+        }
+        BlazorSodium.Sodium.Models.Ed25519KeyPair keyPair = PublicKeySignature.Crypto_Sign_Seed_KeyPair(seedBytes);
         return new Ed25519KeyPair(keyPair.PrivateKey, keyPair.PublicKey);
     }
 
