@@ -29,9 +29,6 @@ using System.Runtime.Versioning;
 using System.Text;
 using BlazorSodium.Sodium;
 using Crypter.Crypto.Common.Encryption;
-using Crypter.Crypto.Common.PasswordHash;
-using EasyMonads;
-using SodiumPasswordHash = BlazorSodium.Sodium.PasswordHash;
 
 namespace Crypter.Crypto.Providers.Browser.Wrappers;
 
@@ -48,29 +45,11 @@ public class Encryption : IEncryption
         get => SecretBox.NONCE_BYTES;
     }
 
-    private readonly IPasswordHash _passwordHash;
-
-    public Encryption(IPasswordHash passwordHash)
-    {
-        _passwordHash = passwordHash;
-    }
-
     public byte[] Decrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
     {
         return AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Decrypt(ciphertext.ToArray(), nonce.ToArray(), key.ToArray(),
             (byte[]?)null);
     }
-
-    public byte[] Decrypt(string passPhrase, ReadOnlySpan<byte> cipherText)
-    {
-        Span<byte> nonce = new byte[NonceSize];
-        nonce.Clear();
-        ReadOnlySpan<byte> salt = cipherText[..(int)SodiumPasswordHash.SALT_BYTES];
-
-        Either<Exception, byte[]> eitherKey = _passwordHash.GenerateKey(passPhrase, salt, KeySize, OpsLimit.Sensitive, MemLimit.Moderate);
-        byte[]? key = eitherKey.ToMaybe().SomeOrDefault();
-        return Decrypt(key!, nonce, cipherText);
-    } 
 
     public string DecryptToString(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
     {
@@ -89,23 +68,5 @@ public class Encryption : IEncryption
     public byte[] Encrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, string plaintext)
     {
         return AEAD.Crypto_AEAD_XChaCha20Poly1305_IETF_Encrypt(plaintext, nonce.ToArray(), key.ToArray(), (byte[]?)null);
-    }
-
-    public byte[] Encrypt(string passPhrase, ReadOnlySpan<byte> plainText)
-    {
-        Span<byte> salt = RandomBytes.RandomBytes_Buf(SodiumPasswordHash.SALT_BYTES);        
-        Span<byte> nonce = new byte[NonceSize];
-        nonce.Clear();
-
-        Either<Exception, byte[]> eitherKey = _passwordHash.GenerateKey(passPhrase, salt, KeySize, OpsLimit.Sensitive, MemLimit.Moderate);
-        byte[]? key = eitherKey.ToMaybe().SomeOrDefault();
-
-        Span<byte> cipherText = Encrypt(key, nonce, plainText);
-        Span<byte> cipherWithSalt = new byte[salt.Length + cipherText.Length];
-
-        salt.CopyTo(cipherWithSalt[..salt.Length]);
-        cipherText.CopyTo(cipherWithSalt.Slice(start:salt.Length, cipherText.Length));
-        
-        return cipherWithSalt.ToArray();
     }
 }

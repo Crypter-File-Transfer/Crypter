@@ -62,13 +62,13 @@ public class DefaultCryptoProvider : ICryptoProvider
         ConstantTime = new ConstantTime();
         CryptoHash = new CryptoHash();
         DigitalSignature = new DigitalSignature();
+        Encryption = new Encryption();
         GenericHash = new GenericHash();
         Padding = new Padding();
         PasswordHash = new PasswordHash();
         Random = new Random();
         StreamEncryptionFactory = new StreamEncryptionFactory(Padding);
         StreamGenericHashFactory = new StreamGenericHashFactory();
-        Encryption = new Encryption(PasswordHash);
 
         KeyExchange = new KeyExchange(StreamGenericHashFactory);
     }

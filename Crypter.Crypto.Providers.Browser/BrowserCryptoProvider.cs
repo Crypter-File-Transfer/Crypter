@@ -63,12 +63,12 @@ public class BrowserCryptoProvider : ICryptoProvider
     {
         CryptoHash = new CryptoHash();
         DigitalSignature = new DigitalSignature();
+        Encryption = new Encryption();
         GenericHash = new GenericHash();
         Padding = new Padding();
         PasswordHash = new PasswordHash();
         Random = new Random();
         StreamGenericHashFactory = new StreamGenericHashFactory();
-        Encryption = new Encryption(PasswordHash);
 
         KeyExchange = new KeyExchange(StreamGenericHashFactory);
         StreamEncryptionFactory = new StreamEncryptionFactory(Padding);

@@ -27,8 +27,6 @@ using System;
 using System.Runtime.Versioning;
 using System.Text;
 using Crypter.Crypto.Common.Encryption;
-using Crypter.Crypto.Common.PasswordHash;
-using EasyMonads;
 using Geralt;
 
 namespace Crypter.Crypto.Providers.Default.Wrappers
@@ -36,33 +34,14 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
     [UnsupportedOSPlatform("browser")]
     public class Encryption : IEncryption
     {
-        private readonly IPasswordHash _passwordHash;
-
         public uint KeySize => XChaCha20Poly1305.KeySize;
         public uint NonceSize => XChaCha20Poly1305.NonceSize;
-
-        public Encryption(IPasswordHash passwordHash)
-        {
-            _passwordHash = passwordHash;
-        }
 
         public byte[] Decrypt(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
         {
             Span<byte> decryptedText = new byte[ciphertext.Length - XChaCha20Poly1305.TagSize];
             XChaCha20Poly1305.Decrypt(decryptedText, ciphertext, nonce, key);
             return decryptedText.ToArray();
-        }
-
-        public byte[] Decrypt(string passPhrase, ReadOnlySpan<byte> cipherText)
-        {
-            Span<byte> nonce = new byte[NonceSize];
-            nonce.Clear();
-            ReadOnlySpan<byte> salt = cipherText[..Argon2id.SaltSize];
-
-            Either<Exception, byte[]> eitherKey = _passwordHash.GenerateKey(passPhrase, salt, KeySize, OpsLimit.Sensitive, MemLimit.Moderate);
-            byte[]? key = eitherKey.ToMaybe().SomeOrDefault();
-
-            return Decrypt(key, nonce, cipherText[salt.Length..]);
         }
 
         public string DecryptToString(ReadOnlySpan<byte> key, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> ciphertext)
@@ -82,23 +61,6 @@ namespace Crypter.Crypto.Providers.Default.Wrappers
         {
             Span<byte> plainTextBytes = Encoding.UTF8.GetBytes(plaintext);
             return Encrypt(key, nonce, plainTextBytes);
-        }
-
-        public byte[] Encrypt(string passPhrase, ReadOnlySpan<byte> plainText)
-        {
-            Span<byte> salt = new byte[Argon2id.SaltSize];
-            SecureRandom.Fill(salt);
-            Span<byte> nonce = new byte[NonceSize];
-            nonce.Clear();
-
-            Either<Exception, byte[]> eitherKey = _passwordHash.GenerateKey(passPhrase, salt, KeySize, OpsLimit.Sensitive, MemLimit.Moderate);
-            byte[]? key = eitherKey.ToMaybe().SomeOrDefault();
-
-            Span<byte> cipherText = Encrypt(key, nonce, plainText);
-            Span<byte> cipherWithSalt = new byte[salt.Length + cipherText.Length];
-
-            Spans.Concat(cipherWithSalt, salt, cipherText);
-            return cipherWithSalt.ToArray();
         }
     }
 }

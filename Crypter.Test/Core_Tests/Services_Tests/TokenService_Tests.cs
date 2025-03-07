@@ -52,7 +52,7 @@ public class TokenService_Tests
             AuthenticationTokenLifetimeMinutes = 5,
             SessionTokenLifetimeMinutes = 30,
             DeviceTokenLifetimeDays = 5,
-            RequirePersistentSigningKey = false,
+            SigningKeySeed = "abcdabcdabcdabcdabcdabcdabcdabcd"
         };
 
         _tokenSettings = Options.Create(tokenSettings);
