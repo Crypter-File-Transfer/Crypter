@@ -23,6 +23,8 @@
  *
  * Contact the current copyright holder to discuss commercial license options.
  */
+
+using System;
 using Crypter.Core.Identity.Tokens;
 using Microsoft.IdentityModel.Tokens;
 using ICrypterCryptoProvider = Crypter.Crypto.Common.ICryptoProvider;
@@ -41,7 +43,8 @@ namespace Crypter.Core.Identity
 
         public TokenKeyProvider(ICrypterCryptoProvider cryptoProvider, TokenSettings settings)
         {
-            EdDsaAlgorithm edDsa = EdDsaAlgorithm.Create(cryptoProvider, settings.SigningKeySeed);
+            byte[] decodedSigningKeySeed = Convert.FromBase64String(settings.SigningKeySeed);
+            EdDsaAlgorithm edDsa = EdDsaAlgorithm.Create(cryptoProvider, decodedSigningKeySeed);
             _privateKey = new EdDsaSecurityKey(edDsa);
             _publicKey = new EdDsaSecurityKey(edDsa);
         }

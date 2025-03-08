@@ -46,7 +46,7 @@ namespace Crypter.Core.Identity.Tokens
             KeyPair = CryptoProvider.DigitalSignature.GenerateKeyPair();
         }
 
-        private EdDsaAlgorithm(ICryptoProvider signer, string seed)
+        private EdDsaAlgorithm(ICryptoProvider signer, ReadOnlySpan<byte> seed)
         {
             CryptoProvider = signer;
             KeyPair = CryptoProvider.DigitalSignature.GenerateKeyPair(seed);
@@ -57,7 +57,7 @@ namespace Crypter.Core.Identity.Tokens
             return cryptoProvider == null ? throw new ArgumentNullException(nameof(cryptoProvider)) : new EdDsaAlgorithm(cryptoProvider);
         }
 
-        public static EdDsaAlgorithm Create(ICryptoProvider? cryptoProvider, string seed)
+        public static EdDsaAlgorithm Create(ICryptoProvider? cryptoProvider, ReadOnlySpan<byte> seed)
         {
             return cryptoProvider == null ? throw new ArgumentNullException(nameof(cryptoProvider)) : new EdDsaAlgorithm(cryptoProvider, seed);
         }
