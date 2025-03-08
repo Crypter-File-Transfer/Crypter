@@ -40,7 +40,7 @@ public class DigitalSignature : IDigitalSignature
         return new Ed25519KeyPair(keyPair.PrivateKey, keyPair.PublicKey);
     }
 
-    public virtual Ed25519KeyPair GenerateKeyPair(ReadOnlySpan<byte> seed)
+    public Ed25519KeyPair GenerateKeyPair(ReadOnlySpan<byte> seed)
     {
         if (seed.Length != PublicKeySignature.SEED_BYTES)
         {

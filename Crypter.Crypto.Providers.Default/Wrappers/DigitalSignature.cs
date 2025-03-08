@@ -42,7 +42,7 @@ public class DigitalSignature : IDigitalSignature
         return new Ed25519KeyPair(privateKey, publicKey);
     }
 
-    public virtual Ed25519KeyPair GenerateKeyPair(ReadOnlySpan<byte> seed)
+    public Ed25519KeyPair GenerateKeyPair(ReadOnlySpan<byte> seed)
     {
         if (seed.Length != Ed25519.SeedSize)
         {
@@ -51,7 +51,7 @@ public class DigitalSignature : IDigitalSignature
         byte[] privateKey = new byte[Ed25519.PrivateKeySize];
         byte[] publicKey = new byte[Ed25519.PublicKeySize];
         
-        Ed25519.GenerateKeyPair(publicKey, privateKey, seed.ToArray());
+        Ed25519.GenerateKeyPair(publicKey, privateKey, seed);
         return new Ed25519KeyPair(privateKey, publicKey);
     }
 

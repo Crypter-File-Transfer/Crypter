@@ -45,7 +45,7 @@ public class EdDsa_Tests
         byte[] toSignBytes = Encoding.UTF8.GetBytes(signableString);
 
         ICryptoProvider cryptoProvider = new DefaultCryptoProvider();
-        EdDsaAlgorithm alg = EdDsaAlgorithm.Create(cryptoProvider);
+        EdDsaAlgorithm alg = new EdDsaAlgorithm(cryptoProvider);
         Assert.That(alg, Is.Not.Null);
 
         byte[] signature = alg.Sign(toSignBytes);

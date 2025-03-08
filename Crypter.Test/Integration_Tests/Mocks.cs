@@ -40,17 +40,14 @@ internal static class Mocks
         ICryptoProvider cryptoProviderMock = Substitute.For<ICryptoProvider>();
         cryptoProviderMock.ConstantTime.Returns(new ConstantTime());
         cryptoProviderMock.CryptoHash.Returns(new CryptoHash());
-        cryptoProviderMock.DigitalSignature.Returns(new DigitalSignature());
         cryptoProviderMock.GenericHash.Returns(new GenericHash());
         cryptoProviderMock.Padding.Returns(new Padding());
         cryptoProviderMock.Random.Returns(new Random());
 
-        DigitalSignature digitalSignatureMock = Substitute.For<DigitalSignature>();
+        DigitalSignature digitalSignatureMock = Substitute.ForPartsOf<DigitalSignature>();
         digitalSignatureMock.GenerateKeyPair().Returns(keyPairToReturn);
-        digitalSignatureMock.GenerateKeyPair(default).ReturnsForAnyArgs(keyPairToReturn);
 
         cryptoProviderMock.DigitalSignature.Returns(digitalSignatureMock);
-
         return cryptoProviderMock;
     }
 }

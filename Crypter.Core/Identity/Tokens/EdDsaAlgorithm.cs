@@ -40,26 +40,16 @@ namespace Crypter.Core.Identity.Tokens
         internal Ed25519KeyPair KeyPair { get; }
         private ICryptoProvider CryptoProvider { get; }
         
-        private EdDsaAlgorithm(ICryptoProvider signer)
+        public EdDsaAlgorithm(ICryptoProvider signer)
         {
             CryptoProvider = signer;
             KeyPair = CryptoProvider.DigitalSignature.GenerateKeyPair();
         }
 
-        private EdDsaAlgorithm(ICryptoProvider signer, ReadOnlySpan<byte> seed)
+        public EdDsaAlgorithm(ICryptoProvider signer, ReadOnlySpan<byte> seed)
         {
             CryptoProvider = signer;
             KeyPair = CryptoProvider.DigitalSignature.GenerateKeyPair(seed);
-        }
-
-        public static EdDsaAlgorithm Create(ICryptoProvider? cryptoProvider)
-        {
-            return cryptoProvider == null ? throw new ArgumentNullException(nameof(cryptoProvider)) : new EdDsaAlgorithm(cryptoProvider);
-        }
-
-        public static EdDsaAlgorithm Create(ICryptoProvider? cryptoProvider, ReadOnlySpan<byte> seed)
-        {
-            return cryptoProvider == null ? throw new ArgumentNullException(nameof(cryptoProvider)) : new EdDsaAlgorithm(cryptoProvider, seed);
         }
 
         public override string SignatureAlgorithm => Name;
