@@ -28,39 +28,38 @@ using Geralt;
 using Microsoft.IdentityModel.Tokens;
 using System;
 
-namespace Crypter.Core.Identity.Tokens
+namespace Crypter.Core.Identity.Tokens;
+
+public class EdDsaSecurityKey : AsymmetricSecurityKey
 {
-    public class EdDsaSecurityKey : AsymmetricSecurityKey
+    private const string JsonWebKeyKeyType_OctetKeyPair = "OKP";
+
+    public EdDsaAlgorithm Algorithm { get; }
+
+    public EdDsaSecurityKey(EdDsaAlgorithm algorithm)
     {
-        public const string JsonWebKeyKeyType_OctetKeyPair = "OKP";
+        Algorithm = algorithm ?? throw new ArgumentNullException(nameof(algorithm));
+        CryptoProviderFactory.CustomCryptoProvider = new EdDsaCryptoProvider();
+    }
 
-        public EdDsaAlgorithm Algorithm { get; }
+    [Obsolete("HasPrivateKey method is deprecated, please use PrivateKeyStatus.")] 
+    public override bool HasPrivateKey => Algorithm?.KeyPair.PrivateKey != null;
 
-        public EdDsaSecurityKey(EdDsaAlgorithm algorithm)
+    public override PrivateKeyStatus PrivateKeyStatus =>
+        Algorithm?.KeyPair.PrivateKey != null ? PrivateKeyStatus.Exists : PrivateKeyStatus.DoesNotExist;
+
+    public override int KeySize => Algorithm.KeySize;
+
+    public JsonWebKey AsJWK()
+    {
+        return new JsonWebKey
         {
-            Algorithm = algorithm ?? throw new ArgumentNullException(nameof(algorithm));
-            CryptoProviderFactory.CustomCryptoProvider = new EdDsaCryptoProvider();
-        }
-
-        [Obsolete("HasPrivateKey method is deprecated, please use PrivateKeyStatus.")] 
-        public override bool HasPrivateKey => Algorithm?.KeyPair.PrivateKey != null;
-
-        public override PrivateKeyStatus PrivateKeyStatus =>
-            Algorithm?.KeyPair.PrivateKey != null ? PrivateKeyStatus.Exists : PrivateKeyStatus.DoesNotExist;
-
-        public override int KeySize => Algorithm.KeySize;
-
-        public JsonWebKey AsJWK()
-        {
-            return new JsonWebKey
-            {
-                Crv = nameof(Ed25519),
-                X = Algorithm.KeyPair?.PublicKey != null ? Base64UrlEncoder.Encode(Algorithm.KeyPair?.PublicKey) : null,
-                D = Algorithm.KeyPair?.PrivateKey != null ? Base64UrlEncoder.Encode(Algorithm.KeyPair?.PrivateKey) : null,
-                Kty = JsonWebKeyKeyType_OctetKeyPair,
-                Alg = EdDsaAlgorithm.Name,
-                CryptoProviderFactory = CryptoProviderFactory,
-            };
-        }
+            Crv = nameof(Ed25519),
+            X = Base64UrlEncoder.Encode(Algorithm.KeyPair.PublicKey),
+            D = Base64UrlEncoder.Encode(Algorithm.KeyPair.PrivateKey),
+            Kty = JsonWebKeyKeyType_OctetKeyPair,
+            Alg = EdDsaAlgorithm.Name,
+            CryptoProviderFactory = CryptoProviderFactory,
+        };
     }
 }
