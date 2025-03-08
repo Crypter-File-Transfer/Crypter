@@ -37,8 +37,8 @@ namespace Crypter.Core.Identity.Tokens
     {
         public const string Name = "EdDSA";
 
-        internal Ed25519KeyPair KeyPair { get; private set; }
-        internal ICryptoProvider CryptoProvider { get; private set; }
+        internal Ed25519KeyPair KeyPair { get; }
+        private ICryptoProvider CryptoProvider { get; }
         
         private EdDsaAlgorithm(ICryptoProvider signer)
         {

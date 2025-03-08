@@ -27,7 +27,6 @@
 using System;
 using System.Threading.Tasks;
 using Crypter.Common.Primitives;
-using Crypter.Core.Models;
 using Crypter.Core.Services;
 using Crypter.Core.Services.Email;
 using MediatR;

@@ -46,7 +46,7 @@ public class DigitalSignature : IDigitalSignature
     {
         if (seed.Length != Ed25519.SeedSize)
         {
-            throw new ArgumentOutOfRangeException(nameof(seed));
+            throw new ArgumentOutOfRangeException(nameof(seed), "Seed must be of length Ed25519.SeedSize");
         }
         byte[] privateKey = new byte[Ed25519.PrivateKeySize];
         byte[] publicKey = new byte[Ed25519.PublicKeySize];

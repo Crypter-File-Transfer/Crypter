@@ -67,20 +67,17 @@ internal class DownloadFileTransfer_Tests
     [Test]
     public async Task Download_Anonymous_File_Transfer_Works()
     {
-        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
-            TestData.GetDefaultEncryptionStream();
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
         UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        Either<UploadTransferError, UploadTransferResponse> uploadResult =
-            await _client!.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, uploadRequest,
-                encryptionStreamOpener, false);
+        Either<UploadTransferError, UploadTransferResponse> uploadResult = await _client!.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, uploadRequest,
+            encryptionStreamOpener,false);
 
         await uploadResult
             .DoRightAsync(async uploadResponse =>
             {
-                Either<DownloadTransferCiphertextError, StreamDownloadResponse> result =
-                    await _client!.FileTransfer.GetAnonymousFileCiphertextAsync(uploadResponse.HashId, keyExchangeProof);
+                Either<DownloadTransferCiphertextError, StreamDownloadResponse> result = await _client!.FileTransfer.GetAnonymousFileCiphertextAsync(uploadResponse.HashId, keyExchangeProof);
                 
                 Assert.That(uploadResult.IsRight, Is.True);
                 Assert.That(result.IsRight, Is.True);
