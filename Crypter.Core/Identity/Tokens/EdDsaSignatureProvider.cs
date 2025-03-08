@@ -26,67 +26,64 @@
 
 using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections.Generic;
 
-namespace Crypter.Core.Identity.Tokens
+namespace Crypter.Core.Identity.Tokens;
+
+internal class EdDsaCryptoProvider : ICryptoProvider
 {
-    internal class EdDsaCryptoProvider : ICryptoProvider
+    public object Create(string algorithm, params object[] args)
     {
-        public object Create(string algorithm, params object[] args)
+        if (algorithm == EdDsaAlgorithm.Name && args[0] is EdDsaSecurityKey key)
         {
-            if (algorithm == EdDsaAlgorithm.Name && args[0] is EdDsaSecurityKey key)
-            {
-                return new EdDsaSignatureProvider(key, algorithm);
-            }
-
-            throw new NotSupportedException($"Only {EdDsaAlgorithm.Name} algorithm is supported.");
+            return new EdDsaSignatureProvider(key, algorithm);
         }
 
-        public bool IsSupportedAlgorithm(string algorithm, params object[] args) => algorithm == EdDsaAlgorithm.Name;
-
-        public void Release(object cryptoInstance)
-        {
-            if (cryptoInstance is IDisposable disposableObject)
-                disposableObject.Dispose();
-        }
+        throw new NotSupportedException($"Only {EdDsaAlgorithm.Name} algorithm is supported.");
     }
 
-    internal class EdDsaSignatureProvider : SignatureProvider
+    public bool IsSupportedAlgorithm(string algorithm, params object[] args) => algorithm == EdDsaAlgorithm.Name;
+
+    public void Release(object cryptoInstance)
     {
-        private readonly EdDsaSecurityKey edDsaKey;
+        if (cryptoInstance is IDisposable disposableObject)
+            disposableObject.Dispose();
+    }
+}
 
-        public EdDsaSignatureProvider(EdDsaSecurityKey key, string algorithm)
-            : base(key, algorithm)
-        {
-            edDsaKey = key;
-            WillCreateSignatures = key.PrivateKeyStatus == PrivateKeyStatus.Exists;
-        }
+internal class EdDsaSignatureProvider : SignatureProvider
+{
+    private readonly EdDsaSecurityKey edDsaKey;
 
-        protected override void Dispose(bool disposing)
-        {
-        }
+    public EdDsaSignatureProvider(EdDsaSecurityKey key, string algorithm)
+        : base(key, algorithm)
+    {
+        edDsaKey = key;
+        WillCreateSignatures = key.PrivateKeyStatus == PrivateKeyStatus.Exists;
+    }
 
-        public override byte[] Sign(byte[] input) => edDsaKey.Algorithm.Sign(input);
+    protected override void Dispose(bool disposing)
+    {
+    }
 
-        public override bool Sign(ReadOnlySpan<byte> data, Span<byte> destination, out int bytesWritten)
-        {
-            var signature = edDsaKey.Algorithm.Sign(data.ToArray());
-            signature.CopyTo(destination);
-            bytesWritten = signature.Length;
-            return true;
-        }
+    public override byte[] Sign(byte[] input) => edDsaKey.Algorithm.Sign(input);
 
-        public override byte[] Sign(byte[] input, int offset, int count)
-        {
-            var data = new byte[count];
-            Buffer.BlockCopy(input, offset, data, 0, count);
-            return edDsaKey.Algorithm.Sign(data);
-        }
+    public override bool Sign(ReadOnlySpan<byte> data, Span<byte> destination, out int bytesWritten)
+    {
+        var signature = edDsaKey.Algorithm.Sign(data.ToArray());
+        signature.CopyTo(destination);
+        bytesWritten = signature.Length;
+        return true;
+    }
 
-        public override bool Verify(byte[] input, byte[] signature) => edDsaKey.Algorithm.Verify(input, signature);
+    public override byte[] Sign(byte[] input, int offset, int count)
+    {
+        byte[] data = new byte[count];
+        Buffer.BlockCopy(input, offset, data, 0, count);
+        return edDsaKey.Algorithm.Sign(data);
+    }
+
+    public override bool Verify(byte[] input, byte[] signature) => edDsaKey.Algorithm.Verify(input, signature);
         
-        public override bool Verify(byte[] input, int inputOffset, int inputLength, byte[] signature, int signatureOffset, int signatureLength) 
-            => edDsaKey.Algorithm.Verify(input, inputOffset, inputLength, signature, signatureOffset, signatureLength);
-
-    }
+    public override bool Verify(byte[] input, int inputOffset, int inputLength, byte[] signature, int signatureOffset, int signatureLength) 
+        => edDsaKey.Algorithm.Verify(input, inputOffset, inputLength, signature, signatureOffset, signatureLength);
 }

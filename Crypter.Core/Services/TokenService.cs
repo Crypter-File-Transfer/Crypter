@@ -123,7 +123,7 @@ public class TokenService : ITokenService
 
     public static Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal)
     {
-        var userClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
+        Claim? userClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
         if (userClaim is null || !Guid.TryParse(userClaim.Value, out Guid userId))
         {
             return Maybe<Guid>.None;
@@ -134,7 +134,7 @@ public class TokenService : ITokenService
 
     public static Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal)
     {
-        var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
+        Claim? idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
         if (idClaim is null)
         {
             return Maybe<Guid>.None;

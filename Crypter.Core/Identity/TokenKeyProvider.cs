@@ -29,24 +29,23 @@ using Crypter.Core.Identity.Tokens;
 using Microsoft.IdentityModel.Tokens;
 using ICrypterCryptoProvider = Crypter.Crypto.Common.ICryptoProvider;
 
-namespace Crypter.Core.Identity
+namespace Crypter.Core.Identity;
+
+public class TokenKeyProvider
 {
-    public class TokenKeyProvider
+    private readonly EdDsaSecurityKey _publicKey;
+    private readonly EdDsaSecurityKey _privateKey;
+
+    public AsymmetricSecurityKey PublicKey => _publicKey;
+    public AsymmetricSecurityKey PrivateKey => _privateKey;
+
+    public JsonWebKey PublicJWK => _publicKey.AsJWK();
+
+    public TokenKeyProvider(ICrypterCryptoProvider cryptoProvider, TokenSettings settings)
     {
-        private readonly EdDsaSecurityKey _publicKey;
-        private readonly EdDsaSecurityKey _privateKey;
-
-        public AsymmetricSecurityKey PublicKey => _publicKey;
-        public AsymmetricSecurityKey PrivateKey => _privateKey;
-
-        public JsonWebKey PublicJWK => _publicKey.AsJWK();
-
-        public TokenKeyProvider(ICrypterCryptoProvider cryptoProvider, TokenSettings settings)
-        {
-            byte[] decodedSigningKeySeed = Convert.FromBase64String(settings.SigningKeySeed);
-            EdDsaAlgorithm edDsa = new EdDsaAlgorithm(cryptoProvider, decodedSigningKeySeed);
-            _privateKey = new EdDsaSecurityKey(edDsa);
-            _publicKey = new EdDsaSecurityKey(edDsa);
-        }
+        byte[] decodedSigningKeySeed = Convert.FromBase64String(settings.SigningKeySeed);
+        EdDsaAlgorithm edDsa = new EdDsaAlgorithm(cryptoProvider, decodedSigningKeySeed);
+        _privateKey = new EdDsaSecurityKey(edDsa);
+        _publicKey = new EdDsaSecurityKey(edDsa);
     }
 }
