@@ -70,7 +70,7 @@ internal class SubmitRecovery_Tests
     {
         _cryptoProvider = new DefaultCryptoProvider();
         _knownKeyPair = _cryptoProvider.DigitalSignature.GenerateKeyPair();
-        _mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_knownKeyPair).Object;
+        _mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_knownKeyPair);
         
         IServiceCollection overrideServices = new ServiceCollection();
         overrideServices.AddSingleton(_mockCryptoProvider!);

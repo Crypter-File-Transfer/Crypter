@@ -57,7 +57,7 @@ internal class EmailAddressVerification_Tests
     {
         _cryptoProvider = new DefaultCryptoProvider();
         _emailVerificationKeyPair = _cryptoProvider.DigitalSignature.GenerateKeyPair();
-        ICryptoProvider mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_emailVerificationKeyPair).Object;
+        ICryptoProvider mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_emailVerificationKeyPair);
         IServiceCollection overrideServices = new ServiceCollection();
         overrideServices.AddSingleton(mockCryptoProvider);
 
@@ -68,10 +68,8 @@ internal class EmailAddressVerification_Tests
     [Test]
     public async Task Email_Address_Verification_Works_Async()
     {
-        RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername,
-            TestData.DefaultPassword, TestData.DefaultEmailAdress);
-        Either<RegistrationError, Unit> _ =
-            await _client!.UserAuthentication.RegisterAsync(registrationRequest);
+        RegistrationRequest registrationRequest = TestData.GetRegistrationRequest(TestData.DefaultUsername, TestData.DefaultPassword, TestData.DefaultEmailAdress);
+        Either<RegistrationError, Unit> _ = await _client!.UserAuthentication.RegisterAsync(registrationRequest);
 
         // Allow the background service to "send" the verification email and save the email verification data
         await Task.Delay(5000);
@@ -83,9 +81,7 @@ internal class EmailAddressVerification_Tests
             .FirstAsync();
 
         string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(verificationData.Code);
-        byte[] signedVerificationCode =
-            _cryptoProvider!.DigitalSignature.GenerateSignature(_emailVerificationKeyPair!.PrivateKey,
-                verificationData.Code.ToByteArray());
+        byte[] signedVerificationCode = _cryptoProvider!.DigitalSignature.GenerateSignature(_emailVerificationKeyPair!.PrivateKey, verificationData.Code.ToByteArray());
         string encodedSignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedVerificationCode);
 
         VerifyEmailAddressRequest request = new VerifyEmailAddressRequest(encodedVerificationCode, encodedSignature);

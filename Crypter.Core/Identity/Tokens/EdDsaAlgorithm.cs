@@ -37,29 +37,19 @@ namespace Crypter.Core.Identity.Tokens
     {
         public const string Name = "EdDSA";
 
-        internal Ed25519KeyPair KeyPair { get; private set; }
-        internal ICryptoProvider CryptoProvider { get; private set; }
+        internal Ed25519KeyPair KeyPair { get; }
+        private ICryptoProvider CryptoProvider { get; }
         
-        private EdDsaAlgorithm(ICryptoProvider signer)
+        public EdDsaAlgorithm(ICryptoProvider signer)
         {
             CryptoProvider = signer;
             KeyPair = CryptoProvider.DigitalSignature.GenerateKeyPair();
         }
 
-        private EdDsaAlgorithm(ICryptoProvider signer, string seed)
+        public EdDsaAlgorithm(ICryptoProvider signer, ReadOnlySpan<byte> seed)
         {
             CryptoProvider = signer;
             KeyPair = CryptoProvider.DigitalSignature.GenerateKeyPair(seed);
-        }
-
-        public static EdDsaAlgorithm Create(ICryptoProvider? cryptoProvider)
-        {
-            return cryptoProvider == null ? throw new ArgumentNullException(nameof(cryptoProvider)) : new EdDsaAlgorithm(cryptoProvider);
-        }
-
-        public static EdDsaAlgorithm Create(ICryptoProvider? cryptoProvider, string seed)
-        {
-            return cryptoProvider == null ? throw new ArgumentNullException(nameof(cryptoProvider)) : new EdDsaAlgorithm(cryptoProvider, seed);
         }
 
         public override string SignatureAlgorithm => Name;

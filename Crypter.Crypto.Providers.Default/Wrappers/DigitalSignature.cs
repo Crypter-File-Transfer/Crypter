@@ -26,7 +26,6 @@
 
 using System;
 using System.Runtime.Versioning;
-using System.Text;
 using Crypter.Crypto.Common.DigitalSignature;
 using Geralt;
 
@@ -43,17 +42,16 @@ public class DigitalSignature : IDigitalSignature
         return new Ed25519KeyPair(privateKey, publicKey);
     }
 
-    public virtual Ed25519KeyPair GenerateKeyPair(string seed)
+    public Ed25519KeyPair GenerateKeyPair(ReadOnlySpan<byte> seed)
     {
-        byte[] seedBytes = Encoding.UTF8.GetBytes(seed);
-        if (seedBytes.Length != Ed25519.SeedSize)
+        if (seed.Length != Ed25519.SeedSize)
         {
-            throw new ArgumentOutOfRangeException(nameof(seed));
+            throw new ArgumentOutOfRangeException(nameof(seed), "Seed must be of length Ed25519.SeedSize");
         }
         byte[] privateKey = new byte[Ed25519.PrivateKeySize];
         byte[] publicKey = new byte[Ed25519.PublicKeySize];
         
-        Ed25519.GenerateKeyPair(publicKey, privateKey, seedBytes);
+        Ed25519.GenerateKeyPair(publicKey, privateKey, seed);
         return new Ed25519KeyPair(privateKey, publicKey);
     }
 

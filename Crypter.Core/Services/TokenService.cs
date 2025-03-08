@@ -54,10 +54,7 @@ public static class TokenServiceExtensions
 {
     public static void AddTokenService(this IServiceCollection services, Action<TokenSettings> settings)
     {
-        if (settings is null)
-        {
-            throw new ArgumentNullException(nameof(settings));
-        }
+        ArgumentNullException.ThrowIfNull(settings);
 
         services.Configure(settings);
         services.TryAddSingleton<ITokenService, TokenService>();
@@ -73,7 +70,7 @@ public class TokenService : ITokenService
     {
         get
         {
-            var parameters = TokenParametersProvider.GetTokenValidationParameters(_tokenSettings);
+            TokenValidationParameters parameters = TokenParametersProvider.GetTokenValidationParameters(_tokenSettings);
             parameters.IssuerSigningKey = _tokenKeyProvider.PublicKey;
             return parameters;
         }
@@ -87,7 +84,7 @@ public class TokenService : ITokenService
 
     public string NewAuthenticationToken(Guid userId)
     {
-        var expiration = DateTime.UtcNow.AddMinutes(_tokenSettings.AuthenticationTokenLifetimeMinutes);
+        DateTime expiration = DateTime.UtcNow.AddMinutes(_tokenSettings.AuthenticationTokenLifetimeMinutes);
         return NewToken(userId, expiration);
     }
 
@@ -157,19 +154,18 @@ public class TokenService : ITokenService
 
     private string NewToken(Guid userId, DateTime expiration, Guid tokenId = default)
     {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var claims = new ClaimsIdentity(new Claim[]
-        {
+        JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+        ClaimsIdentity claims = new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, userId.ToString())
-        });
+        ]);
 
-        if (tokenId != default)
+        if (tokenId != Guid.Empty)
         {
-            var jtiClaim = new Claim(JwtRegisteredClaimNames.Jti, tokenId.ToString());
+            Claim jtiClaim = new Claim(JwtRegisteredClaimNames.Jti, tokenId.ToString());
             claims.AddClaim(jtiClaim);
         }
 
-        var tokenDescriptor = new SecurityTokenDescriptor
+        SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = claims,
             Audience = _tokenSettings.Audience,
@@ -177,7 +173,7 @@ public class TokenService : ITokenService
             Expires = expiration,
             SigningCredentials = new SigningCredentials(_tokenKeyProvider.PrivateKey, EdDsaAlgorithm.Name)
         };
-        var token = tokenHandler.CreateToken(tokenDescriptor);
+        SecurityToken? token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
 

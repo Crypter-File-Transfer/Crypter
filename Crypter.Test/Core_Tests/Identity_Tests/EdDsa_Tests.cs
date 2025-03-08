@@ -24,52 +24,49 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
 using Crypter.Core.Identity.Tokens;
 using Crypter.Crypto.Common;
 using Crypter.Crypto.Providers.Default;
 using NUnit.Framework;
-using System.IO;
 using System.Linq;
 using System.Text;
 using Geralt;
 
-namespace Crypter.Test.Core_Tests.Identity_Tests
+namespace Crypter.Test.Core_Tests.Identity_Tests;
+
+[TestFixture]
+public class EdDsa_Tests
 {
-    [TestFixture]
-    public class EdDsa_Tests
+    [Test]
+    public void Can_Generate_And_Verify_EdDsa_Signature()
     {
+        const string signableString = "Crypter.dev";
+        byte[] toSignBytes = Encoding.UTF8.GetBytes(signableString);
 
-        [Test]
-        public void Can_Generate_And_Verify_EdDsa_Siganture()
-        {
-            string signableString = "Crypter.dev";
-            byte[] toSignBytes = Encoding.UTF8.GetBytes(signableString);
+        ICryptoProvider cryptoProvider = new DefaultCryptoProvider();
+        EdDsaAlgorithm alg = new EdDsaAlgorithm(cryptoProvider);
+        Assert.That(alg, Is.Not.Null);
 
-            ICryptoProvider cryptoProvider = new DefaultCryptoProvider();
-            EdDsaAlgorithm alg = EdDsaAlgorithm.Create(cryptoProvider);
-            Assert.That(alg, Is.Not.Null);
+        byte[] signature = alg.Sign(toSignBytes);
 
-            byte[] signature = alg.Sign(toSignBytes);
+        Assert.That(alg.Verify(toSignBytes, signature));
+    }
 
-            Assert.That(alg.Verify(toSignBytes, signature));
-        }
+    [Test]
+    public void Seeded_Key_Pair_Generation_Is_Deterministic()
+    {
+        const string encodedSeed = "9hBvkx3TqqL5rBYOZ51FnmNFeuFz9DmyY0/odnw9Z5Y=";
+        byte[] seedSpan = Convert.FromBase64String(encodedSeed);
 
-        [Test]
-        [Description("It's more a test for Geralt, but it makes sure that JWT signature verification is fine between restarts.")]
-        public void Geralt_Generates_Same_Key_With_Same_Seed()
-        {
-            string seed = "abcdabcdabcdabcdabcdabcdabcdabcd";
-            byte[] seedSpan = Encoding.UTF8.GetBytes(seed);
+        byte[] privateKey1 = new byte[Ed25519.PrivateKeySize];
+        byte[] publicKey1 = new byte[Ed25519.PublicKeySize];
+        Ed25519.GenerateKeyPair(publicKey1, privateKey1, seedSpan);
 
-            byte[] privateKey1 = new byte[Ed25519.PrivateKeySize];
-            byte[] publicKey1 = new byte[Ed25519.PublicKeySize];
-            Ed25519.GenerateKeyPair(publicKey1, privateKey1, seedSpan);
+        byte[] privateKey2 = new byte[Ed25519.PrivateKeySize];
+        byte[] publicKey2 = new byte[Ed25519.PublicKeySize];
+        Ed25519.GenerateKeyPair(publicKey2, privateKey2, seedSpan);
 
-            byte[] privateKey2 = new byte[Ed25519.PrivateKeySize];
-            byte[] publicKey2 = new byte[Ed25519.PublicKeySize];
-            Ed25519.GenerateKeyPair(publicKey2, privateKey2, seedSpan);
-
-            Assert.That(privateKey1.SequenceEqual(privateKey2));
-        }
+        Assert.That(privateKey1.SequenceEqual(privateKey2));
     }
 }
