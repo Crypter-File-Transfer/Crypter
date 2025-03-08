@@ -43,7 +43,7 @@ public static class TokenParametersProvider
             ValidateLifetime = true,
             ClockSkew = TokenValidationParameters.DefaultClockSkew,
             RequireExpirationTime = true,
-            ValidAlgorithms = new[] { EdDsaAlgorithm.Name }
+            ValidAlgorithms = [EdDsaAlgorithm.Name]
         };
     }
 }
