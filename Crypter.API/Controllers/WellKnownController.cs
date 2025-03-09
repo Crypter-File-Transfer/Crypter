@@ -25,7 +25,6 @@
  */
 
 using Crypter.API.Controllers.Base;
-using Crypter.Common.Contracts.Features.Keys.GetJwks;
 using Crypter.Core.Features.Keys.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -34,19 +33,20 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
 
 namespace Crypter.API.Controllers
 {
     [ApiController]
     [Route(".well-known")]
-    public class JwtController : CrypterControllerBase
+    public class WellKnownController : CrypterControllerBase
     {
         private const string CONFIG_PATH = "openid-configuration";
         private const string JWKS_PATH = "jwks";
 
         private readonly ISender _sender;
 
-        public JwtController(ISender sender)
+        public WellKnownController(ISender sender)
         {
             _sender = sender;
         }

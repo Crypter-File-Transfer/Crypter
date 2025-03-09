@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -24,20 +24,32 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using Crypter.Common.Client.Interfaces.HttpClients;
+using Crypter.Common.Client.Interfaces.Requests;
+using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
+using EasyMonads;
 
-namespace Crypter.Common.Contracts.Features.Keys.GetJwks
+namespace Crypter.Common.Client.HttpClients.Requests;
+
+public class WellKnownRequests : IWellKnownRequests
 {
-    public class OpenIdConfigResponse
-    {
-        [JsonPropertyName("jwks_uri")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string JwksUri { get; private init; }
+    private readonly ICrypterHttpClient _crypterHttpClient;
 
-        [JsonConstructor]
-        public OpenIdConfigResponse(string uri) 
-        {
-            JwksUri = uri;
-        }
+    public WellKnownRequests(ICrypterHttpClient crypterHttpClient)
+    {
+        _crypterHttpClient = crypterHttpClient;
+    }
+
+    public Task<Maybe<OpenIdConfigResponse>> GetOpenIdConfigurationAsync()
+    {
+        const string url = ".well-known/openid-configuration";
+        return _crypterHttpClient.GetMaybeAsync<OpenIdConfigResponse>(url);
+    }
+    
+    public Task<Maybe<GetJwksResponse>> GetJwksAsync()
+    {
+        const string url = ".well-known/jwks";
+        return _crypterHttpClient.GetMaybeAsync<GetJwksResponse>(url);
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -48,25 +48,25 @@ public class CrypterApiClient : ICrypterApiClient
     public IUserRecoveryRequests UserRecovery { get; init; }
     public IUserSettingRequests UserSetting { get; init; }
     public IVersionRequests ApiVersion { get; init; }
+    public IWellKnownRequests WellKnown { get; init; }
 
     public CrypterApiClient(HttpClient httpClient, ITokenRepository tokenRepository)
     {
         ICrypterHttpClient crypterHttpClient = new CrypterHttpClient(httpClient);
-        ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient = new CrypterAuthenticatedHttpClient(httpClient,
-            tokenRepository, this);
+        ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient = new CrypterAuthenticatedHttpClient(httpClient, tokenRepository, this);
         
         FileTransfer = new FileTransferRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
         MessageTransfer = new MessageTransferRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
         Metrics = new MetricsRequests(crypterHttpClient);
         User = new UserRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
-        UserAuthentication = new UserAuthenticationRequests(crypterHttpClient, crypterAuthenticatedHttpClient,
-            _refreshTokenRejectedHandler);
+        UserAuthentication = new UserAuthenticationRequests(crypterHttpClient, crypterAuthenticatedHttpClient, _refreshTokenRejectedHandler);
         UserConsent = new UserConsentRequests(crypterAuthenticatedHttpClient);
         UserContact = new UserContactRequests(crypterAuthenticatedHttpClient);
         UserKey = new UserKeyRequests(crypterAuthenticatedHttpClient);
         UserRecovery = new UserRecoveryRequests(crypterHttpClient);
         UserSetting = new UserSettingRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
         ApiVersion = new VersionRequests(crypterHttpClient);
+        WellKnown = new WellKnownRequests(crypterHttpClient);
     }
 
     public event EventHandler RefreshTokenRejectedEventHandler

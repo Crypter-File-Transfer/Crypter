@@ -24,26 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Client.Interfaces.Requests;
-using Crypter.Common.Contracts.Features.Version;
-using EasyMonads;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Client.HttpClients.Requests;
-
-public class VersionRequests : IVersionRequests
+namespace Crypter.Common.Contracts.Features.WellKnown.GetJwks
 {
-    private readonly ICrypterHttpClient _crypterHttpClient;
-
-    public VersionRequests(ICrypterHttpClient crypterHttpClient)
+    public class OpenIdConfigResponse
     {
-        _crypterHttpClient = crypterHttpClient;
-    }
+        [JsonPropertyName("jwks_uri")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string JwksUri { get; private init; }
 
-    public Task<Maybe<VersionResponse>> GetApiVersionAsync()
-    {
-        const string url = "api/version";
-        return _crypterHttpClient.GetMaybeAsync<VersionResponse>(url);
+        [JsonConstructor]
+        public OpenIdConfigResponse(string uri) 
+        {
+            JwksUri = uri;
+        }
     }
 }

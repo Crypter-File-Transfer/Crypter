@@ -23,13 +23,14 @@
  *
  * Contact the current copyright holder to discuss commercial license options.
  */
-using Crypter.Common.Contracts.Features.Keys.GetJwks;
+
 using Crypter.Core.Services;
 using EasyMonads;
 using MediatR;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
 
 namespace Crypter.Core.Features.Keys.Queries
 {

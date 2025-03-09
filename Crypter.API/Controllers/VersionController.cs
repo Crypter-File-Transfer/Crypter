@@ -33,27 +33,26 @@ using System.Threading;
 using Crypter.Core.Features.Version.Queries;
 using Crypter.Common.Contracts.Features.Version;
 
-namespace Crypter.API.Controllers
+namespace Crypter.API.Controllers;
+
+[ApiController]
+[Route("api/version")]
+public class VersionController: CrypterControllerBase
 {
-    [ApiController]
-    [Route("api/version")]
-    public class VersionController: CrypterControllerBase
+    private readonly ISender _sender;
+
+    public VersionController(ISender sender)
     {
-        private readonly ISender _sender;
+        _sender = sender;
+    }
 
-        public VersionController(ISender sender)
-        {
-            _sender = sender;
-        }
-
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(VersionResponse))]
-        public async Task<IActionResult> GetVersionAsync(CancellationToken cancellationToken)
-        {
-            GetVersionsQuery request = new GetVersionsQuery();
-            GetVersionsResult result = await _sender.Send(request, cancellationToken);
-            VersionResponse response = new VersionResponse(result.Version, result.VersionHash, result.VersionUrl, result.IsRelease);
-            return Ok(response);
-        }
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(VersionResponse))]
+    public async Task<IActionResult> GetVersionAsync(CancellationToken cancellationToken)
+    {
+        GetVersionsQuery request = new GetVersionsQuery();
+        GetVersionsResult result = await _sender.Send(request, cancellationToken);
+        VersionResponse response = new VersionResponse(result.Version, result.VersionHash, result.VersionUrl, result.IsRelease);
+        return Ok(response);
     }
 }

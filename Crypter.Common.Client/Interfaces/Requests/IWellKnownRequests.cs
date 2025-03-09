@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -23,19 +23,15 @@
  *
  * Contact the current copyright holder to discuss commercial license options.
  */
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.Keys.GetJwks
+using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
+using EasyMonads;
+
+namespace Crypter.Common.Client.Interfaces.Requests;
+
+public interface IWellKnownRequests
 {
-    public  class GetJwksResponse
-    {
-        public List<JsonWebKeyModel> Keys { get; init; }
-
-        [JsonConstructor]
-        public GetJwksResponse(List<JsonWebKeyModel> keys)
-        {
-            Keys = keys;
-        }
-    }
+    Task<Maybe<OpenIdConfigResponse>> GetOpenIdConfigurationAsync();
+    Task<Maybe<GetJwksResponse>> GetJwksAsync();
 }
