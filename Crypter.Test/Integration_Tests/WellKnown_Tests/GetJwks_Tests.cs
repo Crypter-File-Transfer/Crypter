@@ -27,6 +27,7 @@
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
+using Crypter.Common.Contracts.Features.WellKnown.Jwks;
 using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
@@ -59,7 +60,7 @@ public sealed class GetJwks_Tests
     [Test]
     public async Task Get_Jwks_Works()
     {
-        Maybe<GetJwksResponse> result = await _client!.WellKnown.GetJwksAsync();
+        Maybe<JwksResponse> result = await _client!.WellKnown.GetJwksAsync();
         Assert.That(result.IsSome, Is.True);
     }
 }

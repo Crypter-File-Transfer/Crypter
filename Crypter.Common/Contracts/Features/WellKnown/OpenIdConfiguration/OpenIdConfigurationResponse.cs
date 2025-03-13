@@ -26,18 +26,18 @@
 
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.WellKnown.GetJwks
+namespace Crypter.Common.Contracts.Features.WellKnown.OpenIdConfiguration
 {
-    public class OpenIdConfigResponse
+    public class OpenIdConfigurationResponse
     {
         [JsonPropertyName("jwks_uri")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public string JwksUri { get; private init; }
+        public string JwksUri { get; init; }
 
         [JsonConstructor]
-        public OpenIdConfigResponse(string uri) 
+        public OpenIdConfigurationResponse(string jwksUri) 
         {
-            JwksUri = uri;
+            JwksUri = jwksUri;
         }
     }
 }

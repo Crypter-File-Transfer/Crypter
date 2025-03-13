@@ -26,15 +26,16 @@
 
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
 
-namespace Crypter.Common.Contracts.Features.WellKnown.GetJwks
+namespace Crypter.Common.Contracts.Features.WellKnown.Jwks
 {
-    public  class GetJwksResponse
+    public class JwksResponse
     {
         public List<JsonWebKeyModel> Keys { get; init; }
 
         [JsonConstructor]
-        public GetJwksResponse(List<JsonWebKeyModel> keys)
+        public JwksResponse(List<JsonWebKeyModel> keys)
         {
             Keys = keys;
         }

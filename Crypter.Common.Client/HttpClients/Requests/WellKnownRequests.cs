@@ -28,6 +28,8 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
+using Crypter.Common.Contracts.Features.WellKnown.Jwks;
+using Crypter.Common.Contracts.Features.WellKnown.OpenIdConfiguration;
 using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients.Requests;
@@ -41,15 +43,15 @@ public class WellKnownRequests : IWellKnownRequests
         _crypterHttpClient = crypterHttpClient;
     }
 
-    public Task<Maybe<OpenIdConfigResponse>> GetOpenIdConfigurationAsync()
+    public Task<Maybe<OpenIdConfigurationResponse>> GetOpenIdConfigurationAsync()
     {
         const string url = ".well-known/openid-configuration";
-        return _crypterHttpClient.GetMaybeAsync<OpenIdConfigResponse>(url);
+        return _crypterHttpClient.GetMaybeAsync<OpenIdConfigurationResponse>(url);
     }
     
-    public Task<Maybe<GetJwksResponse>> GetJwksAsync()
+    public Task<Maybe<JwksResponse>> GetJwksAsync()
     {
         const string url = ".well-known/jwks";
-        return _crypterHttpClient.GetMaybeAsync<GetJwksResponse>(url);
+        return _crypterHttpClient.GetMaybeAsync<JwksResponse>(url);
     }
 }

@@ -27,6 +27,7 @@
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
+using Crypter.Common.Contracts.Features.WellKnown.OpenIdConfiguration;
 using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
@@ -59,7 +60,7 @@ public sealed class GetOpenIdConfiguration_Tests
     [Test]
     public async Task Get_Open_Id_Configuration_Works()
     {
-        Maybe<OpenIdConfigResponse> result = await _client!.WellKnown.GetOpenIdConfigurationAsync();
+        Maybe<OpenIdConfigurationResponse> result = await _client!.WellKnown.GetOpenIdConfigurationAsync();
         Assert.That(result.IsSome, Is.True);
     }
 }

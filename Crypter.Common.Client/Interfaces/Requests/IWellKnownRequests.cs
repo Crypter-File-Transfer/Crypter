@@ -26,12 +26,14 @@
 
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
+using Crypter.Common.Contracts.Features.WellKnown.Jwks;
+using Crypter.Common.Contracts.Features.WellKnown.OpenIdConfiguration;
 using EasyMonads;
 
 namespace Crypter.Common.Client.Interfaces.Requests;
 
 public interface IWellKnownRequests
 {
-    Task<Maybe<OpenIdConfigResponse>> GetOpenIdConfigurationAsync();
-    Task<Maybe<GetJwksResponse>> GetJwksAsync();
+    Task<Maybe<OpenIdConfigurationResponse>> GetOpenIdConfigurationAsync();
+    Task<Maybe<JwksResponse>> GetJwksAsync();
 }
