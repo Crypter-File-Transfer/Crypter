@@ -24,43 +24,20 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Contracts.Features.Version;
-using EasyMonads;
-using Microsoft.AspNetCore.Mvc.Testing;
-using NUnit.Framework;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
 
-namespace Crypter.Test.Integration_Tests.Version_Tests;
-
-[TestFixture]
-public sealed class GetApiVersion_Tests
+namespace Crypter.Common.Contracts.Features.WellKnown.Jwks
 {
-    private WebApplicationFactory<Program>? _factory;
-    private ICrypterApiClient? _client;
-
-    [SetUp]
-    public async Task SetupTestAsync()
+    public class JwksResponse
     {
-        _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-        (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-        await AssemblySetup.InitializeRespawnerAsync();
-    }
+        public List<JsonWebKeyModel> Keys { get; init; }
 
-    [TearDown]
-    public async Task TeardownTestAsync()
-    {
-        if (_factory is not null)
+        [JsonConstructor]
+        public JwksResponse(List<JsonWebKeyModel> keys)
         {
-            await _factory.DisposeAsync();
+            Keys = keys;
         }
-        await AssemblySetup.ResetServerDataAsync();
-    }
-
-    [Test]
-    public async Task Get_Api_Version_Works()
-    {
-        Maybe<VersionResponse> result = await _client!.ApiVersion.GetApiVersionAsync();
-        Assert.That(result.IsSome, Is.True);
     }
 }

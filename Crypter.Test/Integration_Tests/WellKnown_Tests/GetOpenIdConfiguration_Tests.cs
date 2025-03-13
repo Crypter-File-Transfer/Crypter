@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -24,17 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Contracts.Features.Version;
+using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
+using Crypter.Common.Contracts.Features.WellKnown.OpenIdConfiguration;
 using EasyMonads;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
-using System.Threading.Tasks;
 
-namespace Crypter.Test.Integration_Tests.Version_Tests;
+namespace Crypter.Test.Integration_Tests.WellKnown_Tests;
 
-[TestFixture]
-public sealed class GetApiVersion_Tests
+public sealed class GetOpenIdConfiguration_Tests
 {
     private WebApplicationFactory<Program>? _factory;
     private ICrypterApiClient? _client;
@@ -58,9 +58,9 @@ public sealed class GetApiVersion_Tests
     }
 
     [Test]
-    public async Task Get_Api_Version_Works()
+    public async Task Get_Open_Id_Configuration_Works()
     {
-        Maybe<VersionResponse> result = await _client!.ApiVersion.GetApiVersionAsync();
+        Maybe<OpenIdConfigurationResponse> result = await _client!.WellKnown.GetOpenIdConfigurationAsync();
         Assert.That(result.IsSome, Is.True);
     }
 }

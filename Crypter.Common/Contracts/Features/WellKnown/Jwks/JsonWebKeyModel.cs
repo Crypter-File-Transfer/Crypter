@@ -23,10 +23,11 @@
  *
  * Contact the current copyright holder to discuss commercial license options.
  */
-using Microsoft.IdentityModel.Tokens;
-using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.Keys.GetJwks
+using System.Text.Json.Serialization;
+using Microsoft.IdentityModel.Tokens;
+
+namespace Crypter.Common.Contracts.Features.WellKnown.GetJwks
 {
     public class JsonWebKeyModel
     {

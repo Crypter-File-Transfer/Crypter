@@ -25,7 +25,6 @@
  */
 
 using Crypter.API.Controllers.Base;
-using Crypter.Common.Contracts.Features.Keys.GetJwks;
 using Crypter.Core.Features.Keys.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -34,39 +33,42 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.WellKnown.GetJwks;
+using Crypter.Common.Contracts.Features.WellKnown.Jwks;
+using Crypter.Common.Contracts.Features.WellKnown.OpenIdConfiguration;
 
 namespace Crypter.API.Controllers
 {
     [ApiController]
     [Route(".well-known")]
-    public class JwtController : CrypterControllerBase
+    public class WellKnownController : CrypterControllerBase
     {
         private const string CONFIG_PATH = "openid-configuration";
         private const string JWKS_PATH = "jwks";
 
         private readonly ISender _sender;
 
-        public JwtController(ISender sender)
+        public WellKnownController(ISender sender)
         {
             _sender = sender;
         }
 
         [HttpGet(CONFIG_PATH)]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(OpenIdConfigResponse))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(OpenIdConfigurationResponse))]
         [Produces("application/json")]
         public IActionResult GetJwtConfig()
         {
             string fullUrl = HttpContext.Request.GetDisplayUrl();
-            return Ok(new OpenIdConfigResponse(fullUrl.Replace(CONFIG_PATH, JWKS_PATH)));
+            return Ok(new OpenIdConfigurationResponse(fullUrl.Replace(CONFIG_PATH, JWKS_PATH)));
         }
 
         [HttpGet(JWKS_PATH)]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetJwksResponse))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(JwksResponse))]
         [Produces("application/json")]
         public async Task<IActionResult> GetJwks(CancellationToken cancellationToken)
         {
             List<JsonWebKeyModel> result = await _sender.Send(new GetJwksQuery(), cancellationToken);
-            GetJwksResponse response = new GetJwksResponse(result);
+            JwksResponse response = new JwksResponse(result);
             return Ok(response);
         }
     }

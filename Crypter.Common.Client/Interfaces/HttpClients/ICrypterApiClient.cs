@@ -44,4 +44,5 @@ public interface ICrypterApiClient
     IUserRecoveryRequests UserRecovery { get; }
     IUserSettingRequests UserSetting { get; }
     IVersionRequests ApiVersion { get; }
+    IWellKnownRequests WellKnown { get; }
 }
