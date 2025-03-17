@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -32,12 +32,12 @@ namespace Crypter.Common.Client.Events;
 
 public class UserContactInfoChangedEventArgs : EventArgs
 {
-    public Maybe<EmailAddress> EmailAddress { get; init; }
-    public bool EmailAddressVerified { get; init; }
+    public Maybe<EmailAddress> VerifiedEmailAddress { get; init; }
+    public Maybe<EmailAddress> RequestedEmailAddress { get; init; }
 
-    public UserContactInfoChangedEventArgs(Maybe<EmailAddress> emailAddress, bool emailAddressVerified)
+    public UserContactInfoChangedEventArgs(Maybe<EmailAddress> verifiedEmailAddress, Maybe<EmailAddress> requestedEmailAddress)
     {
-        EmailAddress = emailAddress;
-        EmailAddressVerified = emailAddressVerified;
+        VerifiedEmailAddress = verifiedEmailAddress;
+        RequestedEmailAddress = requestedEmailAddress;
     }
 }

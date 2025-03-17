@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,20 +24,31 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-using Crypter.Core.Models;
-using Crypter.Crypto.Common;
-using Crypter.Crypto.Common.DigitalSignature;
+using System.Threading;
+using System.Threading.Tasks;
+using Crypter.Common.Primitives;
+using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
+using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Features.UserEmailVerification;
+namespace Crypter.Core.DataContextExtensions;
 
-internal static class Common
+internal static class DbContextExtensions
 {
-    internal static UserEmailAddressVerificationParameters GenerateEmailAddressVerificationParameters(ICryptoProvider cryptoProvider, Guid userId)
+    /// <summary>
+    /// Checks whether the provided email address is available for the given user.
+    /// </summary>
+    /// <param name="dataContext"></param>
+    /// <param name="email"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <remarks>
+    /// Though null and empty email addresses would be considered available, those checks should be performed
+    /// outside of this method.
+    /// </remarks>
+    public static async Task<bool> IsEmailAddressAvailableAsync(this DataContext dataContext, EmailAddress email, CancellationToken cancellationToken = default)
     {
-        Guid verificationCode = Guid.NewGuid();
-        Ed25519KeyPair keys = cryptoProvider.DigitalSignature.GenerateKeyPair();
-        byte[] signature = cryptoProvider.DigitalSignature.GenerateSignature(keys.PrivateKey, verificationCode.ToByteArray());
-        return new UserEmailAddressVerificationParameters(userId, verificationCode, signature, keys.PublicKey);
+        return !await dataContext.Users
+            .AnyAsync(x => x.EmailAddress == email.Value || x.EmailChange!.EmailAddress == email.Value, cancellationToken);
     }
 }

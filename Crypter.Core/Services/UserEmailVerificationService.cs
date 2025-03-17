@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,23 +25,21 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserSettings;
 using Crypter.Common.Infrastructure;
-using Crypter.Core.Features.UserEmailVerification;
 using Crypter.Core.Models;
 using Crypter.Crypto.Common;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
-using EasyMonads;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Services;
 
 public interface IUserEmailVerificationService
 {
-    Task<Maybe<UserEmailAddressVerificationParameters>> GenerateVerificationParametersAsync(Guid userId);
-    Task SaveVerificationParametersAsync(UserEmailAddressVerificationParameters parameters);
+    UserEmailAddressVerificationParameters GenerateVerificationParameters(Guid userId);
     Task<bool> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request);
 }
 
@@ -56,17 +54,9 @@ public class UserEmailVerificationService : IUserEmailVerificationService
         _cryptoProvider = cryptoProvider;
     }
 
-    public Task<Maybe<UserEmailAddressVerificationParameters>> GenerateVerificationParametersAsync(Guid userId)
+    public UserEmailAddressVerificationParameters GenerateVerificationParameters(Guid userId)
     {
-        return Features.UserEmailVerification.Common.GenerateEmailAddressVerificationParametersAsync(_dataContext, _cryptoProvider, userId);
-    }
-
-    public async Task SaveVerificationParametersAsync(UserEmailAddressVerificationParameters parameters)
-    {
-        UserEmailVerificationEntity newEntity = new UserEmailVerificationEntity(parameters.UserId,
-            parameters.VerificationCode, parameters.VerificationKey, DateTime.UtcNow);
-        _dataContext.UserEmailVerifications.Add(newEntity);
-        await _dataContext.SaveChangesAsync();
+        return Features.UserEmailVerification.Common.GenerateEmailAddressVerificationParameters(_cryptoProvider, userId);
     }
 
     public async Task<bool> VerifyUserEmailAddressAsync(VerifyEmailAddressRequest request)
@@ -81,30 +71,25 @@ public class UserEmailVerificationService : IUserEmailVerificationService
             return false;
         }
 
-        var verificationEntity = await _dataContext.UserEmailVerifications
-            .FirstOrDefaultAsync(x => x.Code == verificationCode);
-
-        if (verificationEntity is null)
+        UserEntity? userWithVerification = await _dataContext.Users
+            .Include(x => x.EmailChange)
+            .Where(x => x.EmailChange!.Code == verificationCode)
+            .FirstOrDefaultAsync();
+        
+        if (userWithVerification is null)
         {
             return false;
         }
 
         byte[] signature = UrlSafeEncoder.DecodeBytesFromUrlSafe(request.Signature);
-        if (!_cryptoProvider.DigitalSignature.VerifySignature(verificationEntity.VerificationKey,
-                verificationCode.ToByteArray(), signature))
+        bool isValidSignature = _cryptoProvider.DigitalSignature.VerifySignature(userWithVerification.EmailChange!.VerificationKey, verificationCode.ToByteArray(), signature);
+        if (!isValidSignature)
         {
             return false;
         }
 
-        var user = await _dataContext.Users
-            .FirstOrDefaultAsync(x => x.Id == verificationEntity.Owner);
-
-        if (user is not null)
-        {
-            user.EmailVerified = true;
-        }
-
-        _dataContext.UserEmailVerifications.Remove(verificationEntity);
+        userWithVerification.EmailAddress = userWithVerification.EmailChange!.EmailAddress;
+        _dataContext.UserEmailChangeRequests.Remove(userWithVerification.EmailChange);
         await _dataContext.SaveChangesAsync();
 
         return true;

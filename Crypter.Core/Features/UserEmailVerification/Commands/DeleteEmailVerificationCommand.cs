@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,19 +25,33 @@
  */
 
 using System;
-using Crypter.Core.Models;
-using Crypter.Crypto.Common;
-using Crypter.Crypto.Common.DigitalSignature;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Crypter.DataAccess;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Unit = EasyMonads.Unit;
 
-namespace Crypter.Core.Features.UserEmailVerification;
+namespace Crypter.Core.Features.UserEmailVerification.Commands;
 
-internal static class Common
+public sealed record DeleteEmailVerificationCommand(Guid UserId, Guid Code) : IRequest<Unit>;
+
+internal sealed class DeleteEmailVerificationCommandHandler : IRequestHandler<DeleteEmailVerificationCommand, Unit>
 {
-    internal static UserEmailAddressVerificationParameters GenerateEmailAddressVerificationParameters(ICryptoProvider cryptoProvider, Guid userId)
+    private readonly DataContext _dataContext;
+
+    public DeleteEmailVerificationCommandHandler(DataContext dataContext)
     {
-        Guid verificationCode = Guid.NewGuid();
-        Ed25519KeyPair keys = cryptoProvider.DigitalSignature.GenerateKeyPair();
-        byte[] signature = cryptoProvider.DigitalSignature.GenerateSignature(keys.PrivateKey, verificationCode.ToByteArray());
-        return new UserEmailAddressVerificationParameters(userId, verificationCode, signature, keys.PublicKey);
+        _dataContext = dataContext;
+    }
+
+    public async Task<Unit> Handle(DeleteEmailVerificationCommand request, CancellationToken cancellationToken)
+    {
+        await _dataContext.UserEmailChangeRequests
+            .Where(x => x.Owner == request.UserId && x.Code == request.Code)
+            .ExecuteDeleteAsync(CancellationToken.None);
+
+        return Unit.Default;
     }
 }

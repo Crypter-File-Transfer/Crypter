@@ -59,9 +59,9 @@ public partial class UserSettingsNotificationSettings : IDisposable
     protected override async Task OnParametersSetAsync()
     {
         _emailAddressVerified = await UserContactInfoSettingsService.GetContactInfoSettingsAsync()
-            .MatchAsync(() =>
+            .MatchAsync(() => 
                     false,
-                x => x.EmailAddressVerified);
+                x => !string.IsNullOrEmpty(x.EmailAddress));
 
         _enableTransferNotifications = await UserNotificationSettingsService.GetNotificationSettingsAsync()
             .MatchAsync(() =>
@@ -100,7 +100,7 @@ public partial class UserSettingsNotificationSettings : IDisposable
 
     private void OnContactInfoChanged(object? sender, UserContactInfoChangedEventArgs args)
     {
-        _emailAddressVerified = args.EmailAddressVerified;
+        _emailAddressVerified = args.RequestedEmailAddress;
         StateHasChanged();
     }
 

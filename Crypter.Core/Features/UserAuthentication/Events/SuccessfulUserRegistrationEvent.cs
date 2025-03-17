@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -57,12 +57,10 @@ internal sealed class SuccessfulUserRegistrationEventHandler : INotificationHand
         
         _backgroundJobClient.Enqueue(() => _hangfireBackgroundService
             .LogSuccessfulUserRegistrationAsync(notification.UserId, emailAddress, notification.DeviceDescription, notification.Timestamp));
-                
-        if (notification.EmailAddress.IsSome)
-        {
+
+        notification.EmailAddress.IfSome(x =>
             _backgroundJobClient.Enqueue(() => _hangfireBackgroundService
-                .SendEmailVerificationAsync(notification.UserId));
-        }
+                .SendEmailVerificationAsync(notification.UserId)));
 
         return Task.CompletedTask;
     }

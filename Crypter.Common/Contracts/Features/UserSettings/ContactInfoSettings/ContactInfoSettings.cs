@@ -29,11 +29,11 @@ namespace Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 public class ContactInfoSettings
 {
     public string? EmailAddress { get; init; }
-    public bool EmailAddressVerified { get; init; }
+    public string? PendingEmailAddress { get; init; }
 
-    public ContactInfoSettings(string? emailAddress, bool emailAddressVerified)
+    public ContactInfoSettings(string? emailAddress, string? pendingEmailAddress)
     {
         EmailAddress = emailAddress;
-        EmailAddressVerified = emailAddressVerified;
+        PendingEmailAddress = pendingEmailAddress;
     }
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,23 +25,19 @@
  */
 
 using System;
-using Crypter.Common.Primitives;
 
 namespace Crypter.Core.Models;
 
 public class UserEmailAddressVerificationParameters
 {
     public Guid UserId { get; init; }
-    public EmailAddress EmailAddress { get; init; }
     public Guid VerificationCode { get; init; }
     public byte[] Signature { get; init; }
     public byte[] VerificationKey { get; init; }
 
-    public UserEmailAddressVerificationParameters(Guid userId, EmailAddress emailAddress, Guid verificationCode,
-        byte[] signature, byte[] verificationKey)
+    public UserEmailAddressVerificationParameters(Guid userId, Guid verificationCode, byte[] signature, byte[] verificationKey)
     {
         UserId = userId;
-        EmailAddress = emailAddress;
         VerificationCode = verificationCode;
         Signature = signature;
         VerificationKey = verificationKey;

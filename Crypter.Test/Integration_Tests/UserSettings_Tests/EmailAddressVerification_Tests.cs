@@ -76,12 +76,12 @@ internal class EmailAddressVerification_Tests
 
         using IServiceScope scope = _factory!.Services.CreateScope();
         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-        UserEmailVerificationEntity verificationData = await dataContext.UserEmailVerifications
+        UserEmailChangeEntity changeData = await dataContext.UserEmailChangeRequests
             .Where(x => x.User!.Username == TestData.DefaultUsername)
             .FirstAsync();
 
-        string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(verificationData.Code);
-        byte[] signedVerificationCode = _cryptoProvider!.DigitalSignature.GenerateSignature(_emailVerificationKeyPair!.PrivateKey, verificationData.Code.ToByteArray());
+        string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(changeData.Code!.Value);
+        byte[] signedVerificationCode = _cryptoProvider!.DigitalSignature.GenerateSignature(_emailVerificationKeyPair!.PrivateKey, changeData.Code.Value.ToByteArray());
         string encodedSignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedVerificationCode);
 
         VerifyEmailAddressRequest request = new VerifyEmailAddressRequest(encodedVerificationCode, encodedSignature);

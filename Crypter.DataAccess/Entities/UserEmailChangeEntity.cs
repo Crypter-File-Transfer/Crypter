@@ -24,43 +24,68 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Crypter.Common.Primitives;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Crypter.DataAccess.Entities;
 
-public class UserEmailVerificationEntity
+public class UserEmailChangeEntity
 {
     public Guid Owner { get; set; }
-    public Guid Code { get; set; }
-    public byte[] VerificationKey { get; set; }
+    public string EmailAddress { get; set; }
+    public Guid? Code { get; set; }
+    public byte[]? VerificationKey { get; set; }
+    public DateTime? VerificationSent { get; set; }
     public DateTime Created { get; set; }
 
     public UserEntity? User { get; set; }
 
-    public UserEmailVerificationEntity(Guid owner, Guid code, byte[] verificationKey, DateTime created)
+    /// <summary>
+    /// Please avoid using this.
+    /// This is only intended to be used by Entity Framework Core.
+    /// </summary>
+    [Obsolete("Use the other constructor.")]
+    public UserEmailChangeEntity(Guid owner, string emailAddress, Guid? code, byte[]? verificationKey, DateTime? verificationSent, DateTime created)
     {
         Owner = owner;
+        EmailAddress = emailAddress;
         Code = code;
         VerificationKey = verificationKey;
+        VerificationSent = verificationSent;
+        Created = created;
+    }
+    
+    public UserEmailChangeEntity(Guid owner, EmailAddress emailAddress, DateTime created)
+    {
+        Owner = owner;
+        EmailAddress = emailAddress.Value;
+        Code = null;
+        VerificationKey = null;
         Created = created;
     }
 }
 
-public class UserEmailVerificationEntityConfiguration : IEntityTypeConfiguration<UserEmailVerificationEntity>
+public class UserEmailChangeEntityConfiguration : IEntityTypeConfiguration<UserEmailChangeEntity>
 {
-    public void Configure(EntityTypeBuilder<UserEmailVerificationEntity> builder)
+    public void Configure(EntityTypeBuilder<UserEmailChangeEntity> builder)
     {
-        builder.ToTable("UserEmailVerification");
+        builder.ToTable("UserEmailChange");
 
         builder.HasKey(x => x.Owner);
-
+        
+        builder.HasIndex(x => x.EmailAddress)
+            .IsUnique();
+        
         builder.HasIndex(x => x.Code)
             .IsUnique();
 
+        builder.Property(x => x.EmailAddress)
+            .HasColumnType("citext");
+        
         builder.HasOne(x => x.User)
-            .WithOne(x => x.EmailVerification)
-            .HasForeignKey<UserEmailVerificationEntity>(x => x.Owner)
+            .WithOne(x => x.EmailChange)
+            .HasForeignKey<UserEmailChangeEntity>(x => x.Owner)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.Cascade);
     }

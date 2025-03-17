@@ -45,7 +45,7 @@ internal static class Common
     {
         return Maybe<ContactInfoSettings>.FromNullableAsync(dataContext.Users
             .Where(x => x.Id == userId)
-            .Select(x => new ContactInfoSettings(x.EmailAddress, x.EmailVerified))
+            .Select(x => new ContactInfoSettings(x.EmailAddress, x.EmailChange!.EmailAddress))
             .FirstOrDefaultAsync(cancellationToken));
     }
     

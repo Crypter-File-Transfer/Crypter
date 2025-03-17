@@ -71,7 +71,7 @@ public partial class UserSettingsAccountInfo
                 _emailAddress = x.EmailAddress ?? string.Empty;
                 _emailAddressEdit = x.EmailAddress ?? string.Empty;
 
-                _emailAddressVerified = x.EmailAddressVerified;
+                _emailAddressVerified = !string.IsNullOrEmpty(x.EmailAddress);
             });
 
         _isDataReady = true;
@@ -146,7 +146,7 @@ public partial class UserSettingsAccountInfo
                 _emailAddress = x.EmailAddress ?? string.Empty;
                 _emailAddressEdit = x.EmailAddress ?? string.Empty;
 
-                _emailAddressVerified = x.EmailAddressVerified;
+                _emailAddressVerified = !string.IsNullOrEmpty(x.EmailAddress);
             })
             .DoLeftOrNeitherAsync(
                 HandleContactInfoUpdateError,
