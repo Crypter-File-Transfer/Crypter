@@ -34,6 +34,7 @@ using Crypter.Crypto.Common;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Crypter.Core.Services;
 
@@ -45,11 +46,13 @@ public interface IUserEmailVerificationService
 
 public class UserEmailVerificationService : IUserEmailVerificationService
 {
+    private readonly ILogger<UserEmailVerificationService> _logger;
     private readonly DataContext _dataContext;
     private readonly ICryptoProvider _cryptoProvider;
 
-    public UserEmailVerificationService(DataContext dataContext, ICryptoProvider cryptoProvider)
+    public UserEmailVerificationService(ILogger<UserEmailVerificationService> logger, DataContext dataContext, ICryptoProvider cryptoProvider)
     {
+        _logger = logger;
         _dataContext = dataContext;
         _cryptoProvider = cryptoProvider;
     }
@@ -66,8 +69,9 @@ public class UserEmailVerificationService : IUserEmailVerificationService
         {
             verificationCode = UrlSafeEncoder.DecodeGuidFromUrlSafe(request.Code);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "An exception occurred while decoding the verification code. VerificationCode: {code}, Message: {message}", request.Code, ex.Message);
             return false;
         }
 
@@ -78,6 +82,7 @@ public class UserEmailVerificationService : IUserEmailVerificationService
         
         if (userWithVerification is null)
         {
+            _logger.LogWarning("UserEmailChange record with verification code not found. VerificationCode: {code}", verificationCode);
             return false;
         }
 
@@ -85,6 +90,7 @@ public class UserEmailVerificationService : IUserEmailVerificationService
         bool isValidSignature = _cryptoProvider.DigitalSignature.VerifySignature(userWithVerification.EmailChange!.VerificationKey, verificationCode.ToByteArray(), signature);
         if (!isValidSignature)
         {
+            _logger.LogWarning("Invalid signature provided for verification code. VerificationCode: {code}", verificationCode);
             return false;
         }
 
