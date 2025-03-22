@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -126,14 +126,14 @@ internal sealed class UpdateContactInformationCommandHandler
             },
             someAsync: async x =>
             {
-                // Delete the email change request if the new email address matches the verified email address
-                if (x.Value == userEntity.EmailAddress && userEntity.EmailChange is not null)
+                // Delete the current email change request, if one exists
+                if (userEntity.EmailChange is not null)
                 {
                     _dataContext.UserEmailChangeRequests.Remove(userEntity.EmailChange);
                 }
 
                 // Create an email change request if the new email address does not match the current email address
-                else if (x.Value != userEntity.EmailAddress)
+                if (x.Value != userEntity.EmailAddress)
                 {
                     bool isEmailAddressAvailableForUser = await newEmailAddress.MatchAsync(
                         () => true,
@@ -154,13 +154,12 @@ internal sealed class UpdateContactInformationCommandHandler
         
         await _dataContext.SaveChangesAsync(CancellationToken.None);
 
-        await result.DoRightAsync(async _ =>
+        return await result.DoRightAsync(async _ =>
         {
             EmailAddressChangeRequestEvent emailAddressChangeRequestEvent = new EmailAddressChangeRequestEvent(request.UserId, newEmailAddress);
             await _publisher.Publish(emailAddressChangeRequestEvent, CancellationToken.None);
-        });
-            
-        return await Common.GetContactInfoSettingsAsync(_dataContext, request.UserId, cancellationToken)
-            .ToEitherAsync(UpdateContactInfoSettingsError.UnknownError);
+        })
+        .BindAsync(async _ => await Common.GetContactInfoSettingsAsync(_dataContext, request.UserId, cancellationToken)
+            .ToEitherAsync(UpdateContactInfoSettingsError.UnknownError));
     }
 }

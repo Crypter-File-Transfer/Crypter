@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -42,8 +42,7 @@ public partial class UserSettingsAccountInfo
     
     private string _emailAddress = string.Empty;
     private string _emailAddressEdit = string.Empty;
-
-    private bool _emailAddressVerified = false;
+    private string _pendingEmailAddress = string.Empty;
 
     private string _emailAddressPassword = string.Empty;
     private string _passwordChangeOldPassword = string.Empty;
@@ -71,7 +70,7 @@ public partial class UserSettingsAccountInfo
                 _emailAddress = x.EmailAddress ?? string.Empty;
                 _emailAddressEdit = x.EmailAddress ?? string.Empty;
 
-                _emailAddressVerified = !string.IsNullOrEmpty(x.EmailAddress);
+                _pendingEmailAddress = x.PendingEmailAddress ?? string.Empty;
             });
 
         _isDataReady = true;
@@ -79,6 +78,7 @@ public partial class UserSettingsAccountInfo
 
     private void OnEditContactInfoClicked()
     {
+        _emailAddressEdit = string.Empty;
         _isEditingEmailAddress = true;
     }
 
@@ -146,14 +146,13 @@ public partial class UserSettingsAccountInfo
                 _emailAddress = x.EmailAddress ?? string.Empty;
                 _emailAddressEdit = x.EmailAddress ?? string.Empty;
 
-                _emailAddressVerified = !string.IsNullOrEmpty(x.EmailAddress);
+                _pendingEmailAddress = x.PendingEmailAddress ?? string.Empty;
+                _emailAddressPassword = string.Empty;
+                _isEditingEmailAddress = false;
             })
             .DoLeftOrNeitherAsync(
                 HandleContactInfoUpdateError,
                 () => HandleContactInfoUpdateError());
-
-        _emailAddressPassword = string.Empty;
-        _isEditingEmailAddress = false;
     }
 
     private async Task OnSavePasswordChangeClickAsync()
@@ -187,6 +186,7 @@ public partial class UserSettingsAccountInfo
 
     private void HandleContactInfoUpdateError(UpdateContactInfoSettingsError error = UpdateContactInfoSettingsError.UnknownError)
     {
+        _emailAddressPassword = string.Empty;
         switch (error)
         {
             case UpdateContactInfoSettingsError.EmailAddressUnavailable:
