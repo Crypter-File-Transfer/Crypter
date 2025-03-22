@@ -71,7 +71,8 @@ public class UserEmailVerificationService : IUserEmailVerificationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An exception occurred while decoding the verification code. VerificationCode: {code}, Message: {message}", request.Code, ex.Message);
+            string sanitizedCode = request.Code.Replace(Environment.NewLine, "").Replace("\n", "").Replace("\r", "");
+            _logger.LogError(ex, "An exception occurred while decoding the verification code. VerificationCode: {code}, Message: {message}", sanitizedCode, ex.Message);
             return false;
         }
 
