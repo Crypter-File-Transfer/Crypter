@@ -227,10 +227,7 @@ public class UserSettingController : CrypterControllerBase
 #pragma warning disable CS8524
             return error switch
             {
-                UpdateNotificationSettingsError.UnknownError => MakeErrorResponseBase(
-                    HttpStatusCode.InternalServerError, error),
-                UpdateNotificationSettingsError.EmailAddressNotVerified => MakeErrorResponseBase(
-                    HttpStatusCode.BadRequest, error)
+                UpdateNotificationSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error)
             };
 #pragma warning restore CS8524
         }

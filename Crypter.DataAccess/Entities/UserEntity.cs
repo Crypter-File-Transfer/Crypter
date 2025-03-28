@@ -40,14 +40,13 @@ public class UserEntity
     public byte[] PasswordSalt { get; set; }
     public short ServerPasswordVersion { get; set; }
     public short ClientPasswordVersion { get; set; }
-    public bool EmailVerified { get; set; }
     public DateTime Created { get; set; }
     public DateTime LastLogin { get; set; }
 
     public UserProfileEntity? Profile { get; set; }
     public UserPrivacySettingEntity? PrivacySetting { get; set; }
     public UserRecoveryEntity? Recovery { get; set; }
-    public UserEmailVerificationEntity? EmailVerification { get; set; }
+    public UserEmailChangeEntity? EmailChange { get; set; }
     public UserNotificationSettingEntity? NotificationSetting { get; set; }
     public UserKeyPairEntity? KeyPair { get; set; }
     public UserMasterKeyEntity? MasterKey { get; set; }
@@ -63,11 +62,11 @@ public class UserEntity
 
     /// <summary>
     /// Please avoid using this.
-    /// This is only intended to be used by Entity Framework.
+    /// This is only intended to be used by Entity Framework Core.
     /// </summary>
+    [Obsolete("Use the other constructor.")]
     public UserEntity(Guid id, string username, string? emailAddress, byte[] passwordHash, byte[] passwordSalt,
-        short serverPasswordVersion, short clientPasswordVersion, bool emailVerified, DateTime created,
-        DateTime lastLogin)
+        short serverPasswordVersion, short clientPasswordVersion, DateTime created, DateTime lastLogin)
     {
         Id = id;
         Username = username;
@@ -76,14 +75,12 @@ public class UserEntity
         PasswordSalt = passwordSalt;
         ServerPasswordVersion = serverPasswordVersion;
         ClientPasswordVersion = clientPasswordVersion;
-        EmailVerified = emailVerified;
         Created = created;
         LastLogin = lastLogin;
     }
 
     public UserEntity(Guid id, Username username, Maybe<EmailAddress> emailAddress, byte[] passwordHash,
-        byte[] passwordSalt, short serverPasswordVersion, short clientPasswordVersion, bool emailVerified,
-        DateTime created, DateTime lastLogin)
+        byte[] passwordSalt, short serverPasswordVersion, short clientPasswordVersion, DateTime created, DateTime lastLogin)
     {
         Id = id;
         Username = username.Value;
@@ -94,7 +91,6 @@ public class UserEntity
         PasswordSalt = passwordSalt;
         ServerPasswordVersion = serverPasswordVersion;
         ClientPasswordVersion = clientPasswordVersion;
-        EmailVerified = emailVerified;
         Created = created;
         LastLogin = lastLogin;
     }

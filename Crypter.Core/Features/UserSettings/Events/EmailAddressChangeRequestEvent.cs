@@ -25,7 +25,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Primitives;
@@ -39,15 +38,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.UserSettings.Events;
 
-public record EmailAddressChangedEvent(Guid UserId, Maybe<EmailAddress> NewEmailAddress) : INotification;
+public record EmailAddressChangeRequestEvent(Guid UserId, Maybe<EmailAddress> NewEmailAddress) : INotification;
 
-internal class EmailAddressChangedEventHandler : INotificationHandler<EmailAddressChangedEvent>
+internal class EmailAddressChangeRequestEventHandler : INotificationHandler<EmailAddressChangeRequestEvent>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly DataContext _dataContext;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
 
-    public EmailAddressChangedEventHandler(
+    public EmailAddressChangeRequestEventHandler(
         IBackgroundJobClient backgroundJobClient,
         DataContext dataContext,
         IHangfireBackgroundService hangfireBackgroundService)
@@ -57,26 +56,16 @@ internal class EmailAddressChangedEventHandler : INotificationHandler<EmailAddre
         _backgroundJobClient = backgroundJobClient;
     }
     
-    public async Task Handle(EmailAddressChangedEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(EmailAddressChangeRequestEvent notification, CancellationToken cancellationToken)
     {
-        await DeleteExistingEmailVerificationsAsync(notification.UserId);
         await notification.NewEmailAddress.IfNoneAsync(async ()
             => await ResetNotificationSettingsAsync(notification.UserId));
         
         await _dataContext.SaveChangesAsync(CancellationToken.None);
         
-        notification.NewEmailAddress.IfSome(_ =>
-        {
+        notification.NewEmailAddress.IfSome(x =>
             _backgroundJobClient.Enqueue(() =>
-                _hangfireBackgroundService.SendEmailVerificationAsync(notification.UserId));
-        });
-    }
-
-    private async Task DeleteExistingEmailVerificationsAsync(Guid userId)
-    {
-        await _dataContext.UserEmailVerifications
-            .Where(x => x.Owner == userId)
-            .ExecuteDeleteAsync(CancellationToken.None);
+                _hangfireBackgroundService.SendEmailVerificationAsync(notification.UserId)));
     }
 
     private async Task ResetNotificationSettingsAsync(Guid userId)

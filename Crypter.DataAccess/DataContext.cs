@@ -46,7 +46,7 @@ public class DataContext : DbContext
     public DbSet<EventLogEntity> EventLogs { get; init; }
     public DbSet<UserConsentEntity> UserConsents { get; init; }
     public DbSet<UserContactEntity> UserContacts { get; init; }
-    public DbSet<UserEmailVerificationEntity> UserEmailVerifications { get; init; }
+    public DbSet<UserEmailChangeEntity> UserEmailChangeRequests { get; init; }
     public DbSet<UserEntity> Users { get; init; }
     public DbSet<UserFailedLoginEntity> UserFailedLoginAttempts { get; init; }
     public DbSet<UserFileTransferEntity> UserFileTransfers { get; init; }

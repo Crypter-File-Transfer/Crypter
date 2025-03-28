@@ -101,9 +101,7 @@ internal static class Common
     {
         bool userExpectsNotification = await dataContext.Users
             .Where(x => x.Id == recipientId)
-            .Where(x => x.NotificationSetting!.EnableTransferNotifications
-                        && x.EmailVerified
-                        && x.NotificationSetting.EmailNotifications)
+            .Where(x => x.NotificationSetting!.EnableTransferNotifications && x.NotificationSetting.EmailNotifications)
             .AnyAsync();
 
         if (userExpectsNotification)
