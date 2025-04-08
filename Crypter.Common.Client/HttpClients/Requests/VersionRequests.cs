@@ -30,21 +30,20 @@ using Crypter.Common.Contracts.Features.Version;
 using EasyMonads;
 using System.Threading.Tasks;
 
-namespace Crypter.Common.Client.HttpClients.Requests
+namespace Crypter.Common.Client.HttpClients.Requests;
+
+public class VersionRequests : IVersionRequests
 {
-    public class VersionRequests : IVersionRequests
+    private readonly ICrypterHttpClient _crypterHttpClient;
+
+    public VersionRequests(ICrypterHttpClient crypterHttpClient)
     {
-        private readonly ICrypterHttpClient _crypterHttpClient;
+        _crypterHttpClient = crypterHttpClient;
+    }
 
-        public VersionRequests(ICrypterHttpClient crypterHttpClient)
-        {
-            _crypterHttpClient = crypterHttpClient;
-        }
-
-        public Task<Maybe<VersionResponse>> GetApiVersionAsync()
-        {
-            const string url = "api/version";
-            return _crypterHttpClient.GetMaybeAsync<VersionResponse>(url);
-        }
+    public Task<Maybe<VersionResponse>> GetApiVersionAsync()
+    {
+        const string url = "api/version";
+        return _crypterHttpClient.GetMaybeAsync<VersionResponse>(url);
     }
 }

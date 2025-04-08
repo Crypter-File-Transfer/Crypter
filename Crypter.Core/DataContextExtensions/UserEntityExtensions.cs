@@ -34,28 +34,9 @@ namespace Crypter.Core.DataContextExtensions;
 
 internal static class UserEntityExtensions
 {
-    public static async Task<bool> IsUsernameAvailableAsync(this DbSet<UserEntity> userContext, Username username,
-        CancellationToken cancellationToken = default)
+    public static async Task<bool> IsUsernameAvailableAsync(this DbSet<UserEntity> userContext, Username username, CancellationToken cancellationToken = default)
     {
         return !await userContext
             .AnyAsync(x => x.Username == username.Value, cancellationToken);
-    }
-
-    /// <summary>
-    /// Checks whether the provided email address is available for the given user.
-    /// </summary>
-    /// <param name="userContext"></param>
-    /// <param name="email"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    /// <remarks>
-    /// Though null and empty email addresses would be considered available, those checks should be performed
-    /// outside of this method.
-    /// </remarks>
-    public static async Task<bool> IsEmailAddressAvailableAsync(this DbSet<UserEntity> userContext, EmailAddress email,
-        CancellationToken cancellationToken = default)
-    {
-        return !await userContext
-            .AnyAsync(x => x.EmailAddress == email.Value, cancellationToken);
     }
 }

@@ -42,6 +42,19 @@ public class DigitalSignature : IDigitalSignature
         return new Ed25519KeyPair(privateKey, publicKey);
     }
 
+    public Ed25519KeyPair GenerateKeyPair(ReadOnlySpan<byte> seed)
+    {
+        if (seed.Length != Ed25519.SeedSize)
+        {
+            throw new ArgumentOutOfRangeException(nameof(seed), "Seed must be of length Ed25519.SeedSize");
+        }
+        byte[] privateKey = new byte[Ed25519.PrivateKeySize];
+        byte[] publicKey = new byte[Ed25519.PublicKeySize];
+        
+        Ed25519.GenerateKeyPair(publicKey, privateKey, seed);
+        return new Ed25519KeyPair(privateKey, publicKey);
+    }
+
     public byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message)
     {
         byte[] signature = new byte[Ed25519.SignatureSize];

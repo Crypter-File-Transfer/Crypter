@@ -70,7 +70,7 @@ internal class SubmitRecovery_Tests
     {
         _cryptoProvider = new DefaultCryptoProvider();
         _knownKeyPair = _cryptoProvider.DigitalSignature.GenerateKeyPair();
-        _mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_knownKeyPair).Object;
+        _mockCryptoProvider = Mocks.CreateDeterministicCryptoProvider(_knownKeyPair);
         
         IServiceCollection overrideServices = new ServiceCollection();
         overrideServices.AddSingleton(_mockCryptoProvider!);
@@ -124,12 +124,12 @@ internal class SubmitRecovery_Tests
 
         using IServiceScope scope = _factory!.Services.CreateScope();
         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-        UserEmailVerificationEntity verificationData = await dataContext.UserEmailVerifications
+        UserEmailChangeEntity changeData = await dataContext.UserEmailChangeRequests
             .Where(x => x.User!.Username == TestData.DefaultUsername)
             .FirstAsync();
 
-        string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(verificationData.Code);
-        byte[] signedVerificationCode = _cryptoProvider!.DigitalSignature.GenerateSignature(_knownKeyPair!.PrivateKey, verificationData.Code.ToByteArray());
+        string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(changeData.Code!.Value);
+        byte[] signedVerificationCode = _cryptoProvider!.DigitalSignature.GenerateSignature(_knownKeyPair!.PrivateKey, changeData.Code.Value.ToByteArray());
         string encodedVerificationSignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedVerificationCode);
 
         VerifyEmailAddressRequest verificationRequest = new VerifyEmailAddressRequest(encodedVerificationCode, encodedVerificationSignature);
@@ -177,14 +177,14 @@ internal class SubmitRecovery_Tests
 
         using IServiceScope scope = _factory!.Services.CreateScope();
         DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-        UserEmailVerificationEntity verificationData = await dataContext.UserEmailVerifications
+        UserEmailChangeEntity changeData = await dataContext.UserEmailChangeRequests
             .Where(x => x.User!.Username == TestData.DefaultUsername)
             .FirstAsync();
 
-        string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(verificationData.Code);
+        string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(changeData.Code!.Value);
         byte[] signedVerificationCode =
             _cryptoProvider!.DigitalSignature.GenerateSignature(_knownKeyPair!.PrivateKey,
-                verificationData.Code.ToByteArray());
+                changeData.Code.Value.ToByteArray());
         string encodedVerificationSignature = UrlSafeEncoder.EncodeBytesUrlSafe(signedVerificationCode);
 
         VerifyEmailAddressRequest verificationRequest = new VerifyEmailAddressRequest(encodedVerificationCode, encodedVerificationSignature);

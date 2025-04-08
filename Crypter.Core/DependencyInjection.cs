@@ -98,10 +98,10 @@ public static class DependencyInjection
         {
             options.Audience = tokenSettings.Audience;
             options.Issuer = tokenSettings.Issuer;
-            options.SecretKey = tokenSettings.SecretKey;
             options.AuthenticationTokenLifetimeMinutes = tokenSettings.AuthenticationTokenLifetimeMinutes;
             options.SessionTokenLifetimeMinutes = tokenSettings.SessionTokenLifetimeMinutes;
             options.DeviceTokenLifetimeDays = tokenSettings.DeviceTokenLifetimeDays;
+            options.SigningKeySeed = tokenSettings.SigningKeySeed;
         });
 
         services.AddTransferRepository(options =>
@@ -114,7 +114,6 @@ public static class DependencyInjection
         services.AddHangfire(config => config
             .UsePostgreSqlStorage(options => { options.UseNpgsqlConnection(hangfireConnectionString); })
             .UseRecommendedSerializerSettings());
-
         return services;
     }
     

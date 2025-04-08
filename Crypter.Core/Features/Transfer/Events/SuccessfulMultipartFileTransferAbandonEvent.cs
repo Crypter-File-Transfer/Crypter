@@ -29,7 +29,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Enums;
 using Crypter.Core.Services;
-using Crypter.DataAccess;
 using Hangfire;
 using MediatR;
 
@@ -42,16 +41,13 @@ internal class SuccessfulMultipartFileTransferAbandonEventHandler
     : INotificationHandler<SuccessfulMultipartFileTransferAbandonEvent>
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly DataContext _dataContext;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
 
     public SuccessfulMultipartFileTransferAbandonEventHandler(
         IBackgroundJobClient backgroundJobClient,
-        DataContext dataContext,
         IHangfireBackgroundService hangfireBackgroundService)
     {
         _backgroundJobClient = backgroundJobClient;
-        _dataContext = dataContext;
         _hangfireBackgroundService = hangfireBackgroundService;
     }
     

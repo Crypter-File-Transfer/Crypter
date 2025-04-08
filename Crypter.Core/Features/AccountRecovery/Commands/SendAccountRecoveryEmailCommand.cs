@@ -85,8 +85,7 @@ internal sealed class SendAccountRecoveryEmailCommandHandler
         _hangfireBackgroundService = hangfireBackgroundService;
     }
 
-    public async Task<Maybe<SendAccountRecoveryEmailError>> Handle(
-        SendAccountRecoveryEmailCommand request, CancellationToken cancellationToken)
+    public async Task<Maybe<SendAccountRecoveryEmailError>> Handle(SendAccountRecoveryEmailCommand request, CancellationToken cancellationToken)
     {
         return await GenerateRecoveryParametersAsync(request.EmailAddress)
             .MatchAsync(
@@ -103,20 +102,17 @@ internal sealed class SendAccountRecoveryEmailCommandHandler
                     await SaveRecoveryParametersAsync(userRecoveryParameters);
 
                     DateTime recoveryExpiration = userRecoveryParameters.Created.DateTime.AddMinutes(AccountRecoveryEmailExpirationMinutes);
-                    _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteRecoveryParametersAsync(userRecoveryParameters.UserId),
-                        recoveryExpiration);
+                    _backgroundJobClient.Schedule(() => _hangfireBackgroundService.DeleteRecoveryParametersAsync(userRecoveryParameters.UserId), recoveryExpiration);
 
                     return Maybe<SendAccountRecoveryEmailError>.None;
                 },
                 neither: SendAccountRecoveryEmailError.Unknown);
     }
 
-    private async Task<Either<SendAccountRecoveryEmailError, UserRecoveryParameters>> GenerateRecoveryParametersAsync(
-        string emailAddress)
+    private async Task<Either<SendAccountRecoveryEmailError, UserRecoveryParameters>> GenerateRecoveryParametersAsync(string emailAddress)
     {
         var userData = await _dataContext.Users
             .Where(x => x.EmailAddress == emailAddress)
-            .Where(x => x.EmailVerified)
             .Select(x => new { x.Id, x.Username, x.EmailAddress })
             .FirstOrDefaultAsync();
 

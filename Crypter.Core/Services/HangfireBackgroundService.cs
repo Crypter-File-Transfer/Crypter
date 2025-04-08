@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -68,11 +68,11 @@ public interface IHangfireBackgroundService
     ///   delete the transfer from storage as the client is still streaming the transfer.
     /// </param>
     /// <returns></returns>
-    Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType,
-        bool deleteFromTransferRepository);
+    Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferRepository);
 
     Task<Unit> DeleteUserTokenAsync(Guid tokenId);
     Task<Unit> DeleteFailedLoginAttemptAsync(Guid failedAttemptId);
+    Task<Unit> DeleteEmailChangeRequestAsync(Guid userId, Guid code);
     Task<Unit> DeleteRecoveryParametersAsync(Guid userId);
     Task<Unit> DeleteUserKeysAsync(Guid userId);
     Task<Unit> DeleteReceivedTransfersAsync(Guid userId);
@@ -138,8 +138,7 @@ public class HangfireBackgroundService : IHangfireBackgroundService
 
         if (!success)
         {
-            _logger.LogError("Failed to send transfer notification for item: {itemId}; type: {itemType}.",
-                itemId, itemType);
+            _logger.LogError("Failed to send transfer notification for item: {itemId}; type: {itemType}.", itemId, itemType);
             throw new HangfireJobException($"{nameof(SendTransferNotificationAsync)} failed.");
         }
         
@@ -197,6 +196,12 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return _sender.Send(request);
     }
 
+    public async Task<Unit> DeleteEmailChangeRequestAsync(Guid userId, Guid code)
+    {
+        DeleteEmailVerificationCommand request = new DeleteEmailVerificationCommand(userId, code);
+        return await _sender.Send(request);
+    }
+    
     public async Task<Unit> DeleteRecoveryParametersAsync(Guid userId)
     {
         DeleteRecoveryParametersCommand request = new DeleteRecoveryParametersCommand(userId);

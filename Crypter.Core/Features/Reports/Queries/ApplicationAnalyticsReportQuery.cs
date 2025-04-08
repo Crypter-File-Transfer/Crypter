@@ -57,7 +57,7 @@ internal sealed class ApplicationAnalyticsReportQueryHandler
         DateTimeOffset now = DateTimeOffset.UtcNow;
         DateTimeOffset reportBegin = DateTimeOffset.UtcNow.AddDays(-request.ReportPeriodDays);
         
-        List<EventLogEntity> events = await _dataContext.EventLogs
+        List<EventLogEntity> events = await _dataContext.EventLogs.AsNoTracking()
             .Where(eventLog => eventLog.Timestamp <= now && eventLog.Timestamp >= reportBegin)
             .ToListAsync(cancellationToken);
 

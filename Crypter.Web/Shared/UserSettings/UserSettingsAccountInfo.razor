@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -29,8 +29,14 @@
     <h3>Contact Info</h3>
     <form>
         <div class="mb-3">
-            <label for="contactInfoEmailAddress" class="form-label">Email Address</label>
-            <input @bind="_emailAddressEdit" type="email" class="form-control" id="contactInfoEmailAddress" name="email" placeholder="Email Not Set" readonly="@(!_isEditingEmailAddress)"/>
+            <label for="contactInfoEmailAddress" class="form-label">@(_isEditingEmailAddress ? "New Email Address" : "Email Address")</label>
+            <input @bind="_emailAddressEdit" type="email" class="form-control" id="contactInfoEmailAddress" name="email" placeholder="@(_isEditingEmailAddress ? string.Empty : "Email Not Set")" readonly="@(!_isEditingEmailAddress)"/>
+            
+            @if (!string.IsNullOrEmpty(_emailAddress) && !_isEditingEmailAddress)
+            {
+                <span class="text-success">Verified</span>
+            }
+            
             @if (_isEditingEmailAddress)
             {
                 @if (!string.IsNullOrEmpty(_emailAddressError))
@@ -38,18 +44,17 @@
                     <span class="text-danger">@_emailAddressError</span>
                 }
             }
-            else
-            {
-                @if (_emailAddressVerified)
-                {
-                    <span class="text-success">Verified</span>
-                }
-                else
-                {
-                    <span class="text-danger">Not verified</span>
-                }
-            }
         </div>
+
+        @if (!_isEditingEmailAddress && !string.IsNullOrEmpty(_pendingEmailAddress))
+        {
+            <div class="mb-3">
+                <label for="pendingEmailAddress" class="form-label">Pending Email Address</label>
+                <input @bind="_pendingEmailAddress" type="email" class="form-control" id="pendingEmailAddress" name="pendingEmail" readonly/>
+                <span class="text-danger">A verification link has been sent to this email address. Click the link to verify this email address.</span>
+            </div>
+        }
+        
         <div class="mb-3" hidden="@(!_isEditingEmailAddress)">
             <label for="contactInfoCurrentPassword" class="form-label">Current Password</label>
             <input @bind="_emailAddressPassword" type="password" class="form-control" id="contactInfoCurrentPassword"/>

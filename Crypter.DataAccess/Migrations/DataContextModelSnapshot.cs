@@ -19,7 +19,7 @@ namespace Crypter.DataAccess.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("crypter")
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
@@ -176,27 +176,36 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("UserContact", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.DataAccess.Entities.UserEmailVerificationEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserEmailChangeEntity", b =>
                 {
                     b.Property<Guid>("Owner")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("Code")
+                    b.Property<Guid?>("Code")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<byte[]>("VerificationKey")
+                    b.Property<string>("EmailAddress")
                         .IsRequired()
+                        .HasColumnType("citext");
+
+                    b.Property<byte[]>("VerificationKey")
                         .HasColumnType("bytea");
+
+                    b.Property<DateTime?>("VerificationSent")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Owner");
 
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("UserEmailVerification", "crypter");
+                    b.HasIndex("EmailAddress")
+                        .IsUnique();
+
+                    b.ToTable("UserEmailChange", "crypter");
                 });
 
             modelBuilder.Entity("Crypter.DataAccess.Entities.UserEntity", b =>
@@ -215,9 +224,6 @@ namespace Crypter.DataAccess.Migrations
 
                     b.Property<string>("EmailAddress")
                         .HasColumnType("citext");
-
-                    b.Property<bool>("EmailVerified")
-                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("LastLogin")
                         .HasColumnType("timestamp with time zone");
@@ -567,11 +573,11 @@ namespace Crypter.DataAccess.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("Crypter.DataAccess.Entities.UserEmailVerificationEntity", b =>
+            modelBuilder.Entity("Crypter.DataAccess.Entities.UserEmailChangeEntity", b =>
                 {
                     b.HasOne("Crypter.DataAccess.Entities.UserEntity", "User")
-                        .WithOne("EmailVerification")
-                        .HasForeignKey("Crypter.DataAccess.Entities.UserEmailVerificationEntity", "Owner")
+                        .WithOne("EmailChange")
+                        .HasForeignKey("Crypter.DataAccess.Entities.UserEmailChangeEntity", "Owner")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("User");
@@ -702,7 +708,7 @@ namespace Crypter.DataAccess.Migrations
 
                     b.Navigation("Contacts");
 
-                    b.Navigation("EmailVerification");
+                    b.Navigation("EmailChange");
 
                     b.Navigation("FailedLoginAttempts");
 

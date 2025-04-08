@@ -78,24 +78,23 @@ public class UserContactInfoSettingsService : IUserContactInfoSettingsService, I
             return UpdateContactInfoSettingsError.InvalidUsername;
         }
 
-        return await _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, currentPassword,
-                _userPasswordService.CurrentPasswordVersion)
+        return await _userPasswordService.DeriveUserAuthenticationPasswordAsync(username, currentPassword, _userPasswordService.CurrentPasswordVersion)
             .ToEitherAsync(UpdateContactInfoSettingsError.PasswordHashFailure)
             .MapAsync(async x =>
             {
-                UpdateContactInfoSettingsRequest request =
-                    new UpdateContactInfoSettingsRequest(emailAddress, x.Password);
-                Either<UpdateContactInfoSettingsError, ContactInfoSettings> response =
-                    await _crypterApiClient.UserSetting.UpdateContactInfoSettingsAsync(request);
+                UpdateContactInfoSettingsRequest request = new UpdateContactInfoSettingsRequest(emailAddress, x.Password);
+                Either<UpdateContactInfoSettingsError, ContactInfoSettings> response = await _crypterApiClient.UserSetting.UpdateContactInfoSettingsAsync(request);
                 _contactInfoSettings = response.ToMaybe();
 
                 response.DoRight(updatedContactInfoSettings =>
                 {
-                    Maybe<EmailAddress> newEmailAddress = EmailAddress.TryFrom(updatedContactInfoSettings.EmailAddress!,
-                        out EmailAddress newValidEmailAddress)
+                    Maybe<EmailAddress> newEmailAddress = EmailAddress.TryFrom(updatedContactInfoSettings.EmailAddress!, out EmailAddress newValidEmailAddress)
                         ? newValidEmailAddress
                         : Maybe<EmailAddress>.None;
-                    HandleUserContactInfoChangedEvent(newEmailAddress, updatedContactInfoSettings.EmailAddressVerified);
+                    Maybe<EmailAddress> requestedEmailAddress = EmailAddress.TryFrom(updatedContactInfoSettings.EmailAddress!, out EmailAddress newRequestedEmailAddress)
+                        ? newRequestedEmailAddress
+                        : Maybe<EmailAddress>.None;
+                    HandleUserContactInfoChangedEvent(newEmailAddress, requestedEmailAddress);
                 });
 
                 return response;
@@ -110,9 +109,8 @@ public class UserContactInfoSettingsService : IUserContactInfoSettingsService, I
             (EventHandler<UserContactInfoChangedEventArgs>?)Delegate.Remove(_userContactInfoChangedEventHandler, value);
     }
 
-    private void HandleUserContactInfoChangedEvent(Maybe<EmailAddress> emailAddress, bool emailAddressVerified) =>
-        _userContactInfoChangedEventHandler?.Invoke(this,
-            new UserContactInfoChangedEventArgs(emailAddress, emailAddressVerified));
+    private void HandleUserContactInfoChangedEvent(Maybe<EmailAddress> verifiedEmailAddress, Maybe<EmailAddress> requestedEmailAddress) =>
+        _userContactInfoChangedEventHandler?.Invoke(this, new UserContactInfoChangedEventArgs(verifiedEmailAddress, requestedEmailAddress));
 
     private void Recycle(object? _, EventArgs __)
     {

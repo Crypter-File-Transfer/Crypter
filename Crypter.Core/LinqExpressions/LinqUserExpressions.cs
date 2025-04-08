@@ -88,13 +88,12 @@ internal static class LinqUserExpressions
             || (x.PrivacySetting!.ReceiveFiles == UserItemTransferPermission.Contacts &&
                 x.Contacts!.Any(y => y.ContactId == visitorId)),
             x.KeyPair!.PublicKey,
-            x.EmailVerified);
+            x.EmailAddress != null);
     }
 
     internal static Expression<Func<UserEntity?, bool>> UserReceivesEmailNotifications()
     {
         return x => x != null
-                      && x.EmailVerified
                       && x.NotificationSetting != null
                       && x.NotificationSetting.EnableTransferNotifications
                       && x.NotificationSetting.EmailNotifications;

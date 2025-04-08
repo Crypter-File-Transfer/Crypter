@@ -1,2 +1,17 @@
+# directories
+Documentation/
+Environments/
+Volumes/
+
+.github/
+.idea/
+
 **/bin/
 **/obj/
+**/out/
+
+# files
+.env
+Dockerfile*
+docker-compose*
+**/*.md

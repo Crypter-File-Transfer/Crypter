@@ -28,14 +28,15 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using System.Text;
 using Crypter.Common.Exceptions;
 using Crypter.Core.Identity;
+using Crypter.Core.Identity.Tokens;
 using EasyMonads;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using ICrypterCryptoProvider = Crypter.Crypto.Common.ICryptoProvider;
 
 namespace Crypter.Core.Services;
 
@@ -45,16 +46,15 @@ public interface ITokenService
     RefreshTokenData NewSessionToken(Guid userId);
     RefreshTokenData NewDeviceToken(Guid userId);
     Maybe<ClaimsPrincipal> ValidateToken(string token);
+    JsonWebKey PublicJWK();
+    TokenValidationParameters TokenValidationParameters { get; }
 }
 
 public static class TokenServiceExtensions
 {
     public static void AddTokenService(this IServiceCollection services, Action<TokenSettings> settings)
     {
-        if (settings is null)
-        {
-            throw new ArgumentNullException(nameof(settings));
-        }
+        ArgumentNullException.ThrowIfNull(settings);
 
         services.Configure(settings);
         services.TryAddSingleton<ITokenService, TokenService>();
@@ -64,15 +64,27 @@ public static class TokenServiceExtensions
 public class TokenService : ITokenService
 {
     private readonly TokenSettings _tokenSettings;
+    private readonly TokenKeyProvider _tokenKeyProvider;
 
-    public TokenService(IOptions<TokenSettings> tokenSettings)
+    public TokenValidationParameters TokenValidationParameters
+    {
+        get
+        {
+            TokenValidationParameters parameters = TokenParametersProvider.GetTokenValidationParameters(_tokenSettings);
+            parameters.IssuerSigningKey = _tokenKeyProvider.PublicKey;
+            return parameters;
+        }
+    }
+
+    public TokenService(IOptions<TokenSettings> tokenSettings, ICrypterCryptoProvider cryptoProvider)
     {
         _tokenSettings = tokenSettings.Value;
+        _tokenKeyProvider = new TokenKeyProvider(cryptoProvider, _tokenSettings);
     }
 
     public string NewAuthenticationToken(Guid userId)
     {
-        var expiration = DateTime.UtcNow.AddMinutes(_tokenSettings.AuthenticationTokenLifetimeMinutes);
+        DateTime expiration = DateTime.UtcNow.AddMinutes(_tokenSettings.AuthenticationTokenLifetimeMinutes);
         return NewToken(userId, expiration);
     }
 
@@ -92,11 +104,9 @@ public class TokenService : ITokenService
 
     public Maybe<ClaimsPrincipal> ValidateToken(string token)
     {
-        var validationParameters = TokenParametersProvider.GetTokenValidationParameters(_tokenSettings);
-
         try
         {
-            return new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out _);
+            return new JwtSecurityTokenHandler().ValidateToken(token, TokenValidationParameters, out _);
         }
         catch (Exception)
         {
@@ -113,7 +123,7 @@ public class TokenService : ITokenService
 
     public static Maybe<Guid> TryParseUserId(ClaimsPrincipal claimsPrincipal)
     {
-        var userClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
+        Claim? userClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
         if (userClaim is null || !Guid.TryParse(userClaim.Value, out Guid userId))
         {
             return Maybe<Guid>.None;
@@ -124,7 +134,7 @@ public class TokenService : ITokenService
 
     public static Maybe<Guid> TryParseTokenId(ClaimsPrincipal claimsPrincipal)
     {
-        var idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
+        Claim? idClaim = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti);
         if (idClaim is null)
         {
             return Maybe<Guid>.None;
@@ -144,29 +154,34 @@ public class TokenService : ITokenService
 
     private string NewToken(Guid userId, DateTime expiration, Guid tokenId = default)
     {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var claims = new ClaimsIdentity(new Claim[]
-        {
+        JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+        ClaimsIdentity claims = new ClaimsIdentity([
             new Claim(ClaimTypes.NameIdentifier, userId.ToString())
-        });
+        ]);
 
-        if (tokenId != default)
+        if (tokenId != Guid.Empty)
         {
-            var jtiClaim = new Claim(JwtRegisteredClaimNames.Jti, tokenId.ToString());
+            Claim jtiClaim = new Claim(JwtRegisteredClaimNames.Jti, tokenId.ToString());
             claims.AddClaim(jtiClaim);
         }
 
-        var tokenKeyBytes = Encoding.UTF8.GetBytes(_tokenSettings.SecretKey);
-        var tokenDescriptor = new SecurityTokenDescriptor
+        SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = claims,
             Audience = _tokenSettings.Audience,
             Issuer = _tokenSettings.Issuer,
             Expires = expiration,
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKeyBytes),
-                SecurityAlgorithms.HmacSha256Signature)
+            SigningCredentials = new SigningCredentials(_tokenKeyProvider.PrivateKey, EdDsaAlgorithm.Name)
         };
-        var token = tokenHandler.CreateToken(tokenDescriptor);
+        SecurityToken? token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
+    }
+
+    public JsonWebKey PublicJWK()
+    {
+        JsonWebKey key = _tokenKeyProvider.PublicJWK;
+        key.D = null; // that should be private
+        key.Use = JsonWebKeyUseNames.Sig;
+        return key;
     }
 }

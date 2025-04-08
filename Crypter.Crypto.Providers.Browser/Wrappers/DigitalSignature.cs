@@ -40,6 +40,16 @@ public class DigitalSignature : IDigitalSignature
         return new Ed25519KeyPair(keyPair.PrivateKey, keyPair.PublicKey);
     }
 
+    public Ed25519KeyPair GenerateKeyPair(ReadOnlySpan<byte> seed)
+    {
+        if (seed.Length != PublicKeySignature.SEED_BYTES)
+        {
+            throw new ArgumentOutOfRangeException(nameof(seed));
+        }
+        BlazorSodium.Sodium.Models.Ed25519KeyPair keyPair = PublicKeySignature.Crypto_Sign_Seed_KeyPair(seed.ToArray());
+        return new Ed25519KeyPair(keyPair.PrivateKey, keyPair.PublicKey);
+    }
+
     public byte[] GenerateSignature(ReadOnlySpan<byte> privateKey, ReadOnlySpan<byte> message)
     {
         return PublicKeySignature.Crypto_Sign_Detached(message.ToArray(), privateKey.ToArray());

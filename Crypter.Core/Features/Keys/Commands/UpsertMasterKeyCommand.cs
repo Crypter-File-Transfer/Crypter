@@ -80,10 +80,10 @@ internal class UpsertMasterKeyCommandHandler : IEitherRequestHandler<UpsertMaste
             _ => InsertMasterKeyError.InvalidPassword,
             async _ =>
             {
-                UserMasterKeyEntity? masterKeyEntity = await _dataContext.UserMasterKeys
-                    .FirstOrDefaultAsync(x => x.Owner == request.UserId, CancellationToken.None);
+                bool masterKeyExists = await _dataContext.UserMasterKeys
+                    .AnyAsync(x => x.Owner == request.UserId, CancellationToken.None);
 
-                if (masterKeyEntity is not null && !request.AllowReplacement)
+                if (masterKeyExists && !request.AllowReplacement)
                 {
                     return InsertMasterKeyError.Conflict;
                 }

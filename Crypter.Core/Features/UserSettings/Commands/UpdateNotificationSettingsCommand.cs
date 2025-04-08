@@ -55,19 +55,14 @@ internal class UpdateNotificationSettingsCommandHandler
     {
         var userData = await _dataContext.Users
             .Where(x => x.Id == request.UserId)
-            .Select(x => new { x.EmailVerified, x.NotificationSetting })
+            .Select(x => new { x.NotificationSetting })
             .FirstOrDefaultAsync(CancellationToken.None);
 
         if (userData is null)
         {
             return UpdateNotificationSettingsError.UnknownError;
         }
-
-        if (!userData.EmailVerified && request.Request.EmailNotifications)
-        {
-            return UpdateNotificationSettingsError.EmailAddressNotVerified;
-        }
-
+        
         if (userData.NotificationSetting is null)
         {
             UserNotificationSettingEntity newNotificationSettings =

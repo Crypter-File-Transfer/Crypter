@@ -14,6 +14,10 @@
 		reverse_proxy {$CRYPTER_API_BASE}
 	}
 
+	handle /.well-known/* {
+		reverse_proxy {$CRYPTER_API_BASE}
+	}
+
     handle /serviceWorker {
         root * /srv
         rewrite * js/dist/serviceWorker/serviceWorker.js

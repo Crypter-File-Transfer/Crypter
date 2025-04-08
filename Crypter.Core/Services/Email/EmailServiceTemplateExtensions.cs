@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -59,15 +59,20 @@ public static class EmailServiceTemplateExtensions
     /// </summary>
     /// <param name="emailService"></param>
     /// <param name="parameters"></param>
+    /// <param name="emailAddress"></param>
+    /// <param name="expirationMinutes"></param>
     /// <remarks>This method is 'virtual' to enable some unit tests.</remarks>
     /// <returns></returns>
-    public static async Task<bool> SendVerificationEmailAsync(this IEmailService emailService, UserEmailAddressVerificationParameters parameters)
+    public static async Task<bool> SendVerificationEmailAsync(this IEmailService emailService, UserEmailAddressVerificationParameters parameters, EmailAddress emailAddress, int expirationMinutes)
     {
         string encodedVerificationCode = UrlSafeEncoder.EncodeGuidUrlSafe(parameters.VerificationCode);
         string encodedSignature = UrlSafeEncoder.EncodeBytesUrlSafe(parameters.Signature);
-        string verificationLink = $"https://www.crypter.dev/verify?code={encodedVerificationCode}&signature={encodedSignature}";
+        
+        string message = "Click the link below to verify your email address.\n" +
+            $"https://www.crypter.dev/verify?code={encodedVerificationCode}&signature={encodedSignature}\n" +
+             $"\nThis link will expire in {expirationMinutes} minutes.";
 
-        return await emailService.SendAsync("Verify your email address", verificationLink, parameters.EmailAddress);
+        return await emailService.SendAsync("Verify your email address", message, emailAddress);
     }
     
     /// <summary>

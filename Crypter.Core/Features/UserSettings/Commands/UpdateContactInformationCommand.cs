@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -41,6 +41,7 @@ using EasyMonads;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.UserSettings.Commands;
 
@@ -88,53 +89,77 @@ internal sealed class UpdateContactInformationCommandHandler
             ? validEmailAddress
             : Maybe<EmailAddress>.None;
 
-        UserEntity? user = await _dataContext.Users
+        UserEntity? userEntity = await _dataContext.Users
+            .Include(x => x.EmailChange)
             .Where(x => x.Id == request.UserId)
             .FirstOrDefaultAsync(CancellationToken.None);
 
-        if (user is null)
+        if (userEntity is null)
         {
             return UpdateContactInfoSettingsError.UserNotFound;
         }
 
-        if (user.ClientPasswordVersion != _serverPasswordSettings.ClientVersion
-            || user.ServerPasswordVersion != _passwordHashService.LatestServerPasswordVersion)
+        if (userEntity.ClientPasswordVersion != _serverPasswordSettings.ClientVersion || userEntity.ServerPasswordVersion != _passwordHashService.LatestServerPasswordVersion)
         {
             return UpdateContactInfoSettingsError.PasswordNeedsMigration;
         }
 
-        bool correctPasswordProvided = _passwordHashService.VerifySecurePasswordHash(validAuthenticationPassword,
-            user.PasswordHash, user.PasswordSalt, _passwordHashService.LatestServerPasswordVersion);
+        bool correctPasswordProvided = _passwordHashService.VerifySecurePasswordHash(validAuthenticationPassword, userEntity.PasswordHash, userEntity.PasswordSalt, _passwordHashService.LatestServerPasswordVersion);
         if (!correctPasswordProvided)
         {
             return UpdateContactInfoSettingsError.InvalidPassword;
         }
 
-        bool differentEmailAddress = (user.EmailAddress ?? string.Empty) !=
-                                     newEmailAddress.Match(() => string.Empty, x => x.Value);
-        if (differentEmailAddress)
-        {
-            bool isEmailAddressAvailableForUser = await newEmailAddress.MatchAsync(
-                () => true,
-                async _ => await _dataContext.Users.IsEmailAddressAvailableAsync(validEmailAddress, CancellationToken.None));
-
-            if (!isEmailAddressAvailableForUser)
+        Either<UpdateContactInfoSettingsError, Unit> result = await newEmailAddress.MatchAsync<Either<UpdateContactInfoSettingsError, Unit>>(
+            none: () =>
             {
-                return UpdateContactInfoSettingsError.EmailAddressUnavailable;
-            }
+                // Clear the current email address from the user
+                userEntity.EmailAddress = null;
 
-            user.EmailAddress = newEmailAddress.Match<string?>(
-                () => null,
-                x => x.Value);
-            user.EmailVerified = false;
-            await _dataContext.SaveChangesAsync(CancellationToken.None);
+                // Delete the current email change request
+                if (userEntity.EmailChange is not null)
+                {
+                    _dataContext.UserEmailChangeRequests.Remove(userEntity.EmailChange);
+                }
+                
+                return Unit.Default;
+            },
+            someAsync: async x =>
+            {
+                // Delete the current email change request, if one exists
+                if (userEntity.EmailChange is not null)
+                {
+                    _dataContext.UserEmailChangeRequests.Remove(userEntity.EmailChange);
+                }
 
-            EmailAddressChangedEvent emailAddressChangedEvent =
-                new EmailAddressChangedEvent(request.UserId, newEmailAddress);
-            await _publisher.Publish(emailAddressChangedEvent, CancellationToken.None);
-        }
+                // Create an email change request if the new email address does not match the current email address
+                if (x.Value != userEntity.EmailAddress)
+                {
+                    bool isEmailAddressAvailableForUser = await newEmailAddress.MatchAsync(
+                        () => true,
+                        async _ => await _dataContext.IsEmailAddressAvailableAsync(validEmailAddress, CancellationToken.None));
 
-        return await Common.GetContactInfoSettingsAsync(_dataContext, request.UserId, cancellationToken)
-            .ToEitherAsync(UpdateContactInfoSettingsError.UnknownError);
+                    if (!isEmailAddressAvailableForUser)
+                    {
+                        return UpdateContactInfoSettingsError.EmailAddressUnavailable;
+                    }
+
+                    UserEmailChangeEntity newEmailChangeEntity = new UserEmailChangeEntity(userEntity.Id, x, DateTime.UtcNow);
+                    userEntity.EmailChange = newEmailChangeEntity;
+                    _dataContext.UserEmailChangeRequests.Add(newEmailChangeEntity);
+                }
+
+                return Unit.Default;
+            });
+        
+        await _dataContext.SaveChangesAsync(CancellationToken.None);
+
+        return await result.DoRightAsync(async _ =>
+        {
+            EmailAddressChangeRequestEvent emailAddressChangeRequestEvent = new EmailAddressChangeRequestEvent(request.UserId, newEmailAddress);
+            await _publisher.Publish(emailAddressChangeRequestEvent, CancellationToken.None);
+        })
+        .BindAsync(async _ => await Common.GetContactInfoSettingsAsync(_dataContext, request.UserId, cancellationToken)
+            .ToEitherAsync(UpdateContactInfoSettingsError.UnknownError));
     }
 }

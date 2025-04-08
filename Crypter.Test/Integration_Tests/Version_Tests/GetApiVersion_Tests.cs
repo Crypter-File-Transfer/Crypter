@@ -31,37 +31,36 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 using System.Threading.Tasks;
 
-namespace Crypter.Test.Integration_Tests.Version_Tests
+namespace Crypter.Test.Integration_Tests.Version_Tests;
+
+[TestFixture]
+public sealed class GetApiVersion_Tests
 {
-    [TestFixture]
-    public class GetApiVersion_Tests
+    private WebApplicationFactory<Program>? _factory;
+    private ICrypterApiClient? _client;
+
+    [SetUp]
+    public async Task SetupTestAsync()
     {
-        private WebApplicationFactory<Program>? _factory;
-        private ICrypterApiClient? _client;
+        _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
+        (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
+        await AssemblySetup.InitializeRespawnerAsync();
+    }
 
-        [SetUp]
-        public async Task SetupTestAsync()
+    [TearDown]
+    public async Task TeardownTestAsync()
+    {
+        if (_factory is not null)
         {
-            _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
-            (_client, _) = AssemblySetup.SetupCrypterApiClient(_factory.CreateClient());
-            await AssemblySetup.InitializeRespawnerAsync();
+            await _factory.DisposeAsync();
         }
+        await AssemblySetup.ResetServerDataAsync();
+    }
 
-        [TearDown]
-        public async Task TeardownTestAsync()
-        {
-            if (_factory is not null)
-            {
-                await _factory.DisposeAsync();
-            }
-            await AssemblySetup.ResetServerDataAsync();
-        }
-
-        [Test]
-        public async Task Get_Api_Version_Works()
-        {
-            Maybe<VersionResponse> result = await _client!.ApiVersion.GetApiVersionAsync();
-            Assert.That(result.IsSome, Is.True);
-        }
+    [Test]
+    public async Task Get_Api_Version_Works()
+    {
+        Maybe<VersionResponse> result = await _client!.ApiVersion.GetApiVersionAsync();
+        Assert.That(result.IsSome, Is.True);
     }
 }

@@ -69,28 +69,25 @@ internal class UserRegistrationCommandHandler
     
     public async Task<Either<RegistrationError, Unit>> Handle(UserRegistrationCommand request, CancellationToken cancellationToken)
     {
+        DateTimeOffset currentTime = DateTimeOffset.UtcNow;
+        
         return await ValidateRegistrationRequestAsync(request.Request)
-            .BindAsync<RegistrationError, ValidRegistrationRequest, UserEntity>(async validRegistrationRequest => await CreateNewUserEntityAsync(validRegistrationRequest))
-            .DoRightAsync(async newUserEntity =>
-            {
-                EmailAddress.TryFrom(newUserEntity.EmailAddress ?? string.Empty, out EmailAddress? outEmailAddress);
-                SuccessfulUserRegistrationEvent successfulUserRegistrationEvent = new SuccessfulUserRegistrationEvent(newUserEntity.Id, outEmailAddress, request.DeviceDescription, DateTimeOffset.UtcNow);
-                await _publisher.Publish(successfulUserRegistrationEvent, CancellationToken.None);
-            })
+            .BindAsync<RegistrationError, ValidRegistrationRequest, UserEntity>(async validRegistrationRequest =>
+                {
+                    UserEntity newUserEntity = await CreateNewUserEntityAsync(validRegistrationRequest, currentTime);
+                    SuccessfulUserRegistrationEvent successfulUserRegistrationEvent = new SuccessfulUserRegistrationEvent(newUserEntity.Id, validRegistrationRequest.EmailAddress, request.DeviceDescription, currentTime);
+                    await _publisher.Publish(successfulUserRegistrationEvent, CancellationToken.None);
+                    return newUserEntity;
+                })
             .DoLeftOrNeitherAsync(
                 async error =>
                 {
-                    FailedUserRegistrationEvent failedUserRegistrationEvent =
-                        new FailedUserRegistrationEvent(request.Request.Username, request.Request.EmailAddress,
-                            error, request.DeviceDescription, DateTimeOffset.UtcNow);
+                    FailedUserRegistrationEvent failedUserRegistrationEvent = new FailedUserRegistrationEvent(request.Request.Username, request.Request.EmailAddress, error, request.DeviceDescription, currentTime);
                     await _publisher.Publish(failedUserRegistrationEvent, CancellationToken.None);
-
                 },
                 async () =>
                 {
-                    FailedUserRegistrationEvent failedUserRegistrationEvent =
-                        new FailedUserRegistrationEvent(request.Request.Username, request.Request.EmailAddress,
-                            RegistrationError.UnknownError, request.DeviceDescription, DateTimeOffset.UtcNow);
+                    FailedUserRegistrationEvent failedUserRegistrationEvent = new FailedUserRegistrationEvent(request.Request.Username, request.Request.EmailAddress, RegistrationError.UnknownError, request.DeviceDescription, currentTime);
                     await _publisher.Publish(failedUserRegistrationEvent, CancellationToken.None);
                 })
             .BindAsync<RegistrationError, UserEntity, Unit>(_ => Unit.Default);
@@ -140,8 +137,7 @@ internal class UserRegistrationCommandHandler
             return RegistrationError.UsernameTaken;
         }
 
-        bool isEmailAddressAvailable = validatedEmailAddress.IsNone
-            || await _dataContext.Users.IsEmailAddressAvailableAsync(validEmailAddress);
+        bool isEmailAddressAvailable = validatedEmailAddress.IsNone || await _dataContext.IsEmailAddressAvailableAsync(validEmailAddress);
         if (!isEmailAddressAvailable)
         {
             return RegistrationError.EmailAddressTaken;
@@ -150,21 +146,19 @@ internal class UserRegistrationCommandHandler
         return new ValidRegistrationRequest(validUsername, validPassword, validatedEmailAddress);
     }
 
-    private async Task<UserEntity> CreateNewUserEntityAsync(ValidRegistrationRequest request)
+    private async Task<UserEntity> CreateNewUserEntityAsync(ValidRegistrationRequest request, DateTimeOffset currentTime)
     {
-        SecurePasswordHashOutput passwordHashOutput = _passwordHashService.MakeSecurePasswordHash(request.Password,
-            _passwordHashService.LatestServerPasswordVersion);
+        SecurePasswordHashOutput passwordHashOutput = _passwordHashService.MakeSecurePasswordHash(request.Password, _passwordHashService.LatestServerPasswordVersion);
         
         UserEntity newUser = new UserEntity(
             id: Guid.NewGuid(),
             request.Username,
-            request.EmailAddress,
+            Maybe<EmailAddress>.None,
             passwordHashOutput.Hash,
             passwordHashOutput.Salt,
             passwordHashOutput.ServerPasswordVersion,
             _serverPasswordSettings.ClientVersion,
-            emailVerified: false,
-            created: DateTime.UtcNow,
+            created: currentTime.UtcDateTime,
             lastLogin: DateTime.MinValue);
         
         newUser.Profile = new UserProfileEntity(
@@ -172,7 +166,7 @@ internal class UserRegistrationCommandHandler
             alias: string.Empty,
             about: string.Empty,
             image: string.Empty);
-        
+
         newUser.PrivacySetting = new UserPrivacySettingEntity(
             newUser.Id, 
             allowKeyExchangeRequests: true,
@@ -184,6 +178,10 @@ internal class UserRegistrationCommandHandler
             newUser.Id, 
             enableTransferNotifications: false,
             emailNotifications: false);
+        
+        newUser.EmailChange = request.EmailAddress.Match(
+            none: (UserEmailChangeEntity?)null,
+            some: x => new UserEmailChangeEntity(newUser.Id, x, currentTime.UtcDateTime));
 
         _dataContext.Users.Add(newUser);
         await _dataContext.SaveChangesAsync();
