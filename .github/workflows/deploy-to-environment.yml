@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Stop service
-        uses: appleboy/ssh-action@v1.2.1
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -50,7 +50,7 @@ jobs:
           strip_components: 2
       
       - name: Reload systemctl daemon
-        uses: appleboy/ssh-action@v1.2.1
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -80,7 +80,7 @@ jobs:
           target: crypter-web-container/
 
       - name: Pull latest images
-        uses: appleboy/ssh-action@v1.2.1
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -90,7 +90,7 @@ jobs:
           script_stop: true
 
       - name: Migrate database
-        uses: appleboy/ssh-action@v1.2.1
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -100,7 +100,7 @@ jobs:
           script_stop: true
 
       - name: Start service
-        uses: appleboy/ssh-action@v1.2.1
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
