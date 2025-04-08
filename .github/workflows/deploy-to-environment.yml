@@ -36,7 +36,6 @@ jobs:
               echo "Stopping service"
               systemctl --user stop crypter.service;
             fi
-          script_stop: true
 
       - name: Push latest systemctl service file
         uses: appleboy/scp-action@v0.1.7
@@ -87,7 +86,6 @@ jobs:
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
           script: docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} pull
-          script_stop: true
 
       - name: Migrate database
         uses: appleboy/ssh-action@v1.2.2
@@ -97,7 +95,6 @@ jobs:
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
           script: docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} run api /app/efbundle
-          script_stop: true
 
       - name: Start service
         uses: appleboy/ssh-action@v1.2.2
@@ -107,4 +104,3 @@ jobs:
           username: ${{ secrets.APPSERVER_SSH_USER }}
           key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
           script: systemctl --user start crypter.service
-          script_stop: true
