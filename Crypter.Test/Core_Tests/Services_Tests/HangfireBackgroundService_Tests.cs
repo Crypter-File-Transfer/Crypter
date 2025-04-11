@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -33,7 +33,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Moq;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Crypter.Test.Core_Tests.Services_Tests;
@@ -45,12 +45,12 @@ public class HangfireBackgroundService_Tests
     private IServiceScope? _scope;
     private ISender? _sender;
     private ILogger<HangfireBackgroundService>? _logger;
-    private Mock<IEmailService>? _emailServiceMock;
+    private IEmailService? _emailServiceMock;
 
     [SetUp]
     public async Task SetupTestAsync()
     {
-        _emailServiceMock = new Mock<IEmailService>();
+        _emailServiceMock = Substitute.For<IEmailService>();
 
         _factory = await AssemblySetup.CreateWebApplicationFactoryAsync();
         await AssemblySetup.InitializeRespawnerAsync();
@@ -77,35 +77,31 @@ public class HangfireBackgroundService_Tests
     public async Task Verification_Email_Not_Sent_Without_Verification_Parameters()
     {
         _emailServiceMock!
-            .Setup(x => x.SendAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<EmailAddress>()))
-            .ReturnsAsync((string _, string _, EmailAddress _) => true);
+            .SendAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<EmailAddress>())
+            .Returns(Task.FromResult(true));
 
         HangfireBackgroundService sut = new HangfireBackgroundService(_sender!, _logger!);
         await sut.SendEmailVerificationAsync(Guid.NewGuid());
 
-        _emailServiceMock.Verify(x =>
-                x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()),
-                Times.Never);
+        await _emailServiceMock!
+            .DidNotReceive()
+            .SendAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<EmailAddress>());
+
     }
 
     [Test]
     public async Task Recovery_Email_Not_Sent_Without_Recovery_Parameters()
     {
         _emailServiceMock!
-            .Setup(x => x.SendAsync(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<EmailAddress>()))
-            .ReturnsAsync((string _, string _, EmailAddress _) => true);
-
+            .SendAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<EmailAddress>())
+            .Returns(Task.FromResult(true));
+        
         HangfireBackgroundService sut = new HangfireBackgroundService(_sender!, _logger!);
         await sut.SendRecoveryEmailAsync("foo@test.com");
 
-        _emailServiceMock.Verify(x =>
-                x.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<EmailAddress>()),
-            Times.Never);
+        await _emailServiceMock!
+            .DidNotReceive()
+            .SendAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<EmailAddress>());
+
     }
 }
