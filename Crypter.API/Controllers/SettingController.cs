@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,10 +24,33 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Settings;
+using System.Threading;
+using System.Threading.Tasks;
+using Crypter.API.Controllers.Base;
+using Crypter.Common.Contracts.Features.Setting;
+using Crypter.Core.Features.Setting.Queries;
+using MediatR;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
-public class DatabaseSettings
+namespace Crypter.API.Controllers;
+
+[Route("api/setting")]
+public class SettingController : CrypterControllerBase
 {
-    public required bool MigrateOnStartup { get; set; }
-    public required bool SeedOnStartup { get; set; }
+    private readonly ISender _sender;
+
+    public SettingController(ISender sender)
+    {
+        _sender = sender;
+    }
+    
+    [HttpGet("upload")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(UploadSettings))]
+    public async Task<IActionResult> GetUploadSettingsAsync(CancellationToken cancellationToken)
+    {
+        GetUploadSettingsQuery request = new GetUploadSettingsQuery(PossibleUserId);
+        UploadSettings result = await _sender.Send(request, cancellationToken);
+        return Ok(result);
+    }
 }

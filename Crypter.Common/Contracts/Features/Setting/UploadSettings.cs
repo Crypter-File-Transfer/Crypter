@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,10 +24,18 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Settings;
+namespace Crypter.Common.Contracts.Features.Setting;
 
-public class DatabaseSettings
+public sealed record UploadSettings
 {
-    public required bool MigrateOnStartup { get; set; }
-    public required bool SeedOnStartup { get; set; }
+    public long MaximumUploadSize { get; init; }
+    public long UsedSpace { get; init; }
+    public long TotalSpace { get; init; }
+
+    public UploadSettings(long maximumUploadSize, long usedSpace, long totalSpace)
+    {
+        MaximumUploadSize = maximumUploadSize;
+        UsedSpace = usedSpace;
+        TotalSpace = totalSpace;
+    }
 }
