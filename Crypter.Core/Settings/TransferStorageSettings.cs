@@ -28,7 +28,5 @@ namespace Crypter.Core.Settings;
 
 public class TransferStorageSettings
 {
-    public required int AllocatedGB { get; set; }
     public required string Location { get; set; }
-    public required short MaximumTransferSizeMB { get; set; }
 }

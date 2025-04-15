@@ -30,6 +30,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.UserSettings.TransferSettings;
 using Crypter.Common.Enums;
 using Crypter.Core.Features.Transfer.Events;
 using Crypter.Core.MediatorMonads;
@@ -135,12 +136,20 @@ internal class SaveMultipartFileTransferCommandHandler
         {
             return UploadMultipartFileTransferError.NotFound;
         }
+
+        Maybe<GetTransferSettingsResponse> userTransferSettings = await UserSettings.Common.GetUserTransferSettingsAsync(_dataContext, request.SenderId);
+        long absoluteMaximumUploadSize = userTransferSettings.Match(
+            0,
+            x => x.MaximumUploadSize);
         
-        long maximumTransferSize = Convert.ToInt64(_transferStorageSettings.MaximumTransferSizeMB * Math.Pow(10, 6));
+        long spaceLeftForUser = userTransferSettings.Match(
+            0,
+            x => Math.Min(x.AvailableFreeTransferSpace, x.AvailableUserSpace));
+        
         long updatedTransferSize = _transferRepository.GetTransferPartsSize(itemId.Value, TransferItemType.File, TransferUserType.User)
             + request.CiphertextStream.Length;
 
-        if (updatedTransferSize > maximumTransferSize)
+        if (updatedTransferSize > absoluteMaximumUploadSize || request.CiphertextStream.Length > spaceLeftForUser)
         {
             return UploadMultipartFileTransferError.AggregateTooLarge;
         }

@@ -52,9 +52,7 @@ internal class TransferRepository_Tests
     {
         TransferStorageSettings settings = new TransferStorageSettings
         {
-            AllocatedGB = 1,
-            Location = AssemblySetup.FileStorageLocation!,
-            MaximumTransferSizeMB = 1
+            Location = AssemblySetup.FileStorageLocation!
         };
         IOptions<TransferStorageSettings> options = Options.Create(settings);
         LoggerFactory loggerFactory = new LoggerFactory();

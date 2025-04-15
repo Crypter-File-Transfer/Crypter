@@ -86,7 +86,6 @@ internal class InitializeMultipartFileTransferCommandHandler
             responseTask =
                 from recipientId in Common.ValidateTransferUploadAsync(
                     _dataContext,
-                    _transferStorageSettings,
                     request.SenderId,
                     request.RecipientUsername,
                     TransferItemType.File,

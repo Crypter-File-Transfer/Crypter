@@ -1,13 +1,37 @@
-﻿using System;
+﻿/*
+ * Copyright (C) 2025 Crypter File Transfer
+ *
+ * This file is part of the Crypter file transfer project.
+ *
+ * Crypter is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The Crypter source code is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * You can be released from the requirements of the aforementioned license
+ * by purchasing a commercial license. Buying such a license is mandatory
+ * as soon as you develop commercial activities involving the Crypter source
+ * code without disclosing the source code of your own applications.
+ *
+ * Contact the current copyright holder to discuss commercial license options.
+ */
+
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Enums;
-using Crypter.Core.Features.Metrics.Queries;
 using Crypter.Core.LinqExpressions;
 using Crypter.Core.Services;
-using Crypter.Core.Settings;
 using Crypter.DataAccess;
 using EasyMonads;
 using Hangfire;
@@ -24,7 +48,6 @@ internal static class Common
     /// Validate whether a transfer upload may be completed with the provided parameters.
     /// </summary>
     /// <param name="dataContext"></param>
-    /// <param name="transferStorageSettings"></param>
     /// <param name="senderId"></param>
     /// <param name="recipientUsername"></param>
     /// <param name="itemType"></param>
@@ -36,7 +59,6 @@ internal static class Common
     /// </returns>
     internal static async Task<Either<UploadTransferError, Maybe<Guid>>> ValidateTransferUploadAsync(
         DataContext dataContext,
-        TransferStorageSettings transferStorageSettings,
         Maybe<Guid> senderId,
         Maybe<string> recipientUsername,
         TransferItemType itemType,
@@ -54,7 +76,11 @@ internal static class Common
 
         if (ciphertextStreamLength.HasValue)
         {
-            bool sufficientDiskSpace = await HasSpaceForTransferAsync(dataContext, transferStorageSettings, ciphertextStreamLength.Value);
+            Maybe<Guid> transferOwner = recipientId.IsSome
+                ? recipientId
+                : senderId;
+            
+            bool sufficientDiskSpace = await HasSpaceForTransferAsync(dataContext, transferOwner, ciphertextStreamLength.Value);
             if (!sufficientDiskSpace)
             {
                 return UploadTransferError.OutOfSpace;
@@ -145,24 +171,18 @@ internal static class Common
     }
     
     /// <summary>
-    /// Check whether there is sufficient disk space to save the transfer upload.
+    /// Check whether there is space to save the upload for this particular user
     /// </summary>
     /// <param name="dataContext"></param>
-    /// <param name="transferStorageSettings"></param>
+    /// <param name="possibleUserId"></param>
     /// <param name="ciphertextStreamLength"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private static async Task<bool> HasSpaceForTransferAsync(
-        DataContext dataContext,
-        TransferStorageSettings transferStorageSettings,
-        long ciphertextStreamLength,
-        CancellationToken cancellationToken = default)
+    private static async Task<bool> HasSpaceForTransferAsync(DataContext dataContext, Maybe<Guid> possibleUserId, long ciphertextStreamLength, CancellationToken cancellationToken = default)
     {
-        GetDiskMetricsResult diskMetrics = await Metrics.Common.GetDiskMetricsAsync(
-            dataContext,
-            transferStorageSettings,
-            cancellationToken);
-
-        return ciphertextStreamLength <= diskMetrics.FreeBytes;
+        return await UserSettings.Common.GetUserTransferSettingsAsync(dataContext, possibleUserId, cancellationToken)
+            .MatchAsync(
+                () => false,
+                x => Math.Min(x.MaximumUploadSize, Math.Min(x.AvailableFreeTransferSpace, x.AvailableUserSpace)) >= ciphertextStreamLength);
     }
 }
