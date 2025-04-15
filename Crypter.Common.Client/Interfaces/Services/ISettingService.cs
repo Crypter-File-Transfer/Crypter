@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -24,13 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Version;
-using EasyMonads;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.Setting;
+using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Requests;
+namespace Crypter.Common.Client.Interfaces.Services;
 
-public interface IVersionRequests
+public interface ISettingService
 {
-    Task<Maybe<VersionResponse>> GetApiVersionAsync();
+    Task<Maybe<UploadSettings>> GetUploadSettingsAsync();
 }

@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -33,9 +33,11 @@ public interface ICrypterApiClient
 {
     event EventHandler RefreshTokenRejectedEventHandler;
 
+    IVersionRequests ApiVersion { get; }
     IFileTransferRequests FileTransfer { get; }
     IMessageTransferRequests MessageTransfer { get; }
     IMetricsRequests Metrics { get; }
+    ISettingRequests Setting { get; }
     IUserRequests User { get; }
     IUserAuthenticationRequests UserAuthentication { get; }
     IUserConsentRequests UserConsent { get; }
@@ -43,6 +45,5 @@ public interface ICrypterApiClient
     IUserKeyRequests UserKey { get; }
     IUserRecoveryRequests UserRecovery { get; }
     IUserSettingRequests UserSetting { get; }
-    IVersionRequests ApiVersion { get; }
     IWellKnownRequests WellKnown { get; }
 }

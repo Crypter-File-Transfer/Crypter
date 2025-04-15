@@ -39,15 +39,13 @@ public class UserRequests : IUserRequests
     private readonly ICrypterHttpClient _crypterHttpClient;
     private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
 
-    public UserRequests(ICrypterHttpClient crypterHttpClient,
-        ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
+    public UserRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
     {
         _crypterHttpClient = crypterHttpClient;
         _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
     }
 
-    public Task<Either<GetUserProfileError, UserProfile>> GetUserProfileAsync(string username,
-        bool withAuthentication)
+    public Task<Either<GetUserProfileError, UserProfile>> GetUserProfileAsync(string username, bool withAuthentication)
     {
         string url = $"api/user/profile/?username={username}";
         ICrypterHttpClient client = withAuthentication

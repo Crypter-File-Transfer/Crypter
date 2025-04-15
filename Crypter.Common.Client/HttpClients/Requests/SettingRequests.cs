@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -24,13 +24,32 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Version;
-using EasyMonads;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Interfaces.HttpClients;
+using Crypter.Common.Client.Interfaces.Requests;
+using Crypter.Common.Contracts.Features.Setting;
+using EasyMonads;
 
-namespace Crypter.Common.Client.Interfaces.Requests;
+namespace Crypter.Common.Client.HttpClients.Requests;
 
-public interface IVersionRequests
+public class SettingRequests : ISettingRequests
 {
-    Task<Maybe<VersionResponse>> GetApiVersionAsync();
+    private readonly ICrypterHttpClient _crypterHttpClient;
+    private readonly ICrypterAuthenticatedHttpClient _crypterAuthenticatedHttpClient;
+
+    public SettingRequests(ICrypterHttpClient crypterHttpClient, ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient)
+    {
+        _crypterHttpClient = crypterHttpClient;
+        _crypterAuthenticatedHttpClient = crypterAuthenticatedHttpClient;
+    }
+
+    public async Task<Maybe<UploadSettings>> GetUploadSettingsAsync(bool withAuthentication)
+    {
+        const string url = "api/setting/upload";
+        ICrypterHttpClient client = withAuthentication
+            ? _crypterAuthenticatedHttpClient
+            : _crypterHttpClient;
+
+        return await client.GetMaybeAsync<UploadSettings>(url);
+    }
 }

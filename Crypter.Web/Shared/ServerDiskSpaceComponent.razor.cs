@@ -24,11 +24,12 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
+using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Transfer.Models;
 using Crypter.Common.Contracts.Features.Metrics;
+using Crypter.Common.Contracts.Features.Setting;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
@@ -39,25 +40,36 @@ public partial class ServerDiskSpaceComponent
     [Inject] private ClientTransferSettings UploadSettings { get; init; } = null!;
 
     [Inject] private ICrypterApiClient CrypterApiService { get; init; } = null!;
+    
+    [Inject] private ISettingService SettingService { get; init; } = null!;
 
     private bool _serverHasDiskSpace = true;
+    
+    private bool _userQuotaReached = false;
 
     private double _serverSpacePercentageRemaining = 100.0;
 
     protected override async Task OnInitializedAsync()
     {
-        Maybe<PublicStorageMetricsResponse> response = await CrypterApiService.Metrics.GetPublicStorageMetricsAsync();
-
-        _serverSpacePercentageRemaining = response.Match(
+        Task<Maybe<PublicStorageMetricsResponse>> metricsTask = CrypterApiService.Metrics.GetPublicStorageMetricsAsync();
+        Task<Maybe<UploadSettings>> settingsTask = SettingService.GetUploadSettingsAsync();
+        Task[] requests = [metricsTask, settingsTask];
+        await Task.WhenAll(requests);
+        
+        _serverSpacePercentageRemaining = metricsTask.Result.Match(
             0.0,
             x => 100.0 * (x.Available / (double)x.Allocated));
 
-        _serverHasDiskSpace = response.Match(
+        long maximumUploadSize = settingsTask.Result.Match(
+            0,
+            x => x.MaximumUploadSize);
+        
+        _serverHasDiskSpace = metricsTask.Result.Match(
             false,
-            x =>
-            {
-                long maxUploadBytes = UploadSettings.MaximumMultipartUploadSizeMB * Convert.ToInt64(Math.Pow(10, 6));
-                return x.Available > maxUploadBytes;
-            });
+            x => x.Available > maximumUploadSize);
+        
+        _userQuotaReached = settingsTask.Result.Match(
+            true,
+            x => x.TotalSpace - x.UsedSpace > maximumUploadSize);
     }
 }

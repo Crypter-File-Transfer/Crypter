@@ -51,6 +51,8 @@ public class UploadTransferBase : ComponentBase
     [Inject] protected ClientTransferSettings ClientTransferSettings { get; init; } = null!;
 
     [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; init; } = null!;
+    
+    [Inject] protected ISettingService SettingService { get; init; } = null!;
 
     [Parameter] public Maybe<string> RecipientUsername { get; set; }
 

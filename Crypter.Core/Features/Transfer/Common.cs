@@ -54,8 +54,7 @@ internal static class Common
 
         if (ciphertextStreamLength.HasValue)
         {
-            bool sufficientDiskSpace =
-                await HasSpaceForTransferAsync(dataContext, transferStorageSettings, ciphertextStreamLength.Value);
+            bool sufficientDiskSpace = await HasSpaceForTransferAsync(dataContext, transferStorageSettings, ciphertextStreamLength.Value);
             if (!sufficientDiskSpace)
             {
                 return UploadTransferError.OutOfSpace;
