@@ -106,40 +106,6 @@ namespace Crypter.DataAccess.Migrations
                     b.ToTable("AnonymousMessageTransfer", "crypter");
                 });
 
-            modelBuilder.Entity("Crypter.DataAccess.Entities.DataTierEntity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("DefaultForUserCategory")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<long>("MaxSingleUploadSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("MaxTotalStorageSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DefaultForUserCategory")
-                        .IsUnique();
-
-                    b.ToTable("DataTier", "crypter");
-                });
-
             modelBuilder.Entity("Crypter.DataAccess.Entities.EventLogEntity", b =>
                 {
                     b.Property<Guid>("Id")

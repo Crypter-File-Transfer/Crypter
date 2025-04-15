@@ -1,5 +1,5 @@
 ﻿@*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  * 
  * This file is part of the Crypter file transfer project.
  * 
@@ -24,26 +24,41 @@
  * Contact the current copyright holder to discuss commercial license options.
  *@
 
-@if (!_serverHasDiskSpace || _serverSpacePercentageRemaining < 20)
+@if (_userQuotaReached || _freeTransferQuotaReached || _currentMaximumUploadSize < _absoluteMaximumUploadSize)
 {
     <div class="card mt-3">
         <div class="card-body">
-            @if (!_serverHasDiskSpace)
+            @if (_userQuotaReached)
+            {
+                if (_loggedIn)
+                {
+                    <div class="alert alert-danger mb-0" role="alert">
+                        <h3>Your individual data storage quota has been reached. More space will become available as your uploads are downloaded or expired.</h3>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-danger mb-0" role="alert">
+                        <h3>The data storage quota for anonymous users has been reached. More space will become available as other uploads are downloaded or expired.</h3>
+                    </div>
+                }
+            }
+            else if (_freeTransferQuotaReached)
             {
                 <div class="alert alert-danger mb-0" role="alert">
-                    <h3>Server is out of disk space. More space will become available as uploads are downloaded or expired.</h3>
+                    <h3>The data storage quota for free users has been reached. More space will become available as other uploads are downloaded or expired.</h3>
                 </div>
             }
-            else if (_userQuotaReached)
-            {
-                <div class="alert alert-danger mb-0" role="alert">
-                    <h3>Your data storage quota has been reached. More space will become available as your uploads are downloaded or expired.</h3>
-                </div>
-            }
-            else if (_serverSpacePercentageRemaining < 20)
+            else if (_currentMaximumUploadSize < _absoluteMaximumUploadSize)
             {
                 <div class="alert alert-warning mb-0" role="alert">
-                    <h3>Server is low on disk space. Please be mindful when transferring large files.</h3>
+                    <h3>One or more data storage quotas are close to being reached. The maximum upload size had been reduced to @(ByteSize.FromBytes(_currentMaximumUploadSize).ToString())</h3>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning mb-0" role="alert">
+                    <h3>Why am I here?</h3>
                 </div>
             }
         </div>

@@ -28,6 +28,7 @@ using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Interfaces.Services;
+using Crypter.Common.Client.Interfaces.Services.UserSettings;
 using Crypter.Common.Client.Transfer;
 using Crypter.Common.Client.Transfer.Handlers.Base;
 using Crypter.Common.Client.Transfer.Models;
@@ -52,7 +53,7 @@ public class UploadTransferBase : ComponentBase
 
     [Inject] protected TransferHandlerFactory TransferHandlerFactory { get; init; } = null!;
     
-    [Inject] protected ISettingService SettingService { get; init; } = null!;
+    [Inject] protected IUserTransferSettingsService UserTransferSettingsService { get; init; } = null!;
 
     [Parameter] public Maybe<string> RecipientUsername { get; set; }
 

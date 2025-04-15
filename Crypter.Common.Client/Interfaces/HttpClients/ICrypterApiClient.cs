@@ -36,8 +36,6 @@ public interface ICrypterApiClient
     IVersionRequests ApiVersion { get; }
     IFileTransferRequests FileTransfer { get; }
     IMessageTransferRequests MessageTransfer { get; }
-    IMetricsRequests Metrics { get; }
-    ISettingRequests Setting { get; }
     IUserRequests User { get; }
     IUserAuthenticationRequests UserAuthentication { get; }
     IUserConsentRequests UserConsent { get; }

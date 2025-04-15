@@ -40,8 +40,6 @@ public class CrypterApiClient : ICrypterApiClient
     public IVersionRequests ApiVersion { get; init; }
     public IFileTransferRequests FileTransfer { get; init; }
     public IMessageTransferRequests MessageTransfer { get; init; }
-    public IMetricsRequests Metrics { get; init; }
-    public ISettingRequests Setting { get; init; }
     public IUserRequests User { get; init; }
     public IUserAuthenticationRequests UserAuthentication { get; init; }
     public IUserConsentRequests UserConsent { get; init; }
@@ -59,8 +57,6 @@ public class CrypterApiClient : ICrypterApiClient
         ApiVersion = new VersionRequests(crypterHttpClient);
         FileTransfer = new FileTransferRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
         MessageTransfer = new MessageTransferRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
-        Metrics = new MetricsRequests(crypterHttpClient);
-        Setting = new SettingRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
         User = new UserRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
         UserAuthentication = new UserAuthenticationRequests(crypterHttpClient, crypterAuthenticatedHttpClient, _refreshTokenRejectedHandler);
         UserConsent = new UserConsentRequests(crypterAuthenticatedHttpClient);

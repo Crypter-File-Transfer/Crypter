@@ -23,9 +23,6 @@ This should also aid developers in deciding where to add a new API endpoint or w
    * GET /api/message/transfer/ciphertext/anonymous?id={hashId}&proof={proof}
    * GET /api/message/transfer/ciphertext/user?id={hashId}&proof={proof}
 
-* Metrics
-   * GET /api/metrics/storage/public
-
 * User
    * GET /api/user/profile?username={username}
    * GET /api/user/search?keyword={keyword}&index={index}&count={count}
@@ -66,6 +63,7 @@ This should also aid developers in deciding where to add a new API endpoint or w
    * POST /api/user/setting/notification
    * GET /api/user/setting/privacy
    * PUT /api/user/setting/
+   * GET /api/user/setting/transfer
 
 * Version
    * GET /api/version

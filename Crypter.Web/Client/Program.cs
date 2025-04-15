@@ -94,7 +94,7 @@ builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =
 builder.Services
     .AddSingleton<IDeviceRepository<BrowserStorageLocation>, BrowserRepository>()
     .AddSingleton<ITokenRepository, BrowserTokenRepository>()
-    .AddSingleton<ISettingService, SettingService>()
+    .AddSingleton<IUserTransferSettingsService, UserTransferUserTransferSettingsService>()
     .AddSingleton<IUserKeysRepository, BrowserUserKeysRepository>()
     .AddSingleton<IUserSessionRepository, BrowserUserSessionRepository>()
     .AddSingleton<IUserSessionService, UserSessionService<BrowserStorageLocation>>()

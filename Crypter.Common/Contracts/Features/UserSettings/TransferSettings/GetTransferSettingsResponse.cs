@@ -24,13 +24,28 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Threading.Tasks;
-using Crypter.Common.Contracts.Features.Setting;
-using EasyMonads;
+namespace Crypter.Common.Contracts.Features.UserSettings.TransferSettings;
 
-namespace Crypter.Common.Client.Interfaces.Services;
-
-public interface ISettingService
+public sealed record GetTransferSettingsResponse
 {
-    Task<Maybe<UploadSettings>> GetUploadSettingsAsync();
+    public string TierName { get; set; }
+    public long MaximumUploadSize { get; init; }
+    public long AvailableUserSpace { get; init; }
+    public long UsedUserSpace { get; init; }
+    public long UserQuota { get; init; }
+    public long AvailableFreeTransferSpace { get; init; }
+    public long UsedFreeTransferSpace { get; init; }
+    public long FreeTransferQuota { get; init; }
+
+    public GetTransferSettingsResponse(string tierName, long maximumUploadSize, long availableUserSpace, long usedUserSpace, long userQuota, long availableFreeTransferSpace, long usedFreeTransferSpace, long freeTransferQuota)
+    {
+        TierName = tierName;
+        MaximumUploadSize = maximumUploadSize;
+        AvailableUserSpace = availableUserSpace;
+        UsedUserSpace = usedUserSpace;
+        UserQuota = userQuota;
+        AvailableFreeTransferSpace = availableFreeTransferSpace;
+        UsedFreeTransferSpace = usedFreeTransferSpace;
+        FreeTransferQuota = freeTransferQuota;
+    }
 }

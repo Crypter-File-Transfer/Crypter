@@ -27,6 +27,7 @@
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.API.Attributes;
 using Crypter.API.Controllers.Base;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserSettings;
@@ -34,6 +35,7 @@ using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings.TransferSettings;
 using Crypter.Core.Features.UserSettings.Commands;
 using Crypter.Core.Features.UserSettings.Queries;
 using Crypter.Core.Services;
@@ -290,5 +292,29 @@ public class UserSettingController : CrypterControllerBase
                 MakeErrorResponse,
                 Ok,
                 MakeErrorResponse(SetPrivacySettingsError.UnknownError));
+    }
+    
+    [HttpGet("transfer")]
+    [MaybeAuthorize]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(GetTransferSettingsResponse))]
+    public async Task<IActionResult> GetTransferSettingsAsync(CancellationToken cancellationToken)
+    {
+        IActionResult MakeErrorResponse(GetTransferSettingsError error)
+        {
+#pragma warning disable CS8524
+            return error switch
+            {
+                GetTransferSettingsError.UnknownError => MakeErrorResponseBase(HttpStatusCode.InternalServerError, error),
+                GetTransferSettingsError.TransferTierNotFound => MakeErrorResponseBase(HttpStatusCode.NotFound, error)
+            };
+#pragma warning restore CS8524
+        }
+        
+        TransferSettingsQuery request = new TransferSettingsQuery(PossibleUserId);
+        return await _sender.Send(request, cancellationToken)
+            .MatchAsync(
+                MakeErrorResponse,
+                Ok,
+                MakeErrorResponse(GetTransferSettingsError.UnknownError));
     }
 }

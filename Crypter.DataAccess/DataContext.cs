@@ -43,8 +43,9 @@ public class DataContext : DbContext
 
     public DbSet<AnonymousFileTransferEntity> AnonymousFileTransfers { get; init; }
     public DbSet<AnonymousMessageTransferEntity> AnonymousMessageTransfers { get; init; }
-    public DbSet<DataTierEntity> DataTiers { get; init; }
+    public DbSet<ApplicationSettingEntity> ApplicationSettings { get; init; }
     public DbSet<EventLogEntity> EventLogs { get; init; }
+    public DbSet<TransferTierEntity> TransferTiers { get; init; }
     public DbSet<UserConsentEntity> UserConsents { get; init; }
     public DbSet<UserContactEntity> UserContacts { get; init; }
     public DbSet<UserEmailChangeEntity> UserEmailChangeRequests { get; init; }

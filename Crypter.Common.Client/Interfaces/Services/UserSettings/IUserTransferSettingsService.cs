@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,19 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserSettings.TransferSettings;
+using EasyMonads;
 
-namespace Crypter.Common.Contracts.Features.Metrics;
+namespace Crypter.Common.Client.Interfaces.Services.UserSettings;
 
-public class PublicStorageMetricsResponse
+public interface IUserTransferSettingsService
 {
-    public long Allocated { get; set; }
-    public long Available { get; set; }
-
-    [JsonConstructor]
-    public PublicStorageMetricsResponse(long allocated, long available)
-    {
-        Allocated = allocated;
-        Available = available;
-    }
+    Task<Maybe<GetTransferSettingsResponse>> GetTransferSettingsAsync();
+    Task<long> GetAbsoluteMaximumUploadSizeAsync();
+    Task<long> GetCurrentMaximumUploadSizeAsync();
+    Task<bool> IsUserQuotaReachedAsync();
+    Task<bool> IsFreeTransferQuotaReachedAsync();
 }

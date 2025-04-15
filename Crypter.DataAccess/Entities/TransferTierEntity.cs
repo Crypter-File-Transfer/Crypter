@@ -30,19 +30,19 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Crypter.DataAccess.Entities;
 
-public class DataTierEntity
+public class TransferTierEntity
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
     public string? Description { get; set; }
-    public long MaxSingleUploadSize { get; set; }
-    public long MaxTotalStorageSize { get; set; }
+    public long MaximumUploadSize { get; set; }
+    public long UserQuota { get; set; }
     public UserCategory? DefaultForUserCategory { get; set; }
 }
 
-public class DataTierEntityConfiguration : IEntityTypeConfiguration<DataTierEntity>
+public class DataTierEntityConfiguration : IEntityTypeConfiguration<TransferTierEntity>
 {
-    public void Configure(EntityTypeBuilder<DataTierEntity> builder)
+    public void Configure(EntityTypeBuilder<TransferTierEntity> builder)
     {
         builder.ToTable("DataTier");
         

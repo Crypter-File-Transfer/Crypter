@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
@@ -25,12 +25,34 @@
  */
 
 using System.Threading.Tasks;
-using Crypter.Common.Contracts.Features.Setting;
-using EasyMonads;
+using Crypter.Common.Client.Interfaces.Services;
+using Crypter.Common.Client.Interfaces.Services.UserSettings;
+using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Common.Client.Interfaces.Requests;
+namespace Crypter.Web.Shared;
 
-public interface ISettingRequests
+public partial class QuotaComponent
 {
-    Task<Maybe<UploadSettings>> GetUploadSettingsAsync(bool withAuthentication);
+    [Inject] private IUserTransferSettingsService UserTransferSettingsService { get; init; } = null!;
+    
+    [Inject] private IUserSessionService UserSessionService { get; init; } = null!;
+
+    private bool _loggedIn = false;
+    
+    private bool _freeTransferQuotaReached = false;
+
+    private bool _userQuotaReached = false;
+    
+    private long _currentMaximumUploadSize = 0;
+    
+    private long _absoluteMaximumUploadSize = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loggedIn = await UserSessionService.IsLoggedInAsync();
+        _freeTransferQuotaReached = await UserTransferSettingsService.IsFreeTransferQuotaReachedAsync();
+        _userQuotaReached = await UserTransferSettingsService.IsUserQuotaReachedAsync();
+        _currentMaximumUploadSize = await UserTransferSettingsService.GetCurrentMaximumUploadSizeAsync();
+        _absoluteMaximumUploadSize = await UserTransferSettingsService.GetAbsoluteMaximumUploadSizeAsync();   
+    }
 }

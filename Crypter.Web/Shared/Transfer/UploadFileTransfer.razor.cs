@@ -57,7 +57,7 @@ public partial class UploadFileTransfer : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        _maximumUploadSize = await SettingService.GetUploadSettingsAsync()
+        _maximumUploadSize = await UserTransferSettingsService.GetTransferSettingsAsync()
             .MatchAsync(
                 () => 0,
                 x => x.MaximumUploadSize);
