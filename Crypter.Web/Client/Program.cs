@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -92,9 +92,10 @@ builder.Services.AddHttpClient<ICrypterApiClient, CrypterApiClient>(httpClient =
 }).AddHttpMessageHandler<BrowserHttpMessageHandler>();
 
 builder.Services
+    .AddMemoryCache()
     .AddSingleton<IDeviceRepository<BrowserStorageLocation>, BrowserRepository>()
     .AddSingleton<ITokenRepository, BrowserTokenRepository>()
-    .AddSingleton<IUserTransferSettingsService, UserTransferUserTransferSettingsService>()
+    .AddSingleton<IUserTransferSettingsService, UserTransferSettingsService>()
     .AddSingleton<IUserKeysRepository, BrowserUserKeysRepository>()
     .AddSingleton<IUserSessionRepository, BrowserUserSessionRepository>()
     .AddSingleton<IUserSessionService, UserSessionService<BrowserStorageLocation>>()

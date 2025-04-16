@@ -35,14 +35,14 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Crypter.Common.Client.Services.UserSettings;
 
-public class UserTransferUserTransferSettingsService : IUserTransferSettingsService
+public class UserTransferSettingsService : IUserTransferSettingsService
 {
     private readonly IUserSessionService _userSessionService;
     private readonly ICrypterApiClient _crypterApiClient;
     
     private readonly IMemoryCache _memoryCache;
     
-    public UserTransferUserTransferSettingsService(IUserSessionService userSessionService, ICrypterApiClient crypterApiClient, IMemoryCache memoryCache)
+    public UserTransferSettingsService(IUserSessionService userSessionService, ICrypterApiClient crypterApiClient, IMemoryCache memoryCache)
     {
         _userSessionService = userSessionService;
         _crypterApiClient = crypterApiClient;
@@ -51,7 +51,7 @@ public class UserTransferUserTransferSettingsService : IUserTransferSettingsServ
     
     public async Task<Maybe<GetTransferSettingsResponse>> GetTransferSettingsAsync()
     {
-        const string cacheKey = $"{nameof(UserTransferUserTransferSettingsService)}:{nameof(GetTransferSettingsAsync)}";
+        const string cacheKey = $"{nameof(UserTransferSettingsService)}:{nameof(GetTransferSettingsAsync)}";
         return await _memoryCache.GetOrCreateAsync<GetTransferSettingsResponse?>(cacheKey, async entry =>
         {
             bool isLoggedIn = await _userSessionService.IsLoggedInAsync();
