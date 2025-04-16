@@ -76,10 +76,7 @@ internal static class Common
 
         if (ciphertextStreamLength.HasValue)
         {
-            Maybe<Guid> transferOwner = recipientId.IsSome
-                ? recipientId
-                : senderId;
-            
+            Maybe<Guid> transferOwner = TransferOwnershipService.GetTransferOwner(senderId, recipientId);
             bool sufficientDiskSpace = await HasSpaceForTransferAsync(dataContext, transferOwner, ciphertextStreamLength.Value);
             if (!sufficientDiskSpace)
             {
