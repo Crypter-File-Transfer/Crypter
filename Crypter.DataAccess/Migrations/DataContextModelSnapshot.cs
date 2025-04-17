@@ -176,7 +176,7 @@ namespace Crypter.DataAccess.Migrations
                     b.HasIndex("DefaultForUserCategory")
                         .IsUnique();
 
-                    b.ToTable("DataTier", "crypter");
+                    b.ToTable("TransferTier", "crypter");
                 });
 
             modelBuilder.Entity("Crypter.DataAccess.Entities.UserConsentEntity", b =>

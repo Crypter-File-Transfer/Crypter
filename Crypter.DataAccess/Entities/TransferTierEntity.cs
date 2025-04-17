@@ -40,11 +40,11 @@ public class TransferTierEntity
     public UserCategory? DefaultForUserCategory { get; set; }
 }
 
-public class DataTierEntityConfiguration : IEntityTypeConfiguration<TransferTierEntity>
+public class TransferTierEntityConfiguration : IEntityTypeConfiguration<TransferTierEntity>
 {
     public void Configure(EntityTypeBuilder<TransferTierEntity> builder)
     {
-        builder.ToTable("DataTier");
+        builder.ToTable("TransferTier");
         
         builder.HasKey(x => x.Id);
         

@@ -34,6 +34,7 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
 using Crypter.Common.Client.Repositories;
 using Crypter.DataAccess;
+using Crypter.DataAccess.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -89,8 +90,7 @@ internal class AssemblySetup
         }
     }
 
-    internal static async Task<WebApplicationFactory<Program>> CreateWebApplicationFactoryAsync(
-        bool ensureDatabaseMigrated = true, IServiceCollection? overrides = null)
+    internal static async Task<WebApplicationFactory<Program>> CreateWebApplicationFactoryAsync(bool ensureDatabaseMigrated = true, IServiceCollection? overrides = null)
     {
         WebApplicationFactory<Program> factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
@@ -132,8 +132,7 @@ internal class AssemblySetup
         serviceCollection.Add(service);
     }
 
-    internal static (ICrypterApiClient crypterApiClient, ITokenRepository tokenRepository) SetupCrypterApiClient(
-        HttpClient webApplicationHttpClient)
+    internal static (ICrypterApiClient crypterApiClient, ITokenRepository tokenRepository) SetupCrypterApiClient(HttpClient webApplicationHttpClient)
     {
         ITokenRepository memoryTokenRepository = new MemoryTokenRepository();
         ICrypterApiClient crypterApiClient = new CrypterApiClient(webApplicationHttpClient, memoryTokenRepository);
@@ -152,7 +151,9 @@ internal class AssemblySetup
             TablesToIgnore =
             [
                 "schema",
-                HistoryRepository.DefaultTableName
+                HistoryRepository.DefaultTableName,
+                "ApplicationSetting",
+                "TransferTier"
             ]
         };
 

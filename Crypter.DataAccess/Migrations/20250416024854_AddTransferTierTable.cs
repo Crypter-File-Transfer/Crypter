@@ -27,7 +27,7 @@ namespace Crypter.DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DataTier",
+                name: "TransferTier",
                 schema: "crypter",
                 columns: table => new
                 {
@@ -41,41 +41,41 @@ namespace Crypter.DataAccess.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DataTier", x => x.Id);
+                    table.PrimaryKey("PK_TransferTier", x => x.Id);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_DataTier_DefaultForUserCategory",
+                name: "IX_TransferTier_DefaultForUserCategory",
                 schema: "crypter",
-                table: "DataTier",
+                table: "TransferTier",
                 column: "DefaultForUserCategory",
                 unique: true);
             
             migrationBuilder.InsertData(
                 schema: "crypter",
-                table: "DataTier",
+                table: "TransferTier",
                 columns: new[] { "Name", "Description", "MaximumUploadSize", "UserQuota", "DefaultForUserCategory" },
                 values: new object[,]
                 {
                     { 
                         "Anonymous Users", 
                         null, 
-                        104857600L, // 100 MB in bytes
-                        5368709120L, // 5 GB in bytes
+                        1000000L, // 1 MB in bytes
+                        1000000000L, // 1 GB in bytes
                         (int)UserCategory.Anonymous
                     },
                     { 
                         "Authenticated Users", 
                         null, 
-                        262144000L, // 250 MB in bytes
-                        10737418240L, // 10 GB in bytes
+                        1000000L, // 1 MB in bytes
+                        1000000000L, // 1 GB in bytes
                         (int)UserCategory.Authenticated
                     },
                     { 
                         "Verified Users", 
                         null, 
-                        262144000L, // 250 MB in bytes
-                        10737418240L, // 10 GB in bytes
+                        1000000L, // 1 MB in bytes
+                        1000000000L, // 1 GB in bytes
                         (int)UserCategory.Verified
                     }
                 });
@@ -84,7 +84,7 @@ namespace Crypter.DataAccess.Migrations
                 schema: "crypter",
                 table: "ApplicationSetting",
                 columns: new[] { "FreeTransferQuota" },
-                values: new object[] { 10737418240L }  // 10 GB in bytes
+                values: new object[] { 1000000000L }  // 1 GB in bytes
             );
         }
 
@@ -96,7 +96,7 @@ namespace Crypter.DataAccess.Migrations
                 schema: "crypter");
 
             migrationBuilder.DropTable(
-                name: "DataTier",
+                name: "TransferTier",
                 schema: "crypter");
         }
     }
