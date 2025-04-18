@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
@@ -41,6 +42,7 @@ public class UserTransferSettingsService : IUserTransferSettingsService
     private readonly ICrypterApiClient _crypterApiClient;
     
     private readonly IMemoryCache _memoryCache;
+    private readonly SemaphoreSlim _memoryCacheLock = new SemaphoreSlim(1, 1);
     
     public UserTransferSettingsService(IUserSessionService userSessionService, ICrypterApiClient crypterApiClient, IMemoryCache memoryCache)
     {
@@ -52,15 +54,23 @@ public class UserTransferSettingsService : IUserTransferSettingsService
     public async Task<Maybe<GetTransferSettingsResponse>> GetTransferSettingsAsync()
     {
         const string cacheKey = $"{nameof(UserTransferSettingsService)}:{nameof(GetTransferSettingsAsync)}";
-        return await _memoryCache.GetOrCreateAsync<GetTransferSettingsResponse?>(cacheKey, async entry =>
+        try
         {
-            bool isLoggedIn = await _userSessionService.IsLoggedInAsync();
-            Maybe<GetTransferSettingsResponse> uploadSettings = await _crypterApiClient.UserSetting.GetTransferSettingsAsync(isLoggedIn);
-            return uploadSettings
-                .IfNone(() => entry.SetValue(null))
-                .Bind<GetTransferSettingsResponse?>(x => x)
-                .SomeOrDefault(null);
-        }, new MemoryCacheEntryOptions{AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5)}) ?? Maybe<GetTransferSettingsResponse>.None;
+            await _memoryCacheLock.WaitAsync();
+            return await _memoryCache.GetOrCreateAsync<GetTransferSettingsResponse?>(cacheKey, async entry =>
+            {
+                bool isLoggedIn = await _userSessionService.IsLoggedInAsync();
+                Maybe<GetTransferSettingsResponse> uploadSettings = await _crypterApiClient.UserSetting.GetTransferSettingsAsync(isLoggedIn);
+                return uploadSettings
+                    .IfNone(() => entry.SetValue(null))
+                    .Bind<GetTransferSettingsResponse?>(x => x)
+                    .SomeOrDefault(null);
+            }, new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5) }) ?? Maybe<GetTransferSettingsResponse>.None;
+        }
+        finally
+        {
+            _memoryCacheLock.Release();
+        }
     }
 
     public async Task<long> GetAbsoluteMaximumUploadSizeAsync()
