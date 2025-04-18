@@ -94,7 +94,7 @@ public class UserTransferSettingsService : IUserTransferSettingsService
         return await GetTransferSettingsAsync()
             .MatchAsync(
                 () => true,
-                x => x.AvailableUserSpace > 0);
+                x => x.AvailableUserSpace == 0);
     }
     
     public async Task<bool> IsFreeTransferQuotaReachedAsync()
@@ -102,6 +102,6 @@ public class UserTransferSettingsService : IUserTransferSettingsService
         return await GetTransferSettingsAsync()
             .MatchAsync(
                 () => true,
-                x => x.AvailableFreeTransferSpace > 0);
+                x => x.AvailableFreeTransferSpace == 0);
     }
 }
