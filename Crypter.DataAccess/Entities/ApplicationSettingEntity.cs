@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,19 +24,21 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Crypter.Common.Contracts.Features.Metrics;
+namespace Crypter.DataAccess.Entities;
 
-public class PublicStorageMetricsResponse
+public class ApplicationSettingEntity
 {
-    public long Allocated { get; set; }
-    public long Available { get; set; }
+    public int Id { get; set; }
+    public long FreeTransferQuota { get; set; }
+}
 
-    [JsonConstructor]
-    public PublicStorageMetricsResponse(long allocated, long available)
+public class ApplicationSettingEntityConfiguration : IEntityTypeConfiguration<ApplicationSettingEntity>
+{
+    public void Configure(EntityTypeBuilder<ApplicationSettingEntity> builder)
     {
-        Allocated = allocated;
-        Available = available;
+        builder.ToTable("ApplicationSetting");
     }
 }

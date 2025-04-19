@@ -32,6 +32,7 @@ using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 using Crypter.Common.Contracts.Features.UserSettings.PrivacySettings;
 using Crypter.Common.Contracts.Features.UserSettings.ProfileSettings;
+using Crypter.Common.Contracts.Features.UserSettings.TransferSettings;
 using EasyMonads;
 
 namespace Crypter.Common.Client.HttpClients.Requests;
@@ -106,5 +107,15 @@ public class UserSettingRequests : IUserSettingRequests
         const string url = "api/user/setting/contact/verify";
         return _crypterHttpClient.PostEitherUnitResponseAsync(url, verificationInfo)
             .ExtractErrorCode<VerifyEmailAddressError, Unit>();
+    }
+    
+    public async Task<Maybe<GetTransferSettingsResponse>> GetTransferSettingsAsync(bool withAuthentication)
+    {
+        const string url = "api/user/setting/transfer";
+        ICrypterHttpClient client = withAuthentication
+            ? _crypterAuthenticatedHttpClient
+            : _crypterHttpClient;
+
+        return await client.GetMaybeAsync<GetTransferSettingsResponse>(url);
     }
 }

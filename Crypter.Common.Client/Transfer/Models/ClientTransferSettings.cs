@@ -34,16 +34,6 @@ public class ClientTransferSettings
     public short MaximumUploadBufferSizeMB { get; init; }
     
     /// <summary>
-    /// Set the limit for the maximum request body size when uploading files using request streaming.
-    /// </summary>
-    public short MaximumUploadStreamSizeMB { get; init; }
-    
-    /// <summary>
-    /// Set the limit for the maximum file size when uploading files using multiple requests.
-    /// </summary>
-    public short MaximumMultipartUploadSizeMB { get; init; }
-    
-    /// <summary>
     /// Set the limit for the number of blocks in a single multipart request body.
     /// </summary>
     public short MaximumMultipartReadBlocks { get; init; }

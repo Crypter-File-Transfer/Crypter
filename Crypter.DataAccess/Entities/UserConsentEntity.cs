@@ -72,8 +72,6 @@ public class UserConsentEntityConfiguration : IEntityTypeConfiguration<UserConse
         builder.Property(x => x.Id)
             .UseIdentityAlwaysColumn();
 
-        builder.Property(x => x.Active);
-
         builder.HasIndex(x => x.Owner);
 
         builder.HasOne(x => x.User)

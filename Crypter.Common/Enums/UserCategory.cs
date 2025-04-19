@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,10 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Settings;
+using System.Text.Json.Serialization;
+using Crypter.Common.Infrastructure;
 
-public class DatabaseSettings
+namespace Crypter.Common.Enums;
+
+[JsonConverter(typeof(JsonEnumConverter<UserCategory>))]
+public enum UserCategory
 {
-    public required bool MigrateOnStartup { get; set; }
-    public required bool SeedOnStartup { get; set; }
+    Unknown,
+    Anonymous,
+    Authenticated,
+    Verified
 }

@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,10 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Core.Settings;
+using System;
+using EasyMonads;
 
-public class DatabaseSettings
+namespace Crypter.Core.Services;
+
+internal static class TransferOwnershipService
 {
-    public required bool MigrateOnStartup { get; set; }
-    public required bool SeedOnStartup { get; set; }
+    public static Maybe<Guid> GetTransferOwner(Maybe<Guid> senderId, Maybe<Guid> recipientId)
+    {
+        return recipientId.IsSome
+            ? recipientId
+            : senderId;
+    }
 }

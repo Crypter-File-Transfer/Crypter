@@ -133,8 +133,7 @@ public sealed class UploadMultipartFileTransfer_Tests
         
         for (int i = 0; i < 10; i++)
         {
-            Either<UploadMultipartFileTransferError, Unit> response =
-                await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, i, () => new MemoryStream(buffer));
+            Either<UploadMultipartFileTransferError, Unit> response = await _client!.FileTransfer.UploadMultipartFileTransferAsync(hashId, i, () => new MemoryStream(buffer));
 
             if (i < 9)
             {

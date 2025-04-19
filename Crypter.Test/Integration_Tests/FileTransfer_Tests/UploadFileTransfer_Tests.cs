@@ -66,14 +66,11 @@ internal class UploadFileTransfer_Tests
     [Test]
     public async Task Upload_Anonymous_File_Transfer_Works()
     {
-        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) =
-            TestData.GetDefaultEncryptionStream();
+        (Func<Action<double>?, EncryptionStream> encryptionStreamOpener, byte[] keyExchangeProof) = TestData.GetDefaultEncryptionStream();
         UploadFileTransferRequest request = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        Either<UploadTransferError, UploadTransferResponse> result =
-            await _client!.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, request, encryptionStreamOpener,
-                false);
+        Either<UploadTransferError, UploadTransferResponse> result = await _client!.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, request, encryptionStreamOpener, false);
 
         Assert.That(result.IsRight, Is.True);
     }

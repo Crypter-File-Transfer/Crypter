@@ -3,7 +3,7 @@
 ## Endpoint Listing
 
 Seeing all the endpoints at a glance helps to reveal how the API is organized.
-This should also aid developers in deciding where to add a new API endpoint or whether to add a new controller.
+This should aid developers in deciding where to add a new API endpoint or whether to add a new controller.
 
 * File Transfer
     * POST /api/file/transfer?username={username}
@@ -22,9 +22,6 @@ This should also aid developers in deciding where to add a new API endpoint or w
    * GET /api/message/transfer/user/anonymous?id={hashId}
    * GET /api/message/transfer/ciphertext/anonymous?id={hashId}&proof={proof}
    * GET /api/message/transfer/ciphertext/user?id={hashId}&proof={proof}
-
-* Metrics
-   * GET /api/metrics/storage/public
 
 * User
    * GET /api/user/profile?username={username}
@@ -65,7 +62,8 @@ This should also aid developers in deciding where to add a new API endpoint or w
    * GET /api/user/setting/notification
    * POST /api/user/setting/notification
    * GET /api/user/setting/privacy
-   * PUT /api/user/setting/
+   * PUT /api/user/setting/privacy
+   * GET /api/user/setting/transfer
 
 * Version
    * GET /api/version

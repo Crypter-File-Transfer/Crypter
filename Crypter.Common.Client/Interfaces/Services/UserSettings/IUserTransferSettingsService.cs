@@ -1,45 +1,40 @@
-﻿@*
- * Copyright (C) 2023 Crypter File Transfer
- * 
+/*
+ * Copyright (C) 2025 Crypter File Transfer
+ *
  * This file is part of the Crypter file transfer project.
- * 
+ *
  * Crypter is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The Crypter source code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * You can be released from the requirements of the aforementioned license
  * by purchasing a commercial license. Buying such a license is mandatory
  * as soon as you develop commercial activities involving the Crypter source
  * code without disclosing the source code of your own applications.
- * 
+ *
  * Contact the current copyright holder to discuss commercial license options.
- *@
+ */
 
-@if (!_serverHasDiskSpace || _serverSpacePercentageRemaining < 20)
+using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.UserSettings.TransferSettings;
+using EasyMonads;
+
+namespace Crypter.Common.Client.Interfaces.Services.UserSettings;
+
+public interface IUserTransferSettingsService
 {
-    <div class="card mt-3">
-        <div class="card-body">
-            @if (!_serverHasDiskSpace)
-            {
-                <div class="alert alert-danger mb-0" role="alert">
-                    <h3>Server is out of disk space. More space will become available as uploads are downloaded or expired.</h3>
-                </div>
-            }
-            else if (_serverSpacePercentageRemaining < 20)
-            {
-                <div class="alert alert-warning mb-0" role="alert">
-                    <h3>Server is low on disk space. Please be mindful when transferring large files.</h3>
-                </div>
-            }
-        </div>
-    </div>
+    Task<Maybe<GetTransferSettingsResponse>> GetTransferSettingsAsync();
+    Task<long> GetAbsoluteMaximumUploadSizeAsync();
+    Task<long> GetCurrentMaximumUploadSizeAsync();
+    Task<bool> IsUserQuotaReachedAsync();
+    Task<bool> IsFreeTransferQuotaReachedAsync();
 }

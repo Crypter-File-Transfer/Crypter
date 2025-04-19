@@ -24,13 +24,35 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Crypter.Common.Contracts.Features.Version;
-using EasyMonads;
 using System.Threading.Tasks;
+using Crypter.Common.Client.Interfaces.Services;
+using Crypter.Common.Client.Interfaces.Services.UserSettings;
+using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Common.Client.Interfaces.Requests;
+namespace Crypter.Web.Shared;
 
-public interface IVersionRequests
+public partial class QuotaComponent
 {
-    Task<Maybe<VersionResponse>> GetApiVersionAsync();
+    [Inject] private IUserTransferSettingsService UserTransferSettingsService { get; init; } = null!;
+    
+    [Inject] private IUserSessionService UserSessionService { get; init; } = null!;
+
+    private bool _loggedIn = false;
+    
+    private bool _freeTransferQuotaReached = false;
+
+    private bool _userQuotaReached = false;
+    
+    private long _currentMaximumUploadSize = 0;
+    
+    private long _absoluteMaximumUploadSize = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loggedIn = await UserSessionService.IsLoggedInAsync();
+        _freeTransferQuotaReached = await UserTransferSettingsService.IsFreeTransferQuotaReachedAsync();
+        _userQuotaReached = await UserTransferSettingsService.IsUserQuotaReachedAsync();
+        _currentMaximumUploadSize = await UserTransferSettingsService.GetCurrentMaximumUploadSizeAsync();
+        _absoluteMaximumUploadSize = await UserTransferSettingsService.GetAbsoluteMaximumUploadSizeAsync();   
+    }
 }
