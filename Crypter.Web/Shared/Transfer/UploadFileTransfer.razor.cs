@@ -43,9 +43,8 @@ public partial class UploadFileTransfer : IDisposable
 {
     private IBrowserFile? _selectedFile;
     
-    private long _maxBufferSizeMB = 0;
-    private long _maxStreamSizeMB = 0;
-    private long _maxMultipartSizeMB = 0;
+    private long _maximumBufferSize = 0;
+    private long _maximumUploadSize = 0;
     
     private string _dropClass = string.Empty;
     private const string DropzoneDrag = "dropzone-drag";
@@ -53,9 +52,15 @@ public partial class UploadFileTransfer : IDisposable
 
     protected override void OnInitialized()
     {
-        _maxBufferSizeMB = ClientTransferSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
-        _maxStreamSizeMB = ClientTransferSettings.MaximumUploadStreamSizeMB * Convert.ToInt64(Math.Pow(10, 6));
-        _maxMultipartSizeMB = ClientTransferSettings.MaximumMultipartUploadSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _maximumBufferSize = ClientTransferSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _maximumUploadSize = await UserTransferSettingsService.GetTransferSettingsAsync()
+            .MatchAsync(
+                () => 0,
+                x => x.MaximumUploadSize);
     }
 
     private void HandleDragEnter()
@@ -87,14 +92,12 @@ public partial class UploadFileTransfer : IDisposable
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (TransmissionType)
         {
-            case TransferTransmissionType.Buffer when file.Size > _maxBufferSizeMB:
-                ErrorMessage = $"The max file size is {ClientTransferSettings.MaximumUploadBufferSizeMB} MB. Login for file sizes up to {ClientTransferSettings.MaximumMultipartUploadSizeMB} MB.";
+            case TransferTransmissionType.Buffer when file.Size > _maximumBufferSize:
+                ErrorMessage = $"The max file size is {ClientTransferSettings.MaximumUploadBufferSizeMB} MB. Login to upload larger files.";
                 break;
-            case TransferTransmissionType.Stream when file.Size > _maxStreamSizeMB:
-                ErrorMessage = $"The max file size is {ClientTransferSettings.MaximumUploadStreamSizeMB} MB.";
-                break;
-            case TransferTransmissionType.Multipart when file.Size > _maxMultipartSizeMB:
-                ErrorMessage = $"The max file size is {ClientTransferSettings.MaximumMultipartUploadSizeMB} MB.";
+            case TransferTransmissionType.Stream
+                or TransferTransmissionType.Multipart when file.Size > _maximumUploadSize:
+                ErrorMessage = $"The max file size is {_maximumUploadSize / Math.Pow(10, 6)} MB.";
                 break;
             default:
                 _selectedFile = file;

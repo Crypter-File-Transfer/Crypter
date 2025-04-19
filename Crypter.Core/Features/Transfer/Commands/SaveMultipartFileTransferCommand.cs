@@ -30,19 +30,18 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Transfer;
+using Crypter.Common.Contracts.Features.UserSettings.TransferSettings;
 using Crypter.Common.Enums;
 using Crypter.Core.Features.Transfer.Events;
 using Crypter.Core.MediatorMonads;
 using Crypter.Core.Repositories;
 using Crypter.Core.Services;
-using Crypter.Core.Settings;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Options;
 using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.Transfer.Commands;
@@ -61,20 +60,17 @@ internal class SaveMultipartFileTransferCommandHandler
     private readonly IHashIdService _hashIdService;
     private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
-    private readonly TransferStorageSettings _transferStorageSettings;
 
     public SaveMultipartFileTransferCommandHandler(
         DataContext dataContext,
         IHashIdService hashIdService,
         IPublisher publisher,
-        ITransferRepository transferRepository,
-        IOptions<TransferStorageSettings> transferStorageSettings)
+        ITransferRepository transferRepository)
     {
         _dataContext = dataContext;
         _hashIdService = hashIdService;
         _publisher = publisher;
         _transferRepository = transferRepository;
-        _transferStorageSettings = transferStorageSettings.Value;
     }
 
     public async Task<Either<UploadMultipartFileTransferError, Unit>> Handle(SaveMultipartFileTransferCommand request,
@@ -135,12 +131,21 @@ internal class SaveMultipartFileTransferCommandHandler
         {
             return UploadMultipartFileTransferError.NotFound;
         }
+
+        Maybe<Guid> transferOwner = TransferOwnershipService.GetTransferOwner(request.SenderId, initializedTransferEntity.RecipientId ?? Maybe<Guid>.None);
+        Maybe<GetTransferSettingsResponse> userTransferSettings = await UserSettings.Common.GetUserTransferSettingsAsync(_dataContext, transferOwner);
+        long absoluteMaximumUploadSize = userTransferSettings.Match(
+            0,
+            x => x.MaximumUploadSize);
         
-        long maximumTransferSize = Convert.ToInt64(_transferStorageSettings.MaximumTransferSizeMB * Math.Pow(10, 6));
+        long spaceLeftForUser = userTransferSettings.Match(
+            0,
+            x => Math.Min(x.AvailableFreeTransferSpace, x.AvailableUserSpace));
+        
         long updatedTransferSize = _transferRepository.GetTransferPartsSize(itemId.Value, TransferItemType.File, TransferUserType.User)
             + request.CiphertextStream.Length;
 
-        if (updatedTransferSize > maximumTransferSize)
+        if (updatedTransferSize > absoluteMaximumUploadSize || request.CiphertextStream.Length > spaceLeftForUser)
         {
             return UploadMultipartFileTransferError.AggregateTooLarge;
         }

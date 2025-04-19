@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -32,7 +32,7 @@ using Crypter.Common.Client.Models;
 using Crypter.Web.Repositories;
 using EasyMonads;
 using Microsoft.JSInterop;
-using Moq;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace Crypter.Test.Web;
@@ -48,12 +48,12 @@ public class BrowserRepository_Tests
     [Test]
     public async Task Storage_Is_Empty_Upon_Initialization_Without_Existing_Data()
     {
-        Mock<IJSRuntime> jsRuntime = new Mock<IJSRuntime>();
+        IJSRuntime jsRuntime = Substitute.For<IJSRuntime>();
         jsRuntime
-            .Setup(x => x.InvokeAsync<string?>(It.IsAny<string>(), new object[] { It.IsAny<string>() }))
-            .ReturnsAsync((string _, string _) => null);
-
-        BrowserRepository sut = new BrowserRepository(jsRuntime.Object);
+            .InvokeAsync<string?>(Arg.Any<string>(), Arg.Any<object[]>())
+            .Returns(ValueTask.FromResult<string?>(null));
+        
+        BrowserRepository sut = new BrowserRepository(jsRuntime);
         await sut.InitializeAsync();
 
         foreach (DeviceStorageObjectType item in Enum.GetValues(typeof(DeviceStorageObjectType)))
@@ -72,44 +72,44 @@ public class BrowserRepository_Tests
         const string refreshToken = "refresh";
         byte[] privateKey = "privateKey"u8.ToArray();
         byte[] masterKey = "masterKey"u8.ToArray();
-        Mock<IJSRuntime> jsRuntime = new Mock<IJSRuntime>();
-
+        IJSRuntime jsRuntime = Substitute.For<IJSRuntime>();
+        
         // UserSession
         jsRuntime
-            .Setup(x => x.InvokeAsync<string>(
-                It.Is<string>(y => y == $"{storageLiteral}.getItem"),
-                It.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.UserSession.ToString())))
-            .ReturnsAsync((string _, object[] _) => JsonSerializer.Serialize(storedUserSession));
+            .InvokeAsync<string>(
+                Arg.Is<string>(y => y == $"{storageLiteral}.getItem"),
+                Arg.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.UserSession.ToString()))
+            .Returns(ValueTask.FromResult(JsonSerializer.Serialize(storedUserSession)));
 
         // AuthenticationToken
         jsRuntime
-            .Setup(x => x.InvokeAsync<string>(
-                It.Is<string>(y => y == $"{storageLiteral}.getItem"),
-                It.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.AuthenticationToken.ToString())))
-            .ReturnsAsync((string _, object[] _) => JsonSerializer.Serialize(authenticationToken));
+            .InvokeAsync<string>(
+                Arg.Is<string>(y => y == $"{storageLiteral}.getItem"),
+                Arg.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.AuthenticationToken.ToString()))
+            .Returns(ValueTask.FromResult(JsonSerializer.Serialize(authenticationToken)));
 
         // RefreshToken
         jsRuntime
-            .Setup(x => x.InvokeAsync<string>(
-                It.Is<string>(y => y == $"{storageLiteral}.getItem"),
-                It.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.RefreshToken.ToString())))
-            .ReturnsAsync((string _, object[] _) => JsonSerializer.Serialize(refreshToken));
-
+            .InvokeAsync<string>(
+                Arg.Is<string>(y => y == $"{storageLiteral}.getItem"),
+                Arg.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.RefreshToken.ToString()))
+            .Returns(ValueTask.FromResult(JsonSerializer.Serialize(refreshToken)));
+        
         // PrivateKey
         jsRuntime
-            .Setup(x => x.InvokeAsync<string>(
-                It.Is<string>(y => y == $"{storageLiteral}.getItem"),
-                It.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.PrivateKey.ToString())))
-            .ReturnsAsync((string _, object[] _) => JsonSerializer.Serialize(privateKey));
+            .InvokeAsync<string>(
+                Arg.Is<string>(y => y == $"{storageLiteral}.getItem"),
+                Arg.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.PrivateKey.ToString()))
+            .Returns(ValueTask.FromResult(JsonSerializer.Serialize(privateKey)));
 
         // MasterKey
         jsRuntime
-            .Setup(x => x.InvokeAsync<string>(
-                It.Is<string>(y => y == $"{storageLiteral}.getItem"),
-                It.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.MasterKey.ToString())))
-            .ReturnsAsync((string _, object[] _) => JsonSerializer.Serialize(masterKey));
+            .InvokeAsync<string>(
+                Arg.Is<string>(y => y == $"{storageLiteral}.getItem"),
+                Arg.Is<object[]>(y => y[0].ToString() == DeviceStorageObjectType.MasterKey.ToString()))
+            .Returns(ValueTask.FromResult(JsonSerializer.Serialize(masterKey)));
 
-        BrowserRepository sut = new BrowserRepository(jsRuntime.Object);
+        BrowserRepository sut = new BrowserRepository(jsRuntime);
         await sut.InitializeAsync();
 
         foreach (DeviceStorageObjectType item in Enum.GetValues(typeof(DeviceStorageObjectType)))

@@ -74,9 +74,7 @@ internal class SaveFileTransferCommandHandler
         _transferStorageSettings = transferStorageSettings.Value;
     }
     
-    public async Task<Either<UploadTransferError, UploadTransferResponse>> Handle(
-        SaveFileTransferCommand request,
-        CancellationToken cancellationToken)
+    public async Task<Either<UploadTransferError, UploadTransferResponse>> Handle(SaveFileTransferCommand request, CancellationToken cancellationToken)
     {
         DateTimeOffset eventTimestamp = DateTimeOffset.UtcNow;
         Task<Either<UploadTransferError, UploadTransferResponse>> responseTask;
@@ -92,7 +90,6 @@ internal class SaveFileTransferCommandHandler
             responseTask =
                 from recipientId in Common.ValidateTransferUploadAsync(
                     _dataContext,
-                    _transferStorageSettings,
                     request.SenderId,
                     request.RecipientUsername,
                     TransferItemType.File,

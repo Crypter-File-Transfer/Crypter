@@ -46,8 +46,7 @@ public static class DependencyInjection
             optionsBuilder.UseNpgsql(connectionString, npgsqlOptionsBuilder =>
                 {
                     npgsqlOptionsBuilder.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), RetryableErrorCodes);
-                    npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName,
-                        DataContext.SchemaName);
+                    npgsqlOptionsBuilder.MigrationsHistoryTable(HistoryRepository.DefaultTableName, DataContext.SchemaName);
                 })
                 .LogTo(
                     filter: (eventId, _) => eventId.Id == CoreEventId.ExecutionStrategyRetrying,
@@ -57,8 +56,7 @@ public static class DependencyInjection
                         IReadOnlyList<Exception>? exceptions = retryEventData?.ExceptionsEncountered;
                         if (retryEventData is not null && exceptions?.Count >= 1)
                         {
-                            logger.LogWarning("Retry #{count} with delay {delay} due to error: {error}", exceptions.Count,
-                                retryEventData.Delay, exceptions[^1].Message);
+                            logger.LogWarning("Retry #{count} with delay {delay} due to error: {error}", exceptions.Count, retryEventData.Delay, exceptions[^1].Message);
                         }
                         else
                         {

@@ -106,9 +106,7 @@ public static class DependencyInjection
 
         services.AddTransferRepository(options =>
         {
-            options.AllocatedGB = transferStorageSettings.AllocatedGB;
             options.Location = transferStorageSettings.Location;
-            options.MaximumTransferSizeMB = transferStorageSettings.MaximumTransferSizeMB;
         });
 
         services.AddHangfire(config => config

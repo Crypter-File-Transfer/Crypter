@@ -37,9 +37,9 @@ public class CrypterApiClient : ICrypterApiClient
 {
     private EventHandler? _refreshTokenRejectedHandler;
 
+    public IVersionRequests ApiVersion { get; init; }
     public IFileTransferRequests FileTransfer { get; init; }
     public IMessageTransferRequests MessageTransfer { get; init; }
-    public IMetricsRequests Metrics { get; init; }
     public IUserRequests User { get; init; }
     public IUserAuthenticationRequests UserAuthentication { get; init; }
     public IUserConsentRequests UserConsent { get; init; }
@@ -47,7 +47,6 @@ public class CrypterApiClient : ICrypterApiClient
     public IUserKeyRequests UserKey { get; init; }
     public IUserRecoveryRequests UserRecovery { get; init; }
     public IUserSettingRequests UserSetting { get; init; }
-    public IVersionRequests ApiVersion { get; init; }
     public IWellKnownRequests WellKnown { get; init; }
 
     public CrypterApiClient(HttpClient httpClient, ITokenRepository tokenRepository)
@@ -55,9 +54,9 @@ public class CrypterApiClient : ICrypterApiClient
         ICrypterHttpClient crypterHttpClient = new CrypterHttpClient(httpClient);
         ICrypterAuthenticatedHttpClient crypterAuthenticatedHttpClient = new CrypterAuthenticatedHttpClient(httpClient, tokenRepository, this);
         
+        ApiVersion = new VersionRequests(crypterHttpClient);
         FileTransfer = new FileTransferRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
         MessageTransfer = new MessageTransferRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
-        Metrics = new MetricsRequests(crypterHttpClient);
         User = new UserRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
         UserAuthentication = new UserAuthenticationRequests(crypterHttpClient, crypterAuthenticatedHttpClient, _refreshTokenRejectedHandler);
         UserConsent = new UserConsentRequests(crypterAuthenticatedHttpClient);
@@ -65,7 +64,6 @@ public class CrypterApiClient : ICrypterApiClient
         UserKey = new UserKeyRequests(crypterAuthenticatedHttpClient);
         UserRecovery = new UserRecoveryRequests(crypterHttpClient);
         UserSetting = new UserSettingRequests(crypterHttpClient, crypterAuthenticatedHttpClient);
-        ApiVersion = new VersionRequests(crypterHttpClient);
         WellKnown = new WellKnownRequests(crypterHttpClient);
     }
 

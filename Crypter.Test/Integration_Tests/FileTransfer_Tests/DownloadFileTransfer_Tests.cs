@@ -71,8 +71,7 @@ internal class DownloadFileTransfer_Tests
         UploadFileTransferRequest uploadRequest = new UploadFileTransferRequest(TestData.DefaultTransferFileName,
             TestData.DefaultTransferFileContentType, TestData.DefaultPublicKey, TestData.DefaultKeyExchangeNonce,
             keyExchangeProof, TestData.DefaultTransferLifetimeHours);
-        Either<UploadTransferError, UploadTransferResponse> uploadResult = await _client!.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, uploadRequest,
-            encryptionStreamOpener,false);
+        Either<UploadTransferError, UploadTransferResponse> uploadResult = await _client!.FileTransfer.UploadFileTransferAsync(Maybe<string>.None, uploadRequest, encryptionStreamOpener,false);
 
         await uploadResult
             .DoRightAsync(async uploadResponse =>

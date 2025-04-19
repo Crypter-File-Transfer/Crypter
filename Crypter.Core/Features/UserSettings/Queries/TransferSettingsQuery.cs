@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,39 +25,30 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
-using Crypter.Common.Client.Interfaces.HttpClients;
-using Crypter.Common.Client.Transfer.Models;
-using Crypter.Common.Contracts.Features.Metrics;
+using Crypter.Common.Contracts.Features.UserSettings.TransferSettings;
+using Crypter.Core.MediatorMonads;
+using Crypter.DataAccess;
 using EasyMonads;
-using Microsoft.AspNetCore.Components;
 
-namespace Crypter.Web.Shared;
+namespace Crypter.Core.Features.UserSettings.Queries;
 
-public partial class ServerDiskSpaceComponent
+public sealed record TransferSettingsQuery(Maybe<Guid> PossibleUserId)
+    : IEitherRequest<GetTransferSettingsError, GetTransferSettingsResponse>;
+
+public sealed class TransferSettingsQueryHandler : IEitherRequestHandler<TransferSettingsQuery, GetTransferSettingsError, GetTransferSettingsResponse>
 {
-    [Inject] private ClientTransferSettings UploadSettings { get; init; } = null!;
+    private readonly DataContext _dataContext;
 
-    [Inject] private ICrypterApiClient CrypterApiService { get; init; } = null!;
-
-    private bool _serverHasDiskSpace = true;
-
-    private double _serverSpacePercentageRemaining = 100.0;
-
-    protected override async Task OnInitializedAsync()
+    public TransferSettingsQueryHandler(DataContext dataContext)
     {
-        Maybe<PublicStorageMetricsResponse> response = await CrypterApiService.Metrics.GetPublicStorageMetricsAsync();
+        _dataContext = dataContext;
+    }
 
-        _serverSpacePercentageRemaining = response.Match(
-            0.0,
-            x => 100.0 * (x.Available / (double)x.Allocated));
-
-        _serverHasDiskSpace = response.Match(
-            false,
-            x =>
-            {
-                long maxUploadBytes = UploadSettings.MaximumMultipartUploadSizeMB * Convert.ToInt64(Math.Pow(10, 6));
-                return x.Available > maxUploadBytes;
-            });
+    public async Task<Either<GetTransferSettingsError, GetTransferSettingsResponse>> Handle(TransferSettingsQuery request, CancellationToken cancellationToken)
+    {
+        return await Common.GetUserTransferSettingsAsync(_dataContext, request.PossibleUserId, cancellationToken)
+            .ToEitherAsync(GetTransferSettingsError.TransferTierNotFound);
     }
 }
