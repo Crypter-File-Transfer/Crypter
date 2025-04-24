@@ -39,11 +39,13 @@ public partial class UploadMessageTransfer : IDisposable
     private string _messageBody = string.Empty;
     private int _maxMessageLength = 0;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         long maximumUploadSize = await UserTransferSettingsService.GetCurrentMaximumUploadSizeAsync();
         int maximumMessageLength = await UserTransferSettingsService.GetAbsoluteMaximumMessageLengthAsync();
         _maxMessageLength = Math.Min((int)Math.Min(maximumUploadSize, int.MaxValue), maximumMessageLength);
+        StateHasChanged();
+        await base.OnParametersSetAsync();
     }
 
     private async Task OnEncryptClicked()

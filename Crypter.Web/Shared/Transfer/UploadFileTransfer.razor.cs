@@ -56,9 +56,11 @@ public partial class UploadFileTransfer : IDisposable
         _absoluteMaximumBufferSize = ClientTransferSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         _currentMaximumUploadSize = await UserTransferSettingsService.GetCurrentMaximumUploadSizeAsync();
+        StateHasChanged();
+        await base.OnParametersSetAsync();
     }
 
     private void HandleDragEnter()
