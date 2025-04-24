@@ -28,6 +28,7 @@ using System;
 using System.IO;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using ByteSizeLib;
 using Crypter.Common.Client.Enums;
 using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Client.Transfer.Models;
@@ -43,8 +44,8 @@ public partial class UploadFileTransfer : IDisposable
 {
     private IBrowserFile? _selectedFile;
     
-    private long _maximumBufferSize = 0;
-    private long _maximumUploadSize = 0;
+    private long _absoluteMaximumBufferSize = 0;
+    private long _currentMaximumUploadSize = 0;
     
     private string _dropClass = string.Empty;
     private const string DropzoneDrag = "dropzone-drag";
@@ -52,15 +53,12 @@ public partial class UploadFileTransfer : IDisposable
 
     protected override void OnInitialized()
     {
-        _maximumBufferSize = ClientTransferSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
+        _absoluteMaximumBufferSize = ClientTransferSettings.MaximumUploadBufferSizeMB * Convert.ToInt64(Math.Pow(10, 6));
     }
 
     protected override async Task OnInitializedAsync()
     {
-        _maximumUploadSize = await UserTransferSettingsService.GetTransferSettingsAsync()
-            .MatchAsync(
-                () => 0,
-                x => x.MaximumUploadSize);
+        _currentMaximumUploadSize = await UserTransferSettingsService.GetCurrentMaximumUploadSizeAsync();
     }
 
     private void HandleDragEnter()
@@ -88,16 +86,20 @@ public partial class UploadFileTransfer : IDisposable
         {
             TransmissionType = TransferTransmissionType.Stream;
         }
+        else
+        {
+            TransmissionType = TransferTransmissionType.Buffer;
+        }
 
         // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (TransmissionType)
         {
-            case TransferTransmissionType.Buffer when file.Size > _maximumBufferSize:
-                ErrorMessage = $"The max file size is {ClientTransferSettings.MaximumUploadBufferSizeMB} MB. Login to upload larger files.";
+            case TransferTransmissionType.Buffer when file.Size > _absoluteMaximumBufferSize:
+                ErrorMessage = $"The max file size is {ByteSize.FromBytes(_absoluteMaximumBufferSize)}. Login to upload larger files.";
                 break;
             case TransferTransmissionType.Stream
-                or TransferTransmissionType.Multipart when file.Size > _maximumUploadSize:
-                ErrorMessage = $"The max file size is {_maximumUploadSize / Math.Pow(10, 6)} MB.";
+                or TransferTransmissionType.Multipart when file.Size > _currentMaximumUploadSize:
+                ErrorMessage = $"The max file size is {ByteSize.FromBytes(_currentMaximumUploadSize)}.";
                 break;
             default:
                 _selectedFile = file;

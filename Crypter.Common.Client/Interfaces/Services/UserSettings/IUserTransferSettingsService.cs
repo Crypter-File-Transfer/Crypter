@@ -34,6 +34,7 @@ public interface IUserTransferSettingsService
 {
     Task<Maybe<GetTransferSettingsResponse>> GetTransferSettingsAsync();
     Task<long> GetAbsoluteMaximumUploadSizeAsync();
+    Task<int> GetAbsoluteMaximumMessageLengthAsync();
     Task<long> GetCurrentMaximumUploadSizeAsync();
     Task<bool> IsUserQuotaReachedAsync();
     Task<bool> IsFreeTransferQuotaReachedAsync();

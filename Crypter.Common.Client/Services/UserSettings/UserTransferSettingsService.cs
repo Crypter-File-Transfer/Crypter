@@ -76,32 +76,35 @@ public class UserTransferSettingsService : IUserTransferSettingsService
     public async Task<long> GetAbsoluteMaximumUploadSizeAsync()
     {
         return await GetTransferSettingsAsync()
-            .MatchAsync(
-                () => 0,
-                x => x.MaximumUploadSize);
+            .Select(x => x.MaximumUploadSize)
+            .SomeOrDefaultAsync(0);
+    }
+
+    public async Task<int> GetAbsoluteMaximumMessageLengthAsync()
+    {
+        return await GetTransferSettingsAsync()
+            .Select(x => x.MaximumMessageLength)
+            .SomeOrDefaultAsync(0);
     }
     
     public async Task<long> GetCurrentMaximumUploadSizeAsync()
     {
         return await GetTransferSettingsAsync()
-            .MatchAsync(
-                () => 0,
-                x => Math.Min(x.MaximumUploadSize, Math.Min(x.AvailableUserSpace, x.AvailableFreeTransferSpace)));
+            .Select(x => Math.Min(x.MaximumUploadSize, Math.Min(x.AvailableUserSpace, x.AvailableFreeTransferSpace)))
+            .SomeOrDefaultAsync(0);
     }
 
     public async Task<bool> IsUserQuotaReachedAsync()
     {
         return await GetTransferSettingsAsync()
-            .MatchAsync(
-                () => true,
-                x => x.AvailableUserSpace == 0);
+            .Select(x => x.AvailableUserSpace == 0)
+            .SomeOrDefaultAsync(true);
     }
     
     public async Task<bool> IsFreeTransferQuotaReachedAsync()
     {
         return await GetTransferSettingsAsync()
-            .MatchAsync(
-                () => true,
-                x => x.AvailableFreeTransferSpace == 0);
+            .Select(x => x.AvailableFreeTransferSpace == 0)
+            .SomeOrDefaultAsync(true);
     }
 }

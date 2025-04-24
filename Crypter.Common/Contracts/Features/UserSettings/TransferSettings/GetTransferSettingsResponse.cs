@@ -30,6 +30,7 @@ public sealed record GetTransferSettingsResponse
 {
     public string TierName { get; set; }
     public long MaximumUploadSize { get; init; }
+    public int MaximumMessageLength { get; init; }
     public long AvailableUserSpace { get; init; }
     public long UsedUserSpace { get; init; }
     public long UserQuota { get; init; }
@@ -37,10 +38,11 @@ public sealed record GetTransferSettingsResponse
     public long UsedFreeTransferSpace { get; init; }
     public long FreeTransferQuota { get; init; }
 
-    public GetTransferSettingsResponse(string tierName, long maximumUploadSize, long availableUserSpace, long usedUserSpace, long userQuota, long availableFreeTransferSpace, long usedFreeTransferSpace, long freeTransferQuota)
+    public GetTransferSettingsResponse(string tierName, long maximumUploadSize, int maximumMessageLength, long availableUserSpace, long usedUserSpace, long userQuota, long availableFreeTransferSpace, long usedFreeTransferSpace, long freeTransferQuota)
     {
         TierName = tierName;
         MaximumUploadSize = maximumUploadSize;
+        MaximumMessageLength = maximumMessageLength;
         AvailableUserSpace = availableUserSpace;
         UsedUserSpace = usedUserSpace;
         UserQuota = userQuota;
