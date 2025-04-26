@@ -36,7 +36,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Crypter.Common.Client.Services.UserSettings;
 
-public class UserTransferSettingsService : IUserTransferSettingsService
+public class UserTransferSettingsService : IUserTransferSettingsService, IDisposable
 {
     private readonly IUserSessionService _userSessionService;
     private readonly ICrypterApiClient _crypterApiClient;
@@ -44,20 +44,24 @@ public class UserTransferSettingsService : IUserTransferSettingsService
     private readonly IMemoryCache _memoryCache;
     private readonly SemaphoreSlim _memoryCacheLock = new SemaphoreSlim(1, 1);
     
+    private const string TransferSettingsCacheKey = $"{nameof(UserTransferSettingsService)}:TransferSettings";
+    
     public UserTransferSettingsService(IUserSessionService userSessionService, ICrypterApiClient crypterApiClient, IMemoryCache memoryCache)
     {
         _userSessionService = userSessionService;
         _crypterApiClient = crypterApiClient;
         _memoryCache = memoryCache;
+
+        userSessionService.UserLoggedInEventHandler += RecycleAsync;
+        userSessionService.UserLoggedOutEventHandler += RecycleAsync;
     }
     
     public async Task<Maybe<GetTransferSettingsResponse>> GetTransferSettingsAsync()
     {
-        const string cacheKey = $"{nameof(UserTransferSettingsService)}:{nameof(GetTransferSettingsAsync)}";
         try
         {
             await _memoryCacheLock.WaitAsync();
-            return await _memoryCache.GetOrCreateAsync<GetTransferSettingsResponse?>(cacheKey, async entry =>
+            return await _memoryCache.GetOrCreateAsync<GetTransferSettingsResponse?>(TransferSettingsCacheKey, async entry =>
             {
                 bool isLoggedIn = await _userSessionService.IsLoggedInAsync();
                 Maybe<GetTransferSettingsResponse> uploadSettings = await _crypterApiClient.UserSetting.GetTransferSettingsAsync(isLoggedIn);
@@ -76,32 +80,55 @@ public class UserTransferSettingsService : IUserTransferSettingsService
     public async Task<long> GetAbsoluteMaximumUploadSizeAsync()
     {
         return await GetTransferSettingsAsync()
-            .MatchAsync(
-                () => 0,
-                x => x.MaximumUploadSize);
+            .Select(x => x.MaximumUploadSize)
+            .SomeOrDefaultAsync(0);
+    }
+
+    public async Task<int> GetAbsoluteMaximumMessageLengthAsync()
+    {
+        return await GetTransferSettingsAsync()
+            .Select(x => x.MaximumMessageLength)
+            .SomeOrDefaultAsync(0);
     }
     
     public async Task<long> GetCurrentMaximumUploadSizeAsync()
     {
         return await GetTransferSettingsAsync()
-            .MatchAsync(
-                () => 0,
-                x => Math.Min(x.MaximumUploadSize, Math.Min(x.AvailableUserSpace, x.AvailableFreeTransferSpace)));
+            .Select(x => Math.Min(x.MaximumUploadSize, Math.Min(x.AvailableUserSpace, x.AvailableFreeTransferSpace)))
+            .SomeOrDefaultAsync(0);
     }
 
     public async Task<bool> IsUserQuotaReachedAsync()
     {
         return await GetTransferSettingsAsync()
-            .MatchAsync(
-                () => true,
-                x => x.AvailableUserSpace == 0);
+            .Select(x => x.AvailableUserSpace == 0)
+            .SomeOrDefaultAsync(true);
     }
     
     public async Task<bool> IsFreeTransferQuotaReachedAsync()
     {
         return await GetTransferSettingsAsync()
-            .MatchAsync(
-                () => true,
-                x => x.AvailableFreeTransferSpace == 0);
+            .Select(x => x.AvailableFreeTransferSpace == 0)
+            .SomeOrDefaultAsync(true);
+    }
+    
+    private async void RecycleAsync(object? _, EventArgs __)
+    {
+        try
+        {
+            await _memoryCacheLock.WaitAsync();
+            _memoryCache.Remove(TransferSettingsCacheKey);
+        }
+        finally
+        {
+            _memoryCacheLock.Release();
+        }
+    }
+
+    public void Dispose()
+    {
+        _userSessionService.UserLoggedInEventHandler -= RecycleAsync;
+        _userSessionService.UserLoggedOutEventHandler -= RecycleAsync;
+        GC.SuppressFinalize(this);
     }
 }

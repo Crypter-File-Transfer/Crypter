@@ -58,7 +58,6 @@ internal class SaveMessageTransferCommandHandler
     private readonly IHashIdService _hashIdService;
     private readonly IPublisher _publisher;
     private readonly ITransferRepository _transferRepository;
-    private readonly TransferStorageSettings _transferStorageSettings;
 
     public SaveMessageTransferCommandHandler(
         DataContext dataContext,
@@ -71,7 +70,6 @@ internal class SaveMessageTransferCommandHandler
         _hashIdService = hashIdService;
         _publisher = publisher;
         _transferRepository = transferRepository;
-        _transferStorageSettings = transferStorageSettings.Value;
     }
 
     public async Task<Either<UploadTransferError, UploadTransferResponse>> Handle(SaveMessageTransferCommand request, CancellationToken cancellationToken)

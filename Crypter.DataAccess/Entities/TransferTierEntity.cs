@@ -36,6 +36,7 @@ public class TransferTierEntity
     public string Name { get; set; } = null!;
     public string? Description { get; set; }
     public long MaximumUploadSize { get; set; }
+    public int MaximumMessageLength { get; set; }
     public long UserQuota { get; set; }
     public UserCategory? DefaultForUserCategory { get; set; }
 }
