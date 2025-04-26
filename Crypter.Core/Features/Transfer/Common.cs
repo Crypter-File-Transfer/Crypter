@@ -178,8 +178,7 @@ internal static class Common
     private static async Task<bool> HasSpaceForTransferAsync(DataContext dataContext, Maybe<Guid> possibleUserId, long ciphertextStreamLength, CancellationToken cancellationToken = default)
     {
         return await UserSettings.Common.GetUserTransferSettingsAsync(dataContext, possibleUserId, cancellationToken)
-            .MatchAsync(
-                () => false,
-                x => Math.Min(x.MaximumUploadSize, Math.Min(x.AvailableFreeTransferSpace, x.AvailableUserSpace)) >= ciphertextStreamLength);
+            .Select(x => Math.Min(x.MaximumUploadSize, Math.Min(x.AvailableFreeTransferSpace, x.AvailableUserSpace)) >= ciphertextStreamLength)
+            .SomeOrDefaultAsync(false);
     }
 }

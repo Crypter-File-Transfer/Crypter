@@ -30,13 +30,13 @@
     <div class="row">
         <div class="col-12 p-0 my-3">
             <label>Subject</label>
-            <input type="text" class="form-control" @bind="MessageSubject" @bind:event="oninput" id="messageSubject" name="messageSubject" placeholder="Subject">
+            <input type="text" class="form-control" @bind="_messageSubject" @bind:event="oninput" id="messageSubject" name="messageSubject" placeholder="Subject">
         </div>
         <div class="col-12 p-0">
             <label>Message</label>
-            <textarea class="form-control" @bind="MessageBody" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@_maxMessageLength"></textarea>
+            <textarea class="form-control" @bind="_messageBody" @bind:event="oninput" id="messageText" name="messageText" rows="5" cols="57" placeholder="Type your message here..." maxlength="@_maxMessageLength"></textarea>
             <label>
-                <small class="align-text-bottom">@(_maxMessageLength - MessageBody.Length) remaining</small>
+                <small class="align-text-bottom">@(_maxMessageLength - _messageBody.Length) remaining</small>
             </label>
         </div>
     </div>

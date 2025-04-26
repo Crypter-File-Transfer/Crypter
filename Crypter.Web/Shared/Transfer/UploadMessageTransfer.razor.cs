@@ -25,7 +25,6 @@
  */
 
 using System;
-using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Transfer.Handlers;
 using Crypter.Common.Client.Transfer.Models;
@@ -36,17 +35,26 @@ namespace Crypter.Web.Shared.Transfer;
 
 public partial class UploadMessageTransfer : IDisposable
 {
-    protected string MessageSubject = string.Empty;
-    protected string MessageBody = string.Empty;
-    protected const int _maxMessageLength = 1024;
+    private string _messageSubject = string.Empty;
+    private string _messageBody = string.Empty;
+    private int _maxMessageLength = 0;
 
-    protected async Task OnEncryptClicked()
+    protected override async Task OnParametersSetAsync()
+    {
+        long maximumUploadSize = await UserTransferSettingsService.GetCurrentMaximumUploadSizeAsync();
+        int maximumMessageLength = await UserTransferSettingsService.GetAbsoluteMaximumMessageLengthAsync();
+        _maxMessageLength = Math.Min((int)Math.Min(maximumUploadSize, int.MaxValue), maximumMessageLength);
+        StateHasChanged();
+        await base.OnParametersSetAsync();
+    }
+
+    private async Task OnEncryptClicked()
     {
         EncryptionInProgress = true;
         ErrorMessage = string.Empty;
 
         await SetProgressMessageAsync("Encrypting message");
-        UploadMessageHandler messageUploader = TransferHandlerFactory.CreateUploadMessageHandler(MessageSubject, MessageBody, ExpirationHours);
+        UploadMessageHandler messageUploader = TransferHandlerFactory.CreateUploadMessageHandler(_messageSubject, _messageBody, ExpirationHours);
 
         SetHandlerUserInfo(messageUploader);
         Either<UploadTransferError, UploadHandlerResponse> uploadResponse = await messageUploader.UploadAsync();
@@ -54,7 +62,7 @@ public partial class UploadMessageTransfer : IDisposable
         Dispose();
     }
 
-    protected async Task SetProgressMessageAsync(string message)
+    private async Task SetProgressMessageAsync(string message)
     {
         UploadStatusMessage = message;
         StateHasChanged();
@@ -63,8 +71,8 @@ public partial class UploadMessageTransfer : IDisposable
 
     public void Dispose()
     {
-        MessageSubject = string.Empty;
-        MessageBody = string.Empty;
+        _messageSubject = string.Empty;
+        _messageBody = string.Empty;
         EncryptionInProgress = false;
         GC.SuppressFinalize(this);
     }

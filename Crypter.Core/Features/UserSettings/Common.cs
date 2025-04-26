@@ -90,6 +90,7 @@ internal static class Common
             {
                 x.Name,
                 x.MaximumUploadSize,
+                x.MaximumMessageLength,
                 x.UserQuota,
                 UsedUserSpace = x.DefaultForUserCategory == UserCategory.Anonymous
                     ? dataContext.AnonymousFileTransfers
@@ -124,6 +125,6 @@ internal static class Common
 
         return data is null 
             ? Maybe<GetTransferSettingsResponse>.None
-            : new GetTransferSettingsResponse(data.Name, data.MaximumUploadSize, data.UserQuota - data.UsedUserSpace, data.UsedUserSpace, data.UserQuota, data.FreeTransferQuota - data.UsedFreeTransferSpace, data.UsedFreeTransferSpace, data.FreeTransferQuota);
+            : new GetTransferSettingsResponse(data.Name, data.MaximumUploadSize, data.MaximumMessageLength, data.UserQuota - data.UsedUserSpace, data.UsedUserSpace, data.UserQuota, data.FreeTransferQuota - data.UsedFreeTransferSpace, data.UsedFreeTransferSpace, data.FreeTransferQuota);
     }
 }
