@@ -38,7 +38,7 @@ jobs:
             fi
 
       - name: Push latest systemctl service file
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -58,7 +58,7 @@ jobs:
           script: systemctl --user daemon-reload
 
       - name: Push latest Docker Compose file
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -69,7 +69,7 @@ jobs:
 
       - name: Push latest Docker Compose override file if deploying to Staging server
         if: github.event.inputs.environment == 'staging'
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
