@@ -55,7 +55,7 @@ internal sealed class UserLoginCommandHandler : IEitherRequestHandler<UserLoginC
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly DataContext _dataContext;
     private readonly IHangfireBackgroundService _hangfireBackgroundService;
-    private readonly HashIdService _hashIdService;
+    private readonly IHashIdService _hashIdService;
     private readonly IPasswordHashService _passwordHashService;
     private readonly IPublisher _publisher;
     private readonly ITokenService _tokenService;
@@ -68,7 +68,7 @@ internal sealed class UserLoginCommandHandler : IEitherRequestHandler<UserLoginC
     private readonly DateTimeOffset _currentTime;
     private UserEntity? _foundUserEntity;
 
-    public UserLoginCommandHandler(IBackgroundJobClient backgroundJobClient, DataContext dataContext, IHangfireBackgroundService hangfireBackgroundService, HashIdService hashIdService, IOptions<ServerPasswordSettings> passwordSettings, IPasswordHashService passwordHashService, IPublisher publisher, ITokenService tokenService)
+    public UserLoginCommandHandler(IBackgroundJobClient backgroundJobClient, DataContext dataContext, IHangfireBackgroundService hangfireBackgroundService, IHashIdService hashIdService, IOptions<ServerPasswordSettings> passwordSettings, IPasswordHashService passwordHashService, IPublisher publisher, ITokenService tokenService)
     {
         _backgroundJobClient = backgroundJobClient;
         _dataContext = dataContext;
