@@ -234,7 +234,7 @@ internal sealed class UserLoginCommandHandler : IEitherRequestHandler<UserLoginC
     /// <returns></returns>
     private static Either<LoginError, OneOf<Guid, Unit>> CheckMultiFactorAuthentication(UserEntity userEntity, ValidMultiFactorVerification? validMultiFactorVerification)
     {
-        if (userEntity is { RequireTwoFactorAuthentication: true, EmailVerified: true })
+        if (userEntity is { RequireTwoFactorAuthentication: true, EmailAddress: not null })
         {
             if (validMultiFactorVerification is null)
             {

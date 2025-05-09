@@ -26,7 +26,7 @@
 
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services.UserSettings;
-using Crypter.Common.Contracts.Features.UserAuthentication.PasswordChange;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Contracts.Features.UserSettings.ContactInfoSettings;
 using Crypter.Common.Primitives;
 using EasyMonads;
@@ -208,6 +208,7 @@ public partial class UserSettingsAccountInfo
 
     private async Task OnSaveMultiFactorAuthenticationClickedAsync()
     {
+        await Task.Delay(1); // TODO implement a real save function
         ResetMultiFactorAuthenticationErrors();
     }
     

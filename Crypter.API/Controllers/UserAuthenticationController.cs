@@ -31,7 +31,6 @@ using Crypter.API.Controllers.Base;
 using Crypter.API.Methods;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserAuthentication.PasswordChange;
 using Crypter.Core.Features.UserAuthentication.Commands;
 using Crypter.Core.Features.UserAuthentication.Queries;
 using EasyMonads;
