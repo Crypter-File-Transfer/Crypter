@@ -285,7 +285,7 @@ internal sealed class UserLoginCommandHandler : IEitherRequestHandler<UserLoginC
 
     private async Task<Either<LoginError, LoginResponse>> CreateLoginResponseAsync(UserEntity userEntity, TokenType refreshTokenType, string deviceDescription)
     {
-        userEntity.LastLogin = _currentTime.DateTime;
+        userEntity.LastLogin = _currentTime.UtcDateTime;
         
         RefreshTokenData refreshToken = _refreshTokenProviderMap[refreshTokenType].Invoke(userEntity.Id);
         UserTokenEntity tokenEntity = new UserTokenEntity(
