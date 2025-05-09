@@ -53,7 +53,8 @@ public interface IHangfireBackgroundService
     Task<Unit> SendEmailVerificationAsync(Guid userId);
     Task<Unit> SendTransferNotificationAsync(Guid itemId, TransferItemType itemType);
     Task<Unit> SendRecoveryEmailAsync(string emailAddress);
-
+    Task<Unit> SendMultiFactorVerificationCodeAsync(Guid userId, Guid multiFactorChallengeId, int challengeExpirationMinutes);
+    
     /// <summary>
     /// Delete a transfer from transfer storage and the database.
     /// </summary>
@@ -76,6 +77,7 @@ public interface IHangfireBackgroundService
     Task<Unit> DeleteRecoveryParametersAsync(Guid userId);
     Task<Unit> DeleteUserKeysAsync(Guid userId);
     Task<Unit> DeleteReceivedTransfersAsync(Guid userId);
+    Task<Unit> DeleteMultiFactorVerificationCodeAsync(Guid multiFactorChallengeId);
 
     Task<Unit> SendApplicationAnalyticsReportAsync();
     
@@ -162,12 +164,10 @@ public class HangfireBackgroundService : IHangfireBackgroundService
                     _logger.LogWarning("A user was not found while attempting to send a recovery email.");
                     break;
                 case SendAccountRecoveryEmailError.InvalidSavedUsername:
-                    _logger.LogWarning(
-                        "A user was found to have an invalid username while attempting to send a recovery email.");
+                    _logger.LogWarning("A user was found to have an invalid username while attempting to send a recovery email.");
                     break;
                 case SendAccountRecoveryEmailError.InvalidSavedEmailAddress:
-                    _logger.LogWarning(
-                        "A user was found to have an invalid email address while attempting to send a recovery email.");
+                    _logger.LogWarning("A user was found to have an invalid email address while attempting to send a recovery email.");
                     break;
                 case SendAccountRecoveryEmailError.EmailFailure:
                     _logger.LogWarning("An email failure occurred while trying to send a recovery email.");
@@ -178,6 +178,20 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return Unit.Default;
     }
 
+    public async Task<Unit> SendMultiFactorVerificationCodeAsync(Guid userId, Guid multiFactorChallengeId, int challengeExpirationMinutes)
+    {
+        SendMultiFactorVerificationCodeCommand sendRequest = new SendMultiFactorVerificationCodeCommand(userId, multiFactorChallengeId, challengeExpirationMinutes);
+        bool sendSuccess = await _sender.Send(sendRequest);
+        
+        if (!sendSuccess)
+        {
+            _logger.LogError("Failed to send multi factor verification code.");
+            throw new HangfireJobException($"{nameof(SendMultiFactorVerificationCodeAsync)} failed.");
+        }
+
+        return Unit.Default;
+    }
+    
     public Task<Unit> DeleteTransferAsync(Guid itemId, TransferItemType itemType, TransferUserType userType, bool deleteFromTransferRepository)
     {
         DeleteTransferCommand request = new DeleteTransferCommand(itemId, itemType, userType, deleteFromTransferRepository);
@@ -220,6 +234,12 @@ public class HangfireBackgroundService : IHangfireBackgroundService
         return _sender.Send(request);
     }
 
+    public Task<Unit> DeleteMultiFactorVerificationCodeAsync(Guid multiFactorChallengeId)
+    {
+        DeleteMultiFactorChallengeCommand request = new DeleteMultiFactorChallengeCommand(multiFactorChallengeId);
+        return _sender.Send(request);
+    }
+    
     public async Task<Unit> SendApplicationAnalyticsReportAsync()
     {
         ApplicationAnalyticsReportQuery reportRequest = new ApplicationAnalyticsReportQuery(7);

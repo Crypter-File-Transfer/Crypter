@@ -34,5 +34,6 @@ public enum LoginError
     InvalidTokenTypeRequested,
     ExcessiveFailedLoginAttempts,
     InvalidPasswordVersion,
-    PasswordHashFailure
+    PasswordHashFailure,
+    InvalidMultiFactorChallenge
 }

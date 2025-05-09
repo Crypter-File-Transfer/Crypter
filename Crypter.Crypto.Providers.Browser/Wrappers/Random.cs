@@ -24,6 +24,8 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System;
+using System.Linq;
 using System.Runtime.Versioning;
 using BlazorSodium.Sodium;
 using Crypter.Crypto.Common.Random;
@@ -41,5 +43,11 @@ public class Random : IRandom
     public uint GenerateRandomNumber()
     {
         return RandomBytes.RandomBytes_Random();
+    }
+
+    public string GenerateRandomString(int length, string alphabet)
+    {
+        return new string(Enumerable.Repeat(alphabet, length)
+            .Select(s => s[Convert.ToInt32(RandomBytes.RandomBytes_Uniform(Convert.ToUInt32(s.Length)))]).ToArray());
     }
 }

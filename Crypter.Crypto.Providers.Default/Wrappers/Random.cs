@@ -25,6 +25,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using Crypter.Crypto.Common.Random;
@@ -43,5 +44,10 @@ public class Random : IRandom
     {
         byte[] randomBytes = RandomNumberGenerator.GetBytes(4);
         return BitConverter.ToUInt32(randomBytes, 0);
+    }
+
+    public string GenerateRandomString(int length, string alphabet)
+    {
+        return RandomNumberGenerator.GetString(alphabet, length);
     }
 }
