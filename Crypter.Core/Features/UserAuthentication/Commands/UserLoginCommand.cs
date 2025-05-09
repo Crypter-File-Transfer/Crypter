@@ -39,38 +39,41 @@ using Crypter.Core.Services;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
+using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using OneOf;
 using Unit = EasyMonads.Unit;
 
 namespace Crypter.Core.Features.UserAuthentication.Commands;
 
-public sealed record UserLoginCommand(LoginRequest Request, string DeviceDescription)
-    : IEitherRequest<LoginError, LoginResponse>;
+public sealed record UserLoginCommand(LoginRequest Request, string DeviceDescription) : IEitherRequest<LoginError, OneOf<ChallengeResponse, LoginResponse>>;
 
-internal sealed class UserLoginCommandHandler
-    : IEitherRequestHandler<UserLoginCommand, LoginError, LoginResponse>
+internal sealed class UserLoginCommandHandler : IEitherRequestHandler<UserLoginCommand, LoginError, OneOf<ChallengeResponse, LoginResponse>>
 {
+    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly DataContext _dataContext;
+    private readonly IHangfireBackgroundService _hangfireBackgroundService;
+    private readonly HashIdService _hashIdService;
     private readonly IPasswordHashService _passwordHashService;
     private readonly IPublisher _publisher;
     private readonly ITokenService _tokenService;
-    
+
+    private const int MultiFactorExpirationMinutes = 5;
     private readonly short _clientPasswordVersion;
     private const int MaximumFailedLoginAttempts = 3;
     private readonly Dictionary<TokenType, Func<Guid, RefreshTokenData>> _refreshTokenProviderMap;
 
+    private readonly DateTimeOffset _currentTime;
     private UserEntity? _foundUserEntity;
 
-    public UserLoginCommandHandler(
-        DataContext dataContext,
-        IOptions<ServerPasswordSettings> passwordSettings,
-        IPasswordHashService passwordHashService,
-        IPublisher publisher,
-        ITokenService tokenService)
+    public UserLoginCommandHandler(IBackgroundJobClient backgroundJobClient, DataContext dataContext, IHangfireBackgroundService hangfireBackgroundService, HashIdService hashIdService, IOptions<ServerPasswordSettings> passwordSettings, IPasswordHashService passwordHashService, IPublisher publisher, ITokenService tokenService)
     {
+        _backgroundJobClient = backgroundJobClient;
         _dataContext = dataContext;
+        _hangfireBackgroundService = hangfireBackgroundService;
+        _hashIdService = hashIdService;
         _passwordHashService = passwordHashService;
         _publisher = publisher;
         _tokenService = tokenService;
@@ -81,25 +84,40 @@ internal sealed class UserLoginCommandHandler
             { TokenType.Session, _tokenService.NewSessionToken },
             { TokenType.Device, _tokenService.NewDeviceToken }
         };
+
+        _currentTime = DateTimeOffset.UtcNow;
     }
     
-    public async Task<Either<LoginError, LoginResponse>> Handle(UserLoginCommand request, CancellationToken cancellationToken)
+    public async Task<Either<LoginError, OneOf<ChallengeResponse, LoginResponse>>> Handle(UserLoginCommand request, CancellationToken cancellationToken)
     {
         return await ValidateLoginRequest(request.Request)
             .BindAsync(async validLoginRequest => await (
                 from foundUser in GetUserAsync(validLoginRequest)
-                from passwordVerificationSuccess in VerifyAndUpgradePassword(validLoginRequest, foundUser).AsTask()
-                from loginResponse in CreateLoginResponseAsync(foundUser, validLoginRequest.RefreshTokenType, request.DeviceDescription)
-                select loginResponse)
-            )
-            .DoRightAsync(async _ =>
+                from passwordVerificationSuccess in VerifyPassword(validLoginRequest, foundUser).AsTask()
+                from twoFactorAuthenticationRequired in CheckMultiFactorAuthentication(foundUser, validLoginRequest.ValidMultiFactorVerification).AsTask()
+                select twoFactorAuthenticationRequired.MapT1(_ => validLoginRequest)))
+            .BindAsync(async preliminaryLoginResult => {
+                if (preliminaryLoginResult.TryPickT0(out Guid challengeId, out ValidLoginRequest validLoginRequest))
+                {
+                    _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendMultiFactorVerificationCodeAsync(_foundUserEntity!.Id, challengeId, MultiFactorExpirationMinutes));
+                    string challengeHash = _hashIdService.Encode(challengeId);
+                    ChallengeResponse challengeResponse = new ChallengeResponse(challengeHash);
+                    return OneOf<ChallengeResponse, LoginResponse>.FromT0(challengeResponse);
+                }
+
+                return await (
+                    from passwordUpgradePerformed in UpgradePasswordIfRequired(validLoginRequest, _foundUserEntity!).AsTask()
+                    from loginResponse in CreateLoginResponseAsync(_foundUserEntity!, validLoginRequest.RefreshTokenType, request.DeviceDescription)
+                    select OneOf<ChallengeResponse, LoginResponse>.FromT1(loginResponse));
+            })
+            .DoRightAsync(async _  =>
             {
-                SuccessfulUserLoginEvent successfulUserLoginEvent = new SuccessfulUserLoginEvent(_foundUserEntity!.Id, request.DeviceDescription, _foundUserEntity.LastLogin);
+                SuccessfulUserLoginEvent successfulUserLoginEvent = new SuccessfulUserLoginEvent(_foundUserEntity!.Id, request.DeviceDescription, _currentTime);
                 await _publisher.Publish(successfulUserLoginEvent, CancellationToken.None);
             })
             .DoLeftOrNeitherAsync(async error =>
             {
-                FailedUserLoginEvent failedUserLoginEvent = new FailedUserLoginEvent(request.Request.Username, error, request.DeviceDescription, DateTimeOffset.UtcNow);
+                FailedUserLoginEvent failedUserLoginEvent = new FailedUserLoginEvent(request.Request.Username, error, request.DeviceDescription, _currentTime);
                 await _publisher.Publish(failedUserLoginEvent, CancellationToken.None);
 
                 if (error == LoginError.InvalidPassword)
@@ -110,16 +128,23 @@ internal sealed class UserLoginCommandHandler
             },
             async () =>
             {
-                FailedUserLoginEvent failedUserLoginEvent = new FailedUserLoginEvent(request.Request.Username, LoginError.UnknownError, request.DeviceDescription, DateTimeOffset.UtcNow);
+                FailedUserLoginEvent failedUserLoginEvent = new FailedUserLoginEvent(request.Request.Username, LoginError.UnknownError, request.DeviceDescription, _currentTime);
                 await _publisher.Publish(failedUserLoginEvent, CancellationToken.None);
             });
     }
     
-    private readonly struct ValidLoginRequest(Username username, IDictionary<short, byte[]> versionedPasswords, TokenType refreshTokenType)
+    private record ValidLoginRequest(Username Username, IDictionary<short, byte[]> VersionedPasswords, TokenType RefreshTokenType, ValidMultiFactorVerification? ValidMultiFactorVerification)
     {
-        public Username Username { get; } = username;
-        public IDictionary<short, byte[]> VersionedPasswords { get; } = versionedPasswords;
-        public TokenType RefreshTokenType { get; } = refreshTokenType;
+        public Username Username { get; } = Username;
+        public IDictionary<short, byte[]> VersionedPasswords { get; } = VersionedPasswords;
+        public TokenType RefreshTokenType { get; } = RefreshTokenType;
+        public ValidMultiFactorVerification? ValidMultiFactorVerification { get; } = ValidMultiFactorVerification;
+    }
+
+    private record ValidMultiFactorVerification(Guid ChallengeId, string VerificationCode)
+    {
+        public Guid ChallengeId { get; } = ChallengeId;
+        public string VerificationCode { get; } = VerificationCode;
     }
     
     private Either<LoginError, ValidLoginRequest> ValidateLoginRequest(LoginRequest request)
@@ -133,11 +158,27 @@ internal sealed class UserLoginCommandHandler
         {
             return LoginError.InvalidTokenTypeRequested;
         }
-
+        
         return GetValidClientPasswords(request.VersionedPasswords)
-            .Map(x => new ValidLoginRequest(validUsername, x, request.RefreshTokenType));
+            .Bind(passwordMap =>
+            {
+                if (request.MultiFactorVerification is null)
+                {
+                    return new ValidLoginRequest(validUsername, passwordMap, request.RefreshTokenType, null);
+                }
+
+                return ValidateMultiFactorVerification(request.MultiFactorVerification)
+                    .Map(validMultiFactorVerification => new ValidLoginRequest(validUsername, passwordMap, request.RefreshTokenType, validMultiFactorVerification));
+            });
     }
 
+    private Either<LoginError, ValidMultiFactorVerification> ValidateMultiFactorVerification(MultiFactorVerification multiFactorVerification)
+    {
+        return _hashIdService.Decode(multiFactorVerification.ChallengeHash)
+            .Select(x => new ValidMultiFactorVerification(x, multiFactorVerification.VerificationCode))
+            .ToEither(LoginError.InvalidMultiFactorChallenge);
+    }
+    
     private async Task<Either<LoginError, UserEntity>> GetUserAsync(ValidLoginRequest validLoginRequest)
     {
         _foundUserEntity = await _dataContext.Users
@@ -145,6 +186,7 @@ internal sealed class UserLoginCommandHandler
             .Include(x => x.FailedLoginAttempts)
             .Include(x => x.MasterKey)
             .Include(x => x.KeyPair)
+            .Include(x => x.MultiFactorChallenges)
             .FirstOrDefaultAsync();
 
         if (_foundUserEntity is null)
@@ -159,8 +201,8 @@ internal sealed class UserLoginCommandHandler
 
         return _foundUserEntity;
     }
-    
-    private Either<LoginError, Unit> VerifyAndUpgradePassword(ValidLoginRequest validLoginRequest, UserEntity userEntity)
+
+    private Either<LoginError, Unit> VerifyPassword(ValidLoginRequest validLoginRequest, UserEntity userEntity)
     {
         bool requestContainsRequiredPasswordVersions = validLoginRequest.VersionedPasswords.ContainsKey(userEntity.ClientPasswordVersion)
                                                        && validLoginRequest.VersionedPasswords.ContainsKey(_clientPasswordVersion);
@@ -179,6 +221,45 @@ internal sealed class UserLoginCommandHandler
             return LoginError.InvalidPassword;
         }
 
+        return Unit.Default;
+    }
+    
+    /// <summary>
+    /// If the user account requires MFA, and a valid MFA is not provided, then return a new Challenge Id.
+    /// If the user account does not require MFA, then return an indication of a successful check.
+    /// If the user account requires MFA, and a valid MFA is provided, then verify the MFA is valid and correct.
+    /// </summary>
+    /// <param name="userEntity"></param>
+    /// <param name="validMultiFactorVerification"></param>
+    /// <returns></returns>
+    private static Either<LoginError, OneOf<Guid, Unit>> CheckMultiFactorAuthentication(UserEntity userEntity, ValidMultiFactorVerification? validMultiFactorVerification)
+    {
+        if (userEntity.RequireTwoFactorAuthentication)
+        {
+            if (validMultiFactorVerification is null)
+            {
+                return OneOf<Guid, Unit>.FromT0(Guid.NewGuid());
+            }
+
+            UserMultiFactorChallengeEntity? challengeEntity = userEntity.MultiFactorChallenges
+                .Where(x => x.Id == validMultiFactorVerification.ChallengeId)
+                .Where(x => x.VerificationCode == validMultiFactorVerification.VerificationCode)
+                .Where(x => x.Created <= DateTime.UtcNow.AddMinutes(MultiFactorExpirationMinutes))
+                .FirstOrDefault();
+
+            if (challengeEntity is null)
+            {
+                return LoginError.InvalidMultiFactorChallenge;
+            }
+
+            userEntity.MultiFactorChallenges.Remove(challengeEntity);
+        }
+
+        return OneOf<Guid, Unit>.FromT1(Unit.Default);
+    }
+    
+    private Either<LoginError, Unit> UpgradePasswordIfRequired(ValidLoginRequest validLoginRequest, UserEntity userEntity)
+    {
         // Now handle the case where even though the provided password is correct
         // the password must be upgraded to the latest 'ClientPasswordVersion' or 'ServerPasswordVersion'
         bool serverPasswordVersionIsOld = userEntity.ServerPasswordVersion != _passwordHashService.LatestServerPasswordVersion;
@@ -204,7 +285,7 @@ internal sealed class UserLoginCommandHandler
 
     private async Task<Either<LoginError, LoginResponse>> CreateLoginResponseAsync(UserEntity userEntity, TokenType refreshTokenType, string deviceDescription)
     {
-        userEntity.LastLogin = DateTime.UtcNow;
+        userEntity.LastLogin = _currentTime.DateTime;
         
         RefreshTokenData refreshToken = _refreshTokenProviderMap[refreshTokenType].Invoke(userEntity.Id);
         UserTokenEntity tokenEntity = new UserTokenEntity(

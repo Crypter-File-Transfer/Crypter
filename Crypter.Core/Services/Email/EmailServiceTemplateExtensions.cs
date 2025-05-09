@@ -104,4 +104,20 @@ public static class EmailServiceTemplateExtensions
                          $"Unique logins: {reportData.UserAnalytics.UniqueLogins}";
         return await emailService.SendAsync("Crypter Analytics", message, emailAddress);
     }
+
+    /// <summary>
+    /// Send a multifactor verification code to the provided recipient.
+    /// </summary>
+    /// <param name="emailService"></param>
+    /// <param name="emailAddress"></param>
+    /// <param name="verificationCode"></param>
+    /// <param name="expirationMinutes"></param>
+    /// <returns></returns>
+    internal static async Task<bool> SendMultiFactorChallengeEmailAsync(this IEmailService emailService, EmailAddress emailAddress, string verificationCode, int expirationMinutes)
+    {
+        string message = $"Your verification code is: {verificationCode}\n" +
+                         "If you did not request this verification code, you should consider updating your password.\n\n" +
+                         $"This code will expire in {expirationMinutes} minutes.";
+        return await emailService.SendAsync("Your verification code", message, emailAddress);
+    }
 }

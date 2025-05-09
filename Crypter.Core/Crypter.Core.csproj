@@ -16,6 +16,7 @@
       <PackageReference Include="MediatR" Version="12.5.0" />
       <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="9.0.3" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <PackageReference Include="OneOf" Version="3.0.271" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.7.0" />
    </ItemGroup>
 
