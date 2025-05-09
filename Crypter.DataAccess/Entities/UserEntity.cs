@@ -60,7 +60,7 @@ public class UserEntity
     public List<UserMessageTransferEntity>? ReceivedMessageTransfers { get; set; }
     public List<UserFailedLoginEntity>? FailedLoginAttempts { get; set; }
     public List<UserConsentEntity>? Consents { get; set; }
-    public List<UserMultiFactorChallengeEntity> MultiFactorChallenges { get; set; }
+    public List<UserMultiFactorChallengeEntity>? MultiFactorChallenges { get; set; }
 
     /// <summary>
     /// Please avoid using this.

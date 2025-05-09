@@ -241,7 +241,7 @@ internal sealed class UserLoginCommandHandler : IEitherRequestHandler<UserLoginC
                 return OneOf<Guid, Unit>.FromT0(Guid.NewGuid());
             }
 
-            UserMultiFactorChallengeEntity? challengeEntity = userEntity.MultiFactorChallenges
+            UserMultiFactorChallengeEntity? challengeEntity = userEntity.MultiFactorChallenges!
                 .Where(x => x.Id == validMultiFactorVerification.ChallengeId)
                 .Where(x => x.VerificationCode == validMultiFactorVerification.VerificationCode)
                 .Where(x => x.Created <= DateTime.UtcNow.AddMinutes(MultiFactorExpirationMinutes))
@@ -252,7 +252,7 @@ internal sealed class UserLoginCommandHandler : IEitherRequestHandler<UserLoginC
                 return LoginError.InvalidMultiFactorChallenge;
             }
 
-            userEntity.MultiFactorChallenges.Remove(challengeEntity);
+            userEntity.MultiFactorChallenges!.Remove(challengeEntity);
         }
 
         return OneOf<Guid, Unit>.FromT1(Unit.Default);

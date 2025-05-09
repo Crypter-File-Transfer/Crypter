@@ -36,7 +36,7 @@ public class UserMultiFactorChallengeEntity
     public string VerificationCode { get; set; }
     public DateTime Created { get; set; }
     
-    public UserEntity User { get; set; }
+    public UserEntity? User { get; set; }
 
     public UserMultiFactorChallengeEntity(Guid id, Guid owner, string verificationCode, DateTime created)
     {
