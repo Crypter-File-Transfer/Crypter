@@ -96,19 +96,20 @@ internal sealed class UserLoginCommandHandler : IEitherRequestHandler<UserLoginC
                 from passwordVerificationSuccess in VerifyPassword(validLoginRequest, foundUser).AsTask()
                 from twoFactorAuthenticationRequired in CheckMultiFactorAuthentication(foundUser, validLoginRequest.ValidMultiFactorVerification).AsTask()
                 select twoFactorAuthenticationRequired.MapT1(_ => validLoginRequest)))
-            .BindAsync(async preliminaryLoginResult => {
-                if (preliminaryLoginResult.TryPickT0(out Guid challengeId, out ValidLoginRequest validLoginRequest))
-                {
-                    _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendMultiFactorVerificationCodeAsync(_foundUserEntity!.Id, challengeId, MultiFactorExpirationMinutes));
-                    string challengeHash = _hashIdService.Encode(challengeId);
-                    ChallengeResponse challengeResponse = new ChallengeResponse(challengeHash);
-                    return OneOf<ChallengeResponse, LoginResponse>.FromT0(challengeResponse);
-                }
-
-                return await (
-                    from passwordUpgradePerformed in UpgradePasswordIfRequired(validLoginRequest, _foundUserEntity!).AsTask()
-                    from loginResponse in CreateLoginResponseAsync(_foundUserEntity!, validLoginRequest.RefreshTokenType, request.DeviceDescription)
-                    select OneOf<ChallengeResponse, LoginResponse>.FromT1(loginResponse));
+            .BindAsync(async preliminaryLoginResult =>
+            {
+                return await preliminaryLoginResult
+                    .Match<Task<Either<LoginError, OneOf<ChallengeResponse, LoginResponse>>>>(async x =>
+                    {
+                        _backgroundJobClient.Enqueue(() => _hangfireBackgroundService.SendMultiFactorVerificationCodeAsync(_foundUserEntity!.Id, x, MultiFactorExpirationMinutes));
+                        string challengeHash = _hashIdService.Encode(x);
+                        ChallengeResponse challengeResponse = new ChallengeResponse(challengeHash);
+                        return await OneOf<ChallengeResponse, LoginResponse>.FromT0(challengeResponse).AsTask();
+                    },
+                    async x => await (
+                        from passwordUpgradePerformed in UpgradePasswordIfRequired(x, _foundUserEntity!).AsTask()
+                        from loginResponse in CreateLoginResponseAsync(_foundUserEntity!, x.RefreshTokenType, request.DeviceDescription)
+                        select OneOf<ChallengeResponse, LoginResponse>.FromT1(loginResponse)));
             })
             .DoRightAsync(async _  =>
             {

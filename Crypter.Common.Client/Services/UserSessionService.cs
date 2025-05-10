@@ -39,6 +39,7 @@ using Crypter.Common.Contracts.Features.UserConsents;
 using Crypter.Common.Enums;
 using Crypter.Common.Primitives;
 using EasyMonads;
+using OneOf;
 
 namespace Crypter.Common.Client.Services;
 
@@ -132,7 +133,7 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
         return Session.IsSome;
     }
 
-    public Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser)
+    public Task<Either<LoginError, OneOf<ChallengeResponse, Unit>>> LoginAsync(Username username, Password password, bool rememberUser)
     {
         return _userPasswordService
             .DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
@@ -141,24 +142,23 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
                 async versionedPassword =>
                 {
                     List<VersionedPassword> versionedPasswords = [versionedPassword];
-                    Task<Either<LoginError, LoginResponse>> loginTask = from loginResponse in LoginRecursiveAsync(username, password, versionedPasswords, _trustDeviceRefreshTokenTypeMap[rememberUser])
-                        from unit0 in Either<LoginError, Unit>.FromRightAsync(StoreSessionInfo(loginResponse, rememberUser))
-                        select loginResponse;
+                    Either<LoginError, OneOf<ChallengeResponse, LoginResponse>> loginResponse = await LoginRecursiveAsync(username, password, versionedPasswords, _trustDeviceRefreshTokenTypeMap[rememberUser]);
+                    await loginResponse.DoRightAsync(async x =>
+                    {
+                        x.MapT1(y => StoreSessionInfo(y, rememberUser));
+                        bool showRecoveryKeyModal = await _crypterApiClient.UserConsent.GetUserConsentsAsync()
+                            .MatchAsync(
+                                none: () => false,
+                                some: y => y.TryGetValue(UserConsentType.RecoveryKeyRisks, out DateTimeOffset? value) && !value.HasValue);
+                        HandleUserLoggedInEvent(username, password, versionedPassword, rememberUser, showRecoveryKeyModal);
+                    });
 
-                    return await loginTask
-                        .DoRightAsync(async x =>
-                        {
-                            bool showRecoveryKeyModal = await _crypterApiClient.UserConsent.GetUserConsentsAsync()
-                                .MatchAsync(
-                                    none: () => false,
-                                    some: y => y.TryGetValue(UserConsentType.RecoveryKeyRisks, out DateTimeOffset? value) && !value.HasValue);
-                            HandleUserLoggedInEvent(username, password, versionedPassword, rememberUser, showRecoveryKeyModal);
-                        })
-                        .BindAsync<LoginError, LoginResponse, Unit>(_ => Unit.Default);
+                    return loginResponse
+                        .Bind<OneOf<ChallengeResponse, Unit>>(x => x.MapT1(_ => Unit.Default));
                 });
     }
 
-    private Task<Either<LoginError, LoginResponse>> LoginRecursiveAsync(Username username, Password password, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+    private Task<Either<LoginError, OneOf<ChallengeResponse, LoginResponse>>> LoginRecursiveAsync(Username username, Password password, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
     {
         return SendLoginRequestAsync(username, versionedPasswords, refreshTokenType)
             .MatchAsync(
@@ -252,7 +252,7 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
 
     #endregion
 
-    private Task<Either<LoginError, LoginResponse>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+    private Task<Either<LoginError, OneOf<ChallengeResponse, LoginResponse>>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
     {
         LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType, null);
         return _crypterApiClient.UserAuthentication.LoginAsync(loginRequest);

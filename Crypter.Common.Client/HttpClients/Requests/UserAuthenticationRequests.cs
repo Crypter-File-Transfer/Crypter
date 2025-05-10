@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,11 +25,13 @@
  */
 
 using System;
+using System.Net;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Requests;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using EasyMonads;
+using OneOf;
 
 namespace Crypter.Common.Client.HttpClients.Requests;
 
@@ -59,11 +61,11 @@ public class UserAuthenticationRequests : IUserAuthenticationRequests
             .ExtractErrorCode<RegistrationError, Unit>();
     }
 
-    public Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest)
+    public Task<Either<LoginError, OneOf<ChallengeResponse, LoginResponse>>> LoginAsync(LoginRequest loginRequest)
     {
         const string url = "api/user/authentication/login";
-        return _crypterHttpClient.PostEitherAsync<LoginRequest, LoginResponse>(url, loginRequest)
-            .ExtractErrorCode<LoginError, LoginResponse>();
+        return _crypterHttpClient.PostEitherAsync<LoginRequest, ChallengeResponse, LoginResponse>(url, loginRequest, HttpStatusCode.OK, HttpStatusCode.TemporaryRedirect)
+            .ExtractErrorCode<LoginError, OneOf<ChallengeResponse, LoginResponse>>();
     }
 
     public async Task<Either<RefreshError, RefreshResponse>> RefreshSessionAsync()

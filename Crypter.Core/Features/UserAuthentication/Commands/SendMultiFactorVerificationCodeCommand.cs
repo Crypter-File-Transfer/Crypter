@@ -63,25 +63,23 @@ internal sealed class SendMultiFactorVerificationCodeCommandHandler : IRequestHa
         string verificationCode = _cryptoProvider.Random.GenerateRandomString(OneTimePasswordLength, OneTimePasswordAlphabet);
         UserMultiFactorChallengeEntity challengeEntity = new UserMultiFactorChallengeEntity(request.MultiFactorChallengeId, request.UserId, verificationCode, DateTime.UtcNow);
 
-        string? verifiedEmailAddress = await _dataContext.Users
-            .Where(x => x.Id == request.UserId && x.EmailAddress != null)
+        string? emailAddress = await _dataContext.Users
+            .Where(x => x.Id == request.UserId && !string.IsNullOrEmpty(x.EmailAddress))
             .Select(x => x.EmailAddress)
             .FirstOrDefaultAsync(CancellationToken.None);
 
-        if (!EmailAddress.TryFrom(verifiedEmailAddress!, out EmailAddress validEmailAddress))
+        if (emailAddress is not null && EmailAddress.TryFrom(emailAddress, out EmailAddress validEmailAddress))
         {
-            // Return true to indicate we succeeded as much as we could.
-            // Returning false may indicate to the caller the command failed for some reason outside our control and should be retried.
-            return true;
+            bool emailSuccess = await _emailService.SendMultiFactorChallengeEmailAsync(validEmailAddress, verificationCode, request.ChallengeExpirationMinutes);
+            if (emailSuccess)
+            {
+                _dataContext.UserMultiFactorChallenges.Add(challengeEntity);
+                await _dataContext.SaveChangesAsync(CancellationToken.None);
+            }
+
+            return emailSuccess;
         }
 
-        bool emailSuccess = await _emailService.SendMultiFactorChallengeEmailAsync(validEmailAddress, verificationCode, request.ChallengeExpirationMinutes);
-        if (emailSuccess)
-        {
-            _dataContext.UserMultiFactorChallenges.Add(challengeEntity);
-            await _dataContext.SaveChangesAsync(CancellationToken.None);
-        }
-
-        return emailSuccess;
+        return true;
     }
 }

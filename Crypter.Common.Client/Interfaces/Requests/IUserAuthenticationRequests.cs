@@ -28,6 +28,7 @@ using System;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using EasyMonads;
+using OneOf;
 
 namespace Crypter.Common.Client.Interfaces.Requests;
 
@@ -35,7 +36,7 @@ public interface IUserAuthenticationRequests
 {
     EventHandler? RefreshTokenRejectedHandler { set; }
     Task<Either<RegistrationError, Unit>> RegisterAsync(RegistrationRequest registerRequest);
-    Task<Either<LoginError, LoginResponse>> LoginAsync(LoginRequest loginRequest);
+    Task<Either<LoginError, OneOf<ChallengeResponse, LoginResponse>>> LoginAsync(LoginRequest loginRequest);
     Task<Either<RefreshError, RefreshResponse>> RefreshSessionAsync();
     Task<Either<PasswordChallengeError, Unit>> PasswordChallengeAsync(PasswordChallengeRequest testPasswordRequest);
     Task<Either<PasswordChangeError, Unit>> ChangePasswordAsync(PasswordChangeRequest passwordChangeRequest);
