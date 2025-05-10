@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -26,6 +26,7 @@
 
 using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -33,6 +34,7 @@ using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Contracts;
 using EasyMonads;
+using OneOf;
 
 namespace Crypter.Common.Client.HttpClients;
 
@@ -84,6 +86,15 @@ public class CrypterHttpClient : ICrypterHttpClient
         return await SendRequestEitherResponseAsync<TResponse>(request);
     }
 
+    public async Task<Either<ErrorResponse, OneOf<T0, T1>>> PostEitherAsync<TRequest, T0, T1>(string uri, TRequest body, HttpStatusCode t0, HttpStatusCode t1)
+        where T0 : class
+        where T1 : class
+        where TRequest : class
+    {
+        using HttpRequestMessage request = MakeRequestMessage(HttpMethod.Post, uri, body);
+        return await SendRequestEitherResponseAsync<T0, T1>(request, t0, t1);
+    }
+    
     public async Task<Maybe<Unit>> PostMaybeUnitResponseAsync<TRequest>(string uri, TRequest body)
         where TRequest : class
     {
@@ -171,15 +182,39 @@ public class CrypterHttpClient : ICrypterHttpClient
 
     private async Task<Either<ErrorResponse, Unit>> SendRequestEitherUnitResponseAsync(HttpRequestMessage request)
     {
-        using HttpResponseMessage response =
-            await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+        using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
         await using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
         return response.IsSuccessStatusCode
             ? Unit.Default
-            : await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions)
-                .ConfigureAwait(false);
+            : await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
     }
 
+    private async Task<Either<ErrorResponse, OneOf<T0, T1>>> SendRequestEitherResponseAsync<T0, T1>(HttpRequestMessage request, HttpStatusCode t0StatusCode, HttpStatusCode t1StatusCode)
+    {
+        using HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+        await using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        
+        OneOf<T0, T1>? result = null;
+        if (response.StatusCode == t0StatusCode)
+        {
+            T0? t0 = await JsonSerializer.DeserializeAsync<T0>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+            result = t0 ?? (OneOf<T0, T1>?)null;
+        }
+        
+        if (response.StatusCode == t1StatusCode)
+        {
+            T1? t1 = await JsonSerializer.DeserializeAsync<T1>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+            result = t1 ?? (OneOf<T0, T1>?)null;
+        }
+
+        if (result is null)
+        {
+            return await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+        }
+
+        return result.Value;
+    }
+    
     private async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamAsync(HttpRequestMessage request)
     {
         HttpResponseMessage response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)

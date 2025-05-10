@@ -31,7 +31,6 @@ using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Client.Interfaces.Services.UserSettings;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserAuthentication.PasswordChange;
 using Crypter.Common.Primitives;
 using Crypter.Crypto.Common;
 using EasyMonads;

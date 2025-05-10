@@ -27,7 +27,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication.PasswordChange;
+namespace Crypter.Common.Contracts.Features.UserAuthentication;
 
 public class PasswordChangeRequest
 {

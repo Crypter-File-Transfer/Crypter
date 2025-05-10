@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2023 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,13 +24,17 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Text.Json.Serialization;
+
 namespace Crypter.Common.Contracts.Features.UserAuthentication;
 
-public enum PasswordChangeError
+public class ChallengeResponse
 {
-    UnknownError,
-    InvalidPassword,
-    InvalidOldPasswordVersion,
-    InvalidNewPasswordVersion,
-    PasswordHashFailure
+    public string ChallengeHash { get; init; }
+
+    [JsonConstructor]
+    public ChallengeResponse(string challengeHash)
+    {
+        ChallengeHash = challengeHash;
+    }
 }

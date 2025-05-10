@@ -25,7 +25,7 @@
  */
 
 using System.Threading.Tasks;
-using Crypter.Common.Contracts.Features.UserAuthentication.PasswordChange;
+using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Primitives;
 using EasyMonads;
 

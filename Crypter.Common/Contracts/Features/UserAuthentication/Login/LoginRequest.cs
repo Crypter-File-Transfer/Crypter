@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2024 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -36,19 +36,35 @@ public class LoginRequest
     public string Username { get; set; }
     public List<VersionedPassword> VersionedPasswords { get; set; }
     public TokenType RefreshTokenType { get; set; }
+    public MultiFactorVerification? MultiFactorVerification { get; set; }
 
     [JsonConstructor]
-    public LoginRequest(string username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+    public LoginRequest(string username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType, MultiFactorVerification? multiFactorVerification)
     {
         Username = username;
         VersionedPasswords = versionedPasswords;
         RefreshTokenType = refreshTokenType;
+        MultiFactorVerification = multiFactorVerification;
     }
 
-    public LoginRequest(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+    public LoginRequest(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType, MultiFactorVerification? multiFactorVerification)
     {
         Username = username.Value;
         VersionedPasswords = versionedPasswords;
         RefreshTokenType = refreshTokenType;
+        MultiFactorVerification = multiFactorVerification;
+    }
+}
+
+public class MultiFactorVerification
+{
+    public string ChallengeHash { get; set; }
+    public string VerificationCode { get; set; }
+
+    [JsonConstructor]
+    public MultiFactorVerification(string challengeHash, string verificationCode)
+    {
+        ChallengeHash = challengeHash;
+        VerificationCode = verificationCode;
     }
 }

@@ -110,4 +110,19 @@
             }
         </div>
     </form>
+    
+    <h3>Multi-factor Authentication</h3>
+    <form>
+        <div class="mb-3">
+            <label for="multiFactorAuthenticationToggle" class="form-label">Enabled</label>
+            <input @bind="_multiFactorAuthenticationEdit" type="checkbox" id="multiFactorAuthenticationToggle" readonly="@(!_isEditingMultiFactorAuthentication)"/>
+            @if (!string.IsNullOrEmpty(_multiFactorAuthenticationError))
+            {
+                <span class="text-danger">@_multiFactorAuthenticationError</span>
+            }
+        </div>
+        <button type="button" class="btn btn-secondary mx-auto" @onclick="OnEditMultiFactorAuthenticationClicked" hidden="@_isEditingMultiFactorAuthentication">Edit</button>
+        <button type="button" class="btn btn-secondary mx-auto" @onclick="OnCancelForMultiFactorAuthenticationClicked" hidden="@(!_isEditingMultiFactorAuthentication)">Cancel</button>
+        <button type="button" class="btn btn-primary mx-auto" @onclick="async () => await OnSaveMultiFactorAuthenticationClickedAsync()" hidden="@(!_isEditingMultiFactorAuthentication)">Save</button>
+    </form>
 }
