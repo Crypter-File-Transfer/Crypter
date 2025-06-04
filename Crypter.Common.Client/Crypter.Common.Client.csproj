@@ -18,4 +18,10 @@
      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
    </ItemGroup>
 
+   <ItemGroup>
+     <Reference Include="OneOf">
+       <HintPath>..\..\..\.nuget\packages\oneof\3.0.271\lib\netstandard2.0\OneOf.dll</HintPath>
+     </Reference>
+   </ItemGroup>
+
 </Project>

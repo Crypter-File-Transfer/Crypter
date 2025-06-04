@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,13 +24,33 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication;
+using System.Threading.Tasks;
+using Crypter.Web.Shared.Modal.Template;
+using EasyMonads;
+using Microsoft.AspNetCore.Components;
 
-public enum PasswordChangeError
+namespace Crypter.Web.Shared.Modal;
+
+public partial class TwoFactorChallengeModal : ComponentBase
 {
-    UnknownError,
-    InvalidPassword,
-    InvalidOldPasswordVersion,
-    InvalidNewPasswordVersion,
-    PasswordHashFailure
+    [Parameter] public required EventCallback<Maybe<string>> ModalClosedCallback { get; set; }
+    
+    private ModalBehavior ModalBehaviorRef { get; set; } = null!;
+    
+    private async Task CloseAsync(Maybe<string> value)
+    {
+        await ModalClosedCallback.InvokeAsync(value);
+        ModalBehaviorRef.Close();
+    }
+    
+    private async Task OnSubmitClickedAsync()
+    {
+        
+    }
+
+    private async Task OnCancelClickedAsync()
+    {
+        await CloseAsync(Maybe<string>.None);
+    }
 }
+

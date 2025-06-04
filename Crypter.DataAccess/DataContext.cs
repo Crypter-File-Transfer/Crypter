@@ -55,6 +55,7 @@ public class DataContext : DbContext
     public DbSet<UserKeyPairEntity> UserKeyPairs { get; init; }
     public DbSet<UserMasterKeyEntity> UserMasterKeys { get; init; }
     public DbSet<UserMessageTransferEntity> UserMessageTransfers { get; init; }
+    public DbSet<UserMultiFactorChallengeEntity> UserMultiFactorChallenges { get; init; }
     public DbSet<UserNotificationSettingEntity> UserNotificationSettings { get; init; }
     public DbSet<UserPrivacySettingEntity> UserPrivacySettings { get; init; }
     public DbSet<UserProfileEntity> UserProfiles { get; init; }

@@ -24,13 +24,38 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-public enum PasswordChangeError
+namespace Crypter.DataAccess.Entities;
+
+public class UserMultiFactorChallengeEntity
 {
-    UnknownError,
-    InvalidPassword,
-    InvalidOldPasswordVersion,
-    InvalidNewPasswordVersion,
-    PasswordHashFailure
+    public Guid Id { get; set; }
+    public Guid Owner { get; set; }
+    public string VerificationCode { get; set; }
+    public DateTime Created { get; set; }
+    
+    public UserEntity? User { get; set; }
+
+    public UserMultiFactorChallengeEntity(Guid id, Guid owner, string verificationCode, DateTime created)
+    {
+        Id = id;
+        Owner = owner;
+        VerificationCode = verificationCode;
+        Created = created;
+    }
+}
+
+public class UserMultiFactorChallengeEntityConfiguration : IEntityTypeConfiguration<UserMultiFactorChallengeEntity>
+{
+    public void Configure(EntityTypeBuilder<UserMultiFactorChallengeEntity> builder)
+    {
+        builder.ToTable("UserMultiFactorChallenge");
+
+        builder.HasKey(x => x.Id);
+        
+        builder.Property(x => x.VerificationCode)
+            .HasMaxLength(8);
+    }
 }

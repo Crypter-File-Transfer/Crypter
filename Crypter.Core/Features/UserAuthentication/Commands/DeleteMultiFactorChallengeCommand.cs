@@ -24,13 +24,34 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-namespace Crypter.Common.Contracts.Features.UserAuthentication;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Crypter.DataAccess;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Unit = EasyMonads.Unit;
 
-public enum PasswordChangeError
+namespace Crypter.Core.Features.UserAuthentication.Commands;
+
+public sealed record DeleteMultiFactorChallengeCommand(Guid MultiFactorChallengeId) : IRequest<Unit>;
+
+internal sealed class DeleteMultiFactorChallengeCommandHandler : IRequestHandler<DeleteMultiFactorChallengeCommand, Unit>
 {
-    UnknownError,
-    InvalidPassword,
-    InvalidOldPasswordVersion,
-    InvalidNewPasswordVersion,
-    PasswordHashFailure
+    private readonly DataContext _dataContext;
+
+    public DeleteMultiFactorChallengeCommandHandler(DataContext dataContext)
+    {
+        _dataContext = dataContext;
+    }
+    
+    public async Task<Unit> Handle(DeleteMultiFactorChallengeCommand request, CancellationToken cancellationToken)
+    {
+        await _dataContext.UserMultiFactorChallenges
+            .Where(x => x.Id == request.MultiFactorChallengeId)
+            .ExecuteDeleteAsync(CancellationToken.None);
+
+        return Unit.Default;
+    }
 }

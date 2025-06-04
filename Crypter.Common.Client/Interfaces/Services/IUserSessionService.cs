@@ -31,6 +31,7 @@ using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Primitives;
 using EasyMonads;
+using OneOf;
 
 namespace Crypter.Common.Client.Interfaces.Services;
 
@@ -39,7 +40,7 @@ public interface IUserSessionService
     Maybe<UserSession> Session { get; }
 
     Task<bool> IsLoggedInAsync();
-    Task<Either<LoginError, Unit>> LoginAsync(Username username, Password password, bool rememberUser);
+    Task<Either<LoginError, OneOf<ChallengeResponse, Unit>>> LoginAsync(Username username, Password password, bool rememberUser, MultiFactorVerification? multiFactorVerification);
     Task<bool> TestPasswordAsync(Password password);
     Task<Unit> LogoutAsync();
 

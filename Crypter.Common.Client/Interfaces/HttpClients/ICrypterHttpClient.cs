@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,10 +25,12 @@
  */
 
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts;
 using EasyMonads;
+using OneOf;
 
 namespace Crypter.Common.Client.Interfaces.HttpClients;
 
@@ -47,6 +49,11 @@ public interface ICrypterHttpClient
     Task<Either<ErrorResponse, TResponse>> PostEitherAsync<TRequest, TResponse>(string uri, TRequest body)
         where TRequest : class
         where TResponse : class;
+    
+    Task<Either<ErrorResponse, OneOf<T0, T1>>> PostEitherAsync<TRequest, T0, T1>(string uri, TRequest body, HttpStatusCode t0, HttpStatusCode t1)
+        where TRequest : class
+        where T0 : class
+        where T1 : class;
     
     Task<Maybe<Unit>> PostMaybeUnitResponseAsync(string uri);
 

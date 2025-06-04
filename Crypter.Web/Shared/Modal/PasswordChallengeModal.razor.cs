@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Primitives;
