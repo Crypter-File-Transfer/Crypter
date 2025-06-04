@@ -133,7 +133,7 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
         return Session.IsSome;
     }
 
-    public Task<Either<LoginError, OneOf<ChallengeResponse, Unit>>> LoginAsync(Username username, Password password, bool rememberUser)
+    public Task<Either<LoginError, OneOf<ChallengeResponse, Unit>>> LoginAsync(Username username, Password password, bool rememberUser, Func<Task<MultiFactorVerification>>? getMultiFactorVerification)
     {
         return _userPasswordService
             .DeriveUserAuthenticationPasswordAsync(username, password, _userPasswordService.CurrentPasswordVersion)
@@ -142,15 +142,18 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
                 async versionedPassword =>
                 {
                     List<VersionedPassword> versionedPasswords = [versionedPassword];
-                    Either<LoginError, OneOf<ChallengeResponse, LoginResponse>> loginResponse = await LoginRecursiveAsync(username, password, versionedPasswords, _trustDeviceRefreshTokenTypeMap[rememberUser]);
+                    Either<LoginError, OneOf<ChallengeResponse, LoginResponse>> loginResponse = await LoginRecursiveAsync(username, password, versionedPasswords, _trustDeviceRefreshTokenTypeMap[rememberUser], getMultiFactorVerification);
                     await loginResponse.DoRightAsync(async x =>
                     {
-                        x.MapT1(y => StoreSessionInfo(y, rememberUser));
-                        bool showRecoveryKeyModal = await _crypterApiClient.UserConsent.GetUserConsentsAsync()
-                            .MatchAsync(
-                                none: () => false,
-                                some: y => y.TryGetValue(UserConsentType.RecoveryKeyRisks, out DateTimeOffset? value) && !value.HasValue);
-                        HandleUserLoggedInEvent(username, password, versionedPassword, rememberUser, showRecoveryKeyModal);
+                        await x.MapT1(async y =>
+                            {
+                                await StoreSessionInfoAsync(y, rememberUser);
+                                bool showRecoveryKeyModal = await _crypterApiClient.UserConsent.GetUserConsentsAsync()
+                                    .MatchAsync(
+                                        none: () => false,
+                                        some: y => y.TryGetValue(UserConsentType.RecoveryKeyRisks, out DateTimeOffset? value) && !value.HasValue);
+                                HandleUserLoggedInEvent(username, password, versionedPassword, rememberUser, showRecoveryKeyModal);
+                            });
                     });
 
                     return loginResponse
@@ -158,9 +161,15 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
                 });
     }
 
-    private Task<Either<LoginError, OneOf<ChallengeResponse, LoginResponse>>> LoginRecursiveAsync(Username username, Password password, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+    private async Task<Either<LoginError, OneOf<ChallengeResponse, LoginResponse>>> LoginRecursiveAsync(Username username, Password password, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType, Func<Task<MultiFactorVerification>>? getMultiFactorVerification)
     {
-        return SendLoginRequestAsync(username, versionedPasswords, refreshTokenType)
+        // TODO
+        // Make sure the password is not updated unless MFA has been submitted
+        // Update the API to return the challenge response before InvalidPasswordVersion
+        MultiFactorVerification? multiFactorVerification = getMultiFactorVerification is null
+            ? null
+            : await getMultiFactorVerification();
+        return await SendLoginRequestAsync(username, versionedPasswords, refreshTokenType, multiFactorVerification)
             .MatchAsync(
                 async error =>
                 {
@@ -174,7 +183,7 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
                                 async previousVersionedPassword =>
                                 {
                                     versionedPasswords.Add(previousVersionedPassword);
-                                    return await LoginRecursiveAsync(username, password, versionedPasswords, refreshTokenType);
+                                    return await LoginRecursiveAsync(username, password, versionedPasswords, refreshTokenType, getMultiFactorVerification);
                                 });
                     }
 
@@ -252,9 +261,9 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
 
     #endregion
 
-    private Task<Either<LoginError, OneOf<ChallengeResponse, LoginResponse>>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType)
+    private Task<Either<LoginError, OneOf<ChallengeResponse, LoginResponse>>> SendLoginRequestAsync(Username username, List<VersionedPassword> versionedPasswords, TokenType refreshTokenType, MultiFactorVerification? multiFactorVerification)
     {
-        LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType, null);
+        LoginRequest loginRequest = new LoginRequest(username, versionedPasswords, refreshTokenType, multiFactorVerification);
         return _crypterApiClient.UserAuthentication.LoginAsync(loginRequest);
     }
 
@@ -287,7 +296,7 @@ public class UserSessionService<TStorageLocation> : IUserSessionService, IDispos
     }
 
 
-    private Task<Unit> StoreSessionInfo(LoginResponse response, bool rememberUser)
+    private Task<Unit> StoreSessionInfoAsync(LoginResponse response, bool rememberUser)
     {
         UserSession sessionInfo = new UserSession(response.Username, rememberUser, UserSession.LATEST_SCHEMA);
         Session = sessionInfo;

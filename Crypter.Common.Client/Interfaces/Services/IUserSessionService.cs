@@ -40,7 +40,7 @@ public interface IUserSessionService
     Maybe<UserSession> Session { get; }
 
     Task<bool> IsLoggedInAsync();
-    Task<Either<LoginError, OneOf<ChallengeResponse, Unit>>> LoginAsync(Username username, Password password, bool rememberUser);
+    Task<Either<LoginError, OneOf<ChallengeResponse, Unit>>> LoginAsync(Username username, Password password, bool rememberUser, MultiFactorVerification? multiFactorVerification);
     Task<bool> TestPasswordAsync(Password password);
     Task<Unit> LogoutAsync();
 

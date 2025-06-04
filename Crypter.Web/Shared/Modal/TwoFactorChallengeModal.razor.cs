@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -25,62 +25,32 @@
  */
 
 using System.Threading.Tasks;
-using Crypter.Common.Client.Interfaces.Services;
-using Crypter.Common.Primitives;
 using Crypter.Web.Shared.Modal.Template;
+using EasyMonads;
 using Microsoft.AspNetCore.Components;
 
 namespace Crypter.Web.Shared.Modal;
 
-public partial class PasswordChallengeModal
+public partial class TwoFactorChallengeModal : ComponentBase
 {
-    [Inject] private IUserSessionService UserSessionService { get; set; } = null!;
-
-    [Parameter] public required EventCallback<bool> ModalClosedCallback { get; set; }
-
+    [Parameter] public required EventCallback<Maybe<string>> ModalClosedCallback { get; set; }
+    
     private ModalBehavior ModalBehaviorRef { get; set; } = null!;
-
-    private string _username = string.Empty;
-    private string _password = string.Empty;
-    private bool _passwordTestFailed;
-
-    public void Open()
+    
+    private async Task CloseAsync(Maybe<string> value)
     {
-        _username = UserSessionService.Session.Match(
-            () => string.Empty,
-            x => x.Username);
-
-        ModalBehaviorRef.Open();
-    }
-
-    private async Task CloseAsync(bool success)
-    {
-        await ModalClosedCallback.InvokeAsync(success);
+        await ModalClosedCallback.InvokeAsync(value);
         ModalBehaviorRef.Close();
     }
-
-    private async Task<bool> TestPasswordAsync()
-    {
-        if (!Password.TryFrom(_password, out Password password))
-        {
-            return false;
-        }
-
-        return await UserSessionService.TestPasswordAsync(password);
-    }
-
+    
     private async Task OnSubmitClickedAsync()
     {
-        if (await TestPasswordAsync())
-        {
-            await CloseAsync(true);
-        }
-
-        _passwordTestFailed = true;
+        
     }
 
     private async Task OnCancelClickedAsync()
     {
-        await CloseAsync(false);
+        await CloseAsync(Maybe<string>.None);
     }
 }
+
