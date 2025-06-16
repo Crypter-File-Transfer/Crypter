@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+ * Copyright (C) 2025 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -40,6 +40,7 @@ using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using EasyMonads;
+using OneOf;
 
 namespace Crypter.Common.Client.HttpClients;
 
@@ -154,6 +155,16 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         return await DeserializeResponseAsync<TResponse>(response);
     }
 
+    public async Task<Either<ErrorResponse, OneOf<T0, T1>>> PostEitherAsync<TRequest, T0, T1>(string uri, TRequest body, HttpStatusCode t0StatusCode, HttpStatusCode t1StatusCode)
+        where T0 : class
+        where T1 : class
+        where TRequest : class
+    {
+        Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Post, uri, body);
+        using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
+        return await DeserializeResponseAsync<T0, T1>(response, t0StatusCode, t1StatusCode);
+    }
+    
     public async Task<Maybe<Unit>> PostMaybeUnitResponseAsync<TRequest>(string uri, TRequest body)
         where TRequest : class
     {
@@ -325,8 +336,7 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         return Unit.Default;
     }
     
-    private async Task<Either<ErrorResponse, TResponse>> DeserializeResponseAsync<TResponse>(
-        HttpResponseMessage response)
+    private async Task<Either<ErrorResponse, TResponse>> DeserializeResponseAsync<TResponse>(HttpResponseMessage response)
     {
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
@@ -339,9 +349,38 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
             : await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions)
                 .ConfigureAwait(false);
     }
+    
+    private async Task<Either<ErrorResponse, OneOf<T0, T1>>> DeserializeResponseAsync<T0, T1>(HttpResponseMessage response, HttpStatusCode t0StatusCode, HttpStatusCode t1StatusCode)
+    {
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            return Either<ErrorResponse, OneOf<T0, T1>>.Neither;
+        }
 
-    private async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(
-        HttpResponseMessage response)
+        await using Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+        
+        OneOf<T0, T1>? result = null;
+        if (response.StatusCode == t0StatusCode)
+        {
+            T0? t0 = await JsonSerializer.DeserializeAsync<T0>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+            result = t0 ?? (OneOf<T0, T1>?)null;
+        }
+        
+        if (response.StatusCode == t1StatusCode)
+        {
+            T1? t1 = await JsonSerializer.DeserializeAsync<T1>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+            result = t1 ?? (OneOf<T0, T1>?)null;
+        }
+
+        if (result is null)
+        {
+            return await JsonSerializer.DeserializeAsync<ErrorResponse>(stream, _jsonSerializerOptions).ConfigureAwait(false);
+        }
+
+        return result.Value;
+    }
+
+    private async Task<Either<ErrorResponse, StreamDownloadResponse>> GetStreamResponseAsync(HttpResponseMessage response)
     {
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {

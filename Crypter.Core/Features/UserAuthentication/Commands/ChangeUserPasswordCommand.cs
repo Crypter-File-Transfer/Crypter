@@ -30,7 +30,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.UserAuthentication;
-using Crypter.Common.Contracts.Features.UserAuthentication.PasswordChange;
 using Crypter.Common.Primitives;
 using Crypter.Core.Identity;
 using Crypter.Core.MediatorMonads;

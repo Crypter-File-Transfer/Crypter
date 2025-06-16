@@ -24,7 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Common.Primitives;
@@ -76,8 +75,10 @@ public partial class PasswordChallengeModal
         {
             await CloseAsync(true);
         }
-
-        _passwordTestFailed = true;
+        else
+        {
+            _passwordTestFailed = true;
+        }
     }
 
     private async Task OnCancelClickedAsync()

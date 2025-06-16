@@ -34,6 +34,7 @@ using Crypter.Web.Helpers;
 using Crypter.Web.Models.Forms;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
+using OneOf;
 
 namespace Crypter.Web.Shared;
 
@@ -62,20 +63,31 @@ public partial class LoginComponent
 
     private async Task SubmitLoginAsync()
     {
-        Task<Either<LoginError, Unit>> loginTask = from username in ValidateUsername().ToEither(LoginError.InvalidUsername).AsTask()
+        Task<Either<LoginError, OneOf<ChallengeResponse, Unit>>> loginTask = from username in ValidateUsername().ToEither(LoginError.InvalidUsername).AsTask()
             from password in ValidatePassword().ToEither(LoginError.InvalidPassword).AsTask()
-            from loginResult in UserSessionService.LoginAsync(username, password, _loginModel.RememberMe)
+            from loginResult in UserSessionService.LoginAsync(username, password, _loginModel.RememberMe, null)
             select loginResult;
 
-        Either<LoginError, Unit> loginTaskResult = await loginTask;
+        Either<LoginError, OneOf<ChallengeResponse, Unit>> loginTaskResult = await loginTask;
 
-        loginTaskResult
-            .DoRight(_ =>
+        await loginTaskResult
+            .MapAsync(async x =>
+            {
+                // Present modal
+                await Task.Delay(1);
+                
+                // Handle challenge response
+                return x.MapT0(challengeResponse =>
+                {
+                    return Task.FromResult(Either<ChallengeResponse, Unit>.Neither);
+                });
+            })
+            .DoRightAsync(x =>
             {
                 string returnUrl = NavigationManager.GetQueryParameter("returnUrl") ?? UserLandingPage;
                 NavigationManager.NavigateTo(returnUrl);
             })
-            .DoLeftOrNeither(
+            .DoLeftOrNeitherAsync(
                 HandleLoginFailure,
                 () => HandleLoginFailure(LoginError.UnknownError));
     }

@@ -138,7 +138,7 @@ internal static class TestData
     {
         byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
         VersionedPassword versionedPassword = new VersionedPassword(passwordBytes, 1);
-        return new LoginRequest(username, [versionedPassword], tokenType);
+        return new LoginRequest(username, [versionedPassword], tokenType, null);
     }
 
     internal static VersionedPassword GetVersionedPassword(string password, short version)
