@@ -75,8 +75,10 @@ public partial class PasswordChallengeModal
         {
             await CloseAsync(true);
         }
-
-        _passwordTestFailed = true;
+        else
+        {
+            _passwordTestFailed = true;
+        }
     }
 
     private async Task OnCancelClickedAsync()

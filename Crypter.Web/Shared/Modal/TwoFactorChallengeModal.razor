@@ -32,10 +32,10 @@
             </div>
             <form @onsubmit:preventDefault @onsubmit="OnSubmitClickedAsync">
                 <div class="modal-body justify-content-center">
-                    <p class="word-wrap">A </p>
+                    <p class="word-wrap">Provide the code sent to your email address.</p>
                     <div class="mb-3">
-                        <input type="password" class="form-control" id="password" @bind="_password" placeholder="Password">
-                        <span hidden="@(!_passwordTestFailed)" class="text-danger">Invalid password</span>
+                        <input type="password" class="form-control" id="password" @bind="_code" placeholder="Code">
+                        <span hidden="@(!_invalidCode)" class="text-danger">Invalid code</span>
                     </div>
                 </div>
                 <div class="modal-footer">

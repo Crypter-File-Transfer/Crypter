@@ -25,6 +25,7 @@
  */
 
 using System.Threading.Tasks;
+using Crypter.Common.Client.Interfaces.Services;
 using Crypter.Web.Shared.Modal.Template;
 using EasyMonads;
 using Microsoft.AspNetCore.Components;
@@ -33,7 +34,12 @@ namespace Crypter.Web.Shared.Modal;
 
 public partial class TwoFactorChallengeModal : ComponentBase
 {
+    [Inject] private IUserSessionService UserSessionService { get; set; }
+    
     [Parameter] public required EventCallback<Maybe<string>> ModalClosedCallback { get; set; }
+    
+    private string _code = string.Empty;
+    private bool _invalidCode;
     
     private ModalBehavior ModalBehaviorRef { get; set; } = null!;
     
@@ -42,10 +48,15 @@ public partial class TwoFactorChallengeModal : ComponentBase
         await ModalClosedCallback.InvokeAsync(value);
         ModalBehaviorRef.Close();
     }
+
+    private async Task SubmitCode()
+    {
+        await UserSessionService.LoginAsync();
+    }
     
     private async Task OnSubmitClickedAsync()
     {
-        
+        _invalidCode = false;
     }
 
     private async Task OnCancelClickedAsync()
