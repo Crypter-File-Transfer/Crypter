@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
    <PropertyGroup>
-      <TargetFramework>net9.0</TargetFramework>
+      <TargetFramework>net10.0</TargetFramework>
       <Nullable>enable</Nullable>
       <ImplicitUsings>disable</ImplicitUsings>
       <ApplicationIcon />
@@ -14,7 +14,6 @@
       <CompressionExcludePatterns>
          blazorSodium.bundle.js
       </CompressionExcludePatterns>
-      <LangVersion>12</LangVersion>
    </PropertyGroup>
 
    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -27,10 +26,10 @@
 
    <ItemGroup>
       <PackageReference Include="ByteSize" Version="2.1.2" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="9.0.3" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.3" />
-      <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.3" />
-      <PackageReference Include="MinVer" Version="6.0.0">
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.10" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.10" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
+      <PackageReference Include="MinVer" Version="7.0.0">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>

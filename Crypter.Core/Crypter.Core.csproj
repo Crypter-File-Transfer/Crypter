@@ -1,22 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
    <PropertyGroup>
-      <TargetFramework>net9.0</TargetFramework>
+      <TargetFramework>net10.0</TargetFramework>
       <Nullable>enable</Nullable>
       <ImplicitUsings>disable</ImplicitUsings>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-      <LangVersion>12</LangVersion>
    </PropertyGroup>
 
    <ItemGroup>
-      <PackageReference Include="Hangfire.AspNetCore" Version="1.8.18" />
-      <PackageReference Include="Hangfire.PostgreSql" Version="1.20.12" />
+      <PackageReference Include="Hangfire.AspNetCore" Version="1.8.24" />
+      <PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
       <PackageReference Include="Hashids.net" Version="1.7.0" />
-      <PackageReference Include="MailKit" Version="4.11.0" />
+      <PackageReference Include="MailKit" Version="4.17.0" />
       <PackageReference Include="MediatR" Version="12.5.0" />
-      <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="9.0.3" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.7.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="10.0.10" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
    </ItemGroup>
 
    <ItemGroup>
