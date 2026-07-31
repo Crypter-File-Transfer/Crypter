@@ -22,10 +22,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Stop service
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -38,7 +38,7 @@ jobs:
             fi
 
       - name: Push latest systemctl service file
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -49,7 +49,7 @@ jobs:
           strip_components: 2
       
       - name: Reload systemctl daemon
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -58,7 +58,7 @@ jobs:
           script: systemctl --user daemon-reload
 
       - name: Push latest Docker Compose file
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -69,7 +69,7 @@ jobs:
 
       - name: Push latest Docker Compose override file if deploying to Staging server
         if: github.event.inputs.environment == 'staging'
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -79,7 +79,7 @@ jobs:
           target: crypter-web-container/
 
       - name: Pull latest images
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -88,7 +88,7 @@ jobs:
           script: docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} pull
 
       - name: Migrate database
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
@@ -97,7 +97,7 @@ jobs:
           script: docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} run api /app/efbundle
 
       - name: Start service
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ secrets.APPSERVER_SSH_HOST }}
           port: ${{ secrets.APPSERVER_SSH_PORT }}
