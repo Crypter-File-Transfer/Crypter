@@ -5,7 +5,12 @@ on:
     branches: [ main, stable ]
 
 jobs:
+  changes:
+    uses: ./.github/workflows/detect-code-changes.yml
+
   build-and-test:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -13,12 +18,12 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11.18.0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Restore dependencies
         run: dotnet restore Crypter.Test
@@ -30,6 +35,8 @@ jobs:
         run: dotnet test Crypter.Test --configuration Release --no-build --verbosity normal
 
   build-and-test-web:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -37,12 +44,12 @@ jobs:
       
     - uses: pnpm/action-setup@v4
       with:
-        version: 9
+        version: 11.18.0
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: 10.0.x
 
     - name: Install wasm-tools
       run: dotnet workload install wasm-tools

@@ -7,8 +7,13 @@ on:
     - cron: '15 3 * * 2'
 
 jobs:
+  changes:
+    uses: ./.github/workflows/detect-code-changes.yml
+
   analyze:
     name: Analyze
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -40,11 +45,11 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: 10.0.x
 
     - uses: pnpm/action-setup@v4
       with:
-        version: 9
+        version: 11.18.0
 
     - name: Install wasm-tools
       run: dotnet workload install wasm-tools

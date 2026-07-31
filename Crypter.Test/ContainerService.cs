@@ -45,8 +45,7 @@ internal class ContainerService : IAsyncDisposable
     {
         PostgresContainerSettings containerSettings = GetPostgresContainerSettings();
 
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage(containerSettings.Image)
+        _postgresContainer = new PostgreSqlBuilder(containerSettings.Image)
             .WithPassword(containerSettings.SuperPassword)
             .WithPortBinding(containerSettings.ContainerPort, true)
             .WithBindMount(GetPostgresInitVolume(), "/docker-entrypoint-initdb.d")

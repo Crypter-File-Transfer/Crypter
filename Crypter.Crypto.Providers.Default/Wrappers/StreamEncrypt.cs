@@ -59,7 +59,7 @@ public class StreamEncrypt : IStreamEncrypt
     public byte[] GenerateHeader(ReadOnlySpan<byte> key)
     {
         byte[] header = new byte[HeaderSize];
-        _state = new IncrementalXChaCha20Poly1305(false, header, key);
+        _state = new IncrementalXChaCha20Poly1305(header, key, encryption: true);
         return header;
     }
 
@@ -73,7 +73,7 @@ public class StreamEncrypt : IStreamEncrypt
         ChunkFlag chunkFlag = final ? ChunkFlag.Final : ChunkFlag.Message;
         byte[] paddedPlaintext = _padding.Pad(plaintext, _padSize);
         byte[] ciphertext = new byte[paddedPlaintext.Length + TagSize];
-        _state.Push(ciphertext, paddedPlaintext, chunkFlag);
+        _state.EncryptChunk(ciphertext, paddedPlaintext, chunkFlag);
         return ciphertext;
     }
 }
