@@ -27,6 +27,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Crypter.API;
 using Crypter.API.Configuration;
 using Crypter.API.MetadataProviders;
 using Crypter.API.Middleware;
@@ -86,6 +87,8 @@ builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>, JwtBearerConf
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
 builder.Services.AddCors();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddCrypterApiHandlers();
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
@@ -151,6 +154,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlerMiddleware>();
 app.MapControllers();
+app.MapCrypterApiEndpoints();
 
 await app.MigrateDatabaseAsync();
 app.ScheduleRecurringReports();

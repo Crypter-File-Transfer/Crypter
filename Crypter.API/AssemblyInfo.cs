@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2024 Crypter File Transfer
+/*
+ * Copyright (C) 2026 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,40 +24,6 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Crypter.DataAccess;
-using Crypter.DataAccess.Entities;
-using EasyMonads;
 using Immediate.Handlers.Shared;
-using Microsoft.EntityFrameworkCore;
 
-namespace Crypter.Core.Features.UserContacts.Commands;
-
-[Handler]
-public static partial class RemoveUserContactCommand
-{
-    public sealed record Command(Guid UserId, string ContactUsername);
-
-    private static async ValueTask<Unit> HandleAsync(
-        Command request,
-        DataContext dataContext,
-        CancellationToken cancellationToken)
-    {
-        string lowerContactUsername = request.ContactUsername.ToLower();
-
-        UserContactEntity? contactEntity = await dataContext.UserContacts
-            .Where(x => x.OwnerId == request.UserId && x.Contact!.Username.ToLower() == lowerContactUsername)
-            .FirstOrDefaultAsync(CancellationToken.None);
-
-        if (contactEntity is not null)
-        {
-            dataContext.UserContacts.Remove(contactEntity);
-            await dataContext.SaveChangesAsync(CancellationToken.None);
-        }
-
-        return Unit.Default;
-    }
-}
+[assembly: ImmediateAssemblyIdentifier("CrypterApi")]
