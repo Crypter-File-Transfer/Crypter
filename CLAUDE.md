@@ -44,6 +44,10 @@ docker compose up                             # local stack
 ## Commits
 
 - Base new branches on `stable` and target `stable` in pull requests. `main` and `stable` must always be releasable.
+- Work in a git worktree. Create it from `origin/stable`, not from the default branch, then enter it by path:
+  ```bash
+  git worktree add .claude/worktrees/{name} -b {branch} origin/stable
+  ```
 - Subject line: imperative mood, capitalized, no trailing period, under ~72 characters. Existing history reads `Add basic tests for getting transfer settings`, `Fix Docker image builds for .NET 10 and pnpm 11`, `Use SemaphoreSlim to limit access to UserTransferSettings memory cache`.
 - No prefixes or tags — this repo does not use Conventional Commits.
 - Body is optional for small, self-explanatory changes. When a change is non-obvious, write a body wrapped at ~80 characters explaining *why*: what broke, what constraint forced the approach, what was ruled out. Describe consequences, not a file-by-file list of the diff.
@@ -52,5 +56,6 @@ docker compose up                             # local stack
 ## Pull requests
 
 - Title reads like a commit subject.
-- Description is written in plain English and states what changed and why. A short bullet summary plus how it was verified is enough; skip ceremony for trivial changes.
-- Call out anything a reviewer would otherwise have to discover: breaking API changes, migrations, deployment steps, dependencies deliberately held back.
+- Description is a few sentences of plain English saying what changed and why. Short is good.
+- Do not argue the case. No justifying the approach, pre-empting objections, listing rejected alternatives, or citing evidence that the change is sound. Reviewers are on the same side.
+- Call out what a reviewer would otherwise have to discover: breaking API changes, migrations, deployment steps, dependencies deliberately held back. That is information, not argument.
