@@ -5,8 +5,13 @@ on:
     branches: [ main, stable ]
 
 jobs:
+  changes:
+    uses: ./.github/workflows/detect-code-changes.yml
+
   build-web:
 
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
 
     steps:
