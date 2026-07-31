@@ -24,10 +24,7 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Dapper;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Npgsql;
 using NUnit.Framework;
@@ -78,15 +75,12 @@ internal class PostgresContainer_Tests
         await using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.CrypterConnectionString);
         await connection.OpenAsync();
 
-        const string query = "SELECT has_database_privilege(@Username, @DatabaseName, 'CONNECT');";
-        var parameters = new
-        {
-            Username = postgresSettings.CrypterUserName,
-            DatabaseName = postgresSettings.HangfireDatabaseName
-        };
+        await using NpgsqlCommand command = new NpgsqlCommand(
+            "SELECT has_database_privilege(@Username, @DatabaseName, 'CONNECT');", connection);
+        command.Parameters.AddWithValue("Username", postgresSettings.CrypterUserName!);
+        command.Parameters.AddWithValue("DatabaseName", postgresSettings.HangfireDatabaseName!);
 
-        IEnumerable<bool> results = await connection.QueryAsync<bool>(query, parameters);
-        bool canConnect = results.First();
+        bool canConnect = (bool)(await command.ExecuteScalarAsync())!;
 
         Assert.That(canConnect, Is.False);
 
@@ -101,15 +95,12 @@ internal class PostgresContainer_Tests
         await using NpgsqlConnection connection = new NpgsqlConnection(AssemblySetup.HangfireConnectionString);
         await connection.OpenAsync();
 
-        const string query = "SELECT has_database_privilege(@Username, @DatabaseName, 'CONNECT');";
-        var parameters = new
-        {
-            Username = postgresSettings.HangfireUserName,
-            DatabaseName = postgresSettings.CrypterDatabaseName
-        };
+        await using NpgsqlCommand command = new NpgsqlCommand(
+            "SELECT has_database_privilege(@Username, @DatabaseName, 'CONNECT');", connection);
+        command.Parameters.AddWithValue("Username", postgresSettings.HangfireUserName!);
+        command.Parameters.AddWithValue("DatabaseName", postgresSettings.CrypterDatabaseName!);
 
-        IEnumerable<bool> results = await connection.QueryAsync<bool>(query, parameters);
-        bool canConnect = results.First();
+        bool canConnect = (bool)(await command.ExecuteScalarAsync())!;
 
         Assert.That(canConnect, Is.False);
 

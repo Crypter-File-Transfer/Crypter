@@ -35,15 +35,15 @@ public class Padding : IPadding
 {
     public byte[] Pad(ReadOnlySpan<byte> block, int blockSize)
     {
-        int bufferSize = Geralt.Padding.GetPaddedLength(block.Length, blockSize);
+        int bufferSize = Geralt.Iso78164Padding.GetPaddedBufferSize(block, blockSize);
         byte[] buffer = new byte[bufferSize];
-        Geralt.Padding.Pad(buffer, block, blockSize);
+        Geralt.Iso78164Padding.Pad(buffer, block, blockSize);
         return buffer;
     }
 
     public byte[] Unpad(ReadOnlySpan<byte> block, int blockSize)
     {
-        int unpaddedLength = Geralt.Padding.GetUnpaddedLength(block, blockSize);
+        int unpaddedLength = Geralt.Iso78164Padding.GetUnpaddedBufferSize(block, blockSize);
         return block[..unpaddedLength].ToArray();
     }
 }

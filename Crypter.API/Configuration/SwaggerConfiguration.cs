@@ -24,9 +24,9 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Crypter.API.Configuration;
@@ -45,21 +45,14 @@ public static class SwaggerConfiguration
             Type = SecuritySchemeType.Http
         };
 
-        OpenApiSecurityScheme securityScheme = new OpenApiSecurityScheme
-        {
-            Reference = new OpenApiReference
-            {
-                Id = "jwt_auth",
-                Type = ReferenceType.SecurityScheme
-            }
-        };
-
-        OpenApiSecurityRequirement securityRequirements = new OpenApiSecurityRequirement
-        {
-            { securityScheme, Array.Empty<string>() }
-        };
-
         options.AddSecurityDefinition("jwt_auth", securityDefinition);
-        options.AddSecurityRequirement(securityRequirements);
+        options.AddSecurityRequirement(document =>
+        {
+            OpenApiSecuritySchemeReference securityScheme = new OpenApiSecuritySchemeReference("jwt_auth", document);
+            return new OpenApiSecurityRequirement
+            {
+                { securityScheme, new List<string>() }
+            };
+        });
     }
 }
