@@ -25,40 +25,15 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Crypter.API.Methods;
-using Crypter.Common.Contracts.Features.Contacts;
-using Crypter.Core.Features.UserContacts.Queries;
-using Immediate.Apis.Shared;
-using Immediate.Handlers.Shared;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
+using Crypter.Core.Services;
 using Microsoft.AspNetCore.Http;
 
-namespace Crypter.API.Endpoints.UserContacts;
+namespace Crypter.API.Methods;
 
-[Handler]
-[MapGet("api/user/contact")]
-[Authorize]
-public static partial class GetUserContactsEndpoint
+internal static class EndpointUser
 {
-    public sealed record Request;
-
-    internal static void CustomizeEndpoint(RouteHandlerBuilder endpoint) =>
-        endpoint
-            .Produces<List<UserContact>>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized);
-
-    private static async ValueTask<IResult> HandleAsync(
-        Request request,
-        IHttpContextAccessor httpContextAccessor,
-        GetUserContactsQuery.Handler handler,
-        CancellationToken cancellationToken)
+    internal static Guid ParseUserId(IHttpContextAccessor httpContextAccessor)
     {
-        Guid userId = EndpointUser.ParseUserId(httpContextAccessor);
-        List<UserContact> result = await handler.HandleAsync(new GetUserContactsQuery.Query(userId), cancellationToken);
-        return Results.Ok(result);
+        return TokenService.ParseUserId(httpContextAccessor.HttpContext!.User);
     }
 }

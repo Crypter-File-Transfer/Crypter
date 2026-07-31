@@ -32,7 +32,6 @@ using Crypter.API.Methods;
 using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Core.Features.UserContacts.Commands;
-using Crypter.Core.Services;
 using EasyMonads;
 using Immediate.Apis.Shared;
 using Immediate.Handlers.Shared;
@@ -67,7 +66,7 @@ public static partial class RemoveUserContactEndpoint
         RemoveUserContactCommand.Handler handler,
         CancellationToken cancellationToken)
     {
-        Guid userId = TokenService.ParseUserId(httpContextAccessor.HttpContext!.User);
+        Guid userId = EndpointUser.ParseUserId(httpContextAccessor);
         RemoveUserContactCommand.Command command = new RemoveUserContactCommand.Command(userId, request.Username);
 
         Either<RemoveUserContactError, Unit> result = await handler.HandleAsync(command, cancellationToken);
