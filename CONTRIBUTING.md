@@ -24,7 +24,7 @@ General guidelines for everyone to follow:
 * Multiple commits per pull request are okay.
 * It is highly encouraged to improve upon your open pull requests. If you see room for improvement, then make the necessary changes and push a new commit.
 * All pull requests should have a description written by the author. Describe your change in plain English.
-* Do not merge incomplete or partial code. The `master` and `stable` branches should always be in a releasable state.
+* Do not merge incomplete or partial code. The `main` and `stable` branches should always be in a releasable state.
 
 There are two different procedures for submitting pull requests.
 The first procedure is for members of the `Crypter-File-Transfer` team in Github.
@@ -53,11 +53,25 @@ All pull requests are treated equally.
 
 ## Schema Updates
 
-The database schema is made up of the models located under `Crypter.Core/Entities`.
+The database schema is made up of the models located under `Crypter.DataAccess/Entities`.
 Each of these models correspond to a table in the Crypter database.
 Every property corresponds to a column in that table.
 If you need to update the database schema, these models must be updated.
 
 ## Migrations
 
-Refer to the `Docs/Production/Deployment/PostgreSQL.md` document on how to create a schema migration.
+Schema changes require an Entity Framework Core migration. Migrations live under `Crypter.DataAccess/Migrations`.
+
+To create one:
+
+```
+dotnet ef migrations add {MigrationName} --project Crypter.DataAccess --startup-project Crypter.API
+```
+
+To list the existing migrations without connecting to a database:
+
+```
+dotnet ef migrations list --project Crypter.DataAccess --startup-project Crypter.API --no-connect
+```
+
+Some migrations need a companion SQL script to be run beforehand. These scripts belong in `Crypter.DataAccess/Scripts`.
