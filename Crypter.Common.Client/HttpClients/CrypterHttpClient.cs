@@ -116,15 +116,6 @@ public class CrypterHttpClient : ICrypterHttpClient
         return await SendRequestEitherUnitResponseAsync(request);
     }
 
-    public async Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri)
-    {
-        using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, uri);
-        using HttpResponseMessage response = await _httpClient.SendAsync(request);
-        return response.IsSuccessStatusCode
-            ? Unit.Default
-            : Maybe<Unit>.None;
-    }
-
     public async Task<Either<ErrorResponse, Unit>> DeleteEitherUnitResponseAsync(string uri)
     {
         using HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Delete, uri);
