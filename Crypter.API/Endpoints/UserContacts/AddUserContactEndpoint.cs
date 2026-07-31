@@ -51,7 +51,7 @@ public static partial class AddUserContactEndpoint
     public sealed record Request
     {
         [FromQuery]
-        public required string Username { get; init; }
+        public string? Username { get; init; }
     }
 
     internal static void CustomizeEndpoint(RouteHandlerBuilder endpoint) =>

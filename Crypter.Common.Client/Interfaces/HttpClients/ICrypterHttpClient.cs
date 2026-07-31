@@ -60,6 +60,8 @@ public interface ICrypterHttpClient
 
     Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri);
 
+    Task<Either<ErrorResponse, Unit>> DeleteEitherUnitResponseAsync(string uri);
+
     Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)
         where TResponse : class;
 

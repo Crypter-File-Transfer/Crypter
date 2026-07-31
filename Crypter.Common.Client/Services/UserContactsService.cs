@@ -83,8 +83,9 @@ public class UserContactsService : IUserContactsService, IDisposable
     {
         await LoadContactsAsync();
         string lowerContactUsername = contactUsername.ToLower();
-        Maybe<Unit> response = await _crypterApiClient.UserContact.RemoveUserContactAsync(lowerContactUsername);
-        response.IfSome(_ => _contacts!.Remove(lowerContactUsername));
+        Either<RemoveUserContactError, Unit> response =
+            await _crypterApiClient.UserContact.RemoveUserContactAsync(lowerContactUsername);
+        response.DoRight(_ => _contacts!.Remove(lowerContactUsername));
     }
 
     private async Task<Dictionary<string, UserContact>> FetchContactsAsync()

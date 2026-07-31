@@ -35,5 +35,5 @@ public interface IUserContactRequests
 {
     Task<Maybe<List<UserContact>>> GetUserContactsAsync();
     Task<Either<AddUserContactError, UserContact>> AddUserContactAsync(string contactUsername);
-    Task<Maybe<Unit>> RemoveUserContactAsync(string contactUsername);
+    Task<Either<RemoveUserContactError, Unit>> RemoveUserContactAsync(string contactUsername);
 }

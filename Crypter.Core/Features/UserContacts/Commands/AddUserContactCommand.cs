@@ -29,6 +29,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Primitives;
 using Crypter.Core.LinqExpressions;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
@@ -41,14 +42,19 @@ namespace Crypter.Core.Features.UserContacts.Commands;
 [Handler]
 public static partial class AddUserContactCommand
 {
-    public sealed record Command(Guid UserId, string ContactUsername);
+    public sealed record Command(Guid UserId, string? ContactUsername);
 
     private static async ValueTask<Either<AddUserContactError, UserContact>> HandleAsync(
         Command request,
         DataContext dataContext,
         CancellationToken cancellationToken)
     {
-        string lowerContactUsername = request.ContactUsername.ToLower();
+        if (!Username.TryFrom(request.ContactUsername!, out Username? validContactUsername))
+        {
+            return AddUserContactError.InvalidUser;
+        }
+
+        string lowerContactUsername = validContactUsername.Value.ToLower();
 
         var foundUser = await dataContext.Users
             .Where(x => x.Username.ToLower() == lowerContactUsername)

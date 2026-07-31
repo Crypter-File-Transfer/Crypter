@@ -28,6 +28,8 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Primitives;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
@@ -39,14 +41,19 @@ namespace Crypter.Core.Features.UserContacts.Commands;
 [Handler]
 public static partial class RemoveUserContactCommand
 {
-    public sealed record Command(Guid UserId, string ContactUsername);
+    public sealed record Command(Guid UserId, string? ContactUsername);
 
-    private static async ValueTask<Unit> HandleAsync(
+    private static async ValueTask<Either<RemoveUserContactError, Unit>> HandleAsync(
         Command request,
         DataContext dataContext,
         CancellationToken cancellationToken)
     {
-        string lowerContactUsername = request.ContactUsername.ToLower();
+        if (!Username.TryFrom(request.ContactUsername!, out Username? validContactUsername))
+        {
+            return RemoveUserContactError.InvalidUser;
+        }
+
+        string lowerContactUsername = validContactUsername.Value.ToLower();
 
         UserContactEntity? contactEntity = await dataContext.UserContacts
             .Where(x => x.OwnerId == request.UserId && x.Contact!.Username.ToLower() == lowerContactUsername)

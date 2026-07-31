@@ -90,7 +90,7 @@ internal class RemoveUserContact_Tests
         Either<AddUserContactError, UserContact> addContactResult = await _client!.UserContact.AddUserContactAsync(contactUsername);
         Maybe<List<UserContact>> secondContactsResult = await _client!.UserContact.GetUserContactsAsync();
 
-        Maybe<Unit> removeContactResult = await _client!.UserContact.RemoveUserContactAsync(contactUsername);
+        Either<RemoveUserContactError, Unit> removeContactResult = await _client!.UserContact.RemoveUserContactAsync(contactUsername);
         Maybe<List<UserContact>> finalContactsResult = await _client!.UserContact.GetUserContactsAsync();
 
         Assert.That(userRegistrationResult.IsRight, Is.True);
@@ -107,7 +107,7 @@ internal class RemoveUserContact_Tests
             Assert.That(x[0].Username, Is.EqualTo(contactUsername));
         });
 
-        Assert.That(removeContactResult.IsSome, Is.True);
+        Assert.That(removeContactResult.IsRight, Is.True);
         Assert.That(finalContactsResult.IsSome, Is.True);
         finalContactsResult.IfSome(x => Assert.That(x, Is.Empty));
     }

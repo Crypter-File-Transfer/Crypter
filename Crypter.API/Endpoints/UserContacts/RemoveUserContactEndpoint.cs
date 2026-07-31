@@ -25,10 +25,15 @@
  */
 
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.API.Methods;
+using Crypter.Common.Contracts;
+using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Core.Features.UserContacts.Commands;
 using Crypter.Core.Services;
+using EasyMonads;
 using Immediate.Apis.Shared;
 using Immediate.Handlers.Shared;
 using Microsoft.AspNetCore.Authorization;
@@ -46,13 +51,15 @@ public static partial class RemoveUserContactEndpoint
     public sealed record Request
     {
         [FromQuery]
-        public required string Username { get; init; }
+        public string? Username { get; init; }
     }
 
     internal static void CustomizeEndpoint(RouteHandlerBuilder endpoint) =>
         endpoint
             .Produces(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status401Unauthorized);
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status500InternalServerError);
 
     private static async ValueTask<IResult> HandleAsync(
         [AsParameters] Request request,
@@ -63,7 +70,21 @@ public static partial class RemoveUserContactEndpoint
         Guid userId = TokenService.ParseUserId(httpContextAccessor.HttpContext!.User);
         RemoveUserContactCommand.Command command = new RemoveUserContactCommand.Command(userId, request.Username);
 
-        await handler.HandleAsync(command, cancellationToken);
-        return Results.Ok();
+        Either<RemoveUserContactError, Unit> result = await handler.HandleAsync(command, cancellationToken);
+        return result.Match(
+            MakeErrorResponse,
+            _ => Results.Ok(),
+            MakeErrorResponse(RemoveUserContactError.UnknownError));
+    }
+
+    private static IResult MakeErrorResponse(RemoveUserContactError error)
+    {
+#pragma warning disable CS8524
+        return error switch
+        {
+            RemoveUserContactError.UnknownError => EndpointResults.MakeErrorResponse(HttpStatusCode.InternalServerError, error),
+            RemoveUserContactError.InvalidUser => EndpointResults.MakeErrorResponse(HttpStatusCode.BadRequest, error)
+        };
+#pragma warning restore CS8524
     }
 }
