@@ -100,7 +100,7 @@ public partial class UserSettingsNotificationSettings : IDisposable
 
     private void OnContactInfoChanged(object? sender, UserContactInfoChangedEventArgs args)
     {
-        _emailAddressVerified = args.RequestedEmailAddress;
+        _emailAddressVerified = args.VerifiedEmailAddress.IsSome;
         StateHasChanged();
     }
 
