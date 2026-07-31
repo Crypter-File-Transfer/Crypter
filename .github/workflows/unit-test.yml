@@ -5,7 +5,12 @@ on:
     branches: [ main, stable ]
 
 jobs:
+  changes:
+    uses: ./.github/workflows/detect-code-changes.yml
+
   build-and-test:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -30,6 +35,8 @@ jobs:
         run: dotnet test Crypter.Test --configuration Release --no-build --verbosity normal
 
   build-and-test-web:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
 
     steps:

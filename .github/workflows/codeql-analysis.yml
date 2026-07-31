@@ -7,8 +7,13 @@ on:
     - cron: '15 3 * * 2'
 
 jobs:
+  changes:
+    uses: ./.github/workflows/detect-code-changes.yml
+
   analyze:
     name: Analyze
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     permissions:
       actions: read
