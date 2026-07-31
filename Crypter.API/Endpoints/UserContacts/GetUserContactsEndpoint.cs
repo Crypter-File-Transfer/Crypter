@@ -48,6 +48,7 @@ public static partial class GetUserContactsEndpoint
 
     internal static void CustomizeEndpoint(RouteHandlerBuilder endpoint) =>
         endpoint
+            .WithSummary("Get a list of user contacts.")
             .Produces<List<UserContact>>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized);
 

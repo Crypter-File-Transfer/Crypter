@@ -55,6 +55,7 @@ public static partial class AddUserContactEndpoint
 
     internal static void CustomizeEndpoint(RouteHandlerBuilder endpoint) =>
         endpoint
+            .WithSummary("Add a user as a contact.")
             .Produces<UserContact>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)

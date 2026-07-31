@@ -55,6 +55,7 @@ public static partial class RemoveUserContactEndpoint
 
     internal static void CustomizeEndpoint(RouteHandlerBuilder endpoint) =>
         endpoint
+            .WithSummary("Remove a user from contacts.")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
