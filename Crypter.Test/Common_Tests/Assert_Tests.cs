@@ -110,6 +110,13 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Is_Right_Fails_For_Neither()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.IsRight(Neither));
+        Assert.That(exception!.Message, Is.EqualTo("Expected Right, but was Neither."));
+    }
+
+    [Test]
     public void Is_Right_With_An_Expected_Value_Returns_The_Value()
     {
         string value = Assert.IsRight(Right, SomeValue);
@@ -137,6 +144,13 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Is_Left_Fails_For_Neither()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.IsLeft(Neither));
+        Assert.That(exception!.Message, Is.EqualTo("Expected Left, but was Neither."));
+    }
+
+    [Test]
     public void Is_Left_With_An_Expected_Value_Returns_The_Value()
     {
         int value = Assert.IsLeft(Left, LeftValue);
@@ -160,6 +174,48 @@ internal class Assert_Tests
     {
         AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.IsNeither(Right));
         Assert.That(exception!.Message, Is.EqualTo($"Expected Neither, but was Right({SomeValue})."));
+    }
+
+    [Test]
+    public void Is_Some_Inside_A_Multiple_Scope_Does_Not_Return_A_Value()
+    {
+        bool returned = false;
+
+        Assert.Throws<AssertionException>(() => Assert.Multiple(() =>
+        {
+            _ = Assert.IsSome(None);
+            returned = true;
+        }));
+
+        Assert.That(returned, Is.False);
+    }
+
+    [Test]
+    public void Is_Right_Inside_A_Multiple_Scope_Does_Not_Return_A_Value()
+    {
+        bool returned = false;
+
+        Assert.Throws<AssertionException>(() => Assert.Multiple(() =>
+        {
+            _ = Assert.IsRight(Left);
+            returned = true;
+        }));
+
+        Assert.That(returned, Is.False);
+    }
+
+    [Test]
+    public void Is_Left_Inside_A_Multiple_Scope_Does_Not_Return_A_Value()
+    {
+        bool returned = false;
+
+        Assert.Throws<AssertionException>(() => Assert.Multiple(() =>
+        {
+            _ = Assert.IsLeft(Right);
+            returned = true;
+        }));
+
+        Assert.That(returned, Is.False);
     }
 
     [Test]
