@@ -24,83 +24,73 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Configure SSH
+        env:
+          SSH_HOST: ${{ secrets.APPSERVER_SSH_HOST }}
+          SSH_PORT: ${{ secrets.APPSERVER_SSH_PORT }}
+          SSH_USER: ${{ secrets.APPSERVER_SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.APPSERVER_SSH_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$SSH_KNOWN_HOSTS" ]; then
+            echo "The APPSERVER_SSH_KNOWN_HOSTS secret is empty." >&2
+            echo "Populate it with the output of: ssh-keyscan -p <port> <host>" >&2
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          {
+            echo "Host appserver"
+            echo "  HostName $SSH_HOST"
+            echo "  Port $SSH_PORT"
+            echo "  User $SSH_USER"
+            echo "  IdentityFile ~/.ssh/id_deploy"
+            echo "  IdentitiesOnly yes"
+            echo "  StrictHostKeyChecking yes"
+          } > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
       - name: Stop service
-        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
-        with:
-          host: ${{ secrets.APPSERVER_SSH_HOST }}
-          port: ${{ secrets.APPSERVER_SSH_PORT }}
-          username: ${{ secrets.APPSERVER_SSH_USER }}
-          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: |
+        run: |
+          ssh appserver '
             if [ "$(systemctl --user is-active crypter.service)" = "active" ]; then
               echo "Stopping service"
-              systemctl --user stop crypter.service;
+              systemctl --user stop crypter.service
             fi
+          '
 
       - name: Push latest systemctl service file
-        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
-        with:
-          host: ${{ secrets.APPSERVER_SSH_HOST }}
-          port: ${{ secrets.APPSERVER_SSH_PORT }}
-          username: ${{ secrets.APPSERVER_SSH_USER }}
-          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          source: Environments/${{ github.event.inputs.environment }}/crypter.service
-          target: .config/systemd/user/
-          strip_components: 2
-      
+        env:
+          environment_name: ${{ github.event.inputs.environment }}
+        run: |
+          ssh appserver 'mkdir -p .config/systemd/user'
+          scp "Environments/$environment_name/crypter.service" appserver:.config/systemd/user/
+
       - name: Reload systemctl daemon
-        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
-        with:
-          host: ${{ secrets.APPSERVER_SSH_HOST }}
-          port: ${{ secrets.APPSERVER_SSH_PORT }}
-          username: ${{ secrets.APPSERVER_SSH_USER }}
-          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: systemctl --user daemon-reload
+        run: ssh appserver 'systemctl --user daemon-reload'
 
       - name: Push latest Docker Compose file
-        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
-        with:
-          host: ${{ secrets.APPSERVER_SSH_HOST }}
-          port: ${{ secrets.APPSERVER_SSH_PORT }}
-          username: ${{ secrets.APPSERVER_SSH_USER }}
-          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          source: docker-compose.yml
-          target: crypter-web-container/
+        run: |
+          ssh appserver 'mkdir -p crypter-web-container'
+          scp docker-compose.yml appserver:crypter-web-container/
 
       - name: Push latest Docker Compose override file if deploying to Staging server
         if: github.event.inputs.environment == 'staging'
-        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
-        with:
-          host: ${{ secrets.APPSERVER_SSH_HOST }}
-          port: ${{ secrets.APPSERVER_SSH_PORT }}
-          username: ${{ secrets.APPSERVER_SSH_USER }}
-          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          source: docker-compose.override.yml
-          target: crypter-web-container/
+        run: scp docker-compose.override.yml appserver:crypter-web-container/
 
       - name: Pull latest images
-        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
-        with:
-          host: ${{ secrets.APPSERVER_SSH_HOST }}
-          port: ${{ secrets.APPSERVER_SSH_PORT }}
-          username: ${{ secrets.APPSERVER_SSH_USER }}
-          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} pull
+        run: ssh appserver 'docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} pull'
 
       - name: Migrate database
-        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
-        with:
-          host: ${{ secrets.APPSERVER_SSH_HOST }}
-          port: ${{ secrets.APPSERVER_SSH_PORT }}
-          username: ${{ secrets.APPSERVER_SSH_USER }}
-          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} run api /app/efbundle
+        run: ssh appserver 'docker compose --project-directory crypter-web-container --profile ${{ env.docker_compose_profile }} run api /app/efbundle'
 
       - name: Start service
-        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
-        with:
-          host: ${{ secrets.APPSERVER_SSH_HOST }}
-          port: ${{ secrets.APPSERVER_SSH_PORT }}
-          username: ${{ secrets.APPSERVER_SSH_USER }}
-          key: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
-          script: systemctl --user start crypter.service
+        run: ssh appserver 'systemctl --user start crypter.service'
