@@ -48,7 +48,7 @@ internal abstract class Assert : NUnit.Framework.Assert
     {
         if (maybe.IsNone)
         {
-            Fail($"Expected Some, but was {Describe(maybe)}.");
+            throw new AssertionException($"Expected Some, but was {Describe(maybe)}.");
         }
 
         return maybe.SomeOrDefault()!;
@@ -83,7 +83,7 @@ internal abstract class Assert : NUnit.Framework.Assert
     {
         if (!either.IsRight)
         {
-            Fail($"Expected Right, but was {Describe(either)}.");
+            throw new AssertionException($"Expected Right, but was {Describe(either)}.");
         }
 
         return either.RightOrDefault(default!)!;
@@ -107,7 +107,7 @@ internal abstract class Assert : NUnit.Framework.Assert
     {
         if (!either.IsLeft)
         {
-            Fail($"Expected Left, but was {Describe(either)}.");
+            throw new AssertionException($"Expected Left, but was {Describe(either)}.");
         }
 
         return either.LeftOrDefault(default!)!;
