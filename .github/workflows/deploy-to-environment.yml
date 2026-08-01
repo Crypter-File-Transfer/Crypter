@@ -17,6 +17,7 @@ env:
 jobs:
   deploy-web-container:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment:
       name: ${{ github.event.inputs.environment }}
 
@@ -32,6 +33,11 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.APPSERVER_SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.APPSERVER_SSH_KNOWN_HOSTS }}
         run: |
+          if [ -z "$SSH_PRIVATE_KEY" ]; then
+            echo "The APPSERVER_SSH_PRIVATE_KEY secret is empty." >&2
+            exit 1
+          fi
+
           if [ -z "$SSH_KNOWN_HOSTS" ]; then
             echo "The APPSERVER_SSH_KNOWN_HOSTS secret is empty." >&2
             echo "Populate it with the output of: ssh-keyscan -p <port> <host>" >&2
@@ -55,6 +61,7 @@ jobs:
             echo "  IdentityFile ~/.ssh/id_deploy"
             echo "  IdentitiesOnly yes"
             echo "  StrictHostKeyChecking yes"
+            echo "  BatchMode yes"
           } > ~/.ssh/config
           chmod 600 ~/.ssh/config
 
