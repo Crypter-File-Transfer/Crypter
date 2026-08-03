@@ -80,6 +80,20 @@ To start over from nothing, remove the volumes and reopen the container:
 docker volume rm crypter-pipeline-workspace crypter-pipeline-claude
 ```
 
+## Authenticate Claude Code
+
+The image ships Claude Code but no credentials. Run `claude` once and follow the login prompt.
+The container has no browser, so the flow gives you a URL to open on your host and a code to
+paste back.
+
+Credentials live in `/home/agent/.claude`, which is the `crypter-pipeline-claude` volume, so
+they survive container rebuilds. You only do this again after removing that volume.
+
+Run the agents with `--dangerously-skip-permissions`. A pipeline that stops to approve every
+file write is not a pipeline, and the fork-scoped token is what bounds the blast radius rather
+than the permission prompts. That flag is also why the container runs as the unprivileged
+`agent` user; Claude Code refuses it as root.
+
 ## Building your own image
 
 Only needed if your change requires a different image — a new tool the agents need, a runtime
