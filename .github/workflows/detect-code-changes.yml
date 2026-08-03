@@ -33,7 +33,7 @@ jobs:
           base_sha: ${{ github.event.pull_request.base.sha }}
           head_sha: ${{ github.event.pull_request.head.sha }}
           documentation: '(\.md$|^Documentation/|^\.github/ISSUE_TEMPLATE/)'
-          devcontainer: '(^\.devcontainer/|^\.github/workflows/pr-build-devcontainer\.yml$)'
+          devcontainer: '(^\.devcontainer/|^\.github/workflows/(pr-build|build-and-push)-devcontainer\.yml$)'
         run: |
           set -euo pipefail
 
