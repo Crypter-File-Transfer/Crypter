@@ -1,11 +1,11 @@
 ---
 name: pipeline
-description: Take a requirement from plan to a published, CI-green pull request on the fork, using a chain of subagents. Use when asked to run the pipeline on a requirement, or invoked as /pipeline "<requirement>".
+description: Take a requirement from plan to an open, CI-green draft pull request on the fork, using a chain of subagents. Use when asked to run the pipeline on a requirement, or invoked as /pipeline "<requirement>".
 ---
 
 # Pipeline
 
-Turn a requirement into a published pull request whose checks pass, in stages, each run by a
+Turn a requirement into a draft pull request whose checks pass, in stages, each run by a
 subagent with its own context. A later stage that starts fresh actually re-examines the work;
 one that inherits the reasoning behind it rubber-stamps it.
 
@@ -14,8 +14,8 @@ and is read-only. Every pull request is fork → fork. Nothing here can reach
 `Crypter-File-Transfer/Crypter`, and the upstream pull request is something the user opens by
 hand at the end, from a fork pull request they have read.
 
-There is exactly one stop: the user approves the plan. Everything after that runs to a
-published pull request or to a written account of why CI would not take it.
+There is exactly one stop: the user approves the plan. Everything after that runs to a draft
+pull request with green checks, or to a written account of why CI would not take it.
 
 ## Setup
 
@@ -49,7 +49,7 @@ Every later stage gets this worktree path and works by absolute path inside it. 
 ## 1. Plan
 
 Invoke `plan-author` with the requirement verbatim, the worktree path, and the output path
-`.claude/pipeline/{run-id}/plan.md`.
+`/work/Crypter/.claude/pipeline/{run-id}/plan.md`.
 
 Then **stop.** Show the user the plan — the file, not a summary of it — and wait. Do not
 implement, do not create the pull request, do not start reviewing. If they ask for changes, run
@@ -68,12 +68,17 @@ surface it to the user with the rest of the results at the end, and let the audi
 
 ## 3. Open the draft pull request
 
-Now, once there is something real to look at and before anyone reviews it:
+Now, once there is something real to look at and before anyone reviews it. You do the pushing,
+here and at every later stage — the implementer commits and returns:
 
 ```bash
 git -C /work/Crypter/.claude/worktrees/{run-id} push -u origin {branch}
 gh pr create --repo {fork} --draft --base stable --head {branch} --title "..." --body "..."
 ```
+
+Creating the pull request starts the first round of checks. Checks run on drafts, so the round
+begins here rather than at stage 7, and every push after this one starts another. Nothing
+cancels the round it supersedes, so push once per stage, after the implementer is done.
 
 Title reads like a commit subject: imperative, capitalized, no trailing period.
 
@@ -89,8 +94,10 @@ it for the org repository's reviewers.
 
 Run these in parallel — they do not interact:
 
-- `conformance-auditor` with the plan, the worktree, and `.claude/pipeline/{run-id}/conformance.md`.
-- `reviewer`, once per lens, with the worktree and `.claude/pipeline/{run-id}/findings/{lens}.md`.
+- `conformance-auditor` with the plan, the worktree, and
+  `/work/Crypter/.claude/pipeline/{run-id}/conformance.md`.
+- `reviewer`, once per lens, with the worktree and
+  `/work/Crypter/.claude/pipeline/{run-id}/findings/{lens}.md`.
 
 The lens list is currently one entry:
 
@@ -112,37 +119,39 @@ you already chose against, and findings about code the diff did not touch. An un
 that contradicts the plan's non-goals is not a preference — accept it.
 
 Write what you accepted and what you rejected, with a reason for each rejection, into
-`.claude/pipeline/{run-id}/findings/triage.md`. The user reads this to check your judgement.
+`/work/Crypter/.claude/pipeline/{run-id}/findings/triage.md`. The user reads this to check your
+judgement.
 
 ## 6. Remediate
 
 If anything was accepted, invoke `implementer` with the accepted findings and the worktree
-path. Each fix is its own commit on the existing branch, and pushing updates the same draft
-pull request.
+path. Each fix is its own commit on the existing branch. When it returns, push once; that
+updates the same draft pull request and starts a fresh round of checks.
 
-If nothing was accepted, skip straight to publishing.
+If nothing was accepted, go straight to stage 7 — the round of checks from the last push is
+the one that counts.
 
-## 7. Publish, and hold it against CI
+## 7. Hold it against CI
 
-Invoke `publisher` with the worktree path, the pull request number, the attempt number, and
-`.claude/pipeline/{run-id}/ci.md`. It runs **one attempt**: it publishes on attempt 1, watches
-the checks, and reports.
+Invoke `ci-watcher` with the worktree path, the pull request number, the attempt number, and
+`/work/Crypter/.claude/pipeline/{run-id}/ci.md`. It runs **one attempt**: it finds the round of
+checks for the branch's current commit, watches it, and reports.
 
 You own the loop:
 
-1. `publisher` reports green → go to step 8.
-2. `publisher` reports a failure → invoke `implementer` with that failure report and the
-   worktree path, push, then invoke `publisher` again with the next attempt number.
+1. `ci-watcher` reports green → go to step 8.
+2. `ci-watcher` reports a failure → invoke `implementer` with that failure report and the
+   worktree path, push, then invoke `ci-watcher` again with the next attempt number.
 3. **Stop after three attempts.** Comment the state of play on the pull request, and hand back
    to the user. Three failures on the same change usually means the plan was wrong, not the
    code, and a fourth attempt buys a full build and test suite for nothing.
 
-A fresh `publisher` per attempt is deliberate — it reads what CI actually says now, rather than
+A fresh `ci-watcher` per attempt is deliberate — it reads what CI actually says now, rather than
 reasoning from its own previous guess about the failure.
 
-Stop immediately, without spending attempts, if `publisher` reports that no run ever started.
-Workflows are disabled on a new fork until they are enabled once in its Actions tab, and that is
-a setup problem.
+Stop immediately, without spending attempts, if `ci-watcher` reports that no run ever appeared
+for the commit. Workflows are disabled on a new fork until they are enabled once in its Actions
+tab, and that is a setup problem.
 
 ## 8. Hand off
 
@@ -154,7 +163,8 @@ Remove it on every exit path, including when the pipeline stopped early.
 
 Then tell the user, in a few sentences:
 
-- The fork pull request URL and whether its checks are green.
+- The fork pull request URL and whether its checks are green. It is still a draft; taking it
+  out of draft is theirs to do once they have read it.
 - Anything the implementer could not do, and any deviation the auditor flagged as drift.
 - What you rejected in triage that they might disagree with.
 - If the CI loop gave up: which check failed and what the last attempt tried.
