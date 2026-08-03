@@ -1,0 +1,20 @@
+{
+  "name": "Crypter agentic pipeline",
+  "image": "ghcr.io/crypter-file-transfer/crypter-devcontainer:latest",
+  "remoteUser": "agent",
+
+  "workspaceMount": "source=crypter-pipeline-workspace,target=/work,type=volume",
+  "workspaceFolder": "/work/Crypter",
+
+  "containerEnv": {
+    "GH_TOKEN": "${localEnv:CRYPTER_FORK_TOKEN}",
+    "CRYPTER_FORK": "${localEnv:CRYPTER_FORK}",
+    "CRYPTER_UPSTREAM": "Crypter-File-Transfer/Crypter"
+  },
+
+  "mounts": [
+    "source=crypter-pipeline-claude,target=/home/agent/.claude,type=volume"
+  ],
+
+  "onCreateCommand": "crypter-clone-fork"
+}
