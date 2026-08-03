@@ -461,3 +461,6 @@ Crypter.Web/pnpm-lock.yaml
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# Agentic pipeline run state
+.claude/pipeline/
