@@ -86,16 +86,13 @@ Only needed if your change requires a different image — a new tool the agents 
 version bump. Otherwise skip this; the org's published image is the default.
 
 `.github/workflows/build-and-push-devcontainer.yml` builds and pushes to
-`ghcr.io/<repository owner>/<DEVCONTAINER_IMAGE_NAME>`, on pushes to `stable` touching
+`ghcr.io/<repository owner>/crypter-devcontainer`, on pushes to `stable` touching
 `.devcontainer/` and on manual dispatch. To publish from your fork:
 
-1. Set the repository variable `DEVCONTAINER_IMAGE_NAME` to `crypter-devcontainer`, under
-   **Settings → Secrets and variables → Actions → Variables**. It is a variable, not a secret.
-   Unset, the workflow builds a malformed image reference and tagging fails.
-2. Run the workflow from the Actions tab.
-3. Make the resulting package public in its package settings. Packages are private when first
+1. Run the workflow from the Actions tab.
+2. Make the resulting package public in its package settings. Packages are private when first
    pushed, and a private one needs a `docker login ghcr.io` before the container can pull it.
-4. Set `CRYPTER_DEVCONTAINER_OWNER` on your host to your GitHub account name, lowercase, and
+3. Set `CRYPTER_DEVCONTAINER_OWNER` on your host to your GitHub account name, lowercase, and
    rebuild the container.
 
 Changes to the image belong upstream once they work. Open a pull request for `.devcontainer/`

@@ -38,7 +38,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
-          images: ${{ env.registry }}/${{ vars.DEVCONTAINER_IMAGE_NAME }}
+          images: ${{ env.registry }}/crypter-devcontainer
           tags: |
             type=raw,value=latest
             type=sha,format=short
