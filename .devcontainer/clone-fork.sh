@@ -11,7 +11,9 @@ set -euo pipefail
 : "${GH_TOKEN:?Set CRYPTER_FORK_TOKEN on the host so it reaches the container as GH_TOKEN}"
 
 upstream_repo="${CRYPTER_UPSTREAM:-Crypter-File-Transfer/Crypter}"
-workspace="${CRYPTER_WORKSPACE:-/work/Crypter}"
+
+# Has to match workspaceFolder in devcontainer.json.
+workspace="/work/Crypter"
 
 if [[ "${CRYPTER_FORK}" == "${upstream_repo}" ]]; then
   echo "CRYPTER_FORK is the upstream repository. Point it at your fork instead." >&2

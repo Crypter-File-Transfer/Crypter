@@ -53,9 +53,11 @@ RUN dotnet tool install dotnet-ef --version '10.0.*' --tool-path "${DOTNET_TOOLS
 COPY .devcontainer/clone-fork.sh /usr/local/bin/crypter-clone-fork
 RUN chmod +x /usr/local/bin/crypter-clone-fork
 
-# The workspace is a named volume. Docker seeds an empty named volume from the image
-# at this path, so creating it here is what gives the volume the right ownership.
-RUN mkdir -p /work && chown $USER_UID:$USER_GID /work
+# The workspace and the agent's Claude Code state are both named volumes. Docker creates a
+# mount point that the image does not already contain as root, so creating these here is
+# what gives the volumes the right ownership.
+RUN mkdir -p /work /home/$USERNAME/.claude \
+    && chown $USER_UID:$USER_GID /work /home/$USERNAME/.claude
 
 USER $USERNAME
 WORKDIR /work
