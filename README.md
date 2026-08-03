@@ -29,6 +29,7 @@ Check out these documents to get started working on Crypter:
 * [Contribution Guide](./CONTRIBUTING.md)
 * [Coding Standard](<./Documentation/Development/Coding Standard.md>)
 * [Development Environment Setup](<./Documentation/Development/Development Environment Setup.md>)
+* [Agentic Development Pipeline](<./Documentation/Development/Agentic Development Pipeline.md>)
 
 Also take a look at some of the articles that have come in handy while working on the project:
 

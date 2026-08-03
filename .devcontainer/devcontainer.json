@@ -1,6 +1,6 @@
 {
   "name": "Crypter agentic pipeline",
-  "image": "ghcr.io/crypter-file-transfer/crypter-devcontainer:latest",
+  "image": "ghcr.io/${localEnv:CRYPTER_DEVCONTAINER_OWNER:crypter-file-transfer}/crypter-devcontainer:latest",
   "remoteUser": "agent",
 
   "workspaceMount": "source=crypter-pipeline-workspace,target=/work,type=volume",
