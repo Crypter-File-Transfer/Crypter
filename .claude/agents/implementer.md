@@ -55,9 +55,18 @@ Build what you changed, by absolute path:
 dotnet build <worktree>/Crypter.Test
 ```
 
-`dotnet build <worktree>/Crypter.sln` also builds `Crypter.Web`, which runs `pnpm install`
-and several `vite build` scripts in a PreBuild target — slower, and worth it only when you
-touched the web client.
+That covers `Crypter.API`, `Crypter.Core`, `Crypter.DataAccess` and `Crypter.Common`, which
+are all in its project graph. `Crypter.Web` and `Crypter.Test.Web` are not, so a change
+touching either needs the solution:
+
+```bash
+dotnet build <worktree>/Crypter.sln
+```
+
+The solution build runs `pnpm install` and several `vite build` scripts in `Crypter.Web`'s
+PreBuild target, so it is slow. It is still cheaper than the alternative: CI compiles the
+whole solution and runs both test projects, so a compile error in `Crypter.Test.Web` costs
+a full round of checks to find out about.
 
 **Do not run `dotnet test`.** `Crypter.Test` needs Docker for Testcontainers and there is no
 Docker in this container. The tests run in CI once the pull request exists, and their
