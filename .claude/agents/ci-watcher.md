@@ -47,11 +47,26 @@ gh pr checks <number> --repo <fork> --watch
 Give it a generous timeout — a full build plus the test suite is slow, and a watch you kill
 early looks exactly like a failure.
 
-Five workflows run on a pull request: `unit-test`, `codeql-analysis`, `pr-build-api`,
-`pr-build-web` and `pr-build-devcontainer`. Every one of them gates on `detect-code-changes`,
-so each contributes a `changes / detect` job of its own. The first four skip when the diff is
-documentation only; the devcontainer build skips unless the diff touches `.devcontainer/`. A
-skipped check is a pass.
+Five workflows run on a pull request, and `gh pr checks` reports them by job name rather than
+by workflow name. Expect these:
+
+| Check | Skips when |
+|---|---|
+| `changes / detect` | Never. Every workflow gates on `detect-code-changes`, so there are five of these. |
+| `build-and-test` | The diff is documentation only |
+| `build-and-test-web` | The diff is documentation only |
+| `Analyze (csharp)` | The diff is documentation only |
+| `Analyze (javascript)` | The diff is documentation only |
+| `build-api` | The diff is documentation only |
+| `build-web` | The diff is documentation only |
+| `build-devcontainer` | The diff does not touch `.devcontainer/` |
+
+A skipped check is a pass. The CodeQL action also posts a short `CodeQL` summary check
+alongside the two `Analyze` jobs.
+
+`build-and-test-web` is the one to look at twice. It compiles `Crypter.Test.Web`, which is
+outside `Crypter.Test`'s project graph, so it is where a compile error the implementer could
+not have caught locally shows up.
 
 ## On failure
 
