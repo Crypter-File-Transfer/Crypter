@@ -47,9 +47,11 @@ gh pr checks <number> --repo <fork> --watch
 Give it a generous timeout — a full build plus the test suite is slow, and a watch you kill
 early looks exactly like a failure.
 
-Four workflows run on a pull request: `unit-test`, `codeql-analysis`, `pr-build-api` and
-`pr-build-web`. The last two are gated on `detect-code-changes` and skip entirely when the
-diff is documentation only. A skipped check is a pass.
+Five workflows run on a pull request: `unit-test`, `codeql-analysis`, `pr-build-api`,
+`pr-build-web` and `pr-build-devcontainer`. Every one of them gates on `detect-code-changes`,
+so each contributes a `changes / detect` job of its own. The first four skip when the diff is
+documentation only; the devcontainer build skips unless the diff touches `.devcontainer/`. A
+skipped check is a pass.
 
 ## On failure
 
