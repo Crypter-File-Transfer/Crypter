@@ -22,7 +22,6 @@ tracked with empty placeholders, the same way the root `.env` is. Fill it in bef
 |---|---|---|
 | `CRYPTER_FORK` | Yes | Your fork, as `<owner>/<repo>`. Startup fails if this is the upstream repository. |
 | `CRYPTER_FORK_TOKEN` | Yes | A fine-grained personal access token. Reaches the container as `GH_TOKEN`. |
-| `CRYPTER_DEVCONTAINER_OWNER` | No | Only if you build your own image. See below. Defaults to `crypter-file-transfer`. |
 | `CRYPTER_GIT_NAME` | No | Author name on the agents' commits. Defaults to `Crypter pipeline`. |
 | `CRYPTER_GIT_EMAIL` | No | Author email. Defaults to `pipeline@users.noreply.github.com`. |
 
@@ -114,20 +113,20 @@ file write is not a pipeline, and the fork-scoped token is what bounds the blast
 than the permission prompts. That flag is also why the container runs as the unprivileged
 `agent` user; Claude Code refuses it as root.
 
-## Building your own image
+## Changing the image
 
 Only needed if your change requires a different image — a new tool the agents need, a runtime
-version bump. Otherwise skip this; the org's published image is the default.
+version bump. Otherwise skip this; the published image is what the container runs.
 
-`.github/workflows/build-and-push-devcontainer.yml` builds and pushes to
-`ghcr.io/<repository owner>/crypter-devcontainer`, on pushes to `stable` touching
-`.devcontainer/` and on manual dispatch. To publish from your fork:
+Build your change locally to try it:
 
-1. Run the workflow from the Actions tab.
-2. Make the resulting package public in its package settings. Packages are private when first
-   pushed, and a private one needs a `docker login ghcr.io` before the container can pull it.
-3. Set `CRYPTER_DEVCONTAINER_OWNER` in `.devcontainer/.env` to your GitHub account name,
-   lowercase, and rebuild the container.
+```bash
+docker compose -f .devcontainer/docker-compose.yml build
+docker compose -f .devcontainer/docker-compose.yml up -d
+```
 
-Changes to the image belong upstream once they work. Open a pull request for `.devcontainer/`
-against the org repository and unset `CRYPTER_DEVCONTAINER_OWNER` when it merges.
+Open a pull request for `.devcontainer/` once it works. `pr-build-devcontainer` builds the image
+on the pull request, and merging to `stable` runs
+`.github/workflows/build-and-push-devcontainer.yml`, which pushes to
+`ghcr.io/crypter-file-transfer/crypter-devcontainer`. That job runs in the `devcontainer`
+environment, so it waits for a reviewer to approve it before anything is published.

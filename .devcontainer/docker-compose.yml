@@ -3,7 +3,8 @@ name: crypter-pipeline
 services:
   pipeline:
     container_name: crypter-pipeline
-    image: ghcr.io/${CRYPTER_DEVCONTAINER_OWNER:-crypter-file-transfer}/crypter-devcontainer:latest
+    image: ghcr.io/crypter-file-transfer/crypter-devcontainer:latest
+    pull_policy: missing
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
