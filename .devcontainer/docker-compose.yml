@@ -1,0 +1,30 @@
+name: crypter-pipeline
+
+services:
+  pipeline:
+    container_name: crypter-pipeline
+    image: ghcr.io/${CRYPTER_DEVCONTAINER_OWNER:-crypter-file-transfer}/crypter-devcontainer:latest
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    environment:
+      GH_TOKEN: ${CRYPTER_FORK_TOKEN}
+      CRYPTER_FORK: ${CRYPTER_FORK}
+      CRYPTER_UPSTREAM: Crypter-File-Transfer/Crypter
+      CRYPTER_GIT_NAME: ${CRYPTER_GIT_NAME:-Crypter pipeline}
+      CRYPTER_GIT_EMAIL: ${CRYPTER_GIT_EMAIL:-pipeline@users.noreply.github.com}
+    volumes:
+      - workspace:/work
+      - claude:/home/agent/.claude
+    # /work/Crypter does not exist until crypter-clone-fork has run, so the container starts
+    # one level up. Open a shell with `exec -w /work/Crypter`.
+    working_dir: /work
+    # crypter-clone-fork leaves an existing workspace alone and only refetches, so running it
+    # on every start is safe.
+    command: bash -lc "crypter-clone-fork && sleep infinity"
+
+volumes:
+  workspace:
+    name: crypter-pipeline-workspace
+  claude:
+    name: crypter-pipeline-claude
