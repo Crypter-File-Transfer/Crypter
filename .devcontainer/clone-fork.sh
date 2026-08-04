@@ -9,6 +9,8 @@ set -euo pipefail
 
 : "${CRYPTER_FORK:?Set CRYPTER_FORK in .devcontainer/.env to <owner>/<repo> of your fork}"
 : "${GH_TOKEN:?Set CRYPTER_FORK_TOKEN in .devcontainer/.env so it reaches the container as GH_TOKEN}"
+: "${CRYPTER_GIT_NAME:?Set CRYPTER_GIT_NAME in .devcontainer/.env to the author name on the commits}"
+: "${CRYPTER_GIT_EMAIL:?Set CRYPTER_GIT_EMAIL in .devcontainer/.env to the author email on the commits}"
 
 upstream_repo="${CRYPTER_UPSTREAM:-Crypter-File-Transfer/Crypter}"
 
@@ -20,8 +22,8 @@ if [[ "${CRYPTER_FORK}" == "${upstream_repo}" ]]; then
   exit 1
 fi
 
-git config --global user.name "${CRYPTER_GIT_NAME:-Crypter pipeline}"
-git config --global user.email "${CRYPTER_GIT_EMAIL:-pipeline@users.noreply.github.com}"
+git config --global user.name "${CRYPTER_GIT_NAME}"
+git config --global user.email "${CRYPTER_GIT_EMAIL}"
 gh auth setup-git
 
 if [[ -d "${workspace}/.git" ]]; then

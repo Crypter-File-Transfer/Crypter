@@ -15,18 +15,21 @@ This document covers the setup you need before the container will start.
 ## Configuration
 
 `.devcontainer/.env` holds everything Compose substitutes when it creates the container. It is
-tracked with empty placeholders, the same way the root `.env` is. Fill it in before the first
-`up`.
+ignored by git. Copy the template and fill it in before the first `up`.
 
-| Variable | Required | Value |
-|---|---|---|
-| `CRYPTER_FORK` | Yes | Your fork, as `<owner>/<repo>`. Startup fails if this is the upstream repository. |
-| `CRYPTER_FORK_TOKEN` | Yes | A fine-grained personal access token. Reaches the container as `GH_TOKEN`. |
-| `CRYPTER_GIT_NAME` | No | Author name on the agents' commits. Defaults to `Crypter pipeline`. |
-| `CRYPTER_GIT_EMAIL` | No | Author email. Defaults to `pipeline@users.noreply.github.com`. |
+```bash
+cp .devcontainer/.env.example .devcontainer/.env
+```
 
-Leave the optional ones empty to take their defaults. The token is a live credential sitting in
-a tracked file, so watch what you stage.
+| Variable | Value |
+|---|---|
+| `CRYPTER_FORK` | Your fork, as `<owner>/<repo>`. Startup fails if this is the upstream repository. |
+| `CRYPTER_FORK_TOKEN` | A fine-grained personal access token. Reaches the container as `GH_TOKEN`. |
+| `CRYPTER_GIT_NAME` | Author name on the agents' commits. |
+| `CRYPTER_GIT_EMAIL` | Author email on the agents' commits. |
+
+All four are required. Leaving one empty fails the container's startup script with a message
+naming the variable.
 
 ## Launching the container
 
