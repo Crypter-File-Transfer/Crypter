@@ -12,8 +12,8 @@ services:
       GH_TOKEN: ${CRYPTER_FORK_TOKEN}
       CRYPTER_FORK: ${CRYPTER_FORK}
       CRYPTER_UPSTREAM: Crypter-File-Transfer/Crypter
-      CRYPTER_GIT_NAME: ${CRYPTER_GIT_NAME:-Crypter pipeline}
-      CRYPTER_GIT_EMAIL: ${CRYPTER_GIT_EMAIL:-pipeline@users.noreply.github.com}
+      CRYPTER_GIT_NAME: ${CRYPTER_GIT_NAME}
+      CRYPTER_GIT_EMAIL: ${CRYPTER_GIT_EMAIL}
     volumes:
       - workspace:/work
       - claude:/home/agent/.claude

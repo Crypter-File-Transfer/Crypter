@@ -14,38 +14,22 @@ This document covers the setup you need before the container will start.
 
 ## Configuration
 
-`.devcontainer/.env` holds everything Compose substitutes when it creates the container. It is not
-tracked. Copy the template and fill it in before the first `up`.
+`.devcontainer/.env` holds everything Compose substitutes when it creates the container. It is
+ignored by git. Copy the template and fill it in before the first `up`.
 
 ```bash
 cp .devcontainer/.env.example .devcontainer/.env
 ```
 
-| Variable | Required | Value |
-|---|---|---|
-| `CRYPTER_FORK` | Yes | Your fork, as `<owner>/<repo>`. Startup fails if this is the upstream repository. |
-| `CRYPTER_FORK_TOKEN` | Yes | A fine-grained personal access token. Reaches the container as `GH_TOKEN`. |
-| `CRYPTER_GIT_NAME` | No | Author name on the agents' commits. Defaults to `Crypter pipeline`. |
-| `CRYPTER_GIT_EMAIL` | No | Author email. Defaults to `pipeline@users.noreply.github.com`. |
+| Variable | Value |
+|---|---|
+| `CRYPTER_FORK` | Your fork, as `<owner>/<repo>`. Startup fails if this is the upstream repository. |
+| `CRYPTER_FORK_TOKEN` | A fine-grained personal access token. Reaches the container as `GH_TOKEN`. |
+| `CRYPTER_GIT_NAME` | Author name on the agents' commits. |
+| `CRYPTER_GIT_EMAIL` | Author email on the agents' commits. |
 
-Leave the optional ones empty to take their defaults. The token is a live credential, and on a
-fresh checkout `.devcontainer/.env` is ignored by git, so it cannot be committed by accident
-there. A branch cut before the file stopped being tracked still tracks it, and a token committed
-on such a branch commits as it always did.
-
-If you already have a filled-in `.devcontainer/.env` from when the file was tracked, untrack it
-before you pull the commit that stops tracking it. Pulling first gives you `CONFLICT
-(modify/delete): .devcontainer/.env deleted in <commit> and modified in HEAD`, and git's own
-suggested resolution, `git rm .devcontainer/.env`, throws away your token along with the file.
-Instead, in your existing checkout:
-
-```bash
-git rm --cached .devcontainer/.env
-git commit -m "Untrack devcontainer env"
-git pull
-```
-
-The pull then succeeds, and the file and its token stay on disk.
+All four are required. Leaving one empty fails the container's startup script with a message
+naming the variable.
 
 ## Launching the container
 
