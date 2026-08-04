@@ -28,8 +28,24 @@ cp .devcontainer/.env.example .devcontainer/.env
 | `CRYPTER_GIT_NAME` | No | Author name on the agents' commits. Defaults to `Crypter pipeline`. |
 | `CRYPTER_GIT_EMAIL` | No | Author email. Defaults to `pipeline@users.noreply.github.com`. |
 
-Leave the optional ones empty to take their defaults. The token is a live credential, and
-`.devcontainer/.env` is ignored by git so it cannot be committed by accident.
+Leave the optional ones empty to take their defaults. The token is a live credential, and on a
+fresh checkout `.devcontainer/.env` is ignored by git, so it cannot be committed by accident
+there. A branch cut before the file stopped being tracked still tracks it, and a token committed
+on such a branch commits as it always did.
+
+If you already have a filled-in `.devcontainer/.env` from when the file was tracked, untrack it
+before you pull the commit that stops tracking it. Pulling first gives you `CONFLICT
+(modify/delete): .devcontainer/.env deleted in <commit> and modified in HEAD`, and git's own
+suggested resolution, `git rm .devcontainer/.env`, throws away your token along with the file.
+Instead, in your existing checkout:
+
+```bash
+git rm --cached .devcontainer/.env
+git commit -m "Untrack devcontainer env"
+git pull
+```
+
+The pull then succeeds, and the file and its token stay on disk.
 
 ## Launching the container
 
