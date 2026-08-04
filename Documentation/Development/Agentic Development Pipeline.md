@@ -14,9 +14,12 @@ This document covers the setup you need before the container will start.
 
 ## Configuration
 
-`.devcontainer/.env` holds everything Compose substitutes when it creates the container. It is
-tracked with empty placeholders, the same way the root `.env` is. Fill it in before the first
-`up`.
+`.devcontainer/.env` holds everything Compose substitutes when it creates the container. It is not
+tracked. Copy the template and fill it in before the first `up`.
+
+```bash
+cp .devcontainer/.env.example .devcontainer/.env
+```
 
 | Variable | Required | Value |
 |---|---|---|
@@ -25,8 +28,8 @@ tracked with empty placeholders, the same way the root `.env` is. Fill it in bef
 | `CRYPTER_GIT_NAME` | No | Author name on the agents' commits. Defaults to `Crypter pipeline`. |
 | `CRYPTER_GIT_EMAIL` | No | Author email. Defaults to `pipeline@users.noreply.github.com`. |
 
-Leave the optional ones empty to take their defaults. The token is a live credential sitting in
-a tracked file, so watch what you stage.
+Leave the optional ones empty to take their defaults. The token is a live credential, and
+`.devcontainer/.env` is ignored by git so it cannot be committed by accident.
 
 ## Launching the container
 

@@ -464,3 +464,6 @@ Crypter.Web/pnpm-lock.yaml
 
 # Agentic pipeline run state
 .claude/pipeline/
+
+# Devcontainer configuration, copied from .devcontainer/.env.example
+.devcontainer/.env
