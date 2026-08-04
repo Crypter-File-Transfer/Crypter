@@ -17,6 +17,8 @@ services:
     volumes:
       - workspace:/work
       - claude:/home/agent/.claude
+      # Plans are authored on the host and read from /plans.
+      - ../.claude/plans:/plans:ro
     # /work/Crypter does not exist until crypter-clone-fork has run, so the container starts
     # one level up. Open a shell with `exec -w /work/Crypter`.
     working_dir: /work

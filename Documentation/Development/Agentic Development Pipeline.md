@@ -1,16 +1,34 @@
 # Agentic Development Pipeline
 
-The `/pipeline` skill takes a requirement from a plan to a draft pull request with green checks,
-using a chain of subagents that each start with their own context. It runs inside a devcontainer
-built from `.devcontainer/Dockerfile`.
+A change goes through two skills. `/crypter-plan-author` runs interactively on your host and
+drafts the plan, with the web, your tooling, and you available to it. `/pipeline` runs inside a
+devcontainer built from `.devcontainer/Dockerfile` and takes that plan to a draft pull request
+with green checks, using a chain of subagents that each start with their own context.
 
-Everything it does happens on **your fork**. The container's token cannot reach
+Everything the pipeline does happens on **your fork**. The container's token cannot reach
 `Crypter-File-Transfer/Crypter`, and the workspace is a named Docker volume rather than a bind
 mount of your checkout, so the agents cannot touch uncommitted work on your machine. When the
 pipeline finishes you have a fork pull request to read; opening one against the org repository is
 something you do by hand afterwards.
 
 This document covers the setup you need before the container will start.
+
+## Planning and the plans mount
+
+`/crypter-plan-author` writes to `.claude/plans/{run-id}/plan.md` on your host, which is
+gitignored. Compose mounts `.claude/plans` read-only at `/plans` in the container, so the
+pipeline reads the plan where you wrote it and the agents write their run state to the workspace
+instead.
+
+You approve the plan in that host session. It then starts the pipeline itself:
+
+```bash
+docker exec -w /work/Crypter crypter-pipeline \
+  claude --dangerously-skip-permissions -p "/pipeline {run-id} {branch}"
+```
+
+A container created before the mount existed picks it up on
+`docker compose -f .devcontainer/docker-compose.yml up -d --force-recreate`.
 
 ## Configuration
 
