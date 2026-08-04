@@ -12,10 +12,11 @@ something you do by hand afterwards.
 
 This document covers the setup you need before the container will start.
 
-## Host environment variables
+## Configuration
 
-`devcontainer.json` passes these through from your machine. Set them wherever your shell reads
-its environment from, before launching the container.
+`.devcontainer/.env` holds everything Compose substitutes when it creates the container. It is
+tracked with empty placeholders, the same way the root `.env` is. Fill it in before the first
+`up`.
 
 | Variable | Required | Value |
 |---|---|---|
@@ -24,6 +25,23 @@ its environment from, before launching the container.
 | `CRYPTER_DEVCONTAINER_OWNER` | No | Only if you build your own image. See below. Defaults to `crypter-file-transfer`. |
 | `CRYPTER_GIT_NAME` | No | Author name on the agents' commits. Defaults to `Crypter pipeline`. |
 | `CRYPTER_GIT_EMAIL` | No | Author email. Defaults to `pipeline@users.noreply.github.com`. |
+
+Leave the optional ones empty to take their defaults. The token is a live credential sitting in
+a tracked file, so watch what you stage.
+
+## Launching the container
+
+The container is a Compose service in `.devcontainer/docker-compose.yml`. That is a separate
+Compose project from the application stack at the repository root, so `docker compose up` and
+`docker compose down` there never touch it, and the two share no network.
+
+```bash
+docker compose -f .devcontainer/docker-compose.yml up -d
+docker compose -f .devcontainer/docker-compose.yml exec -w /work/Crypter pipeline bash
+```
+
+Swap `up -d` for `down` to stop it. The named volumes outlive the container, so the next `up`
+reuses the workspace and your Claude Code credentials.
 
 ## The token
 
@@ -65,26 +83,28 @@ There is **no Docker in the container**, so `Crypter.Test` cannot run there — 
 Testcontainers to start PostgreSQL. The agents build but never test locally; the test suite runs
 in CI once the pull request exists, and failures come back to the implementer from there.
 
-Two named volumes survive rebuilds: `crypter-pipeline-workspace` holds the clone at
+Two named volumes survive rebuilds: `crypter-pipeline-workspace` holds the workspace at
 `/work/Crypter`, and `crypter-pipeline-claude` holds the agent's Claude Code state.
 
 ## First start
 
-On creation the container clones your fork to `/work/Crypter`, adds the org repository as a
-read-only `upstream`, and fetches both. If it already finds a clone there it leaves it alone, so
-rebuilding the container does not discard work in progress.
+Every `up` runs `crypter-clone-fork`, which clones your fork to `/work/Crypter`, adds the org
+repository as a read-only `upstream`, and fetches both. If it already finds a workspace there it
+leaves it alone and only refetches, so restarting the container does not discard work in
+progress.
 
-To start over from nothing, remove the volumes and reopen the container:
+To start over from nothing, take the container down and remove the volumes:
 
 ```bash
+docker compose -f .devcontainer/docker-compose.yml down
 docker volume rm crypter-pipeline-workspace crypter-pipeline-claude
 ```
 
 ## Authenticate Claude Code
 
-The image ships Claude Code but no credentials. Run `claude` once and follow the login prompt.
-The container has no browser, so the flow gives you a URL to open on your host and a code to
-paste back.
+The image ships Claude Code but no credentials. Run `claude` once inside the container and
+follow the login prompt. The container has no browser, so the flow gives you a URL to open on
+your host and a code to paste back.
 
 Credentials live in `/home/agent/.claude`, which is the `crypter-pipeline-claude` volume, so
 they survive container rebuilds. You only do this again after removing that volume.
@@ -106,8 +126,8 @@ version bump. Otherwise skip this; the org's published image is the default.
 1. Run the workflow from the Actions tab.
 2. Make the resulting package public in its package settings. Packages are private when first
    pushed, and a private one needs a `docker login ghcr.io` before the container can pull it.
-3. Set `CRYPTER_DEVCONTAINER_OWNER` on your host to your GitHub account name, lowercase, and
-   rebuild the container.
+3. Set `CRYPTER_DEVCONTAINER_OWNER` in `.devcontainer/.env` to your GitHub account name,
+   lowercase, and rebuild the container.
 
 Changes to the image belong upstream once they work. Open a pull request for `.devcontainer/`
 against the org repository and unset `CRYPTER_DEVCONTAINER_OWNER` when it merges.
