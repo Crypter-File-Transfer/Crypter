@@ -72,8 +72,11 @@ summary.
 
 Every finding gets one of three outcomes, and none of them is silence.
 
-**Does not hold** — reply on the thread with `add_reply_to_pull_request_comment`, or
-`gh pr comment` where the finding has no thread. Give the evidence: what the code does instead,
+**Does not hold** — reply on the thread with `add_reply_to_pull_request_comment`. Where the
+finding has no thread to reply on, comment on the pull request itself with `add_issue_comment`
+or `gh pr comment`, quoting enough of the finding that the reply stands on its own.
+
+Give the evidence: what the code does instead,
 by file and line. Two or three sentences. Say it as a position, not a verdict — the person who
 raised it may know something the verifier could not see, and the thread is where that comes out.
 

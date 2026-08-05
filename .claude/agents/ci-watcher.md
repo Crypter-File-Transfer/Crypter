@@ -24,9 +24,19 @@ The pull request is on the repository the branch was pushed to:
 git -C <repo> remote get-url origin
 ```
 
-Use `mcp__github__pull_request_read` with `method: "get_check_runs"` for the head commit's
-checks. Where the `gh` CLI is installed, `gh pr checks --watch` and `gh run list --commit <sha>`
-followed by `gh run view <run-id> --log-failed` give more detail; use them when they are there.
+The `gh` CLI is what you watch and diagnose with. `mcp__github__pull_request_read` is there for
+structured pull request data when you want it. Do not reach for the REST API directly.
+
+`gh` needs its own credential, separate from the one the MCP server holds. Confirm it before you
+start:
+
+```bash
+gh auth status
+```
+
+**If it reports no logged-in host, stop and say that `gh auth login` has not been run.** Say it
+as the setup problem it is. Every command below fails without it, and failing at the first one
+with an authentication error looks nothing like the real answer, which is that nobody logged in.
 
 ## Find the run
 
@@ -40,14 +50,31 @@ Confirm you are reading the round for the commit you were asked about:
 git -C <repo> rev-parse <branch>
 ```
 
-Compare that against the head SHA in the pull request data. A push takes a moment to register,
-so poll `get_check_runs` until runs appear. If nothing has appeared after a few minutes, say so
-and stop: a push that starts no checks is a setup problem no amount of waiting fixes.
+Compare that against the head SHA the pull request reports. A push takes a moment to register,
+so a check run may not exist the instant you are invoked.
+
+`gh pr checks` says `no checks reported on the ... branch` when none have started. That is the
+one case worth distinguishing from a failure: if it still says that after a few minutes, stop
+and say so, because a push that starts no checks is a setup problem no amount of waiting fixes.
 
 ## Watch
 
-Poll until every check reaches a conclusion. Give it a generous timeout — a full build plus the
-test suite is slow, and a watch you cut short looks exactly like a failure.
+```bash
+gh pr checks <number> --repo <owner>/<repo> --watch
+```
+
+`--watch` blocks until every check reaches a conclusion, so this is one call rather than a
+polling loop. **Never write a polling loop with `sleep` in it** — a foreground `sleep` does not
+run here, and `--watch` exists precisely so you do not need one.
+
+Give the call a long timeout. A full round is several minutes, and the tool caps at ten. If the
+call is killed before the round finishes, run it again — a watch you cut short looks exactly
+like a failure.
+
+The exit code is your signal, and it separates the two outcomes you would otherwise confuse:
+`0` when everything passed, `1` when something failed, `8` when checks are still pending. An `8`
+after `--watch` means the call was cut short rather than that CI is unhappy — run it again
+rather than reporting a failure.
 
 Five workflows run on a pull request, reported by job name rather than by workflow name. Expect
 these:
@@ -72,8 +99,19 @@ not have caught locally shows up.
 
 ## On failure
 
-Get the real error. The check run's `output` summary and annotations carry the diagnostic;
-where `gh` is installed, the failed job's log carries more.
+Get the real error out of the failing job's log:
+
+```bash
+gh run list --commit <sha> --repo <owner>/<repo>
+gh run view <run-id> --repo <owner>/<repo> --log-failed
+```
+
+`--log-failed` prints only the steps that failed, which is usually the whole diagnosis — the
+compiler diagnostic, the assertion message, the analyzer rule. Where a log is too long to read
+whole, grep it rather than skimming it.
+
+Where the log still leaves you short of the cause, say so in the report and give the run URL. Do
+not fill the gap by guessing at a cause the log does not support.
 
 Then read the code the failure points at. The repository's working tree is on whatever the user
 last checked out, so read the branch's version:
