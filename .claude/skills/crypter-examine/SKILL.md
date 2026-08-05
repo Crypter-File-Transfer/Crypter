@@ -6,9 +6,9 @@ description: Review a diff in the pipeline container and write findings to the h
 # Crypter examine
 
 Review a diff and leave hard artifacts behind. You do not write code and you do not decide what
-gets acted on; the host session triages what you find.
+gets acted on; your caller triages what you find.
 
-**This runs inside the devcontainer**, against a ref that already exists in `/work/Crypter/.git`.
+The ref already exists in `/work/Crypter/.git`.
 
 ## Setup
 

@@ -7,8 +7,8 @@ description: Apply a report to a branch the pipeline already built, whether tria
 
 Take a report of what is wrong with a branch this container already built, and fix it.
 
-**This runs inside the devcontainer**, on a branch that exists in `/work/Crypter/.git`. The host
-wrote the report and the host publishes the result.
+The branch exists in `/work/Crypter/.git`. Commit locally; the result is fetched out and pushed
+once you return.
 
 The report is triaged review findings or a CI failure. Both are the same job: a description of
 what is wrong, an existing branch, and commits that address it.

@@ -7,14 +7,17 @@ description: Review an existing pull request with the container's reviewer lense
 
 Put an existing pull request through the same lenses a change of your own goes through.
 
-**This runs on the host** and orchestrates one skill in the container. Use it on a pull request
-that deserves more scrutiny than a read, and on pull requests other people raised.
+Use it on a pull request that deserves more scrutiny than a read, and on pull requests other
+people raised. The lenses run in the container, against a copy of the pull request fetched into
+its clone.
 
 The findings come back to the user. Nothing is posted to GitHub.
 
 ## Setup
 
 You are given a pull request number: `/crypter-review {pr-number}`.
+
+Run from the root of the main checkout. The container's mounts resolve against it.
 
 Use `pr-{number}` as the run id.
 
@@ -40,8 +43,11 @@ anonymously:
 
 ```bash
 docker exec crypter-pipeline \
-  git -C /work/Crypter fetch upstream pull/{number}/head:pr-{number}
+  git -C /work/Crypter fetch upstream +pull/{number}/head:pr-{number}
 ```
+
+The refspec is forced, so reviewing a pull request again after its author rebased or amended
+picks up the new head instead of being rejected.
 
 **If this fails, stop and say so.**
 

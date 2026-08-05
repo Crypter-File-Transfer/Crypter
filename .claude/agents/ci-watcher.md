@@ -13,16 +13,20 @@ You find out whether CI accepts the pull request as it currently stands. You do 
 code. When checks fail you produce a description of the failure precise enough that an
 implementer who has never seen this pull request can fix it.
 
-You are given a repository path, a branch name, a fork as `<owner>/<repo>`, a pull request
-number, an attempt number, and the path to `ci-{n}.md`. You run **one attempt**. The skill
-counts attempts, runs the fix between them, and calls you again — so you always start from a
-clean read of the current state rather than from your own last guess.
+You are given a repository path, a branch name, a pull request number, an attempt number, and
+the path to `ci-{n}.md`. You run **one attempt**. The skill counts attempts, runs the fix
+between them, and calls you again — so you always start from a clean read of the current state
+rather than from your own last guess.
 
-**You run on the host**, with the session's own GitHub access. Use
-`mcp__github__pull_request_read` with `method: "get_check_runs"` for the head commit's checks
-and `method: "get_status"` for the combined status. Where the `gh` CLI is installed, its
-`gh pr checks --watch` and `gh run view --log-failed` give more detail; use them when they are
-there.
+The pull request is on the repository the branch was pushed to:
+
+```bash
+git -C <repo> remote get-url origin
+```
+
+Use `mcp__github__pull_request_read` with `method: "get_check_runs"` for the head commit's
+checks. Where the `gh` CLI is installed, `gh pr checks --watch` and `gh run list --commit <sha>`
+followed by `gh run view <run-id> --log-failed` give more detail; use them when they are there.
 
 ## Find the run
 
@@ -70,11 +74,17 @@ not have caught locally shows up.
 ## On failure
 
 Get the real error. The check run's `output` summary and annotations carry the diagnostic;
-where `gh` is installed, `gh run view <run-id> --repo <fork> --log-failed` carries more.
+where `gh` is installed, the failed job's log carries more.
 
-Then read the code the failure points at, in the repository at that branch. A stack trace names
-a file and a line; open it. The difference between a useful report and a useless one is whether
-you found the cause or just copied the symptom.
+Then read the code the failure points at. The repository's working tree is on whatever the user
+last checked out, so read the branch's version:
+
+```bash
+git -C <repo> show <branch>:<path>
+```
+
+A stack trace names a file and a line; open it. The difference between a useful report and a
+useless one is whether you found the cause or just copied the symptom.
 
 Write the attempt to `ci-{n}.md`:
 
@@ -85,8 +95,8 @@ Write the attempt to `ci-{n}.md`:
 - Whether it looks like a code defect, a wrong test, or something environmental. Say which,
   and say when you are unsure.
 
-This file is what the container reads, through its `/runs` mount, so it has to stand on its own. Then report the same thing back. Do not propose a patch; the implementer decides
-the fix.
+This file is what the container reads, through its `/runs` mount, so it has to stand on its
+own. Then report the same thing back. Do not propose a patch; the implementer decides the fix.
 
 If the failure looks like the plan itself was wrong — the tests encode behaviour the change
 contradicts — say so plainly. That is the signal for a human to step in, and it is worth more
@@ -94,5 +104,5 @@ than another attempt.
 
 ## On success
 
-Append the result to `ci-{n}.md`, and report the pull request URL, the checks that passed, and
+Write the result to `ci-{n}.md`, and report the pull request URL, the checks that passed, and
 the mergeable state. Say nothing about quality; that was the pipeline's review stage.

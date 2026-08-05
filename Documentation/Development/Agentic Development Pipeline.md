@@ -1,26 +1,43 @@
 # Agentic Development Pipeline
 
-Two orchestrators compose a set of task skills.
+Two orchestrators compose a set of task skills. You invoke an orchestrator in your own session,
+and it invokes the rest.
 
-| Skill | Runs | Does |
+| Orchestrator | Does |
+|---|---|
+| `/crypter-change "<requirement>"` | Carries a requirement to a green draft pull request |
+| `/crypter-review {pr-number}` | Puts an existing pull request through the reviewer lenses |
+
+| Task skill | Executes in | Does |
 |---|---|---|
-| `/crypter-change` | Host | Carries a requirement to a green draft pull request |
-| `/crypter-review` | Host | Puts an existing pull request through the reviewer lenses |
-| `/crypter-plan` | Host | Drafts the plan interactively, with the web, your tooling and you available to it |
+| `/crypter-plan` | Your session | Drafts the plan interactively, with the web, your tooling and you available to it |
 | `/crypter-implement` | Container | Builds the plan into commits on a new branch |
 | `/crypter-examine` | Container | Reviews a diff for plan adherence and code quality |
 | `/crypter-remediate` | Container | Applies triaged findings or a CI failure to an existing branch |
-| `/crypter-publish` | Host | Pushes the branch and opens or updates the pull request |
+| `/crypter-open-pull-request` | Your session | Pushes the branch and opens or updates the draft pull request |
+
+Every skill that reads or writes code runs in the container, against the container's own clone.
+Your session plans, decides what to act on, and talks to GitHub. `/crypter-review` reviews
+nothing itself: it fetches the pull request into the container and runs `/crypter-examine`
+there.
 
 The task skills stand alone. `/crypter-plan` is worth running on its own when you want a plan
-and nothing else, and `/crypter-publish` is safe to run repeatedly, which is how the CI loop
-uses it.
+and nothing else, and `/crypter-open-pull-request` is safe to run repeatedly, which is how the
+CI loop uses it.
 
-**The container holds no credential.** Its workspace is an anonymous clone of the org
+**Run the orchestrators from the root of your main checkout.** The container's mounts are
+relative to `.devcontainer/`, so `.claude/plans` and `.claude/runs` resolve against that one
+directory. Started from a worktree, a run writes its plan somewhere the container cannot read.
+
+**The container holds no GitHub credential.** Its workspace is an anonymous clone of the org
 repository with one remote, `upstream`, which has no push url, so the agents read public code
-and commit locally. Every authenticated GitHub operation happens on the host with your own
-access. The workspace is a named Docker volume rather than a bind mount of your checkout, so
-the agents cannot touch uncommitted work on your machine.
+and commit locally. Every authenticated GitHub operation happens in your session with your own
+access, and `/crypter-change` pushes and re-pushes without stopping to ask. The workspace is a
+named Docker volume rather than a bind mount of your checkout, so the agents cannot touch
+uncommitted work on your machine.
+
+The container does hold your Claude Code credential, in the `crypter-pipeline-claude` volume,
+and its network egress is open. Treat it as a trust boundary rather than a sandbox.
 
 When `/crypter-change` finishes you have a fork pull request to read; opening one against the org
 repository is something you do by hand afterwards.
@@ -34,8 +51,8 @@ and both on your disk:
 
 | Host | Container | Direction | Holds |
 |---|---|---|---|
-| `.claude/plans/{run-id}` | `/plans` | Read-only | `plan.md` |
-| `.claude/runs/{run-id}` | `/runs` | Writable | `conformance.md`, `findings/{lens}.md`, `triage.md`, `ci-{n}.md` |
+| `.claude/plans` | `/plans` | Read-only | `{run-id}/plan.md` |
+| `.claude/runs` | `/runs` | Writable | `{run-id}/conformance.md`, `{run-id}/findings/{lens}.md`, `{run-id}/triage.md`, `{run-id}/ci-{n}.md` |
 
 The plan goes in and cannot be rewritten by the agents. Findings come back out as files you can
 open, grep and keep, rather than as text in a transcript, and each is written by the agent that
@@ -65,8 +82,9 @@ A container created before these mounts existed picks them up on
 /crypter-change "<requirement>"
 ```
 
-It plans, stops for your approval, then builds, examines, triages, remediates, publishes, and
-holds the pull request against CI for at most three fix attempts. The approval is the only stop.
+It plans, stops for your approval, then builds, examines, triages, remediates, opens the draft
+pull request, and holds it against CI for at most three fix attempts. The approval is the only
+stop, and the pull request stays a draft until you take it out of one.
 
 `/crypter-review {pr-number}` is the other entry point. It fetches a pull request's head into the
 container, runs the lenses against it with no plan to audit, and reports. It posts nothing to
@@ -96,9 +114,14 @@ Compose project from the application stack at the repository root, so `docker co
 `docker compose down` there never touch it, and the two share no network.
 
 ```bash
+mkdir -p .claude/plans .claude/runs
 docker compose -f .devcontainer/docker-compose.yml up -d
 docker compose -f .devcontainer/docker-compose.yml exec -w /work/Crypter pipeline bash
 ```
+
+Create the two mount sources first. They are gitignored, so a fresh clone has neither, and
+Docker creates a missing bind-mount source as root — which the orchestrators then cannot write
+into.
 
 Swap `up -d` for `down` to stop it. The named volumes outlive the container, so the next `up`
 reuses the workspace and your Claude Code credentials.
@@ -155,9 +178,9 @@ Credentials live in `/home/agent/.claude`, which is the `crypter-pipeline-claude
 they survive container rebuilds. You only do this again after removing that volume.
 
 Run the agents with `--dangerously-skip-permissions`. A pipeline that stops to approve every
-file write is not a pipeline, and the fork-scoped token is what bounds the blast radius rather
-than the permission prompts. That flag is also why the container runs as the unprivileged
-`agent` user; Claude Code refuses it as root.
+file write is not a pipeline. What bounds the blast radius is the container itself: a workspace
+in a named volume, a remote with no push url, and no GitHub credential to push with. That flag
+is also why the container runs as the unprivileged `agent` user; Claude Code refuses it as root.
 
 ## Changing the image
 

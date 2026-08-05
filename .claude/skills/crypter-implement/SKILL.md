@@ -7,12 +7,11 @@ description: Build an approved plan into commits on a new branch, inside the pip
 
 Turn an approved plan into commits on a branch.
 
-**This runs inside the devcontainer.** The workspace is an anonymous clone of the org repository
-with a single remote, `upstream`, which has no push url. The container holds no credential and
-reads public code. The host session publishes the branch once you return.
+The workspace is an anonymous clone of the org repository with a single remote, `upstream`,
+which has no push url. Commit locally and stop there; the branch is fetched out and pushed once
+you return.
 
-The plan is the specification. An interactive session on the host wrote it and the user approved
-it there. This runs unattended.
+The plan is the specification. The user approved it before this ran, and this runs unattended.
 
 ## Setup
 

@@ -462,9 +462,6 @@ Crypter.Web/pnpm-lock.yaml
 # Claude Code worktrees
 .claude/worktrees/
 
-# Agentic pipeline run state
-.claude/pipeline/
-
 # Plans authored on the host and mounted into the pipeline container
 .claude/plans/
 

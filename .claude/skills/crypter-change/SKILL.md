@@ -1,15 +1,17 @@
 ---
 name: crypter-change
-description: Take a requirement to an open, CI-green draft pull request, orchestrating the plan, build, review and publish skills. Use when asked to make a change to Crypter, or invoked as /crypter-change "<requirement>".
+description: Take a requirement to an open, CI-green draft pull request, orchestrating the plan, implement, examine and pull request skills. Use when asked to make a change to Crypter, or invoked as /crypter-change "<requirement>".
 ---
 
 # Crypter change
 
 Carry a requirement from a sentence to a draft pull request whose checks pass.
 
-**This runs on the host** and owns the whole run. The work happens in skills below you: planning
-here, building and reviewing in the container, publishing here. You hold the plan, the findings
-and every CI attempt, which is why the judgement calls are yours.
+You own the whole run. Building and reviewing happen in the container; you hold the plan, the
+findings and every CI attempt, which is why the judgement calls are yours.
+
+Run from the root of the main checkout. The container's mounts resolve against it, so a run
+started from a worktree writes its plan where the container cannot read it.
 
 There is one gate: the user approves the plan. Everything after it runs to a green draft pull
 request, or to a written account of why CI would not take it.
@@ -34,10 +36,12 @@ and both are yours to read at any point.
 write into a directory that grants it. Creating them on this side also keeps you able to delete
 what they wrote — a directory the container creates is one you cannot remove.
 
-The container needs both mounts. Confirm before starting a run:
+The container needs both mounts, and the run directory has to be writable from inside it.
+Confirm before starting:
 
 ```bash
-docker exec crypter-pipeline test -d /plans && docker exec crypter-pipeline test -w /runs
+docker exec crypter-pipeline test -d /plans/{run-id} && \
+  docker exec crypter-pipeline test -w /runs/{run-id}/findings
 ```
 
 A container created before these existed picks them up on
@@ -57,7 +61,7 @@ docker exec -w /work/Crypter crypter-pipeline \
   claude --dangerously-skip-permissions -p "/crypter-implement {run-id} {branch}"
 ```
 
-Keep the title and description it reports; `crypter-publish` needs them.
+Keep the title and description it reports; `crypter-open-pull-request` needs them.
 
 ## 3. Examine
 
@@ -92,21 +96,21 @@ docker exec -w /work/Crypter crypter-pipeline \
   claude --dangerously-skip-permissions -p "/crypter-remediate {run-id} {branch} /runs/{run-id}/triage.md"
 ```
 
-## 6. Publish
+## 6. Open the pull request
 
-Invoke `crypter-publish` with the run id and the branch. It fetches the commits out of the
-container, pushes them, and opens or updates the draft pull request.
+Invoke `crypter-open-pull-request` with the run id and the branch. It fetches the commits out of
+the container, pushes them, and opens or updates the draft pull request.
 
 ## 7. Hold it against CI
 
-Invoke `ci-watcher` with the repository path, the branch, the fork, the pull request number, the
-attempt number, and `.claude/runs/{run-id}/ci-{n}.md`. It runs one attempt and reports.
+Invoke `ci-watcher` with the repository path, the branch, the pull request number, the attempt
+number, and `.claude/runs/{run-id}/ci-{n}.md`. It runs one attempt and reports.
 
 The loop is yours:
 
 1. Green → go to stage 8.
-2. A failure → run `crypter-remediate` with `/runs/{run-id}/ci-{n}.md`, invoke `crypter-publish`
-   again, then `ci-watcher` with the next attempt number.
+2. A failure → run `crypter-remediate` with `/runs/{run-id}/ci-{n}.md`, invoke
+   `crypter-open-pull-request` again, then `ci-watcher` with the next attempt number.
 3. **Three attempts is the ceiling.** Comment the state of play on the pull request and hand back
    to the user.
 

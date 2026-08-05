@@ -1,20 +1,17 @@
 ---
-name: crypter-publish
-description: Push a branch the pipeline built in the container to the fork and open or update its pull request. Use when a branch is ready to publish, or invoked as /crypter-publish {run-id} {branch}.
+name: crypter-open-pull-request
+description: Push a branch the pipeline built in the container to the fork and open or update its draft pull request. Use when a branch is ready for a pull request, or invoked as /crypter-open-pull-request {run-id} {branch}.
 ---
 
-# Crypter publish
+# Crypter open pull request
 
-Take the branch the container built and put it on the fork, with a pull request open against it.
-
-**This runs on the host.** The container holds no credential, so every authenticated GitHub
-operation happens here, with yours.
+Take the branch the container built and put it on the fork, with a draft pull request open
+against it.
 
 Safe to run repeatedly on the same branch. Each run pushes whatever commits the container has
-added and updates the existing pull request, which is what a caller looping over CI attempts
-needs from it.
+added and updates the existing pull request.
 
-You are given a run id and a branch name: `/crypter-publish {run-id} {branch}`.
+You are given a run id and a branch name: `/crypter-open-pull-request {run-id} {branch}`.
 
 ## 1. Fetch the branch out of the container
 
@@ -46,6 +43,8 @@ nothing more to do. Say which one it was.
 
 Otherwise open it against the fork, base `stable`, as a draft, using whatever GitHub access this
 session has — the `gh` CLI, or the GitHub MCP server's `create_pull_request`.
+
+It stays a draft. Taking it out of draft is the user's.
 
 Take the title and description from the report of whoever built the branch. Write the
 description for the org repository's reviewers, since it carries over when the upstream pull
