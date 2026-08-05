@@ -217,7 +217,8 @@ they survive container rebuilds. You only do this again after removing that volu
 
 Run the agents with `--permission-mode auto`. They work unattended, so a prompt they cannot
 answer is a run that stalls. What bounds the blast radius is the container itself: a workspace
-in a named volume, a remote with no push url, and no GitHub credential to push with.
+that is thrown away at the end of the run, a read-only view of your repository, and no GitHub
+credential to push with.
 
 ## Changing the image
 
@@ -228,8 +229,9 @@ changes never require it, because the image carries no source.
 docker compose -f .devcontainer/docker-compose.yml up -d --build
 ```
 
-That is the whole loop. Nothing is published and nothing waits for an approval, so a change to
-`workspace.sh` or the Dockerfile takes effect on your next `up`.
+That is the whole loop. The image is local to your machine — it is never published, and nobody
+else consumes it — so a change to `workspace.sh` or the Dockerfile takes effect on your next
+`up` and affects nothing but your own container.
 
-`pr-build-devcontainer` still builds the image on a pull request that touches `.devcontainer/`,
-which catches a Dockerfile that does not build.
+`pr-build-devcontainer` builds the image on a pull request that touches `.devcontainer/`. It
+pushes nothing; it is there to catch a Dockerfile that does not build.
