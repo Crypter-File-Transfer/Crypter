@@ -84,7 +84,7 @@ this pull request may not be theirs.
 
 Use the GitHub MCP server's `pull_request_review_write` with method `create` to open a pending
 review, `add_comment_to_pending_review` for each finding that names a file and a line **in the
-diff**, then `submit_pending`. Where `gh` is installed, `gh pr review --comment` posts the body.
+diff**, then `submit_pending`.
 
 The review body carries:
 

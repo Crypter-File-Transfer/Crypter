@@ -80,12 +80,9 @@ ERROR: ... exit code: 1`. The thing that actually broke — a version mismatch, 
 diagnostic, a failing assertion — sits in the lines above it. Work upwards until you find
 something that explains the failure rather than restating it.
 
-Where the extract leaves you short of the cause, pull more of the log yourself rather than
-guessing:
-
-```bash
-gh run view <run-id> --repo <owner>/<repo> --log-failed > <file>
-```
+Where the extract leaves you short of the cause, read further. The script keeps each failing
+job's full log and prints its path, so open that file and search it rather than fetching another
+copy.
 
 Say so in the report if it still does not explain the failure, and give the run URL. Do not fill
 the gap with a cause the log does not support.

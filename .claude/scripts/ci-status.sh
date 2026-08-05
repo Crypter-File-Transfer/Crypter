@@ -101,8 +101,10 @@ if [[ -z "${failed_runs}" ]]; then
   exit 1
 fi
 
-log_dir=$(mktemp -d)
-trap 'rm -rf "${log_dir}"' EXIT
+# The full logs are kept rather than cleaned up. The extract below is a window, and whoever
+# reads it may need more; leaving the files behind means they open a file instead of going back
+# to the network for a second copy.
+log_dir=$(mktemp -d -t ci-status-XXXXXX)
 
 while IFS=$'\t' read -r run_id workflow_name; do
   [[ -z "${run_id}" ]] && continue
@@ -114,6 +116,8 @@ while IFS=$'\t' read -r run_id workflow_name; do
   log="${log_dir}/${run_id}.log"
   if gh run view "${run_id}" "${gh_args[@]}" --log-failed >"${log}" 2>/dev/null && [[ -s "${log}" ]]; then
     extract_failure "${log}"
+    echo
+    echo "  Full log: ${log}"
   else
     echo "  Could not read the failed log for run ${run_id}."
   fi
