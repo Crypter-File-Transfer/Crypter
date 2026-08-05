@@ -7,12 +7,14 @@ and it invokes the rest.
 |---|---|
 | `/crypter-change "<requirement>"` | Carries a requirement to a green draft pull request |
 | `/crypter-review {pr-number}` | Puts an existing pull request through the reviewer lenses |
+| `/crypter-triage-review {pr-number}` | Rules on the findings left on a pull request and fixes the ones that hold |
 
 | Task skill | Executes in | Does |
 |---|---|---|
 | `/crypter-plan` | Your session | Drafts the plan interactively, with the web, your tooling and you available to it |
 | `/crypter-implement` | Container | Builds the plan into commits on a new branch |
 | `/crypter-examine` | Container | Reviews a diff for plan adherence and code quality |
+| `/crypter-verify` | Container | Rules on each finding in a report against the code |
 | `/crypter-remediate` | Container | Applies triaged findings or a CI failure to an existing branch |
 | `/crypter-open-pull-request` | Your session | Pushes the branch and opens or updates the draft pull request |
 
@@ -52,7 +54,7 @@ and both on your disk:
 | Host | Container | Direction | Holds |
 |---|---|---|---|
 | `.claude/plans` | `/plans` | Read-only | `{run-id}/plan.md` |
-| `.claude/runs` | `/runs` | Writable | `{run-id}/conformance.md`, `{run-id}/findings/{lens}.md`, `{run-id}/triage.md`, `{run-id}/ci-{n}.md` |
+| `.claude/runs` | `/runs` | Writable | `{run-id}/conformance.md`, `{run-id}/findings/{lens}.md`, `{run-id}/review.md`, `{run-id}/verification/{id}.md`, `{run-id}/triage.md`, `{run-id}/ci-{n}.md` |
 
 The plan goes in and cannot be rewritten by the agents. Findings come back out as files you can
 open, grep and keep, rather than as text in a transcript, and each is written by the agent that
@@ -86,9 +88,15 @@ It plans, stops for your approval, then builds, examines, triages, remediates, o
 pull request, and holds it against CI for at most three fix attempts. The approval is the only
 stop, and the pull request stays a draft until you take it out of one.
 
-`/crypter-review {pr-number}` is the other entry point. It fetches a pull request's head into the
-container, runs the lenses against it with no plan to audit, triages what they raise, and posts
-one review that comments. It never approves and never requests changes.
+`/crypter-review {pr-number}` is the second entry point. It fetches a pull request's head into
+the container, runs the lenses against it with no plan to audit, triages what they raise, and
+posts one review that comments. It never approves and never requests changes.
+
+`/crypter-triage-review {pr-number}` is the third. It reads the findings already on a pull
+request, whoever left them, and gives one verifier per finding a worktree and nothing else to
+judge it by. A finding that does not survive that gets a reply on its thread saying what the
+code does instead. A finding that does becomes a commit, where the head branch is one you can
+push to. Nothing is fixed on the strength of the finding alone.
 
 ## Configuration
 
