@@ -45,8 +45,15 @@ uncommitted work on your machine.
 The container does hold your Claude Code credential, in the `crypter-pipeline-claude` volume,
 and its network egress is open. Treat it as a trust boundary rather than a sandbox.
 
-When `/crypter-change` finishes you have a fork pull request to read; opening one against the org
-repository is something you do by hand afterwards.
+The branch is pushed to the org repository and the pull request opens against it, base `stable`,
+the same route a branch of your own takes. `/crypter-change` leaves you a draft pull request to
+read.
+
+The org repository therefore has two names in this pipeline. Your session reaches it as `origin`,
+the remote your checkout already has. The container reaches it as `upstream`, the name its clone
+gives the one remote it has, chosen so that a remote with no push url reads as one. Host-side
+skills say `origin` and container-side skills say `upstream`; both mean
+`Crypter-File-Transfer/Crypter`.
 
 This document covers the setup you need before the container will start.
 
@@ -137,14 +144,6 @@ into.
 
 Swap `up -d` for `down` to stop it. The named volumes outlive the container, so the next `up`
 reuses the workspace and your Claude Code credentials.
-
-## Enable Actions on your fork
-
-GitHub disables workflows on new forks. Until you turn them on, pushing a branch runs nothing,
-and `/crypter-change` stops at the CI stage reporting that no run ever appeared.
-
-Open the **Actions** tab on your fork and use the button confirming you want to run workflows.
-You only do this once.
 
 ## What is in the container
 
