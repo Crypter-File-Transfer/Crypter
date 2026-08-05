@@ -71,10 +71,18 @@ Give the call a long timeout. A full round is several minutes, and the tool caps
 call is killed before the round finishes, run it again — a watch you cut short looks exactly
 like a failure.
 
-The exit code is your signal, and it separates the two outcomes you would otherwise confuse:
-`0` when everything passed, `1` when something failed, `8` when checks are still pending. An `8`
-after `--watch` means the call was cut short rather than that CI is unhappy — run it again
-rather than reporting a failure.
+The exit code is your signal, and it separates outcomes you would otherwise confuse:
+
+| Exit | Means |
+|---|---|
+| `0` | Every check passed |
+| `1` | A check failed |
+| `4` | `gh` is not authenticated — a setup problem, not a CI result |
+| `8` | Checks are still pending |
+
+An `8` after `--watch` means the call was cut short rather than that CI is unhappy; run it again
+rather than reporting a failure. A `4` means nobody ran `gh auth login`, and reporting that as a
+failing build would send the implementer hunting for a defect that does not exist.
 
 Five workflows run on a pull request, reported by job name rather than by workflow name. Expect
 these:
