@@ -87,8 +87,8 @@ pull request, and holds it against CI for at most three fix attempts. The approv
 stop, and the pull request stays a draft until you take it out of one.
 
 `/crypter-review {pr-number}` is the other entry point. It fetches a pull request's head into the
-container, runs the lenses against it with no plan to audit, and reports. It posts nothing to
-GitHub.
+container, runs the lenses against it with no plan to audit, triages what they raise, and posts
+one review that comments. It never approves and never requests changes.
 
 ## Configuration
 

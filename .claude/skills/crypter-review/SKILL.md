@@ -1,6 +1,6 @@
 ---
 name: crypter-review
-description: Review an existing pull request with the container's reviewer lenses and report what they found. Use when asked to scrutinise a pull request, or invoked as /crypter-review {pr-number}.
+description: Review an existing pull request with the container's reviewer lenses and post what they found to the pull request. Use when asked to scrutinise a pull request, or invoked as /crypter-review {pr-number}.
 ---
 
 # Crypter review
@@ -11,7 +11,8 @@ Use it on a pull request that deserves more scrutiny than a read, and on pull re
 people raised. The lenses run in the container, against a copy of the pull request fetched into
 its clone.
 
-The findings come back to the user. Nothing is posted to GitHub.
+The findings land on disk and on the pull request, as one review that comments and neither
+approves nor requests changes.
 
 ## Setup
 
@@ -63,17 +64,42 @@ adherence phase sits out and the lenses do the work.
 
 Findings land in `.claude/runs/pr-{number}/findings/{lens}.md`.
 
-## 4. Report
+## 4. Triage
 
-Read the files and tell the user what is in them:
+Read every finding against the code before you carry it to the pull request. A lens that has
+already been wrong once will happily be wrong again, and a finding posted is a finding the author
+has to answer.
 
-- What each lens raised, and which findings you would act on first.
-- Where a finding rests on an assumption about intent, say so — the lenses read a diff, not a
-  discussion.
-- Which findings you checked against the code yourself and stand behind, separately from those
-  you are relaying.
-- Where the artifacts are.
+Keep anything with a concrete failure behind it. Drop preferences, restatements of what the
+author already chose, and findings about code the diff did not touch.
 
-Say plainly where the lenses found nothing. A quiet review is a result.
+Write what you kept and what you dropped, with a reason for each, to
+`.claude/runs/pr-{number}/triage.md`. That file is how the user checks this judgement, and it is
+what a later remediation run reads.
 
-Posting any of this to the pull request is the user's call, and theirs to do.
+## 5. Post the review
+
+One review, event `COMMENT`. Never approve and never request changes — that is the user's, and
+this pull request may not be theirs.
+
+Use the GitHub MCP server's `pull_request_review_write` with method `create` to open a pending
+review, `add_comment_to_pending_review` for each finding that names a file and a line **in the
+diff**, then `submit_pending`. Where `gh` is installed, `gh pr review --comment` posts the body.
+
+The review body carries:
+
+- Which lenses ran, and which found nothing. A quiet lens is a result worth stating.
+- Every finding you kept that has no line to hang on, in full.
+- That the lenses read the diff rather than the discussion around it, so a finding resting on an
+  assumption about intent says so.
+
+Attribute it. The body opens by naming the lenses as its author, so the person reading knows what
+produced it.
+
+A line comment that the API rejects for being outside the diff goes in the body instead. **Do not
+retry it against a different line.**
+
+## 6. Report
+
+Tell the user the review URL, what you kept and dropped, which findings you checked against the
+code yourself and stand behind, and where the artifacts are.
