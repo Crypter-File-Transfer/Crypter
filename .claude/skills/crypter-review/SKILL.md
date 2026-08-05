@@ -55,7 +55,7 @@ picks up the new head instead of being rejected.
 
 ```bash
 docker exec -w /work/Crypter crypter-pipeline \
-  claude --dangerously-skip-permissions -p "/crypter-examine pr-{number} pr-{number}"
+  claude --permission-mode auto -p "/crypter-examine pr-{number} pr-{number}"
 ```
 
 No plan path. A pull request raised elsewhere has no plan to hold it against, so the plan

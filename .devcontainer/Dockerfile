@@ -12,8 +12,7 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_TOOLS=/usr/local/share/dotnet-tools
 ENV PATH="${PATH}:${DOTNET_TOOLS}"
 
-# Claude Code refuses --dangerously-skip-permissions when running as root on Linux,
-# so the agents need an unprivileged user to run as.
+# The agents run unattended, so they run as an unprivileged user rather than root.
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID --create-home --shell /bin/bash $USERNAME
 

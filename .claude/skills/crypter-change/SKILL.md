@@ -58,7 +58,7 @@ It settles the plan with the user itself. **Do not continue until they have appr
 
 ```bash
 docker exec -w /work/Crypter crypter-pipeline \
-  claude --dangerously-skip-permissions -p "/crypter-implement {run-id} {branch}"
+  claude --permission-mode auto -p "/crypter-implement {run-id} {branch}"
 ```
 
 Keep the title and description it reports; `crypter-open-pull-request` needs them.
@@ -67,7 +67,7 @@ Keep the title and description it reports; `crypter-open-pull-request` needs the
 
 ```bash
 docker exec -w /work/Crypter crypter-pipeline \
-  claude --dangerously-skip-permissions -p "/crypter-examine {run-id} {branch} /plans/{run-id}/plan.md"
+  claude --permission-mode auto -p "/crypter-examine {run-id} {branch} /plans/{run-id}/plan.md"
 ```
 
 It writes `.claude/runs/{run-id}/conformance.md` and `.claude/runs/{run-id}/findings/{lens}.md`.
@@ -93,7 +93,7 @@ Where anything was accepted:
 
 ```bash
 docker exec -w /work/Crypter crypter-pipeline \
-  claude --dangerously-skip-permissions -p "/crypter-remediate {run-id} {branch} /runs/{run-id}/triage.md"
+  claude --permission-mode auto -p "/crypter-remediate {run-id} {branch} /runs/{run-id}/triage.md"
 ```
 
 ## 6. Open the pull request

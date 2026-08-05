@@ -141,7 +141,7 @@ the container pulls it for you. There is nothing to build unless you are changin
 itself.
 
 Built on `mcr.microsoft.com/dotnet/sdk:10.0`, running as an unprivileged user named `agent`
-because Claude Code refuses `--dangerously-skip-permissions` as root:
+rather than as root:
 
 - The .NET 10 SDK, the `wasm-tools` workload, and `dotnet-ef`
 - Node 22 and pnpm 11.18.0, which `Crypter.Web`'s PreBuild target needs
@@ -177,10 +177,9 @@ your host and a code to paste back.
 Credentials live in `/home/agent/.claude`, which is the `crypter-pipeline-claude` volume, so
 they survive container rebuilds. You only do this again after removing that volume.
 
-Run the agents with `--dangerously-skip-permissions`. A pipeline that stops to approve every
-file write is not a pipeline. What bounds the blast radius is the container itself: a workspace
-in a named volume, a remote with no push url, and no GitHub credential to push with. That flag
-is also why the container runs as the unprivileged `agent` user; Claude Code refuses it as root.
+Run the agents with `--permission-mode auto`. They work unattended, so a prompt they cannot
+answer is a run that stalls. What bounds the blast radius is the container itself: a workspace
+in a named volume, a remote with no push url, and no GitHub credential to push with.
 
 ## Changing the image
 
