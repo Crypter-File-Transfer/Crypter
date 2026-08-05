@@ -1,12 +1,20 @@
 # Agentic Development Pipeline
 
-A change goes through three skills:
+Two orchestrators compose a set of task skills.
 
 | Skill | Runs | Does |
 |---|---|---|
-| `/crypter-plan-author` | Host | Drafts the plan interactively, with the web, your tooling and you available to it |
-| `/pipeline` | Container | Implements the plan, reviews it, and leaves a branch |
-| `/crypter-publish` | Host | Pushes the branch, opens the pull request, holds it against CI |
+| `/crypter-change` | Host | Carries a requirement to a green draft pull request |
+| `/crypter-review` | Host | Puts an existing pull request through the reviewer lenses |
+| `/crypter-plan` | Host | Drafts the plan interactively, with the web, your tooling and you available to it |
+| `/crypter-implement` | Container | Builds the plan into commits on a new branch |
+| `/crypter-examine` | Container | Reviews a diff for plan adherence and code quality |
+| `/crypter-remediate` | Container | Applies triaged findings or a CI failure to an existing branch |
+| `/crypter-publish` | Host | Pushes the branch and opens or updates the pull request |
+
+The task skills stand alone. `/crypter-plan` is worth running on its own when you want a plan
+and nothing else, and `/crypter-publish` is safe to run repeatedly, which is how the CI loop
+uses it.
 
 **The container holds no credential.** Its workspace is an anonymous clone of the org
 repository with one remote, `upstream`, which has no push url, so the agents read public code
@@ -14,27 +22,55 @@ and commit locally. Every authenticated GitHub operation happens on the host wit
 access. The workspace is a named Docker volume rather than a bind mount of your checkout, so
 the agents cannot touch uncommitted work on your machine.
 
-When `/crypter-publish` finishes you have a fork pull request to read; opening one against the
-org repository is something you do by hand afterwards.
+When `/crypter-change` finishes you have a fork pull request to read; opening one against the org
+repository is something you do by hand afterwards.
 
 This document covers the setup you need before the container will start.
 
-## Planning and the plans mount
+## The two mounts
 
-`/crypter-plan-author` writes to `.claude/plans/{run-id}/plan.md` on your host, which is
-gitignored. Compose mounts `.claude/plans` read-only at `/plans` in the container, so the
-pipeline reads the plan where you wrote it and the agents write their run state to the workspace
-instead.
+Everything crossing the container boundary goes through one of two directories, both gitignored
+and both on your disk:
 
-You approve the plan in that host session. It then starts the pipeline itself:
+| Host | Container | Direction | Holds |
+|---|---|---|---|
+| `.claude/plans/{run-id}` | `/plans` | Read-only | `plan.md` |
+| `.claude/runs/{run-id}` | `/runs` | Writable | `conformance.md`, `findings/{lens}.md`, `triage.md`, `ci-{n}.md` |
+
+The plan goes in and cannot be rewritten by the agents. Findings come back out as files you can
+open, grep and keep, rather than as text in a transcript, and each is written by the agent that
+found it. `triage.md` is what `/crypter-change` decided to act on, and reading it is how you
+check that judgement.
+
+The container's `agent` user is uid 1001, because the base image already has a user on 1000. A
+bind mount keeps host ownership, so the orchestrators create every directory under `.claude/runs`
+themselves and give it mode 777. Directories made on the host stay deletable from the host; a
+directory the container creates is one you need `docker exec` to remove.
+
+The branch itself travels differently. It never passes through a mount:
 
 ```bash
-docker exec -w /work/Crypter crypter-pipeline \
-  claude --dangerously-skip-permissions -p "/pipeline {run-id} {branch}"
+git -c protocol.ext.allow=user fetch \
+  "ext::docker exec -i crypter-pipeline git upload-pack /work/Crypter" {branch}:{branch}
 ```
 
-A container created before the mount existed picks it up on
+`protocol.ext.allow` is passed per command, so it stays out of your git config.
+
+A container created before these mounts existed picks them up on
 `docker compose -f .devcontainer/docker-compose.yml up -d --force-recreate`.
+
+## Running a change
+
+```bash
+/crypter-change "<requirement>"
+```
+
+It plans, stops for your approval, then builds, examines, triages, remediates, publishes, and
+holds the pull request against CI for at most three fix attempts. The approval is the only stop.
+
+`/crypter-review {pr-number}` is the other entry point. It fetches a pull request's head into the
+container, runs the lenses against it with no plan to audit, and reports. It posts nothing to
+GitHub.
 
 ## Configuration
 
@@ -67,26 +103,10 @@ docker compose -f .devcontainer/docker-compose.yml exec -w /work/Crypter pipelin
 Swap `up -d` for `down` to stop it. The named volumes outlive the container, so the next `up`
 reuses the workspace and your Claude Code credentials.
 
-## Publishing
-
-`/crypter-publish {run-id} {branch}` reaches into the container for the branch, using git's
-`ext` transport over `docker exec`:
-
-```bash
-git -c protocol.ext.allow=user fetch \
-  "ext::docker exec -i crypter-pipeline git upload-pack /work/Crypter" {branch}:{branch}
-```
-
-`protocol.ext.allow` is passed per command, so it stays out of your git config. From there the
-host pushes the branch to your fork, opens the draft pull request, and runs the CI loop with
-your own GitHub access — the `gh` CLI or the GitHub MCP server. Three fix attempts is the
-ceiling; `/crypter-publish` writes each failure to `.claude/plans/{run-id}/ci-{n}.md` and runs
-`/pipeline-fix` in the container to address it.
-
 ## Enable Actions on your fork
 
 GitHub disables workflows on new forks. Until you turn them on, pushing a branch runs nothing,
-and the pipeline stops at the CI stage reporting that no run ever appeared.
+and `/crypter-change` stops at the CI stage reporting that no run ever appeared.
 
 Open the **Actions** tab on your fork and use the button confirming you want to run workflows.
 You only do this once.

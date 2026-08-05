@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Implement an approved plan in Crypter, or apply accepted review findings and CI fixes. Used as stages 2 and 5 of the /pipeline skill, and by /pipeline-fix.
+description: Implement an approved plan in Crypter, or apply triaged review findings and CI fixes. Used by the /crypter-implement and /crypter-remediate skills.
 tools: Read, Grep, Glob, Bash, Write, Edit
 model: opus
 effort: high

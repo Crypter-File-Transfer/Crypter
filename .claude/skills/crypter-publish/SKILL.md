@@ -1,14 +1,18 @@
 ---
 name: crypter-publish
-description: Take a branch the pipeline built in the container, push it to the fork, open a pull request, and hold it against CI. Use when the pipeline has finished, or invoked as /crypter-publish {run-id} {branch}.
+description: Push a branch the pipeline built in the container to the fork and open or update its pull request. Use when a branch is ready to publish, or invoked as /crypter-publish {run-id} {branch}.
 ---
 
 # Crypter publish
 
-Take the branch the pipeline built and turn it into a pull request with green checks.
+Take the branch the container built and put it on the fork, with a pull request open against it.
 
 **This runs on the host.** The container holds no credential, so every authenticated GitHub
 operation happens here, with yours.
+
+Safe to run repeatedly on the same branch. Each run pushes whatever commits the container has
+added and updates the existing pull request, which is what a caller looping over CI attempts
+needs from it.
 
 You are given a run id and a branch name: `/crypter-publish {run-id} {branch}`.
 
@@ -29,58 +33,26 @@ and say so** — the branch is the whole deliverable.
 ```bash
 git fetch upstream
 git push origin upstream/stable:refs/heads/stable
-git push -u origin {branch}
+git push origin {branch}
 ```
 
 The first push keeps the fork's `stable` level with the org repository, so the pull request
 compares against current code.
 
-## 3. Open the pull request
+## 3. Open or update the pull request
 
-Open it against the fork, base `stable`, as a draft, using whatever GitHub access this session
-has — the `gh` CLI, or the GitHub MCP server's `create_pull_request`.
+Where a pull request for `{branch}` is already open, the push has updated it and there is
+nothing more to do. Say which one it was.
 
-Take the title and description from the pipeline's report. Write the description for the org
-repository's reviewers, since it carries over when the upstream pull request is opened.
+Otherwise open it against the fork, base `stable`, as a draft, using whatever GitHub access this
+session has — the `gh` CLI, or the GitHub MCP server's `create_pull_request`.
 
-## 4. Hold it against CI
+Take the title and description from the report of whoever built the branch. Write the
+description for the org repository's reviewers, since it carries over when the upstream pull
+request is opened.
 
-Invoke `ci-watcher` with the pull request number, the attempt number, and
-`.claude/plans/{run-id}/ci-{n}.md`. It runs **one attempt**: it reads the checks for the head
-commit, watches them, and reports.
+## 4. Report
 
-You own the loop:
+The pull request URL, whether it was opened or updated, and the head commit now on it.
 
-1. `ci-watcher` reports green → go to stage 5.
-2. `ci-watcher` reports a failure → run the fix in the container with the report it wrote:
-
-   ```bash
-   docker exec -w /work/Crypter crypter-pipeline \
-     claude --dangerously-skip-permissions -p "/pipeline-fix {run-id} {branch} /plans/{run-id}/ci-{n}.md"
-   ```
-
-   Then fetch the new commits as in stage 1, push them, and invoke `ci-watcher` again with the
-   next attempt number.
-3. **Stop after three attempts.** Comment the state of play on the pull request and hand back
-   to the user.
-
-Stop earlier and ask the user whenever another attempt looks pointless — the same check failing
-the same way twice, a failure the plan did not anticipate, or anything that reads as a wrong
-plan rather than wrong code. Three attempts is the ceiling, not a quota to spend.
-
-Stop immediately, without spending an attempt, if `ci-watcher` reports that no run appeared for
-the commit. Workflows stay disabled on a new fork until they are enabled once in its Actions
-tab, and that is a setup problem.
-
-## 5. Report
-
-Tell the user:
-
-- The fork pull request URL and whether its checks are green. It is a draft; taking it out of
-  draft is theirs.
-- What each fix attempt changed, if any ran.
-- Anything the pipeline could not do, and what it rejected in triage.
-- If the loop gave up: which check failed and what the last attempt tried.
-
-The upstream pull request is a separate one against `Crypter-File-Transfer/Crypter`, since the
-base repository is fixed when a pull request is created. The description is ready to paste.
+Checks start on the push. Watching them belongs to the caller.

@@ -17,6 +17,8 @@ services:
       - claude:/home/agent/.claude
       # Plans are authored on the host and read from /plans.
       - ../.claude/plans:/plans:ro
+      # Findings, conformance and triage are artifacts on the host, written from /runs.
+      - ../.claude/runs:/runs
     # /work/Crypter does not exist until crypter-clone-upstream has run, so the container starts
     # one level up. Open a shell with `exec -w /work/Crypter`.
     working_dir: /work

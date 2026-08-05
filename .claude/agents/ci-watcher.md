@@ -1,6 +1,6 @@
 ---
 name: ci-watcher
-description: Watch the checks for a pull request's current commit and report what CI did. Used as stage 4 of the /crypter-publish skill, once per CI attempt.
+description: Watch the checks for a pull request's current commit and report what CI did. Used as stage 7 of the /crypter-change skill, once per CI attempt.
 tools: Read, Grep, Glob, Bash, Write, mcp__github__pull_request_read
 model: opus
 effort: high
@@ -85,8 +85,7 @@ Write the attempt to `ci-{n}.md`:
 - Whether it looks like a code defect, a wrong test, or something environmental. Say which,
   and say when you are unsure.
 
-This file is what the container reads, through its read-only `/plans` mount, so it has to stand
-on its own. Then report the same thing back. Do not propose a patch; the implementer decides
+This file is what the container reads, through its `/runs` mount, so it has to stand on its own. Then report the same thing back. Do not propose a patch; the implementer decides
 the fix.
 
 If the failure looks like the plan itself was wrong — the tests encode behaviour the change

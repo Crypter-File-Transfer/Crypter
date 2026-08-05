@@ -13,7 +13,7 @@ set -euo pipefail
 
 upstream_repo="${CRYPTER_UPSTREAM:-Crypter-File-Transfer/Crypter}"
 
-# Has to match the workspace path the pipeline skill and docker-compose.yml use.
+# Has to match the workspace path the container skills and docker-compose.yml use.
 workspace="/work/Crypter"
 
 git config --global user.name "${CRYPTER_GIT_NAME}"
