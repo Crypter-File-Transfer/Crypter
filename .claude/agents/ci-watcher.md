@@ -24,30 +24,31 @@ The pull request is on the repository the branch was pushed to:
 git -C <repo> remote get-url origin
 ```
 
-Use `mcp__github__pull_request_read` with `method: "get_check_runs"` for the head commit's
-checks. Where the `gh` CLI is installed, `gh pr checks --watch` and `gh run list --commit <sha>`
-followed by `gh run view <run-id> --log-failed` give more detail; use them when they are there.
-
-## Find the run
-
-The pull request is a draft and stays one; the user takes it out of draft when they are ready
-to review it. Checks run on drafts, so pushing the branch starts a round of them, and a round
-is already queued or finished by the time you are invoked.
-
-Confirm you are reading the round for the commit you were asked about:
-
-```bash
-git -C <repo> rev-parse <branch>
-```
-
-Compare that against the head SHA in the pull request data. A push takes a moment to register,
-so poll `get_check_runs` until runs appear. If nothing has appeared after a few minutes, say so
-and stop: a push that starts no checks is a setup problem no amount of waiting fixes.
-
 ## Watch
 
-Poll until every check reaches a conclusion. Give it a generous timeout — a full build plus the
-test suite is slow, and a watch you cut short looks exactly like a failure.
+`.claude/scripts/ci-status.sh` does the waiting and the log archaeology. Run it and read what it
+gives you:
+
+```bash
+.claude/scripts/ci-status.sh <pr-number> <owner>/<repo>
+```
+
+It blocks until every check concludes, so **never write a polling loop with `sleep` in it** — a
+foreground `sleep` does not run here. Give the call a long timeout; a full round is several
+minutes and the tool caps at ten.
+
+Its exit code is the outcome, and it separates cases you would otherwise confuse:
+
+| Exit | Means | What to do |
+|---|---|---|
+| `0` | Every check passed | Report success |
+| `1` | A check failed | The log extract is on stdout; diagnose it |
+| `3` | No checks ever started | A setup problem. Stop and say so |
+| `4` | `gh` is not authenticated | A setup problem. Say `gh auth login` has not been run |
+| `8` | Still pending when the watch ended | The call was cut short. Run it again |
+
+`3`, `4` and `8` are **not** CI failures. Reporting any of them as one sends an implementer
+hunting for a defect that does not exist.
 
 Five workflows run on a pull request, reported by job name rather than by workflow name. Expect
 these:
@@ -57,8 +58,7 @@ these:
 | `changes / detect` | Never. Every workflow gates on `detect-code-changes`, so there are five of these. |
 | `build-and-test` | The diff is documentation only |
 | `build-and-test-web` | The diff is documentation only |
-| `Analyze (csharp)` | The diff is documentation only |
-| `Analyze (javascript)` | The diff is documentation only |
+| `Analyze (csharp)` and `Analyze (javascript)` | The diff is documentation only |
 | `build-api` | The diff is documentation only |
 | `build-web` | The diff is documentation only |
 | `build-devcontainer` | The diff does not touch `.devcontainer/` |
@@ -72,8 +72,20 @@ not have caught locally shows up.
 
 ## On failure
 
-Get the real error. The check run's `output` summary and annotations carry the diagnostic;
-where `gh` is installed, the failed job's log carries more.
+The script has already found the failing runs and printed the window of log ending at the
+runner's `##[error]` marker. That window is where the diagnosis is, and reading it is the job.
+
+**The marker line is the symptom, not the cause.** It says things like `buildx failed with:
+ERROR: ... exit code: 1`. The thing that actually broke — a version mismatch, a compiler
+diagnostic, a failing assertion — sits in the lines above it. Work upwards until you find
+something that explains the failure rather than restating it.
+
+Where the extract leaves you short of the cause, read further. The script keeps each failing
+job's full log and prints its path, so open that file and search it rather than fetching another
+copy.
+
+Say so in the report if it still does not explain the failure, and give the run URL. Do not fill
+the gap with a cause the log does not support.
 
 Then read the code the failure points at. The repository's working tree is on whatever the user
 last checked out, so read the branch's version:
