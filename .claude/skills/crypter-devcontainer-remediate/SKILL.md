@@ -7,8 +7,8 @@ description: Apply a report to a branch the pipeline already built, whether tria
 
 Take a report of what is wrong with a branch this container already built, and fix it.
 
-The branch exists in `/work/Crypter/.git`. Commit locally; the result is fetched out and pushed
-once you return.
+The branch exists in the run's workspace at `/work/{run-id}`. Commit locally; the result is
+fetched out and pushed once you return.
 
 The report is triaged review findings or a CI failure. Both are the same job: a description of
 what is wrong, an existing branch, and commits that address it.
@@ -25,19 +25,21 @@ Read `/plans/{run-id}/plan.md` too where one exists. The fix stays inside what t
 to do; a repair that reaches into the plan's non-goals belongs in your report rather than in a
 commit.
 
-## 1. Worktree on the existing branch
+## 1. Claim the existing branch
+
+The workspace at `/work/{run-id}` already exists; the host created it. **If it is missing, stop
+and say so** rather than creating one.
 
 ```bash
-git -C /work/Crypter fetch upstream
-git -C /work/Crypter worktree add /work/Crypter/.claude/worktrees/{run-id} {branch}
+git -C /work/{run-id} checkout {branch}
 ```
 
-No `-b` — the branch is already there, carrying the commits the host has pushed. **If this
-fails, stop and say so.**
+No `-b` — the branch is already there, carrying the commits an earlier stage put on it. **If
+this fails, stop and say so.**
 
 ## 2. Fix
 
-Invoke `implementer` with the report path and the worktree path. Each fix is its own commit on
+Invoke `implementer` with the report path and the workspace path. Each fix is its own commit on
 the branch.
 
 Read its report. If it says the failure could not be addressed, say so plainly in your own
@@ -45,11 +47,8 @@ report rather than reporting success.
 
 ## 3. Hand off
 
-```bash
-git -C /work/Crypter worktree remove /work/Crypter/.claude/worktrees/{run-id}
-```
+Leave the workspace as it is, with the new commits on `{branch}`. The host fetches them out and
+removes the workspace when the run ends.
 
-Remove it on every exit path. The branch keeps the new commits.
-
-Then report back to the host session: what the report described, what changed, and which commits
+Report back to the host session: what the report described, what changed, and which commits
 now sit on the branch. The host fetches those commits and pushes them.

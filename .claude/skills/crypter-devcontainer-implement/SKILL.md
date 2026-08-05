@@ -7,9 +7,9 @@ description: Build an approved plan into commits on a new branch, inside the pip
 
 Turn an approved plan into commits on a branch.
 
-The workspace is an anonymous clone of the org repository with a single remote, `upstream`,
-which has no push url. Commit locally and stop there; the branch is fetched out and pushed once
-you return.
+The workspace at `/work/{run-id}` is a clone of the host repository, taken from a read-only
+mount. It has no push url and no credential. Commit locally and stop there; the branch is
+fetched out and pushed once you return.
 
 The plan is the specification. The user approved it before this ran, and this runs unattended.
 
@@ -20,23 +20,26 @@ You are given a run id and a branch name: `/crypter-devcontainer-implement {run-
 Read `/plans/{run-id}/plan.md` first. It is a read-only mount of the host's `.claude/plans`.
 **If it is absent, stop and say so** — the host session owns that file.
 
-## 1. Sync and branch
+`/work/{run-id}` already exists; the host created it. **If it is missing, stop and say so**
+rather than creating one — the host owns the workspace for the whole run and removes it at the
+end.
 
-Build on current code:
+## 1. Branch
+
+The workspace is checked out at `upstream/stable`, so build from there:
 
 ```bash
-git -C /work/Crypter fetch upstream
-git -C /work/Crypter worktree add /work/Crypter/.claude/worktrees/{run-id} -b {branch} upstream/stable
+git -C /work/{run-id} checkout -b {branch} refs/remotes/upstream/stable
 ```
 
-**If either fails, stop and say so.** A quietly skipped sync leaves the diff and the eventual
-pull request on the wrong base, and nothing downstream will notice.
+**If this fails, stop and say so.** A branch cut from the wrong base leaves the diff and the
+eventual pull request on the wrong base, and nothing downstream will notice.
 
-Work by absolute path inside the worktree. Never `cd`.
+Work by absolute path inside the workspace. Never `cd`.
 
 ## 2. Implement
 
-Invoke `implementer` with `/plans/{run-id}/plan.md` and the worktree path. Give it nothing about
+Invoke `implementer` with `/plans/{run-id}/plan.md` and the workspace path. Give it nothing about
 how the plan was reached — the plan is the specification.
 
 Read its report. If it says a step could not be done, that is not a failure to paper over:
@@ -44,14 +47,10 @@ say so plainly in your own report.
 
 ## 3. Hand off
 
-```bash
-git -C /work/Crypter worktree remove /work/Crypter/.claude/worktrees/{run-id}
-```
+Leave the workspace as it is, with `{branch}` checked out and its commits on it. The host fetches
+the branch out of it and removes it when the run ends.
 
-Remove it on every exit path. The branch ref lives in `/work/Crypter/.git` and survives, which
-is what the host fetches.
-
-Then report back to the host session:
+Report back to the host session:
 
 - The branch name and the commits on it.
 - A title and description for the pull request. Title reads like a commit subject: imperative,

@@ -37,25 +37,28 @@ Read its title, description and diff with whatever GitHub access this session ha
 CLI, or the GitHub MCP server's `pull_request_read`. What the author says it does is context for
 reading the diff, and worth carrying into your report where the two disagree.
 
-## 2. Fetch it into the container
+## 2. Fetch it into a workspace
 
-Pull request heads are public refs on the org repository, so the container reaches them
-anonymously:
+The container has no network remote. It clones from your repository through a read-only mount,
+so the pull request head goes into your repository first and travels across from there:
 
 ```bash
-docker exec crypter-pipeline \
-  git -C /work/Crypter fetch upstream +pull/{number}/head:pr-{number}
+git fetch origin +refs/pull/{number}/head:refs/pr/{number}
+docker exec crypter-pipeline crypter-workspace create pr-{number} \
+  '+refs/pr/{number}:refs/heads/pr-{number}'
 ```
 
 The refspec is forced, so reviewing a pull request again after its author rebased or amended
 picks up the new head instead of being rejected.
 
-**If this fails, stop and say so.**
+**If either fails, stop and say so.**
+
+The workspace lasts for this review and no longer.
 
 ## 3. Examine
 
 ```bash
-docker exec -w /work/Crypter crypter-pipeline \
+docker exec -w /work/pr-{number} crypter-pipeline \
   claude --permission-mode auto -p "/crypter-devcontainer-examine pr-{number} pr-{number}"
 ```
 
@@ -99,7 +102,14 @@ produced it.
 A line comment that the API rejects for being outside the diff goes in the body instead. **Do not
 retry it against a different line.**
 
-## 6. Report
+## 6. Tear down and report
+
+```bash
+docker exec crypter-pipeline crypter-workspace remove pr-{number}
+```
+
+Remove it on every exit path, including the ones where you stopped early. The findings under
+`.claude/runs/pr-{number}` are the record and they stay.
 
 Tell the user the review URL, what you kept and dropped, which findings you checked against the
 code yourself and stand behind, and where the artifacts are.

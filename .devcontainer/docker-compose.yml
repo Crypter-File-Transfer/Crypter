@@ -3,31 +3,38 @@ name: crypter-pipeline
 services:
   pipeline:
     container_name: crypter-pipeline
-    image: ghcr.io/crypter-file-transfer/crypter-devcontainer:latest
-    pull_policy: missing
+    # Built here rather than pulled. The image carries tooling and nothing else, so a change to
+    # it is a local rebuild instead of a publish someone has to approve.
+    image: crypter-devcontainer:local
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
     environment:
-      CRYPTER_UPSTREAM: Crypter-File-Transfer/Crypter
       CRYPTER_GIT_NAME: ${CRYPTER_GIT_NAME}
       CRYPTER_GIT_EMAIL: ${CRYPTER_GIT_EMAIL}
     volumes:
-      - workspace:/work
       - claude:/home/agent/.claude
+      # The host repository, read-only. Workspaces are cloned from it and the container writes
+      # nothing back. The host working tree is deliberately not mounted, so uncommitted work is
+      # not visible in here.
+      - ../.git:/host-git:ro
       # Plans are authored on the host and read from /plans.
       - ../.claude/plans:/plans:ro
       # Findings, conformance and triage are artifacts on the host, written from /runs.
       - ../.claude/runs:/runs
-    # /work/Crypter does not exist until crypter-clone-upstream has run, so the container starts
-    # one level up. Open a shell with `exec -w /work/Crypter`.
+      # Package caches are the one thing that outlives a run. Workspaces are ephemeral, so
+      # without these every run restores NuGet and pnpm from scratch.
+      - nuget:/caches/nuget
+      - pnpm:/caches/pnpm
+    # Workspaces are created per run at /work/{run-id}. Open a shell on one with
+    # `exec -w /work/{run-id}`.
     working_dir: /work
-    # crypter-clone-upstream leaves an existing workspace alone and only refetches, so running
-    # it on every start is safe.
-    command: bash -lc "crypter-clone-upstream && sleep infinity"
+    command: sleep infinity
 
 volumes:
-  workspace:
-    name: crypter-pipeline-workspace
   claude:
     name: crypter-pipeline-claude
+  nuget:
+    name: crypter-pipeline-nuget
+  pnpm:
+    name: crypter-pipeline-pnpm

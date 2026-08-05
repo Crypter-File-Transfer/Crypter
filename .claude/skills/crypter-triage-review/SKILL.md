@@ -46,22 +46,26 @@ about intent. A question is for the author to answer, not for a verifier.
 
 **If there is nothing open, say so and stop.**
 
-## 2. Fetch the head into the container
+## 2. Fetch the head into a workspace
+
+The container has no network remote. It clones from your repository through a read-only mount,
+so the head goes into your repository first and travels across from there:
 
 ```bash
-docker exec crypter-pipeline \
-  git -C /work/Crypter fetch upstream +pull/{number}/head:{head-branch}
+git fetch origin +refs/pull/{number}/head:refs/pr/{number}
+docker exec crypter-pipeline crypter-workspace create pr-{number} \
+  '+refs/pr/{number}:refs/heads/{head-branch}'
 ```
 
-The local branch takes the pull request's own branch name, so the commits go back to the branch
-they came from.
+The branch in the workspace takes the pull request's own branch name, so the commits go back to
+the branch they came from.
 
-**If this fails, stop and say so.**
+**If either fails, stop and say so.**
 
 ## 3. Verify
 
 ```bash
-docker exec -w /work/Crypter crypter-pipeline \
+docker exec -w /work/pr-{number} crypter-pipeline \
   claude --permission-mode auto -p "/crypter-devcontainer-verify pr-{number} {head-branch} /runs/pr-{number}/review.md"
 ```
 
@@ -90,7 +94,7 @@ thread.
 Where `triage.md` has anything, and the head branch is one you can push to:
 
 ```bash
-docker exec -w /work/Crypter crypter-pipeline \
+docker exec -w /work/pr-{number} crypter-pipeline \
   claude --permission-mode auto -p "/crypter-devcontainer-remediate pr-{number} {head-branch} /runs/pr-{number}/triage.md"
 ```
 
@@ -100,7 +104,16 @@ commits and leaves the existing pull request in place.
 A pull request from a repository you cannot push to stops here. The replies stand, `triage.md`
 stands, and the author does the fixing. Say so in the report.
 
-## 6. Report
+## 6. Tear down and report
+
+```bash
+docker exec crypter-pipeline crypter-workspace remove pr-{number}
+```
+
+Remove it on every exit path, including the ones where you stopped early. The verdicts under
+`.claude/runs/pr-{number}` are the record and they stay.
+
+Then report:
 
 - What held, what did not, and what you could not settle.
 - The replies you posted, and where.
