@@ -94,7 +94,7 @@ docker exec -w /work/Crypter crypter-pipeline \
   claude --permission-mode auto -p "/crypter-devcontainer-remediate pr-{number} {head-branch} /runs/pr-{number}/triage.md"
 ```
 
-Then invoke `crypter-open-pull-request` with the run id and the head branch. It pushes the
+Then invoke `crypter-step-open-pull-request` with the run id and the head branch. It pushes the
 commits and leaves the existing pull request in place.
 
 A pull request from a repository you cannot push to stops here. The replies stand, `triage.md`

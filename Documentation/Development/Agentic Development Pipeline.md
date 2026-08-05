@@ -11,24 +11,25 @@ and it invokes the rest.
 
 | Task skill | Executes in | Does |
 |---|---|---|
-| `/crypter-plan` | Your session | Drafts the plan interactively, with the web, your tooling and you available to it |
+| `/crypter-step-plan` | Your session | Drafts the plan interactively, with the web, your tooling and you available to it |
 | `/crypter-devcontainer-implement` | Container | Builds the plan into commits on a new branch |
 | `/crypter-devcontainer-examine` | Container | Reviews a diff for plan adherence and code quality |
 | `/crypter-devcontainer-verify` | Container | Rules on each finding in a report against the code |
 | `/crypter-devcontainer-remediate` | Container | Applies triaged findings or a CI failure to an existing branch |
-| `/crypter-open-pull-request` | Your session | Pushes the branch and opens or updates the draft pull request |
+| `/crypter-step-open-pull-request` | Your session | Pushes the branch and opens or updates the draft pull request |
 
 Every skill that reads or writes code runs in the container, against the container's own clone.
 Your session plans, decides what to act on, and talks to GitHub. `/crypter-review` reviews
 nothing itself: it fetches the pull request into the container and runs
 `/crypter-devcontainer-examine` there.
 
-The `crypter-devcontainer-` prefix marks the skills an orchestrator invokes inside the container.
-They expect `/work/Crypter`, `/plans` and `/runs`, none of which your session has, and they are
-named so you can tell at a glance which skills are yours to run.
+Both prefixes say the same thing: an orchestrator invokes this, you do not. `crypter-step-` runs
+in your session, and `crypter-devcontainer-` runs in the container, which expects `/work/Crypter`,
+`/plans` and `/runs` — none of which your session has. The three skills without a prefix are the
+ones to invoke.
 
-Of the rest, `/crypter-plan` is worth running on its own when you want a plan and nothing else,
-and `/crypter-open-pull-request` is safe to run repeatedly, which is how the CI loop uses it.
+`/crypter-step-plan` is the one worth borrowing when you want a plan and nothing else, and
+`/crypter-step-open-pull-request` is safe to run repeatedly, which is how the CI loop uses it.
 
 **Run the orchestrators from the root of your main checkout.** The container's mounts are
 relative to `.devcontainer/`, so `.claude/plans` and `.claude/runs` resolve against that one

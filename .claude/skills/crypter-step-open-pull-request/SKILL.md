@@ -1,9 +1,9 @@
 ---
-name: crypter-open-pull-request
-description: Push a branch the pipeline built in the container to the fork and open or update its draft pull request. Use when a branch is ready for a pull request, or invoked as /crypter-open-pull-request {run-id} {branch}.
+name: crypter-step-open-pull-request
+description: Push a branch the pipeline built in the container to the fork and open or update its draft pull request. Invoked as /crypter-step-open-pull-request {run-id} {branch} by the crypter-change and crypter-triage-review skills.
 ---
 
-# Crypter open pull request
+# Crypter step open pull request
 
 Take the branch the container built and put it on the fork, with a draft pull request open
 against it.
@@ -11,7 +11,7 @@ against it.
 Safe to run repeatedly on the same branch. Each run pushes whatever commits the container has
 added and updates the existing pull request.
 
-You are given a run id and a branch name: `/crypter-open-pull-request {run-id} {branch}`.
+You are given a run id and a branch name: `/crypter-step-open-pull-request {run-id} {branch}`.
 
 ## 1. Fetch the branch out of the container
 

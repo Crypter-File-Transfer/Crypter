@@ -49,7 +49,7 @@ A container created before these existed picks them up on
 
 ## 1. Plan
 
-Invoke `crypter-plan` with the requirement verbatim and the output path
+Invoke `crypter-step-plan` with the requirement verbatim and the output path
 `.claude/plans/{run-id}/plan.md`.
 
 It settles the plan with the user itself. **Do not continue until they have approved it.**
@@ -61,7 +61,7 @@ docker exec -w /work/Crypter crypter-pipeline \
   claude --permission-mode auto -p "/crypter-devcontainer-implement {run-id} {branch}"
 ```
 
-Keep the title and description it reports; `crypter-open-pull-request` needs them.
+Keep the title and description it reports; `crypter-step-open-pull-request` needs them.
 
 ## 3. Examine
 
@@ -98,8 +98,8 @@ docker exec -w /work/Crypter crypter-pipeline \
 
 ## 6. Open the pull request
 
-Invoke `crypter-open-pull-request` with the run id and the branch. It fetches the commits out of
-the container, pushes them, and opens or updates the draft pull request.
+Invoke `crypter-step-open-pull-request` with the run id and the branch. It fetches the commits
+out of the container, pushes them, and opens or updates the draft pull request.
 
 ## 7. Hold it against CI
 
@@ -110,7 +110,7 @@ The loop is yours:
 
 1. Green → go to stage 8.
 2. A failure → run `crypter-devcontainer-remediate` with `/runs/{run-id}/ci-{n}.md`, invoke
-   `crypter-open-pull-request` again, then `ci-watcher` with the next attempt number.
+   `crypter-step-open-pull-request` again, then `ci-watcher` with the next attempt number.
 3. **Three attempts is the ceiling.** Comment the state of play on the pull request and hand back
    to the user.
 

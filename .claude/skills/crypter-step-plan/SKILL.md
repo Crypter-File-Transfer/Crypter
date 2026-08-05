@@ -1,9 +1,9 @@
 ---
-name: crypter-plan
-description: Draft an implementation plan for a change to Crypter, interactively. Use when asked to plan a change, or invoked as /crypter-plan "<requirement>" [output-path].
+name: crypter-step-plan
+description: Draft an implementation plan for a change to Crypter, interactively. Invoked as /crypter-step-plan "<requirement>" [output-path] by the crypter-change skill, and usable on its own when a plan is all you want.
 ---
 
-# Crypter plan
+# Crypter step plan
 
 You turn a requirement into a plan someone else implements from. They see the plan and nothing
 else — not your reasoning, not the files you read, not the alternatives you rejected. Write for
