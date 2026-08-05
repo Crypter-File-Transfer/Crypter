@@ -27,15 +27,6 @@ RUN apt-get update \
         less \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-        -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
-    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-        > /etc/apt/sources.list.d/github-cli.list \
-    && apt-get update \
-    && apt-get install --yes --no-install-recommends gh \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
     && apt-get install --yes --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
@@ -50,8 +41,8 @@ RUN dotnet workload install wasm-tools
 
 RUN dotnet tool install dotnet-ef --version '10.0.*' --tool-path "${DOTNET_TOOLS}"
 
-COPY .devcontainer/clone-fork.sh /usr/local/bin/crypter-clone-fork
-RUN chmod +x /usr/local/bin/crypter-clone-fork
+COPY .devcontainer/clone-upstream.sh /usr/local/bin/crypter-clone-upstream
+RUN chmod +x /usr/local/bin/crypter-clone-upstream
 
 # The workspace and the agent's Claude Code state are both named volumes. Docker creates a
 # mount point that the image does not already contain as root, so creating these here is

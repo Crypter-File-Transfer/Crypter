@@ -92,5 +92,5 @@ Recreate the container to pick up the mount:
 docker compose -f .devcontainer/docker-compose.yml up -d --force-recreate
 ```
 
-Report what the pipeline returns: the pull request URL, whether its checks are green, and
-anything it flagged.
+The pipeline returns a branch, a title and description for the pull request, and anything it
+flagged. Publish it with `/crypter-publish {run-id} {branch}`.

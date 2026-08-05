@@ -1,15 +1,21 @@
 # Agentic Development Pipeline
 
-A change goes through two skills. `/crypter-plan-author` runs interactively on your host and
-drafts the plan, with the web, your tooling, and you available to it. `/pipeline` runs inside a
-devcontainer built from `.devcontainer/Dockerfile` and takes that plan to a draft pull request
-with green checks, using a chain of subagents that each start with their own context.
+A change goes through three skills:
 
-Everything the pipeline does happens on **your fork**. The container's token cannot reach
-`Crypter-File-Transfer/Crypter`, and the workspace is a named Docker volume rather than a bind
-mount of your checkout, so the agents cannot touch uncommitted work on your machine. When the
-pipeline finishes you have a fork pull request to read; opening one against the org repository is
-something you do by hand afterwards.
+| Skill | Runs | Does |
+|---|---|---|
+| `/crypter-plan-author` | Host | Drafts the plan interactively, with the web, your tooling and you available to it |
+| `/pipeline` | Container | Implements the plan, reviews it, and leaves a branch |
+| `/crypter-publish` | Host | Pushes the branch, opens the pull request, holds it against CI |
+
+**The container holds no credential.** Its workspace is an anonymous clone of the org
+repository with one remote, `upstream`, which has no push url, so the agents read public code
+and commit locally. Every authenticated GitHub operation happens on the host with your own
+access. The workspace is a named Docker volume rather than a bind mount of your checkout, so
+the agents cannot touch uncommitted work on your machine.
+
+When `/crypter-publish` finishes you have a fork pull request to read; opening one against the
+org repository is something you do by hand afterwards.
 
 This document covers the setup you need before the container will start.
 
@@ -41,13 +47,11 @@ cp .devcontainer/.env.example .devcontainer/.env
 
 | Variable | Value |
 |---|---|
-| `CRYPTER_FORK` | Your fork, as `<owner>/<repo>`. Startup fails if this is the upstream repository. |
-| `CRYPTER_FORK_TOKEN` | A fine-grained personal access token. Reaches the container as `GH_TOKEN`. |
 | `CRYPTER_GIT_NAME` | Author name on the agents' commits. |
 | `CRYPTER_GIT_EMAIL` | Author email on the agents' commits. |
 
-All four are required. Leaving one empty fails the container's startup script with a message
-naming the variable.
+Both are required. Leaving one empty fails the container's startup script with a message naming
+the variable.
 
 ## Launching the container
 
@@ -63,20 +67,21 @@ docker compose -f .devcontainer/docker-compose.yml exec -w /work/Crypter pipelin
 Swap `up -d` for `down` to stop it. The named volumes outlive the container, so the next `up`
 reuses the workspace and your Claude Code credentials.
 
-## The token
+## Publishing
 
-Create a fine-grained personal access token with access to **your fork only**. That restriction
-is what makes the rest of the design hold: the agents push branches, open pull requests, and read
-check results without any path to the org repository.
+`/crypter-publish {run-id} {branch}` reaches into the container for the branch, using git's
+`ext` transport over `docker exec`:
 
-Grant it these repository permissions:
+```bash
+git -c protocol.ext.allow=user fetch \
+  "ext::docker exec -i crypter-pipeline git upload-pack /work/Crypter" {branch}:{branch}
+```
 
-| Permission | Access | Needed for |
-|---|---|---|
-| Contents | Read and write | Pushing the branch |
-| Pull requests | Read and write | Opening the draft pull request |
-| Actions | Read | Reading check runs and failed job logs |
-| Metadata | Read | Mandatory on every fine-grained token |
+`protocol.ext.allow` is passed per command, so it stays out of your git config. From there the
+host pushes the branch to your fork, opens the draft pull request, and runs the CI loop with
+your own GitHub access — the `gh` CLI or the GitHub MCP server. Three fix attempts is the
+ceiling; `/crypter-publish` writes each failure to `.claude/plans/{run-id}/ci-{n}.md` and runs
+`/pipeline-fix` in the container to address it.
 
 ## Enable Actions on your fork
 
@@ -97,7 +102,7 @@ because Claude Code refuses `--dangerously-skip-permissions` as root:
 
 - The .NET 10 SDK, the `wasm-tools` workload, and `dotnet-ef`
 - Node 22 and pnpm 11.18.0, which `Crypter.Web`'s PreBuild target needs
-- The GitHub CLI and Claude Code
+- Claude Code
 
 There is **no Docker in the container**, so `Crypter.Test` cannot run there — it needs
 Testcontainers to start PostgreSQL. The agents build but never test locally; the test suite runs
@@ -108,10 +113,10 @@ Two named volumes survive rebuilds: `crypter-pipeline-workspace` holds the works
 
 ## First start
 
-Every `up` runs `crypter-clone-fork`, which clones your fork to `/work/Crypter`, adds the org
-repository as a read-only `upstream`, and fetches both. If it already finds a workspace there it
-leaves it alone and only refetches, so restarting the container does not discard work in
-progress.
+Every `up` runs `crypter-clone-upstream`, which clones the org repository to `/work/Crypter` as
+the `upstream` remote, clears that remote's push url, and fetches. If it already finds a
+workspace there it leaves it alone and only refetches, so restarting the container does not
+discard work in progress.
 
 To start over from nothing, take the container down and remove the volumes:
 

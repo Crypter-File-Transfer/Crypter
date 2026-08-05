@@ -1,6 +1,6 @@
 ---
 name: conformance-auditor
-description: Compare a branch's diff against the plan it was built from and report where they diverge. Used as stage 4 of the /pipeline skill.
+description: Compare a branch's diff against the plan it was built from and report where they diverge. Used as stage 3 of the /pipeline skill.
 tools: Read, Grep, Glob, Bash, Write
 model: opus
 effort: high
