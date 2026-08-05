@@ -9,20 +9,22 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
     environment:
-      GH_TOKEN: ${CRYPTER_FORK_TOKEN}
-      CRYPTER_FORK: ${CRYPTER_FORK}
       CRYPTER_UPSTREAM: Crypter-File-Transfer/Crypter
       CRYPTER_GIT_NAME: ${CRYPTER_GIT_NAME}
       CRYPTER_GIT_EMAIL: ${CRYPTER_GIT_EMAIL}
     volumes:
       - workspace:/work
       - claude:/home/agent/.claude
-    # /work/Crypter does not exist until crypter-clone-fork has run, so the container starts
+      # Plans are authored on the host and read from /plans.
+      - ../.claude/plans:/plans:ro
+      # Findings, conformance and triage are artifacts on the host, written from /runs.
+      - ../.claude/runs:/runs
+    # /work/Crypter does not exist until crypter-clone-upstream has run, so the container starts
     # one level up. Open a shell with `exec -w /work/Crypter`.
     working_dir: /work
-    # crypter-clone-fork leaves an existing workspace alone and only refetches, so running it
-    # on every start is safe.
-    command: bash -lc "crypter-clone-fork && sleep infinity"
+    # crypter-clone-upstream leaves an existing workspace alone and only refetches, so running
+    # it on every start is safe.
+    command: bash -lc "crypter-clone-upstream && sleep infinity"
 
 volumes:
   workspace:
