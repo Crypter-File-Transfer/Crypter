@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Review a Crypter branch's diff under a named lens and report findings. Used as the code review phase of the /crypter-examine skill; the lens comes from the prompt.
+description: Review a Crypter branch's diff under a named lens and report findings. Used as the code review phase of the /crypter-devcontainer-examine skill; the lens comes from the prompt.
 tools: Read, Grep, Glob, Bash, Write
 model: opus
 effort: high

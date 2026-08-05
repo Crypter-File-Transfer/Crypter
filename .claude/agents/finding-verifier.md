@@ -1,6 +1,6 @@
 ---
 name: finding-verifier
-description: Check a review finding against the code and rule on whether it holds. Used by the /crypter-verify skill, once per finding.
+description: Check a review finding against the code and rule on whether it holds. Used by the /crypter-devcontainer-verify skill, once per finding.
 tools: Read, Grep, Glob, Bash, Write
 model: opus
 effort: high

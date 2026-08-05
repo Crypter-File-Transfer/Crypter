@@ -1,9 +1,9 @@
 ---
-name: crypter-remediate
-description: Apply a report to a branch the pipeline already built, whether triaged review findings or a CI failure. Invoked as /crypter-remediate {run-id} {branch} {report-path} by the crypter-change skill on the host.
+name: crypter-devcontainer-remediate
+description: Apply a report to a branch the pipeline already built, whether triaged review findings or a CI failure. Invoked as /crypter-devcontainer-remediate {run-id} {branch} {report-path} by the crypter-change and crypter-triage-review skills.
 ---
 
-# Crypter remediate
+# Crypter devcontainer remediate
 
 Take a report of what is wrong with a branch this container already built, and fix it.
 
@@ -16,7 +16,7 @@ what is wrong, an existing branch, and commits that address it.
 ## Setup
 
 You are given a run id, a branch name, and a report path:
-`/crypter-remediate {run-id} {branch} {report-path}`.
+`/crypter-devcontainer-remediate {run-id} {branch} {report-path}`.
 
 Read the report first. It lives under `/runs/{run-id}/`, the mount the host shares with you.
 **If it is absent, stop and say so.**

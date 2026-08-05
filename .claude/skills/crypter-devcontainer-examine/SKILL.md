@@ -1,9 +1,9 @@
 ---
-name: crypter-examine
-description: Review a diff in the pipeline container and write findings to the host. Invoked as /crypter-examine {run-id} {ref} [plan-path] by the crypter-change and crypter-review skills on the host.
+name: crypter-devcontainer-examine
+description: Review a diff in the pipeline container and write findings to the host. Invoked as /crypter-devcontainer-examine {run-id} {ref} [plan-path] by the crypter-change and crypter-review skills.
 ---
 
-# Crypter examine
+# Crypter devcontainer examine
 
 Review a diff and leave hard artifacts behind. You do not write code and you do not decide what
 gets acted on; your caller triages what you find.
@@ -13,7 +13,7 @@ The ref already exists in `/work/Crypter/.git`.
 ## Setup
 
 You are given a run id, a ref, and optionally a plan path:
-`/crypter-examine {run-id} {ref} [plan-path]`.
+`/crypter-devcontainer-examine {run-id} {ref} [plan-path]`.
 
 Two review phases run here, and the plan path decides whether the first one applies:
 

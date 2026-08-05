@@ -62,7 +62,7 @@ they came from.
 
 ```bash
 docker exec -w /work/Crypter crypter-pipeline \
-  claude --permission-mode auto -p "/crypter-verify pr-{number} {head-branch} /runs/pr-{number}/review.md"
+  claude --permission-mode auto -p "/crypter-devcontainer-verify pr-{number} {head-branch} /runs/pr-{number}/review.md"
 ```
 
 Verdicts land in `.claude/runs/pr-{number}/verification/{id}.md`. Read the files, not the
@@ -91,7 +91,7 @@ Where `triage.md` has anything, and the head branch is one you can push to:
 
 ```bash
 docker exec -w /work/Crypter crypter-pipeline \
-  claude --permission-mode auto -p "/crypter-remediate pr-{number} {head-branch} /runs/pr-{number}/triage.md"
+  claude --permission-mode auto -p "/crypter-devcontainer-remediate pr-{number} {head-branch} /runs/pr-{number}/triage.md"
 ```
 
 Then invoke `crypter-open-pull-request` with the run id and the head branch. It pushes the

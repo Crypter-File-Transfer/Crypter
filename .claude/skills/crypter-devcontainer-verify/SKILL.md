@@ -1,9 +1,9 @@
 ---
-name: crypter-verify
-description: Rule on each finding in a report against the code, one verifier per finding. Invoked as /crypter-verify {run-id} {ref} {findings-path} by the crypter-triage-review skill.
+name: crypter-devcontainer-verify
+description: Rule on each finding in a report against the code, one verifier per finding. Invoked as /crypter-devcontainer-verify {run-id} {ref} {findings-path} by the crypter-triage-review skill.
 ---
 
-# Crypter verify
+# Crypter devcontainer verify
 
 Take a list of findings somebody left on a diff and decide which of them are true.
 
@@ -13,7 +13,7 @@ and no findings of your own.
 ## Setup
 
 You are given a run id, a ref, and a findings path:
-`/crypter-verify {run-id} {ref} {findings-path}`.
+`/crypter-devcontainer-verify {run-id} {ref} {findings-path}`.
 
 The findings file lives under `/runs/{run-id}/`. Each finding in it carries an id. **If the file
 is absent, stop and say so.**

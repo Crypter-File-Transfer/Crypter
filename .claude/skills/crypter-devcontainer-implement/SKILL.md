@@ -1,9 +1,9 @@
 ---
-name: crypter-implement
-description: Build an approved plan into commits on a new branch, inside the pipeline container. Invoked as /crypter-implement {run-id} {branch} by the crypter-change skill on the host.
+name: crypter-devcontainer-implement
+description: Build an approved plan into commits on a new branch, inside the pipeline container. Invoked as /crypter-devcontainer-implement {run-id} {branch} by the crypter-change skill.
 ---
 
-# Crypter implement
+# Crypter devcontainer implement
 
 Turn an approved plan into commits on a branch.
 
@@ -15,7 +15,7 @@ The plan is the specification. The user approved it before this ran, and this ru
 
 ## Setup
 
-You are given a run id and a branch name: `/crypter-implement {run-id} {branch}`.
+You are given a run id and a branch name: `/crypter-devcontainer-implement {run-id} {branch}`.
 
 Read `/plans/{run-id}/plan.md` first. It is a read-only mount of the host's `.claude/plans`.
 **If it is absent, stop and say so** — the host session owns that file.

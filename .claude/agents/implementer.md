@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Implement an approved plan in Crypter, or apply triaged review findings and CI fixes. Used by the /crypter-implement and /crypter-remediate skills.
+description: Implement an approved plan in Crypter, or apply triaged review findings and CI fixes. Used by the /crypter-devcontainer-implement and /crypter-devcontainer-remediate skills.
 tools: Read, Grep, Glob, Bash, Write, Edit
 model: opus
 effort: high
