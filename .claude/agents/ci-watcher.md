@@ -41,9 +41,8 @@ git -C <repo> rev-parse <branch>
 ```
 
 Compare that against the head SHA in the pull request data. A push takes a moment to register,
-so poll `get_check_runs` every 30 seconds until runs appear. If nothing has appeared after a
-few minutes, say so and stop: on a fork, workflows stay disabled until they are enabled once in
-the Actions tab, and that is a setup problem no amount of waiting fixes.
+so poll `get_check_runs` until runs appear. If nothing has appeared after a few minutes, say so
+and stop: a push that starts no checks is a setup problem no amount of waiting fixes.
 
 ## Watch
 

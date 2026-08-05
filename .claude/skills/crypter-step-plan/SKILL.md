@@ -18,11 +18,10 @@ it goes to `crypter-change`, to a person, or nowhere.
 ## 1. Sync
 
 ```bash
-git fetch upstream
 git fetch origin
 ```
 
-Read the code at `upstream/stable`, the commit a build branches from.
+Read the code at `origin/stable`, the commit a build branches from.
 
 ## 2. Understand before deciding
 

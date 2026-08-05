@@ -119,16 +119,13 @@ the same way twice, a failure the plan did not anticipate, or anything that read
 rather than wrong code. Three attempts is a limit, not a quota to spend.
 
 Stop immediately, without spending an attempt, where `ci-watcher` reports that no run appeared
-for the commit. Workflows stay disabled on a new fork until they are enabled once in its Actions
-tab, and that is a setup problem.
+for the commit. Nothing to fix has been established yet, and a push that starts no checks is a
+setup problem rather than a code one.
 
 ## 8. Report
 
-- The fork pull request URL and whether its checks are green. It is a draft; taking it out of
-  draft is the user's.
+- The pull request URL and whether its checks are green. It is a draft; taking it out of draft
+  is the user's.
 - What each fix attempt changed, where any ran.
 - Anything the implementer could not do, and any drift the auditor flagged.
 - What you rejected in triage that the user might disagree with, and where `triage.md` is.
-
-The upstream pull request is a separate one against `Crypter-File-Transfer/Crypter`, since the
-base repository is fixed when a pull request is created. The description is ready to paste.
