@@ -37,10 +37,11 @@ one the host cannot clean up.
 ## 1. Worktree on the ref
 
 ```bash
-git -C /work/Crypter worktree add /work/Crypter/.claude/worktrees/{run-id} {ref}
+git -C /work/Crypter worktree add --detach /work/Crypter/.claude/worktrees/{run-id} {ref}
 ```
 
-No `-b` — the ref is already there. **If this fails, stop and say so.**
+`--detach` because you only read. A worktree that claims the branch collides with anything else
+holding it, and reviewing never needs it claimed. **If this fails, stop and say so.**
 
 Every agent gets this worktree path and works by absolute path inside it. Never `cd`.
 
