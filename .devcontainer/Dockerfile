@@ -48,11 +48,6 @@ RUN dotnet tool install dotnet-ef --version '10.0.*' --tool-path "${DOTNET_TOOLS
 COPY .devcontainer/workspace.sh /usr/local/bin/crypter-workspace
 RUN chmod +x /usr/local/bin/crypter-workspace
 
-# /host-git is the host's repository, owned by the host user. Git refuses to read a repository
-# owned by anyone else until it is named as safe, and the whole point of the mount is that it
-# belongs to somebody else.
-RUN git config --system --add safe.directory /host-git
-
 # The caches and the agent's Claude Code state are named volumes. Docker creates a mount point
 # that the image does not already contain as root, so creating these here is what gives the
 # volumes the right ownership. /work holds the ephemeral workspaces and is not a volume.
