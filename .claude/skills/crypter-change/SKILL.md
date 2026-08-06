@@ -36,16 +36,32 @@ and both are yours to read at any point.
 write into a directory that grants it. Creating them on this side also keeps you able to delete
 what they wrote — a directory the container creates is one you cannot remove.
 
-The container needs both mounts, and the run directory has to be writable from inside it.
-Confirm before starting:
+The container needs both mounts, the run directory has to be writable from inside it, and the
+image has to carry the current tooling. Confirm before starting:
 
 ```bash
 docker exec crypter-pipeline test -d /plans/{run-id} && \
-  docker exec crypter-pipeline test -w /runs/{run-id}/findings
+  docker exec crypter-pipeline test -w /runs/{run-id}/findings && \
+  docker exec crypter-pipeline test -x /usr/local/bin/crypter-workspace
 ```
 
-A container created before these existed picks them up on
-`docker compose -f .devcontainer/docker-compose.yml up -d --force-recreate`.
+The mount checks also settle which checkout the container belongs to: one created against a
+different one reaches neither directory. The last check is separate because an older image
+passes the first two and then fails at workspace creation with nothing but a missing executable
+to go on. All three are `test` because `docker exec` runs a binary and not a shell, so a builtin
+like `command -v` exits 127 whether or not the thing it was looking for is there.
+
+**Do not `docker start` an exited container to fix any of this.** Mounts and image are fixed
+when a container is created, so starting one built from another checkout, or from an older
+image, brings back the same wrong container. Bring it up from here instead:
+
+```bash
+docker compose -f .devcontainer/docker-compose.yml up -d --build
+```
+
+That rebuilds the image and recreates the container against this checkout's mounts. It replaces
+any container of the same name, so **ask the user before running it** — theirs may belong to
+another checkout and hold work you cannot see.
 
 Then make the workspace the container builds in. It is a clone of your repository, taken from
 the read-only `/host-git` mount, and it lasts exactly as long as this run:

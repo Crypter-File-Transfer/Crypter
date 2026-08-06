@@ -31,6 +31,35 @@ The container's `agent` is uid 1001 and your files are uid 1000, so the agents w
 directories this side creates and grants. Creating them here also keeps you able to delete what
 they wrote.
 
+Then confirm the running container is the one this checkout describes, before anything depends
+on it:
+
+```bash
+docker exec crypter-pipeline test -w /runs/pr-{number}/findings && \
+  docker exec crypter-pipeline test -x /usr/local/bin/crypter-workspace
+```
+
+The first proves the `/runs` mount reaches the directory you just made, which a container
+created against a different checkout will not. The second proves the image carries the current
+tooling. A container that fails either is not this checkout's, and every later step fails
+against it in a way that reads like something else — a missing executable, findings written
+somewhere you never look.
+
+Both are `test` because `docker exec` runs a binary and not a shell, so a builtin like
+`command -v` exits 127 whether or not the thing it was looking for is there.
+
+**Do not `docker start` an exited container to fix this.** Mounts and image are fixed when a
+container is created, so starting one built from another checkout, or from an older image,
+brings back the same wrong container. Bring it up from here instead:
+
+```bash
+docker compose -f .devcontainer/docker-compose.yml up -d --build
+```
+
+That rebuilds the image and recreates the container against this checkout's mounts. It replaces
+any container of the same name, so **ask the user before running it** — theirs may belong to
+another checkout and hold work you cannot see.
+
 ## 1. Read the pull request
 
 Read its title, description and diff with whatever GitHub access this session has — the `gh`
