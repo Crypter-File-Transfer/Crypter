@@ -62,16 +62,41 @@ Given a plan path, invoke `conformance-auditor` with it, the workspace, the base
 ## 3. Code review
 
 Invoke `reviewer` once per lens, in parallel — they do not interact. Each gets the workspace, the
-base ref, and `/runs/{run-id}/findings/{lens}.md`.
+base ref, `/runs/{run-id}/findings/{lens}.md`, and its brief below, in full.
 
-| Lens | Brief |
-|---|---|
-| correctness | Bugs, boundary conditions, error paths, and what happens when inputs are hostile or absent. |
-| maintainability | Readability, scope creep, and the conventions in `CLAUDE.md` and the Coding Standard. |
-| testability | What the tests pin down, what they leave unverified, and whether the change can be tested at all. |
-| security | Crypto boundaries, input validation, authentication and authorisation paths, key handling, transfer integrity. |
+A brief is the whole of what its lens covers, conventions included. The conventions are split by
+what goes wrong when they are broken rather than kept as one list, so that a lens is told the
+ones it can judge the consequences of and left ignorant of the rest.
 
-Adding a lens means adding a row here. The `reviewer` definition stays as it is; the lens comes
+**correctness** — Bugs, boundary conditions, error paths, and what happens when inputs are
+hostile or absent. Including:
+
+- Nulls or exceptions where `Maybe<T>` or `Either<TLeft, TRight>` from `Crypter.Common/Monads`
+  belongs, and the crash or swallowed failure that follows.
+- Sync IO on a database, file, or network path.
+- Object initializers where a constructor belongs, leaving an object usable before it is whole.
+- Magic strings where an enum belongs.
+- An entity change under `Crypter.DataAccess/Entities` with no migration in
+  `Crypter.DataAccess/Migrations`, and whether it needs a companion script in
+  `Crypter.DataAccess/Scripts`.
+
+**maintainability** — Readability, scope creep, and the conventions in `CLAUDE.md` and the Coding
+Standard that no other lens claims. Including:
+
+- Comments narrating history rather than explaining the code as it stands.
+- A missing `Async` suffix on an async method. The naming is yours; sync IO on a path that should
+  be async belongs to correctness.
+
+**testability** — What the tests pin down, what they leave unverified, and whether the change can
+be tested at all.
+
+**security** — Crypto boundaries, input validation, authentication and authorisation paths, key
+handling, transfer integrity. Including:
+
+- Raw strings where a validated type from `Crypter.Common/Primitives` exists, and the unchecked
+  value that reaches past a boundary as a result.
+
+Adding a lens means adding a brief here. The `reviewer` definition stays as it is; the lens comes
 from the prompt.
 
 Run the phases in parallel with each other too. The auditor and the reviewers read the same diff
