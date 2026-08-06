@@ -15,11 +15,11 @@ You are given a run id and a branch name: `/crypter-step-open-pull-request {run-
 
 ## 1. Fetch the branch out of the container
 
-The branch lives in the container's clone. `git` reaches it over `docker exec`:
+The branch lives in the run's workspace. `git` reaches it over `docker exec`:
 
 ```bash
 git -c protocol.ext.allow=user fetch \
-  "ext::docker exec -i crypter-pipeline git upload-pack /work/Crypter" {branch}:{branch}
+  "ext::docker exec -i crypter-pipeline git upload-pack /work/{run-id}" {branch}:{branch}
 ```
 
 `protocol.ext.allow` is passed per command and stays out of your config. **If this fails, stop

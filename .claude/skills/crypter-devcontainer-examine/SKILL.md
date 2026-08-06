@@ -8,7 +8,7 @@ description: Review a diff in the pipeline container and write findings to the h
 Review a diff and leave hard artifacts behind. You do not write code and you do not decide what
 gets acted on; your caller triages what you find.
 
-The ref already exists in `/work/Crypter/.git`.
+The ref already exists in the run's workspace at `/work/{run-id}`.
 
 ## Setup
 
@@ -34,25 +34,28 @@ judgement, and a later pass can read them to verify the claims they make.
 either is missing, stop and say so** rather than creating it — a directory made on this side is
 one the host cannot clean up.
 
-## 1. Worktree on the ref
+## 1. Put the workspace on the ref
+
+The workspace at `/work/{run-id}` already exists; the host created it. **If it is missing, stop
+and say so** rather than creating one.
 
 ```bash
-git -C /work/Crypter worktree add --detach /work/Crypter/.claude/worktrees/{run-id} {ref}
+git -C /work/{run-id} checkout --detach {ref}
 ```
 
-`--detach` because you only read. A worktree that claims the branch collides with anything else
-holding it, and reviewing never needs it claimed. **If this fails, stop and say so.**
+`--detach` because you only read. Leaving the branch unclaimed keeps a later stage free to check
+it out and commit to it. **If this fails, stop and say so.**
 
-Every agent gets this worktree path and works by absolute path inside it. Never `cd`.
+Every agent gets the workspace path and works by absolute path inside it. Never `cd`.
 
 ## 2. Plan adherence
 
-Given a plan path, invoke `conformance-auditor` with it, the worktree, and
+Given a plan path, invoke `conformance-auditor` with it, the workspace, and
 `/runs/{run-id}/conformance.md`. It reports where the diff and the plan diverge.
 
 ## 3. Code review
 
-Invoke `reviewer` once per lens, in parallel — they do not interact. Each gets the worktree and
+Invoke `reviewer` once per lens, in parallel — they do not interact. Each gets the workspace and
 `/runs/{run-id}/findings/{lens}.md`.
 
 | Lens | Brief |
@@ -75,8 +78,4 @@ drift, and which findings you would look at first. Name the files you wrote.
 
 Leave the judgement to the host. Reporting a finding is not accepting it.
 
-```bash
-git -C /work/Crypter worktree remove /work/Crypter/.claude/worktrees/{run-id}
-```
-
-Remove it on every exit path.
+Leave the workspace as it is. The host removes it when the run ends.

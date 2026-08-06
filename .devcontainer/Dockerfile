@@ -12,6 +12,11 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_TOOLS=/usr/local/share/dotnet-tools
 ENV PATH="${PATH}:${DOTNET_TOOLS}"
 
+# Workspaces are ephemeral, so the package caches have to live outside them or every run pays a
+# full restore. Both paths are named volumes in docker-compose.yml.
+ENV NUGET_PACKAGES=/caches/nuget \
+    npm_config_store_dir=/caches/pnpm
+
 # The agents run unattended, so they run as an unprivileged user rather than root.
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID --create-home --shell /bin/bash $USERNAME
@@ -40,14 +45,19 @@ RUN dotnet workload install wasm-tools
 
 RUN dotnet tool install dotnet-ef --version '10.0.*' --tool-path "${DOTNET_TOOLS}"
 
-COPY .devcontainer/clone-upstream.sh /usr/local/bin/crypter-clone-upstream
-RUN chmod +x /usr/local/bin/crypter-clone-upstream
+COPY .devcontainer/workspace.sh /usr/local/bin/crypter-workspace
+RUN chmod +x /usr/local/bin/crypter-workspace
 
-# The workspace and the agent's Claude Code state are both named volumes. Docker creates a
-# mount point that the image does not already contain as root, so creating these here is
-# what gives the volumes the right ownership.
-RUN mkdir -p /work /home/$USERNAME/.claude \
-    && chown $USER_UID:$USER_GID /work /home/$USERNAME/.claude
+# /host-git is the host's repository, owned by the host user. Git refuses to read a repository
+# owned by anyone else until it is named as safe, and the whole point of the mount is that it
+# belongs to somebody else.
+RUN git config --system --add safe.directory /host-git
+
+# The caches and the agent's Claude Code state are named volumes. Docker creates a mount point
+# that the image does not already contain as root, so creating these here is what gives the
+# volumes the right ownership. /work holds the ephemeral workspaces and is not a volume.
+RUN mkdir -p /work /caches/nuget /caches/pnpm /home/$USERNAME/.claude \
+    && chown -R $USER_UID:$USER_GID /work /caches /home/$USERNAME/.claude
 
 USER $USERNAME
 WORKDIR /work

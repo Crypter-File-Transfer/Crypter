@@ -47,6 +47,20 @@ docker exec crypter-pipeline test -d /plans/{run-id} && \
 A container created before these existed picks them up on
 `docker compose -f .devcontainer/docker-compose.yml up -d --force-recreate`.
 
+Then make the workspace the container builds in. It is a clone of your repository, taken from
+the read-only `/host-git` mount, and it lasts exactly as long as this run:
+
+```bash
+git fetch origin
+docker exec crypter-pipeline crypter-workspace create {run-id}
+```
+
+Fetch first — the workspace takes `upstream/stable` from your `origin/stable`, so a stale
+remote-tracking ref puts the whole run on an old base. **If either fails, stop and say so.**
+
+The workspace holds only committed history. Uncommitted work in your checkout is not visible to
+the container and never reaches the branch.
+
 ## 1. Plan
 
 Invoke `crypter-step-plan` with the requirement verbatim and the output path
@@ -57,7 +71,7 @@ It settles the plan with the user itself. **Do not continue until they have appr
 ## 2. Build
 
 ```bash
-docker exec -w /work/Crypter crypter-pipeline \
+docker exec -w /work/{run-id} crypter-pipeline \
   claude --permission-mode auto -p "/crypter-devcontainer-implement {run-id} {branch}"
 ```
 
@@ -66,7 +80,7 @@ Keep the title and description it reports; `crypter-step-open-pull-request` need
 ## 3. Examine
 
 ```bash
-docker exec -w /work/Crypter crypter-pipeline \
+docker exec -w /work/{run-id} crypter-pipeline \
   claude --permission-mode auto -p "/crypter-devcontainer-examine {run-id} {branch} /plans/{run-id}/plan.md"
 ```
 
@@ -92,7 +106,7 @@ them.
 Where anything was accepted:
 
 ```bash
-docker exec -w /work/Crypter crypter-pipeline \
+docker exec -w /work/{run-id} crypter-pipeline \
   claude --permission-mode auto -p "/crypter-devcontainer-remediate {run-id} {branch} /runs/{run-id}/triage.md"
 ```
 
@@ -122,7 +136,19 @@ Stop immediately, without spending an attempt, where `ci-watcher` reports that n
 for the commit. Nothing to fix has been established yet, and a push that starts no checks is a
 setup problem rather than a code one.
 
-## 8. Report
+## 8. Tear down and report
+
+The branch is on the fork and the artifacts are on your disk, so the workspace has nothing left
+to hold:
+
+```bash
+docker exec crypter-pipeline crypter-workspace remove {run-id}
+```
+
+Remove it on every exit path, including the ones where you stopped early. Nothing under `/runs`
+or `.claude/plans` is touched by this — those are the record of the run and they stay.
+
+Then report:
 
 - The pull request URL and whether its checks are green. It is a draft; taking it out of draft
   is the user's.

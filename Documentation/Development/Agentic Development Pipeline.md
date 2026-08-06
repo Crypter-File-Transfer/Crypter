@@ -24,7 +24,7 @@ nothing itself: it fetches the pull request into the container and runs
 `/crypter-devcontainer-examine` there.
 
 Both prefixes say the same thing: an orchestrator invokes this, you do not. `crypter-step-` runs
-in your session, and `crypter-devcontainer-` runs in the container, which expects `/work/Crypter`,
+in your session, and `crypter-devcontainer-` runs in the container, which expects a workspace,
 `/plans` and `/runs` — none of which your session has. The three skills without a prefix are the
 ones to invoke.
 
@@ -35,37 +35,56 @@ ones to invoke.
 relative to `.devcontainer/`, so `.claude/plans` and `.claude/runs` resolve against that one
 directory. Started from a worktree, a run writes its plan somewhere the container cannot read.
 
-**The container holds no GitHub credential.** Its workspace is an anonymous clone of the org
-repository with one remote, `upstream`, which has no push url, so the agents read public code
-and commit locally. Every authenticated GitHub operation happens in your session with your own
-access, and `/crypter-change` pushes and re-pushes without stopping to ask. The workspace is a
-named Docker volume rather than a bind mount of your checkout, so the agents cannot touch
-uncommitted work on your machine.
-
-The container does hold your Claude Code credential, in the `crypter-pipeline-claude` volume,
-and its network egress is open. Treat it as a trust boundary rather than a sandbox.
+**The container holds no GitHub credential and no network remote.** Every authenticated GitHub
+operation happens in your session with your own access, and `/crypter-change` pushes and
+re-pushes without stopping to ask.
 
 The branch is pushed to the org repository and the pull request opens against it, base `stable`,
 the same route a branch of your own takes. `/crypter-change` leaves you a draft pull request to
 read.
 
-The org repository therefore has two names in this pipeline. Your session reaches it as `origin`,
-the remote your checkout already has. The container reaches it as `upstream`, the name its clone
-gives the one remote it has, chosen so that a remote with no push url reads as one. Host-side
-skills say `origin` and container-side skills say `upstream`; both mean
-`Crypter-File-Transfer/Crypter`.
+The container does hold your Claude Code credential, in the `crypter-pipeline-claude` volume,
+and its network egress is open. Treat it as a trust boundary rather than a sandbox.
+
+## Workspaces
+
+The agents build and review in a **workspace**: a clone of your repository at `/work/{run-id}`,
+made when a run starts and deleted when it ends. Nothing that holds a copy of the code outlives
+the run that made it, so there is no second checkout drifting away from yours.
+
+Workspaces are cloned from `/host-git`, a read-only mount of your repository's `.git`. Read-only
+is what makes this safe to share: the container reads committed history and cannot move a ref,
+add an object, or touch anything in your repository. Your working tree is not mounted at all, so
+uncommitted work is invisible in there and cannot reach a branch.
+
+The orchestrator owns the lifecycle. It creates the workspace in its setup and removes it when
+the run ends; the container skills use it and never create or destroy one.
+
+```bash
+docker exec crypter-pipeline crypter-workspace create {run-id} [refspec]
+docker exec crypter-pipeline crypter-workspace remove {run-id}
+```
+
+The org repository has two names as a result. Your session reaches it as `origin`, the remote
+your checkout already has. Inside a workspace it is `upstream/stable`, a ref the create step
+copies from your `origin/stable` so the agents always diff against the org's current code rather
+than whatever branch you have checked out. Fetch before creating a workspace, or the run starts
+on a stale base.
 
 This document covers the setup you need before the container will start.
 
-## The two mounts
+## The mounts
 
-Everything crossing the container boundary goes through one of two directories, both gitignored
-and both on your disk:
+Everything crossing the container boundary goes through one of these:
 
 | Host | Container | Direction | Holds |
 |---|---|---|---|
+| `.git` | `/host-git` | Read-only | Your committed history, which workspaces are cloned from |
 | `.claude/plans` | `/plans` | Read-only | `{run-id}/plan.md` |
 | `.claude/runs` | `/runs` | Writable | `{run-id}/conformance.md`, `{run-id}/findings/{lens}.md`, `{run-id}/review.md`, `{run-id}/verification/{id}.md`, `{run-id}/triage.md`, `{run-id}/ci-{n}.md` |
+
+`.claude/plans` and `.claude/runs` are gitignored and live on your disk. Only `/runs` is
+writable; the other two the container can read and nothing more.
 
 The plan goes in and cannot be rewritten by the agents. Findings come back out as files you can
 open, grep and keep, rather than as text in a transcript, and each is written by the agent that
@@ -81,7 +100,7 @@ The branch itself travels differently. It never passes through a mount:
 
 ```bash
 git -c protocol.ext.allow=user fetch \
-  "ext::docker exec -i crypter-pipeline git upload-pack /work/Crypter" {branch}:{branch}
+  "ext::docker exec -i crypter-pipeline git upload-pack /work/{run-id}" {branch}:{branch}
 ```
 
 `protocol.ext.allow` is passed per command, so it stays out of your git config.
@@ -123,8 +142,8 @@ cp .devcontainer/.env.example .devcontainer/.env
 | `CRYPTER_GIT_NAME` | Author name on the agents' commits. |
 | `CRYPTER_GIT_EMAIL` | Author email on the agents' commits. |
 
-Both are required. Leaving one empty fails the container's startup script with a message naming
-the variable.
+Both are required. Leaving one empty fails workspace creation with a message naming the
+variable.
 
 ## Launching the container
 
@@ -134,22 +153,25 @@ Compose project from the application stack at the repository root, so `docker co
 
 ```bash
 mkdir -p .claude/plans .claude/runs
-docker compose -f .devcontainer/docker-compose.yml up -d
-docker compose -f .devcontainer/docker-compose.yml exec -w /work/Crypter pipeline bash
+docker compose -f .devcontainer/docker-compose.yml up -d --build
+docker compose -f .devcontainer/docker-compose.yml exec pipeline bash
 ```
 
 Create the two mount sources first. They are gitignored, so a fresh clone has neither, and
 Docker creates a missing bind-mount source as root — which the orchestrators then cannot write
 into.
 
+The first `--build` takes a few minutes, mostly installing the `wasm-tools` workload. After
+that Docker's layer cache makes it quick, and a change to `workspace.sh` rebuilds only the last
+couple of layers. Use `--build` whenever `.devcontainer/` has changed; plain `up -d` otherwise.
+
 Swap `up -d` for `down` to stop it. The named volumes outlive the container, so the next `up`
-reuses the workspace and your Claude Code credentials.
+keeps your Claude Code credentials and your package caches.
 
 ## What is in the container
 
-The image is published by the org at `ghcr.io/crypter-file-transfer/crypter-devcontainer`, and
-the container pulls it for you. There is nothing to build unless you are changing the image
-itself.
+The image is built locally from `.devcontainer/Dockerfile` and tagged `crypter-devcontainer:local`.
+It carries tooling and no source, so it only changes when the tooling does.
 
 Built on `mcr.microsoft.com/dotnet/sdk:10.0`, running as an unprivileged user named `agent`
 rather than as root:
@@ -162,21 +184,26 @@ There is **no Docker in the container**, so `Crypter.Test` cannot run there — 
 Testcontainers to start PostgreSQL. The agents build but never test locally; the test suite runs
 in CI once the pull request exists, and failures come back to the implementer from there.
 
-Two named volumes survive rebuilds: `crypter-pipeline-workspace` holds the workspace at
-`/work/Crypter`, and `crypter-pipeline-claude` holds the agent's Claude Code state.
+Three named volumes survive rebuilds, and none of them holds source:
 
-## First start
+| Volume | Holds |
+|---|---|
+| `crypter-pipeline-claude` | The agent's Claude Code state and credentials |
+| `crypter-pipeline-nuget` | The NuGet package cache |
+| `crypter-pipeline-pnpm` | The pnpm store |
 
-Every `up` runs `crypter-clone-upstream`, which clones the org repository to `/work/Crypter` as
-the `upstream` remote, clears that remote's push url, and fetches. If it already finds a
-workspace there it leaves it alone and only refetches, so restarting the container does not
-discard work in progress.
+The two caches exist because workspaces are ephemeral. Without them every run would restore
+NuGet and pnpm from nothing, which is most of a build.
+
+`/work` is the container's own filesystem rather than a volume, so live workspaces do not
+survive a `down`. That is the intent: a run that was interrupted leaves nothing behind to
+collide with the next one.
 
 To start over from nothing, take the container down and remove the volumes:
 
 ```bash
 docker compose -f .devcontainer/docker-compose.yml down
-docker volume rm crypter-pipeline-workspace crypter-pipeline-claude
+docker volume rm crypter-pipeline-claude crypter-pipeline-nuget crypter-pipeline-pnpm
 ```
 
 ## Authenticate Claude Code
@@ -190,22 +217,21 @@ they survive container rebuilds. You only do this again after removing that volu
 
 Run the agents with `--permission-mode auto`. They work unattended, so a prompt they cannot
 answer is a run that stalls. What bounds the blast radius is the container itself: a workspace
-in a named volume, a remote with no push url, and no GitHub credential to push with.
+that is thrown away at the end of the run, a read-only view of your repository, and no GitHub
+credential to push with.
 
 ## Changing the image
 
-Only needed if your change requires a different image — a new tool the agents need, a runtime
-version bump. Otherwise skip this; the published image is what the container runs.
-
-Build your change locally to try it:
+Needed when the tooling changes — a new tool the agents need, a runtime version bump. Source
+changes never require it, because the image carries no source.
 
 ```bash
-docker compose -f .devcontainer/docker-compose.yml build
-docker compose -f .devcontainer/docker-compose.yml up -d
+docker compose -f .devcontainer/docker-compose.yml up -d --build
 ```
 
-Open a pull request for `.devcontainer/` once it works. `pr-build-devcontainer` builds the image
-on the pull request, and merging to `stable` runs
-`.github/workflows/build-and-push-devcontainer.yml`, which pushes to
-`ghcr.io/crypter-file-transfer/crypter-devcontainer`. That job runs in the `devcontainer`
-environment, so it waits for a reviewer to approve it before anything is published.
+That is the whole loop. The image is local to your machine — it is never published, and nobody
+else consumes it — so a change to `workspace.sh` or the Dockerfile takes effect on your next
+`up` and affects nothing but your own container.
+
+`pr-build-devcontainer` builds the image on a pull request that touches `.devcontainer/`. It
+pushes nothing; it is there to catch a Dockerfile that does not build.
