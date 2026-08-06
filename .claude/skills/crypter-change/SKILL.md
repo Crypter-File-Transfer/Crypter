@@ -71,8 +71,9 @@ git fetch origin
 docker exec crypter-pipeline crypter-workspace create {run-id}
 ```
 
-Fetch first — the workspace takes `upstream/stable` from your `origin/stable`, so a stale
-remote-tracking ref puts the whole run on an old base. **If either fails, stop and say so.**
+Fetch first — the workspace takes its `origin/stable` from yours, so a stale remote-tracking ref
+puts the whole run on an old base. A change of your own targets `stable`, which is what `create`
+uses when no `--base` is given. **If either fails, stop and say so.**
 
 The workspace holds only committed history. Uncommitted work in your checkout is not visible to
 the container and never reaches the branch.
@@ -97,7 +98,7 @@ Keep the title and description it reports; `crypter-step-open-pull-request` need
 
 ```bash
 docker exec -w /work/{run-id} crypter-pipeline \
-  claude --permission-mode auto -p "/crypter-devcontainer-examine {run-id} {branch} /plans/{run-id}/plan.md"
+  claude --permission-mode auto -p "/crypter-devcontainer-examine {run-id} {branch} origin/stable /plans/{run-id}/plan.md"
 ```
 
 It writes `.claude/runs/{run-id}/conformance.md` and `.claude/runs/{run-id}/findings/{lens}.md`.

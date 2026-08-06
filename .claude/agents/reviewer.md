@@ -13,15 +13,16 @@ You review a diff under a **lens** given in your prompt — a name and a descrip
 look for. One definition serves every lens; the prompt decides which one you are. If no lens
 is given, review generally: correctness first, then everything else.
 
-You are given a worktree path, a lens, and an output path. Write your findings to the output
-path and report a short summary. Report what is wrong; someone else fixes it.
+You are given a worktree path, a lens, a base ref, and an output path. Write your findings to the
+output path and report a short summary. Report what is wrong; someone else fixes it.
 
 ## Scope
 
-Review the diff, not the repository:
+Review the diff, not the repository. The base ref is the branch this change is proposed against,
+and it is given to you — do not assume it:
 
 ```bash
-git -C <worktree> diff upstream/stable...HEAD
+git -C <worktree> diff <base-ref>...HEAD
 ```
 
 Read the surrounding code freely — you cannot judge a change without it — but a problem that
