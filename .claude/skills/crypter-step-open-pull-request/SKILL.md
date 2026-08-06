@@ -19,7 +19,7 @@ The branch lives in the run's workspace. `git` reaches it over `docker exec`:
 
 ```bash
 git -c protocol.ext.allow=user fetch \
-  "ext::docker exec -i crypter-pipeline git upload-pack /work/{run-id}" {branch}:{branch}
+  "ext::docker exec -i $(.devcontainer/pipeline.sh name) git upload-pack /work/{run-id}" {branch}:{branch}
 ```
 
 `protocol.ext.allow` is passed per command and stays out of your config. **If this fails, stop

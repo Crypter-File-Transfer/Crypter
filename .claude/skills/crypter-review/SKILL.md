@@ -26,7 +26,8 @@ your own inside it is a claim made in someone else's name.
 
 You are given a pull request number: `/crypter-review {pr-number}`.
 
-Run from the root of the main checkout. The container's mounts resolve against it.
+Run from the root of a checkout. `/plans` and `/runs` resolve against it, and the container is
+named after it, so the one you reach is always the one whose artifacts you are reading.
 
 Use `pr-{number}` as the run id.
 
@@ -40,35 +41,35 @@ The container's `agent` is uid 1001 and your files are uid 1000, so the agents w
 directories this side creates and grants. Creating them here also keeps you able to delete what
 they wrote.
 
-Then confirm the running container is the one this checkout describes, before anything depends
-on it:
+Then confirm the container is up and current, before anything depends on it:
 
 ```bash
-docker exec crypter-pipeline test -w /runs/pr-{number}/findings && \
-  docker exec crypter-pipeline test -w /runs/pr-{number}/verification && \
-  docker exec crypter-pipeline test -x /usr/local/bin/crypter-workspace
+.devcontainer/pipeline.sh exec -- test -w /runs/pr-{number}/findings && \
+  .devcontainer/pipeline.sh exec -- test -w /runs/pr-{number}/verification && \
+  .devcontainer/pipeline.sh exec -- test -x /usr/local/bin/crypter-workspace
 ```
 
-The first proves the `/runs` mount reaches the directory you just made, which a container
-created against a different checkout will not. The second proves the image carries the current
-tooling. A container that fails either is not this checkout's, and every later step fails
-against it in a way that reads like something else — a missing executable, findings written
-somewhere you never look.
+`pipeline.sh` resolves the container from the checkout it sits in, so which container you get is
+settled by where you are rather than by anything you check. What the probes are for is the rest:
+the first two prove `/runs` is mounted and that uid 1001 can write the directories you just
+made, and the third proves the image carries the current tooling. Without them a later step
+fails in a way that reads like something else — a missing executable, findings written somewhere
+you never look.
 
-Both are `test` because `docker exec` runs a binary and not a shell, so a builtin like
+All three are `test` because `docker exec` runs a binary and not a shell, so a builtin like
 `command -v` exits 127 whether or not the thing it was looking for is there.
 
-**Do not `docker start` an exited container to fix this.** Mounts and image are fixed when a
-container is created, so starting one built from another checkout, or from an older image,
-brings back the same wrong container. Bring it up from here instead:
+**Do not `docker start` an exited container to fix this.** The image is fixed when a container is
+created, so starting an old one brings back the old tooling. Bring it up from here instead:
 
 ```bash
-docker compose -f .devcontainer/docker-compose.yml up -d --build
+.devcontainer/pipeline.sh up
 ```
 
-That rebuilds the image and recreates the container against this checkout's mounts. It replaces
-any container of the same name, so **ask the user before running it** — theirs may belong to
-another checkout and hold work you cannot see.
+That rebuilds the image and recreates this checkout's container. It cannot touch another
+checkout's. What it does destroy is every workspace under `/work` in *this* container, because
+`/work` is the container's own filesystem and not a volume — so **ask the user before running it
+if another run may be live here.**
 
 ## 1. Read the pull request
 
@@ -87,28 +88,28 @@ against the branch the pull request actually names.
 
 ## 2. Fetch it into a workspace
 
-The container has no network remote. It clones from your repository through a read-only mount,
-so the pull request head goes into your repository first and travels across from there:
+The container clones from the repository itself, so the pull request head comes straight from
+GitHub and nothing has to be staged in your checkout first:
 
 ```bash
-git fetch origin +refs/pull/{number}/head:refs/pr/{number} {base-branch}
-docker exec crypter-pipeline crypter-workspace create pr-{number} \
-  --base {base-branch} '+refs/pr/{number}:refs/heads/pr-{number}'
+.devcontainer/pipeline.sh exec -- crypter-workspace create pr-{number} \
+  --base {base-branch} '+refs/pull/{number}/head:refs/heads/pr-{number}'
 ```
 
 The refspec is forced, so reviewing a pull request again after its author rebased or amended
-picks up the new head instead of being rejected. The base branch is fetched alongside it because
-the workspace clones your repository, and a base you have never fetched is not there to diff
-against.
+picks up the new head instead of being rejected. The base branch needs no fetching of its own —
+the clone brings every branch the repository has.
 
-**If either fails, stop and say so.**
+Whatever your checkout is on, and however stale it is, does not reach the review.
+
+**If it fails, stop and say so.**
 
 The workspace lasts for this review and no longer.
 
 ## 3. Examine
 
 ```bash
-docker exec -w /work/pr-{number} crypter-pipeline \
+.devcontainer/pipeline.sh exec -w /work/pr-{number} -- \
   claude --permission-mode auto -p "/crypter-devcontainer-examine pr-{number} pr-{number} origin/{base-branch}"
 ```
 
@@ -140,7 +141,7 @@ finding the author has to answer. So every finding is ruled on against the code 
 anywhere — by a verifier in the container, one per finding, not by you.
 
 ```bash
-docker exec -w /work/pr-{number} crypter-pipeline \
+.devcontainer/pipeline.sh exec -w /work/pr-{number} -- \
   claude --permission-mode auto -p "/crypter-devcontainer-verify pr-{number} pr-{number} /runs/pr-{number}/findings/"
 ```
 
@@ -195,7 +196,7 @@ retry it against a different line.**
 ## 6. Tear down and report
 
 ```bash
-docker exec crypter-pipeline crypter-workspace remove pr-{number}
+.devcontainer/pipeline.sh exec -- crypter-workspace remove pr-{number}
 ```
 
 Remove it on every exit path, including the ones where you stopped early. The findings and

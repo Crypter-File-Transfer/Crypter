@@ -1,23 +1,26 @@
-name: crypter-pipeline
-
 services:
   pipeline:
-    container_name: crypter-pipeline
+    # Named per checkout by pipeline.sh, so two checkouts get two containers instead of fighting
+    # over one. Required rather than defaulted: a bare `docker compose` here would create a
+    # container whose name says nothing about which checkout's mounts it holds.
+    container_name: ${CRYPTER_PIPELINE_CONTAINER:?run .devcontainer/pipeline.sh up instead}
     # Built here rather than pulled. The image carries tooling and nothing else, so a change to
     # it is a local rebuild instead of a publish someone has to approve.
     image: crypter-devcontainer:local
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
+    labels:
+      # What `pipeline.sh list` reads to say which checkout a container belongs to.
+      com.crypter.pipeline.checkout: ${CRYPTER_PIPELINE_CHECKOUT:?run .devcontainer/pipeline.sh up instead}
     environment:
       CRYPTER_GIT_NAME: ${CRYPTER_GIT_NAME}
       CRYPTER_GIT_EMAIL: ${CRYPTER_GIT_EMAIL}
+      # Workspaces are cloned from here rather than from the host, so a run sees the branch as
+      # the repository holds it. Override for a fork.
+      CRYPTER_REPO_URL: ${CRYPTER_REPO_URL:-https://github.com/Crypter-File-Transfer/Crypter.git}
     volumes:
       - claude:/home/agent/.claude
-      # The host repository, read-only. Workspaces are cloned from it and the container writes
-      # nothing back. The host working tree is deliberately not mounted, so uncommitted work is
-      # not visible in here.
-      - ../.git:/host-git:ro
       # Plans are authored on the host and read from /plans.
       - ../.claude/plans:/plans:ro
       # Findings, conformance and triage are artifacts on the host, written from /runs.
@@ -31,10 +34,16 @@ services:
     working_dir: /work
     command: sleep infinity
 
+# External so every instance on the machine shares them: Claude Code is authenticated once and
+# the caches are warmed once. A Compose-owned volume carries the project it was created for, and
+# a second project mounting it fails on the mismatch. `pipeline.sh up` creates them.
 volumes:
   claude:
+    external: true
     name: crypter-pipeline-claude
   nuget:
+    external: true
     name: crypter-pipeline-nuget
   pnpm:
+    external: true
     name: crypter-pipeline-pnpm

@@ -34,13 +34,14 @@ ones to invoke.
 `/crypter-step-plan` is the one worth borrowing when you want a plan and nothing else, and
 `/crypter-step-open-pull-request` is safe to run repeatedly, which is how the CI loop uses it.
 
-**Run the orchestrators from the root of your main checkout.** The container's mounts are
-relative to `.devcontainer/`, so `.claude/plans` and `.claude/runs` resolve against that one
-directory. Started from a worktree, a run writes its plan somewhere the container cannot read.
+**Run the orchestrators from the root of a checkout**, main or worktree. `.claude/plans` and
+`.claude/runs` are mounts relative to `.devcontainer/`, so they resolve against whichever checkout
+you launch from, and the container is named after that checkout — so the one you reach is always
+the one holding the artifacts you are reading.
 
-**The container holds no GitHub credential and no network remote.** Every authenticated GitHub
-operation happens in your session with your own access, and `/crypter-change` pushes and
-re-pushes without stopping to ask.
+**The container holds no GitHub credential.** It clones anonymously over https and can only read
+a public repository. Every authenticated GitHub operation happens in your session with your own
+access, and `/crypter-change` pushes and re-pushes without stopping to ask.
 
 The branch is pushed to the org repository and the pull request opens against it, base `stable`,
 the same route a branch of your own takes. `/crypter-change` leaves you a draft pull request to
@@ -51,27 +52,28 @@ and its network egress is open. Treat it as a trust boundary rather than a sandb
 
 ## Workspaces
 
-The agents build and review in a **workspace**: a clone of your repository at `/work/{run-id}`,
+The agents build and review in a **workspace**: a clone of the repository at `/work/{run-id}`,
 made when a run starts and deleted when it ends. Nothing that holds a copy of the code outlives
 the run that made it, so there is no second checkout drifting away from yours.
 
-Workspaces are cloned from `/host-git`, a read-only mount of your repository's `.git`. Read-only
-is what makes this safe to share: the container reads committed history and cannot move a ref,
-add an object, or touch anything in your repository. Your working tree is not mounted at all, so
-uncommitted work is invisible in there and cannot reach a branch.
+Workspaces are cloned from `CRYPTER_REPO_URL` — the org repository on GitHub, not your checkout.
+Nothing on the host is mounted for them to read. **Your checkout is therefore irrelevant to what
+a run builds or reviews**: it sees the branch as the repository holds it, whatever yours is on,
+however stale it is, and whatever is uncommitted in it. A pull request head is fetched straight
+from `refs/pull/{number}/head`, so nothing has to be staged on your side first.
+
+Because each workspace is a full clone taken when it is created, and nothing re-fetches
+afterwards, a run is pinned to the commit it started from. Merge to `stable` while a run is going
+and it keeps building against what it cloned; the next run gets the new commit. Two runs at
+different bases are no trouble.
 
 The orchestrator owns the lifecycle. It creates the workspace in its setup and removes it when
 the run ends; the container skills use it and never create or destroy one.
 
 ```bash
-docker exec crypter-pipeline crypter-workspace create {run-id} [--base {branch}] [refspec]
-docker exec crypter-pipeline crypter-workspace remove {run-id}
+.devcontainer/pipeline.sh exec -- crypter-workspace create {run-id} [--base {branch}] [refspec]
+.devcontainer/pipeline.sh exec -- crypter-workspace remove {run-id}
 ```
-
-The org repository is `origin` on both sides. A clone would otherwise map your local branches
-into the workspace's `origin/*`, so the create step points the remote at your remote-tracking
-refs instead, and `origin/stable` in a workspace means what it means in your checkout. Fetch
-before creating a workspace, or the run starts on a stale base.
 
 `--base` is the branch the run is built or reviewed against, `stable` when it is not given. A
 pull request states its own base, and a release states `main`, so the review skills pass what
@@ -85,12 +87,14 @@ Everything crossing the container boundary goes through one of these:
 
 | Host | Container | Direction | Holds |
 |---|---|---|---|
-| `.git` | `/host-git` | Read-only | Your committed history, which workspaces are cloned from |
 | `.claude/plans` | `/plans` | Read-only | `{run-id}/plan.md` |
 | `.claude/runs` | `/runs` | Writable | `{run-id}/conformance.md`, `{run-id}/findings/{lens}.md`, `{run-id}/review.md`, `{run-id}/verification/{id}.md`, `{run-id}/triage.md`, `{run-id}/ci-{n}.md` |
 
-`.claude/plans` and `.claude/runs` are gitignored and live on your disk. Only `/runs` is
-writable; the other two the container can read and nothing more.
+Both are gitignored and live on your disk. Only `/runs` is writable; `/plans` the container can
+read and nothing more.
+
+Source is not among them. Nothing of your repository is mounted, so a run cannot read your
+working tree, your local branches, or a ref you have not pushed — it clones from GitHub instead.
 
 The plan goes in and cannot be rewritten by the agents. Findings come back out as files you can
 open, grep and keep, rather than as text in a transcript, and each is written by the agent that
@@ -102,32 +106,52 @@ bind mount keeps host ownership, so the orchestrators create every directory und
 themselves and give it mode 777. Directories made on the host stay deletable from the host; a
 directory the container creates is one you need `docker exec` to remove.
 
-The branch itself travels differently. It never passes through a mount:
+A branch the agents built travels back out the same way it would from any remote, over a git
+transport that runs `docker exec` instead of opening a socket:
 
 ```bash
 git -c protocol.ext.allow=user fetch \
-  "ext::docker exec -i crypter-pipeline git upload-pack /work/{run-id}" {branch}:{branch}
+  "ext::docker exec -i $(.devcontainer/pipeline.sh name) git upload-pack /work/{run-id}" {branch}:{branch}
 ```
 
-`protocol.ext.allow` is passed per command, so it stays out of your git config.
+`protocol.ext.allow` is passed per command, so it stays out of your git config. Pushing is then
+yours, with your credentials — which is what keeps a write token out of a container running
+unattended agents.
 
-Because the mounts are relative paths in the Compose file, they resolve against the checkout you
-launch from, and a container is stuck with whatever they resolved to when it was created. Run
-the pipeline from a second checkout and the container it finds by name is the first one's:
-`/runs` writes land under a repository you are not looking at, and `/host-git` clones a history
-that is not the one you are reviewing.
+## One container per checkout
 
-Starting an exited container does not repair this, and neither does it pick up a newer image —
-`docker start` reuses what the container was created with. Recreate it from the checkout you
-mean to work in:
+`/plans` and `/runs` are relative paths in the Compose file, so they resolve against the checkout
+you launch from and a container is stuck with whatever they resolved to when it was created. Each
+checkout therefore gets its own container, named after it:
 
 ```bash
-docker compose -f .devcontainer/docker-compose.yml up -d --build
+.devcontainer/pipeline.sh name        # crypter-pipeline-crypter-4f3a9c21
 ```
 
-That rebuilds the image and recreates the container against the mounts as they resolve here.
-There is one `crypter-pipeline` on the machine, so this takes it over from whichever checkout
-held it.
+The name is derived from the checkout's real path — a readable slug, and a hash to separate two
+clones that share a basename. Nothing to configure, and nothing that can drift out of step with
+where the checkout actually is. Because a checkout resolves only to its own name, a run can never
+reach another checkout's mounts, and recreating one container leaves the others alone.
+
+```bash
+.devcontainer/pipeline.sh list        # every instance, and the checkout it belongs to
+```
+
+This is not what makes runs parallel. Several runs share one container quite happily — they are
+separated by their workspaces at `/work/{run-id}` and their artifacts at `/runs/{run-id}`, and
+concurrent `docker exec` calls do not queue. Per-checkout naming is about which host directories
+a container is wired to, nothing more.
+
+Starting an exited container does not pick up a newer image — `docker start` reuses what the
+container was created with. Recreate it instead:
+
+```bash
+.devcontainer/pipeline.sh up
+```
+
+That rebuilds the image and recreates this checkout's container. `/work` is the container's own
+filesystem rather than a volume, so this destroys any workspace a run in this checkout is still
+using.
 
 ## Running a change
 
@@ -163,36 +187,43 @@ ignored by git. Copy the template and fill it in before the first `up`.
 cp .devcontainer/.env.example .devcontainer/.env
 ```
 
-| Variable | Value |
-|---|---|
-| `CRYPTER_GIT_NAME` | Author name on the agents' commits. |
-| `CRYPTER_GIT_EMAIL` | Author email on the agents' commits. |
+| Variable | Value | |
+|---|---|---|
+| `CRYPTER_GIT_NAME` | Author name on the agents' commits. | Required |
+| `CRYPTER_GIT_EMAIL` | Author email on the agents' commits. | Required |
+| `CRYPTER_REPO_URL` | The repository workspaces are cloned from. | Defaults to the org repository; set it for a fork |
 
-Both are required. Leaving one empty fails workspace creation with a message naming the
-variable.
+Both required ones fail workspace creation with a message naming the variable when left empty.
+
+The container's name needs no configuration. It is derived from where the checkout is.
 
 ## Launching the container
 
-The container is a Compose service in `.devcontainer/docker-compose.yml`. That is a separate
-Compose project from the application stack at the repository root, so `docker compose up` and
+The container is a Compose service in `.devcontainer/docker-compose.yml`, driven through
+`pipeline.sh` — which supplies the per-checkout name Compose needs. That is a separate Compose
+project from the application stack at the repository root, so `docker compose up` and
 `docker compose down` there never touch it, and the two share no network.
 
 ```bash
 mkdir -p .claude/plans .claude/runs
-docker compose -f .devcontainer/docker-compose.yml up -d --build
-docker compose -f .devcontainer/docker-compose.yml exec pipeline bash
+.devcontainer/pipeline.sh up
+.devcontainer/pipeline.sh exec -- bash        # add -it for an interactive shell
 ```
 
 Create the two mount sources first. They are gitignored, so a fresh clone has neither, and
 Docker creates a missing bind-mount source as root — which the orchestrators then cannot write
 into.
 
-The first `--build` takes a few minutes, mostly installing the `wasm-tools` workload. After
-that Docker's layer cache makes it quick, and a change to `workspace.sh` rebuilds only the last
-couple of layers. Use `--build` whenever `.devcontainer/` has changed; plain `up -d` otherwise.
+Running `docker compose` against this file directly fails, on purpose: the container name is a
+required variable, and a container created without it would say nothing about which checkout's
+mounts it holds.
 
-Swap `up -d` for `down` to stop it. The named volumes outlive the container, so the next `up`
-keeps your Claude Code credentials and your package caches.
+The first `up` takes a few minutes, mostly installing the `wasm-tools` workload. After that
+Docker's layer cache makes it quick, and a change to `workspace.sh` rebuilds only the last couple
+of layers.
+
+`pipeline.sh down` stops it. The named volumes outlive the container, so the next `up` keeps your
+Claude Code credentials and your package caches.
 
 ## What is in the container
 
@@ -210,6 +241,9 @@ There is **no Docker in the container**, so `Crypter.Test` cannot run there — 
 Testcontainers to start PostgreSQL. The agents build but never test locally; the test suite runs
 in CI once the pull request exists, and failures come back to the implementer from there.
 
+It does need **outbound network**, both for the Anthropic API and now for cloning workspaces.
+The pipeline does not work offline.
+
 Three named volumes survive rebuilds, and none of them holds source:
 
 | Volume | Holds |
@@ -217,6 +251,11 @@ Three named volumes survive rebuilds, and none of them holds source:
 | `crypter-pipeline-claude` | The agent's Claude Code state and credentials |
 | `crypter-pipeline-nuget` | The NuGet package cache |
 | `crypter-pipeline-pnpm` | The pnpm store |
+
+**Every instance on the machine shares all three**, which is why Claude Code is authenticated
+once rather than once per checkout, and why a second checkout's first build is not a cold
+restore. They are declared external so that several Compose projects can mount them; `pipeline.sh
+up` creates them.
 
 The two caches exist because workspaces are ephemeral. Without them every run would restore
 NuGet and pnpm from nothing, which is most of a build.
@@ -228,9 +267,13 @@ collide with the next one.
 To start over from nothing, take the container down and remove the volumes:
 
 ```bash
-docker compose -f .devcontainer/docker-compose.yml down
+.devcontainer/pipeline.sh down
 docker volume rm crypter-pipeline-claude crypter-pipeline-nuget crypter-pipeline-pnpm
 ```
+
+The `down` is per-checkout, but removing the volumes is not — it takes the credentials and caches
+away from **every** instance. Use `pipeline.sh list` to see what else is on the machine first,
+including containers left behind by checkouts that no longer exist.
 
 ## Authenticate Claude Code
 
@@ -243,8 +286,9 @@ they survive container rebuilds. You only do this again after removing that volu
 
 Run the agents with `--permission-mode auto`. They work unattended, so a prompt they cannot
 answer is a run that stalls. What bounds the blast radius is the container itself: a workspace
-that is thrown away at the end of the run, a read-only view of your repository, and no GitHub
-credential to push with.
+that is thrown away at the end of the run, no access to your repository at all, and no GitHub
+credential to push with — its only reach into the repository is an anonymous read of what is
+already public.
 
 ## Changing the image
 
@@ -252,12 +296,15 @@ Needed when the tooling changes — a new tool the agents need, a runtime versio
 changes never require it, because the image carries no source.
 
 ```bash
-docker compose -f .devcontainer/docker-compose.yml up -d --build
+.devcontainer/pipeline.sh up
 ```
 
 That is the whole loop. The image is local to your machine — it is never published, and nobody
 else consumes it — so a change to `workspace.sh` or the Dockerfile takes effect on your next
-`up` and affects nothing but your own container.
+`up`.
+
+The image tag is shared, so the rebuild is machine-wide; other instances pick the new image up
+when they are next recreated, not before.
 
 `pr-build-devcontainer` builds the image on a pull request that touches `.devcontainer/`. It
 pushes nothing; it is there to catch a Dockerfile that does not build.

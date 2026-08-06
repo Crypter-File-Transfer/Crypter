@@ -10,8 +10,9 @@ Carry a requirement from a sentence to a draft pull request whose checks pass.
 You own the whole run. Building and reviewing happen in the container; you hold the plan, the
 findings and every CI attempt, which is why the judgement calls are yours.
 
-Run from the root of the main checkout. The container's mounts resolve against it, so a run
-started from a worktree writes its plan where the container cannot read it.
+Run from the root of a checkout — a worktree does as well as a main one. `/plans` and `/runs`
+resolve against it, and the container is named after it, so the one you reach is always the one
+reading the plan you wrote.
 
 There is one gate: the user approves the plan. Everything after it runs to a green draft pull
 request, or to a written account of why CI would not take it.
@@ -40,43 +41,44 @@ The container needs both mounts, the run directory has to be writable from insid
 image has to carry the current tooling. Confirm before starting:
 
 ```bash
-docker exec crypter-pipeline test -d /plans/{run-id} && \
-  docker exec crypter-pipeline test -w /runs/{run-id}/findings && \
-  docker exec crypter-pipeline test -x /usr/local/bin/crypter-workspace
+.devcontainer/pipeline.sh exec -- test -d /plans/{run-id} && \
+  .devcontainer/pipeline.sh exec -- test -w /runs/{run-id}/findings && \
+  .devcontainer/pipeline.sh exec -- test -x /usr/local/bin/crypter-workspace
 ```
 
-The mount checks also settle which checkout the container belongs to: one created against a
-different one reaches neither directory. The last check is separate because an older image
-passes the first two and then fails at workspace creation with nothing but a missing executable
-to go on. All three are `test` because `docker exec` runs a binary and not a shell, so a builtin
-like `command -v` exits 127 whether or not the thing it was looking for is there.
+`pipeline.sh` resolves the container from the checkout it sits in, so which container you get is
+settled by where you are rather than by anything you check. The mount checks prove `/plans` and
+`/runs` are both there and that uid 1001 can write the run directory. The last check is separate
+because an older image passes the first two and then fails at workspace creation with nothing but
+a missing executable to go on. All three are `test` because `docker exec` runs a binary and not a
+shell, so a builtin like `command -v` exits 127 whether or not the thing it was looking for is
+there.
 
-**Do not `docker start` an exited container to fix any of this.** Mounts and image are fixed
-when a container is created, so starting one built from another checkout, or from an older
-image, brings back the same wrong container. Bring it up from here instead:
+**Do not `docker start` an exited container to fix any of this.** The image is fixed when a
+container is created, so starting an old one brings back the old tooling. Bring it up from here
+instead:
 
 ```bash
-docker compose -f .devcontainer/docker-compose.yml up -d --build
+.devcontainer/pipeline.sh up
 ```
 
-That rebuilds the image and recreates the container against this checkout's mounts. It replaces
-any container of the same name, so **ask the user before running it** — theirs may belong to
-another checkout and hold work you cannot see.
+That rebuilds the image and recreates this checkout's container. It cannot touch another
+checkout's. What it does destroy is every workspace under `/work` in *this* container, because
+`/work` is the container's own filesystem and not a volume — so **ask the user before running it
+if another run may be live here.**
 
-Then make the workspace the container builds in. It is a clone of your repository, taken from
-the read-only `/host-git` mount, and it lasts exactly as long as this run:
+Then make the workspace the container builds in. It is a clone of the repository taken from
+GitHub, and it lasts exactly as long as this run:
 
 ```bash
-git fetch origin
-docker exec crypter-pipeline crypter-workspace create {run-id}
+.devcontainer/pipeline.sh exec -- crypter-workspace create {run-id}
 ```
 
-Fetch first — the workspace takes its `origin/stable` from yours, so a stale remote-tracking ref
-puts the whole run on an old base. A change of your own targets `stable`, which is what `create`
-uses when no `--base` is given. **If either fails, stop and say so.**
+A change of your own targets `stable`, which is what `create` uses when no `--base` is given.
+**If it fails, stop and say so.**
 
-The workspace holds only committed history. Uncommitted work in your checkout is not visible to
-the container and never reaches the branch.
+The workspace takes `stable` as the repository holds it, so nothing about your checkout — what
+it is on, how stale it is, what is uncommitted in it — reaches the branch.
 
 ## 1. Plan
 
@@ -88,7 +90,7 @@ It settles the plan with the user itself. **Do not continue until they have appr
 ## 2. Build
 
 ```bash
-docker exec -w /work/{run-id} crypter-pipeline \
+.devcontainer/pipeline.sh exec -w /work/{run-id} -- \
   claude --permission-mode auto -p "/crypter-devcontainer-implement {run-id} {branch}"
 ```
 
@@ -97,7 +99,7 @@ Keep the title and description it reports; `crypter-step-open-pull-request` need
 ## 3. Examine
 
 ```bash
-docker exec -w /work/{run-id} crypter-pipeline \
+.devcontainer/pipeline.sh exec -w /work/{run-id} -- \
   claude --permission-mode auto -p "/crypter-devcontainer-examine {run-id} {branch} origin/stable /plans/{run-id}/plan.md"
 ```
 
@@ -123,7 +125,7 @@ them.
 Where anything was accepted:
 
 ```bash
-docker exec -w /work/{run-id} crypter-pipeline \
+.devcontainer/pipeline.sh exec -w /work/{run-id} -- \
   claude --permission-mode auto -p "/crypter-devcontainer-remediate {run-id} {branch} /runs/{run-id}/triage.md"
 ```
 
@@ -159,7 +161,7 @@ The branch is on the fork and the artifacts are on your disk, so the workspace h
 to hold:
 
 ```bash
-docker exec crypter-pipeline crypter-workspace remove {run-id}
+.devcontainer/pipeline.sh exec -- crypter-workspace remove {run-id}
 ```
 
 Remove it on every exit path, including the ones where you stopped early. Nothing under `/runs`
