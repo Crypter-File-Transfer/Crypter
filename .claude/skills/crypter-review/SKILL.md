@@ -66,19 +66,26 @@ Read its title, description and diff with whatever GitHub access this session ha
 CLI, or the GitHub MCP server's `pull_request_read`. What the author says it does is context for
 reading the diff, and worth carrying into your report where the two disagree.
 
+Take its **base branch** from the same read — `base.ref` from `pull_request_read` with method
+`get`, or `.baseRefName` from `gh pr view`. Most pull requests here target `stable`, but a
+release targets `main`, and nothing about the number tells you which. Everything below diffs
+against the branch the pull request actually names.
+
 ## 2. Fetch it into a workspace
 
 The container has no network remote. It clones from your repository through a read-only mount,
 so the pull request head goes into your repository first and travels across from there:
 
 ```bash
-git fetch origin +refs/pull/{number}/head:refs/pr/{number}
+git fetch origin +refs/pull/{number}/head:refs/pr/{number} {base-branch}
 docker exec crypter-pipeline crypter-workspace create pr-{number} \
-  '+refs/pr/{number}:refs/heads/pr-{number}'
+  --base {base-branch} '+refs/pr/{number}:refs/heads/pr-{number}'
 ```
 
 The refspec is forced, so reviewing a pull request again after its author rebased or amended
-picks up the new head instead of being rejected.
+picks up the new head instead of being rejected. The base branch is fetched alongside it because
+the workspace clones your repository, and a base you have never fetched is not there to diff
+against.
 
 **If either fails, stop and say so.**
 
@@ -88,7 +95,7 @@ The workspace lasts for this review and no longer.
 
 ```bash
 docker exec -w /work/pr-{number} crypter-pipeline \
-  claude --permission-mode auto -p "/crypter-devcontainer-examine pr-{number} pr-{number}"
+  claude --permission-mode auto -p "/crypter-devcontainer-examine pr-{number} pr-{number} origin/{base-branch}"
 ```
 
 No plan path. A pull request raised elsewhere has no plan to hold it against, so the plan

@@ -61,15 +61,18 @@ The orchestrator owns the lifecycle. It creates the workspace in its setup and r
 the run ends; the container skills use it and never create or destroy one.
 
 ```bash
-docker exec crypter-pipeline crypter-workspace create {run-id} [refspec]
+docker exec crypter-pipeline crypter-workspace create {run-id} [--base {branch}] [refspec]
 docker exec crypter-pipeline crypter-workspace remove {run-id}
 ```
 
-The org repository has two names as a result. Your session reaches it as `origin`, the remote
-your checkout already has. Inside a workspace it is `upstream/stable`, a ref the create step
-copies from your `origin/stable` so the agents always diff against the org's current code rather
-than whatever branch you have checked out. Fetch before creating a workspace, or the run starts
-on a stale base.
+The org repository is `origin` on both sides. A clone would otherwise map your local branches
+into the workspace's `origin/*`, so the create step points the remote at your remote-tracking
+refs instead, and `origin/stable` in a workspace means what it means in your checkout. Fetch
+before creating a workspace, or the run starts on a stale base.
+
+`--base` is the branch the run is built or reviewed against, `stable` when it is not given. A
+pull request states its own base, and a release states `main`, so the review skills pass what
+they read rather than assuming.
 
 This document covers the setup you need before the container will start.
 

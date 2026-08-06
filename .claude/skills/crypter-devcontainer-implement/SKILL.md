@@ -26,10 +26,10 @@ end.
 
 ## 1. Branch
 
-The workspace is checked out at `upstream/stable`, so build from there:
+The workspace is checked out at `origin/stable`, so build from there:
 
 ```bash
-git -C /work/{run-id} checkout -b {branch} refs/remotes/upstream/stable
+git -C /work/{run-id} checkout -b {branch} refs/remotes/origin/stable
 ```
 
 **If this fails, stop and say so.** A branch cut from the wrong base leaves the diff and the

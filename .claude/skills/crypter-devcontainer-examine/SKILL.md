@@ -1,6 +1,6 @@
 ---
 name: crypter-devcontainer-examine
-description: Review a diff in the pipeline container and write findings to the host. Invoked as /crypter-devcontainer-examine {run-id} {ref} [plan-path] by the crypter-change and crypter-review skills.
+description: Review a diff in the pipeline container and write findings to the host. Invoked as /crypter-devcontainer-examine {run-id} {ref} {base-ref} [plan-path] by the crypter-change and crypter-review skills.
 ---
 
 # Crypter devcontainer examine
@@ -12,8 +12,14 @@ The ref already exists in the run's workspace at `/work/{run-id}`.
 
 ## Setup
 
-You are given a run id, a ref, and optionally a plan path:
-`/crypter-devcontainer-examine {run-id} {ref} [plan-path]`.
+You are given a run id, a ref, a base ref, and optionally a plan path:
+`/crypter-devcontainer-examine {run-id} {ref} {base-ref} [plan-path]`.
+
+The base ref is the branch the change is proposed against, named as the workspace knows it —
+`origin/stable` for work built here, `origin/main` for a pull request that targets `main`. Every
+agent below diffs against it. **Pass it on as given; never substitute a default.** A base that
+does not match the pull request produces a diff nobody asked about, and the emptiest version of
+that failure — a base identical to the ref — reads as four lenses finding nothing wrong.
 
 Two review phases run here, and the plan path decides whether the first one applies:
 
@@ -50,13 +56,13 @@ Every agent gets the workspace path and works by absolute path inside it. Never 
 
 ## 2. Plan adherence
 
-Given a plan path, invoke `conformance-auditor` with it, the workspace, and
+Given a plan path, invoke `conformance-auditor` with it, the workspace, the base ref, and
 `/runs/{run-id}/conformance.md`. It reports where the diff and the plan diverge.
 
 ## 3. Code review
 
-Invoke `reviewer` once per lens, in parallel — they do not interact. Each gets the workspace and
-`/runs/{run-id}/findings/{lens}.md`.
+Invoke `reviewer` once per lens, in parallel — they do not interact. Each gets the workspace, the
+base ref, and `/runs/{run-id}/findings/{lens}.md`.
 
 | Lens | Brief |
 |---|---|
