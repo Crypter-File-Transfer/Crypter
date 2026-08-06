@@ -105,8 +105,23 @@ git -c protocol.ext.allow=user fetch \
 
 `protocol.ext.allow` is passed per command, so it stays out of your git config.
 
-A container created before these mounts existed picks them up on
-`docker compose -f .devcontainer/docker-compose.yml up -d --force-recreate`.
+Because the mounts are relative paths in the Compose file, they resolve against the checkout you
+launch from, and a container is stuck with whatever they resolved to when it was created. Run
+the pipeline from a second checkout and the container it finds by name is the first one's:
+`/runs` writes land under a repository you are not looking at, and `/host-git` clones a history
+that is not the one you are reviewing.
+
+Starting an exited container does not repair this, and neither does it pick up a newer image —
+`docker start` reuses what the container was created with. Recreate it from the checkout you
+mean to work in:
+
+```bash
+docker compose -f .devcontainer/docker-compose.yml up -d --build
+```
+
+That rebuilds the image and recreates the container against the mounts as they resolve here.
+There is one `crypter-pipeline` on the machine, so this takes it over from whichever checkout
+held it.
 
 ## Running a change
 
