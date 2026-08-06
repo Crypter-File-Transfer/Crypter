@@ -19,9 +19,12 @@ and it invokes the rest.
 | `/crypter-step-open-pull-request` | Your session | Pushes the branch and opens or updates the draft pull request |
 
 Every skill that reads or writes code runs in the container, against the container's own clone.
-Your session plans, decides what to act on, and talks to GitHub. `/crypter-review` reviews
-nothing itself: it fetches the pull request into the container and runs
-`/crypter-devcontainer-examine` there.
+Your session plans, decides what to act on, and talks to GitHub. It does not read code to form a
+view on it — reviewing a diff and ruling on a finding are both judgements made in the container,
+by an agent with the code in front of it. `/crypter-review` reviews nothing itself and settles
+nothing itself: it fetches the pull request into the container, runs
+`/crypter-devcontainer-examine` there, has `/crypter-devcontainer-verify` rule on what came back,
+and carries the survivors to GitHub.
 
 Both prefixes say the same thing: an orchestrator invokes this, you do not. `crypter-step-` runs
 in your session, and `crypter-devcontainer-` runs in the container, which expects a workspace,
@@ -137,8 +140,13 @@ pull request, and holds it against CI for at most three fix attempts. The approv
 stop, and the pull request stays a draft until you take it out of one.
 
 `/crypter-review {pr-number}` is the second entry point. It fetches a pull request's head into
-the container, runs the lenses against it with no plan to audit, triages what they raise, and
-posts one review that comments. It never approves and never requests changes.
+the container, runs the lenses against it with no plan to audit, then gives one verifier per
+finding the same treatment `/crypter-triage-review` gives findings from anywhere else. Only the
+findings that survive that are posted, as one review that comments. It never approves and never
+requests changes.
+
+What a lens raised and a verifier then ruled against stays in `.claude/runs`. It is a record of
+the pipeline checking itself, and not something the pull request has to carry.
 
 `/crypter-triage-review {pr-number}` is the third. It reads the findings already on a pull
 request, whoever left them, and gives one verifier per finding a worktree and nothing else to
