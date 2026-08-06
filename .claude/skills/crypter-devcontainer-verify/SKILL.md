@@ -1,6 +1,6 @@
 ---
 name: crypter-devcontainer-verify
-description: Rule on each finding in a report against the code, one verifier per finding. Invoked as /crypter-devcontainer-verify {run-id} {ref} {findings-path} by the crypter-triage-review skill.
+description: Rule on each finding in a report against the code, one verifier per finding. Invoked as /crypter-devcontainer-verify {run-id} {ref} {findings-path} by the crypter-triage-review and crypter-review skills.
 ---
 
 # Crypter devcontainer verify
@@ -16,8 +16,23 @@ and no findings of your own.
 You are given a run id, a ref, and a findings path:
 `/crypter-devcontainer-verify {run-id} {ref} {findings-path}`.
 
-The findings file lives under `/runs/{run-id}/`. Each finding in it carries an id. **If the file
-is absent, stop and say so.**
+The findings path lives under `/runs/{run-id}/` and is either a file or a directory. **If it is
+absent, stop and say so.**
+
+**A file** is a report someone collected, and each finding in it already carries an id. Use those
+ids.
+
+**A directory** is the lenses' own output, one report per lens and no ids in it. Every `.md` in
+it is a lens report named for its lens. Read each one, split it into its individual findings, and
+give each an id of `{lens}-{n}` numbered from 1 in the order the lens reported them — the lenses
+rank most severe first, so that order is information worth keeping.
+
+A lens that found nothing still writes its file saying so. It contributes no findings and no ids,
+which is a result rather than a problem. Where every lens reported that way there is nothing to
+verify, and that is the answer — say so and stop.
+
+**A directory holding no files at all is a different thing:** whatever should have filled it did
+not run. Stop and say so, and do not report it as lenses finding nothing.
 
 `/runs/{run-id}/verification/` already exists; the caller creates it. **If it is missing, stop
 and say so** rather than creating it.
