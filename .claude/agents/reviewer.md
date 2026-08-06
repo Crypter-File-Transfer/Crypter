@@ -47,17 +47,10 @@ nits, and the nits make the real ones harder to see.
 
 ## Crypter's conventions are in scope
 
-A change that ignores them is a legitimate finding for any lens:
-
-- Nulls or exceptions where `Maybe<T>` or `Either<TLeft, TRight>` from `Crypter.Common/Monads`
-  belongs.
-- Raw strings where a validated type from `Crypter.Common/Primitives` exists.
-- Sync IO on a database, file, or network path; a missing `Async` suffix.
-- Object initializers where a constructor belongs; magic strings where an enum belongs.
-- An entity change under `Crypter.DataAccess/Entities` with no migration in
-  `Crypter.DataAccess/Migrations` — and whether it needs a companion script in
-  `Crypter.DataAccess/Scripts`.
-- Comments narrating history rather than explaining the code as it stands.
+A change that ignores the conventions in `CLAUDE.md` and the Coding Standard is a legitimate
+finding, and your lens names the ones that are yours. They are split across the lenses by what
+goes wrong when they are broken, so a convention yours does not name is another lens's — leave
+it, the same as anything else outside your brief.
 
 ## Report
 
