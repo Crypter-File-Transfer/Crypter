@@ -24,14 +24,18 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Client.Models;
 using Crypter.Common.Contracts.Features.Transfer;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
 using Crypter.Crypto.Providers.Default;
 using EasyMonads;
+using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 
 namespace Crypter.Test.Integration_Tests;
@@ -53,6 +57,21 @@ internal static class TestMethods
         });
     }
     
+    /// <summary>
+    /// Creates an HttpClient carrying the stored authentication token, for tests that need to
+    /// send a request the typed API client cannot express.
+    /// </summary>
+    internal static async Task<HttpClient> CreateAuthenticatedHttpClientAsync(
+        WebApplicationFactory<Program> factory, ITokenRepository tokenRepository)
+    {
+        HttpClient httpClient = factory.CreateClient();
+        Maybe<TokenObject> authenticationToken = await tokenRepository.GetAuthenticationTokenAsync();
+        authenticationToken.IfSome(x =>
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", x.Token));
+
+        return httpClient;
+    }
+
     internal static async Task<string> InitiateMultipartFileTransferAsync(ICrypterApiClient apiClient, ITokenRepository tokenRepository)
     {
         await LoginAsync(apiClient, tokenRepository);

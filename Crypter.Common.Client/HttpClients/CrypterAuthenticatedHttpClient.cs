@@ -206,13 +206,11 @@ public class CrypterAuthenticatedHttpClient : ICrypterAuthenticatedHttpClient
         return await DeserializeEitherUnitResponseAsync(response);
     }
 
-    public async Task<Maybe<Unit>> DeleteUnitResponseAsync(string uri)
+    public async Task<Either<ErrorResponse, Unit>> DeleteEitherUnitResponseAsync(string uri)
     {
         Func<HttpRequestMessage> requestFactory = MakeRequestMessageFactory(HttpMethod.Delete, uri);
         using HttpResponseMessage response = await SendWithAuthenticationAsync(requestFactory, false);
-        return response.IsSuccessStatusCode
-            ? Unit.Default
-            : Maybe<Unit>.None;
+        return await DeserializeEitherUnitResponseAsync(response);
     }
 
     public async Task<Either<ErrorResponse, TResponse>> SendAsync<TResponse>(Func<HttpRequestMessage> requestFactory)

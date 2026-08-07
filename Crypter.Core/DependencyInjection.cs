@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddDataAccess(defaultConnectionString);
         services.AddMediatR(cfg => cfg
             .RegisterServicesFromAssemblyContaining(typeof(AssemblyInfo)));
+        services.AddCrypterCoreHandlers();
 
         services.TryAddSingleton<IPasswordHashService, PasswordHashService>();
         services.TryAddSingleton<ICryptoProvider, DefaultCryptoProvider>();

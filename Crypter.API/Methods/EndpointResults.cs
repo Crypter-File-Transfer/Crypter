@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+/*
+ * Copyright (C) 2026 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,11 +24,18 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Immediate.Handlers.Shared;
+using System;
+using System.Net;
+using Crypter.Common.Contracts;
+using Microsoft.AspNetCore.Http;
 
-[assembly: ImmediateAssemblyIdentifier("CrypterCore")]
+namespace Crypter.API.Methods;
 
-namespace Crypter.Core;
-
-public class AssemblyInfo
-{ }
+internal static class EndpointResults
+{
+    internal static IResult MakeErrorResponse(HttpStatusCode httpStatus, Enum errorCode)
+    {
+        ErrorResponse errorResponse = new ErrorResponse((int)httpStatus, errorCode);
+        return Results.Json(errorResponse, statusCode: (int)httpStatus);
+    }
+}

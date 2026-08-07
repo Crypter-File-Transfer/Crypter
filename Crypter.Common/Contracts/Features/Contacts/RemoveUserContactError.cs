@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+/*
+ * Copyright (C) 2026 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,11 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Immediate.Handlers.Shared;
+namespace Crypter.Common.Contracts.Features.Contacts;
 
-[assembly: ImmediateAssemblyIdentifier("CrypterCore")]
-
-namespace Crypter.Core;
-
-public class AssemblyInfo
-{ }
+public enum RemoveUserContactError
+{
+    UnknownError,
+    InvalidUser
+}

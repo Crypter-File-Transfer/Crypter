@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+/*
+ * Copyright (C) 2026 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -24,11 +24,16 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
-using Immediate.Handlers.Shared;
+using System;
+using Crypter.Core.Services;
+using Microsoft.AspNetCore.Http;
 
-[assembly: ImmediateAssemblyIdentifier("CrypterCore")]
+namespace Crypter.API.Methods;
 
-namespace Crypter.Core;
-
-public class AssemblyInfo
-{ }
+internal static class EndpointUser
+{
+    internal static Guid ParseUserId(IHttpContextAccessor httpContextAccessor)
+    {
+        return TokenService.ParseUserId(httpContextAccessor.HttpContext!.User);
+    }
+}

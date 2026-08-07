@@ -1,5 +1,5 @@
-﻿/*
- * Copyright (C) 2023 Crypter File Transfer
+/*
+ * Copyright (C) 2026 Crypter File Transfer
  *
  * This file is part of the Crypter file transfer project.
  *
@@ -26,9 +26,4 @@
 
 using Immediate.Handlers.Shared;
 
-[assembly: ImmediateAssemblyIdentifier("CrypterCore")]
-
-namespace Crypter.Core;
-
-public class AssemblyInfo
-{ }
+[assembly: ImmediateAssemblyIdentifier("CrypterApi")]
