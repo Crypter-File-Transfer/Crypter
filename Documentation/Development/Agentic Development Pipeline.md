@@ -47,8 +47,9 @@ The branch is pushed to the org repository and the pull request opens against it
 the same route a branch of your own takes. `/crypter-change` leaves you a draft pull request to
 read.
 
-The container does hold your Claude Code credential, in the `crypter-pipeline-claude` volume,
-and its network egress is open. Treat it as a trust boundary rather than a sandbox.
+The container does hold your Claude Code credential, in the `crypter-pipeline-claude` volume or as
+`CLAUDE_CODE_OAUTH_TOKEN` in its environment, and its network egress is open. Treat it as a trust
+boundary rather than a sandbox.
 
 ## Workspaces
 
@@ -191,9 +192,10 @@ cp .devcontainer/.env.example .devcontainer/.env
 |---|---|---|
 | `CRYPTER_GIT_NAME` | Author name on the agents' commits. | Required |
 | `CRYPTER_GIT_EMAIL` | Author email on the agents' commits. | Required |
+| `CLAUDE_CODE_OAUTH_TOKEN` | Claude Code's credential. | Optional; an alternative to `pipeline.sh login` |
 | `CRYPTER_REPO_URL` | The repository workspaces are cloned from. | Defaults to the org repository; set it for a fork |
 
-Both required ones fail workspace creation with a message naming the variable when left empty.
+The two git variables fail workspace creation with a message naming the variable when left empty.
 
 The container's name needs no configuration. It is derived from where the checkout is.
 
@@ -277,12 +279,24 @@ including containers left behind by checkouts that no longer exist.
 
 ## Authenticate Claude Code
 
-The image ships Claude Code but no credentials. Run `claude` once inside the container and
-follow the login prompt. The container has no browser, so the flow gives you a URL to open on
-your host and a code to paste back.
+The image ships Claude Code but no credential. Log in once:
 
-Credentials live in `/home/agent/.claude`, which is the `crypter-pipeline-claude` volume, so
-they survive container rebuilds. You only do this again after removing that volume.
+```bash
+.devcontainer/pipeline.sh login
+```
+
+Type `/login` and follow the prompt. The container has no browser, so the flow gives you a URL to
+open on your host and a code to paste back. Credentials live in `/home/agent/.claude`, which is
+the `crypter-pipeline-claude` volume, so they survive rebuilds and are shared by every checkout
+on the machine. Run this again when the login lapses.
+
+A machine that would rather configure the credential than open a browser can set
+`CLAUDE_CODE_OAUTH_TOKEN` in `.devcontainer/.env` instead, generated on the host with `claude
+setup-token`. Compose reads it into the container's environment and Claude Code uses it in place
+of the stored login. Replacing an expired one means editing `.env` and running `up` again, since
+the environment is fixed when the container is created — a stored login renews without that.
+
+`up` warns when neither is set. Either one on its own is enough.
 
 Run the agents with `--permission-mode auto`. They work unattended, so a prompt they cannot
 answer is a run that stalls. What bounds the blast radius is the container itself: a workspace

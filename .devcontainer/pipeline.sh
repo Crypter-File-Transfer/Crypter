@@ -15,10 +15,10 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")" && pwd)"
 checkout="$(dirname "${script_dir}")"
 compose_file="${script_dir}/docker-compose.yml"
+env_file="${script_dir}/.env"
 
 # Shared by every instance on the machine, which is why Claude Code is authenticated once and the
-# package caches are warmed once. Declared external in the Compose file, so nothing creates them
-# but this script.
+# package caches are warmed once. Declared external, so nothing creates them but this script.
 volumes=(crypter-pipeline-claude crypter-pipeline-nuget crypter-pipeline-pnpm)
 
 usage() {
@@ -26,6 +26,7 @@ usage() {
 usage: pipeline.sh name                     print this checkout's container name
        pipeline.sh exec [flags] -- {cmd}    run a command in this checkout's container
        pipeline.sh up                       create or recreate it, rebuilding the image
+       pipeline.sh login                    authenticate Claude Code interactively
        pipeline.sh down                     stop and remove it
        pipeline.sh list                     every pipeline container, and its checkout
 EOF
@@ -78,6 +79,15 @@ case "${1:-}" in
     ;;
 
   up)
+    token="${CLAUDE_CODE_OAUTH_TOKEN:-}"
+    if [[ -z "${token}" && -f "${env_file}" ]]; then
+      token="$(. "${env_file}" >/dev/null 2>&1; printf '%s' "${CLAUDE_CODE_OAUTH_TOKEN:-}")"
+    fi
+    if [[ -z "${token}" ]]; then
+      echo "No CLAUDE_CODE_OAUTH_TOKEN in .devcontainer/.env." >&2
+      echo "Claude Code will use the login in the volume; 'pipeline.sh login' renews it." >&2
+    fi
+
     # Compose will not create an external volume, and a missing one fails the `up` rather than
     # being made on the fly. Creating is idempotent, so this is safe on every run.
     for volume in "${volumes[@]}"; do
@@ -85,6 +95,12 @@ case "${1:-}" in
     done
 
     compose up --detach --build
+    ;;
+
+  login)
+    # Credentials land in /home/agent/.claude, which is a volume, so the login outlives the
+    # container and is shared by every checkout on the machine.
+    docker exec -it "$(container_name)" claude
     ;;
 
   down)

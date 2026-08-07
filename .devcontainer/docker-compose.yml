@@ -19,6 +19,7 @@ services:
       # Workspaces are cloned from here rather than from the host, so a run sees the branch as
       # the repository holds it. Override for a fork.
       CRYPTER_REPO_URL: ${CRYPTER_REPO_URL:-https://github.com/Crypter-File-Transfer/Crypter.git}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
     volumes:
       - claude:/home/agent/.claude
       # Plans are authored on the host and read from /plans.
