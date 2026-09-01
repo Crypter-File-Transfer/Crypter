@@ -26,7 +26,7 @@
 
    <ItemGroup>
       <PackageReference Include="ByteSize" Version="2.1.2" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.10" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.11" />
       <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.10" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
       <PackageReference Include="MinVer" Version="7.0.0">
