@@ -39,7 +39,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using NUnit.Framework;
@@ -70,15 +69,8 @@ internal class AssemblySetup
         CrypterConnectionString = _containerService.CrypterConnectionString;
         HangfireConnectionString = _containerService.HangfireConnectionString;
 
-        string osName = OperatingSystem.IsWindows()
-            ? "Windows"
-            : OperatingSystem.IsLinux()
-                ? "Linux"
-                : throw new NotImplementedException("Operating system not implemented.");
-
-        FileStorageLocation = SettingsReader.GetTestSettings()
-            .GetSection($"IntegrationTestingOnly:TransferStorageLocation:{osName}")
-            .Get<string>();
+        DirectoryInfo repoDirectory = SettingsReader.GetRepoPath();
+        FileStorageLocation = Path.Join(repoDirectory.FullName, "crypter_files");
     }
 
     [OneTimeTearDown]
