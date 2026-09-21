@@ -21,7 +21,7 @@
       <PackageReference Include="Respawn" Version="7.0.0" />
       <PackageReference Include="System.Drawing.Common" Version="10.0.10" />
       <PackageReference Include="TestContainers.Container.Database.PostgreSql" Version="1.5.4" />
-      <PackageReference Include="Testcontainers.PostgreSql" Version="4.13.0" />
+      <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
    </ItemGroup>
 
    <ItemGroup>
