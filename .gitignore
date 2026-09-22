@@ -447,6 +447,9 @@ $RECYCLE.BIN/
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# Integration test transfer storage
+crypter_files/
+
 # Container data
 Volumes/API/storage/
 Volumes/Caddy/tls/
