@@ -28,7 +28,7 @@ using System.Threading.Tasks;
 using EasyMonads;
 using NUnit.Framework;
 
-namespace Crypter.Test.Common_Tests;
+namespace Crypter.Test.Harness_Tests;
 
 /// <summary>
 /// Every monad assertion is exercised twice: once against the state it expects, and once against a
