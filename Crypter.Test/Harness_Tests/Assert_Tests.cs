@@ -83,6 +83,20 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Is_Some_Inside_A_Multiple_Scope_Collects_The_Failure()
+    {
+        bool continued = false;
+
+        Assert.Throws<MultipleAssertException>(() => Assert.Multiple(() =>
+        {
+            Assert.IsSome(None);
+            continued = true;
+        }));
+
+        Assert.That(continued, Is.True);
+    }
+
+    [Test]
     public void Some_Value_Of_Returns_The_Value()
     {
         string value = Assert.SomeValueOf(Some);
@@ -137,6 +151,20 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Is_None_Inside_A_Multiple_Scope_Collects_The_Failure()
+    {
+        bool continued = false;
+
+        Assert.Throws<MultipleAssertException>(() => Assert.Multiple(() =>
+        {
+            Assert.IsNone(Some);
+            continued = true;
+        }));
+
+        Assert.That(continued, Is.True);
+    }
+
+    [Test]
     public void Is_Right_Passes_For_Right()
     {
         Assert.IsRight(Right);
@@ -166,6 +194,20 @@ internal class Assert_Tests
     public void Is_Right_With_An_Expected_Value_Fails_For_A_Different_Value()
     {
         Assert.Throws<AssertionException>(() => Assert.IsRight(Right, OtherValue));
+    }
+
+    [Test]
+    public void Is_Right_Inside_A_Multiple_Scope_Collects_The_Failure()
+    {
+        bool continued = false;
+
+        Assert.Throws<MultipleAssertException>(() => Assert.Multiple(() =>
+        {
+            Assert.IsRight(Left);
+            continued = true;
+        }));
+
+        Assert.That(continued, Is.True);
     }
 
     [Test]
@@ -249,6 +291,20 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Is_Left_Inside_A_Multiple_Scope_Collects_The_Failure()
+    {
+        bool continued = false;
+
+        Assert.Throws<MultipleAssertException>(() => Assert.Multiple(() =>
+        {
+            Assert.IsLeft(Right);
+            continued = true;
+        }));
+
+        Assert.That(continued, Is.True);
+    }
+
+    [Test]
     public void Left_Value_Of_Returns_The_Value()
     {
         int value = Assert.LeftValueOf(Left);
@@ -307,6 +363,20 @@ internal class Assert_Tests
     {
         AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.IsNeither(Right));
         Assert.That(exception!.Message, Is.EqualTo($"Expected Neither, but was Right({SomeValue})."));
+    }
+
+    [Test]
+    public void Is_Neither_Inside_A_Multiple_Scope_Collects_The_Failure()
+    {
+        bool continued = false;
+
+        Assert.Throws<MultipleAssertException>(() => Assert.Multiple(() =>
+        {
+            Assert.IsNeither(Right);
+            continued = true;
+        }));
+
+        Assert.That(continued, Is.True);
     }
 
     [Test]
