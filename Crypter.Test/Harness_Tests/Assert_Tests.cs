@@ -83,6 +83,13 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Is_Some_With_An_Expected_Value_Fails_For_None()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.IsSome(None, SomeValue));
+        Assert.That(exception!.Message, Is.EqualTo("Expected Some, but was None."));
+    }
+
+    [Test]
     public void Is_Some_Inside_A_Multiple_Scope_Collects_The_Failure()
     {
         bool continued = false;
@@ -121,6 +128,13 @@ internal class Assert_Tests
     public void Some_Value_Of_With_An_Expected_Value_Fails_For_A_Different_Value()
     {
         Assert.Throws<AssertionException>(() => Assert.SomeValueOf(Some, OtherValue));
+    }
+
+    [Test]
+    public void Some_Value_Of_With_An_Expected_Value_Fails_For_None()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.SomeValueOf(None, SomeValue));
+        Assert.That(exception!.Message, Is.EqualTo("Expected Some, but was None."));
     }
 
     [Test]
@@ -213,6 +227,13 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Is_Right_With_An_Expected_Value_Fails_For_Left()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.IsRight(Left, SomeValue));
+        Assert.That(exception!.Message, Is.EqualTo($"Expected Right, but was Left({LeftValue})."));
+    }
+
+    [Test]
     public void Is_Right_Inside_A_Multiple_Scope_Collects_The_Failure()
     {
         bool continued = false;
@@ -258,6 +279,13 @@ internal class Assert_Tests
     public void Right_Value_Of_With_An_Expected_Value_Fails_For_A_Different_Value()
     {
         Assert.Throws<AssertionException>(() => Assert.RightValueOf(Right, OtherValue));
+    }
+
+    [Test]
+    public void Right_Value_Of_With_An_Expected_Value_Fails_For_Left()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.RightValueOf(Left, SomeValue));
+        Assert.That(exception!.Message, Is.EqualTo($"Expected Right, but was Left({LeftValue})."));
     }
 
     [Test]
@@ -323,6 +351,13 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Is_Left_With_An_Expected_Value_Fails_For_Right()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.IsLeft(Right, LeftValue));
+        Assert.That(exception!.Message, Is.EqualTo($"Expected Left, but was Right({SomeValue})."));
+    }
+
+    [Test]
     public void Is_Left_Inside_A_Multiple_Scope_Collects_The_Failure()
     {
         bool continued = false;
@@ -368,6 +403,13 @@ internal class Assert_Tests
     public void Left_Value_Of_With_An_Expected_Value_Fails_For_A_Different_Value()
     {
         Assert.Throws<AssertionException>(() => Assert.LeftValueOf(Left, OtherLeftValue));
+    }
+
+    [Test]
+    public void Left_Value_Of_With_An_Expected_Value_Fails_For_Right()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.LeftValueOf(Right, LeftValue));
+        Assert.That(exception!.Message, Is.EqualTo($"Expected Left, but was Right({SomeValue})."));
     }
 
     [Test]
