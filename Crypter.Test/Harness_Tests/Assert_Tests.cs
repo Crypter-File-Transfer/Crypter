@@ -138,6 +138,22 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Some_Value_Of_With_An_Expected_Value_Inside_A_Multiple_Scope_Collects_The_Mismatch()
+    {
+        bool continued = false;
+        string value = string.Empty;
+
+        Assert.Throws<MultipleAssertException>(() => Assert.Multiple(() =>
+        {
+            value = Assert.SomeValueOf(Some, OtherValue);
+            continued = true;
+        }));
+
+        Assert.That(continued, Is.True);
+        Assert.That(value, Is.EqualTo(SomeValue));
+    }
+
+    [Test]
     public void Is_None_Passes_For_None()
     {
         Assert.IsNone(None);
@@ -259,6 +275,22 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Right_Value_Of_With_An_Expected_Value_Inside_A_Multiple_Scope_Collects_The_Mismatch()
+    {
+        bool continued = false;
+        string value = string.Empty;
+
+        Assert.Throws<MultipleAssertException>(() => Assert.Multiple(() =>
+        {
+            value = Assert.RightValueOf(Right, OtherValue);
+            continued = true;
+        }));
+
+        Assert.That(continued, Is.True);
+        Assert.That(value, Is.EqualTo(SomeValue));
+    }
+
+    [Test]
     public void Is_Left_Passes_For_Left()
     {
         Assert.IsLeft(Left);
@@ -350,6 +382,22 @@ internal class Assert_Tests
         }));
 
         Assert.That(returned, Is.False);
+    }
+
+    [Test]
+    public void Left_Value_Of_With_An_Expected_Value_Inside_A_Multiple_Scope_Collects_The_Mismatch()
+    {
+        bool continued = false;
+        int value = 0;
+
+        Assert.Throws<MultipleAssertException>(() => Assert.Multiple(() =>
+        {
+            value = Assert.LeftValueOf(Left, OtherLeftValue);
+            continued = true;
+        }));
+
+        Assert.That(continued, Is.True);
+        Assert.That(value, Is.EqualTo(LeftValue));
     }
 
     [Test]
