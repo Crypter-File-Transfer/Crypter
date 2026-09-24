@@ -31,8 +31,10 @@ using NUnit.Framework;
 namespace Crypter.Test.Harness_Tests;
 
 /// <summary>
-/// Every monad assertion is exercised twice: once against the state it expects, and once against a
-/// state it must reject. A helper that never fails would silently pass every test that depends on it.
+/// Every monad assertion is exercised against the state it expects and against a state it must
+/// reject, and the assertions that behave differently inside an <c>Assert.Multiple</c> block are
+/// exercised there as well. A helper that never fails would silently pass every test that depends on
+/// it.
 /// </summary>
 /// <remarks>
 /// The rejection tests wrap the assertion in <c>Assert.Throws</c> rather than a try/catch. NUnit
