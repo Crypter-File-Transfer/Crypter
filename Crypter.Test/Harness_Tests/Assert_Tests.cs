@@ -52,10 +52,12 @@ internal class Assert_Tests
 
     private static Maybe<string> Some => Maybe<string>.From(SomeValue);
     private static Maybe<string> None => Maybe<string>.None;
+    private static Maybe<int> NoneOfValueType => Maybe<int>.None;
 
     private static Either<int, string> Right => Either<int, string>.FromRight(SomeValue);
     private static Either<int, string> Left => Either<int, string>.FromLeft(LeftValue);
     private static Either<int, string> Neither => Either<int, string>.Neither;
+    private static Either<string, int> LeftOfValueTypeRight => Either<string, int>.FromLeft(SomeValue);
 
     [Test]
     public void Is_Some_Passes_For_Some()
@@ -67,6 +69,13 @@ internal class Assert_Tests
     public void Is_Some_Fails_For_None()
     {
         AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.IsSome(None));
+        Assert.That(exception!.Message, Is.EqualTo("Expected Some, but was None."));
+    }
+
+    [Test]
+    public void Is_Some_Fails_For_A_None_Of_A_Value_Type()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.IsSome(NoneOfValueType));
         Assert.That(exception!.Message, Is.EqualTo("Expected Some, but was None."));
     }
 
@@ -114,6 +123,13 @@ internal class Assert_Tests
     public void Some_Value_Of_Fails_For_None()
     {
         AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.SomeValueOf(None));
+        Assert.That(exception!.Message, Is.EqualTo("Expected Some, but was None."));
+    }
+
+    [Test]
+    public void Some_Value_Of_Fails_For_A_None_Of_A_Value_Type()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.SomeValueOf(NoneOfValueType));
         Assert.That(exception!.Message, Is.EqualTo("Expected Some, but was None."));
     }
 
@@ -215,6 +231,13 @@ internal class Assert_Tests
     }
 
     [Test]
+    public void Is_Right_Fails_For_A_Left_Of_A_Value_Type_Right()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.IsRight(LeftOfValueTypeRight));
+        Assert.That(exception!.Message, Is.EqualTo($"Expected Right, but was Left({SomeValue})."));
+    }
+
+    [Test]
     public void Is_Right_With_An_Expected_Value_Passes_For_The_Expected_Value()
     {
         Assert.IsRight(Right, SomeValue);
@@ -266,6 +289,13 @@ internal class Assert_Tests
     {
         AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.RightValueOf(Neither));
         Assert.That(exception!.Message, Is.EqualTo("Expected Right, but was Neither."));
+    }
+
+    [Test]
+    public void Right_Value_Of_Fails_For_A_Left_Of_A_Value_Type_Right()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.RightValueOf(LeftOfValueTypeRight));
+        Assert.That(exception!.Message, Is.EqualTo($"Expected Right, but was Left({SomeValue})."));
     }
 
     [Test]
