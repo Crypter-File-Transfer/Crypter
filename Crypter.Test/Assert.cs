@@ -36,8 +36,13 @@ namespace Crypter.Test;
 /// <remarks>
 /// This type shadows <see cref="NUnit.Framework.Assert"/> for every test in the Crypter.Test namespace,
 /// so the inherited assertions are reached through the same <c>Assert</c> name they always were.
-/// The monad assertions return the matched value, which lets a test assert the state and bind the
-/// value in one statement.
+/// The monad assertions come in two forms, which fail in different ways. The <c>Is*</c> assertions
+/// return nothing and report a wrong state through <c>Fail</c>, so an <c>Assert.Multiple</c> block
+/// collects the failure and runs the statements after it. The <c>*ValueOf</c> assertions return the
+/// matched value, which lets a test assert the state and bind the value in one statement; a wrong
+/// state leaves them no value to return, so they throw an <see cref="AssertionException"/> and end an
+/// <c>Assert.Multiple</c> block where they stand. Both forms check an expected value with <c>That</c>,
+/// so a value that does not match is collected by an <c>Assert.Multiple</c> block either way.
 /// </remarks>
 internal abstract class Assert : NUnit.Framework.Assert
 {
