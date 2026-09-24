@@ -42,9 +42,33 @@ namespace Crypter.Test;
 internal abstract class Assert : NUnit.Framework.Assert
 {
     /// <summary>
+    /// Assert that the maybe is in the Some state.
+    /// </summary>
+    internal static void IsSome<T>(Maybe<T> maybe)
+    {
+        if (maybe.IsNone)
+        {
+            Fail($"Expected Some, but was {Describe(maybe)}.");
+        }
+    }
+
+    /// <summary>
+    /// Assert that the maybe is in the Some state and holds <paramref name="expectedValue"/>.
+    /// </summary>
+    internal static void IsSome<T>(Maybe<T> maybe, T expectedValue)
+    {
+        IsSome(maybe);
+
+        if (maybe.IsSome)
+        {
+            That(maybe.SomeOrDefault(), Is.EqualTo(expectedValue));
+        }
+    }
+
+    /// <summary>
     /// Assert that the maybe is in the Some state and return the value it holds.
     /// </summary>
-    internal static T IsSome<T>(Maybe<T> maybe)
+    internal static T SomeValueOf<T>(Maybe<T> maybe)
     {
         if (maybe.IsNone)
         {
@@ -58,9 +82,9 @@ internal abstract class Assert : NUnit.Framework.Assert
     /// Assert that the maybe is in the Some state and holds <paramref name="expectedValue"/>, then
     /// return the value it holds.
     /// </summary>
-    internal static T IsSome<T>(Maybe<T> maybe, T expectedValue)
+    internal static T SomeValueOf<T>(Maybe<T> maybe, T expectedValue)
     {
-        T value = IsSome(maybe);
+        T value = SomeValueOf(maybe);
         That(value, Is.EqualTo(expectedValue));
         return value;
     }
@@ -77,9 +101,33 @@ internal abstract class Assert : NUnit.Framework.Assert
     }
 
     /// <summary>
+    /// Assert that the either is in the Right state.
+    /// </summary>
+    internal static void IsRight<TLeft, TRight>(Either<TLeft, TRight> either)
+    {
+        if (!either.IsRight)
+        {
+            Fail($"Expected Right, but was {Describe(either)}.");
+        }
+    }
+
+    /// <summary>
+    /// Assert that the either is in the Right state and holds <paramref name="expectedValue"/>.
+    /// </summary>
+    internal static void IsRight<TLeft, TRight>(Either<TLeft, TRight> either, TRight expectedValue)
+    {
+        IsRight(either);
+
+        if (either.IsRight)
+        {
+            That(either.RightOrDefault(default!), Is.EqualTo(expectedValue));
+        }
+    }
+
+    /// <summary>
     /// Assert that the either is in the Right state and return the value it holds.
     /// </summary>
-    internal static TRight IsRight<TLeft, TRight>(Either<TLeft, TRight> either)
+    internal static TRight RightValueOf<TLeft, TRight>(Either<TLeft, TRight> either)
     {
         if (!either.IsRight)
         {
@@ -93,17 +141,41 @@ internal abstract class Assert : NUnit.Framework.Assert
     /// Assert that the either is in the Right state and holds <paramref name="expectedValue"/>, then
     /// return the value it holds.
     /// </summary>
-    internal static TRight IsRight<TLeft, TRight>(Either<TLeft, TRight> either, TRight expectedValue)
+    internal static TRight RightValueOf<TLeft, TRight>(Either<TLeft, TRight> either, TRight expectedValue)
     {
-        TRight value = IsRight(either);
+        TRight value = RightValueOf(either);
         That(value, Is.EqualTo(expectedValue));
         return value;
     }
 
     /// <summary>
+    /// Assert that the either is in the Left state.
+    /// </summary>
+    internal static void IsLeft<TLeft, TRight>(Either<TLeft, TRight> either)
+    {
+        if (!either.IsLeft)
+        {
+            Fail($"Expected Left, but was {Describe(either)}.");
+        }
+    }
+
+    /// <summary>
+    /// Assert that the either is in the Left state and holds <paramref name="expectedValue"/>.
+    /// </summary>
+    internal static void IsLeft<TLeft, TRight>(Either<TLeft, TRight> either, TLeft expectedValue)
+    {
+        IsLeft(either);
+
+        if (either.IsLeft)
+        {
+            That(either.LeftOrDefault(default!), Is.EqualTo(expectedValue));
+        }
+    }
+
+    /// <summary>
     /// Assert that the either is in the Left state and return the value it holds.
     /// </summary>
-    internal static TLeft IsLeft<TLeft, TRight>(Either<TLeft, TRight> either)
+    internal static TLeft LeftValueOf<TLeft, TRight>(Either<TLeft, TRight> either)
     {
         if (!either.IsLeft)
         {
@@ -117,9 +189,9 @@ internal abstract class Assert : NUnit.Framework.Assert
     /// Assert that the either is in the Left state and holds <paramref name="expectedValue"/>, then
     /// return the value it holds.
     /// </summary>
-    internal static TLeft IsLeft<TLeft, TRight>(Either<TLeft, TRight> either, TLeft expectedValue)
+    internal static TLeft LeftValueOf<TLeft, TRight>(Either<TLeft, TRight> either, TLeft expectedValue)
     {
-        TLeft value = IsLeft(either);
+        TLeft value = LeftValueOf(either);
         That(value, Is.EqualTo(expectedValue));
         return value;
     }
@@ -138,18 +210,18 @@ internal abstract class Assert : NUnit.Framework.Assert
     /// <summary>
     /// Await the task, then assert that the maybe is in the Some state and return the value it holds.
     /// </summary>
-    internal static async Task<T> IsSomeAsync<T>(Task<Maybe<T>> maybeTask)
+    internal static async Task<T> SomeValueOfAsync<T>(Task<Maybe<T>> maybeTask)
     {
-        return IsSome(await maybeTask);
+        return SomeValueOf(await maybeTask);
     }
 
     /// <summary>
     /// Await the task, then assert that the maybe is in the Some state and holds
     /// <paramref name="expectedValue"/>, then return the value it holds.
     /// </summary>
-    internal static async Task<T> IsSomeAsync<T>(Task<Maybe<T>> maybeTask, T expectedValue)
+    internal static async Task<T> SomeValueOfAsync<T>(Task<Maybe<T>> maybeTask, T expectedValue)
     {
-        return IsSome(await maybeTask, expectedValue);
+        return SomeValueOf(await maybeTask, expectedValue);
     }
 
     /// <summary>
@@ -163,35 +235,35 @@ internal abstract class Assert : NUnit.Framework.Assert
     /// <summary>
     /// Await the task, then assert that the either is in the Right state and return the value it holds.
     /// </summary>
-    internal static async Task<TRight> IsRightAsync<TLeft, TRight>(Task<Either<TLeft, TRight>> eitherTask)
+    internal static async Task<TRight> RightValueOfAsync<TLeft, TRight>(Task<Either<TLeft, TRight>> eitherTask)
     {
-        return IsRight(await eitherTask);
+        return RightValueOf(await eitherTask);
     }
 
     /// <summary>
     /// Await the task, then assert that the either is in the Right state and holds
     /// <paramref name="expectedValue"/>, then return the value it holds.
     /// </summary>
-    internal static async Task<TRight> IsRightAsync<TLeft, TRight>(Task<Either<TLeft, TRight>> eitherTask, TRight expectedValue)
+    internal static async Task<TRight> RightValueOfAsync<TLeft, TRight>(Task<Either<TLeft, TRight>> eitherTask, TRight expectedValue)
     {
-        return IsRight(await eitherTask, expectedValue);
+        return RightValueOf(await eitherTask, expectedValue);
     }
 
     /// <summary>
     /// Await the task, then assert that the either is in the Left state and return the value it holds.
     /// </summary>
-    internal static async Task<TLeft> IsLeftAsync<TLeft, TRight>(Task<Either<TLeft, TRight>> eitherTask)
+    internal static async Task<TLeft> LeftValueOfAsync<TLeft, TRight>(Task<Either<TLeft, TRight>> eitherTask)
     {
-        return IsLeft(await eitherTask);
+        return LeftValueOf(await eitherTask);
     }
 
     /// <summary>
     /// Await the task, then assert that the either is in the Left state and holds
     /// <paramref name="expectedValue"/>, then return the value it holds.
     /// </summary>
-    internal static async Task<TLeft> IsLeftAsync<TLeft, TRight>(Task<Either<TLeft, TRight>> eitherTask, TLeft expectedValue)
+    internal static async Task<TLeft> LeftValueOfAsync<TLeft, TRight>(Task<Either<TLeft, TRight>> eitherTask, TLeft expectedValue)
     {
-        return IsLeft(await eitherTask, expectedValue);
+        return LeftValueOf(await eitherTask, expectedValue);
     }
 
     /// <summary>

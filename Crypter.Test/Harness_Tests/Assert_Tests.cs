@@ -56,10 +56,9 @@ internal class Assert_Tests
     private static Either<int, string> Neither => Either<int, string>.Neither;
 
     [Test]
-    public void Is_Some_Returns_The_Value()
+    public void Is_Some_Passes_For_Some()
     {
-        string value = Assert.IsSome(Some);
-        Assert.That(value, Is.EqualTo(SomeValue));
+        Assert.IsSome(Some);
     }
 
     [Test]
@@ -70,16 +69,56 @@ internal class Assert_Tests
     }
 
     [Test]
-    public void Is_Some_With_An_Expected_Value_Returns_The_Value()
+    public void Is_Some_With_An_Expected_Value_Passes_For_The_Expected_Value()
     {
-        string value = Assert.IsSome(Some, SomeValue);
-        Assert.That(value, Is.EqualTo(SomeValue));
+        Assert.IsSome(Some, SomeValue);
     }
 
     [Test]
     public void Is_Some_With_An_Expected_Value_Fails_For_A_Different_Value()
     {
         Assert.Throws<AssertionException>(() => Assert.IsSome(Some, OtherValue));
+    }
+
+    [Test]
+    public void Some_Value_Of_Returns_The_Value()
+    {
+        string value = Assert.SomeValueOf(Some);
+        Assert.That(value, Is.EqualTo(SomeValue));
+    }
+
+    [Test]
+    public void Some_Value_Of_Fails_For_None()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.SomeValueOf(None));
+        Assert.That(exception!.Message, Is.EqualTo("Expected Some, but was None."));
+    }
+
+    [Test]
+    public void Some_Value_Of_With_An_Expected_Value_Returns_The_Value()
+    {
+        string value = Assert.SomeValueOf(Some, SomeValue);
+        Assert.That(value, Is.EqualTo(SomeValue));
+    }
+
+    [Test]
+    public void Some_Value_Of_With_An_Expected_Value_Fails_For_A_Different_Value()
+    {
+        Assert.Throws<AssertionException>(() => Assert.SomeValueOf(Some, OtherValue));
+    }
+
+    [Test]
+    public void Some_Value_Of_Inside_A_Multiple_Scope_Does_Not_Return_A_Value()
+    {
+        bool returned = false;
+
+        Assert.Throws<AssertionException>(() => Assert.Multiple(() =>
+        {
+            _ = Assert.SomeValueOf(None);
+            returned = true;
+        }));
+
+        Assert.That(returned, Is.False);
     }
 
     [Test]
@@ -96,10 +135,9 @@ internal class Assert_Tests
     }
 
     [Test]
-    public void Is_Right_Returns_The_Value()
+    public void Is_Right_Passes_For_Right()
     {
-        string value = Assert.IsRight(Right);
-        Assert.That(value, Is.EqualTo(SomeValue));
+        Assert.IsRight(Right);
     }
 
     [Test]
@@ -117,10 +155,9 @@ internal class Assert_Tests
     }
 
     [Test]
-    public void Is_Right_With_An_Expected_Value_Returns_The_Value()
+    public void Is_Right_With_An_Expected_Value_Passes_For_The_Expected_Value()
     {
-        string value = Assert.IsRight(Right, SomeValue);
-        Assert.That(value, Is.EqualTo(SomeValue));
+        Assert.IsRight(Right, SomeValue);
     }
 
     [Test]
@@ -130,10 +167,57 @@ internal class Assert_Tests
     }
 
     [Test]
-    public void Is_Left_Returns_The_Value()
+    public void Right_Value_Of_Returns_The_Value()
     {
-        int value = Assert.IsLeft(Left);
-        Assert.That(value, Is.EqualTo(LeftValue));
+        string value = Assert.RightValueOf(Right);
+        Assert.That(value, Is.EqualTo(SomeValue));
+    }
+
+    [Test]
+    public void Right_Value_Of_Fails_For_Left()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.RightValueOf(Left));
+        Assert.That(exception!.Message, Is.EqualTo($"Expected Right, but was Left({LeftValue})."));
+    }
+
+    [Test]
+    public void Right_Value_Of_Fails_For_Neither()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.RightValueOf(Neither));
+        Assert.That(exception!.Message, Is.EqualTo("Expected Right, but was Neither."));
+    }
+
+    [Test]
+    public void Right_Value_Of_With_An_Expected_Value_Returns_The_Value()
+    {
+        string value = Assert.RightValueOf(Right, SomeValue);
+        Assert.That(value, Is.EqualTo(SomeValue));
+    }
+
+    [Test]
+    public void Right_Value_Of_With_An_Expected_Value_Fails_For_A_Different_Value()
+    {
+        Assert.Throws<AssertionException>(() => Assert.RightValueOf(Right, OtherValue));
+    }
+
+    [Test]
+    public void Right_Value_Of_Inside_A_Multiple_Scope_Does_Not_Return_A_Value()
+    {
+        bool returned = false;
+
+        Assert.Throws<AssertionException>(() => Assert.Multiple(() =>
+        {
+            _ = Assert.RightValueOf(Left);
+            returned = true;
+        }));
+
+        Assert.That(returned, Is.False);
+    }
+
+    [Test]
+    public void Is_Left_Passes_For_Left()
+    {
+        Assert.IsLeft(Left);
     }
 
     [Test]
@@ -151,16 +235,63 @@ internal class Assert_Tests
     }
 
     [Test]
-    public void Is_Left_With_An_Expected_Value_Returns_The_Value()
+    public void Is_Left_With_An_Expected_Value_Passes_For_The_Expected_Value()
     {
-        int value = Assert.IsLeft(Left, LeftValue);
-        Assert.That(value, Is.EqualTo(LeftValue));
+        Assert.IsLeft(Left, LeftValue);
     }
 
     [Test]
     public void Is_Left_With_An_Expected_Value_Fails_For_A_Different_Value()
     {
         Assert.Throws<AssertionException>(() => Assert.IsLeft(Left, OtherLeftValue));
+    }
+
+    [Test]
+    public void Left_Value_Of_Returns_The_Value()
+    {
+        int value = Assert.LeftValueOf(Left);
+        Assert.That(value, Is.EqualTo(LeftValue));
+    }
+
+    [Test]
+    public void Left_Value_Of_Fails_For_Right()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.LeftValueOf(Right));
+        Assert.That(exception!.Message, Is.EqualTo($"Expected Left, but was Right({SomeValue})."));
+    }
+
+    [Test]
+    public void Left_Value_Of_Fails_For_Neither()
+    {
+        AssertionException? exception = Assert.Throws<AssertionException>(() => Assert.LeftValueOf(Neither));
+        Assert.That(exception!.Message, Is.EqualTo("Expected Left, but was Neither."));
+    }
+
+    [Test]
+    public void Left_Value_Of_With_An_Expected_Value_Returns_The_Value()
+    {
+        int value = Assert.LeftValueOf(Left, LeftValue);
+        Assert.That(value, Is.EqualTo(LeftValue));
+    }
+
+    [Test]
+    public void Left_Value_Of_With_An_Expected_Value_Fails_For_A_Different_Value()
+    {
+        Assert.Throws<AssertionException>(() => Assert.LeftValueOf(Left, OtherLeftValue));
+    }
+
+    [Test]
+    public void Left_Value_Of_Inside_A_Multiple_Scope_Does_Not_Return_A_Value()
+    {
+        bool returned = false;
+
+        Assert.Throws<AssertionException>(() => Assert.Multiple(() =>
+        {
+            _ = Assert.LeftValueOf(Right);
+            returned = true;
+        }));
+
+        Assert.That(returned, Is.False);
     }
 
     [Test]
@@ -177,73 +308,31 @@ internal class Assert_Tests
     }
 
     [Test]
-    public void Is_Some_Inside_A_Multiple_Scope_Does_Not_Return_A_Value()
+    public async Task Some_Value_Of_Async_Returns_The_Value_Async()
     {
-        bool returned = false;
-
-        Assert.Throws<AssertionException>(() => Assert.Multiple(() =>
-        {
-            _ = Assert.IsSome(None);
-            returned = true;
-        }));
-
-        Assert.That(returned, Is.False);
-    }
-
-    [Test]
-    public void Is_Right_Inside_A_Multiple_Scope_Does_Not_Return_A_Value()
-    {
-        bool returned = false;
-
-        Assert.Throws<AssertionException>(() => Assert.Multiple(() =>
-        {
-            _ = Assert.IsRight(Left);
-            returned = true;
-        }));
-
-        Assert.That(returned, Is.False);
-    }
-
-    [Test]
-    public void Is_Left_Inside_A_Multiple_Scope_Does_Not_Return_A_Value()
-    {
-        bool returned = false;
-
-        Assert.Throws<AssertionException>(() => Assert.Multiple(() =>
-        {
-            _ = Assert.IsLeft(Right);
-            returned = true;
-        }));
-
-        Assert.That(returned, Is.False);
-    }
-
-    [Test]
-    public async Task Is_Some_Async_Returns_The_Value_Async()
-    {
-        string value = await Assert.IsSomeAsync(Task.FromResult(Some));
+        string value = await Assert.SomeValueOfAsync(Task.FromResult(Some));
         Assert.That(value, Is.EqualTo(SomeValue));
     }
 
     [Test]
-    public void Is_Some_Async_Fails_For_None()
+    public void Some_Value_Of_Async_Fails_For_None()
     {
         AssertionException? exception =
-            Assert.ThrowsAsync<AssertionException>(() => Assert.IsSomeAsync(Task.FromResult(None)));
+            Assert.ThrowsAsync<AssertionException>(() => Assert.SomeValueOfAsync(Task.FromResult(None)));
         Assert.That(exception!.Message, Is.EqualTo("Expected Some, but was None."));
     }
 
     [Test]
-    public async Task Is_Some_Async_With_An_Expected_Value_Returns_The_Value_Async()
+    public async Task Some_Value_Of_Async_With_An_Expected_Value_Returns_The_Value_Async()
     {
-        string value = await Assert.IsSomeAsync(Task.FromResult(Some), SomeValue);
+        string value = await Assert.SomeValueOfAsync(Task.FromResult(Some), SomeValue);
         Assert.That(value, Is.EqualTo(SomeValue));
     }
 
     [Test]
-    public void Is_Some_Async_With_An_Expected_Value_Fails_For_A_Different_Value()
+    public void Some_Value_Of_Async_With_An_Expected_Value_Fails_For_A_Different_Value()
     {
-        Assert.ThrowsAsync<AssertionException>(() => Assert.IsSomeAsync(Task.FromResult(Some), OtherValue));
+        Assert.ThrowsAsync<AssertionException>(() => Assert.SomeValueOfAsync(Task.FromResult(Some), OtherValue));
     }
 
     [Test]
@@ -261,59 +350,59 @@ internal class Assert_Tests
     }
 
     [Test]
-    public async Task Is_Right_Async_Returns_The_Value_Async()
+    public async Task Right_Value_Of_Async_Returns_The_Value_Async()
     {
-        string value = await Assert.IsRightAsync(Task.FromResult(Right));
+        string value = await Assert.RightValueOfAsync(Task.FromResult(Right));
         Assert.That(value, Is.EqualTo(SomeValue));
     }
 
     [Test]
-    public void Is_Right_Async_Fails_For_Left()
+    public void Right_Value_Of_Async_Fails_For_Left()
     {
         AssertionException? exception =
-            Assert.ThrowsAsync<AssertionException>(() => Assert.IsRightAsync(Task.FromResult(Left)));
+            Assert.ThrowsAsync<AssertionException>(() => Assert.RightValueOfAsync(Task.FromResult(Left)));
         Assert.That(exception!.Message, Is.EqualTo($"Expected Right, but was Left({LeftValue})."));
     }
 
     [Test]
-    public async Task Is_Right_Async_With_An_Expected_Value_Returns_The_Value_Async()
+    public async Task Right_Value_Of_Async_With_An_Expected_Value_Returns_The_Value_Async()
     {
-        string value = await Assert.IsRightAsync(Task.FromResult(Right), SomeValue);
+        string value = await Assert.RightValueOfAsync(Task.FromResult(Right), SomeValue);
         Assert.That(value, Is.EqualTo(SomeValue));
     }
 
     [Test]
-    public void Is_Right_Async_With_An_Expected_Value_Fails_For_A_Different_Value()
+    public void Right_Value_Of_Async_With_An_Expected_Value_Fails_For_A_Different_Value()
     {
-        Assert.ThrowsAsync<AssertionException>(() => Assert.IsRightAsync(Task.FromResult(Right), OtherValue));
+        Assert.ThrowsAsync<AssertionException>(() => Assert.RightValueOfAsync(Task.FromResult(Right), OtherValue));
     }
 
     [Test]
-    public async Task Is_Left_Async_Returns_The_Value_Async()
+    public async Task Left_Value_Of_Async_Returns_The_Value_Async()
     {
-        int value = await Assert.IsLeftAsync(Task.FromResult(Left));
+        int value = await Assert.LeftValueOfAsync(Task.FromResult(Left));
         Assert.That(value, Is.EqualTo(LeftValue));
     }
 
     [Test]
-    public void Is_Left_Async_Fails_For_Right()
+    public void Left_Value_Of_Async_Fails_For_Right()
     {
         AssertionException? exception =
-            Assert.ThrowsAsync<AssertionException>(() => Assert.IsLeftAsync(Task.FromResult(Right)));
+            Assert.ThrowsAsync<AssertionException>(() => Assert.LeftValueOfAsync(Task.FromResult(Right)));
         Assert.That(exception!.Message, Is.EqualTo($"Expected Left, but was Right({SomeValue})."));
     }
 
     [Test]
-    public async Task Is_Left_Async_With_An_Expected_Value_Returns_The_Value_Async()
+    public async Task Left_Value_Of_Async_With_An_Expected_Value_Returns_The_Value_Async()
     {
-        int value = await Assert.IsLeftAsync(Task.FromResult(Left), LeftValue);
+        int value = await Assert.LeftValueOfAsync(Task.FromResult(Left), LeftValue);
         Assert.That(value, Is.EqualTo(LeftValue));
     }
 
     [Test]
-    public void Is_Left_Async_With_An_Expected_Value_Fails_For_A_Different_Value()
+    public void Left_Value_Of_Async_With_An_Expected_Value_Fails_For_A_Different_Value()
     {
-        Assert.ThrowsAsync<AssertionException>(() => Assert.IsLeftAsync(Task.FromResult(Left), OtherLeftValue));
+        Assert.ThrowsAsync<AssertionException>(() => Assert.LeftValueOfAsync(Task.FromResult(Left), OtherLeftValue));
     }
 
     [Test]
