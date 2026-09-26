@@ -24,9 +24,13 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
@@ -113,6 +117,9 @@ internal class AddUserContact_Tests
         Assert.That(userRegistrationResult.IsRight, Is.True);
         Assert.That(userLoginResult.IsRight, Is.True);
         Assert.That(result.IsLeft, Is.True);
+        result.DoLeftOrNeither(
+            left: error => Assert.That(error, Is.EqualTo(AddUserContactError.InvalidUser)),
+            neither: Assert.Fail);
     }
 
     [TestCase]
@@ -136,5 +143,40 @@ internal class AddUserContact_Tests
         Assert.That(userRegistrationResult.IsRight, Is.True);
         Assert.That(userLoginResult.IsRight, Is.True);
         Assert.That(result.IsLeft, Is.True);
+        result.DoLeftOrNeither(
+            left: error => Assert.That(error, Is.EqualTo(AddUserContactError.NotFound)),
+            neither: Assert.Fail);
+    }
+
+    [Test]
+    public async Task Add_User_Contact_Fails_For_Absent_Username_Parameter_Async()
+    {
+        await TestMethods.LoginAsync(_client!, _clientTokenRepository!);
+        using HttpClient httpClient =
+            await TestMethods.CreateAuthenticatedHttpClientAsync(_factory!, _clientTokenRepository!);
+
+        using HttpResponseMessage response = await httpClient.PostAsync("api/user/contact", null);
+        ErrorResponse? errorResponse = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(errorResponse, Is.Not.Null);
+        Assert.That(errorResponse!.Errors, Has.Count.EqualTo(1));
+        Assert.That(errorResponse.Errors[0].ErrorCode, Is.EqualTo((int)AddUserContactError.InvalidUser));
+    }
+
+    [TestCase("")]
+    [TestCase(" ")]
+    [TestCase("no spaces allowed")]
+    [TestCase("bad*characters")]
+    public async Task Add_User_Contact_Fails_For_Invalid_Username_Async(string contactUsername)
+    {
+        await TestMethods.LoginAsync(_client!, _clientTokenRepository!);
+
+        Either<AddUserContactError, UserContact> result = await _client!.UserContact.AddUserContactAsync(contactUsername);
+
+        Assert.That(result.IsLeft, Is.True);
+        result.DoLeftOrNeither(
+            left: error => Assert.That(error, Is.EqualTo(AddUserContactError.InvalidUser)),
+            neither: Assert.Fail);
     }
 }

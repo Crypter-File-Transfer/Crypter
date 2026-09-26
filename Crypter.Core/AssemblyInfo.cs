@@ -24,6 +24,10 @@
  * Contact the current copyright holder to discuss commercial license options.
  */
 
+using Immediate.Handlers.Shared;
+
+[assembly: ImmediateAssemblyIdentifier("CrypterCore")]
+
 namespace Crypter.Core;
 
 public class AssemblyInfo

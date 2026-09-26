@@ -28,36 +28,41 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Primitives;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
+using Immediate.Handlers.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.UserContacts.Commands;
 
-public sealed record RemoveUserContactCommand(Guid UserId, string ContactUsername) : MediatR.IRequest<Unit>;
-
-internal class RemoveUserContactCommandHandler : MediatR.IRequestHandler<RemoveUserContactCommand, Unit>
+[Handler]
+public static partial class RemoveUserContactCommand
 {
-    private readonly DataContext _dataContext;
+    public sealed record Command(Guid UserId, string? ContactUsername);
 
-    public RemoveUserContactCommandHandler(DataContext dataContext)
+    private static async ValueTask<Either<RemoveUserContactError, Unit>> HandleAsync(
+        Command request,
+        DataContext dataContext,
+        CancellationToken cancellationToken)
     {
-        _dataContext = dataContext;
-    }
+        if (!Username.TryFrom(request.ContactUsername!, out Username? validContactUsername))
+        {
+            return RemoveUserContactError.InvalidUser;
+        }
 
-    public async Task<Unit> Handle(RemoveUserContactCommand request, CancellationToken cancellationToken)
-    {
-        string lowerContactUsername = request.ContactUsername.ToLower();
+        string lowerContactUsername = validContactUsername.Value.ToLower();
 
-        UserContactEntity? contactEntity = await _dataContext.UserContacts
+        UserContactEntity? contactEntity = await dataContext.UserContacts
             .Where(x => x.OwnerId == request.UserId && x.Contact!.Username.ToLower() == lowerContactUsername)
             .FirstOrDefaultAsync(CancellationToken.None);
 
         if (contactEntity is not null)
         {
-            _dataContext.UserContacts.Remove(contactEntity);
-            await _dataContext.SaveChangesAsync(CancellationToken.None);
+            dataContext.UserContacts.Remove(contactEntity);
+            await dataContext.SaveChangesAsync(CancellationToken.None);
         }
 
         return Unit.Default;

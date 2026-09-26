@@ -25,9 +25,13 @@
  */
 
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Crypter.Common.Client.Interfaces.HttpClients;
 using Crypter.Common.Client.Interfaces.Repositories;
+using Crypter.Common.Contracts;
 using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Contracts.Features.UserAuthentication;
 using Crypter.Common.Enums;
@@ -90,7 +94,7 @@ internal class RemoveUserContact_Tests
         Either<AddUserContactError, UserContact> addContactResult = await _client!.UserContact.AddUserContactAsync(contactUsername);
         Maybe<List<UserContact>> secondContactsResult = await _client!.UserContact.GetUserContactsAsync();
 
-        Maybe<Unit> removeContactResult = await _client!.UserContact.RemoveUserContactAsync(contactUsername);
+        Either<RemoveUserContactError, Unit> removeContactResult = await _client!.UserContact.RemoveUserContactAsync(contactUsername);
         Maybe<List<UserContact>> finalContactsResult = await _client!.UserContact.GetUserContactsAsync();
 
         Assert.That(userRegistrationResult.IsRight, Is.True);
@@ -107,8 +111,50 @@ internal class RemoveUserContact_Tests
             Assert.That(x[0].Username, Is.EqualTo(contactUsername));
         });
 
-        Assert.That(removeContactResult.IsSome, Is.True);
+        Assert.That(removeContactResult.IsRight, Is.True);
         Assert.That(finalContactsResult.IsSome, Is.True);
         finalContactsResult.IfSome(x => Assert.That(x, Is.Empty));
+    }
+
+    [Test]
+    public async Task Remove_User_Contact_Fails_For_Absent_Username_Parameter_Async()
+    {
+        await TestMethods.LoginAsync(_client!, _clientTokenRepository!);
+        using HttpClient httpClient =
+            await TestMethods.CreateAuthenticatedHttpClientAsync(_factory!, _clientTokenRepository!);
+
+        using HttpResponseMessage response = await httpClient.DeleteAsync("api/user/contact");
+        ErrorResponse? errorResponse = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(errorResponse, Is.Not.Null);
+        Assert.That(errorResponse!.Errors, Has.Count.EqualTo(1));
+        Assert.That(errorResponse.Errors[0].ErrorCode, Is.EqualTo((int)RemoveUserContactError.InvalidUser));
+    }
+
+    [TestCase("")]
+    [TestCase(" ")]
+    [TestCase("no spaces allowed")]
+    [TestCase("bad*characters")]
+    public async Task Remove_User_Contact_Fails_For_Invalid_Username_Async(string contactUsername)
+    {
+        await TestMethods.LoginAsync(_client!, _clientTokenRepository!);
+
+        Either<RemoveUserContactError, Unit> result = await _client!.UserContact.RemoveUserContactAsync(contactUsername);
+
+        Assert.That(result.IsLeft, Is.True);
+        result.DoLeftOrNeither(
+            left: error => Assert.That(error, Is.EqualTo(RemoveUserContactError.InvalidUser)),
+            neither: Assert.Fail);
+    }
+
+    [Test]
+    public async Task Remove_User_Contact_Succeeds_For_Absent_Contact_Async()
+    {
+        await TestMethods.LoginAsync(_client!, _clientTokenRepository!);
+
+        Either<RemoveUserContactError, Unit> result = await _client!.UserContact.RemoveUserContactAsync("Tom_Bombadil");
+
+        Assert.That(result.IsRight, Is.True);
     }
 }

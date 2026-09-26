@@ -29,33 +29,34 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Crypter.Common.Contracts.Features.Contacts;
+using Crypter.Common.Primitives;
 using Crypter.Core.LinqExpressions;
-using Crypter.Core.MediatorMonads;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
 using EasyMonads;
+using Immediate.Handlers.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.UserContacts.Commands;
 
-public record AddUserContactCommand(Guid UserId, string ContactUsername)
-    : IEitherRequest<AddUserContactError, UserContact>;
-
-internal class AddUserContactCommandHandler
-    : IEitherRequestHandler<AddUserContactCommand, AddUserContactError, UserContact>
+[Handler]
+public static partial class AddUserContactCommand
 {
-    private readonly DataContext _dataContext;
+    public sealed record Command(Guid UserId, string? ContactUsername);
 
-    public AddUserContactCommandHandler(DataContext dataContext)
+    private static async ValueTask<Either<AddUserContactError, UserContact>> HandleAsync(
+        Command request,
+        DataContext dataContext,
+        CancellationToken cancellationToken)
     {
-        _dataContext = dataContext;
-    }
+        if (!Username.TryFrom(request.ContactUsername!, out Username? validContactUsername))
+        {
+            return AddUserContactError.InvalidUser;
+        }
 
-    public async Task<Either<AddUserContactError, UserContact>> Handle(AddUserContactCommand request, CancellationToken cancellationToken)
-    {
-        string lowerContactUsername = request.ContactUsername.ToLower();
+        string lowerContactUsername = validContactUsername.Value.ToLower();
 
-        var foundUser = await _dataContext.Users
+        var foundUser = await dataContext.Users
             .Where(x => x.Username.ToLower() == lowerContactUsername)
             .Where(LinqUserExpressions.UserPrivacyAllowsVisitor(request.UserId))
             .Select(x => new { x.Id, x.Username, x.Profile!.Alias })
@@ -71,7 +72,7 @@ internal class AddUserContactCommandHandler
             return AddUserContactError.InvalidUser;
         }
 
-        bool contactExists = await _dataContext.UserContacts
+        bool contactExists = await dataContext.UserContacts
             .Where(x => x.OwnerId == request.UserId)
             .Where(x => x.ContactId == foundUser.Id)
             .AnyAsync(CancellationToken.None);
@@ -79,8 +80,8 @@ internal class AddUserContactCommandHandler
         if (!contactExists)
         {
             UserContactEntity newContactEntity = new UserContactEntity(request.UserId, foundUser.Id);
-            _dataContext.UserContacts.Add(newContactEntity);
-            await _dataContext.SaveChangesAsync(CancellationToken.None);
+            dataContext.UserContacts.Add(newContactEntity);
+            await dataContext.SaveChangesAsync(CancellationToken.None);
         }
 
         return new UserContact(foundUser.Username, foundUser.Alias);

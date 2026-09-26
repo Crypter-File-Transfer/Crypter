@@ -34,31 +34,28 @@ using Crypter.Common.Contracts.Features.Contacts;
 using Crypter.Common.Enums;
 using Crypter.DataAccess;
 using Crypter.DataAccess.Entities;
-using MediatR;
+using Immediate.Handlers.Shared;
 using Microsoft.EntityFrameworkCore;
 
 namespace Crypter.Core.Features.UserContacts.Queries;
 
-public sealed record GetUserContactsQuery(Guid UserId) : IRequest<List<UserContact>>;
-
-internal class GetUserContactsQueryHandler : IRequestHandler<GetUserContactsQuery, List<UserContact>>
+[Handler]
+public static partial class GetUserContactsQuery
 {
-    private readonly DataContext _dataContext;
+    public sealed record Query(Guid UserId);
 
-    public GetUserContactsQueryHandler(DataContext dataContext)
+    private static async ValueTask<List<UserContact>> HandleAsync(
+        Query request,
+        DataContext dataContext,
+        CancellationToken cancellationToken)
     {
-        _dataContext = dataContext;
-    }
-    
-    public Task<List<UserContact>> Handle(GetUserContactsQuery request, CancellationToken cancellationToken)
-    {
-        return _dataContext.UserContacts
+        return await dataContext.UserContacts
             .Where(x => x.OwnerId == request.UserId)
             .Select(x => x.Contact)
             .Select(ToUserContactDto(request.UserId))
             .ToListAsync(cancellationToken);
     }
-    
+
     private static Expression<Func<UserEntity?, UserContact>> ToUserContactDto(Guid? visitorId)
     {
         return x => x != null

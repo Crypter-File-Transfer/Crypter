@@ -55,9 +55,10 @@ public class UserContactRequests : IUserContactRequests
             .ExtractErrorCode<AddUserContactError, UserContact>();
     }
 
-    public Task<Maybe<Unit>> RemoveUserContactAsync(string contactUsername)
+    public Task<Either<RemoveUserContactError, Unit>> RemoveUserContactAsync(string contactUsername)
     {
         string url = $"api/user/contact?username={contactUsername}";
-        return _crypterAuthenticatedHttpClient.DeleteUnitResponseAsync(url);
+        return _crypterAuthenticatedHttpClient.DeleteEitherUnitResponseAsync(url)
+            .ExtractErrorCode<RemoveUserContactError>();
     }
 }
