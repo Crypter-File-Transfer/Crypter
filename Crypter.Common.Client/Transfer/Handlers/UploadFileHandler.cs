@@ -25,7 +25,6 @@
  */
 
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -164,7 +163,8 @@ public class UploadFileHandler : UploadHandler
             {
                 loopStopwatch.Restart();
                 int bufferSize = blocksPerRequest * encryptionStream.MinimumBufferSize;
-                byte[] buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
+                // Each part keeps its own buffer: the upload reads it after the enumerator has moved on.
+                byte[] buffer = new byte[bufferSize];
 
                 int totalBytesRead = 0;
                 for (int i = 0; i < blocksPerRequest; i++)
@@ -180,14 +180,7 @@ public class UploadFileHandler : UploadHandler
                 
                 if (totalBytesRead > 0)
                 {
-                    try
-                    {
-                        yield return () => new MemoryStream(buffer, 0, totalBytesRead);
-                    }
-                    finally
-                    {
-                        ArrayPool<byte>.Shared.Return(buffer, clearArray: true);   
-                    }
+                    yield return () => new MemoryStream(buffer, 0, totalBytesRead);
                 }
                 
                 double factor = ClientTransferSettings.TargetMultipartUploadMilliseconds / loopStopwatch.Elapsed.TotalMilliseconds;
