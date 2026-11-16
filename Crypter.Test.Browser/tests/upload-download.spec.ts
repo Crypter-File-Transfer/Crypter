@@ -51,11 +51,13 @@ test('a logged-in user can upload a file and decrypt it', async ({ page }) => {
 
   // The navigation bar holds a second upload form in a hidden modal.
   const uploadForm = page.locator('#encrypt');
-  await uploadForm.locator('#fileInput').setInputFiles({
-    name: 'e2e.bin',
-    mimeType: 'application/octet-stream',
-    buffer: randomBytes(200_000),
-  });
+  const file = { name: 'e2e.bin', mimeType: 'application/octet-stream', buffer: randomBytes(200_000) };
+
+  // A file set before InputFile finishes initialising is dropped, so retry until the form shows it.
+  await expect(async () => {
+    await uploadForm.locator('#fileInput').setInputFiles(file);
+    await expect(uploadForm.getByText(file.name)).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
   await uploadForm.getByRole('button', { name: 'Encrypt', exact: true }).click();
 
   const downloadUrlInput = page.locator('#downloadUrl');
