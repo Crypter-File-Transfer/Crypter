@@ -18,7 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # A Firefox entry is `latest`, `latest-N` (N major releases back), or an exact version such as 158.0.1.
+        # A Firefox entry is `latest`, `latest-N` (N major releases back), or an exact version such as 159.0.1.
+        # Playwright 1.65 cannot drive Firefox older than 159 over WebDriver BiDi.
         include:
           - name: chromium
             project: chromium
@@ -28,9 +29,6 @@ jobs:
           - name: firefox-latest-1
             project: firefox
             firefox: latest-1
-          - name: firefox-latest-2
-            project: firefox
-            firefox: latest-2
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
