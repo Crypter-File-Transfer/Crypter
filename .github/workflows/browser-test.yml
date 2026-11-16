@@ -1,0 +1,106 @@
+name: Browser test
+
+on:
+  pull_request:
+    branches: [ main, stable ]
+  workflow_dispatch:
+
+jobs:
+  changes:
+    uses: ./.github/workflows/detect-code-changes.yml
+
+  browser-test:
+    name: ${{ matrix.name }}
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # A Firefox entry is `latest`, `latest-N` (N major releases back), or an exact version such as 159.0.1.
+        # Playwright 1.65 cannot drive Firefox older than 159 over WebDriver BiDi.
+        include:
+          - name: chromium
+            project: chromium
+          - name: firefox-latest
+            project: firefox
+            firefox: latest
+          - name: firefox-latest-1
+            project: firefox
+            firefox: latest-1
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Start the stack
+        run: docker compose --profile local up -d --build
+
+      - name: Wait for the API
+        run: curl --fail --silent --show-error --insecure --retry 60 --retry-delay 5 --retry-all-errors https://localhost/api/version
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 11.18.0
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: Crypter.Test.Browser
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        if: matrix.project == 'chromium'
+        working-directory: Crypter.Test.Browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Resolve Firefox version
+        if: matrix.project == 'firefox'
+        id: firefox-version
+        env:
+          spec: ${{ matrix.firefox }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$spec" =~ ^latest(-([0-9]+))?$ ]]; then
+            offset="${BASH_REMATCH[2]:-0}"
+            base='https://product-details.mozilla.org/1.0'
+            latest="$(curl -fsS "$base/firefox_versions.json" | jq -r .LATEST_FIREFOX_VERSION)"
+            major=$(( ${latest%%.*} - offset ))
+            version="$({
+              curl -fsS "$base/firefox_history_major_releases.json"
+              curl -fsS "$base/firefox_history_stability_releases.json"
+            } | jq -r 'keys[]' | grep "^$major\." | sort -V | tail -n 1)"
+          else
+            version="$spec"
+          fi
+
+          echo "Firefox $spec resolves to $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Install Firefox
+        if: matrix.project == 'firefox'
+        id: setup-firefox
+        uses: browser-actions/setup-firefox@0bc507ddf224827e3b1af68e014d5e42ab93e795 # v1.7.2
+        with:
+          firefox-version: ${{ steps.firefox-version.outputs.version }}
+
+      - name: Run the browser test
+        working-directory: Crypter.Test.Browser
+        env:
+          FIREFOX_PATH: ${{ steps.setup-firefox.outputs.firefox-path }}
+        run: pnpm exec playwright test --project=${{ matrix.project }}
+
+      - name: Collect stack logs
+        if: failure()
+        run: docker compose --profile local logs > stack.log
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: browser-test-${{ matrix.name }}
+          path: |
+            Crypter.Test.Browser/playwright-report/
+            stack.log
