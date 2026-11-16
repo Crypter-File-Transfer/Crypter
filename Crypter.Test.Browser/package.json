@@ -1,0 +1,10 @@
+{
+  "name": "crypter-test-browser",
+  "private": true,
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1"
+  }
+}
