@@ -7,7 +7,7 @@ WORKDIR /source/
 SHELL ["/bin/bash", "-c"]
 
 RUN apt-get update -yq && apt-get upgrade -yq && apt-get install -yq curl git nano
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -yq nodejs
+RUN curl -fsSL https://deb.nodesource.com/setup_26.x | bash - && apt-get install -yq nodejs
 RUN npm install --global pnpm@11.18.0 \
     && SHELL=bash pnpm setup \
     && source /root/.bashrc
