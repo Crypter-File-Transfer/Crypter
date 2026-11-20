@@ -28,5 +28,6 @@ namespace Crypter.Common.Contracts.Features.UserSettings.NotificationSettings;
 
 public enum UpdateNotificationSettingsError
 {
-    UnknownError
+    UnknownError,
+    MissingNotificationChannel
 }

@@ -55,14 +55,20 @@ internal class UpdateNotificationSettingsCommandHandler
     {
         var userData = await _dataContext.Users
             .Where(x => x.Id == request.UserId)
-            .Select(x => new { x.NotificationSetting })
+            .Select(x => new { x.EmailAddress, x.NotificationSetting })
             .FirstOrDefaultAsync(CancellationToken.None);
 
         if (userData is null)
         {
             return UpdateNotificationSettingsError.UnknownError;
         }
-        
+
+        bool enablingNotifications = request.Request.NotifyOnTransferReceived || request.Request.EmailNotifications;
+        if (enablingNotifications && string.IsNullOrEmpty(userData.EmailAddress))
+        {
+            return UpdateNotificationSettingsError.MissingNotificationChannel;
+        }
+
         if (userData.NotificationSetting is null)
         {
             UserNotificationSettingEntity newNotificationSettings =
